@@ -1,47 +1,48 @@
-# Template-Aware Elementor Generation Engine
+# 3-Format Templates: Elementor / Gutenberg / Shopify
 
-The goal: every published Elementor page looks identical to the source template, with new SEO content that fits the original design. Several pieces already exist (length budgets in `template-length-budget.ts`, Elementor conversion in `elementor-engine.ts`, visual regression in `ElementorTestPage`). This plan unifies them into one enforced pipeline and adds the missing DB storage + hard limits.
+Goal: Each marketplace template can be used in 3 formats. The user picks a format on the template card AND inside the campaign wizard. On publish, the page is built in the chosen format so WordPress pages look exactly like the template (images go into the WP Media Library; Shopify uses its own system). Gutenberg structure is wired now, full block conversion filled in later.
 
-## Part A — Store Elementor templates in the database
-Add an `elementor_templates` table so publishing reads stored JSON instead of converting HTML at publish time.
+## 1. Data model (frontend)
+- Add `export type TemplateFormat = "elementor" | "gutenberg" | "shopify";` in `src/lib/marketplace-templates.ts`.
+- Add a helper `availableFormats(t)` returning the formats a template supports. By the request, every template supports all three: `["elementor", "gutenberg", "shopify"]` (Shopify-native templates keep `shopify` as default).
+- Add `defaultFormat(t)`: `shopify` if `platform === "shopify"`, else `elementor`.
 
-Columns: `category`, `preview_image`, `elementor_json` (jsonb), `template_structure` (jsonb), `editable_fields` (jsonb), `default_content` (jsonb), `default_limits` (jsonb).
+## 2. Marketplace card + preview (`TemplateMarketplacePage.tsx`)
+- On each card and in the preview dialog, render a small 3-way format pill group (Elementor / Gutenberg / Shopify) with the resolved default pre-selected.
+- Track `selectedFormat` per template in component state (`Record<templateId, TemplateFormat>`).
+- "Use template" passes the chosen format through to the campaign-create flow (URL/query param or context the wizard already reads when launched from marketplace).
+- Gutenberg pill shows a small "Beta" badge.
 
-A one-time conversion routine runs every HTML marketplace template through the existing `templateToElementor`, extracts editable fields + per-field limits, and upserts rows. Publishing then loads a row, replaces only editable fields, and pushes the JSON — no HTML conversion on publish.
+## 3. Campaign wizard (format step)
+- In the wizard (template-selection / mapping area), add a "Publish format" selector (Elementor / Gutenberg / Shopify) seeded from the format chosen in the marketplace, still editable here ("dui jaygatei").
+- Persist the choice on the campaign: new column `publish_format text` (migration), default `'elementor'`.
 
-## Part B — Field-level editable metadata + hard limits
-Extend the budget analyzer to emit, per editable field:
-- widget type (heading / text / button / icon-box / counter / faq / testimonial)
-- original text, char/word/line count, container width
-- a hard max derived from BOTH the original length (±10%) AND the fixed caps below (whichever is smaller)
+## 4. Format-aware conversion engine
+- New module `src/lib/connectors/format-engine.ts` (frontend) + mirror in `supabase/functions/_shared/connectors/`:
+  - `elementor`: existing `htmlToElementor` / `buildElementorMeta` path (unchanged).
+  - `gutenberg`: new `htmlToGutenberg(html)` — STRUCTURE NOW: wrap template HTML in a single `core/html` block as a safe baseline so pages still publish correctly; leave TODO hooks + a block-mapping table to fill in real native blocks later.
+  - `shopify`: existing Shopify connector path.
 
-Fixed caps:
+## 5. WordPress publishing (`_shared/connectors/wordpress.ts` + `publish-pages`)
+- Read `publish_format` from the campaign/payload.
+- `elementor` → current native Elementor flow (force `elementor_canvas`, import images to Media Library).
+- `gutenberg` → set post `content` to Gutenberg block markup from `htmlToGutenberg`, do NOT write `_elementor_*` meta, use the theme/full-width template; still run `importHtmlAssets` so every template image lands in the WP Media Library and renders from there.
+- Keep the existing template-only image rule (no AI/stock images; missing images stay blank).
+
+## 6. Shopify publishing
+- Unchanged — when format is `shopify`, route through the existing Shopify connector/product system.
+
+## 7. Validation
+- Typecheck. Manually verify: marketplace card shows 3 pills, choice flows into wizard, campaign saves `publish_format`, and the WordPress connector branches on format without breaking the current Elementor path.
+
+```text
+Template ──pick format──> Elementor ─┐
+                          Gutenberg ─┼─> publish-pages ─> WP (media library) / Shopify
+                          Shopify   ─┘
 ```
-Hero title        35 chars
-Section heading   45 chars
-Small heading     30 chars
-Button            4 words
-Feature title     5 words
-Description       ±10% of original
-FAQ question      1 line
-CTA               1 line
-Counter           numeric only
-```
-
-## Part C — Provider-independent enforcement
-All AI generation routes through the same post-processing in the edge functions (`ai-generate-rows`, `generate-pages`): after any provider returns content, `enforceRowBudget` clamps every field to its hard limit and the prompt is seeded with the per-field limits. This makes Gemini/OpenAI/Claude output converge to the same lengths.
-
-## Part D — Visual validation gate before publish
-Reuse `compareVisualRegression`. Before a page publishes, generated content is rendered against the template signature; if similarity < 98% (overflow / wrapping / extra lines), the offending fields are regenerated with a stricter limit, retrying up to N times, then truncated at a safe boundary as a final fallback.
-
-## Scope decisions I need from you
-This is multiple days of work. To deliver value fast I propose phasing it. Which first?
-
-1. **DB-stored Elementor templates** (Part A) — biggest architectural change, guarantees identical pages.
-2. **Hard per-field limits + provider-independent clamping** (Parts B/C) — directly fixes "AI too long / providers differ".
-3. **Visual validation gate** (Part D) — automated reject+regenerate loop.
 
 ## Technical notes
-- New migration for `elementor_templates` with workspace-agnostic read (marketplace templates are global) + service_role write.
-- Conversion script lives in an edge function (`seed-elementor-templates`) so it runs server-side once.
-- `template-length-budget.ts` is shared between functions — add a `FIELD_CAPS` map and merge with the ±10% original-length rule there so client and server agree.
+- DB: `ALTER TABLE public.campaigns ADD COLUMN publish_format text NOT NULL DEFAULT 'elementor';`
+- No new RLS needed (column on existing table).
+- Gutenberg engine ships as a working `core/html` fallback now; native block mapping is a later iteration (per your "structure now, fill later").
+- Images always uploaded to WP Media Library via existing `importHtmlAssets` / `importElementorImages` so the published page renders images from WordPress, matching the template.

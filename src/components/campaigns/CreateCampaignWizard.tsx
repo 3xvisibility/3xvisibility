@@ -167,6 +167,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // generate-pages, publish-pages, and republish flows so behavior stays
   // identical everywhere.
   const [publishAs, setPublishAs] = useState<"page" | "product">("page");
+  const [publishFormat, setPublishFormat] = useState<"elementor" | "gutenberg" | "shopify">("elementor");
+  const publishFormatTouchedRef = useRef(false);
   const [maxRows, setMaxRows] = useState("");
   const [generationMethod, setGenerationMethod] = useState<"all" | "sequential" | "random">("all");
   const [scheduleMode, setScheduleMode] = useState<"now" | "later" | "recurring">("now");
@@ -655,6 +657,16 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTemplate]);
 
+  // Seed the publish format from the template's saved choice (from marketplace),
+  // unless the user has already changed it manually.
+  useEffect(() => {
+    if (!selectedTemplate || publishFormatTouchedRef.current) return;
+    const tpl = templates.find(t => t.id === selectedTemplate) as { schema_config?: { publish_format?: string } } | undefined;
+    const fmt = tpl?.schema_config?.publish_format;
+    if (fmt === "elementor" || fmt === "gutenberg" || fmt === "shopify") setPublishFormat(fmt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTemplate, templates]);
+
   // Vibe validator — runs on every change of template/palette/typography/density
   // and surfaces clash warnings + one-click fixes inside the vibe panel.
   const vibeValidation = useMemo(() => {
@@ -1125,6 +1137,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         campaign_type: campaignType,
         campaign_types: campaignTypes as any,
         template_id: selectedTemplate || null,
+        publish_format: publishFormat,
         ai_max_lines: aiMaxLines.trim() ? parseInt(aiMaxLines, 10) : null,
         ai_max_words: aiMaxWords.trim() ? parseInt(aiMaxWords, 10) : null,
         website_id: selectedWebsite || (dataSource === "website" ? websiteForPages : null) || null,
@@ -2600,6 +2613,19 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         <div className="flex items-center space-x-1.5"><RadioGroupItem value="page" id="w-as-page" /><Label htmlFor="w-as-page" className="text-xs cursor-pointer">Page</Label></div>
                         <div className="flex items-center space-x-1.5"><RadioGroupItem value="product" id="w-as-product" /><Label htmlFor="w-as-product" className="text-xs cursor-pointer">Product</Label></div>
                       </RadioGroup>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Publish Format</Label>
+                      <RadioGroup
+                        value={publishFormat}
+                        onValueChange={v => { publishFormatTouchedRef.current = true; setPublishFormat(v as any); }}
+                        className="flex flex-wrap gap-3"
+                      >
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="elementor" id="w-fmt-elementor" /><Label htmlFor="w-fmt-elementor" className="text-xs cursor-pointer">Elementor</Label></div>
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="gutenberg" id="w-fmt-gutenberg" /><Label htmlFor="w-fmt-gutenberg" className="text-xs cursor-pointer">Gutenberg <span className="opacity-60">(Beta)</span></Label></div>
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="shopify" id="w-fmt-shopify" /><Label htmlFor="w-fmt-shopify" className="text-xs cursor-pointer">Shopify</Label></div>
+                      </RadioGroup>
+                      <p className="text-[10px] text-muted-foreground">Controls how the page is built when published. WordPress supports Elementor &amp; Gutenberg; Shopify uses its native sections.</p>
                     </div>
                   </div>
 

@@ -32,6 +32,12 @@ export interface PagePayload {
    * published page matches the stored template design 1:1.
    */
   elementor_data?: string;
+  /**
+   * Desired publish format for WordPress pages: "elementor" (native Elementor,
+   * default), "gutenberg" (native block editor), or "shopify" (routed to the
+   * Shopify connector). Controls how `content` is converted at publish time.
+   */
+  publish_format?: "elementor" | "gutenberg" | "shopify";
   custom_fields?: Record<string, unknown>;
   taxonomies?: Record<string, string[]>;
   /**

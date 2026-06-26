@@ -569,6 +569,7 @@ export type Database = {
           max_rows: number | null
           name: string
           processed_rows: number | null
+          publish_format: string
           publish_mode: string
           publish_type: string
           recurring_schedule: Json | null
@@ -610,6 +611,7 @@ export type Database = {
           max_rows?: number | null
           name: string
           processed_rows?: number | null
+          publish_format?: string
           publish_mode?: string
           publish_type?: string
           recurring_schedule?: Json | null
@@ -651,6 +653,7 @@ export type Database = {
           max_rows?: number | null
           name?: string
           processed_rows?: number | null
+          publish_format?: string
           publish_mode?: string
           publish_type?: string
           recurring_schedule?: Json | null

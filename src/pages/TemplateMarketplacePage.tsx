@@ -29,7 +29,7 @@ import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
-import { COMMUNITY_TEMPLATES, applyTemplateDefaults, platformFromCategory, type MarketplaceTemplate } from "@/lib/marketplace-templates";
+import { COMMUNITY_TEMPLATES, applyTemplateDefaults, platformFromCategory, availableFormats, defaultFormat, TEMPLATE_FORMAT_LABELS, type MarketplaceTemplate, type TemplateFormat } from "@/lib/marketplace-templates";
 import { ELEMENTOR_TEMPLATES } from "@/lib/marketplace-elementor-templates";
 import { useTranslatedTemplate } from "@/hooks/use-translated-template";
 import { useTranslatedTemplateList } from "@/hooks/use-translated-template-list";
@@ -84,8 +84,44 @@ function localizedCategoryLabel(id: string, language: Language): string {
   return CATEGORY_LABEL_I18N[id]?.[language] ?? categoryMeta(id).label;
 }
 
-
-
+// 3-way format selector (Elementor / Gutenberg / Shopify) shown on each template
+// card and in the preview dialog. Gutenberg is flagged Beta.
+function FormatPills({
+  template,
+  value,
+  onChange,
+  size = "sm",
+}: {
+  template: MarketplaceTemplate;
+  value: TemplateFormat;
+  onChange: (fmt: TemplateFormat) => void;
+  size?: "sm" | "md";
+}) {
+  return (
+    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+      {availableFormats(template).map((fmt) => (
+        <button
+          key={fmt}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onChange(fmt);
+          }}
+          className={`rounded-full border transition-colors ${
+            size === "md" ? "px-3 py-1 text-xs" : "px-2 py-0.5 text-[10px]"
+          } ${
+            value === fmt
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-muted/40 text-muted-foreground border-border hover:bg-muted"
+          }`}
+        >
+          {TEMPLATE_FORMAT_LABELS[fmt]}
+          {fmt === "gutenberg" && <span className="ml-1 opacity-70">βeta</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -102,6 +138,11 @@ export default function TemplateMarketplacePage() {
   const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
   const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const [contentOverrides, setContentOverrides] = useState<Record<string, string>>({});
+  const [formatByTemplate, setFormatByTemplate] = useState<Record<string, TemplateFormat>>({});
+  const resolveFormat = (tpl: MarketplaceTemplate): TemplateFormat =>
+    formatByTemplate[tpl.id] ?? defaultFormat(tpl);
+  const setFormat = (id: string, fmt: TemplateFormat) =>
+    setFormatByTemplate((prev) => ({ ...prev, [id]: fmt }));
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
@@ -364,6 +405,7 @@ export default function TemplateMarketplacePage() {
         schema_type: tpl.schema_type || "WebPage",
         schema_config: {
           default_values: mergedDefaults,
+          publish_format: resolveFormat(tpl),
           ...(hasOverrides
             ? { content_overrides: contentOverrides, image_overrides: imageOverrides }
             : {}),
@@ -545,7 +587,11 @@ export default function TemplateMarketplacePage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+              <div className="mt-3 pt-3 border-t border-border">
+                <FormatPills template={tpl} value={resolveFormat(tpl)} onChange={(f) => setFormat(tpl.id, f)} />
+              </div>
+
+              <div className="flex items-center justify-between mt-3">
                 <span className="text-xs text-muted-foreground">
                   {tpl.variables.length} variables
                 </span>
@@ -837,6 +883,18 @@ export default function TemplateMarketplacePage() {
                     )}
                   </div>
                 )}
+
+                <div className="flex items-center justify-between gap-3 pt-2 border-t border-border mt-2">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium">Publish format</span>
+                    <FormatPills
+                      template={previewTemplate}
+                      value={resolveFormat(previewTemplate)}
+                      onChange={(f) => setFormat(previewTemplate.id, f)}
+                      size="md"
+                    />
+                  </div>
+                </div>
 
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Close</Button>

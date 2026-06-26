@@ -3,6 +3,7 @@ import { buildSeoMetaRecord, extractSeoFieldsFromMeta } from "./seo-meta.ts";
 import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter.ts";
 import { getThemeAssets, type ThemeAssets } from "./theme-assets.ts";
 import { buildElementorMeta } from "./elementor-engine.ts";
+import { htmlToGutenberg } from "./gutenberg-engine.ts";
 import { importHtmlAssets } from "./asset-import.ts";
 
 function slugify(text: string): string {
@@ -283,12 +284,20 @@ export class WordPressConnector implements CmsConnector {
     }
 
 
+    // Publish format: "gutenberg" emits native block-editor content (no Elementor
+    // meta / canvas), otherwise the default Elementor flow runs.
+    const format = payload.publish_format || "elementor";
+
     // WordPress Template Compatibility Engine: build a native, editable Elementor
     // page from the HTML template (pages only, not Shopify-style products).
     let elementorApplied = false;
-    if (!payload.product_data && (payload.content || payload.elementor_data)) {
+    if (!payload.product_data && format === "gutenberg") {
+      // Gutenberg path: wrap the asset-imported template HTML in block markup so
+      // images render from the WP Media Library and the design matches 1:1.
+      body.content = htmlToGutenberg(payload.content || "") || adapted;
+    } else if (!payload.product_data && (payload.content || payload.elementor_data)) {
       // Catalog path: when a pre-built Elementor tree is supplied (stored template
-      // with editable content applied), publish it verbatim. Otherwise convert the
+      // with editable content already applied), publish it verbatim. Otherwise convert the
       // HTML template into native Elementor Containers + Widgets.
       const elementorData = payload.elementor_data
         ? await this.importElementorImages(payload.elementor_data)
@@ -365,8 +374,11 @@ export class WordPressConnector implements CmsConnector {
 
     // Rebuild the native Elementor layout when the body content is being updated
     // (skipped in design-preservation mode and for products).
+    const format = payload.publish_format || "elementor";
     let elementorApplied = false;
-    if (!preserveDesign && !payload.product_data && (typeof payload.content === "string" || payload.elementor_data)) {
+    if (!preserveDesign && !payload.product_data && format === "gutenberg" && typeof payload.content === "string") {
+      body.content = htmlToGutenberg(payload.content) || (body.content as string);
+    } else if (!preserveDesign && !payload.product_data && (typeof payload.content === "string" || payload.elementor_data)) {
       const elementorData = payload.elementor_data
         ? await this.importElementorImages(payload.elementor_data)
         : undefined;

@@ -1,0 +1,1 @@
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS publish_format text NOT NULL DEFAULT 'elementor';

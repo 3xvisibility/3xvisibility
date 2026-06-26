@@ -79,6 +79,33 @@ export function applyTemplateDefaults(content: string, defaults?: Record<string,
   );
 }
 
+// ── Output formats ─────────────────────────────────────────────────────────
+// Every marketplace template can be published in three formats. The user picks
+// one on the template card and again (editable) inside the campaign wizard.
+//  • elementor → native, editable Elementor page (default for WordPress designs)
+//  • gutenberg → native WordPress block editor content
+//  • shopify   → Shopify storefront page/product (default for Shopify designs)
+export type TemplateFormat = "elementor" | "gutenberg" | "shopify";
+
+export const ALL_TEMPLATE_FORMATS: TemplateFormat[] = ["elementor", "gutenberg", "shopify"];
+
+export const TEMPLATE_FORMAT_LABELS: Record<TemplateFormat, string> = {
+  elementor: "Elementor",
+  gutenberg: "Gutenberg",
+  shopify: "Shopify",
+};
+
+/** Formats a template can be published in. Per product spec, all templates support all three. */
+export function availableFormats(_t?: Pick<MarketplaceTemplate, "platform">): TemplateFormat[] {
+  return ALL_TEMPLATE_FORMATS;
+}
+
+/** The format pre-selected for a template: Shopify-native designs default to shopify, else elementor. */
+export function defaultFormat(t?: Pick<MarketplaceTemplate, "platform" | "category">): TemplateFormat {
+  if (t && (t.platform === "shopify" || t.category === "shopify")) return "shopify";
+  return "elementor";
+}
+
 
 
 // ── Shared base styles ─────────────────────────────────────────────────────
