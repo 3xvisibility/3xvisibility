@@ -11,6 +11,38 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
+// ── Instrumentation ─────────────────────────────────────────────────────────
+// Per-isolate cumulative counters keyed by user and workspace. These survive
+// across warm invocations of the same edge-function instance and let us see
+// call counts without a dedicated table. Each invocation also emits a single
+// structured METRIC log line (parseable JSON) carrying latency + outcome, so
+// counts/latencies/failures can be aggregated per user/workspace from logs.
+const callCountByUser = new Map<string, number>();
+const callCountByWorkspace = new Map<string, number>();
+
+const bump = (map: Map<string, number>, key: string | null | undefined): number => {
+  if (!key) return 0;
+  const next = (map.get(key) ?? 0) + 1;
+  map.set(key, next);
+  return next;
+};
+
+interface Metric {
+  user_id: string | null;
+  workspace_id: string | null;
+  duration_ms: number;
+  outcome: "success" | "failure";
+  status: number;
+  failure_reason: string | null;
+  user_call_count: number;
+  workspace_call_count: number;
+}
+
+const emitMetric = (m: Metric) => {
+  // Single-line JSON for easy log filtering/aggregation.
+  console.log(`[CHECK-SUBSCRIPTION] METRIC ${JSON.stringify(m)}`);
+};
+
 // Map Stripe product IDs to plan names
 const PRODUCT_TO_PLAN: Record<string, string> = {
   "prod_UALduTYX0c1iq6": "starter",
