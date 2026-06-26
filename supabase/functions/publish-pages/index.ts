@@ -376,6 +376,27 @@ Deno.serve(async (req) => {
       return out;
     }
 
+    // Per-campaign publish format cache (elementor | gutenberg | shopify).
+    const campaignFormatCache = new Map<string, "elementor" | "gutenberg" | "shopify">();
+    async function getCampaignPublishFormat(campaignId: string | null | undefined): Promise<"elementor" | "gutenberg" | "shopify"> {
+      if (typeof body.publish_format === "string" && ["elementor", "gutenberg", "shopify"].includes(body.publish_format)) {
+        return body.publish_format as "elementor" | "gutenberg" | "shopify";
+      }
+      if (!campaignId) return "elementor";
+      if (campaignFormatCache.has(campaignId)) return campaignFormatCache.get(campaignId)!;
+      const { data } = await supabase
+        .from("campaigns")
+        .select("publish_format")
+        .eq("id", campaignId)
+        .maybeSingle();
+      const fmt = ((data as any)?.publish_format as string) || "elementor";
+      const out = (["elementor", "gutenberg", "shopify"].includes(fmt) ? fmt : "elementor") as "elementor" | "gutenberg" | "shopify";
+      campaignFormatCache.set(campaignId, out);
+      return out;
+    }
+
+
+
 
 
 
