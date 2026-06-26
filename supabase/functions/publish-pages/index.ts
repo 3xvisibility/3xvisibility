@@ -743,15 +743,31 @@ Deno.serve(async (req) => {
           preserveDesign,
         );
 
-        // WordPress page publishes: prefer the stored Elementor catalog template
-        // (editable JSON with new content applied + validated) over HTML conversion.
+        // WordPress page publishes: ALWAYS prefer the stored Elementor catalog
+        // template (editable JSON with new content applied + validated). The
+        // catalog JSON is the master design; HTML conversion is a last resort
+        // only when no template has been seeded for this campaign.
+        let elementorSource: "catalog" | "html-fallback" | undefined;
+        let elementorSimilarity: number | undefined;
         if (
           resolvedPublishType === "page" && !preserveDesign &&
           (page.websites as { type?: string })?.type === "wordpress"
         ) {
-          const catalogData = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
-          if (catalogData) payload.elementor_data = catalogData;
+          const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
+          if (catalog) {
+            payload.elementor_data = catalog.data;
+            elementorSource = "catalog";
+            elementorSimilarity = catalog.similarity;
+          } else {
+            elementorSource = "html-fallback";
+            console.warn(
+              `[publish-pages] page ${page.id} has no seeded Elementor template; ` +
+              `falling back to HTML→Elementor conversion (layout fidelity not guaranteed). ` +
+              `Seed this template via seed-elementor-templates to publish from the master JSON.`,
+            );
+          }
         }
+
 
         // Apply Shopify template suffix overrides (campaign or request body)
         const pageSuffixes = {
