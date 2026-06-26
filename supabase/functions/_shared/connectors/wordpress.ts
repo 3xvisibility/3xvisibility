@@ -181,6 +181,33 @@ export class WordPressConnector implements CmsConnector {
     }
   }
 
+  /**
+   * Upload every image referenced inside a stored Elementor `_elementor_data`
+   * JSON string into the WordPress Media Library and rewrite the URLs to the
+   * uploaded copies. Template-only: images that fail to upload are left as-is
+   * (never replaced with AI/stock); no images are ever generated or inserted.
+   */
+  private async importElementorImages(elementorData: string): Promise<string> {
+    if (!elementorData) return elementorData;
+    const URL_RE = /https?:\/\/[^\s"'\\)]+?\.(?:png|jpe?g|gif|webp|avif|svg|ico|bmp)(?:\?[^\s"'\\)]*)?/gi;
+    const urls = [...new Set(elementorData.match(URL_RE) ?? [])];
+    if (urls.length === 0) return elementorData;
+    let result = elementorData;
+    for (const original of urls) {
+      try {
+        const uploaded = await this.uploadMediaFromUrl(original);
+        if (uploaded && uploaded !== original) {
+          result = result.split(original).join(uploaded);
+        }
+      } catch {
+        // Best effort: keep the original template URL on failure.
+      }
+    }
+    return result;
+  }
+
+
+
 
   private async executePageRequest(
     url: string,
