@@ -11,6 +11,38 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
+// ── Instrumentation ─────────────────────────────────────────────────────────
+// Per-isolate cumulative counters keyed by user and workspace. These survive
+// across warm invocations of the same edge-function instance and let us see
+// call counts without a dedicated table. Each invocation also emits a single
+// structured METRIC log line (parseable JSON) carrying latency + outcome, so
+// counts/latencies/failures can be aggregated per user/workspace from logs.
+const callCountByUser = new Map<string, number>();
+const callCountByWorkspace = new Map<string, number>();
+
+const bump = (map: Map<string, number>, key: string | null | undefined): number => {
+  if (!key) return 0;
+  const next = (map.get(key) ?? 0) + 1;
+  map.set(key, next);
+  return next;
+};
+
+interface Metric {
+  user_id: string | null;
+  workspace_id: string | null;
+  duration_ms: number;
+  outcome: "success" | "failure";
+  status: number;
+  failure_reason: string | null;
+  user_call_count: number;
+  workspace_call_count: number;
+}
+
+const emitMetric = (m: Metric) => {
+  // Single-line JSON for easy log filtering/aggregation.
+  console.log(`[CHECK-SUBSCRIPTION] METRIC ${JSON.stringify(m)}`);
+};
+
 // Map Stripe product IDs to plan names
 const PRODUCT_TO_PLAN: Record<string, string> = {
   "prod_UALduTYX0c1iq6": "starter",
@@ -37,6 +69,14 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
+  // ── Per-invocation instrumentation state ──────────────────────────────────
+  const startedAt = Date.now();
+  let metricUserId: string | null = null;
+  let metricWorkspaceId: string | null = null;
+  let metricOutcome: "success" | "failure" = "success";
+  let metricStatus = 200;
+  let metricFailureReason: string | null = null;
+
   try {
     logStep("Function started");
 
@@ -45,6 +85,8 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      metricOutcome = "failure";
+      metricFailureReason = "missing_auth_header";
       return new Response(JSON.stringify({ subscribed: false, error: "No authorization header" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -55,6 +97,8 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError || !userData?.user) {
       logStep("Auth failed gracefully", { message: userError?.message });
+      metricOutcome = "failure";
+      metricFailureReason = "auth_failed";
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -63,6 +107,7 @@ serve(async (req) => {
     
     const userId = userData.user.id;
     const userEmail = userData.user.email;
+    metricUserId = userId;
     if (!userEmail) throw new Error("No email in token");
     logStep("User authenticated", { email: userEmail });
 
@@ -74,6 +119,7 @@ serve(async (req) => {
       .limit(1)
       .maybeSingle();
     const workspaceId = memberData?.workspace_id ?? null;
+    metricWorkspaceId = workspaceId;
     logStep("Workspace", { workspaceId });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
@@ -164,9 +210,28 @@ serve(async (req) => {
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: msg });
+    metricOutcome = "failure";
+    metricStatus = 500;
+    metricFailureReason = msg;
     return new Response(JSON.stringify({ error: msg }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
+    });
+  } finally {
+    // Emit one structured metric per invocation. Counts are per-isolate
+    // cumulative tallies keyed by user and workspace; latency + outcome are
+    // per-call. Aggregate across logs for global counts.
+    const userCallCount = bump(callCountByUser, metricUserId);
+    const workspaceCallCount = bump(callCountByWorkspace, metricWorkspaceId);
+    emitMetric({
+      user_id: metricUserId,
+      workspace_id: metricWorkspaceId,
+      duration_ms: Date.now() - startedAt,
+      outcome: metricOutcome,
+      status: metricStatus,
+      failure_reason: metricFailureReason,
+      user_call_count: userCallCount,
+      workspace_call_count: workspaceCallCount,
     });
   }
 });
