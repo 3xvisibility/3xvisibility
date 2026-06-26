@@ -770,30 +770,42 @@ Deno.serve(async (req) => {
           preserveDesign,
         );
 
-        // WordPress page publishes: ALWAYS prefer the stored Elementor catalog
-        // template (editable JSON with new content applied + validated). The
-        // catalog JSON is the master design; HTML conversion is a last resort
-        // only when no template has been seeded for this campaign.
-        let elementorSource: "catalog" | "html-fallback" | undefined;
+        // WordPress page publishes: ALWAYS use the stored Elementor catalog
+        // template (editable JSON with new content applied + validated). There is
+        // NO raw-HTML fallback — if no matching template is seeded, or the rebuild
+        // loop cannot reach the visual-similarity target, the page fails with a
+        // clear report so the design integrity is never compromised.
+        let elementorSource: "catalog" | undefined;
         let elementorSimilarity: number | undefined;
         if (
           resolvedPublishType === "page" && !preserveDesign &&
           (page.websites as { type?: string })?.type === "wordpress"
         ) {
           const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
-          if (catalog) {
-            payload.elementor_data = catalog.data;
-            elementorSource = "catalog";
-            elementorSimilarity = catalog.similarity;
-          } else {
-            elementorSource = "html-fallback";
-            console.warn(
-              `[publish-pages] page ${page.id} has no seeded Elementor template; ` +
-              `falling back to HTML→Elementor conversion (layout fidelity not guaranteed). ` +
-              `Seed this template via seed-elementor-templates to publish from the master JSON.`,
-            );
+          if (!catalog) {
+            const msg =
+              "Publish blocked: no stored Elementor template found for this campaign. " +
+              "Seed the template via seed-elementor-templates before publishing to WordPress.";
+            console.error("[publish-pages]", msg, { pageId: page.id });
+            await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+            results.push({ id: page.id, status: "failed", error: msg });
+            continue;
           }
+          if (!catalog.ok) {
+            const msg =
+              `Publish blocked: visual similarity ${catalog.similarity}% is below the ` +
+              `${ELEMENTOR_SIMILARITY_TARGET}% threshold after ${MAX_REBUILD_ATTEMPTS} rebuild attempts. ` +
+              `Content could not be fit into the template design.`;
+            console.error("[publish-pages]", msg, { pageId: page.id });
+            await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+            results.push({ id: page.id, status: "failed", error: msg, elementor_similarity: catalog.similarity });
+            continue;
+          }
+          payload.elementor_data = catalog.data;
+          elementorSource = "catalog";
+          elementorSimilarity = catalog.similarity;
         }
+
 
 
         // Apply Shopify template suffix overrides (campaign or request body)
