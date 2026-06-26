@@ -28,6 +28,43 @@ export interface SubscriptionData {
   resetDate: string | null;
 }
 
+// ── Shared singletons across ALL useSubscription instances ────────────────
+// The hook is mounted by ~19 components, often several on the same page. If
+// every instance ran its own Stripe sync + interval + realtime channel, each
+// page load fired N× `check-subscription` invocations (each writing the
+// subscriptions row) and opened N× duplicate realtime channels. These
+// module-level singletons collapse that work to a single shared instance.
+const SYNC_MIN_INTERVAL = 5 * 60_000; // throttle Stripe sync to once / 5 min
+let lastStripeSyncAt = 0;
+let stripeSyncInFlight = false;
+let syncInstanceCount = 0;
+let sharedSyncInterval: ReturnType<typeof setInterval> | null = null;
+let currentSyncWsId: string | null = null;
+
+let realtimeRefCount = 0;
+let sharedChannel: ReturnType<typeof supabase.channel> | null = null;
+let channelInitializing = false;
+
+async function runStripeSync(queryClient: ReturnType<typeof useQueryClient>, force = false) {
+  const wsId = currentSyncWsId;
+  if (!wsId) return;
+  const now = Date.now();
+  if (!force && now - lastStripeSyncAt < SYNC_MIN_INTERVAL) return;
+  if (stripeSyncInFlight) return;
+  stripeSyncInFlight = true;
+  lastStripeSyncAt = now;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { lastStripeSyncAt = 0; return; }
+    const { error } = await supabase.functions.invoke("check-subscription");
+    if (!error) queryClient.invalidateQueries({ queryKey: ["user-subscription", wsId] });
+  } catch {
+    lastStripeSyncAt = 0; // allow a retry on next mount
+  } finally {
+    stripeSyncInFlight = false;
+  }
+}
+
 export function useSubscription(): SubscriptionData {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
@@ -36,71 +73,66 @@ export function useSubscription(): SubscriptionData {
   const navigate = useNavigate();
   const warnedRef = useRef<{ pages: boolean; ai: boolean }>({ pages: false, ai: false });
 
-  // Auto-sync with Stripe on mount and every 60 seconds
+  // Auto-sync with Stripe — shared across all instances, throttled to 5 min.
   useEffect(() => {
     if (!wsId) return;
-    let cancelled = false;
+    currentSyncWsId = wsId;
+    syncInstanceCount++;
 
-    const syncWithStripe = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session || cancelled) return;
-        const { error } = await supabase.functions.invoke("check-subscription");
-        if (!error && !cancelled) {
-          queryClient.invalidateQueries({ queryKey: ["user-subscription", wsId] });
-        }
-      } catch {
-        // Silently fail — the cached DB value will be used
+    runStripeSync(queryClient); // throttled — only actually runs when stale
+
+    if (!sharedSyncInterval) {
+      sharedSyncInterval = setInterval(() => runStripeSync(queryClient, true), SYNC_MIN_INTERVAL);
+    }
+
+    return () => {
+      syncInstanceCount--;
+      if (syncInstanceCount <= 0 && sharedSyncInterval) {
+        clearInterval(sharedSyncInterval);
+        sharedSyncInterval = null;
       }
     };
-
-    syncWithStripe();
-    const interval = setInterval(syncWithStripe, 60_000);
-    return () => { cancelled = true; clearInterval(interval); };
   }, [wsId, queryClient]);
 
-  // Realtime: auto re-fetch AI credit limits whenever the user's subscription
-  // plan or status changes (e.g. upgrade, downgrade, renewal, usage update).
+  // Realtime: a single shared channel re-fetches subscription/credit data on
+  // change. Ref-counted so it stays open while any instance is mounted.
   useEffect(() => {
     let active = true;
-    let channel: ReturnType<typeof supabase.channel> | null = null;
+    realtimeRefCount++;
 
     (async () => {
+      if (sharedChannel || channelInitializing) return;
+      channelInitializing = true;
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !active) return;
+      if (!user || !active || sharedChannel) { channelInitializing = false; return; }
 
       const refresh = () => {
         queryClient.invalidateQueries({ queryKey: ["user-subscription"] });
       };
 
-      channel = supabase
+      sharedChannel = supabase
         .channel(`subscription-changes-${user.id}`)
         .on(
           "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "subscriptions",
-            filter: `user_id=eq.${user.id}`,
-          },
+          { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${user.id}` },
           refresh,
         )
         .on(
           "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "ai_credits",
-            filter: `user_id=eq.${user.id}`,
-          },
+          { event: "*", schema: "public", table: "ai_credits", filter: `user_id=eq.${user.id}` },
           refresh,
         )
         .subscribe();
+      channelInitializing = false;
     })();
 
     return () => {
       active = false;
-      if (channel) supabase.removeChannel(channel);
+      realtimeRefCount--;
+      if (realtimeRefCount <= 0 && sharedChannel) {
+        supabase.removeChannel(sharedChannel);
+        sharedChannel = null;
+      }
     };
   }, [queryClient]);
 
