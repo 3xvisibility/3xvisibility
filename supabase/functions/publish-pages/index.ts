@@ -791,15 +791,20 @@ Deno.serve(async (req) => {
           preserveDesign,
         );
 
-        // WordPress page publishes: ALWAYS use the stored Elementor catalog
-        // template (editable JSON with new content applied + validated). There is
-        // NO raw-HTML fallback — if no matching template is seeded, or the rebuild
-        // loop cannot reach the visual-similarity target, the page fails with a
-        // clear report so the design integrity is never compromised.
+        // Resolve the campaign's chosen publish format and forward it so the
+        // WordPress connector emits Elementor or Gutenberg content accordingly.
+        const publishFormat = await getCampaignPublishFormat(page.campaign_id);
+        payload.publish_format = publishFormat;
+
+        // WordPress page publishes: in Elementor format, ALWAYS use the stored
+        // Elementor catalog template (editable JSON with new content applied +
+        // validated). There is NO raw-HTML fallback. In Gutenberg format we skip
+        // the catalog gate and publish native block content built from the
+        // template HTML (images still imported into the WP Media Library).
         let elementorSource: "catalog" | undefined;
         let elementorSimilarity: number | undefined;
         if (
-          resolvedPublishType === "page" && !preserveDesign &&
+          resolvedPublishType === "page" && !preserveDesign && publishFormat === "elementor" &&
           (page.websites as { type?: string })?.type === "wordpress"
         ) {
           const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
