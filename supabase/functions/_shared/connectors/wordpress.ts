@@ -387,7 +387,9 @@ export class WordPressConnector implements CmsConnector {
       const elementorData = payload.elementor_data
         ? await this.importElementorImages(payload.elementor_data)
         : undefined;
-      Object.assign(meta, buildElementorMeta((payload.content as string) || "", { embedCss: false, prebuiltData: elementorData }));
+      // Embed full markup + CSS when there is no stored catalog JSON, so all
+      // template styling renders 1:1 in Elementor and on the WordPress frontend.
+      Object.assign(meta, buildElementorMeta((payload.content as string) || "", { embedCss: !elementorData, prebuiltData: elementorData }));
       // `_elementor_css` omitted on purpose (object REST schema → rest_invalid_type);
       // Elementor regenerates the CSS automatically when the page is re-rendered.
       elementorApplied = true;
