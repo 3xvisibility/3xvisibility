@@ -66,6 +66,7 @@ Deno.serve(async (req) => {
         const fields = extractEditableFields(tree);
         const defaults = defaultContentFor(fields);
         const limits = limitsFor(fields);
+        const pkg = buildTemplatePackage(tree, fields);
 
         const { error } = await supabase
           .from("elementor_templates")
