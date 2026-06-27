@@ -102,6 +102,15 @@ export interface CatalogOverrides {
   title?: string;
   description?: string;
   bodyHtml?: string;
+  /** Template `<style>` CSS to inject so class-based design renders 1:1. */
+  injectCss?: string;
+}
+
+/** Prepend a CSS-injection element to the tree when template CSS is provided. */
+function withInjectedCss(tree: ElementorElement[], css?: string): ElementorElement[] {
+  const clean = (css || "").trim();
+  if (!clean) return tree;
+  return [buildCssInjectionElement(clean), ...tree];
 }
 
 /**
@@ -119,9 +128,9 @@ export function buildElementorFromCatalog(
 
   const fields = extractEditableFields(tree);
   // No editable fields detected: still publish the resolved Elementor tree as-is
-  // so the template design renders 1:1 (rather than blocking the publish).
+  // (with template CSS injected) so the design renders 1:1 rather than blocking.
   if (fields.length === 0) {
-    return { data: JSON.stringify(tree), similarity: 100, truncatedFields: [] };
+    return { data: JSON.stringify(withInjectedCss(tree, overrides.injectCss)), similarity: 100, truncatedFields: [] };
   }
 
   const limits = limitsFor(fields);
