@@ -438,6 +438,92 @@ function extractAiImageBlocks(content: string): { fullMatch: string; prompt: str
   return blocks;
 }
 
+// ═══════════════════════════════════════════════════════════
+// Template image whitelist + media validation
+// The published page must use ONLY the images that ship with the
+// template. We collect every image URL referenced by the template
+// HTML (img src/srcset + CSS url(...)) once, then validate each
+// generated page against that whitelist before it is allowed to save.
+// ═══════════════════════════════════════════════════════════
+function extractTemplateImageUrls(html: string): Set<string> {
+  const urls = new Set<string>();
+  if (!html) return urls;
+  const add = (u: string) => {
+    const v = (u || "").trim();
+    if (v) urls.add(v);
+  };
+  const imgRe = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/gi;
+  let m: RegExpExecArray | null;
+  while ((m = imgRe.exec(html)) !== null) add(m[1]);
+  const srcsetRe = /\bsrcset\s*=\s*["']([^"']+)["']/gi;
+  while ((m = srcsetRe.exec(html)) !== null) {
+    for (const part of m[1].split(",")) add(part.trim().split(/\s+/)[0]);
+  }
+  const cssRe = /url\(\s*["']?([^"')]+)["']?\s*\)/gi;
+  while ((m = cssRe.exec(html)) !== null) {
+    if (!m[1].startsWith("data:")) add(m[1]);
+  }
+  return urls;
+}
+
+/**
+ * Validate that a finished page uses ONLY template images and contains no
+ * leftover {{AI_IMAGE}} placeholders. Returns a list of human-readable
+ * errors; an empty list means the page passed.
+ */
+function validatePageMedia(
+  pageContent: string,
+  allowedUrls: Set<string>,
+  allowStockImages: boolean,
+): string[] {
+  const errors: string[] = [];
+
+  // 1) No AI image placeholders may survive into the published page.
+  if (/\{\{\s*AI_IMAGE/i.test(pageContent)) {
+    errors.push("Page still contains an {{AI_IMAGE}} placeholder.");
+  }
+
+  if (allowStockImages) return errors; // template opted into stock images.
+
+  // 2) Every <img src> must be a template image (or an inline data URI).
+  const imgRe = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/gi;
+  let m: RegExpExecArray | null;
+  while ((m = imgRe.exec(pageContent)) !== null) {
+    const src = (m[1] || "").trim();
+    if (!src || src.startsWith("data:")) continue;
+    if (src.includes("{")) continue; // unresolved placeholder handled elsewhere
+    if (allowedUrls.has(src)) continue;
+    // Flag any non-template image (AI/stock/Unsplash/Picsum/placeholder).
+    errors.push(`Page references a non-template image: ${src.slice(0, 120)}`);
+  }
+  return errors;
+}
+
+// ═══════════════════════════════════════════════════════════
+// Strict word-count lock for title / subtitle / description.
+// These fields must preserve the EXACT word footprint of the
+// template so the layout never shifts. We never add words; if the
+// generated value is longer we truncate to the original word count
+// at a clean boundary; if shorter we keep it (never pad with filler).
+// ═══════════════════════════════════════════════════════════
+const WORD_LOCK_FIELD_RE =
+  /(^|_)(title|subtitle|sub_title|subheading|sub_heading|heading|headline|tagline|description|desc|subtext|sub_text)($|_)/i;
+
+function isWordLockField(name: string): boolean {
+  return WORD_LOCK_FIELD_RE.test((name || "").toLowerCase());
+}
+
+function lockExactWords(value: string, targetWords: number): string {
+  if (!value || targetWords <= 0) return value;
+  const stripped = value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const words = stripped.split(/\s+/).filter(Boolean);
+  if (words.length <= targetWords) return value.trim();
+  // Too long → truncate to the exact template word count, no trailing punctuation.
+  return words.slice(0, targetWords).join(" ").replace(/[\s,;:.\-–—]+$/, "").trim();
+}
+
+
+
 async function generateAiImage(
   prompt: string,
   apiKey: string,
@@ -1338,6 +1424,45 @@ Deno.serve(async (req) => {
 
 
     const templateContent = campaign.templates.content as string;
+    // Whitelist of images that ship with the template. Every generated page is
+    // validated against this set so it can ONLY use the template's own images.
+    const templateImageUrls = extractTemplateImageUrls(templateContent);
+    const allowStockImagesGlobal =
+      ((campaign.templates?.schema_config || {}) as Record<string, any>)._preserveImages === false;
+
+    // ── Fail-safe: verify every template image is reachable BEFORE generating.
+    // If any template image is missing/broken, abort so no broken page is saved
+    // or published. Runs once per campaign run (template images are shared).
+    if (!test_mode && templateImageUrls.size > 0) {
+      const httpImages = [...templateImageUrls].filter((u) => /^https?:\/\//i.test(u));
+      const broken: string[] = [];
+      await Promise.all(
+        httpImages.map(async (url) => {
+          try {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 10_000);
+            let res = await fetch(url, { method: "HEAD", signal: ctrl.signal });
+            // Some CDNs reject HEAD — retry with a ranged GET.
+            if (!res.ok || res.status === 405) {
+              res = await fetch(url, { method: "GET", headers: { Range: "bytes=0-0" }, signal: ctrl.signal });
+            }
+            clearTimeout(t);
+            if (!res.ok) broken.push(`${url} (HTTP ${res.status})`);
+          } catch (e) {
+            broken.push(`${url} (${(e as Error).message})`);
+          }
+        }),
+      );
+      if (broken.length > 0) {
+        const msg = `Template has ${broken.length} missing/broken image(s). Generation aborted so no broken page is published:\n- ${broken.slice(0, 10).join("\n- ")}`;
+        console.error("[GENERATE-PAGES] " + msg);
+        await supabase.from("campaigns").update({ status: "failed" }).eq("id", campaign_id);
+        return new Response(
+          JSON.stringify({ error: msg, broken_images: broken }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
     // ── Template Structure Analyzer / Design Integrity Protection ──
     // Derive per-variable length budgets from the template's ORIGINAL sample
     // values (default_values). Generated/CSV/AI content is clamped to the same
@@ -1354,8 +1479,15 @@ Deno.serve(async (req) => {
     const clampVar = (key: string, value: string): string => {
       if (!templateSafeMode || typeof value !== "string") return value;
       const b = lengthBudget[key] || lengthBudget[key.toLowerCase()];
-      return b ? enforceBudget(value, b) : value;
+      let out = b ? enforceBudget(value, b) : value;
+      // Strict word-count lock: title/subtitle/description must keep the
+      // template's EXACT word footprint (never more words than the original).
+      if (b && b.words > 0 && isWordLockField(key)) {
+        out = lockExactWords(out, b.words);
+      }
+      return out;
     };
+
     // ── Template Reuse Mode ──
     // When enabled, the template's existing title/description/content are reused
     // verbatim and ONLY CSV placeholders (single {var} and double {{var}}) are
@@ -2329,8 +2461,22 @@ Deno.serve(async (req) => {
             console.warn("[GENERATE-PAGES] JSON-LD validator skipped:", (vErr as Error).message);
           }
 
+          // ── Media validation gate ──
+          // Confirm the finished page uses ONLY template images and contains
+          // no leftover {{AI_IMAGE}} placeholders. On failure, throw so the
+          // page is marked "failed" and never published.
+          const mediaErrors = validatePageMedia(
+            pageContent,
+            templateImageUrls,
+            allowStockImagesGlobal,
+          );
+          if (mediaErrors.length > 0) {
+            throw new Error(`Image validation failed: ${mediaErrors.join("; ")}`);
+          }
+
           // Extract SEA ad IDs from utm_settings or row data
           const adCampaignId = (utmSettings as any).ad_campaign_id || row.ad_campaign_id || null;
+
           const adGroupId = (utmSettings as any).ad_group_id || row.ad_group_id || null;
 
           batchPages.push({
