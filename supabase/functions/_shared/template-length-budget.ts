@@ -247,7 +247,11 @@ export function checkBudgetOverflow(value: string, budget?: LengthBudget): Budge
   return { overflow: false, words, maxWords: budget.maxWords, chars, maxChars: budget.maxChars, reason: "ok" };
 }
 
-
+/**
+ * Design protection: shorten a value to its budget at a word boundary, never
+ * exceeding maxChars. Preserves meaning by keeping the leading words.
+ */
+export function enforceBudget(value: string, budget?: LengthBudget): string {
   if (!budget) return value;
   let text = value.trim();
 
