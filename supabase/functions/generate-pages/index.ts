@@ -1499,9 +1499,13 @@ Deno.serve(async (req) => {
           ? analyzeTemplateBudget(sampleValues)
           : analyzeTemplateContentBudget(campaign.templates.content as string))
       : {};
+    for (const key of Object.keys(lengthBudget)) {
+      const hardened = hardenHeroDescriptionBudget(key, lengthBudget[key]);
+      if (hardened) lengthBudget[key] = hardened;
+    }
     const clampVar = (key: string, value: string): string => {
       if (!templateSafeMode || typeof value !== "string") return value;
-      const b = lengthBudget[key] || lengthBudget[key.toLowerCase()];
+      const b = hardenHeroDescriptionBudget(key, lengthBudget[key] || lengthBudget[key.toLowerCase()]);
       let out = b ? enforceBudget(value, b) : value;
       // Strict word-count lock: title/subtitle/description must keep the
       // template's EXACT word footprint (never more words than the original).
