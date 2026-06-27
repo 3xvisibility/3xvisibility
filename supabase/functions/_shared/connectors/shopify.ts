@@ -167,9 +167,11 @@ export class ShopifyConnector implements CmsConnector {
     const pd = payload.product_data!;
     const rawProductHtml = pd.body_html || payload.content || "";
     const assets = await this.themeAssets();
+    // Host every image referenced in the product description on Shopify's CDN.
+    const productHtml = await importHtmlAssets(rawProductHtml, (u) => this.uploadFileFromUrl(u));
     const productBody: Record<string, unknown> = {
       title: payload.title,
-      body_html: adaptHtmlForShopifyTheme(rawProductHtml, "product", assets),
+      body_html: adaptHtmlForShopifyTheme(productHtml, "product", assets),
       handle: slugify(pd.handle || payload.slug || payload.title),
       status: pd.product_status || "active",
     };
