@@ -79,6 +79,7 @@ const pgpNav: NavItem[] = [
 const toolsNav: NavItem[] = [
   { titleKey: "sidebar.websiteContent", path: "website-content", icon: Layers, requiredFeature: "discovery" },
   { titleKey: "sidebar.templateMapping", path: "template-mapping", icon: Columns3, requiredFeature: "discovery" },
+  { titleKey: "sidebar.templateKit", path: "template-kit", icon: Boxes, requiredFeature: "discovery" },
   { titleKey: "sidebar.analytics", path: "analytics", icon: BarChart3 },
   { titleKey: "sidebar.performance", path: "performance", icon: Activity },
   
