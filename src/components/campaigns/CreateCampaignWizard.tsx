@@ -604,6 +604,16 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return (tpl.variables as string[]).map(v => v.replace(/[{}]/g, "")).filter(v => !isDesignVariable(v));
   }, [selectedTemplate, templates]);
 
+  // Resolve the template's stored default values. Marketplace imports save them
+  // under `schema_config.default_values`; older templates may have a root column.
+  const templateDefaultValues = useMemo(() => {
+    if (!selectedTemplate) return {} as Record<string, string>;
+    const tpl = templates.find(t => t.id === selectedTemplate) as
+      | { schema_config?: { default_values?: Record<string, string> }; default_values?: Record<string, string> }
+      | undefined;
+    return (tpl?.schema_config?.default_values || tpl?.default_values || {}) as Record<string, string>;
+  }, [selectedTemplate, templates]);
+
   // Variables that hold contact/link info the user should supply directly
   // (phone, email, links/URLs) rather than letting the AI invent fake values.
   const contactVars = useMemo(
@@ -666,6 +676,22 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     if (fmt === "elementor" || fmt === "gutenberg" || fmt === "shopify") setPublishFormat(fmt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTemplate, templates]);
+
+  // Zero-edit publish: when an imported template ships with stored default
+  // values, pre-fill them as custom values and enable Reuse mode so the user can
+  // publish the page as-is (no editing, no AI) straight to WordPress to test it.
+  const reuseTouchedRef = useRef(false);
+  useEffect(() => {
+    if (!selectedTemplate || reuseTouchedRef.current) return;
+    const defaults = templateDefaultValues;
+    if (defaults && Object.keys(defaults).length > 0) {
+      setCustomValues((prev) => ({ ...defaults, ...prev }));
+      setReuseTemplateContent(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTemplate, templateDefaultValues]);
+
+
 
   // Vibe validator — runs on every change of template/palette/typography/density
   // and surfaces clash warnings + one-click fixes inside the vibe panel.
@@ -952,7 +978,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           templateSafeMode: true,
           // Exact per-field word/char budgets derived from the template's own
           // default values, so AI headings/text match the template length 1:1.
-          defaultValues: genTpl?.default_values || undefined,
+          defaultValues: (Object.keys(templateDefaultValues).length > 0 ? templateDefaultValues : genTpl?.default_values) || undefined,
           templateContent: genTpl?.content || undefined,
         },
       });
@@ -1805,7 +1831,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                  disabled={!selectedTemplate}
                                  onClick={() => {
                                    const tpl = templates.find(t => t.id === selectedTemplate) as { id: string; name: string; variables?: string[]; default_values?: Record<string, string> } | undefined;
-                                   if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [], defaultValues: tpl.default_values || undefined });
+                                   if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [], defaultValues: (Object.keys(templateDefaultValues).length > 0 ? templateDefaultValues : tpl.default_values) || undefined });
                                  }}
                                >
                                  <Download className="h-3.5 w-3.5 mr-1" /> Download
@@ -2205,7 +2231,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             Keep the template's title, description and content exactly as-is and only replace CSV placeholders like <code>{"{keyword}"}</code> or <code>{"{{city}}"}</code>. Images stay from the template — missing ones are left blank, never generated.
                           </p>
                         </div>
-                        <Switch checked={reuseTemplateContent} onCheckedChange={setReuseTemplateContent} />
+                        <Switch checked={reuseTemplateContent} onCheckedChange={(v) => { reuseTouchedRef.current = true; setReuseTemplateContent(v); }} />
                       </div>
                       {reuseTemplateContent && reuseDiffData && (
                         <div className="space-y-2.5 rounded-lg border border-border/60 bg-background/40 p-2.5">
