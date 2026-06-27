@@ -1905,6 +1905,8 @@ Deno.serve(async (req) => {
 
       for (const row of batchRows) {
         try {
+          // Reset per-row record of clamped field values for the length gate.
+          appliedFieldValues = {};
           let pageContent = templateContent;
 
           // Build combined vars for conditionals/loops
