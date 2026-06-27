@@ -3,7 +3,7 @@
 // Derives per-variable length constraints from a template's *original* sample
 // content (the defaultValues that ship with each template) so AI-generated
 // content fits the existing layout. Enforces a hard cap at the original length
-// plus a tiny 2-3 word tolerance ("design integrity > content length").
+// with no tolerance ("design integrity > content length").
 
 export interface LengthBudget {
   /** Original word count of the sample value. */
@@ -41,6 +41,7 @@ export function capForFieldName(name: string): FieldCap | null {
   if (/(counter|count|number|stat|metric|years?|percent)/.test(n)) return { numeric: true };
   if (/(button|btn|cta_label|cta_button|link_text|action)/.test(n)) return { maxWords: 4, singleLine: true };
   if (/(hero).*(title|heading|head)|(title|heading).*(hero)/.test(n)) return { maxChars: 35, singleLine: true };
+  if (/(hero).*(description|desc|subtext|sub_text|copy|content|paragraph)|(description|desc|subtext|sub_text|copy|content|paragraph).*(hero)/.test(n)) return { maxWords: 18, maxChars: 130 };
   if (/(feature).*(title|name|head)/.test(n)) return { maxWords: 5, singleLine: true };
   if (/(faq).*(question|q)\b|question/.test(n)) return { singleLine: true };
   if (/(cta).*(title|heading|head)/.test(n)) return { maxChars: 45, singleLine: true };
@@ -177,11 +178,11 @@ export function inferInlineBudgetForHtmlToken(content: string, token: string): L
   const tag = (tagMatch?.[1] || "p").toLowerCase();
   let { maxWords, maxChars } = budgetForTag(tag);
 
-  // Hero/banner description: allow a fuller paragraph but never more than
-  // ~5 lines, so the section height stays close to the template.
+  // Hero/banner description: never allow AI to create a long paragraph here.
+  // If the template has no default sample value, this is the final safety cap.
   if (isInHeroContext(before) && (tag === "p" || tag === "div" || tag === "span")) {
-    maxWords = Math.min(Math.max(maxWords, 45), 45); // up to ~5 lines
-    maxChars = Math.min(Math.max(maxChars, 320), 320);
+    maxWords = Math.min(maxWords, 18);
+    maxChars = Math.min(maxChars, 130);
   }
 
   return {

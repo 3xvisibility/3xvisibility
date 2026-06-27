@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 import { slugifyLocale } from "../_shared/locale-format.ts";
-import { analyzeTemplateBudget, analyzeTemplateContentBudget, enforceBudget, inferInlineBudgetForHtmlToken, type BudgetMap } from "../_shared/template-length-budget.ts";
+import { analyzeTemplateBudget, analyzeTemplateContentBudget, enforceBudget, inferInlineBudgetForHtmlToken, type BudgetMap, type LengthBudget } from "../_shared/template-length-budget.ts";
 
 function slugify(text: string, locale?: string): string {
   return slugifyLocale(text, locale);
@@ -508,6 +508,8 @@ function validatePageMedia(
 // ═══════════════════════════════════════════════════════════
 const WORD_LOCK_FIELD_RE =
   /(^|_)(title|subtitle|sub_title|subheading|sub_heading|heading|headline|tagline|description|desc|subtext|sub_text)($|_)/i;
+const HERO_DESCRIPTION_FIELD_RE =
+  /hero.*(description|desc|subtext|sub_text|copy|content|paragraph)|(description|desc|subtext|sub_text|copy|content|paragraph).*hero/i;
 
 function isWordLockField(name: string): boolean {
   return WORD_LOCK_FIELD_RE.test((name || "").toLowerCase());
@@ -520,6 +522,18 @@ function lockExactWords(value: string, targetWords: number): string {
   if (words.length <= targetWords) return value.trim();
   // Too long → truncate to the exact template word count, no trailing punctuation.
   return words.slice(0, targetWords).join(" ").replace(/[\s,;:.\-–—]+$/, "").trim();
+}
+
+function hardenHeroDescriptionBudget(key: string, budget?: LengthBudget): LengthBudget | undefined {
+  if (!budget || !HERO_DESCRIPTION_FIELD_RE.test(key || "")) return budget;
+  return {
+    ...budget,
+    minWords: Math.min(budget.minWords, budget.maxWords, 18),
+    maxWords: Math.min(budget.maxWords, budget.words > 0 ? budget.words : 18, 18),
+    minChars: Math.min(budget.minChars, budget.maxChars, 130),
+    recommendedChars: Math.min(budget.recommendedChars, budget.maxChars, 130),
+    maxChars: Math.min(budget.maxChars, 130),
+  };
 }
 
 
@@ -719,6 +733,7 @@ async function generateAiVarDefaults(
   context: { business?: string; niche?: string; service?: string },
   settings: { tone: string; contentLength: string; language: string },
   apiKey: string,
+  budget?: BudgetMap,
 ): Promise<Record<string, string>> {
   if (variables.length === 0) return {};
   const langName = resolveLanguageName(settings.language);
@@ -727,6 +742,13 @@ async function generateAiVarDefaults(
     context.niche && `Niche: ${context.niche}`,
     context.service && `Services / products: ${context.service}`,
   ].filter(Boolean).join("\n") || "(no extra context provided — infer reasonable values)";
+
+  const budgetLine = budget && Object.keys(budget).length
+    ? `\n\nSTRICT FIELD LENGTH CAPS (must obey exactly):\n${variables.map((v) => {
+        const b = budget[v] || budget[v.toLowerCase()];
+        return b ? `- ${v}: max ${b.maxWords} words, max ${b.maxChars} chars` : `- ${v}: keep very short`;
+      }).join("\n")}`
+    : "";
 
   const systemPrompt = `You generate default values for template variables of a programmatic SEO page.
 
@@ -737,7 +759,7 @@ CRITICAL LANGUAGE RULE: ALL values MUST be written in ${langName}. This is non-n
 - If ${langName} is not English and you would naturally write the value in English, STOP and rewrite it in ${langName}.
 
 TONE: ${settings.tone}.
-Each value must be short, natural, and directly usable as a substitution in HTML. No markdown, no quotes, no labels, no language tags.`;
+Each value must be short, natural, and directly usable as a substitution in HTML. No markdown, no quotes, no labels, no language tags.${budgetLine}`;
   const userPrompt = `${ctxLine}
 
 For each variable name below, return a concise, realistic default value that fits the niche/services above, written in ${langName}.
@@ -774,7 +796,8 @@ Return ONLY a JSON object, no prose, no code fences. Example:
     const out: Record<string, string> = {};
     for (const v of variables) {
       const val = parsed[v] ?? parsed[v.toLowerCase()];
-      if (typeof val === "string" && val.trim()) out[v] = val.trim();
+      const b = budget?.[v] || budget?.[v.toLowerCase()];
+      if (typeof val === "string" && val.trim()) out[v] = b ? enforceBudget(val.trim(), b) : val.trim();
       else if (typeof val === "number" || typeof val === "boolean") out[v] = String(val);
     }
     return out;
@@ -1476,9 +1499,13 @@ Deno.serve(async (req) => {
           ? analyzeTemplateBudget(sampleValues)
           : analyzeTemplateContentBudget(campaign.templates.content as string))
       : {};
+    for (const key of Object.keys(lengthBudget)) {
+      const hardened = hardenHeroDescriptionBudget(key, lengthBudget[key]);
+      if (hardened) lengthBudget[key] = hardened;
+    }
     const clampVar = (key: string, value: string): string => {
       if (!templateSafeMode || typeof value !== "string") return value;
-      const b = lengthBudget[key] || lengthBudget[key.toLowerCase()];
+      const b = hardenHeroDescriptionBudget(key, lengthBudget[key] || lengthBudget[key.toLowerCase()]);
       let out = b ? enforceBudget(value, b) : value;
       // Strict word-count lock: title/subtitle/description must keep the
       // template's EXACT word footprint (never more words than the original).
@@ -1557,7 +1584,7 @@ Deno.serve(async (req) => {
 
       if (unmapped.length > 0 && LOVABLE_API_KEY && hasContext && aiFillMode === "per_campaign") {
         console.log(`[GENERATE-PAGES] AI fill (per_campaign): ${unmapped.length} variable(s) →`, unmapped.join(", "));
-        aiVarDefaults = await generateAiVarDefaults(unmapped, aiContext, aiSettings, LOVABLE_API_KEY);
+        aiVarDefaults = await generateAiVarDefaults(unmapped, aiContext, aiSettings, LOVABLE_API_KEY, lengthBudget);
         const filledCount = Object.keys(aiVarDefaults).length;
         console.log(`[GENERATE-PAGES] AI fill produced ${filledCount}/${unmapped.length} default(s) — reused across all rows`);
         if (filledCount > 0) {
@@ -1967,7 +1994,7 @@ Deno.serve(async (req) => {
               service: [_aiFillCtx.service, rowSummary].filter(Boolean).join(" — Row data: "),
             };
             try {
-              rowAiDefaults = await generateAiVarDefaults(_aiFillTargets, perRowCtx, aiSettings, LOVABLE_API_KEY);
+              rowAiDefaults = await generateAiVarDefaults(_aiFillTargets, perRowCtx, aiSettings, LOVABLE_API_KEY, lengthBudget);
             } catch (e) {
               console.error("[GENERATE-PAGES] per-row AI fill failed, falling back to campaign defaults:", e);
               rowAiDefaults = aiVarDefaults;
@@ -2028,7 +2055,7 @@ Deno.serve(async (req) => {
                 const generatedText = await generateAiContent(
                   block.prompt,
                   blockBudget
-                    ? { ...aiSettings, maxWords: blockBudget.maxWords, maxLines: Math.max(1, Math.min(2, Math.ceil(blockBudget.maxWords / 10))) }
+                    ? { ...aiSettings, maxWords: blockBudget.maxWords, maxLines: Math.max(1, Math.min(5, Math.ceil(blockBudget.maxWords / 10))) }
                     : aiSettings,
                   LOVABLE_API_KEY,
                 );
