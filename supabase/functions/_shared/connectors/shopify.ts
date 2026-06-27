@@ -309,7 +309,8 @@ export class ShopifyConnector implements CmsConnector {
     if (payload.title) body.title = payload.title;
     if (!preserveDesign && (payload.product_data?.body_html || payload.content)) {
       const raw = payload.product_data?.body_html || payload.content || "";
-      body.body_html = adaptHtmlForShopifyTheme(raw, "product", await this.themeAssets());
+      const html = await importHtmlAssets(raw, (u) => this.uploadFileFromUrl(u));
+      body.body_html = adaptHtmlForShopifyTheme(html, "product", await this.themeAssets());
     }
     if (payload.product_data?.handle || payload.slug) body.handle = slugify(payload.product_data?.handle || payload.slug || "");
     if (payload.product_data?.vendor) body.vendor = payload.product_data.vendor;
