@@ -16,6 +16,7 @@ import {
   defaultContentFor,
   limitsFor,
 } from "../_shared/connectors/elementor-fields.ts";
+import { buildTemplatePackage } from "../_shared/connectors/elementor-package.ts";
 
 function countWidgets(tree: any[]): number {
   let n = 0;
@@ -75,6 +76,7 @@ Deno.serve(async (req) => {
         const fields = extractEditableFields(tree);
         const defaults = defaultContentFor(fields);
         const limits = limitsFor(fields);
+        const pkg = buildTemplatePackage(tree, fields);
 
         // 1) Per-template master JSON.
         const { error: upErr } = await supabase
@@ -100,6 +102,11 @@ Deno.serve(async (req) => {
               editable_fields: fields,
               default_content: defaults,
               default_limits: limits,
+              placeholders: pkg.placeholders,
+              image_map: pkg.imageMap,
+              responsive_rules: pkg.responsiveRules,
+              status: "active",
+              version: 1,
             },
             { onConflict: "source_template_id" },
           );

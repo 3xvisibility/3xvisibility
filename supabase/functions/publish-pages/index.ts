@@ -3,7 +3,7 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
-import { buildEmbeddedElementorData } from "../_shared/connectors/elementor-engine.ts";
+
 
 /**
  * Resolve a stored Elementor catalog template for a generated page and overlay the
@@ -858,16 +858,16 @@ Deno.serve(async (req) => {
             results.push({ id: page.id, status: "failed", error: msg, elementor_similarity: catalog.similarity });
             continue;
           }
-          // Publish the design as an importable Elementor template that renders
-          // with PERFECT CSS: embed the full rendered template markup + its
-          // <style> CSS in a single Elementor HTML widget (original classes
-          // preserved). The catalog gate above still validates visual fidelity,
-          // but we ship the embedded full-HTML template so class-based design
-          // (grids, fonts, backgrounds) styles 1:1 instead of native widgets
-          // that drop the template's CSS classes.
-          payload.elementor_data = buildEmbeddedElementorData(cleanedContent);
+          // Template-Kit architecture: ship the NATIVE Elementor JSON tree from
+          // the catalog (placeholder-only content applied, template CSS injected
+          // as a top-of-tree HTML widget). The page is fully editable inside
+          // Elementor as native Containers + widgets — NOT a single embedded
+          // HTML blob. Image URLs in the JSON are uploaded to the WP Media
+          // Library by the connector before the page is created/updated.
+          payload.elementor_data = catalog.data;
           elementorSource = "catalog";
           elementorSimilarity = catalog.similarity;
+
         }
 
 
