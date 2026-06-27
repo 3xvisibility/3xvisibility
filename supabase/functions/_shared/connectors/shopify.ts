@@ -124,8 +124,90 @@ export class ShopifyConnector implements CmsConnector {
 
 
 
+  /** Fetch the live (role=main) theme id, or null if not accessible. */
+  private async getMainThemeId(): Promise<number | null> {
+    try {
+      const res = await shopifyFetch(`${this.apiBase}/themes.json`, { headers: this.headers });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const main = (data.themes || []).find((t: any) => t.role === "main");
+      return main?.id ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Write a single theme asset (PUT). Returns true on success. */
+  private async putAsset(themeId: number, key: string, value: string): Promise<boolean> {
+    const res = await shopifyFetch(`${this.apiBase}/themes/${themeId}/assets.json`, {
+      method: "PUT",
+      headers: this.headers,
+      body: JSON.stringify({ asset: { key, value } }),
+    });
+    if (res.ok) return true;
+    // Permission / scope problems should signal a graceful fallback to caller.
+    await res.text().catch(() => "");
+    return false;
+  }
+
+  /**
+   * Publish the page as a NATIVE Online Store 2.0 section template:
+   *   - sections/<id>.liquid  (markup + {% stylesheet %} + {% schema %})
+   *   - templates/page.<suffix>.json  (references the section + default settings)
+   * Images inside the section liquid are uploaded to Shopify Files first.
+   * Returns the created page result, or null when the theme is not writable
+   * (e.g. missing write_themes scope) so the caller can fall back to body_html.
+   */
+  private async publishSectionKit(payload: PagePayload): Promise<ConnectorResult | null> {
+    const kit = payload.shopify_section_kit;
+    if (!kit) return null;
+    const themeId = await this.getMainThemeId();
+    if (!themeId) return null;
+
+    // Host every image referenced by the section on Shopify's CDN.
+    const liquid = await importHtmlAssets(kit.sectionLiquid, (u) => this.uploadFileFromUrl(u));
+
+    const okSection = await this.putAsset(themeId, `sections/${kit.sectionId}.liquid`, liquid);
+    if (!okSection) return null;
+    const okTemplate = await this.putAsset(
+      themeId,
+      `templates/page.${kit.suffix}.json`,
+      JSON.stringify(kit.template, null, 2),
+    );
+    if (!okTemplate) return null;
+
+    const pageBody: Record<string, unknown> = {
+      title: payload.title,
+      handle: slugify(payload.slug || payload.title),
+      published: payload.status === "publish",
+      template_suffix: kit.suffix,
+    };
+    if (payload.seo_title) pageBody.metafields_global_title_tag = payload.seo_title;
+    if (payload.seo_description) pageBody.metafields_global_description_tag = payload.seo_description;
+
+    const res = await shopifyFetch(`${this.apiBase}/pages.json`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({ page: pageBody }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      external_id: String(data.page.id),
+      url: `https://${this.shopDomain}/pages/${data.page.handle}`,
+    };
+  }
+
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
     if (payload.product_data) return this.createProduct(payload);
+
+    // Prefer native OS 2.0 section publishing when a section kit is supplied.
+    if (payload.shopify_section_kit) {
+      const native = await this.publishSectionKit(payload);
+      if (native) return native;
+      // else: fall through to the body_html path below.
+    }
+
 
     const assets = await this.themeAssets();
     // Upload every template image into Shopify Files and rewrite URLs so the
