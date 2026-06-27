@@ -3,7 +3,6 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog } from "../_shared/connectors/elementor-catalog.ts";
-import { htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
 
 /**
  * Resolve a stored Elementor catalog template for a generated page and overlay the
@@ -11,7 +10,7 @@ import { htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
  *   page.campaign_id → campaigns.template_id → templates.source_marketplace_id
  *     → elementor_templates.source_template_id → elementor_json
  * Returns a validated `_elementor_data` string, or null when no stored template
- * matches (caller falls back to HTML→Elementor conversion).
+ * matches (publish is then blocked — there is NO raw-HTML fallback).
  */
 const ELEMENTOR_SIMILARITY_TARGET = 98;
 const MAX_REBUILD_ATTEMPTS = 4;
@@ -66,15 +65,10 @@ async function resolveCatalogElementorData(
         if (hasData) elementorJson = ed;
       }
 
-      // 3) Last resort: convert the template's HTML into Elementor JSON on the fly.
-      if (!elementorJson && tplRow?.content) {
-        try {
-          const tree = htmlToElementor(tplRow.content);
-          if (tree.length > 0) elementorJson = tree;
-        } catch (e) {
-          console.warn("[publish-pages] on-the-fly HTML→Elementor conversion failed", e);
-        }
-      }
+      // NO on-the-fly HTML→Elementor fallback. Stored Elementor JSON is the
+      // ONLY master format. If neither a catalog row nor the template's own
+      // elementor_data exists, publishing is blocked upstream so a forbidden
+      // raw-HTML conversion can never reach WordPress.
 
       cache.set(page.campaign_id, elementorJson ?? null);
     }
