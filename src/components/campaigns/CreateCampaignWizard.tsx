@@ -1831,7 +1831,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                  disabled={!selectedTemplate}
                                  onClick={() => {
                                    const tpl = templates.find(t => t.id === selectedTemplate) as { id: string; name: string; variables?: string[]; default_values?: Record<string, string> } | undefined;
-                                   if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [], defaultValues: tpl.default_values || undefined });
+                                   if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [], defaultValues: (Object.keys(templateDefaultValues).length > 0 ? templateDefaultValues : tpl.default_values) || undefined });
                                  }}
                                >
                                  <Download className="h-3.5 w-3.5 mr-1" /> Download
