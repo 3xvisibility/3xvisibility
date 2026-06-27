@@ -29,6 +29,21 @@ function countWidgets(tree: any[]): number {
   return n;
 }
 
+/**
+ * Remove every {{AI_IMAGE}} placeholder (and any <img> whose src is one) from
+ * the master HTML. Template-only image policy: missing images stay blank,
+ * never AI/stock — and never trip the publish-time fail-safe.
+ */
+function stripAiImagePlaceholders(html: string): string {
+  return html
+    // <img ... src="{{AI_IMAGE...}}" ...> -> removed entirely
+    .replace(/<img[^>]*\{\{\s*AI_IMAGE[^}]*\}\}[^>]*>/gi, "")
+    // background-image:url({{AI_IMAGE...}}) -> drop the declaration
+    .replace(/background(-image)?\s*:\s*url\(\s*['"]?\{\{\s*AI_IMAGE[^}]*\}\}['"]?\s*\)\s*;?/gi, "")
+    // any remaining bare tokens
+    .replace(/\{\{\s*AI_IMAGE[^}]*\}\}/gi, "");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
