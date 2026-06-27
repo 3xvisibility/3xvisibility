@@ -76,6 +76,7 @@ Deno.serve(async (req) => {
         const fields = extractEditableFields(tree);
         const defaults = defaultContentFor(fields);
         const limits = limitsFor(fields);
+        const pkg = buildTemplatePackage(tree, fields);
 
         // 1) Per-template master JSON.
         const { error: upErr } = await supabase
