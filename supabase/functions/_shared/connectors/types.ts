@@ -49,6 +49,19 @@ export interface PagePayload {
    * flow through.
    */
   preserve_design?: boolean;
+  /**
+   * Shopify Online Store 2.0 section kit. When set, the Shopify connector
+   * publishes the page as a NATIVE section template (writes sections/<id>.liquid
+   * + templates/page.<suffix>.json to the live theme) so the design renders 1:1
+   * and stays editable in the theme customizer. Falls back to body_html when the
+   * theme is not writable (missing write_themes scope).
+   */
+  shopify_section_kit?: {
+    sectionId: string;
+    sectionLiquid: string;
+    template: Record<string, unknown>;
+    suffix: string;
+  };
   product_data?: {
     price?: string;
     sku?: string;
