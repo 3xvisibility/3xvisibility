@@ -29,6 +29,52 @@ export interface CatalogBuildResult {
 const stripTags = (s: string): string =>
   s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
+let cssWidgetCounter = 0;
+function genCssWidgetId(): string {
+  cssWidgetCounter = (cssWidgetCounter + 1) % 0xffffff;
+  return `css${cssWidgetCounter.toString(16).padStart(7, "0")}`.slice(0, 7);
+}
+
+/**
+ * Extract every `<style>…</style>` block from raw template HTML and return the
+ * concatenated CSS. This CSS carries the template's class-based design
+ * (layout grids, colors, fonts, backgrounds, custom classes) that the Elementor
+ * widget tree references but does not itself embed.
+ */
+export function extractTemplateCss(html: string | null | undefined): string {
+  if (!html) return "";
+  const blocks: string[] = [];
+  const re = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const css = (m[1] || "").trim();
+    if (css) blocks.push(css);
+  }
+  return blocks.join("\n");
+}
+
+/**
+ * Build an Elementor HTML widget (wrapped in a thin full-width container) that
+ * injects the template's class-based CSS so the published page renders 1:1.
+ * Placed at the very top of the tree so styles apply to all widgets below.
+ */
+function buildCssInjectionElement(css: string): ElementorElement {
+  const widget: ElementorElement = {
+    id: genCssWidgetId(),
+    elType: "widget",
+    widgetType: "html",
+    elements: [],
+    settings: { html: `<style>\n${css}\n</style>` },
+  };
+  return {
+    id: genCssWidgetId(),
+    elType: "container",
+    elements: [widget],
+    settings: { content_width: "full", padding: { unit: "px", top: "0", bottom: "0", left: "0", right: "0", isLinked: false } },
+  } as unknown as ElementorElement;
+}
+
+
 /** Coerce stored `elementor_json` (array, {data:[]}, or {elements:[]}) into a tree. */
 function coerceTree(json: unknown): ElementorElement[] {
   if (Array.isArray(json)) return json as ElementorElement[];
