@@ -499,6 +499,30 @@ function validatePageMedia(
   return errors;
 }
 
+// ═══════════════════════════════════════════════════════════
+// Strict word-count lock for title / subtitle / description.
+// These fields must preserve the EXACT word footprint of the
+// template so the layout never shifts. We never add words; if the
+// generated value is longer we truncate to the original word count
+// at a clean boundary; if shorter we keep it (never pad with filler).
+// ═══════════════════════════════════════════════════════════
+const WORD_LOCK_FIELD_RE =
+  /(^|_)(title|subtitle|sub_title|subheading|sub_heading|heading|headline|tagline|description|desc|subtext|sub_text)($|_)/i;
+
+function isWordLockField(name: string): boolean {
+  return WORD_LOCK_FIELD_RE.test((name || "").toLowerCase());
+}
+
+function lockExactWords(value: string, targetWords: number): string {
+  if (!value || targetWords <= 0) return value;
+  const stripped = value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const words = stripped.split(/\s+/).filter(Boolean);
+  if (words.length <= targetWords) return value.trim();
+  // Too long → truncate to the exact template word count, no trailing punctuation.
+  return words.slice(0, targetWords).join(" ").replace(/[\s,;:.\-–—]+$/, "").trim();
+}
+
+
 
 async function generateAiImage(
   prompt: string,
