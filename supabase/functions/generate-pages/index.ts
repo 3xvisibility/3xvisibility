@@ -508,6 +508,8 @@ function validatePageMedia(
 // ═══════════════════════════════════════════════════════════
 const WORD_LOCK_FIELD_RE =
   /(^|_)(title|subtitle|sub_title|subheading|sub_heading|heading|headline|tagline|description|desc|subtext|sub_text)($|_)/i;
+const HERO_DESCRIPTION_FIELD_RE =
+  /hero.*(description|desc|subtext|sub_text|copy|content|paragraph)|(description|desc|subtext|sub_text|copy|content|paragraph).*hero/i;
 
 function isWordLockField(name: string): boolean {
   return WORD_LOCK_FIELD_RE.test((name || "").toLowerCase());
@@ -520,6 +522,18 @@ function lockExactWords(value: string, targetWords: number): string {
   if (words.length <= targetWords) return value.trim();
   // Too long → truncate to the exact template word count, no trailing punctuation.
   return words.slice(0, targetWords).join(" ").replace(/[\s,;:.\-–—]+$/, "").trim();
+}
+
+function hardenHeroDescriptionBudget(key: string, budget?: LengthBudget): LengthBudget | undefined {
+  if (!budget || !HERO_DESCRIPTION_FIELD_RE.test(key || "")) return budget;
+  return {
+    ...budget,
+    minWords: Math.min(budget.minWords, budget.maxWords, 18),
+    maxWords: Math.min(budget.maxWords, budget.words > 0 ? budget.words : 18, 18),
+    minChars: Math.min(budget.minChars, budget.maxChars, 130),
+    recommendedChars: Math.min(budget.recommendedChars, budget.maxChars, 130),
+    maxChars: Math.min(budget.maxChars, 130),
+  };
 }
 
 
