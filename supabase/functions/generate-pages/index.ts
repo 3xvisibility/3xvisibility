@@ -1908,11 +1908,22 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Process {{AI_IMAGE:prompt}} blocks — replace with FREE Unsplash stock photos (zero AI cost)
+          // Process {{AI_IMAGE:prompt}} blocks.
+          // DEFAULT: never generate or insert AI/stock images — the published
+          // page must use ONLY the template's own images. So AI_IMAGE
+          // placeholders are simply removed unless a template explicitly opts
+          // in to stock images via schema_config._preserveImages === false.
           if (hasAiImageBlocks) {
+            const allowStockImages =
+              ((campaign.templates?.schema_config || {}) as Record<string, any>)._preserveImages === false;
             const currentAiImageBlocks = extractAiImageBlocks(pageContent);
             for (let imgIdx = 0; imgIdx < currentAiImageBlocks.length; imgIdx++) {
               const block = currentAiImageBlocks[imgIdx];
+              if (!allowStockImages) {
+                // Strip the placeholder so no generated/stock image appears.
+                pageContent = pageContent.replace(block.fullMatch, "");
+                continue;
+              }
               try {
                 const kw = encodeURIComponent(
                   String(block.prompt || "").split(/[\s,]+/).filter(Boolean).slice(0, 4).join(",") || "business",
@@ -1934,6 +1945,7 @@ Deno.serve(async (req) => {
               }
             }
           }
+
 
           // ═══════════════════════════════════════════════════════════
           // Image Fallback — if content has no real images (only
