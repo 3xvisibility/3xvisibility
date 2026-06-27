@@ -114,6 +114,70 @@ async function resolveCatalogElementorData(
   }
 }
 
+/**
+ * Resolve the stored Shopify Online Store 2.0 section kit for a generated page
+ * and overlay its new content onto the section's editable settings
+ * (placeholder-only). Mirrors resolveCatalogElementorData but for Shopify.
+ * Returns a payload-ready section kit, or null when no stored kit matches.
+ */
+async function resolveShopifySectionKit(
+  supabase: ReturnType<typeof createClient>,
+  page: { campaign_id?: string | null; title: string; seo_description?: string | null },
+  cache: Map<string, unknown>,
+): Promise<{ sectionId: string; sectionLiquid: string; template: Record<string, unknown>; suffix: string } | null> {
+  try {
+    if (!page.campaign_id) return null;
+
+    let kit: any = null;
+    if (cache.has(page.campaign_id)) {
+      kit = cache.get(page.campaign_id);
+    } else {
+      const { data: campaign } = await supabase
+        .from("campaigns").select("template_id").eq("id", page.campaign_id).maybeSingle();
+      const templateId = (campaign as { template_id?: string | null } | null)?.template_id;
+      if (!templateId) { cache.set(page.campaign_id, null); return null; }
+
+      const { data: tpl } = await supabase
+        .from("templates").select("source_marketplace_id").eq("id", templateId).maybeSingle();
+      const marketplaceId = (tpl as { source_marketplace_id?: string | null } | null)?.source_marketplace_id;
+      if (!marketplaceId) { cache.set(page.campaign_id, null); return null; }
+
+      const { data: stored } = await supabase
+        .from("elementor_templates").select("shopify_section_json")
+        .eq("source_template_id", marketplaceId).maybeSingle();
+      const sj = (stored as { shopify_section_json?: any } | null)?.shopify_section_json;
+      kit = sj && sj.sectionLiquid && sj.template ? sj : null;
+      cache.set(page.campaign_id, kit);
+    }
+    if (!kit) return null;
+
+    // Overlay the page's title/description onto the matching placeholder settings.
+    const { applyShopifyKitContent } = await import("../_shared/connectors/shopify-section-kit.ts");
+    const placeholders: Record<string, string> = kit.placeholders || {};
+    const content: Record<string, string> = {};
+    const heroKey = placeholders["{{HERO_TITLE}}"];
+    if (heroKey && page.title) content[heroKey] = page.title;
+    if (page.seo_description) {
+      const descKey = Object.values(placeholders).find(
+        (k) => /text|desc/i.test(k),
+      ) as string | undefined;
+      if (descKey) content[descKey] = page.seo_description;
+    }
+    const template = Object.keys(content).length
+      ? applyShopifyKitContent({ template: kit.template, placeholders }, content)
+      : kit.template;
+
+    // Stable per-template suffix so the section file is reused, not duplicated.
+    const suffix = `lov-${String(kit.sectionId || "kit").replace(/[^a-z0-9]+/gi, "").slice(0, 20)}`;
+    return { sectionId: kit.sectionId || "lov-kit-template", sectionLiquid: kit.sectionLiquid, template, suffix };
+  } catch (e) {
+    console.warn("[publish-pages] shopify section kit resolve failed", e);
+    return null;
+  }
+}
+
+
+
 
 /**
  * Strip head-level tags (meta, link, script/JSON-LD, style) from generated content
@@ -589,6 +653,7 @@ Deno.serve(async (req) => {
     // Cache page-template detection per website to avoid redundant checks
     const templateCache = new Map<string, { pageTemplate?: string }>();
     const elementorCatalogCache = new Map<string, unknown>();
+    const shopifySectionKitCache = new Map<string, unknown>();
 
     const publishStartTime = Date.now();
     let pageIndex = 0;
@@ -869,6 +934,20 @@ Deno.serve(async (req) => {
           elementorSimilarity = catalog.similarity;
 
         }
+
+        // Shopify page publishes: attach the stored Online Store 2.0 section kit
+        // so the connector publishes a NATIVE section template (design 1:1,
+        // images on the Shopify CDN, editable in the theme customizer). Falls
+        // back to body_html inside the connector if the theme isn't writable.
+        if (
+          resolvedPublishType === "page" && !preserveDesign &&
+          (page.websites as { type?: string })?.type === "shopify"
+        ) {
+          const kit = await resolveShopifySectionKit(supabase, page, shopifySectionKitCache);
+          if (kit) payload.shopify_section_kit = kit;
+        }
+
+
 
 
 

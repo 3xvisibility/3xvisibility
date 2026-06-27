@@ -809,6 +809,7 @@ export type Database = {
           placeholders: Json
           preview_image: string | null
           responsive_rules: Json
+          shopify_section_json: Json
           source_template_id: string
           status: string
           template_structure: Json
@@ -828,6 +829,7 @@ export type Database = {
           placeholders?: Json
           preview_image?: string | null
           responsive_rules?: Json
+          shopify_section_json?: Json
           source_template_id: string
           status?: string
           template_structure?: Json
@@ -847,6 +849,7 @@ export type Database = {
           placeholders?: Json
           preview_image?: string | null
           responsive_rules?: Json
+          shopify_section_json?: Json
           source_template_id?: string
           status?: string
           template_structure?: Json

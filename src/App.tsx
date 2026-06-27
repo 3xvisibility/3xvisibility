@@ -45,6 +45,7 @@ import PgpKeywordsPage from "./pages/PgpKeywordsPage";
 import PgpGeneratePage from "./pages/PgpGeneratePage";
 import PgpTermsPage from "./pages/PgpTermsPage";
 import TemplateMappingPage from "./pages/TemplateMappingPage";
+import TemplateKitPage from "./pages/TemplateKitPage";
 import ElementorTestPage from "./pages/ElementorTestPage";
 import NotFound from "./pages/NotFound";
 import ShopifyCallbackPage from "./pages/ShopifyCallbackPage";
@@ -155,6 +156,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="pgp-terms" element={wrap(<PgpTermsPage />)} />
       <Route path="pgp-logs" element={<Navigate to="../pages" replace />} />
       <Route path="template-mapping" element={wrap(<FeatureGate feature="discovery"><TemplateMappingPage /></FeatureGate>)} />
+      <Route path="template-kit" element={wrap(<FeatureGate feature="discovery"><TemplateKitPage /></FeatureGate>)} />
       <Route path="elementor-test" element={wrap(<ElementorTestPage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>

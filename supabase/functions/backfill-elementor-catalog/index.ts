@@ -17,6 +17,7 @@ import {
   limitsFor,
 } from "../_shared/connectors/elementor-fields.ts";
 import { buildTemplatePackage } from "../_shared/connectors/elementor-package.ts";
+import { buildShopifySectionKit } from "../_shared/connectors/shopify-section-kit.ts";
 
 function countWidgets(tree: any[]): number {
   let n = 0;
@@ -77,6 +78,12 @@ Deno.serve(async (req) => {
         const defaults = defaultContentFor(fields);
         const limits = limitsFor(fields);
         const pkg = buildTemplatePackage(tree, fields);
+        // Shopify Online Store 2.0 section kit (same placeholder/image rules).
+        const sectionSlug = `lov-${String(t.source_marketplace_id || t.id).replace(/[^a-z0-9]+/gi, "").slice(0, 18)}`;
+        const shopifyKit = buildShopifySectionKit(t.content, fields, {
+          sectionId: sectionSlug,
+          name: t.name,
+        });
 
         // 1) Per-template master JSON.
         const { error: upErr } = await supabase
@@ -105,6 +112,14 @@ Deno.serve(async (req) => {
               placeholders: pkg.placeholders,
               image_map: pkg.imageMap,
               responsive_rules: pkg.responsiveRules,
+              shopify_section_json: {
+                sectionId: shopifyKit.sectionId,
+                sectionLiquid: shopifyKit.sectionLiquid,
+                template: shopifyKit.template,
+                placeholders: shopifyKit.placeholders,
+                image_map: shopifyKit.imageMap,
+                mappedFields: shopifyKit.mappedFields,
+              },
               status: "active",
               version: 1,
             },
