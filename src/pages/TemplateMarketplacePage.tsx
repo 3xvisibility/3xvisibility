@@ -391,8 +391,11 @@ export default function TemplateMarketplacePage() {
       // Merge edits over the template's defaults so the saved default values
       // also reflect the customisation (used by the editor + CSV export).
       const mergedDefaults = { ...(tpl.defaultValues ?? {}), ...overrides };
-      const content = hasOverrides
-        ? applyTemplateDefaults(tpl.content, overrides)
+      // Bake the template's default values (plus any user overrides) into the
+      // imported HTML so the saved template shows real content instead of raw
+      // {variable} placeholders.
+      const content = Object.keys(mergedDefaults).length > 0
+        ? applyTemplateDefaults(tpl.content, mergedDefaults)
         : tpl.content;
       const { error } = await supabase.from("templates").insert({
         name: tpl.name,
