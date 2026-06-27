@@ -1,6 +1,7 @@
 import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
 import { adaptHtmlForShopifyTheme } from "./shopify-theme-adapter.ts";
 import { getThemeAssets, type ThemeAssets } from "./theme-assets.ts";
+import { importHtmlAssets } from "./asset-import.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -42,6 +43,10 @@ export class ShopifyConnector implements CmsConnector {
     return `https://${this.shopDomain}/admin/api/2024-01`;
   }
 
+  private get graphqlUrl() {
+    return `https://${this.shopDomain}/admin/api/2024-01/graphql.json`;
+  }
+
   private assetsPromise?: Promise<ThemeAssets>;
   /** Lazily fetch + cache the storefront's theme assets (fonts/styles) once per connector. */
   private themeAssets(): Promise<ThemeAssets> {
@@ -51,14 +56,84 @@ export class ShopifyConnector implements CmsConnector {
     return this.assetsPromise;
   }
 
+  /** Cache of source URL -> uploaded Shopify CDN URL to avoid re-uploading. */
+  private mediaCache = new Map<string, string | null>();
+
+  /**
+   * Upload a remote image into Shopify Files (GraphQL fileCreate, originalSource)
+   * and return the hosted Shopify CDN URL. Shopify ingests the asset from the
+   * given URL asynchronously, so we poll the created file until its image URL is
+   * ready. Returns null on failure (caller keeps the original URL).
+   */
+  private async uploadFileFromUrl(sourceUrl: string): Promise<string | null> {
+    if (this.mediaCache.has(sourceUrl)) return this.mediaCache.get(sourceUrl)!;
+    try {
+      const createQuery = `mutation fileCreate($files: [FileCreateInput!]!) {
+        fileCreate(files: $files) {
+          files { id fileStatus alt
+            ... on MediaImage { image { url } }
+            ... on GenericFile { url } }
+          userErrors { field message }
+        }
+      }`;
+      const createRes = await shopifyFetch(this.graphqlUrl, {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify({
+          query: createQuery,
+          variables: { files: [{ originalSource: sourceUrl, contentType: "IMAGE" }] },
+        }),
+      });
+      if (!createRes.ok) { this.mediaCache.set(sourceUrl, null); return null; }
+      const createJson = await createRes.json();
+      const created = createJson?.data?.fileCreate?.files?.[0];
+      const errors = createJson?.data?.fileCreate?.userErrors;
+      if (!created?.id || (errors && errors.length)) { this.mediaCache.set(sourceUrl, null); return null; }
+
+      let url: string | null = created.image?.url || created.url || null;
+      const fileId: string = created.id;
+
+      // Poll until Shopify finishes ingesting and exposes the CDN URL.
+      const pollQuery = `query getFile($id: ID!) {
+        node(id: $id) {
+          ... on MediaImage { fileStatus image { url } }
+          ... on GenericFile { fileStatus url }
+        }
+      }`;
+      for (let attempt = 0; attempt < 10 && !url; attempt++) {
+        await new Promise((r) => setTimeout(r, 1500));
+        const pollRes = await shopifyFetch(this.graphqlUrl, {
+          method: "POST",
+          headers: this.headers,
+          body: JSON.stringify({ query: pollQuery, variables: { id: fileId } }),
+        });
+        if (!pollRes.ok) continue;
+        const pollJson = await pollRes.json();
+        const node = pollJson?.data?.node;
+        if (node?.fileStatus === "FAILED") break;
+        url = node?.image?.url || node?.url || null;
+      }
+
+      this.mediaCache.set(sourceUrl, url);
+      return url;
+    } catch {
+      this.mediaCache.set(sourceUrl, null);
+      return null;
+    }
+  }
+
+
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
     if (payload.product_data) return this.createProduct(payload);
 
     const assets = await this.themeAssets();
+    // Upload every template image into Shopify Files and rewrite URLs so the
+    // published page serves images from Shopify's CDN (no broken external links).
+    const pageHtml = await importHtmlAssets(payload.content || "", (u) => this.uploadFileFromUrl(u));
     const pageBody: Record<string, unknown> = {
       title: payload.title,
-      body_html: adaptHtmlForShopifyTheme(payload.content || "", "page", assets),
+      body_html: adaptHtmlForShopifyTheme(pageHtml, "page", assets),
       handle: slugify(payload.slug || payload.title),
       published: payload.status === "publish",
     };
@@ -92,9 +167,11 @@ export class ShopifyConnector implements CmsConnector {
     const pd = payload.product_data!;
     const rawProductHtml = pd.body_html || payload.content || "";
     const assets = await this.themeAssets();
+    // Host every image referenced in the product description on Shopify's CDN.
+    const productHtml = await importHtmlAssets(rawProductHtml, (u) => this.uploadFileFromUrl(u));
     const productBody: Record<string, unknown> = {
       title: payload.title,
-      body_html: adaptHtmlForShopifyTheme(rawProductHtml, "product", assets),
+      body_html: adaptHtmlForShopifyTheme(productHtml, "product", assets),
       handle: slugify(pd.handle || payload.slug || payload.title),
       status: pd.product_status || "active",
     };
@@ -198,7 +275,10 @@ export class ShopifyConnector implements CmsConnector {
 
     if (payload.title) body.title = payload.title;
     // Preserve existing on-site design when republishing — only metadata flows through.
-    if (!preserveDesign && payload.content) body.body_html = adaptHtmlForShopifyTheme(payload.content, "page", await this.themeAssets());
+    if (!preserveDesign && payload.content) {
+      const html = await importHtmlAssets(payload.content, (u) => this.uploadFileFromUrl(u));
+      body.body_html = adaptHtmlForShopifyTheme(html, "page", await this.themeAssets());
+    }
     if (payload.slug) body.handle = slugify(payload.slug);
     if (payload.status) body.published = payload.status === "publish";
     if (payload.seo_title) body.metafields_global_title_tag = payload.seo_title;
@@ -229,7 +309,8 @@ export class ShopifyConnector implements CmsConnector {
     if (payload.title) body.title = payload.title;
     if (!preserveDesign && (payload.product_data?.body_html || payload.content)) {
       const raw = payload.product_data?.body_html || payload.content || "";
-      body.body_html = adaptHtmlForShopifyTheme(raw, "product", await this.themeAssets());
+      const html = await importHtmlAssets(raw, (u) => this.uploadFileFromUrl(u));
+      body.body_html = adaptHtmlForShopifyTheme(html, "product", await this.themeAssets());
     }
     if (payload.product_data?.handle || payload.slug) body.handle = slugify(payload.product_data?.handle || payload.slug || "");
     if (payload.product_data?.vendor) body.vendor = payload.product_data.vendor;
