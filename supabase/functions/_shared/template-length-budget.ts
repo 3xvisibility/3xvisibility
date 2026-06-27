@@ -156,6 +156,17 @@ function budgetForTag(tag: string): { maxWords: number; maxChars: number } {
   }
 }
 
+/**
+ * Detect whether a placeholder sits inside a hero/banner-type section.
+ * Hero copy is the most design-constrained area: an over-long description
+ * pushes the layout apart, so we clamp it harder than a generic paragraph.
+ */
+function isInHeroContext(before: string): boolean {
+  // Look only at the nearest ~600 chars of opening markup before the token.
+  const scope = before.slice(-600).toLowerCase();
+  return /\b(hero|banner|jumbotron|masthead|page-header|cover|intro-section)\b/.test(scope);
+}
+
 export function inferInlineBudgetForHtmlToken(content: string, token: string): LengthBudget | null {
   if (!content || !token) return null;
   const index = content.indexOf(token);
@@ -164,7 +175,13 @@ export function inferInlineBudgetForHtmlToken(content: string, token: string): L
   const before = content.slice(0, index);
   const tagMatch = before.match(/<([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>(?:[^<]*)$/);
   const tag = (tagMatch?.[1] || "p").toLowerCase();
-  const { maxWords, maxChars } = budgetForTag(tag);
+  let { maxWords, maxChars } = budgetForTag(tag);
+
+  // Hero/banner copy must stay short so the section height never breaks.
+  if (isInHeroContext(before) && (tag === "p" || tag === "div" || tag === "span")) {
+    maxWords = Math.min(maxWords, 16);
+    maxChars = Math.min(maxChars, 110);
+  }
 
   return {
     words: maxWords,
