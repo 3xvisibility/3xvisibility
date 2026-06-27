@@ -29,6 +29,24 @@ function countWidgets(tree: any[]): number {
   return n;
 }
 
+/**
+ * Remove every {{AI_IMAGE}} placeholder (and any <img> whose src is one) from
+ * the master HTML. Template-only image policy: missing images stay blank,
+ * never AI/stock — and never trip the publish-time fail-safe.
+ */
+function stripAiImagePlaceholders(html: string): string {
+  // Tokens look like {{AI_IMAGE: ... {location} ...}} and may contain inner
+  // single braces, so match non-greedily up to the first closing "}}".
+  const TOKEN = /\{\{\s*AI_IMAGE[\s\S]*?\}\}/gi;
+  return html
+    // <img ... src="{{AI_IMAGE...}}" ...> -> removed entirely
+    .replace(/<img\b[^>]*\{\{\s*AI_IMAGE[\s\S]*?\}\}[^>]*>/gi, "")
+    // background[-image]:url({{AI_IMAGE...}}) -> drop the whole declaration
+    .replace(/background(-image)?\s*:\s*url\(\s*['"]?\{\{\s*AI_IMAGE[\s\S]*?\}\}['"]?\s*\)\s*;?/gi, "")
+    // any remaining bare tokens (in text, alt, url settings, etc.)
+    .replace(TOKEN, "");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -69,7 +87,11 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        const tree = htmlToElementor(t.content);
+        // Strip any {{AI_IMAGE}} placeholders from the master markup so the
+        // stored kit only ever references real template images. Missing images
+        // stay blank (never AI/stock) and never trip the publish fail-safe.
+        const cleanContent = stripAiImagePlaceholders(t.content);
+        const tree = htmlToElementor(cleanContent);
         if (!tree.length) {
           results.push({ id: t.id, ok: false, error: "empty_conversion" });
           continue;
@@ -80,7 +102,7 @@ Deno.serve(async (req) => {
         const pkg = buildTemplatePackage(tree, fields);
         // Shopify Online Store 2.0 section kit (same placeholder/image rules).
         const sectionSlug = `lov-${String(t.source_marketplace_id || t.id).replace(/[^a-z0-9]+/gi, "").slice(0, 18)}`;
-        const shopifyKit = buildShopifySectionKit(t.content, fields, {
+        const shopifyKit = buildShopifySectionKit(cleanContent, fields, {
           sectionId: sectionSlug,
           name: t.name,
         });
