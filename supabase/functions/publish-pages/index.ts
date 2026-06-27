@@ -33,8 +33,11 @@ async function resolveCatalogElementorData(
     if (!page.campaign_id) return null;
 
     let elementorJson: unknown;
+    let templateCss = "";
     if (cache.has(page.campaign_id)) {
-      elementorJson = cache.get(page.campaign_id);
+      const cached = cache.get(page.campaign_id) as { json: unknown; css: string } | null;
+      elementorJson = cached?.json ?? null;
+      templateCss = cached?.css ?? "";
     } else {
       const { data: campaign } = await supabase
         .from("campaigns").select("template_id").eq("id", page.campaign_id).maybeSingle();
@@ -70,7 +73,12 @@ async function resolveCatalogElementorData(
       // elementor_data exists, publishing is blocked upstream so a forbidden
       // raw-HTML conversion can never reach WordPress.
 
-      cache.set(page.campaign_id, elementorJson ?? null);
+      // Extract the template's <style> CSS so class-based design (grids, colors,
+      // fonts, backgrounds, custom classes) renders 1:1 on the published page.
+      // Without this the Elementor widget tree has structure but no styling.
+      templateCss = extractTemplateCss(tplRow?.content);
+
+      cache.set(page.campaign_id, elementorJson ? { json: elementorJson, css: templateCss } : null);
     }
 
     if (!elementorJson) return null;
@@ -84,6 +92,7 @@ async function resolveCatalogElementorData(
         title: shrinkText(page.title, keepFraction),
         description: shrinkText(page.seo_description || undefined, keepFraction),
         bodyHtml: page.content,
+        injectCss: templateCss,
       }, ELEMENTOR_SIMILARITY_TARGET);
       if (!built) return null;
       if (!best || built.similarity > best.similarity) best = built;
@@ -94,7 +103,8 @@ async function resolveCatalogElementorData(
     const ok = best.similarity >= ELEMENTOR_SIMILARITY_TARGET;
     console.log(
       `[publish-pages] catalog Elementor rebuilt (similarity ${best.similarity}%, ` +
-      `target ${ELEMENTOR_SIMILARITY_TARGET}%, ok=${ok}, truncated ${best.truncatedFields.length})`,
+      `target ${ELEMENTOR_SIMILARITY_TARGET}%, ok=${ok}, truncated ${best.truncatedFields.length}, ` +
+      `css ${templateCss.length} chars)`,
     );
     return { ...best, ok };
   } catch (e) {
