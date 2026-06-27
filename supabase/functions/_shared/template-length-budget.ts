@@ -219,11 +219,35 @@ export function buildBudgetPromptHints(budget: BudgetMap): string {
   return `Strict length limits per field — generated text MUST fit the template layout. Match the original template word count; never exceed the listed max words/chars:\n${lines.join("\n")}`;
 }
 
+export interface BudgetOverflow {
+  overflow: boolean;
+  words: number;
+  maxWords: number;
+  chars: number;
+  maxChars: number;
+  reason: "ok" | "word_overflow" | "char_overflow";
+}
+
 /**
- * Design protection: shorten a value to its budget at a word boundary, never
- * exceeding maxChars. Preserves meaning by keeping the leading words.
+ * Check whether a value still exceeds its length budget. Used by the
+ * generation/publish validation gate to detect content that would break the
+ * template layout (e.g. an over-long hero description).
  */
-export function enforceBudget(value: string, budget?: LengthBudget): string {
+export function checkBudgetOverflow(value: string, budget?: LengthBudget): BudgetOverflow {
+  const text = stripHtml(value || "");
+  const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+  const chars = text.length;
+  if (!budget) return { overflow: false, words, maxWords: 0, chars, maxChars: 0, reason: "ok" };
+  if (words > budget.maxWords) {
+    return { overflow: true, words, maxWords: budget.maxWords, chars, maxChars: budget.maxChars, reason: "word_overflow" };
+  }
+  if (chars > budget.maxChars) {
+    return { overflow: true, words, maxWords: budget.maxWords, chars, maxChars: budget.maxChars, reason: "char_overflow" };
+  }
+  return { overflow: false, words, maxWords: budget.maxWords, chars, maxChars: budget.maxChars, reason: "ok" };
+}
+
+
   if (!budget) return value;
   let text = value.trim();
 
