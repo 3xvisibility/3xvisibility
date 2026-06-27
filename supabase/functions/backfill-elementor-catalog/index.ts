@@ -79,8 +79,9 @@ Deno.serve(async (req) => {
         const limits = limitsFor(fields);
         const pkg = buildTemplatePackage(tree, fields);
         // Shopify Online Store 2.0 section kit (same placeholder/image rules).
+        const sectionSlug = `lov-${String(t.source_marketplace_id || t.id).replace(/[^a-z0-9]+/gi, "").slice(0, 18)}`;
         const shopifyKit = buildShopifySectionKit(t.content, fields, {
-          sectionId: `lov-${String(sourceIdSafe(t)).slice(0, 18)}`,
+          sectionId: sectionSlug,
           name: t.name,
         });
 
