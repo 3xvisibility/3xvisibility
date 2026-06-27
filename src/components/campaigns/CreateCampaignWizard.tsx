@@ -2231,7 +2231,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             Keep the template's title, description and content exactly as-is and only replace CSV placeholders like <code>{"{keyword}"}</code> or <code>{"{{city}}"}</code>. Images stay from the template — missing ones are left blank, never generated.
                           </p>
                         </div>
-                        <Switch checked={reuseTemplateContent} onCheckedChange={setReuseTemplateContent} />
+                        <Switch checked={reuseTemplateContent} onCheckedChange={(v) => { reuseTouchedRef.current = true; setReuseTemplateContent(v); }} />
                       </div>
                       {reuseTemplateContent && reuseDiffData && (
                         <div className="space-y-2.5 rounded-lg border border-border/60 bg-background/40 p-2.5">
