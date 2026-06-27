@@ -1584,7 +1584,7 @@ Deno.serve(async (req) => {
 
       if (unmapped.length > 0 && LOVABLE_API_KEY && hasContext && aiFillMode === "per_campaign") {
         console.log(`[GENERATE-PAGES] AI fill (per_campaign): ${unmapped.length} variable(s) →`, unmapped.join(", "));
-        aiVarDefaults = await generateAiVarDefaults(unmapped, aiContext, aiSettings, LOVABLE_API_KEY);
+        aiVarDefaults = await generateAiVarDefaults(unmapped, aiContext, aiSettings, LOVABLE_API_KEY, lengthBudget);
         const filledCount = Object.keys(aiVarDefaults).length;
         console.log(`[GENERATE-PAGES] AI fill produced ${filledCount}/${unmapped.length} default(s) — reused across all rows`);
         if (filledCount > 0) {
@@ -1994,7 +1994,7 @@ Deno.serve(async (req) => {
               service: [_aiFillCtx.service, rowSummary].filter(Boolean).join(" — Row data: "),
             };
             try {
-              rowAiDefaults = await generateAiVarDefaults(_aiFillTargets, perRowCtx, aiSettings, LOVABLE_API_KEY);
+              rowAiDefaults = await generateAiVarDefaults(_aiFillTargets, perRowCtx, aiSettings, LOVABLE_API_KEY, lengthBudget);
             } catch (e) {
               console.error("[GENERATE-PAGES] per-row AI fill failed, falling back to campaign defaults:", e);
               rowAiDefaults = aiVarDefaults;
