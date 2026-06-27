@@ -2066,20 +2066,39 @@ Deno.serve(async (req) => {
             for (const block of currentAiBlocks) {
               try {
                 const blockBudget = templateSafeMode ? inferInlineBudgetForHtmlToken(pageContent, block.fullMatch) : null;
-                const generatedText = await generateAiContent(
-                  block.prompt,
-                  blockBudget
-                    ? { ...aiSettings, maxWords: blockBudget.maxWords, maxLines: Math.max(1, Math.min(5, Math.ceil(blockBudget.maxWords / 10))) }
-                    : aiSettings,
-                  LOVABLE_API_KEY,
-                );
-                pageContent = pageContent.replace(block.fullMatch, blockBudget ? enforceBudget(generatedText, blockBudget) : generatedText);
+                const blockSettings = blockBudget
+                  ? { ...aiSettings, maxWords: blockBudget.maxWords, maxLines: Math.max(1, Math.min(5, Math.ceil(blockBudget.maxWords / 10))) }
+                  : aiSettings;
+
+                // Generate, then validate against the block budget. If the
+                // output still overflows, regenerate (retry) up to 2 times;
+                // if it still doesn't fit, fall back to a hard truncation so
+                // the layout is never broken.
+                let generatedText = await generateAiContent(block.prompt, blockSettings, LOVABLE_API_KEY);
                 aiGenerationsUsed++;
+                if (blockBudget) {
+                  let attempt = 0;
+                  while (attempt < 2 && checkBudgetOverflow(generatedText, blockBudget).overflow) {
+                    attempt++;
+                    console.warn(`[GENERATE-PAGES] AI block overflow (attempt ${attempt}) — regenerating to fit ${blockBudget.maxWords}w/${blockBudget.maxChars}c`);
+                    try {
+                      generatedText = await generateAiContent(block.prompt, blockSettings, LOVABLE_API_KEY);
+                      aiGenerationsUsed++;
+                    } catch (_retryErr) {
+                      break;
+                    }
+                  }
+                  // Graceful fallback: hard-truncate to the budget.
+                  generatedText = enforceBudget(generatedText, blockBudget);
+                  appliedFieldValues[`ai_block_${block.fullMatch.slice(0, 24)}`] = generatedText;
+                }
+                pageContent = pageContent.replace(block.fullMatch, generatedText);
               } catch (aiErr: any) {
                 pageContent = pageContent.replace(block.fullMatch, `<em style="color:#dc2626;">[AI failed: ${aiErr.message}]</em>`);
               }
             }
           }
+
 
           // Process {{AI_IMAGE:prompt}} blocks.
           // DEFAULT: never generate or insert AI/stock images — the published
