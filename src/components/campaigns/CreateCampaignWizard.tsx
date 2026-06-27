@@ -604,6 +604,16 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return (tpl.variables as string[]).map(v => v.replace(/[{}]/g, "")).filter(v => !isDesignVariable(v));
   }, [selectedTemplate, templates]);
 
+  // Resolve the template's stored default values. Marketplace imports save them
+  // under `schema_config.default_values`; older templates may have a root column.
+  const templateDefaultValues = useMemo(() => {
+    if (!selectedTemplate) return {} as Record<string, string>;
+    const tpl = templates.find(t => t.id === selectedTemplate) as
+      | { schema_config?: { default_values?: Record<string, string> }; default_values?: Record<string, string> }
+      | undefined;
+    return (tpl?.schema_config?.default_values || tpl?.default_values || {}) as Record<string, string>;
+  }, [selectedTemplate, templates]);
+
   // Variables that hold contact/link info the user should supply directly
   // (phone, email, links/URLs) rather than letting the AI invent fake values.
   const contactVars = useMemo(
