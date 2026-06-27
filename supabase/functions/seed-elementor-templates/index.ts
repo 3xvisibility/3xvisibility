@@ -14,6 +14,7 @@ import {
   defaultContentFor,
   limitsFor,
 } from "../_shared/connectors/elementor-fields.ts";
+import { buildTemplatePackage } from "../_shared/connectors/elementor-package.ts";
 
 const InputSchema = z.object({
   templates: z
