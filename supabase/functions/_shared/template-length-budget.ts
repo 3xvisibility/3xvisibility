@@ -177,10 +177,11 @@ export function inferInlineBudgetForHtmlToken(content: string, token: string): L
   const tag = (tagMatch?.[1] || "p").toLowerCase();
   let { maxWords, maxChars } = budgetForTag(tag);
 
-  // Hero/banner copy must stay short so the section height never breaks.
+  // Hero/banner description: allow a fuller paragraph but never more than
+  // ~5 lines, so the section height stays close to the template.
   if (isInHeroContext(before) && (tag === "p" || tag === "div" || tag === "span")) {
-    maxWords = Math.min(maxWords, 16);
-    maxChars = Math.min(maxChars, 110);
+    maxWords = Math.min(Math.max(maxWords, 45), 45); // up to ~5 lines
+    maxChars = Math.min(Math.max(maxChars, 320), 320);
   }
 
   return {
