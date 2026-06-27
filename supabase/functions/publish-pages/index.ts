@@ -10,7 +10,7 @@ import { buildElementorFromCatalog } from "../_shared/connectors/elementor-catal
  *   page.campaign_id → campaigns.template_id → templates.source_marketplace_id
  *     → elementor_templates.source_template_id → elementor_json
  * Returns a validated `_elementor_data` string, or null when no stored template
- * matches (caller falls back to HTML→Elementor conversion).
+ * matches (publish is then blocked — there is NO raw-HTML fallback).
  */
 const ELEMENTOR_SIMILARITY_TARGET = 98;
 const MAX_REBUILD_ATTEMPTS = 4;
