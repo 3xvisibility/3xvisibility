@@ -17,6 +17,7 @@ import {
   limitsFor,
 } from "../_shared/connectors/elementor-fields.ts";
 import { buildTemplatePackage } from "../_shared/connectors/elementor-package.ts";
+import { buildShopifySectionKit } from "../_shared/connectors/shopify-section-kit.ts";
 
 function countWidgets(tree: any[]): number {
   let n = 0;
