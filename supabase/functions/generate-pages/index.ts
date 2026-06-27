@@ -1503,15 +1503,27 @@ Deno.serve(async (req) => {
       const hardened = hardenHeroDescriptionBudget(key, lengthBudget[key]);
       if (hardened) lengthBudget[key] = hardened;
     }
+    // Strict length validation gate: when enabled (default ON in Safe Mode),
+    // a field that still overflows its budget after retry + truncation blocks
+    // that page so a broken layout is never published. Disable via
+    // mapping.strict_length_gate === false.
+    const strictLengthGate =
+      ((campaign.mapping || {}) as { strict_length_gate?: boolean }).strict_length_gate !== false;
+    // Per-row record of the final (clamped) value applied for each budgeted
+    // field, used by the validation gate below.
+    let appliedFieldValues: Record<string, string> = {};
+    const budgetFor = (key: string): LengthBudget | undefined =>
+      hardenHeroDescriptionBudget(key, lengthBudget[key] || lengthBudget[key.toLowerCase()]);
     const clampVar = (key: string, value: string): string => {
       if (!templateSafeMode || typeof value !== "string") return value;
-      const b = hardenHeroDescriptionBudget(key, lengthBudget[key] || lengthBudget[key.toLowerCase()]);
+      const b = budgetFor(key);
       let out = b ? enforceBudget(value, b) : value;
       // Strict word-count lock: title/subtitle/description must keep the
       // template's EXACT word footprint (never more words than the original).
       if (b && b.words > 0 && isWordLockField(key)) {
         out = lockExactWords(out, b.words);
       }
+      if (b) appliedFieldValues[key] = out;
       return out;
     };
 
