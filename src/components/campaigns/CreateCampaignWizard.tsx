@@ -677,6 +677,22 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTemplate, templates]);
 
+  // Zero-edit publish: when an imported template ships with stored default
+  // values, pre-fill them as custom values and enable Reuse mode so the user can
+  // publish the page as-is (no editing, no AI) straight to WordPress to test it.
+  const reuseTouchedRef = useRef(false);
+  useEffect(() => {
+    if (!selectedTemplate || reuseTouchedRef.current) return;
+    const defaults = templateDefaultValues;
+    if (defaults && Object.keys(defaults).length > 0) {
+      setCustomValues((prev) => ({ ...defaults, ...prev }));
+      setReuseTemplateContent(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTemplate, templateDefaultValues]);
+
+
+
   // Vibe validator — runs on every change of template/palette/typography/density
   // and surfaces clash warnings + one-click fixes inside the vibe panel.
   const vibeValidation = useMemo(() => {
