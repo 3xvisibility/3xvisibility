@@ -420,6 +420,9 @@ export default function TemplateMarketplacePage() {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
       toast({ title: "Template imported!", description: `"${tpl.name}" added to your templates.` });
       setPreviewTemplate(null);
+      // Seed native Elementor JSON for the new template so WordPress publishing
+      // always starts from stored JSON (never converts HTML at publish time).
+      void supabase.functions.invoke("backfill-elementor-catalog", { body: {} }).catch(() => {});
     },
     onError: (err: Error) => {
       toast({ title: "Import failed", description: err.message, variant: "destructive" });
