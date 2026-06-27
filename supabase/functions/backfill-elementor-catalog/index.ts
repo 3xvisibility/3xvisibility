@@ -16,6 +16,7 @@ import {
   defaultContentFor,
   limitsFor,
 } from "../_shared/connectors/elementor-fields.ts";
+import { buildTemplatePackage } from "../_shared/connectors/elementor-package.ts";
 
 function countWidgets(tree: any[]): number {
   let n = 0;
