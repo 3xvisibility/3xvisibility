@@ -331,13 +331,30 @@ function mapChildren(node: HtmlNode): string {
     .join("\n\n");
 }
 
+/** Pull every <style> block out of the HTML so we can re-inject the CSS. */
+function extractStyleCss(html: string): string {
+  const blocks: string[] = [];
+  const re = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const css = (m[1] || "").trim();
+    if (css) blocks.push(css);
+  }
+  return blocks.join("\n");
+}
+
 /**
  * Convert resolved template HTML to NATIVE Gutenberg block markup.
  * Falls back to a single core/html block only if parsing yields nothing.
+ * The template's <style> CSS is preserved in a leading core/html block so the
+ * class-based design renders 1:1 on the published page.
  */
 export function htmlToGutenberg(html: string): string {
   const clean = (html || "").trim();
   if (!clean) return "";
+
+  const css = extractStyleCss(clean);
+  const cssBlock = css ? htmlBlock(`<style>\n${css}\n</style>`) : "";
 
   try {
     const nodes = parseHtml(clean);
@@ -345,10 +362,11 @@ export function htmlToGutenberg(html: string): string {
       .map(mapNode)
       .filter((s) => s.trim().length > 0)
       .join("\n\n");
-    if (blocks.trim()) return blocks;
+    if (blocks.trim()) return [cssBlock, blocks].filter(Boolean).join("\n\n");
   } catch (_e) {
     // fall through to safe wrapper
   }
+
 
   // Safety net: never lose the template — wrap it whole.
   return htmlBlock(clean);
