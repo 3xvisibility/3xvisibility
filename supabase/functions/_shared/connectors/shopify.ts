@@ -128,9 +128,12 @@ export class ShopifyConnector implements CmsConnector {
     if (payload.product_data) return this.createProduct(payload);
 
     const assets = await this.themeAssets();
+    // Upload every template image into Shopify Files and rewrite URLs so the
+    // published page serves images from Shopify's CDN (no broken external links).
+    const pageHtml = await importHtmlAssets(payload.content || "", (u) => this.uploadFileFromUrl(u));
     const pageBody: Record<string, unknown> = {
       title: payload.title,
-      body_html: adaptHtmlForShopifyTheme(payload.content || "", "page", assets),
+      body_html: adaptHtmlForShopifyTheme(pageHtml, "page", assets),
       handle: slugify(payload.slug || payload.title),
       published: payload.status === "publish",
     };
