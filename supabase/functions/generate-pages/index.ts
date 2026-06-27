@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 import { slugifyLocale } from "../_shared/locale-format.ts";
-import { analyzeTemplateBudget, analyzeTemplateContentBudget, enforceBudget, inferInlineBudgetForHtmlToken, type BudgetMap } from "../_shared/template-length-budget.ts";
+import { analyzeTemplateBudget, analyzeTemplateContentBudget, enforceBudget, inferInlineBudgetForHtmlToken, type BudgetMap, type LengthBudget } from "../_shared/template-length-budget.ts";
 
 function slugify(text: string, locale?: string): string {
   return slugifyLocale(text, locale);
@@ -719,6 +719,7 @@ async function generateAiVarDefaults(
   context: { business?: string; niche?: string; service?: string },
   settings: { tone: string; contentLength: string; language: string },
   apiKey: string,
+  budget?: BudgetMap,
 ): Promise<Record<string, string>> {
   if (variables.length === 0) return {};
   const langName = resolveLanguageName(settings.language);
@@ -727,6 +728,13 @@ async function generateAiVarDefaults(
     context.niche && `Niche: ${context.niche}`,
     context.service && `Services / products: ${context.service}`,
   ].filter(Boolean).join("\n") || "(no extra context provided — infer reasonable values)";
+
+  const budgetLine = budget && Object.keys(budget).length
+    ? `\n\nSTRICT FIELD LENGTH CAPS (must obey exactly):\n${variables.map((v) => {
+        const b = budget[v] || budget[v.toLowerCase()];
+        return b ? `- ${v}: max ${b.maxWords} words, max ${b.maxChars} chars` : `- ${v}: keep very short`;
+      }).join("\n")}`
+    : "";
 
   const systemPrompt = `You generate default values for template variables of a programmatic SEO page.
 
@@ -737,7 +745,7 @@ CRITICAL LANGUAGE RULE: ALL values MUST be written in ${langName}. This is non-n
 - If ${langName} is not English and you would naturally write the value in English, STOP and rewrite it in ${langName}.
 
 TONE: ${settings.tone}.
-Each value must be short, natural, and directly usable as a substitution in HTML. No markdown, no quotes, no labels, no language tags.`;
+Each value must be short, natural, and directly usable as a substitution in HTML. No markdown, no quotes, no labels, no language tags.${budgetLine}`;
   const userPrompt = `${ctxLine}
 
 For each variable name below, return a concise, realistic default value that fits the niche/services above, written in ${langName}.
@@ -774,7 +782,8 @@ Return ONLY a JSON object, no prose, no code fences. Example:
     const out: Record<string, string> = {};
     for (const v of variables) {
       const val = parsed[v] ?? parsed[v.toLowerCase()];
-      if (typeof val === "string" && val.trim()) out[v] = val.trim();
+      const b = budget?.[v] || budget?.[v.toLowerCase()];
+      if (typeof val === "string" && val.trim()) out[v] = b ? enforceBudget(val.trim(), b) : val.trim();
       else if (typeof val === "number" || typeof val === "boolean") out[v] = String(val);
     }
     return out;
