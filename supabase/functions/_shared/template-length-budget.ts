@@ -90,19 +90,19 @@ export function countWords(s: string): number {
  * regardless of field size, so the template layout never breaks.
  */
 function rangeForWords(words: number): { minWords: number; maxWords: number } {
-  // Strict: generated text must fit the SAME word count as the template,
-  // never more than +1 word, so the layout/design is preserved exactly.
+  // Strict: generated text must fit the SAME word count as the template.
+  // The max NEVER exceeds the original word count, so the layout/design is
+  // preserved exactly and long descriptions can't break the hero/section.
   if (words <= 1) return { minWords: 1, maxWords: 1 };
-  if (words <= 8) return { minWords: Math.max(1, words - 1), maxWords: words + 1 };
-  return { minWords: Math.max(3, Math.round(words * 0.9)), maxWords: words + 1 };
+  if (words <= 8) return { minWords: Math.max(1, words - 1), maxWords: words };
+  return { minWords: Math.max(3, Math.round(words * 0.85)), maxWords: words };
 }
 
-function charCapForValue(value: string, maxWords: number): number {
+function charCapForValue(value: string, _maxWords: number): number {
+  // Hard cap at the original character length — no tolerance. Generated content
+  // must occupy the same footprint as the template sample.
   const originalChars = stripHtml(value).length;
-  const words = stripHtml(value).split(/\s+/).filter(Boolean);
-  const avgWordLength = words.length > 0 ? originalChars / words.length : 7;
-  const tinyTolerance = Math.ceil(avgWordLength * Math.min(3, Math.max(0, maxWords - words.length)));
-  return Math.max(8, originalChars + tinyTolerance);
+  return Math.max(8, originalChars);
 }
 
 /**
