@@ -2461,7 +2461,20 @@ Deno.serve(async (req) => {
             console.warn("[GENERATE-PAGES] JSON-LD validator skipped:", (vErr as Error).message);
           }
 
-          // Extract SEA ad IDs from utm_settings or row data
+          // ── Media validation gate ──
+          // Confirm the finished page uses ONLY template images and contains
+          // no leftover {{AI_IMAGE}} placeholders. On failure, throw so the
+          // page is marked "failed" and never published.
+          const mediaErrors = validatePageMedia(
+            pageContent,
+            templateImageUrls,
+            allowStockImagesGlobal,
+          );
+          if (mediaErrors.length > 0) {
+            throw new Error(`Image validation failed: ${mediaErrors.join("; ")}`);
+          }
+
+
           const adCampaignId = (utmSettings as any).ad_campaign_id || row.ad_campaign_id || null;
           const adGroupId = (utmSettings as any).ad_group_id || row.ad_group_id || null;
 
