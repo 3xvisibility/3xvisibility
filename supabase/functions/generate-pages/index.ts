@@ -1424,6 +1424,11 @@ Deno.serve(async (req) => {
 
 
     const templateContent = campaign.templates.content as string;
+    // Whitelist of images that ship with the template. Every generated page is
+    // validated against this set so it can ONLY use the template's own images.
+    const templateImageUrls = extractTemplateImageUrls(templateContent);
+    const allowStockImagesGlobal =
+      ((campaign.templates?.schema_config || {}) as Record<string, any>)._preserveImages === false;
     // ── Template Structure Analyzer / Design Integrity Protection ──
     // Derive per-variable length budgets from the template's ORIGINAL sample
     // values (default_values). Generated/CSV/AI content is clamped to the same
