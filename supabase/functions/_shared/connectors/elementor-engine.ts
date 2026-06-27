@@ -501,6 +501,33 @@ export function htmlToElementor(html: string): ElementorElement[] {
 }
 
 /**
+ * Build an importable Elementor `_elementor_data` JSON string that renders the
+ * template 1:1 with PERFECT CSS. Instead of mapping the markup onto native
+ * Elementor widgets (which would replace the template's own class names and drop
+ * its <style> CSS), the FULL rendered template markup + every <style> block is
+ * embedded verbatim inside a single Elementor "html" widget. The original
+ * classes are preserved, so class-based design (grids, colors, fonts,
+ * backgrounds) styles correctly — exactly like importing a ready-made template.
+ *
+ * @param html  Rendered template HTML (content already applied). Its <style>
+ *              blocks are kept automatically.
+ * @param extraCss Optional additional CSS prepended to guarantee styling even if
+ *              `html` lost its <style> blocks upstream.
+ */
+export function buildEmbeddedElementorData(html: string, extraCss?: string): string {
+  const css = (extraCss || "").trim();
+  const renderable = (css ? `<style>\n${css}\n</style>\n` : "") + extractRenderableHtml(html || "");
+  const htmlWidget: ElementorElement = {
+    id: genId(),
+    elType: "widget",
+    widgetType: "html",
+    settings: { html: renderable },
+    elements: [],
+  };
+  return JSON.stringify([container([htmlWidget], undefined, true)]);
+}
+
+/**
  * Extract the renderable markup of a template: all <style> blocks (so the
  * design CSS, including background-image rules, is preserved) plus the <body>
  * markup, with <script>/<meta>/<link> removed. Returned as a single HTML string

@@ -3,6 +3,7 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
+import { buildEmbeddedElementorData } from "../_shared/connectors/elementor-engine.ts";
 
 /**
  * Resolve a stored Elementor catalog template for a generated page and overlay the
@@ -857,7 +858,14 @@ Deno.serve(async (req) => {
             results.push({ id: page.id, status: "failed", error: msg, elementor_similarity: catalog.similarity });
             continue;
           }
-          payload.elementor_data = catalog.data;
+          // Publish the design as an importable Elementor template that renders
+          // with PERFECT CSS: embed the full rendered template markup + its
+          // <style> CSS in a single Elementor HTML widget (original classes
+          // preserved). The catalog gate above still validates visual fidelity,
+          // but we ship the embedded full-HTML template so class-based design
+          // (grids, fonts, backgrounds) styles 1:1 instead of native widgets
+          // that drop the template's CSS classes.
+          payload.elementor_data = buildEmbeddedElementorData(cleanedContent);
           elementorSource = "catalog";
           elementorSimilarity = catalog.similarity;
         }

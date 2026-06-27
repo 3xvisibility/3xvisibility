@@ -207,6 +207,43 @@ export class WordPressConnector implements CmsConnector {
     return result;
   }
 
+  /**
+   * Best-effort: register the design in the WordPress Elementor Template Library
+   * (the `elementor_library` post type) as a reusable "page" template, so it can
+   * be re-imported like a ready-made plugin template. Failure is non-fatal — the
+   * page itself still carries the same `_elementor_data` and renders correctly.
+   * Returns the created library template id, or null when unavailable.
+   */
+  private async importElementorLibraryTemplate(title: string, elementorData: string): Promise<string | null> {
+    try {
+      const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/elementor_library`, {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify({
+          title: title || "Imported Template",
+          status: "publish",
+          meta: {
+            _elementor_edit_mode: "builder",
+            _elementor_template_type: "page",
+            _elementor_version: "3.21.0",
+            _elementor_data: elementorData,
+          },
+        }),
+      });
+      if (!res.ok) {
+        await res.text();
+        return null;
+      }
+      const data = await res.json();
+      return data?.id ? String(data.id) : null;
+    } catch {
+      return null;
+    }
+  }
+
+
+
+
 
 
 
@@ -308,6 +345,12 @@ export class WordPressConnector implements CmsConnector {
       // (fonts, backgrounds, layout) renders 1:1 in Elementor and on the
       // WordPress frontend — native-widget conversion would drop <style> blocks.
       Object.assign(meta, buildElementorMeta(payload.content || "", { embedCss: !elementorData, prebuiltData: elementorData }));
+      // Step 1: import the design into the WP Elementor Template Library first
+      // (like a ready-made plugin template), so the same Elementor JSON is
+      // registered/reusable on the site before the page itself is created.
+      if (elementorData) {
+        await this.importElementorLibraryTemplate(resolveWordPressTitle(payload), elementorData);
+      }
       // NOTE: do NOT send `_elementor_css`. Elementor registers it with an
       // `object` REST schema, so a string value triggers `rest_invalid_type`
       // (HTTP 400). A newly created page has no cached CSS file, so Elementor
