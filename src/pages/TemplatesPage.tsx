@@ -230,7 +230,7 @@ export default function TemplatesPage() {
     arr.sort((a, b) => {
       let cmp = 0;
       if (sortColumn === "name") cmp = a.name.localeCompare(b.name);
-      else if (sortColumn === "date") cmp = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+      else if (sortColumn === "date") cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       else cmp = (campaignsByTemplate[a.id]?.count ?? 0) - (campaignsByTemplate[b.id]?.count ?? 0);
       return sortDir === "asc" ? cmp : -cmp;
     });
