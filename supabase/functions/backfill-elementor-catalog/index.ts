@@ -1,0 +1,128 @@
+// One-time backfill: convert every stored template's HTML into native Elementor
+// JSON and persist it so WordPress publishing NEVER converts HTML at publish
+// time. Conversion at seed/backfill time is allowed; conversion at publish time
+// is forbidden. Writes to BOTH:
+//   - templates.elementor_data (per-template master JSON)
+//   - elementor_templates catalog (id, category, json, fields, defaults, limits)
+//
+// Idempotent: safe to re-run. Pass { force: true } to overwrite templates that
+// already have elementor_data.
+
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
+import {
+  extractEditableFields,
+  defaultContentFor,
+  limitsFor,
+} from "../_shared/connectors/elementor-fields.ts";
+
+function countWidgets(tree: any[]): number {
+  let n = 0;
+  const walk = (el: any) => {
+    if (el.elType === "widget") n++;
+    for (const c of el.elements ?? []) walk(c);
+  };
+  for (const el of tree) walk(el);
+  return n;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const force = body?.force === true;
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const { data: templates, error } = await supabase
+      .from("templates")
+      .select("id, name, content, schema_type, source_marketplace_id, elementor_data");
+    if (error) throw new Error(error.message);
+
+    const results: Array<{
+      id: string;
+      ok: boolean;
+      skipped?: boolean;
+      widgets?: number;
+      fields?: number;
+      error?: string;
+    }> = [];
+
+    for (const t of (templates ?? []) as any[]) {
+      try {
+        if (!t.content || typeof t.content !== "string" || !t.content.trim()) {
+          results.push({ id: t.id, ok: false, error: "no_html_content" });
+          continue;
+        }
+        const hasExisting = Array.isArray(t.elementor_data)
+          ? t.elementor_data.length > 0
+          : !!t.elementor_data;
+        if (hasExisting && !force) {
+          results.push({ id: t.id, ok: true, skipped: true });
+          continue;
+        }
+
+        const tree = htmlToElementor(t.content);
+        if (!tree.length) {
+          results.push({ id: t.id, ok: false, error: "empty_conversion" });
+          continue;
+        }
+        const fields = extractEditableFields(tree);
+        const defaults = defaultContentFor(fields);
+        const limits = limitsFor(fields);
+
+        // 1) Per-template master JSON.
+        const { error: upErr } = await supabase
+          .from("templates")
+          .update({ elementor_data: tree })
+          .eq("id", t.id);
+        if (upErr) throw new Error(`templates.update: ${upErr.message}`);
+
+        // 2) Catalog row (keyed by marketplace id when present, else template id).
+        const sourceId = t.source_marketplace_id || t.id;
+        const { error: catErr } = await supabase
+          .from("elementor_templates")
+          .upsert(
+            {
+              source_template_id: sourceId,
+              category: t.schema_type || "General",
+              name: t.name,
+              elementor_json: tree,
+              template_structure: {
+                widgetCount: countWidgets(tree),
+                sectionCount: tree.length,
+              },
+              editable_fields: fields,
+              default_content: defaults,
+              default_limits: limits,
+            },
+            { onConflict: "source_template_id" },
+          );
+        if (catErr) throw new Error(`catalog.upsert: ${catErr.message}`);
+
+        results.push({ id: t.id, ok: true, widgets: countWidgets(tree), fields: fields.length });
+      } catch (e) {
+        results.push({ id: t.id, ok: false, error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+
+    const converted = results.filter((r) => r.ok && !r.skipped).length;
+    const skipped = results.filter((r) => r.skipped).length;
+    const failed = results.filter((r) => !r.ok).length;
+
+    return new Response(
+      JSON.stringify({ total: results.length, converted, skipped, failed, results }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
