@@ -43,15 +43,40 @@ async function resolveCatalogElementorData(
       if (!templateId) { cache.set(page.campaign_id, null); return null; }
 
       const { data: tpl } = await supabase
-        .from("templates").select("source_marketplace_id").eq("id", templateId).maybeSingle();
-      const marketplaceId = (tpl as { source_marketplace_id?: string | null } | null)?.source_marketplace_id;
-      if (!marketplaceId) { cache.set(page.campaign_id, null); return null; }
+        .from("templates")
+        .select("source_marketplace_id, elementor_data, content")
+        .eq("id", templateId).maybeSingle();
+      const tplRow = tpl as
+        | { source_marketplace_id?: string | null; elementor_data?: unknown; content?: string | null }
+        | null;
 
-      const { data: stored } = await supabase
-        .from("elementor_templates").select("elementor_json")
-        .eq("source_template_id", marketplaceId).maybeSingle();
-      elementorJson = (stored as { elementor_json?: unknown } | null)?.elementor_json ?? null;
-      cache.set(page.campaign_id, elementorJson);
+      // 1) Preferred: a pre-seeded catalog row keyed by marketplace id.
+      const marketplaceId = tplRow?.source_marketplace_id;
+      if (marketplaceId) {
+        const { data: stored } = await supabase
+          .from("elementor_templates").select("elementor_json")
+          .eq("source_template_id", marketplaceId).maybeSingle();
+        elementorJson = (stored as { elementor_json?: unknown } | null)?.elementor_json ?? null;
+      }
+
+      // 2) Fallback: the campaign template's own stored Elementor data.
+      if (!elementorJson && tplRow?.elementor_data) {
+        const ed = tplRow.elementor_data;
+        const hasData = Array.isArray(ed) ? ed.length > 0 : !!ed;
+        if (hasData) elementorJson = ed;
+      }
+
+      // 3) Last resort: convert the template's HTML into Elementor JSON on the fly.
+      if (!elementorJson && tplRow?.content) {
+        try {
+          const tree = htmlToElementor(tplRow.content);
+          if (tree.length > 0) elementorJson = tree;
+        } catch (e) {
+          console.warn("[publish-pages] on-the-fly HTML→Elementor conversion failed", e);
+        }
+      }
+
+      cache.set(page.campaign_id, elementorJson ?? null);
     }
 
     if (!elementorJson) return null;
