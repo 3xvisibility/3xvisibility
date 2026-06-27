@@ -207,6 +207,43 @@ export class WordPressConnector implements CmsConnector {
     return result;
   }
 
+  /**
+   * Best-effort: register the design in the WordPress Elementor Template Library
+   * (the `elementor_library` post type) as a reusable "page" template, so it can
+   * be re-imported like a ready-made plugin template. Failure is non-fatal — the
+   * page itself still carries the same `_elementor_data` and renders correctly.
+   * Returns the created library template id, or null when unavailable.
+   */
+  private async importElementorLibraryTemplate(title: string, elementorData: string): Promise<string | null> {
+    try {
+      const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/elementor_library`, {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify({
+          title: title || "Imported Template",
+          status: "publish",
+          meta: {
+            _elementor_edit_mode: "builder",
+            _elementor_template_type: "page",
+            _elementor_version: "3.21.0",
+            _elementor_data: elementorData,
+          },
+        }),
+      });
+      if (!res.ok) {
+        await res.text();
+        return null;
+      }
+      const data = await res.json();
+      return data?.id ? String(data.id) : null;
+    } catch {
+      return null;
+    }
+  }
+
+
+
+
 
 
 
