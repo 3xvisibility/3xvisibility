@@ -1429,6 +1429,40 @@ Deno.serve(async (req) => {
     const templateImageUrls = extractTemplateImageUrls(templateContent);
     const allowStockImagesGlobal =
       ((campaign.templates?.schema_config || {}) as Record<string, any>)._preserveImages === false;
+
+    // ── Fail-safe: verify every template image is reachable BEFORE generating.
+    // If any template image is missing/broken, abort so no broken page is saved
+    // or published. Runs once per campaign run (template images are shared).
+    if (!test_mode && templateImageUrls.size > 0) {
+      const httpImages = [...templateImageUrls].filter((u) => /^https?:\/\//i.test(u));
+      const broken: string[] = [];
+      await Promise.all(
+        httpImages.map(async (url) => {
+          try {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 10_000);
+            let res = await fetch(url, { method: "HEAD", signal: ctrl.signal });
+            // Some CDNs reject HEAD — retry with a ranged GET.
+            if (!res.ok || res.status === 405) {
+              res = await fetch(url, { method: "GET", headers: { Range: "bytes=0-0" }, signal: ctrl.signal });
+            }
+            clearTimeout(t);
+            if (!res.ok) broken.push(`${url} (HTTP ${res.status})`);
+          } catch (e) {
+            broken.push(`${url} (${(e as Error).message})`);
+          }
+        }),
+      );
+      if (broken.length > 0) {
+        const msg = `Template has ${broken.length} missing/broken image(s). Generation aborted so no broken page is published:\n- ${broken.slice(0, 10).join("\n- ")}`;
+        console.error("[GENERATE-PAGES] " + msg);
+        await supabase.from("campaigns").update({ status: "failed" }).eq("id", campaign_id);
+        return new Response(
+          JSON.stringify({ error: msg, broken_images: broken }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
     // ── Template Structure Analyzer / Design Integrity Protection ──
     // Derive per-variable length budgets from the template's ORIGINAL sample
     // values (default_values). Generated/CSV/AI content is clamped to the same
