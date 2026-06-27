@@ -45,6 +45,7 @@ import PgpKeywordsPage from "./pages/PgpKeywordsPage";
 import PgpGeneratePage from "./pages/PgpGeneratePage";
 import PgpTermsPage from "./pages/PgpTermsPage";
 import TemplateMappingPage from "./pages/TemplateMappingPage";
+import TemplateKitPage from "./pages/TemplateKitPage";
 import ElementorTestPage from "./pages/ElementorTestPage";
 import NotFound from "./pages/NotFound";
 import ShopifyCallbackPage from "./pages/ShopifyCallbackPage";
