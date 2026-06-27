@@ -43,6 +43,10 @@ export class ShopifyConnector implements CmsConnector {
     return `https://${this.shopDomain}/admin/api/2024-01`;
   }
 
+  private get graphqlUrl() {
+    return `https://${this.shopDomain}/admin/api/2024-01/graphql.json`;
+  }
+
   private assetsPromise?: Promise<ThemeAssets>;
   /** Lazily fetch + cache the storefront's theme assets (fonts/styles) once per connector. */
   private themeAssets(): Promise<ThemeAssets> {
@@ -51,6 +55,73 @@ export class ShopifyConnector implements CmsConnector {
     }
     return this.assetsPromise;
   }
+
+  /** Cache of source URL -> uploaded Shopify CDN URL to avoid re-uploading. */
+  private mediaCache = new Map<string, string | null>();
+
+  /**
+   * Upload a remote image into Shopify Files (GraphQL fileCreate, originalSource)
+   * and return the hosted Shopify CDN URL. Shopify ingests the asset from the
+   * given URL asynchronously, so we poll the created file until its image URL is
+   * ready. Returns null on failure (caller keeps the original URL).
+   */
+  private async uploadFileFromUrl(sourceUrl: string): Promise<string | null> {
+    if (this.mediaCache.has(sourceUrl)) return this.mediaCache.get(sourceUrl)!;
+    try {
+      const createQuery = `mutation fileCreate($files: [FileCreateInput!]!) {
+        fileCreate(files: $files) {
+          files { id fileStatus alt
+            ... on MediaImage { image { url } }
+            ... on GenericFile { url } }
+          userErrors { field message }
+        }
+      }`;
+      const createRes = await shopifyFetch(this.graphqlUrl, {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify({
+          query: createQuery,
+          variables: { files: [{ originalSource: sourceUrl, contentType: "IMAGE" }] },
+        }),
+      });
+      if (!createRes.ok) { this.mediaCache.set(sourceUrl, null); return null; }
+      const createJson = await createRes.json();
+      const created = createJson?.data?.fileCreate?.files?.[0];
+      const errors = createJson?.data?.fileCreate?.userErrors;
+      if (!created?.id || (errors && errors.length)) { this.mediaCache.set(sourceUrl, null); return null; }
+
+      let url: string | null = created.image?.url || created.url || null;
+      const fileId: string = created.id;
+
+      // Poll until Shopify finishes ingesting and exposes the CDN URL.
+      const pollQuery = `query getFile($id: ID!) {
+        node(id: $id) {
+          ... on MediaImage { fileStatus image { url } }
+          ... on GenericFile { fileStatus url }
+        }
+      }`;
+      for (let attempt = 0; attempt < 10 && !url; attempt++) {
+        await new Promise((r) => setTimeout(r, 1500));
+        const pollRes = await shopifyFetch(this.graphqlUrl, {
+          method: "POST",
+          headers: this.headers,
+          body: JSON.stringify({ query: pollQuery, variables: { id: fileId } }),
+        });
+        if (!pollRes.ok) continue;
+        const pollJson = await pollRes.json();
+        const node = pollJson?.data?.node;
+        if (node?.fileStatus === "FAILED") break;
+        url = node?.image?.url || node?.url || null;
+      }
+
+      this.mediaCache.set(sourceUrl, url);
+      return url;
+    } catch {
+      this.mediaCache.set(sourceUrl, null);
+      return null;
+    }
+  }
+
 
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
