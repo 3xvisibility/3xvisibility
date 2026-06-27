@@ -69,7 +69,11 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        const tree = htmlToElementor(t.content);
+        // Strip any {{AI_IMAGE}} placeholders from the master markup so the
+        // stored kit only ever references real template images. Missing images
+        // stay blank (never AI/stock) and never trip the publish fail-safe.
+        const cleanContent = stripAiImagePlaceholders(t.content);
+        const tree = htmlToElementor(cleanContent);
         if (!tree.length) {
           results.push({ id: t.id, ok: false, error: "empty_conversion" });
           continue;
