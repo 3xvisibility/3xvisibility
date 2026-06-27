@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 import { slugifyLocale } from "../_shared/locale-format.ts";
-import { analyzeTemplateBudget, analyzeTemplateContentBudget, enforceBudget, inferInlineBudgetForHtmlToken, type BudgetMap, type LengthBudget } from "../_shared/template-length-budget.ts";
+import { analyzeTemplateBudget, analyzeTemplateContentBudget, checkBudgetOverflow, enforceBudget, inferInlineBudgetForHtmlToken, type BudgetMap, type LengthBudget } from "../_shared/template-length-budget.ts";
 
 function slugify(text: string, locale?: string): string {
   return slugifyLocale(text, locale);
@@ -1503,15 +1503,27 @@ Deno.serve(async (req) => {
       const hardened = hardenHeroDescriptionBudget(key, lengthBudget[key]);
       if (hardened) lengthBudget[key] = hardened;
     }
+    // Strict length validation gate: when enabled (default ON in Safe Mode),
+    // a field that still overflows its budget after retry + truncation blocks
+    // that page so a broken layout is never published. Disable via
+    // mapping.strict_length_gate === false.
+    const strictLengthGate =
+      ((campaign.mapping || {}) as { strict_length_gate?: boolean }).strict_length_gate !== false;
+    // Per-row record of the final (clamped) value applied for each budgeted
+    // field, used by the validation gate below.
+    let appliedFieldValues: Record<string, string> = {};
+    const budgetFor = (key: string): LengthBudget | undefined =>
+      hardenHeroDescriptionBudget(key, lengthBudget[key] || lengthBudget[key.toLowerCase()]);
     const clampVar = (key: string, value: string): string => {
       if (!templateSafeMode || typeof value !== "string") return value;
-      const b = hardenHeroDescriptionBudget(key, lengthBudget[key] || lengthBudget[key.toLowerCase()]);
+      const b = budgetFor(key);
       let out = b ? enforceBudget(value, b) : value;
       // Strict word-count lock: title/subtitle/description must keep the
       // template's EXACT word footprint (never more words than the original).
       if (b && b.words > 0 && isWordLockField(key)) {
         out = lockExactWords(out, b.words);
       }
+      if (b) appliedFieldValues[key] = out;
       return out;
     };
 
@@ -1893,6 +1905,8 @@ Deno.serve(async (req) => {
 
       for (const row of batchRows) {
         try {
+          // Reset per-row record of clamped field values for the length gate.
+          appliedFieldValues = {};
           let pageContent = templateContent;
 
           // Build combined vars for conditionals/loops
@@ -1917,7 +1931,7 @@ Deno.serve(async (req) => {
             for (const mapping of customValueMaps) {
               const staticValue = mapping.source_column.replace("__custom__:", "");
               const regex = new RegExp(`\\{${mapping.target_field}\\}`, "gi");
-              pageContent = pageContent.replace(regex, staticValue);
+              pageContent = pageContent.replace(regex, clampVar(mapping.target_field, staticValue));
             }
           }
 
@@ -2052,20 +2066,39 @@ Deno.serve(async (req) => {
             for (const block of currentAiBlocks) {
               try {
                 const blockBudget = templateSafeMode ? inferInlineBudgetForHtmlToken(pageContent, block.fullMatch) : null;
-                const generatedText = await generateAiContent(
-                  block.prompt,
-                  blockBudget
-                    ? { ...aiSettings, maxWords: blockBudget.maxWords, maxLines: Math.max(1, Math.min(5, Math.ceil(blockBudget.maxWords / 10))) }
-                    : aiSettings,
-                  LOVABLE_API_KEY,
-                );
-                pageContent = pageContent.replace(block.fullMatch, blockBudget ? enforceBudget(generatedText, blockBudget) : generatedText);
+                const blockSettings = blockBudget
+                  ? { ...aiSettings, maxWords: blockBudget.maxWords, maxLines: Math.max(1, Math.min(5, Math.ceil(blockBudget.maxWords / 10))) }
+                  : aiSettings;
+
+                // Generate, then validate against the block budget. If the
+                // output still overflows, regenerate (retry) up to 2 times;
+                // if it still doesn't fit, fall back to a hard truncation so
+                // the layout is never broken.
+                let generatedText = await generateAiContent(block.prompt, blockSettings, LOVABLE_API_KEY);
                 aiGenerationsUsed++;
+                if (blockBudget) {
+                  let attempt = 0;
+                  while (attempt < 2 && checkBudgetOverflow(generatedText, blockBudget).overflow) {
+                    attempt++;
+                    console.warn(`[GENERATE-PAGES] AI block overflow (attempt ${attempt}) — regenerating to fit ${blockBudget.maxWords}w/${blockBudget.maxChars}c`);
+                    try {
+                      generatedText = await generateAiContent(block.prompt, blockSettings, LOVABLE_API_KEY);
+                      aiGenerationsUsed++;
+                    } catch (_retryErr) {
+                      break;
+                    }
+                  }
+                  // Graceful fallback: hard-truncate to the budget.
+                  generatedText = enforceBudget(generatedText, blockBudget);
+                  appliedFieldValues[`ai_block_${block.fullMatch.slice(0, 24)}`] = generatedText;
+                }
+                pageContent = pageContent.replace(block.fullMatch, generatedText);
               } catch (aiErr: any) {
                 pageContent = pageContent.replace(block.fullMatch, `<em style="color:#dc2626;">[AI failed: ${aiErr.message}]</em>`);
               }
             }
           }
+
 
           // Process {{AI_IMAGE:prompt}} blocks.
           // DEFAULT: never generate or insert AI/stock images — the published
@@ -2487,6 +2520,35 @@ Deno.serve(async (req) => {
           } catch (vErr) {
             console.warn("[GENERATE-PAGES] JSON-LD validator skipped:", (vErr as Error).message);
           }
+
+          // ── Length validation gate ──
+          // Final safety check: every budgeted field (hero description,
+          // headings, buttons, AI blocks…) must fit its template length budget.
+          // clampVar + the AI retry/fallback above should already guarantee
+          // this, but if any field STILL overflows we block this page (mark it
+          // failed with a clear message) so a broken layout is never published.
+          if (templateSafeMode && strictLengthGate) {
+            const lengthErrors: string[] = [];
+            for (const [key, val] of Object.entries(appliedFieldValues)) {
+              const budget = key.startsWith("ai_block_")
+                ? undefined
+                : budgetFor(key);
+              // AI block values were already enforced to their inline budget;
+              // re-derive an inline budget only for named fields.
+              const ov = budget ? checkBudgetOverflow(val, budget) : { overflow: false } as ReturnType<typeof checkBudgetOverflow>;
+              if (ov.overflow) {
+                lengthErrors.push(
+                  `"${key}" exceeds the template limit (${ov.reason === "char_overflow" ? `${ov.chars}/${ov.maxChars} chars` : `${ov.words}/${ov.maxWords} words`})`,
+                );
+              }
+            }
+            if (lengthErrors.length > 0) {
+              throw new Error(
+                `Length validation failed — content too long for the template layout: ${lengthErrors.join("; ")}. Shorten the content or relax the length limits and try again.`,
+              );
+            }
+          }
+
 
           // ── Media validation gate ──
           // Confirm the finished page uses ONLY template images and contains
