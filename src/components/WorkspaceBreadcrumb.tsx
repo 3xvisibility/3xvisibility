@@ -58,6 +58,7 @@ export function WorkspaceBreadcrumb() {
     "pgp-terms": t("sidebar.pgpTerms"),
     "website-content": t("sidebar.websiteContent"),
     "template-mapping": t("sidebar.templateMapping"),
+    "template-kit": t("sidebar.templateKit"),
     
     "content-calendar": t("sidebar.contentCalendar"),
     performance: t("sidebar.performance"),
