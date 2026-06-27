@@ -2055,7 +2055,7 @@ Deno.serve(async (req) => {
                 const generatedText = await generateAiContent(
                   block.prompt,
                   blockBudget
-                    ? { ...aiSettings, maxWords: blockBudget.maxWords, maxLines: Math.max(1, Math.min(2, Math.ceil(blockBudget.maxWords / 10))) }
+                    ? { ...aiSettings, maxWords: blockBudget.maxWords, maxLines: Math.max(1, Math.min(5, Math.ceil(blockBudget.maxWords / 10))) }
                     : aiSettings,
                   LOVABLE_API_KEY,
                 );
