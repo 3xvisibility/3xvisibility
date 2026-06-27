@@ -2474,8 +2474,9 @@ Deno.serve(async (req) => {
             throw new Error(`Image validation failed: ${mediaErrors.join("; ")}`);
           }
 
-
+          // Extract SEA ad IDs from utm_settings or row data
           const adCampaignId = (utmSettings as any).ad_campaign_id || row.ad_campaign_id || null;
+
           const adGroupId = (utmSettings as any).ad_group_id || row.ad_group_id || null;
 
           batchPages.push({
