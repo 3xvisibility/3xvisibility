@@ -932,7 +932,7 @@ export function MappingStep({
                 <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 hidden sm:block" />
 
                 {/* Column mapping / Custom value */}
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   {isSpecial && !column && !(variable in customValues) ? (
                     <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[11px] py-1 px-2">
                       <Check className="h-3 w-3 mr-1" /> Auto-generated
@@ -968,9 +968,9 @@ export function MappingStep({
                       );
                     })()
                   ) : column ? (
-                    <div className="flex items-center gap-1.5">
-                      <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg text-[11px] py-1 px-2">
-                        <Check className="h-3 w-3 mr-1" /> {column}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg text-[11px] py-1 px-2 min-w-0 max-w-full" title={column}>
+                        <Check className="h-3 w-3 mr-1 shrink-0" /> <span className="truncate">{column}</span>
                       </Badge>
                       <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setManualMappings(prev => ({ ...prev, [variable]: "__none__" }))}>
                         <X className="h-3 w-3 text-muted-foreground" />
