@@ -102,6 +102,11 @@ Deno.serve(async (req) => {
               editable_fields: fields,
               default_content: defaults,
               default_limits: limits,
+              placeholders: pkg.placeholders,
+              image_map: pkg.imageMap,
+              responsive_rules: pkg.responsiveRules,
+              status: "active",
+              version: 1,
             },
             { onConflict: "source_template_id" },
           );
