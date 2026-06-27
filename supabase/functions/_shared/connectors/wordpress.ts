@@ -345,6 +345,12 @@ export class WordPressConnector implements CmsConnector {
       // (fonts, backgrounds, layout) renders 1:1 in Elementor and on the
       // WordPress frontend — native-widget conversion would drop <style> blocks.
       Object.assign(meta, buildElementorMeta(payload.content || "", { embedCss: !elementorData, prebuiltData: elementorData }));
+      // Step 1: import the design into the WP Elementor Template Library first
+      // (like a ready-made plugin template), so the same Elementor JSON is
+      // registered/reusable on the site before the page itself is created.
+      if (elementorData) {
+        await this.importElementorLibraryTemplate(resolveWordPressTitle(payload), elementorData);
+      }
       // NOTE: do NOT send `_elementor_css`. Elementor registers it with an
       // `object` REST schema, so a string value triggers `rest_invalid_type`
       // (HTTP 400). A newly created page has no cached CSS file, so Elementor
