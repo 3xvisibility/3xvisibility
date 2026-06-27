@@ -65,15 +65,10 @@ async function resolveCatalogElementorData(
         if (hasData) elementorJson = ed;
       }
 
-      // 3) Last resort: convert the template's HTML into Elementor JSON on the fly.
-      if (!elementorJson && tplRow?.content) {
-        try {
-          const tree = htmlToElementor(tplRow.content);
-          if (tree.length > 0) elementorJson = tree;
-        } catch (e) {
-          console.warn("[publish-pages] on-the-fly HTML→Elementor conversion failed", e);
-        }
-      }
+      // NO on-the-fly HTML→Elementor fallback. Stored Elementor JSON is the
+      // ONLY master format. If neither a catalog row nor the template's own
+      // elementor_data exists, publishing is blocked upstream so a forbidden
+      // raw-HTML conversion can never reach WordPress.
 
       cache.set(page.campaign_id, elementorJson ?? null);
     }
