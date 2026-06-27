@@ -1931,7 +1931,7 @@ Deno.serve(async (req) => {
             for (const mapping of customValueMaps) {
               const staticValue = mapping.source_column.replace("__custom__:", "");
               const regex = new RegExp(`\\{${mapping.target_field}\\}`, "gi");
-              pageContent = pageContent.replace(regex, staticValue);
+              pageContent = pageContent.replace(regex, clampVar(mapping.target_field, staticValue));
             }
           }
 
