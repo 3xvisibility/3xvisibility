@@ -978,7 +978,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           templateSafeMode: true,
           // Exact per-field word/char budgets derived from the template's own
           // default values, so AI headings/text match the template length 1:1.
-          defaultValues: genTpl?.default_values || undefined,
+          defaultValues: (Object.keys(templateDefaultValues).length > 0 ? templateDefaultValues : genTpl?.default_values) || undefined,
           templateContent: genTpl?.content || undefined,
         },
       });
