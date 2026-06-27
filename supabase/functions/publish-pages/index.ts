@@ -935,6 +935,20 @@ Deno.serve(async (req) => {
 
         }
 
+        // Shopify page publishes: attach the stored Online Store 2.0 section kit
+        // so the connector publishes a NATIVE section template (design 1:1,
+        // images on the Shopify CDN, editable in the theme customizer). Falls
+        // back to body_html inside the connector if the theme isn't writable.
+        if (
+          resolvedPublishType === "page" && !preserveDesign &&
+          (page.websites as { type?: string })?.type === "shopify"
+        ) {
+          const kit = await resolveShopifySectionKit(supabase, page, shopifySectionKitCache);
+          if (kit) payload.shopify_section_kit = kit;
+        }
+
+
+
 
 
         // Apply Shopify template suffix overrides (campaign or request body)
