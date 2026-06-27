@@ -653,6 +653,7 @@ Deno.serve(async (req) => {
     // Cache page-template detection per website to avoid redundant checks
     const templateCache = new Map<string, { pageTemplate?: string }>();
     const elementorCatalogCache = new Map<string, unknown>();
+    const shopifySectionKitCache = new Map<string, unknown>();
 
     const publishStartTime = Date.now();
     let pageIndex = 0;
