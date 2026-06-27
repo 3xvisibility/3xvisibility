@@ -78,6 +78,11 @@ Deno.serve(async (req) => {
         const defaults = defaultContentFor(fields);
         const limits = limitsFor(fields);
         const pkg = buildTemplatePackage(tree, fields);
+        // Shopify Online Store 2.0 section kit (same placeholder/image rules).
+        const shopifyKit = buildShopifySectionKit(t.content, fields, {
+          sectionId: `lov-${String(sourceIdSafe(t)).slice(0, 18)}`,
+          name: t.name,
+        });
 
         // 1) Per-template master JSON.
         const { error: upErr } = await supabase
