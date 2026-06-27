@@ -804,11 +804,16 @@ export type Database = {
           editable_fields: Json
           elementor_json: Json
           id: string
+          image_map: Json
           name: string
+          placeholders: Json
           preview_image: string | null
+          responsive_rules: Json
           source_template_id: string
+          status: string
           template_structure: Json
           updated_at: string
+          version: number
         }
         Insert: {
           category?: string
@@ -818,11 +823,16 @@ export type Database = {
           editable_fields?: Json
           elementor_json?: Json
           id?: string
+          image_map?: Json
           name: string
+          placeholders?: Json
           preview_image?: string | null
+          responsive_rules?: Json
           source_template_id: string
+          status?: string
           template_structure?: Json
           updated_at?: string
+          version?: number
         }
         Update: {
           category?: string
@@ -832,11 +842,16 @@ export type Database = {
           editable_fields?: Json
           elementor_json?: Json
           id?: string
+          image_map?: Json
           name?: string
+          placeholders?: Json
           preview_image?: string | null
+          responsive_rules?: Json
           source_template_id?: string
+          status?: string
           template_structure?: Json
           updated_at?: string
+          version?: number
         }
         Relationships: []
       }
