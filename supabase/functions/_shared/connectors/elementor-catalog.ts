@@ -170,7 +170,7 @@ export function buildElementorFromCatalog(
 
   const applied = applyEditableContent(tree, fields, content);
   return {
-    data: JSON.stringify(applied),
+    data: JSON.stringify(withInjectedCss(applied, overrides.injectCss)),
     similarity: report.similarity,
     truncatedFields,
   };
