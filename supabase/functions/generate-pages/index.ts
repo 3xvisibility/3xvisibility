@@ -2521,6 +2521,35 @@ Deno.serve(async (req) => {
             console.warn("[GENERATE-PAGES] JSON-LD validator skipped:", (vErr as Error).message);
           }
 
+          // ── Length validation gate ──
+          // Final safety check: every budgeted field (hero description,
+          // headings, buttons, AI blocks…) must fit its template length budget.
+          // clampVar + the AI retry/fallback above should already guarantee
+          // this, but if any field STILL overflows we block this page (mark it
+          // failed with a clear message) so a broken layout is never published.
+          if (templateSafeMode && strictLengthGate) {
+            const lengthErrors: string[] = [];
+            for (const [key, val] of Object.entries(appliedFieldValues)) {
+              const budget = key.startsWith("ai_block_")
+                ? undefined
+                : budgetFor(key);
+              // AI block values were already enforced to their inline budget;
+              // re-derive an inline budget only for named fields.
+              const ov = budget ? checkBudgetOverflow(val, budget) : { overflow: false } as ReturnType<typeof checkBudgetOverflow>;
+              if (ov.overflow) {
+                lengthErrors.push(
+                  `"${key}" exceeds the template limit (${ov.reason === "char_overflow" ? `${ov.chars}/${ov.maxChars} chars` : `${ov.words}/${ov.maxWords} words`})`,
+                );
+              }
+            }
+            if (lengthErrors.length > 0) {
+              throw new Error(
+                `Length validation failed — content too long for the template layout: ${lengthErrors.join("; ")}. Shorten the content or relax the length limits and try again.`,
+              );
+            }
+          }
+
+
           // ── Media validation gate ──
           // Confirm the finished page uses ONLY template images and contains
           // no leftover {{AI_IMAGE}} placeholders. On failure, throw so the
