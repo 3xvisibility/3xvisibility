@@ -438,6 +438,68 @@ function extractAiImageBlocks(content: string): { fullMatch: string; prompt: str
   return blocks;
 }
 
+// ═══════════════════════════════════════════════════════════
+// Template image whitelist + media validation
+// The published page must use ONLY the images that ship with the
+// template. We collect every image URL referenced by the template
+// HTML (img src/srcset + CSS url(...)) once, then validate each
+// generated page against that whitelist before it is allowed to save.
+// ═══════════════════════════════════════════════════════════
+function extractTemplateImageUrls(html: string): Set<string> {
+  const urls = new Set<string>();
+  if (!html) return urls;
+  const add = (u: string) => {
+    const v = (u || "").trim();
+    if (v) urls.add(v);
+  };
+  const imgRe = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/gi;
+  let m: RegExpExecArray | null;
+  while ((m = imgRe.exec(html)) !== null) add(m[1]);
+  const srcsetRe = /\bsrcset\s*=\s*["']([^"']+)["']/gi;
+  while ((m = srcsetRe.exec(html)) !== null) {
+    for (const part of m[1].split(",")) add(part.trim().split(/\s+/)[0]);
+  }
+  const cssRe = /url\(\s*["']?([^"')]+)["']?\s*\)/gi;
+  while ((m = cssRe.exec(html)) !== null) {
+    if (!m[1].startsWith("data:")) add(m[1]);
+  }
+  return urls;
+}
+
+/**
+ * Validate that a finished page uses ONLY template images and contains no
+ * leftover {{AI_IMAGE}} placeholders. Returns a list of human-readable
+ * errors; an empty list means the page passed.
+ */
+function validatePageMedia(
+  pageContent: string,
+  allowedUrls: Set<string>,
+  allowStockImages: boolean,
+): string[] {
+  const errors: string[] = [];
+
+  // 1) No AI image placeholders may survive into the published page.
+  if (/\{\{\s*AI_IMAGE/i.test(pageContent)) {
+    errors.push("Page still contains an {{AI_IMAGE}} placeholder.");
+  }
+
+  if (allowStockImages) return errors; // template opted into stock images.
+
+  // 2) Every <img src> must be a template image (or an inline data URI).
+  const imgRe = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/gi;
+  let m: RegExpExecArray | null;
+  while ((m = imgRe.exec(pageContent)) !== null) {
+    const src = (m[1] || "").trim();
+    if (!src || src.startsWith("data:")) continue;
+    if (src.includes("{")) continue; // unresolved placeholder handled elsewhere
+    if (allowedUrls.has(src)) continue;
+    // Flag any non-template image (AI/stock/Unsplash/Picsum/placeholder).
+    errors.push(`Page references a non-template image: ${src.slice(0, 120)}`);
+  }
+  return errors;
+}
+
+
 async function generateAiImage(
   prompt: string,
   apiKey: string,
