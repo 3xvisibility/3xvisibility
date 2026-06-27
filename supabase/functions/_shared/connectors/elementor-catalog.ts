@@ -72,7 +72,11 @@ export function buildElementorFromCatalog(
   if (tree.length === 0) return null;
 
   const fields = extractEditableFields(tree);
-  if (fields.length === 0) return null;
+  // No editable fields detected: still publish the resolved Elementor tree as-is
+  // so the template design renders 1:1 (rather than blocking the publish).
+  if (fields.length === 0) {
+    return { data: JSON.stringify(tree), similarity: 100, truncatedFields: [] };
+  }
 
   const limits = limitsFor(fields);
   const content = defaultContentFor(fields);
