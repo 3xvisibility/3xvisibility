@@ -1440,8 +1440,15 @@ Deno.serve(async (req) => {
     const clampVar = (key: string, value: string): string => {
       if (!templateSafeMode || typeof value !== "string") return value;
       const b = lengthBudget[key] || lengthBudget[key.toLowerCase()];
-      return b ? enforceBudget(value, b) : value;
+      let out = b ? enforceBudget(value, b) : value;
+      // Strict word-count lock: title/subtitle/description must keep the
+      // template's EXACT word footprint (never more words than the original).
+      if (b && b.words > 0 && isWordLockField(key)) {
+        out = lockExactWords(out, b.words);
+      }
+      return out;
     };
+
     // ── Template Reuse Mode ──
     // When enabled, the template's existing title/description/content are reused
     // verbatim and ONLY CSV placeholders (single {var} and double {{var}}) are
