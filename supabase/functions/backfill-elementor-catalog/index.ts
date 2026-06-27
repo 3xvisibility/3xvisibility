@@ -35,13 +35,16 @@ function countWidgets(tree: any[]): number {
  * never AI/stock — and never trip the publish-time fail-safe.
  */
 function stripAiImagePlaceholders(html: string): string {
+  // Tokens look like {{AI_IMAGE: ... {location} ...}} and may contain inner
+  // single braces, so match non-greedily up to the first closing "}}".
+  const TOKEN = /\{\{\s*AI_IMAGE[\s\S]*?\}\}/gi;
   return html
     // <img ... src="{{AI_IMAGE...}}" ...> -> removed entirely
-    .replace(/<img[^>]*\{\{\s*AI_IMAGE[^}]*\}\}[^>]*>/gi, "")
-    // background-image:url({{AI_IMAGE...}}) -> drop the declaration
-    .replace(/background(-image)?\s*:\s*url\(\s*['"]?\{\{\s*AI_IMAGE[^}]*\}\}['"]?\s*\)\s*;?/gi, "")
-    // any remaining bare tokens
-    .replace(/\{\{\s*AI_IMAGE[^}]*\}\}/gi, "");
+    .replace(/<img\b[^>]*\{\{\s*AI_IMAGE[\s\S]*?\}\}[^>]*>/gi, "")
+    // background[-image]:url({{AI_IMAGE...}}) -> drop the whole declaration
+    .replace(/background(-image)?\s*:\s*url\(\s*['"]?\{\{\s*AI_IMAGE[\s\S]*?\}\}['"]?\s*\)\s*;?/gi, "")
+    // any remaining bare tokens (in text, alt, url settings, etc.)
+    .replace(TOKEN, "");
 }
 
 Deno.serve(async (req) => {
