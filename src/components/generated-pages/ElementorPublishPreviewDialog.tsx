@@ -71,15 +71,35 @@ export function ElementorPublishPreviewDialog({
   onOpenChange,
   page,
   onPublish,
+  workspaceId,
+  templateId,
+  baseline = {},
+  publishedUrl,
 }: ElementorPublishPreviewDialogProps) {
   const [mode, setMode] = useState<ElementorWidgetMode>("html");
+  const [validation, setValidation] = useState<ValidationResult | null>(null);
+  const [override, setOverride] = useState(false);
 
   const report = useMemo(() => {
     if (!page) return null;
     return buildElementorDebugReport(page.content || "", mode);
   }, [page, mode]);
 
+  // Reset gate state whenever the dialog target changes.
+  useEffect(() => {
+    setValidation(null);
+    setOverride(false);
+  }, [page?.id, mode]);
+
+  const target: ValidationSide = publishedUrl
+    ? { url: publishedUrl }
+    : { html: report?.renderable || page?.content || "" };
+
+  const gateFailed = validation?.status === "failed";
+  const publishBlocked = gateFailed && !override;
+
   if (!page) return null;
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
