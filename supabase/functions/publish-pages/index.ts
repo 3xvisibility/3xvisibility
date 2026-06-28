@@ -273,6 +273,7 @@ function buildPayload(
   extraData?: Record<string, unknown>,
   pageTemplate?: string,
   preserveDesign?: boolean,
+  elementorMode?: "native" | "html",
 ): PagePayload {
   const payload: PagePayload = {
     title: page.title,
