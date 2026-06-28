@@ -1191,6 +1191,7 @@ async function updateJob(supabase: any, jobId: string, updates: Record<string, a
 }
 
 const BATCH_SIZE = 5;
+const MAX_ROWS_PER_INVOCATION = 25;
 
 Deno.serve(async (req) => {
   console.log("[GENERATE-PAGES] Request received:", req.method);
@@ -1345,8 +1346,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Try loading CSV from dedicated storage table first, fall back to inline csv_data
+    const alreadyProcessed = campaign.processed_rows || 0;
+    const startIndex = action === "resume" ? alreadyProcessed : 0;
+
+    // Try loading only the needed CSV window from the dedicated storage table.
+    // Loading every row for very large files can exceed edge worker memory before
+    // batch processing begins, so each invocation processes a small resumable slice.
     let csvRows: Record<string, string>[] = [];
+    let csvTotalRows = 0;
     const { data: csvFile } = await supabase
       .from("campaign_csv_files")
       .select("raw_content, headers, row_count")
@@ -1354,22 +1361,27 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (csvFile?.raw_content) {
-      const parsedRows = parseCsvRawContent(csvFile.raw_content as string);
+      const rawCsv = csvFile.raw_content as string;
       (csvFile as { raw_content?: string | null }).raw_content = null; // free ~MBs for GC
       const expectedRowCount = typeof csvFile.row_count === "number" ? csvFile.row_count : null;
-
-      if (!expectedRowCount || parsedRows.length === expectedRowCount) {
-        csvRows = parsedRows;
-      } else {
-        console.warn(
-          `[GENERATE-PAGES] CSV parse mismatch for campaign ${campaign_id}: parsed ${parsedRows.length}, expected ${expectedRowCount}. Falling back to inline csv_data.`
-        );
-      }
+      csvTotalRows = expectedRowCount ?? countCsvRawRows(rawCsv);
+      const windowStart = action === "preview" ? 0 : startIndex;
+      csvRows = readCsvWindow(rawCsv, windowStart, action === "preview" ? 1 : MAX_ROWS_PER_INVOCATION).rows;
     }
 
-    // Fall back to inline csv_data
+    // Fall back to legacy inline csv_data only when no dedicated CSV file exists.
     if (csvRows.length === 0) {
-      csvRows = (campaign.csv_data || []) as Record<string, string>[];
+      const { data: inlineCampaign } = await supabase
+        .from("campaigns")
+        .select("csv_data")
+        .eq("id", campaign_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const inlineRows = (inlineCampaign?.csv_data || []) as Record<string, string>[];
+      csvTotalRows = inlineRows.length;
+      csvRows = action === "preview"
+        ? inlineRows.slice(0, 1)
+        : inlineRows.slice(startIndex, startIndex + MAX_ROWS_PER_INVOCATION);
     }
 
     // ─────────────────────────────────────────────────────────────────────
