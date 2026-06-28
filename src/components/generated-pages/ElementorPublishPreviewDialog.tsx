@@ -165,7 +165,19 @@ export function ElementorPublishPreviewDialog({
           </RadioGroup>
         </div>
 
+        {/* Visual-validation gate (98% similarity) */}
+        <VisualValidationPanel
+          workspaceId={workspaceId}
+          generatedPageId={page.id}
+          templateId={templateId}
+          baseline={baseline}
+          target={target}
+          threshold={0.98}
+          onResult={(r) => { setValidation(r); setOverride(false); }}
+        />
+
         <Tabs defaultValue="preview" className="flex-1 min-h-0 flex flex-col">
+
           <TabsList className="self-start">
             <TabsTrigger value="preview" className="gap-1 text-xs">
               <Eye className="h-3.5 w-3.5" /> Preview
