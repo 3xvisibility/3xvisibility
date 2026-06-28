@@ -126,6 +126,21 @@ export class WordPressConnector implements CmsConnector {
     return this.assetsPromise;
   }
 
+  private siteContextPromise?: Promise<SiteContext | undefined>;
+  /**
+   * Lazily read + cache the connected WordPress site's context (active theme,
+   * Elementor globals/colors/fonts, container width, breakpoints) once per
+   * connector so native Elementor output maps to the live site's design tokens.
+   * Best-effort: returns undefined if the site blocks introspection.
+   */
+  private siteContext(): Promise<SiteContext | undefined> {
+    if (!this.siteContextPromise) {
+      this.siteContextPromise = readSiteContext(this.baseUrl, this.headers as Record<string, string>)
+        .catch(() => undefined);
+    }
+    return this.siteContextPromise;
+  }
+
   /** Cache of source URL -> uploaded Media Library URL to avoid re-uploading. */
   private mediaCache = new Map<string, string | null>();
 
