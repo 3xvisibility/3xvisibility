@@ -1440,14 +1440,24 @@ Deno.serve(async (req) => {
     }
 
 
-    if (csvRows.length === 0) {
+    const maxRowsLimit = campaign.max_rows ? Math.min(campaign.max_rows, csvTotalRows) : csvTotalRows;
+
+    if (csvTotalRows === 0) {
       console.error("[GENERATE-PAGES] No CSV data found for campaign");
       return new Response(JSON.stringify({ error: "No CSV data in this campaign" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    console.log("[GENERATE-PAGES] CSV rows:", csvRows.length);
+
+    if (startIndex >= maxRowsLimit) {
+      return new Response(JSON.stringify({ success: true, message: "All pages already generated" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const rowsRemainingForCampaign = Math.max(0, maxRowsLimit - startIndex);
+    console.log("[GENERATE-PAGES] CSV rows:", csvTotalRows, "window:", csvRows.length, "start:", startIndex);
 
     // Load custom mappings from the mappings table
     const { data: customMappings } = await supabase
@@ -1456,11 +1466,8 @@ Deno.serve(async (req) => {
       .eq("campaign_id", campaign_id)
       .order("sort_order", { ascending: true });
 
-    const alreadyProcessed = campaign.processed_rows || 0;
-    const startIndex = action === "resume" ? alreadyProcessed : 0;
-    // Apply max_rows limit if set
-    const maxRowsLimit = campaign.max_rows ? Math.min(campaign.max_rows, csvRows.length) : csvRows.length;
-    let limitedRows = csvRows.slice(0, maxRowsLimit);
+    // This invocation only sees a bounded window of rows to keep memory usage low.
+    let limitedRows = csvRows.slice(0, rowsRemainingForCampaign);
 
     // ═══════════════════════════════════════════════════════════
     // Generation Methods: all | sequential | random
@@ -1507,7 +1514,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const remainingRows = limitedRows.slice(startIndex);
+    const remainingRows = limitedRows;
 
     if (remainingRows.length === 0) {
       return new Response(JSON.stringify({ success: true, message: "All pages already generated" }), {
