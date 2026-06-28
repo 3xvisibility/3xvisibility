@@ -624,7 +624,12 @@ function extractRenderableHtml(html: string): string {
  * theme header/footer/sidebar and full width — matching the original design.
  */
 export interface BuildElementorMetaOptions {
-  /** When true (default), embed full template markup + CSS in a single HTML widget. When false, rely on native Elementor widgets + Elementor-generated CSS. */
+  /**
+   * When false (default), build NATIVE Elementor containers/widgets with the
+   * template's CSS baked into widget style settings (no HTML widget, fully
+   * editable). When true, embed full template markup + CSS in a single HTML
+   * widget (legacy fallback, kept only for explicit opt-in / debugging).
+   */
   embedCss?: boolean;
   version?: string;
   /**
@@ -632,6 +637,8 @@ export interface BuildElementorMetaOptions {
    * content already applied). When set, it's used verbatim and the HTML is ignored.
    */
   prebuiltData?: string;
+  /** Live site context so native widgets map to the site's global tokens. */
+  siteContext?: SiteContext;
 }
 
 export function buildElementorMeta(
@@ -641,7 +648,7 @@ export function buildElementorMeta(
   // Back-compat: allow passing version string as the 2nd arg.
   const opts: BuildElementorMetaOptions =
     typeof options === "string" ? { version: options } : options;
-  const { embedCss = true, version = "3.21.0", prebuiltData } = opts;
+  const { embedCss = false, version = "3.21.0", prebuiltData, siteContext } = opts;
 
   let dataStr: string;
   if (prebuiltData) {
@@ -660,7 +667,8 @@ export function buildElementorMeta(
       };
       data = [container([htmlWidget], undefined, true)];
     } else {
-      data = htmlToElementor(html);
+      // Native Elementor widgets with the template CSS baked into settings.
+      data = htmlToElementor(html, siteContext);
     }
     dataStr = JSON.stringify(data);
   }
