@@ -2,15 +2,21 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Code2, Eye, FileCode2, Palette, UploadCloud } from "lucide-react";
+import { Code2, Eye, FileCode2, Palette, UploadCloud, ShieldAlert } from "lucide-react";
 import {
   buildElementorDebugReport,
   type ElementorWidgetMode,
 } from "@/lib/connectors/elementor-engine";
+import {
+  VisualValidationPanel,
+  type ValidationSide,
+  type ValidationResult,
+} from "@/components/generated-pages/VisualValidationPanel";
 
 interface PreviewPage {
   id: string;
@@ -24,7 +30,13 @@ interface ElementorPublishPreviewDialogProps {
   onOpenChange: (open: boolean) => void;
   page: PreviewPage | null;
   /** Called with the chosen widget mode when the user proceeds to publish. */
-  onPublish?: (mode: ElementorWidgetMode) => void;
+  onPublish?: (mode: ElementorWidgetMode, gate?: { overridden: boolean; checkId?: string | null }) => void;
+  workspaceId?: string | null;
+  templateId?: string | null;
+  /** Expected/template render for the visual gate. */
+  baseline?: ValidationSide;
+  /** Live URL if the page is already published (used as the target render). */
+  publishedUrl?: string | null;
 }
 
 function RenderableFrame({ html }: { html: string }) {
@@ -59,15 +71,35 @@ export function ElementorPublishPreviewDialog({
   onOpenChange,
   page,
   onPublish,
+  workspaceId,
+  templateId,
+  baseline = {},
+  publishedUrl,
 }: ElementorPublishPreviewDialogProps) {
   const [mode, setMode] = useState<ElementorWidgetMode>("html");
+  const [validation, setValidation] = useState<ValidationResult | null>(null);
+  const [override, setOverride] = useState(false);
 
   const report = useMemo(() => {
     if (!page) return null;
     return buildElementorDebugReport(page.content || "", mode);
   }, [page, mode]);
 
+  // Reset gate state whenever the dialog target changes.
+  useEffect(() => {
+    setValidation(null);
+    setOverride(false);
+  }, [page?.id, mode]);
+
+  const target: ValidationSide = publishedUrl
+    ? { url: publishedUrl }
+    : { html: report?.renderable || page?.content || "" };
+
+  const gateFailed = validation?.status === "failed";
+  const publishBlocked = gateFailed && !override;
+
   if (!page) return null;
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -133,7 +165,19 @@ export function ElementorPublishPreviewDialog({
           </RadioGroup>
         </div>
 
+        {/* Visual-validation gate (98% similarity) */}
+        <VisualValidationPanel
+          workspaceId={workspaceId}
+          generatedPageId={page.id}
+          templateId={templateId}
+          baseline={baseline}
+          target={target}
+          threshold={0.98}
+          onResult={(r) => { setValidation(r); setOverride(false); }}
+        />
+
         <Tabs defaultValue="preview" className="flex-1 min-h-0 flex flex-col">
+
           <TabsList className="self-start">
             <TabsTrigger value="preview" className="gap-1 text-xs">
               <Eye className="h-3.5 w-3.5" /> Preview
@@ -177,16 +221,29 @@ export function ElementorPublishPreviewDialog({
           </div>
         </Tabs>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 flex-col sm:flex-row sm:items-center">
+          {gateFailed && (
+            <label className="flex items-center gap-2 text-xs text-destructive mr-auto cursor-pointer">
+              <Checkbox checked={override} onCheckedChange={(v) => setOverride(!!v)} />
+              <ShieldAlert className="h-3.5 w-3.5" />
+              Override failed visual gate and publish anyway
+            </label>
+          )}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
           {onPublish && (
-            <Button onClick={() => onPublish(mode)} className="gap-1">
-              <UploadCloud className="h-4 w-4" /> Publish with this mode
+            <Button
+              onClick={() => onPublish(mode, { overridden: override, checkId: validation?.check_id })}
+              disabled={publishBlocked}
+              className="gap-1"
+            >
+              <UploadCloud className="h-4 w-4" />
+              {publishBlocked ? "Blocked by visual gate" : "Publish with this mode"}
             </Button>
           )}
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );

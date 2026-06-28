@@ -1701,49 +1701,76 @@ export type Database = {
       page_render_checks: {
         Row: {
           attempt: number
+          baseline_path: string | null
+          baseline_source: string | null
           created_at: string
           diff_regions: Json
+          error_message: string | null
           generated_page_id: string | null
           id: string
+          meta: Json
+          overridden: boolean
           pixel_score: number | null
+          provider: string | null
           published_screenshot_url: string | null
           score: number | null
           status: string
           structural_score: number | null
+          target_path: string | null
+          target_source: string | null
           template_id: string | null
           template_screenshot_url: string | null
+          threshold: number
           updated_at: string
           workspace_id: string
         }
         Insert: {
           attempt?: number
+          baseline_path?: string | null
+          baseline_source?: string | null
           created_at?: string
           diff_regions?: Json
+          error_message?: string | null
           generated_page_id?: string | null
           id?: string
+          meta?: Json
+          overridden?: boolean
           pixel_score?: number | null
+          provider?: string | null
           published_screenshot_url?: string | null
           score?: number | null
           status?: string
           structural_score?: number | null
+          target_path?: string | null
+          target_source?: string | null
           template_id?: string | null
           template_screenshot_url?: string | null
+          threshold?: number
           updated_at?: string
           workspace_id: string
         }
         Update: {
           attempt?: number
+          baseline_path?: string | null
+          baseline_source?: string | null
           created_at?: string
           diff_regions?: Json
+          error_message?: string | null
           generated_page_id?: string | null
           id?: string
+          meta?: Json
+          overridden?: boolean
           pixel_score?: number | null
+          provider?: string | null
           published_screenshot_url?: string | null
           score?: number | null
           status?: string
           structural_score?: number | null
+          target_path?: string | null
+          target_source?: string | null
           template_id?: string | null
           template_screenshot_url?: string | null
+          threshold?: number
           updated_at?: string
           workspace_id?: string
         }
