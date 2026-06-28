@@ -221,16 +221,29 @@ export function ElementorPublishPreviewDialog({
           </div>
         </Tabs>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 flex-col sm:flex-row sm:items-center">
+          {gateFailed && (
+            <label className="flex items-center gap-2 text-xs text-destructive mr-auto cursor-pointer">
+              <Checkbox checked={override} onCheckedChange={(v) => setOverride(!!v)} />
+              <ShieldAlert className="h-3.5 w-3.5" />
+              Override failed visual gate and publish anyway
+            </label>
+          )}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
           {onPublish && (
-            <Button onClick={() => onPublish(mode)} className="gap-1">
-              <UploadCloud className="h-4 w-4" /> Publish with this mode
+            <Button
+              onClick={() => onPublish(mode)}
+              disabled={publishBlocked}
+              className="gap-1"
+            >
+              <UploadCloud className="h-4 w-4" />
+              {publishBlocked ? "Blocked by visual gate" : "Publish with this mode"}
             </Button>
           )}
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
