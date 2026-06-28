@@ -639,7 +639,7 @@ function extractStylesheetImports(html: string): string {
   return imports.length ? `<style>\n${imports.join("\n")}\n</style>` : "";
 }
 
-function extractRenderableHtml(html: string): string {
+export function extractRenderableHtml(html: string): string {
   const input = html || "";
   const fontImports = extractStylesheetImports(input);
   const styles = [fontImports, ...(input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || [])].filter(Boolean).join("\n");
