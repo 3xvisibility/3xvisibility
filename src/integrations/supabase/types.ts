@@ -2649,6 +2649,7 @@ export type Database = {
           last_sync: string | null
           name: string
           shop_details: Json | null
+          site_context: Json | null
           status: Database["public"]["Enums"]["website_status"]
           type: Database["public"]["Enums"]["website_type"]
           updated_at: string
@@ -2667,6 +2668,7 @@ export type Database = {
           last_sync?: string | null
           name: string
           shop_details?: Json | null
+          site_context?: Json | null
           status?: Database["public"]["Enums"]["website_status"]
           type: Database["public"]["Enums"]["website_type"]
           updated_at?: string
@@ -2685,6 +2687,7 @@ export type Database = {
           last_sync?: string | null
           name?: string
           shop_details?: Json | null
+          site_context?: Json | null
           status?: Database["public"]["Enums"]["website_status"]
           type?: Database["public"]["Enums"]["website_type"]
           updated_at?: string
