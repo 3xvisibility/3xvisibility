@@ -694,3 +694,85 @@ export function buildElementorMeta(
     _wp_page_template: "elementor_canvas",
   };
 }
+
+/**
+ * Extract all `<style>` CSS blocks from a template HTML string, concatenated.
+ * Mirrors the server-side `extractTemplateCss` so the in-app preview shows the
+ * same CSS that gets embedded into the Elementor JSON at publish time.
+ */
+export function extractTemplateCss(html: string | null | undefined): string {
+  if (!html) return "";
+  const blocks: string[] = [];
+  const re = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const css = (m[1] || "").trim();
+    if (css) blocks.push(css);
+  }
+  return blocks.join("\n");
+}
+
+export type ElementorWidgetMode = "html" | "native";
+
+export interface ElementorDebugReport {
+  /** Selected widget mode. */
+  mode: ElementorWidgetMode;
+  /** CSS that travels into the Elementor JSON (concatenated <style> blocks). */
+  css: string;
+  /** The renderable markup (styles + body) that an iframe can render 1:1. */
+  renderable: string;
+  /** The serialized `_elementor_data` JSON string written to WordPress. */
+  elementorData: string;
+  /** Byte length of the `_elementor_data` string. */
+  dataLength: number;
+  /** Number of widgets produced in the Elementor tree. */
+  widgetCount: number;
+  /** Number of top-level containers/sections. */
+  containerCount: number;
+}
+
+function countNodes(nodes: ElementorElement[]): { widgets: number; containers: number } {
+  let widgets = 0;
+  let containers = 0;
+  const walk = (list: ElementorElement[]) => {
+    for (const n of list) {
+      if (n.elType === "widget") widgets++;
+      else containers++;
+      if (n.elements?.length) walk(n.elements);
+    }
+  };
+  walk(nodes);
+  return { widgets, containers };
+}
+
+/**
+ * Produce a full debug report describing exactly what CSS + HTML get embedded
+ * into the Elementor JSON for a generated page, in the selected widget mode.
+ * Used by the in-app publish preview & debug panel (no network calls).
+ */
+export function buildElementorDebugReport(
+  html: string,
+  mode: ElementorWidgetMode = "html",
+): ElementorDebugReport {
+  const css = extractTemplateCss(html);
+  const renderable = extractRenderableHtml(html);
+  const meta = buildElementorMeta(html, { embedCss: mode === "html" });
+  const elementorData = String(meta._elementor_data || "[]");
+  let tree: ElementorElement[] = [];
+  try {
+    tree = JSON.parse(elementorData) as ElementorElement[];
+  } catch {
+    tree = [];
+  }
+  const counts = countNodes(tree);
+  return {
+    mode,
+    css,
+    renderable,
+    elementorData,
+    dataLength: elementorData.length,
+    widgetCount: counts.widgets,
+    containerCount: counts.containers,
+  };
+}
+
