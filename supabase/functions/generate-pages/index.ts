@@ -1252,6 +1252,7 @@ Deno.serve(async (req) => {
 
     if (csvFile?.raw_content) {
       const parsedRows = parseCsvRawContent(csvFile.raw_content as string);
+      (csvFile as { raw_content?: string | null }).raw_content = null; // free ~MBs for GC
       const expectedRowCount = typeof csvFile.row_count === "number" ? csvFile.row_count : null;
 
       if (!expectedRowCount || parsedRows.length === expectedRowCount) {
