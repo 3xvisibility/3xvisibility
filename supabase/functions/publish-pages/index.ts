@@ -910,6 +910,7 @@ Deno.serve(async (req) => {
             ? templateCache.get(page.website_id || "default")?.pageTemplate
             : undefined,
           preserveDesign,
+          elementorMode,
         );
 
         // Resolve the campaign's chosen publish format and forward it so the
