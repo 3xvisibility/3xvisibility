@@ -117,6 +117,22 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  // Baseline template HTML for the visual-validation gate (campaign → template).
+  const baselineCampaignId = elementorPreviewPage?.campaign_id || fidelityPage?.campaign_id || null;
+  const { data: baselineHtml } = useQuery({
+    queryKey: ["template-baseline", baselineCampaignId],
+    enabled: !!baselineCampaignId,
+    queryFn: async () => {
+      const { data: camp } = await supabase
+        .from("campaigns").select("template_id").eq("id", baselineCampaignId!).maybeSingle();
+      if (!camp?.template_id) return null;
+      const { data: tpl } = await supabase
+        .from("templates").select("content").eq("id", camp.template_id).maybeSingle();
+      return tpl?.content ?? null;
+    },
+  });
+
+
   // ─── Realtime: live publish-status updates ────────────────
   // Subscribes to `generated_pages` UPDATE/INSERT/DELETE events for the
   // current workspace so each row's status (publishing → published /
