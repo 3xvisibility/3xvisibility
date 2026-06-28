@@ -14,6 +14,26 @@
  * a small, tolerant HTML tokenizer.
  */
 
+import { StyleResolver, styleButton, styleContainer, styleHeading, styleImage, styleText, type NodeLike } from "./style-extract.ts";
+import type { SiteContext } from "./wp-site-context.ts";
+
+// Module-scoped style baking state. Set by `htmlToElementor` so the widget
+// builders can bake the template's CSS into native Elementor settings without
+// changing every builder signature. Null when styling is unavailable.
+let CURRENT_RESOLVER: StyleResolver | null = null;
+let CURRENT_CTX: SiteContext | undefined = undefined;
+
+function bakedSettings(
+  node: HtmlNode | undefined,
+  apply: (settings: Record<string, unknown>, props: ReturnType<StyleResolver["resolve"]>, ctx?: SiteContext) => void,
+  settings: Record<string, unknown>,
+): Record<string, unknown> {
+  if (!CURRENT_RESOLVER || !node) return settings;
+  const props = CURRENT_RESOLVER.resolve(node as NodeLike);
+  apply(settings, props, CURRENT_CTX);
+  return settings;
+}
+
 export interface ElementorElement {
   id: string;
   elType: "container" | "widget";
