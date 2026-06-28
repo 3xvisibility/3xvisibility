@@ -30,7 +30,7 @@ interface ElementorPublishPreviewDialogProps {
   onOpenChange: (open: boolean) => void;
   page: PreviewPage | null;
   /** Called with the chosen widget mode when the user proceeds to publish. */
-  onPublish?: (mode: ElementorWidgetMode) => void;
+  onPublish?: (mode: ElementorWidgetMode, gate?: { overridden: boolean; checkId?: string | null }) => void;
   workspaceId?: string | null;
   templateId?: string | null;
   /** Expected/template render for the visual gate. */
