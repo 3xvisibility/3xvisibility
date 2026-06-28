@@ -387,6 +387,10 @@ function container(children: ElementorElement[], node?: HtmlNode, topLevel = fal
     settings.flex_direction = "row";
     settings.flex_wrap = "wrap";
   }
+  // Bake the template's section background/padding/margin into the container.
+  if (node && CURRENT_RESOLVER) {
+    styleContainer(settings, CURRENT_RESOLVER.resolve(node as NodeLike), CURRENT_CTX);
+  }
   return { id: genId(), elType: "container", settings, elements: children };
 }
 
