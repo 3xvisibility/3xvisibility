@@ -922,7 +922,7 @@ Deno.serve(async (req) => {
           resolvedPublishType === "page" && !preserveDesign && publishFormat === "elementor" &&
           (page.websites as { type?: string })?.type === "wordpress"
         ) {
-          const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
+          const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache, elementorMode);
           if (!catalog) {
             const msg =
               "Publish blocked: no stored Elementor template found for this campaign. " +
