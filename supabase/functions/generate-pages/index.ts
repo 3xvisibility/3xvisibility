@@ -1350,24 +1350,38 @@ Deno.serve(async (req) => {
     const startIndex = action === "resume" ? alreadyProcessed : 0;
 
     // Try loading only the needed CSV window from the dedicated storage table.
-    // Loading every row for very large files can exceed edge worker memory before
-    // batch processing begins, so each invocation processes a small resumable slice.
+    // IMPORTANT: do NOT select raw_content here. For large CSV uploads, sending a
+    // 25MB+ text field into the Edge Function is enough to hit worker memory
+    // limits before generation starts. The DB helper slices the CSV server-side
+    // and returns only the current small row window.
     let csvRows: Record<string, string>[] = [];
     let csvTotalRows = 0;
     const { data: csvFile } = await supabase
       .from("campaign_csv_files")
-      .select("raw_content, headers, row_count")
+      .select("id, headers, row_count")
       .eq("campaign_id", campaign_id)
       .maybeSingle();
 
-    const hasDedicatedCsv = Boolean(csvFile?.raw_content);
+    const hasDedicatedCsv = Boolean(csvFile?.id);
     if (hasDedicatedCsv) {
-      const rawCsv = csvFile.raw_content as string;
-      (csvFile as { raw_content?: string | null }).raw_content = null; // free ~MBs for GC
       const expectedRowCount = typeof csvFile.row_count === "number" ? csvFile.row_count : null;
-      csvTotalRows = expectedRowCount ?? countCsvRawRows(rawCsv);
       const windowStart = action === "preview" ? 0 : startIndex;
-      csvRows = readCsvWindow(rawCsv, windowStart, action === "preview" ? 1 : MAX_ROWS_PER_INVOCATION).rows;
+      const windowSize = action === "preview" ? 1 : MAX_ROWS_PER_INVOCATION;
+      const { data: csvWindow, error: csvWindowError } = await supabase.rpc("get_campaign_csv_window", {
+        _campaign_id: campaign_id,
+        _start_row: windowStart,
+        _row_count: windowSize,
+      });
+      if (csvWindowError) {
+        console.error("[GENERATE-PAGES] CSV window load failed:", csvWindowError.message);
+        return new Response(JSON.stringify({ error: `Could not load CSV rows: ${csvWindowError.message}` }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const windowPayload = (csvWindow || {}) as { rows?: Record<string, string>[]; row_count?: number };
+      csvTotalRows = expectedRowCount ?? (typeof windowPayload.row_count === "number" ? windowPayload.row_count : 0);
+      csvRows = Array.isArray(windowPayload.rows) ? windowPayload.rows : [];
     }
 
     // Fall back to legacy inline csv_data only when no dedicated CSV file exists.
