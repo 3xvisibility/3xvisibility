@@ -1283,7 +1283,8 @@ export default function GeneratedPagesPage() {
       <VisualFidelityDialog
         open={!!fidelityPage}
         onOpenChange={(v) => { if (!v) setFidelityPage(null); }}
-        templateHtml={fidelityPage?.content}
+        baselineHtml={baselineHtml}
+        targetHtml={fidelityPage?.content}
         publishedUrl={fidelityPage?.external_url}
         workspaceId={wsId}
         generatedPageId={fidelityPage?.id}
@@ -1293,13 +1294,21 @@ export default function GeneratedPagesPage() {
         open={!!elementorPreviewPage}
         onOpenChange={(v) => { if (!v) setElementorPreviewPage(null); }}
         page={elementorPreviewPage ? { id: elementorPreviewPage.id, title: elementorPreviewPage.title, content: elementorPreviewPage.content || "", slug: elementorPreviewPage.slug } : null}
-        onPublish={(mode) => {
+        workspaceId={wsId}
+        templateId={undefined}
+        publishedUrl={elementorPreviewPage?.external_url}
+        baseline={baselineHtml ? { html: baselineHtml } : {}}
+        onPublish={async (mode, gate) => {
           const pg = elementorPreviewPage;
+          if (gate?.overridden && gate.checkId) {
+            await supabase.from("page_render_checks").update({ overridden: true }).eq("id", gate.checkId);
+          }
           setElementorMode(mode);
           setElementorPreviewPage(null);
           if (pg) handlePublish([pg.id], "publish");
         }}
       />
+
       <SeoAnalysisDialog open={!!seoAnalysisPage} onOpenChange={(open) => !open && setSeoAnalysisPage(null)} page={seoAnalysisPage}
         campaignTitles={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.title) : undefined}
         campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined}
