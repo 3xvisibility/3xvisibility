@@ -30,7 +30,8 @@ async function resolveCatalogElementorData(
   supabase: ReturnType<typeof createClient>,
   page: { campaign_id?: string | null; title: string; content: string; seo_description?: string | null },
   cache: Map<string, unknown>,
-): Promise<{ data: string; similarity: number; truncatedFields: string[]; ok: boolean } | null> {
+  mode: "html" | "native" = "html",
+): Promise<{ data: string; similarity: number; truncatedFields: string[]; ok: boolean; mode: "html" | "native"; cssLength: number } | null> {
   try {
     if (!page.campaign_id) return null;
 
