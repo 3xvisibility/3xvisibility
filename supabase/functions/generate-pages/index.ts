@@ -321,6 +321,109 @@ function parseCsvRawContent(rawContent: string): Record<string, string>[] {
   return out;
 }
 
+type CsvWindow = { headers: string[]; rows: Record<string, string>[] };
+
+function detectCsvDelimiter(firstLine: string): string {
+  if (firstLine.includes("\t")) return "\t";
+  if (firstLine.split(";").length > firstLine.split(",").length) return ";";
+  if (firstLine.split("|").length > firstLine.split(",").length) return "|";
+  return ",";
+}
+
+function readCsvWindow(rawContent: string, startRow: number, rowCount: number): CsvWindow {
+  const safeStart = Math.max(0, startRow || 0);
+  const safeCount = Math.max(0, rowCount || 0);
+  const rows: Record<string, string>[] = [];
+  let headers: string[] = [];
+  let delimiter = ",";
+  let current = "";
+  let inQuotes = false;
+  let dataRowIndex = 0;
+  let hasHeader = false;
+
+  const consumeRecord = (record: string): boolean => {
+    if (!record.trim()) return false;
+    if (!hasHeader) {
+      delimiter = detectCsvDelimiter(record);
+      headers = parseCsvLine(record, delimiter);
+      hasHeader = true;
+      return false;
+    }
+
+    if (dataRowIndex >= safeStart && rows.length < safeCount) {
+      const values = parseCsvLine(record, delimiter);
+      if (values.some((v) => v.length > 0)) {
+        const row: Record<string, string> = {};
+        for (let h = 0; h < headers.length; h++) row[headers[h]] = values[h] || "";
+        rows.push(row);
+      }
+    }
+
+    dataRowIndex++;
+    return rows.length >= safeCount && dataRowIndex >= safeStart + safeCount;
+  };
+
+  for (let i = 0; i < rawContent.length; i++) {
+    const char = rawContent[i];
+    const nextChar = rawContent[i + 1];
+
+    if (char === '"') {
+      current += char;
+      if (inQuotes && nextChar === '"') {
+        current += nextChar;
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && nextChar === "\n") i++;
+      const shouldStop = consumeRecord(current);
+      current = "";
+      if (shouldStop) break;
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current.trim() && rows.length < safeCount) consumeRecord(current);
+  return { headers, rows };
+}
+
+function countCsvRawRows(rawContent: string): number {
+  let currentLength = 0;
+  let inQuotes = false;
+  let records = 0;
+
+  for (let i = 0; i < rawContent.length; i++) {
+    const char = rawContent[i];
+    const nextChar = rawContent[i + 1];
+    if (char === '"') {
+      currentLength++;
+      if (inQuotes && nextChar === '"') {
+        i++;
+        currentLength++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (currentLength > 0) records++;
+      currentLength = 0;
+      if (char === "\r" && nextChar === "\n") i++;
+      continue;
+    }
+    if (!/\s/.test(char)) currentLength++;
+  }
+
+  if (currentLength > 0) records++;
+  return Math.max(0, records - 1);
+}
+
 
 function triggerBackgroundFunction(
   url: string,
