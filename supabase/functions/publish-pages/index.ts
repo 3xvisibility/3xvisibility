@@ -30,7 +30,8 @@ async function resolveCatalogElementorData(
   supabase: ReturnType<typeof createClient>,
   page: { campaign_id?: string | null; title: string; content: string; seo_description?: string | null },
   cache: Map<string, unknown>,
-): Promise<{ data: string; similarity: number; truncatedFields: string[]; ok: boolean } | null> {
+  mode: "html" | "native" = "html",
+): Promise<{ data: string; similarity: number; truncatedFields: string[]; ok: boolean; mode: "html" | "native"; cssLength: number } | null> {
   try {
     if (!page.campaign_id) return null;
 
@@ -113,13 +114,18 @@ async function resolveCatalogElementorData(
     // styles it travel together inside the `_elementor_data` JSON.
     const embeddedData = buildEmbeddedElementorData(page.content, templateCss);
 
+    // Mode selector: "html" embeds the full styled markup in a single HTML
+    // widget (renders 1:1 with the template); "native" ships the editable
+    // native Elementor widget tree built from the catalog.
+    const chosenData = mode === "native" ? best.data : embeddedData;
+
     const ok = best.similarity >= ELEMENTOR_SIMILARITY_TARGET;
     console.log(
-      `[publish-pages] catalog Elementor rebuilt (similarity ${best.similarity}%, ` +
+      `[publish-pages] catalog Elementor rebuilt (mode ${mode}, similarity ${best.similarity}%, ` +
       `target ${ELEMENTOR_SIMILARITY_TARGET}%, ok=${ok}, truncated ${best.truncatedFields.length}, ` +
-      `css ${templateCss.length} chars, embedded ${embeddedData.length} chars)`,
+      `css ${templateCss.length} chars, data ${chosenData.length} chars)`,
     );
-    return { data: embeddedData, similarity: best.similarity, truncatedFields: best.truncatedFields, ok };
+    return { data: chosenData, similarity: best.similarity, truncatedFields: best.truncatedFields, ok, mode, cssLength: templateCss.length };
   } catch (e) {
     console.warn("[publish-pages] catalog Elementor resolve failed", e);
     return null;
@@ -443,7 +449,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { page_ids, publish_type, website_id, pages: directPages, overwrite_design } = body;
+    const { page_ids, publish_type, website_id, pages: directPages, overwrite_design, elementor_mode } = body;
+    const elementorMode: "html" | "native" = elementor_mode === "native" ? "native" : "html";
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
 
@@ -681,7 +688,7 @@ Deno.serve(async (req) => {
             headers: { Authorization: authHeader, "Content-Type": "application/json" },
             body: JSON.stringify({
               page_ids: allRemaining, publish_type: pubType, website_id: fallbackWebsiteId,
-              overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
+              overwrite_design: allowOverwriteDesign, elementor_mode: elementorMode, _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
             }),
           }).catch(() => {});
         }
@@ -915,7 +922,7 @@ Deno.serve(async (req) => {
           resolvedPublishType === "page" && !preserveDesign && publishFormat === "elementor" &&
           (page.websites as { type?: string })?.type === "wordpress"
         ) {
-          const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
+          const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache, elementorMode);
           if (!catalog) {
             const msg =
               "Publish blocked: no stored Elementor template found for this campaign. " +
@@ -1013,7 +1020,7 @@ Deno.serve(async (req) => {
         headers: { Authorization: authHeader, "Content-Type": "application/json" },
         body: JSON.stringify({
           page_ids: remainingIds, publish_type: pubType, website_id: fallbackWebsiteId,
-          overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
+          overwrite_design: allowOverwriteDesign, elementor_mode: elementorMode, _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
         }),
       }).catch((e) => console.error("[PUBLISH] Self-chain failed:", e));
     }
