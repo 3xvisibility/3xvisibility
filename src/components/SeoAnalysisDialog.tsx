@@ -378,6 +378,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
             page_ids: [currentPage.id],
             publish_type: inferPublishType(currentPage),
             website_id: currentPage.website_id,
+            elementor_mode: "html",
             overwrite_design: true,
           },
         });
