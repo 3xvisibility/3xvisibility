@@ -510,18 +510,28 @@ function flattenSections(elements: ElementorElement[]): ElementorElement[] {
 }
 
 /**
- * Convert an HTML string into a top-level array of Elementor elements
- * (each visual section becomes its own full-width top-level Container).
+ * Convert an HTML string into a top-level array of native Elementor elements
+ * (each visual section becomes its own full-width top-level Container). When a
+ * `siteContext` is supplied, the template's CSS is baked into each widget's
+ * native Elementor style settings — preferring the site's global color/font
+ * tokens — so the page renders 1:1 with NO HTML widget and NO external CSS.
  */
-export function htmlToElementor(html: string): ElementorElement[] {
-  const tree = parseHtml(html || "");
-  const converted = flattenSections(convertChildren(tree));
-  // Ensure every top-level element is a full-width container (Elementor sections).
-  return converted.map((el) =>
-    el.elType === "container"
-      ? { ...el, settings: { ...el.settings, content_width: "full", width: "100%" } }
-      : container([el], undefined, true)
-  );
+export function htmlToElementor(html: string, siteContext?: SiteContext): ElementorElement[] {
+  CURRENT_RESOLVER = new StyleResolver(html || "");
+  CURRENT_CTX = siteContext;
+  try {
+    const tree = parseHtml(html || "");
+    const converted = flattenSections(convertChildren(tree));
+    // Ensure every top-level element is a full-width container (Elementor sections).
+    return converted.map((el) =>
+      el.elType === "container"
+        ? { ...el, settings: { ...el.settings, content_width: "full", width: "100%" } }
+        : container([el], undefined, true)
+    );
+  } finally {
+    CURRENT_RESOLVER = null;
+    CURRENT_CTX = undefined;
+  }
 }
 
 /**
