@@ -3,6 +3,7 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
+import { buildEmbeddedElementorData } from "../_shared/connectors/elementor-engine.ts";
 
 
 /**
@@ -86,6 +87,7 @@ async function resolveCatalogElementorData(
 
     // Automatic rebuild loop: regenerate fields (progressively shrinking content)
     // until the visual similarity check reaches the target or attempts run out.
+    // This still validates that the new content FITS the template design.
     let best: { data: string; similarity: number; truncatedFields: string[] } | null = null;
     for (let attempt = 0; attempt < MAX_REBUILD_ATTEMPTS; attempt++) {
       const keepFraction = 1 - attempt * 0.15;
@@ -101,13 +103,23 @@ async function resolveCatalogElementorData(
     }
     if (!best) return null;
 
+    // CSS-fidelity fix: native Elementor widgets carry Elementor's own class
+    // names, so the template's class-based CSS (`<style>` blocks targeting the
+    // ORIGINAL template classes) never matched and the published page rendered
+    // unstyled. Instead, embed the FULL resolved page markup (which keeps the
+    // template's original classes) together with its `<style>` CSS inside a
+    // single Elementor HTML widget. The design — layout, colors, fonts,
+    // background images — renders 1:1 because both the markup and the CSS that
+    // styles it travel together inside the `_elementor_data` JSON.
+    const embeddedData = buildEmbeddedElementorData(page.content, templateCss);
+
     const ok = best.similarity >= ELEMENTOR_SIMILARITY_TARGET;
     console.log(
       `[publish-pages] catalog Elementor rebuilt (similarity ${best.similarity}%, ` +
       `target ${ELEMENTOR_SIMILARITY_TARGET}%, ok=${ok}, truncated ${best.truncatedFields.length}, ` +
-      `css ${templateCss.length} chars)`,
+      `css ${templateCss.length} chars, embedded ${embeddedData.length} chars)`,
     );
-    return { ...best, ok };
+    return { data: embeddedData, similarity: best.similarity, truncatedFields: best.truncatedFields, ok };
   } catch (e) {
     console.warn("[publish-pages] catalog Elementor resolve failed", e);
     return null;
