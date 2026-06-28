@@ -2200,8 +2200,10 @@ Deno.serve(async (req) => {
           if (pageContent.includes("{{GEO_BLOCKS}}")) {
             const geoBlocksHtml = buildGeoBlocks(geoSettings, row);
             pageContent = pageContent.replace(/\{\{GEO_BLOCKS\}\}/gi, geoBlocksHtml);
-          } else if ((campaign.campaign_type || "seo") === "geo") {
-            // Auto-append GEO blocks for GEO campaigns
+          } else if ((campaign.campaign_type || "seo") === "geo" && !templateSafeMode) {
+            // Auto-append GEO blocks only for non-template-safe pages. Template
+            // marketplace pages must not receive extra visible sections because
+            // they break visual similarity and length budgets.
             pageContent += buildGeoBlocks(geoSettings, row);
           }
 
@@ -2342,17 +2344,23 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Auto-repair SEO elements (H1, links, schema, keyword placement)
-          const repairKeyword = derivePrimaryKeyword({
-            title: Object.values(row).filter(Boolean).slice(0, 2).join(" "),
-            slug: slugify(Object.values(row).filter(Boolean).slice(0, 2).join(" ")),
-            content: pageContent,
-          });
-          pageContent = autoRepairContent(pageContent, {
-            title: Object.values(row).filter(Boolean).slice(0, 2).join(" - ") || `Page ${processedCount + 1}`,
-            primaryKeyword: repairKeyword,
-            language: resolvedLanguage,
-          });
+          // Auto-repair SEO elements only for free-form generated pages.
+          // IMPORTANT: Marketplace/template-safe pages must stay visually identical
+          // to the selected template. The repair helper injects visible SEO/GEO
+          // paragraphs after the H1, which was the source of the oversized
+          // description under the hero subtitle.
+          if (!templateSafeMode && !reuseTemplateContent) {
+            const repairKeyword = derivePrimaryKeyword({
+              title: Object.values(row).filter(Boolean).slice(0, 2).join(" "),
+              slug: slugify(Object.values(row).filter(Boolean).slice(0, 2).join(" ")),
+              content: pageContent,
+            });
+            pageContent = autoRepairContent(pageContent, {
+              title: Object.values(row).filter(Boolean).slice(0, 2).join(" - ") || `Page ${processedCount + 1}`,
+              primaryKeyword: repairKeyword,
+              language: resolvedLanguage,
+            });
+          }
 
           const h1Match = pageContent.match(/<h1[^>]*>(.*?)<\/h1>/i);
           let pageTitle: string;
@@ -2635,7 +2643,10 @@ Deno.serve(async (req) => {
                 }
               }
               const faq = buildAutoFaq(pageContent, faqRow);
-              aiFaqHtml = faq.html;
+              // Keep FAQ structured data if available, but never append visible
+              // FAQ HTML in template-safe/reuse mode. Extra visible blocks alter
+              // the selected design and can look like overlong AI content.
+              aiFaqHtml = templateSafeMode || reuseTemplateContent ? "" : faq.html;
               aiFaqJsonLd = faq.jsonLd || "";
             }
           } catch (extErr) {
