@@ -361,7 +361,7 @@ export class WordPressConnector implements CmsConnector {
       // into each widget's settings (mapped to the live site's global color/font
       // tokens) — fully editable, no HTML widget, no external CSS dependency.
       const siteCtx = elementorData ? undefined : await this.siteContext();
-      Object.assign(meta, buildElementorMeta(payload.content || "", { embedCss: false, prebuiltData: elementorData, siteContext: siteCtx }));
+      Object.assign(meta, buildElementorMeta(payload.content || "", { embedCss: payload.elementor_mode === "html", prebuiltData: elementorData, siteContext: siteCtx }));
       // Step 1: import the design into the WP Elementor Template Library first
       // (like a ready-made plugin template), so the same Elementor JSON is
       // registered/reusable on the site before the page itself is created.
@@ -451,7 +451,7 @@ export class WordPressConnector implements CmsConnector {
       // widget's settings (mapped to the site's global tokens), so the page is
       // fully editable and renders 1:1 with no HTML widget / external CSS.
       const siteCtx = elementorData ? undefined : await this.siteContext();
-      Object.assign(meta, buildElementorMeta((payload.content as string) || "", { embedCss: false, prebuiltData: elementorData, siteContext: siteCtx }));
+      Object.assign(meta, buildElementorMeta((payload.content as string) || "", { embedCss: payload.elementor_mode === "html", prebuiltData: elementorData, siteContext: siteCtx }));
       // `_elementor_css` omitted on purpose (object REST schema → rest_invalid_type);
       // Elementor regenerates the CSS automatically when the page is re-rendered.
       elementorApplied = true;
