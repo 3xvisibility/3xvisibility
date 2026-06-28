@@ -225,7 +225,13 @@ export default function GeneratedPagesPage() {
   const publishMutation = useMutation({
     mutationFn: async ({ pageIds, type, websiteId }: { pageIds: string[]; type: "page" | "product"; websiteId?: string }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: pageIds, publish_type: type, website_id: websiteId, elementor_mode: elementorModeRef.current },
+        body: {
+          page_ids: pageIds,
+          publish_type: type,
+          website_id: websiteId,
+          elementor_mode: elementorModeRef.current,
+          overwrite_design: true,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -289,7 +295,13 @@ export default function GeneratedPagesPage() {
   const bulkPublishMutation = useMutation({
     mutationFn: async ({ ids, websiteId, type }: { ids: string[]; websiteId?: string; type?: "page" | "product" }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: ids, publish_type: type ?? publishType, website_id: websiteId, elementor_mode: elementorModeRef.current },
+        body: {
+          page_ids: ids,
+          publish_type: type ?? publishType,
+          website_id: websiteId,
+          elementor_mode: elementorModeRef.current,
+          overwrite_design: true,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -329,7 +341,13 @@ export default function GeneratedPagesPage() {
         .update({ status: "pending" as any, error_message: null }).in("id", ids);
       if (resetErr) throw resetErr;
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: ids, publish_type: type ?? publishType, website_id: websiteId, elementor_mode: elementorModeRef.current },
+        body: {
+          page_ids: ids,
+          publish_type: type ?? publishType,
+          website_id: websiteId,
+          elementor_mode: elementorModeRef.current,
+          overwrite_design: true,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

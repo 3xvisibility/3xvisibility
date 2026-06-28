@@ -377,7 +377,13 @@ export default function CampaignDetailPage() {
       const pubType = ((campaign as any)?.publish_type === "product" ? "product" : "page");
 
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: [pageId], publish_type: pubType, website_id: websiteId || campaign?.website_id },
+        body: {
+          page_ids: [pageId],
+          publish_type: pubType,
+          website_id: websiteId || campaign?.website_id,
+          elementor_mode: "html",
+          overwrite_design: true,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -414,6 +420,8 @@ export default function CampaignDetailPage() {
           publish_type: pubType,
           website_id: campaign?.website_id,
           use_latest_mapping: true,
+          elementor_mode: "html",
+          overwrite_design: true,
         },
       });
       if (error) throw error;
@@ -450,6 +458,8 @@ export default function CampaignDetailPage() {
           page_ids: pageIds,
           publish_type: pubType,
           website_id: websiteId || campaign?.website_id,
+          elementor_mode: "html",
+          overwrite_design: true,
         },
       });
       if (error) throw error;
