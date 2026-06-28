@@ -114,13 +114,18 @@ async function resolveCatalogElementorData(
     // styles it travel together inside the `_elementor_data` JSON.
     const embeddedData = buildEmbeddedElementorData(page.content, templateCss);
 
+    // Mode selector: "html" embeds the full styled markup in a single HTML
+    // widget (renders 1:1 with the template); "native" ships the editable
+    // native Elementor widget tree built from the catalog.
+    const chosenData = mode === "native" ? best.data : embeddedData;
+
     const ok = best.similarity >= ELEMENTOR_SIMILARITY_TARGET;
     console.log(
-      `[publish-pages] catalog Elementor rebuilt (similarity ${best.similarity}%, ` +
+      `[publish-pages] catalog Elementor rebuilt (mode ${mode}, similarity ${best.similarity}%, ` +
       `target ${ELEMENTOR_SIMILARITY_TARGET}%, ok=${ok}, truncated ${best.truncatedFields.length}, ` +
-      `css ${templateCss.length} chars, embedded ${embeddedData.length} chars)`,
+      `css ${templateCss.length} chars, data ${chosenData.length} chars)`,
     );
-    return { data: embeddedData, similarity: best.similarity, truncatedFields: best.truncatedFields, ok };
+    return { data: chosenData, similarity: best.similarity, truncatedFields: best.truncatedFields, ok, mode, cssLength: templateCss.length };
   } catch (e) {
     console.warn("[publish-pages] catalog Elementor resolve failed", e);
     return null;
