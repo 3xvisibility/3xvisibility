@@ -1255,6 +1255,17 @@ export default function GeneratedPagesPage() {
         generatedPageId={fidelityPage?.id}
         templateId={undefined}
       />
+      <ElementorPublishPreviewDialog
+        open={!!elementorPreviewPage}
+        onOpenChange={(v) => { if (!v) setElementorPreviewPage(null); }}
+        page={elementorPreviewPage ? { id: elementorPreviewPage.id, title: elementorPreviewPage.title, content: elementorPreviewPage.content || "", slug: elementorPreviewPage.slug } : null}
+        onPublish={(mode) => {
+          const pg = elementorPreviewPage;
+          setElementorMode(mode);
+          setElementorPreviewPage(null);
+          if (pg) handlePublish([pg.id], "publish");
+        }}
+      />
       <SeoAnalysisDialog open={!!seoAnalysisPage} onOpenChange={(open) => !open && setSeoAnalysisPage(null)} page={seoAnalysisPage}
         campaignTitles={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.title) : undefined}
         campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined}
