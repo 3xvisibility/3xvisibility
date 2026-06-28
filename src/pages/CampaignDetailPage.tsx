@@ -381,7 +381,7 @@ export default function CampaignDetailPage() {
           page_ids: [pageId],
           publish_type: pubType,
           website_id: websiteId || campaign?.website_id,
-          elementor_mode: "html",
+          elementor_mode: "native",
           overwrite_design: true,
         },
       });
@@ -420,7 +420,7 @@ export default function CampaignDetailPage() {
           publish_type: pubType,
           website_id: campaign?.website_id,
           use_latest_mapping: true,
-          elementor_mode: "html",
+          elementor_mode: "native",
           overwrite_design: true,
         },
       });
@@ -458,7 +458,7 @@ export default function CampaignDetailPage() {
           page_ids: pageIds,
           publish_type: pubType,
           website_id: websiteId || campaign?.website_id,
-          elementor_mode: "html",
+          elementor_mode: "native",
           overwrite_design: true,
         },
       });
