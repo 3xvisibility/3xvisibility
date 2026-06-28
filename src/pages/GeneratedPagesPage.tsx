@@ -85,6 +85,10 @@ export default function GeneratedPagesPage() {
   const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
+  const [elementorPreviewPage, setElementorPreviewPage] = useState<GeneratedPage | null>(null);
+  const [elementorMode, setElementorModeState] = useState<ElementorWidgetMode>("html");
+  const elementorModeRef = useRef<ElementorWidgetMode>("html");
+  const setElementorMode = (m: ElementorWidgetMode) => { elementorModeRef.current = m; setElementorModeState(m); };
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
