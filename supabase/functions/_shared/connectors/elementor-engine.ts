@@ -14,6 +14,26 @@
  * a small, tolerant HTML tokenizer.
  */
 
+import { StyleResolver, styleButton, styleContainer, styleHeading, styleImage, styleText, type NodeLike } from "./style-extract.ts";
+import type { SiteContext } from "./wp-site-context.ts";
+
+// Module-scoped style baking state. Set by `htmlToElementor` so the widget
+// builders can bake the template's CSS into native Elementor settings without
+// changing every builder signature. Null when styling is unavailable.
+let CURRENT_RESOLVER: StyleResolver | null = null;
+let CURRENT_CTX: SiteContext | undefined = undefined;
+
+function bakedSettings(
+  node: HtmlNode | undefined,
+  apply: (settings: Record<string, unknown>, props: ReturnType<StyleResolver["resolve"]>, ctx?: SiteContext) => void,
+  settings: Record<string, unknown>,
+): Record<string, unknown> {
+  if (!CURRENT_RESOLVER || !node) return settings;
+  const props = CURRENT_RESOLVER.resolve(node as NodeLike);
+  apply(settings, props, CURRENT_CTX);
+  return settings;
+}
+
 export interface ElementorElement {
   id: string;
   elType: "container" | "widget";
@@ -149,20 +169,20 @@ function heading(node: HtmlNode): ElementorElement {
     id: genId(),
     elType: "widget",
     widgetType: "heading",
-    settings: {
+    settings: bakedSettings(node, styleHeading, {
       title: textContent(node),
       header_size: node.tag,
-    },
+    }),
     elements: [],
   };
 }
 
-function textEditor(html: string): ElementorElement {
+function textEditor(html: string, node?: HtmlNode): ElementorElement {
   return {
     id: genId(),
     elType: "widget",
     widgetType: "text-editor",
-    settings: { editor: html.trim().startsWith("<") ? html : `<p>${html}</p>` },
+    settings: bakedSettings(node, styleText, { editor: html.trim().startsWith("<") ? html : `<p>${html}</p>` }),
     elements: [],
   };
 }
@@ -172,9 +192,9 @@ function image(node: HtmlNode): ElementorElement {
     id: genId(),
     elType: "widget",
     widgetType: "image",
-    settings: {
+    settings: bakedSettings(node, (s, p) => styleImage(s, p), {
       image: { url: node.attrs.src || "", alt: node.attrs.alt || "" },
-    },
+    }),
     elements: [],
   };
 }
@@ -184,10 +204,10 @@ function button(node: HtmlNode): ElementorElement {
     id: genId(),
     elType: "widget",
     widgetType: "button",
-    settings: {
+    settings: bakedSettings(node, styleButton, {
       text: textContent(node) || "Button",
       link: node.attrs.href ? { url: node.attrs.href, is_external: "", nofollow: "" } : { url: "#" },
-    },
+    }),
     elements: [],
   };
 }
@@ -367,6 +387,10 @@ function container(children: ElementorElement[], node?: HtmlNode, topLevel = fal
     settings.flex_direction = "row";
     settings.flex_wrap = "wrap";
   }
+  // Bake the template's section background/padding/margin into the container.
+  if (node && CURRENT_RESOLVER) {
+    styleContainer(settings, CURRENT_RESOLVER.resolve(node as NodeLike), CURRENT_CTX);
+  }
   return { id: genId(), elType: "container", settings, elements: children };
 }
 
@@ -486,18 +510,28 @@ function flattenSections(elements: ElementorElement[]): ElementorElement[] {
 }
 
 /**
- * Convert an HTML string into a top-level array of Elementor elements
- * (each visual section becomes its own full-width top-level Container).
+ * Convert an HTML string into a top-level array of native Elementor elements
+ * (each visual section becomes its own full-width top-level Container). When a
+ * `siteContext` is supplied, the template's CSS is baked into each widget's
+ * native Elementor style settings — preferring the site's global color/font
+ * tokens — so the page renders 1:1 with NO HTML widget and NO external CSS.
  */
-export function htmlToElementor(html: string): ElementorElement[] {
-  const tree = parseHtml(html || "");
-  const converted = flattenSections(convertChildren(tree));
-  // Ensure every top-level element is a full-width container (Elementor sections).
-  return converted.map((el) =>
-    el.elType === "container"
-      ? { ...el, settings: { ...el.settings, content_width: "full", width: "100%" } }
-      : container([el], undefined, true)
-  );
+export function htmlToElementor(html: string, siteContext?: SiteContext): ElementorElement[] {
+  CURRENT_RESOLVER = new StyleResolver(html || "");
+  CURRENT_CTX = siteContext;
+  try {
+    const tree = parseHtml(html || "");
+    const converted = flattenSections(convertChildren(tree));
+    // Ensure every top-level element is a full-width container (Elementor sections).
+    return converted.map((el) =>
+      el.elType === "container"
+        ? { ...el, settings: { ...el.settings, content_width: "full", width: "100%" } }
+        : container([el], undefined, true)
+    );
+  } finally {
+    CURRENT_RESOLVER = null;
+    CURRENT_CTX = undefined;
+  }
 }
 
 /**
@@ -590,7 +624,12 @@ function extractRenderableHtml(html: string): string {
  * theme header/footer/sidebar and full width — matching the original design.
  */
 export interface BuildElementorMetaOptions {
-  /** When true (default), embed full template markup + CSS in a single HTML widget. When false, rely on native Elementor widgets + Elementor-generated CSS. */
+  /**
+   * When false (default), build NATIVE Elementor containers/widgets with the
+   * template's CSS baked into widget style settings (no HTML widget, fully
+   * editable). When true, embed full template markup + CSS in a single HTML
+   * widget (legacy fallback, kept only for explicit opt-in / debugging).
+   */
   embedCss?: boolean;
   version?: string;
   /**
@@ -598,6 +637,8 @@ export interface BuildElementorMetaOptions {
    * content already applied). When set, it's used verbatim and the HTML is ignored.
    */
   prebuiltData?: string;
+  /** Live site context so native widgets map to the site's global tokens. */
+  siteContext?: SiteContext;
 }
 
 export function buildElementorMeta(
@@ -607,7 +648,7 @@ export function buildElementorMeta(
   // Back-compat: allow passing version string as the 2nd arg.
   const opts: BuildElementorMetaOptions =
     typeof options === "string" ? { version: options } : options;
-  const { embedCss = true, version = "3.21.0", prebuiltData } = opts;
+  const { embedCss = false, version = "3.21.0", prebuiltData, siteContext } = opts;
 
   let dataStr: string;
   if (prebuiltData) {
@@ -626,7 +667,8 @@ export function buildElementorMeta(
       };
       data = [container([htmlWidget], undefined, true)];
     } else {
-      data = htmlToElementor(html);
+      // Native Elementor widgets with the template CSS baked into settings.
+      data = htmlToElementor(html, siteContext);
     }
     dataStr = JSON.stringify(data);
   }
