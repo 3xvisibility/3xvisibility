@@ -38,6 +38,13 @@ export interface PagePayload {
    * Shopify connector). Controls how `content` is converted at publish time.
    */
   publish_format?: "elementor" | "gutenberg" | "shopify";
+  /**
+   * Elementor build strategy. "native" (default) emits native Elementor
+   * Containers + widgets with the template CSS baked into each widget's
+   * settings (fully editable, no external CSS). "html" is a legacy escape hatch
+   * that embeds the full template markup + CSS into a single HTML widget.
+   */
+  elementor_mode?: "native" | "html";
   custom_fields?: Record<string, unknown>;
   taxonomies?: Record<string, string[]>;
   /**

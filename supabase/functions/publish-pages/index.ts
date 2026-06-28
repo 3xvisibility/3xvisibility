@@ -273,6 +273,7 @@ function buildPayload(
   extraData?: Record<string, unknown>,
   pageTemplate?: string,
   preserveDesign?: boolean,
+  elementorMode?: "native" | "html",
 ): PagePayload {
   const payload: PagePayload = {
     title: page.title,
@@ -286,6 +287,8 @@ function buildPayload(
   };
 
   if (page.seo_description) payload.excerpt = page.seo_description;
+
+  if (elementorMode) payload.elementor_mode = elementorMode;
 
   if (preserveDesign) payload.preserve_design = true;
 
@@ -450,7 +453,9 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { page_ids, publish_type, website_id, pages: directPages, overwrite_design, elementor_mode } = body;
-    const elementorMode: "html" | "native" = elementor_mode === "native" ? "native" : "html";
+    // Default to NATIVE Elementor widgets (CSS baked into settings). Only the
+    // legacy single-HTML-widget embed path is used when explicitly requested.
+    const elementorMode: "html" | "native" = elementor_mode === "html" ? "html" : "native";
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
 
@@ -574,6 +579,7 @@ Deno.serve(async (req) => {
             // Mirror the site's preferred template.
             !preserveDesign ? templateInfo.pageTemplate : undefined,
             preserveDesign,
+            elementorMode,
           );
 
 
@@ -904,6 +910,7 @@ Deno.serve(async (req) => {
             ? templateCache.get(page.website_id || "default")?.pageTemplate
             : undefined,
           preserveDesign,
+          elementorMode,
         );
 
         // Resolve the campaign's chosen publish format and forward it so the
