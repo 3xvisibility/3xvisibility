@@ -1813,7 +1813,7 @@ Deno.serve(async (req) => {
 
       const pagesUsed = pageSub?.pages_used || 0;
       const pagesLimit = pageSub?.pages_limit ?? 0;
-      const pagesNeeded = remainingRows.length;
+      const pagesNeeded = rowsRemainingForCampaign;
       if (pagesLimit > 0 && pagesUsed + pagesNeeded > pagesLimit) {
         return new Response(JSON.stringify({
           error: `Monthly page quota exceeded. Need ${pagesNeeded}, have ${Math.max(0, pagesLimit - pagesUsed)} remaining of ${pagesLimit}.`,
@@ -1844,7 +1844,7 @@ Deno.serve(async (req) => {
           workspace_id: campaign.workspace_id,
           user_id: user.id,
           status: "running",
-          total_rows: limitedRows.length,
+          total_rows: maxRowsLimit,
           processed_rows: 0,
           success_count: 0,
           error_count: 0,
@@ -1879,7 +1879,7 @@ Deno.serve(async (req) => {
         generation_completed_at: null,
       }).eq("id", campaign_id);
 
-      await logEvent(supabase, campaign_id, user.id, "started", `Generation started. ${csvRows.length} total pages to generate. Job: ${jobId}`);
+      await logEvent(supabase, campaign_id, user.id, "started", `Generation started. ${maxRowsLimit} total pages to generate. Job: ${jobId}`);
     }
 
     // Pre-fetch website URL and name once (instead of per-row)
@@ -1931,7 +1931,7 @@ Deno.serve(async (req) => {
         timedOut = true;
         console.log(`[GENERATE-PAGES] Timeout reached after ${batchesCompleted} batches. Saving partial results.`);
         await logEvent(supabase, campaign_id, user.id, "timeout_partial",
-          `Timeout after ${batchesCompleted} batches. ${processedCount}/${limitedRows.length} processed. Will auto-resume.`,
+          `Timeout after ${batchesCompleted} batches. ${processedCount}/${maxRowsLimit} processed. Will auto-resume.`,
           batchesCompleted);
 
         // Save progress so it can be resumed
@@ -1972,10 +1972,10 @@ Deno.serve(async (req) => {
           partial: true,
           generated: successCount,
           failed: failedCount,
-          total: limitedRows.length,
-          remaining: limitedRows.length - processedCount,
+          total: maxRowsLimit,
+          remaining: Math.max(0, maxRowsLimit - processedCount),
           job_id: jobId,
-          message: `Timeout reached. ${successCount} pages generated so far. Auto-resuming remaining ${limitedRows.length - processedCount} pages.`,
+          message: `Timeout reached. ${successCount} pages generated so far. Auto-resuming remaining ${Math.max(0, maxRowsLimit - processedCount)} pages.`,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -1989,7 +1989,7 @@ Deno.serve(async (req) => {
 
       if (freshCampaign?.is_paused) {
         await logEvent(supabase, campaign_id, user.id, "paused_during_batch",
-          `Paused after batch ${batchesCompleted}. ${processedCount}/${csvRows.length} pages processed.`, batchesCompleted);
+          `Paused after batch ${batchesCompleted}. ${processedCount}/${maxRowsLimit} pages processed.`, batchesCompleted);
 
         await supabase.from("campaigns").update({
           status: "queued",
@@ -2013,8 +2013,8 @@ Deno.serve(async (req) => {
           paused: true,
           generated: successCount,
           failed: failedCount,
-          total: csvRows.length,
-          remaining: csvRows.length - processedCount,
+          total: maxRowsLimit,
+          remaining: Math.max(0, maxRowsLimit - processedCount),
           job_id: jobId,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
