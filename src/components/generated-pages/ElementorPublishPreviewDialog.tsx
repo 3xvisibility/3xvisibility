@@ -234,7 +234,7 @@ export function ElementorPublishPreviewDialog({
           </Button>
           {onPublish && (
             <Button
-              onClick={() => onPublish(mode)}
+              onClick={() => onPublish(mode, { overridden: override, checkId: validation?.check_id })}
               disabled={publishBlocked}
               className="gap-1"
             >
