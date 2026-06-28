@@ -169,20 +169,20 @@ function heading(node: HtmlNode): ElementorElement {
     id: genId(),
     elType: "widget",
     widgetType: "heading",
-    settings: {
+    settings: bakedSettings(node, styleHeading, {
       title: textContent(node),
       header_size: node.tag,
-    },
+    }),
     elements: [],
   };
 }
 
-function textEditor(html: string): ElementorElement {
+function textEditor(html: string, node?: HtmlNode): ElementorElement {
   return {
     id: genId(),
     elType: "widget",
     widgetType: "text-editor",
-    settings: { editor: html.trim().startsWith("<") ? html : `<p>${html}</p>` },
+    settings: bakedSettings(node, styleText, { editor: html.trim().startsWith("<") ? html : `<p>${html}</p>` }),
     elements: [],
   };
 }
@@ -192,9 +192,9 @@ function image(node: HtmlNode): ElementorElement {
     id: genId(),
     elType: "widget",
     widgetType: "image",
-    settings: {
+    settings: bakedSettings(node, (s, p) => styleImage(s, p), {
       image: { url: node.attrs.src || "", alt: node.attrs.alt || "" },
-    },
+    }),
     elements: [],
   };
 }
@@ -204,10 +204,10 @@ function button(node: HtmlNode): ElementorElement {
     id: genId(),
     elType: "widget",
     widgetType: "button",
-    settings: {
+    settings: bakedSettings(node, styleButton, {
       text: textContent(node) || "Button",
       link: node.attrs.href ? { url: node.attrs.href, is_external: "", nofollow: "" } : { url: "#" },
-    },
+    }),
     elements: [],
   };
 }
