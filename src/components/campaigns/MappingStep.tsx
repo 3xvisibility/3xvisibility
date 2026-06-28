@@ -940,14 +940,14 @@ export function MappingStep({
                   ) : variable in customValues ? (
                     (() => {
                       const raw = customValues[variable] || "";
-                      const parts = raw.split(/[\n,;|]/).map(p => p.trim()).filter(Boolean);
+                      const lineCount = Math.max(1, raw.split(/\n/).length);
                       return (
                         <div className="space-y-1">
                           <div className="flex items-start gap-1.5">
                             <textarea
                               className="min-h-[34px] w-full flex-1 rounded-lg border border-primary/30 bg-background px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none resize-y"
-                              placeholder={"One value, or many — one per line for multiple services"}
-                              rows={parts.length > 1 ? Math.min(parts.length + 1, 6) : 1}
+                              placeholder={"Custom fixed value. Commas/lists stay on the same page."}
+                              rows={Math.min(lineCount, 6)}
                               value={raw}
                               onChange={e => {
                                 setCustomValues(prev => ({ ...prev, [variable]: e.target.value }));
@@ -958,12 +958,10 @@ export function MappingStep({
                               <X className="h-3.5 w-3.5" />
                             </Button>
                           </div>
-                          {parts.length > 1 && (
-                            <p className="text-[10px] text-primary flex items-center gap-1">
-                              <Sparkles className="h-2.5 w-2.5" />
-                              {parts.length} values → {parts.length}× pages (one per value)
-                            </p>
-                          )}
+                          <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <Sparkles className="h-2.5 w-2.5" />
+                            Fixed template value — it will not create extra pages.
+                          </p>
                         </div>
                       );
                     })()
