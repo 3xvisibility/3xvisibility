@@ -288,6 +288,8 @@ function buildPayload(
 
   if (page.seo_description) payload.excerpt = page.seo_description;
 
+  if (elementorMode) payload.elementor_mode = elementorMode;
+
   if (preserveDesign) payload.preserve_design = true;
 
   // Forward the detected/explicit page_template so the new page inherits the
