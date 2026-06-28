@@ -2874,6 +2874,10 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_campaign_csv_window: {
+        Args: { _campaign_id: string; _row_count?: number; _start_row?: number }
+        Returns: Json
+      }
       get_shopify_access_token: {
         Args: { _website_id: string }
         Returns: string
