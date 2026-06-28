@@ -2978,8 +2978,67 @@ Deno.serve(async (req) => {
       }
     }
 
+    // This invocation intentionally processes only a bounded window for large
+    // CSVs. If more rows remain, save progress and immediately queue the next
+    // resume run instead of marking the campaign complete.
+    if (processedCount < maxRowsLimit) {
+      await supabase.from("campaigns").update({
+        status: "queued",
+        processed_rows: processedCount,
+        failed_rows: failedCount,
+        current_batch: batchesCompleted,
+        is_paused: false,
+      }).eq("id", campaign_id);
+
+      if (jobId) {
+        await updateJob(supabase, jobId, {
+          status: "paused",
+          processed_rows: processedCount,
+          success_count: successCount,
+          error_count: failedCount,
+          current_batch: batchesCompleted,
+        });
+      }
+
+      await logEvent(
+        supabase,
+        campaign_id,
+        user.id,
+        "window_completed",
+        `Generated ${processedCount}/${maxRowsLimit} pages. Auto-resuming next safe batch.`,
+        batchesCompleted,
+      );
+
+      try {
+        const resumeUrl = `${supabaseUrl}/functions/v1/generate-pages`;
+        triggerBackgroundFunction(
+          resumeUrl,
+          {
+            Authorization: authHeader,
+            "Content-Type": "application/json",
+            "x-service-role-key": supabaseServiceKey,
+          },
+          { campaign_id, action: "resume" },
+          "generate-pages resume",
+        );
+      } catch { /* ignore */ }
+
+      return new Response(JSON.stringify({
+        success: true,
+        partial: true,
+        generated: successCount,
+        failed: failedCount,
+        total: maxRowsLimit,
+        remaining: Math.max(0, maxRowsLimit - processedCount),
+        job_id: jobId,
+        message: `Generated ${processedCount}/${maxRowsLimit} pages. Continuing automatically in safe batches.`,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Mark completed
-    const finalStatus = failedCount === csvRows.length ? "failed" : "completed";
+    const finalStatus = failedCount === maxRowsLimit ? "failed" : "completed";
     await supabase.from("campaigns").update({
       status: finalStatus,
       processed_rows: processedCount,
@@ -3143,7 +3202,7 @@ Deno.serve(async (req) => {
       success: true,
       generated: successCount,
       failed: failedCount,
-      total: csvRows.length,
+      total: maxRowsLimit,
       ai_generations_used: aiGenerationsUsed,
       ai_autofill: {
         count: aiFilledKeys.length,
