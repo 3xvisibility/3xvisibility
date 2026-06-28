@@ -2,15 +2,21 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Code2, Eye, FileCode2, Palette, UploadCloud } from "lucide-react";
+import { Code2, Eye, FileCode2, Palette, UploadCloud, ShieldAlert } from "lucide-react";
 import {
   buildElementorDebugReport,
   type ElementorWidgetMode,
 } from "@/lib/connectors/elementor-engine";
+import {
+  VisualValidationPanel,
+  type ValidationSide,
+  type ValidationResult,
+} from "@/components/generated-pages/VisualValidationPanel";
 
 interface PreviewPage {
   id: string;
@@ -25,6 +31,12 @@ interface ElementorPublishPreviewDialogProps {
   page: PreviewPage | null;
   /** Called with the chosen widget mode when the user proceeds to publish. */
   onPublish?: (mode: ElementorWidgetMode) => void;
+  workspaceId?: string | null;
+  templateId?: string | null;
+  /** Expected/template render for the visual gate. */
+  baseline?: ValidationSide;
+  /** Live URL if the page is already published (used as the target render). */
+  publishedUrl?: string | null;
 }
 
 function RenderableFrame({ html }: { html: string }) {
