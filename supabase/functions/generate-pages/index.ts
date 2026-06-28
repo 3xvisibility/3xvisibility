@@ -1360,7 +1360,8 @@ Deno.serve(async (req) => {
       .eq("campaign_id", campaign_id)
       .maybeSingle();
 
-    if (csvFile?.raw_content) {
+    const hasDedicatedCsv = Boolean(csvFile?.raw_content);
+    if (hasDedicatedCsv) {
       const rawCsv = csvFile.raw_content as string;
       (csvFile as { raw_content?: string | null }).raw_content = null; // free ~MBs for GC
       const expectedRowCount = typeof csvFile.row_count === "number" ? csvFile.row_count : null;
@@ -1370,7 +1371,7 @@ Deno.serve(async (req) => {
     }
 
     // Fall back to legacy inline csv_data only when no dedicated CSV file exists.
-    if (csvRows.length === 0) {
+    if (!hasDedicatedCsv && csvRows.length === 0) {
       const { data: inlineCampaign } = await supabase
         .from("campaigns")
         .select("csv_data")
