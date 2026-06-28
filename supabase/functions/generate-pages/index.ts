@@ -321,6 +321,109 @@ function parseCsvRawContent(rawContent: string): Record<string, string>[] {
   return out;
 }
 
+type CsvWindow = { headers: string[]; rows: Record<string, string>[] };
+
+function detectCsvDelimiter(firstLine: string): string {
+  if (firstLine.includes("\t")) return "\t";
+  if (firstLine.split(";").length > firstLine.split(",").length) return ";";
+  if (firstLine.split("|").length > firstLine.split(",").length) return "|";
+  return ",";
+}
+
+function readCsvWindow(rawContent: string, startRow: number, rowCount: number): CsvWindow {
+  const safeStart = Math.max(0, startRow || 0);
+  const safeCount = Math.max(0, rowCount || 0);
+  const rows: Record<string, string>[] = [];
+  let headers: string[] = [];
+  let delimiter = ",";
+  let current = "";
+  let inQuotes = false;
+  let dataRowIndex = 0;
+  let hasHeader = false;
+
+  const consumeRecord = (record: string): boolean => {
+    if (!record.trim()) return false;
+    if (!hasHeader) {
+      delimiter = detectCsvDelimiter(record);
+      headers = parseCsvLine(record, delimiter);
+      hasHeader = true;
+      return false;
+    }
+
+    if (dataRowIndex >= safeStart && rows.length < safeCount) {
+      const values = parseCsvLine(record, delimiter);
+      if (values.some((v) => v.length > 0)) {
+        const row: Record<string, string> = {};
+        for (let h = 0; h < headers.length; h++) row[headers[h]] = values[h] || "";
+        rows.push(row);
+      }
+    }
+
+    dataRowIndex++;
+    return rows.length >= safeCount && dataRowIndex >= safeStart + safeCount;
+  };
+
+  for (let i = 0; i < rawContent.length; i++) {
+    const char = rawContent[i];
+    const nextChar = rawContent[i + 1];
+
+    if (char === '"') {
+      current += char;
+      if (inQuotes && nextChar === '"') {
+        current += nextChar;
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && nextChar === "\n") i++;
+      const shouldStop = consumeRecord(current);
+      current = "";
+      if (shouldStop) break;
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current.trim() && rows.length < safeCount) consumeRecord(current);
+  return { headers, rows };
+}
+
+function countCsvRawRows(rawContent: string): number {
+  let currentLength = 0;
+  let inQuotes = false;
+  let records = 0;
+
+  for (let i = 0; i < rawContent.length; i++) {
+    const char = rawContent[i];
+    const nextChar = rawContent[i + 1];
+    if (char === '"') {
+      currentLength++;
+      if (inQuotes && nextChar === '"') {
+        i++;
+        currentLength++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (currentLength > 0) records++;
+      currentLength = 0;
+      if (char === "\r" && nextChar === "\n") i++;
+      continue;
+    }
+    if (!/\s/.test(char)) currentLength++;
+  }
+
+  if (currentLength > 0) records++;
+  return Math.max(0, records - 1);
+}
+
 
 function triggerBackgroundFunction(
   url: string,
@@ -1088,6 +1191,7 @@ async function updateJob(supabase: any, jobId: string, updates: Record<string, a
 }
 
 const BATCH_SIZE = 5;
+const MAX_ROWS_PER_INVOCATION = 25;
 
 Deno.serve(async (req) => {
   console.log("[GENERATE-PAGES] Request received:", req.method);
@@ -1207,7 +1311,7 @@ Deno.serve(async (req) => {
     // Fetch campaign
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
-      .select("*, templates(content, variables, seo_title_pattern, seo_description_pattern, schema_type, schema_config)")
+      .select("id, name, user_id, workspace_id, website_id, campaign_type, publish_mode, max_rows, scheduled_at, processed_rows, failed_rows, current_batch, is_paused, geo_settings, utm_settings, mapping, language, ai_max_lines, ai_max_words, generation_method, directory_structure, templates(content, variables, seo_title_pattern, seo_description_pattern, schema_type, schema_config)")
       .eq("id", campaign_id)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -1242,31 +1346,43 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Try loading CSV from dedicated storage table first, fall back to inline csv_data
+    const alreadyProcessed = campaign.processed_rows || 0;
+    const startIndex = action === "resume" ? alreadyProcessed : 0;
+
+    // Try loading only the needed CSV window from the dedicated storage table.
+    // Loading every row for very large files can exceed edge worker memory before
+    // batch processing begins, so each invocation processes a small resumable slice.
     let csvRows: Record<string, string>[] = [];
+    let csvTotalRows = 0;
     const { data: csvFile } = await supabase
       .from("campaign_csv_files")
       .select("raw_content, headers, row_count")
       .eq("campaign_id", campaign_id)
       .maybeSingle();
 
-    if (csvFile?.raw_content) {
-      const parsedRows = parseCsvRawContent(csvFile.raw_content as string);
+    const hasDedicatedCsv = Boolean(csvFile?.raw_content);
+    if (hasDedicatedCsv) {
+      const rawCsv = csvFile.raw_content as string;
       (csvFile as { raw_content?: string | null }).raw_content = null; // free ~MBs for GC
       const expectedRowCount = typeof csvFile.row_count === "number" ? csvFile.row_count : null;
-
-      if (!expectedRowCount || parsedRows.length === expectedRowCount) {
-        csvRows = parsedRows;
-      } else {
-        console.warn(
-          `[GENERATE-PAGES] CSV parse mismatch for campaign ${campaign_id}: parsed ${parsedRows.length}, expected ${expectedRowCount}. Falling back to inline csv_data.`
-        );
-      }
+      csvTotalRows = expectedRowCount ?? countCsvRawRows(rawCsv);
+      const windowStart = action === "preview" ? 0 : startIndex;
+      csvRows = readCsvWindow(rawCsv, windowStart, action === "preview" ? 1 : MAX_ROWS_PER_INVOCATION).rows;
     }
 
-    // Fall back to inline csv_data
-    if (csvRows.length === 0) {
-      csvRows = (campaign.csv_data || []) as Record<string, string>[];
+    // Fall back to legacy inline csv_data only when no dedicated CSV file exists.
+    if (!hasDedicatedCsv && csvRows.length === 0) {
+      const { data: inlineCampaign } = await supabase
+        .from("campaigns")
+        .select("csv_data")
+        .eq("id", campaign_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const inlineRows = (inlineCampaign?.csv_data || []) as Record<string, string>[];
+      csvTotalRows = inlineRows.length;
+      csvRows = action === "preview"
+        ? inlineRows.slice(0, 1)
+        : inlineRows.slice(startIndex, startIndex + MAX_ROWS_PER_INVOCATION);
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -1325,14 +1441,24 @@ Deno.serve(async (req) => {
     }
 
 
-    if (csvRows.length === 0) {
+    const maxRowsLimit = campaign.max_rows ? Math.min(campaign.max_rows, csvTotalRows) : csvTotalRows;
+
+    if (csvTotalRows === 0) {
       console.error("[GENERATE-PAGES] No CSV data found for campaign");
       return new Response(JSON.stringify({ error: "No CSV data in this campaign" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    console.log("[GENERATE-PAGES] CSV rows:", csvRows.length);
+
+    if (startIndex >= maxRowsLimit) {
+      return new Response(JSON.stringify({ success: true, message: "All pages already generated" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const rowsRemainingForCampaign = Math.max(0, maxRowsLimit - startIndex);
+    console.log("[GENERATE-PAGES] CSV rows:", csvTotalRows, "window:", csvRows.length, "start:", startIndex);
 
     // Load custom mappings from the mappings table
     const { data: customMappings } = await supabase
@@ -1341,11 +1467,8 @@ Deno.serve(async (req) => {
       .eq("campaign_id", campaign_id)
       .order("sort_order", { ascending: true });
 
-    const alreadyProcessed = campaign.processed_rows || 0;
-    const startIndex = action === "resume" ? alreadyProcessed : 0;
-    // Apply max_rows limit if set
-    const maxRowsLimit = campaign.max_rows ? Math.min(campaign.max_rows, csvRows.length) : csvRows.length;
-    let limitedRows = csvRows.slice(0, maxRowsLimit);
+    // This invocation only sees a bounded window of rows to keep memory usage low.
+    let limitedRows = csvRows.slice(0, rowsRemainingForCampaign);
 
     // ═══════════════════════════════════════════════════════════
     // Generation Methods: all | sequential | random
@@ -1392,7 +1515,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const remainingRows = limitedRows.slice(startIndex);
+    const remainingRows = limitedRows;
 
     if (remainingRows.length === 0) {
       return new Response(JSON.stringify({ success: true, message: "All pages already generated" }), {
@@ -1690,7 +1813,7 @@ Deno.serve(async (req) => {
 
       const pagesUsed = pageSub?.pages_used || 0;
       const pagesLimit = pageSub?.pages_limit ?? 0;
-      const pagesNeeded = remainingRows.length;
+      const pagesNeeded = rowsRemainingForCampaign;
       if (pagesLimit > 0 && pagesUsed + pagesNeeded > pagesLimit) {
         return new Response(JSON.stringify({
           error: `Monthly page quota exceeded. Need ${pagesNeeded}, have ${Math.max(0, pagesLimit - pagesUsed)} remaining of ${pagesLimit}.`,
@@ -1721,7 +1844,7 @@ Deno.serve(async (req) => {
           workspace_id: campaign.workspace_id,
           user_id: user.id,
           status: "running",
-          total_rows: limitedRows.length,
+          total_rows: maxRowsLimit,
           processed_rows: 0,
           success_count: 0,
           error_count: 0,
@@ -1756,7 +1879,7 @@ Deno.serve(async (req) => {
         generation_completed_at: null,
       }).eq("id", campaign_id);
 
-      await logEvent(supabase, campaign_id, user.id, "started", `Generation started. ${csvRows.length} total pages to generate. Job: ${jobId}`);
+      await logEvent(supabase, campaign_id, user.id, "started", `Generation started. ${maxRowsLimit} total pages to generate. Job: ${jobId}`);
     }
 
     // Pre-fetch website URL and name once (instead of per-row)
@@ -1808,7 +1931,7 @@ Deno.serve(async (req) => {
         timedOut = true;
         console.log(`[GENERATE-PAGES] Timeout reached after ${batchesCompleted} batches. Saving partial results.`);
         await logEvent(supabase, campaign_id, user.id, "timeout_partial",
-          `Timeout after ${batchesCompleted} batches. ${processedCount}/${limitedRows.length} processed. Will auto-resume.`,
+          `Timeout after ${batchesCompleted} batches. ${processedCount}/${maxRowsLimit} processed. Will auto-resume.`,
           batchesCompleted);
 
         // Save progress so it can be resumed
@@ -1849,10 +1972,10 @@ Deno.serve(async (req) => {
           partial: true,
           generated: successCount,
           failed: failedCount,
-          total: limitedRows.length,
-          remaining: limitedRows.length - processedCount,
+          total: maxRowsLimit,
+          remaining: Math.max(0, maxRowsLimit - processedCount),
           job_id: jobId,
-          message: `Timeout reached. ${successCount} pages generated so far. Auto-resuming remaining ${limitedRows.length - processedCount} pages.`,
+          message: `Timeout reached. ${successCount} pages generated so far. Auto-resuming remaining ${Math.max(0, maxRowsLimit - processedCount)} pages.`,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -1866,7 +1989,7 @@ Deno.serve(async (req) => {
 
       if (freshCampaign?.is_paused) {
         await logEvent(supabase, campaign_id, user.id, "paused_during_batch",
-          `Paused after batch ${batchesCompleted}. ${processedCount}/${csvRows.length} pages processed.`, batchesCompleted);
+          `Paused after batch ${batchesCompleted}. ${processedCount}/${maxRowsLimit} pages processed.`, batchesCompleted);
 
         await supabase.from("campaigns").update({
           status: "queued",
@@ -1890,8 +2013,8 @@ Deno.serve(async (req) => {
           paused: true,
           generated: successCount,
           failed: failedCount,
-          total: csvRows.length,
-          remaining: csvRows.length - processedCount,
+          total: maxRowsLimit,
+          remaining: Math.max(0, maxRowsLimit - processedCount),
           job_id: jobId,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -2855,8 +2978,67 @@ Deno.serve(async (req) => {
       }
     }
 
+    // This invocation intentionally processes only a bounded window for large
+    // CSVs. If more rows remain, save progress and immediately queue the next
+    // resume run instead of marking the campaign complete.
+    if (processedCount < maxRowsLimit) {
+      await supabase.from("campaigns").update({
+        status: "queued",
+        processed_rows: processedCount,
+        failed_rows: failedCount,
+        current_batch: batchesCompleted,
+        is_paused: false,
+      }).eq("id", campaign_id);
+
+      if (jobId) {
+        await updateJob(supabase, jobId, {
+          status: "paused",
+          processed_rows: processedCount,
+          success_count: successCount,
+          error_count: failedCount,
+          current_batch: batchesCompleted,
+        });
+      }
+
+      await logEvent(
+        supabase,
+        campaign_id,
+        user.id,
+        "window_completed",
+        `Generated ${processedCount}/${maxRowsLimit} pages. Auto-resuming next safe batch.`,
+        batchesCompleted,
+      );
+
+      try {
+        const resumeUrl = `${supabaseUrl}/functions/v1/generate-pages`;
+        triggerBackgroundFunction(
+          resumeUrl,
+          {
+            Authorization: authHeader,
+            "Content-Type": "application/json",
+            "x-service-role-key": supabaseServiceKey,
+          },
+          { campaign_id, action: "resume" },
+          "generate-pages resume",
+        );
+      } catch { /* ignore */ }
+
+      return new Response(JSON.stringify({
+        success: true,
+        partial: true,
+        generated: successCount,
+        failed: failedCount,
+        total: maxRowsLimit,
+        remaining: Math.max(0, maxRowsLimit - processedCount),
+        job_id: jobId,
+        message: `Generated ${processedCount}/${maxRowsLimit} pages. Continuing automatically in safe batches.`,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Mark completed
-    const finalStatus = failedCount === csvRows.length ? "failed" : "completed";
+    const finalStatus = failedCount === maxRowsLimit ? "failed" : "completed";
     await supabase.from("campaigns").update({
       status: finalStatus,
       processed_rows: processedCount,
@@ -3020,7 +3202,7 @@ Deno.serve(async (req) => {
       success: true,
       generated: successCount,
       failed: failedCount,
-      total: csvRows.length,
+      total: maxRowsLimit,
       ai_generations_used: aiGenerationsUsed,
       ai_autofill: {
         count: aiFilledKeys.length,
