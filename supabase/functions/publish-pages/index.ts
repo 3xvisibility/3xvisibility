@@ -449,7 +449,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { page_ids, publish_type, website_id, pages: directPages, overwrite_design } = body;
+    const { page_ids, publish_type, website_id, pages: directPages, overwrite_design, elementor_mode } = body;
+    const elementorMode: "html" | "native" = elementor_mode === "native" ? "native" : "html";
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
 
