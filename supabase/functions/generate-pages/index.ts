@@ -304,17 +304,23 @@ function parseCsvRawContent(rawContent: string): Record<string, string>[] {
   else if (firstLine.split("|").length > firstLine.split(",").length) delimiter = "|";
 
   const headers = parseCsvLine(firstLine, delimiter);
-  return records
-    .slice(1)
-    .map((record) => parseCsvLine(record, delimiter))
-    .filter((values) => values.some((value) => value.length > 0))
-    .map((values) =>
-      headers.reduce((acc: Record<string, string>, header, index) => {
-        acc[header] = values[index] || "";
-        return acc;
-      }, {})
-    );
+
+  // Single-pass build to keep peak memory low for very large CSVs (tens of MB /
+  // tens of thousands of rows). Avoids creating multiple full intermediate
+  // arrays (map → filter → map) that triple memory and trip the edge function's
+  // resource limit. We also drop each source record as we consume it.
+  const out: Record<string, string>[] = [];
+  for (let i = 1; i < records.length; i++) {
+    const values = parseCsvLine(records[i], delimiter);
+    records[i] = ""; // release the source string for GC
+    if (!values.some((v) => v.length > 0)) continue;
+    const row: Record<string, string> = {};
+    for (let h = 0; h < headers.length; h++) row[headers[h]] = values[h] || "";
+    out.push(row);
+  }
+  return out;
 }
+
 
 function triggerBackgroundFunction(
   url: string,
