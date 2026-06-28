@@ -579,6 +579,7 @@ Deno.serve(async (req) => {
             // Mirror the site's preferred template.
             !preserveDesign ? templateInfo.pageTemplate : undefined,
             preserveDesign,
+            elementorMode,
           );
 
 
