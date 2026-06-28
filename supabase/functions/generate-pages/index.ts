@@ -2938,7 +2938,7 @@ Deno.serve(async (req) => {
               page_ids: chunk,
               publish_type: "page",
               website_id: campaign.website_id,
-              elementor_mode: "html",
+              elementor_mode: "native",
               overwrite_design: true,
             },
             "publish-pages"
@@ -3138,7 +3138,7 @@ Deno.serve(async (req) => {
                 page_ids: chunk,
                 publish_type: "page",
                 website_id: campaign.website_id,
-                elementor_mode: "html",
+                elementor_mode: "native",
                 overwrite_design: true,
               },
               "publish-pages"
