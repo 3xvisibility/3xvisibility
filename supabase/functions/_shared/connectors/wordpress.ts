@@ -356,11 +356,12 @@ export class WordPressConnector implements CmsConnector {
         ? await this.importElementorImages(payload.elementor_data)
         : undefined;
       // When a stored Elementor catalog JSON exists, its CSS is already baked into
-      // the widget settings, so publish it verbatim. Otherwise embed the full
-      // template markup + <style> CSS in a single HTML widget so ALL styling
-      // (fonts, backgrounds, layout) renders 1:1 in Elementor and on the
-      // WordPress frontend — native-widget conversion would drop <style> blocks.
-      Object.assign(meta, buildElementorMeta(payload.content || "", { embedCss: !elementorData, prebuiltData: elementorData }));
+      // the widget settings, so publish it verbatim. Otherwise build NATIVE
+      // Elementor Containers + Widgets from the template HTML, baking its CSS
+      // into each widget's settings (mapped to the live site's global color/font
+      // tokens) — fully editable, no HTML widget, no external CSS dependency.
+      const siteCtx = elementorData ? undefined : await this.siteContext();
+      Object.assign(meta, buildElementorMeta(payload.content || "", { embedCss: false, prebuiltData: elementorData, siteContext: siteCtx }));
       // Step 1: import the design into the WP Elementor Template Library first
       // (like a ready-made plugin template), so the same Elementor JSON is
       // registered/reusable on the site before the page itself is created.
