@@ -79,6 +79,9 @@ export default function CampaignsPage() {
         queryClient.invalidateQueries({ queryKey: ["campaigns"] });
         queryClient.invalidateQueries({ queryKey: ["generation-jobs", wsId] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "generated_pages", filter: wsScopeFilter }, () => {
+        queryClient.invalidateQueries({ queryKey: ["campaigns-generated-page-count", wsId] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [queryClient, wsId]);
@@ -108,6 +111,19 @@ export default function CampaignsPage() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: generatedPageCount = 0 } = useQuery({
+    queryKey: ["campaigns-generated-page-count", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("generated_pages")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", wsId!);
+      if (error) throw error;
+      return count ?? 0;
     },
   });
 
@@ -280,9 +296,11 @@ export default function CampaignsPage() {
     const total = campaigns.length;
     const active = campaigns.filter(c => c.status === "processing" || c.status === "queued").length;
     const completed = campaigns.filter(c => c.status === "completed").length;
-    const totalPages = campaigns.reduce((sum, c) => sum + ((c as any).processed_rows || 0), 0);
+    // Only records that actually exist in generated_pages are real pages.
+    // Draft/import rows or template variable combinations must not be counted as pages.
+    const totalPages = generatedPageCount;
     return { total, active, completed, totalPages };
-  }, [campaigns]);
+  }, [campaigns, generatedPageCount]);
 
   const getProgressInfo = (c: Campaign) => {
     const total = (c as any).total_rows || 0;
