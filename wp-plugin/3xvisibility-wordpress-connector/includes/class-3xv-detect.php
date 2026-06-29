@@ -21,9 +21,11 @@ class XXXV_Detect {
 
 		$is_block_theme = function_exists( 'wp_is_block_theme' ) ? wp_is_block_theme() : false;
 
-		// Resolve container width / global colors from Elementor kit when present.
-		$container_width = null;
-		$global_colors   = array();
+		// Resolve container width / global colors / typography / breakpoints from kit.
+		$container_width    = null;
+		$global_colors      = array();
+		$global_typography  = array();
+		$breakpoints        = array();
 		if ( $elementor_active && class_exists( '\Elementor\Plugin' ) ) {
 			$kit_id = get_option( 'elementor_active_kit' );
 			if ( $kit_id ) {
@@ -32,30 +34,84 @@ class XXXV_Detect {
 					if ( isset( $kit_settings['container_width']['size'] ) ) {
 						$container_width = (int) $kit_settings['container_width']['size'];
 					}
-					if ( ! empty( $kit_settings['system_colors'] ) && is_array( $kit_settings['system_colors'] ) ) {
-						foreach ( $kit_settings['system_colors'] as $c ) {
-							if ( ! empty( $c['color'] ) ) {
-								$global_colors[] = array(
-									'id'    => isset( $c['_id'] ) ? $c['_id'] : '',
-									'title' => isset( $c['title'] ) ? $c['title'] : '',
-									'value' => $c['color'],
+
+					// Global colors (system + custom).
+					foreach ( array( 'system_colors', 'custom_colors' ) as $color_group ) {
+						if ( ! empty( $kit_settings[ $color_group ] ) && is_array( $kit_settings[ $color_group ] ) ) {
+							foreach ( $kit_settings[ $color_group ] as $c ) {
+								if ( ! empty( $c['color'] ) ) {
+									$global_colors[] = array(
+										'id'    => isset( $c['_id'] ) ? $c['_id'] : '',
+										'title' => isset( $c['title'] ) ? $c['title'] : '',
+										'value' => $c['color'],
+									);
+								}
+							}
+						}
+					}
+
+					// Global typography (system + custom).
+					foreach ( array( 'system_typography', 'custom_typography' ) as $typo_group ) {
+						if ( ! empty( $kit_settings[ $typo_group ] ) && is_array( $kit_settings[ $typo_group ] ) ) {
+							foreach ( $kit_settings[ $typo_group ] as $t ) {
+								$global_typography[] = array(
+									'id'          => isset( $t['_id'] ) ? $t['_id'] : '',
+									'title'       => isset( $t['title'] ) ? $t['title'] : '',
+									'font_family' => isset( $t['typography_font_family'] ) ? $t['typography_font_family'] : '',
+									'font_weight' => isset( $t['typography_font_weight'] ) ? $t['typography_font_weight'] : '',
+									'font_size'   => isset( $t['typography_font_size'] ) ? $t['typography_font_size'] : null,
+									'line_height' => isset( $t['typography_line_height'] ) ? $t['typography_line_height'] : null,
 								);
 							}
 						}
 					}
+
+					// Responsive breakpoints.
+					foreach ( array( 'mobile', 'mobile_extra', 'tablet', 'tablet_extra', 'laptop', 'widescreen' ) as $bp ) {
+						$key = 'viewport_' . $bp;
+						if ( isset( $kit_settings[ $key ] ) && '' !== $kit_settings[ $key ] ) {
+							$breakpoints[ $bp ] = (int) $kit_settings[ $key ];
+						}
+					}
 				}
 			}
+
+			// Fallback to Elementor's active breakpoints API.
+			if ( empty( $breakpoints ) && class_exists( '\Elementor\Plugin' ) && isset( \Elementor\Plugin::$instance->breakpoints ) ) {
+				try {
+					$active = \Elementor\Plugin::$instance->breakpoints->get_active_breakpoints();
+					if ( is_array( $active ) ) {
+						foreach ( $active as $name => $bp_obj ) {
+							if ( is_object( $bp_obj ) && method_exists( $bp_obj, 'get_value' ) ) {
+								$breakpoints[ $name ] = (int) $bp_obj->get_value();
+							}
+						}
+					}
+				} catch ( \Throwable $e ) {
+					// Ignore — defaults below.
+				}
+			}
+		}
+
+		// Sensible Elementor defaults if none resolved.
+		if ( empty( $breakpoints ) ) {
+			$breakpoints = array(
+				'mobile' => 767,
+				'tablet' => 1024,
+			);
 		}
 
 		return rest_ensure_response(
 			array(
 				'recommended_builder' => $elementor_active ? 'elementor' : 'gutenberg',
 				'elementor'           => array(
-					'active'          => (bool) $elementor_active,
-					'pro'             => (bool) $elementor_pro_active,
-					'version'         => $elementor_version,
-					'container_width' => $container_width,
-					'global_colors'   => $global_colors,
+					'active'            => (bool) $elementor_active,
+					'pro'               => (bool) $elementor_pro_active,
+					'version'           => $elementor_version,
+					'container_width'   => $container_width,
+					'global_colors'     => $global_colors,
+					'global_typography' => $global_typography,
+					'breakpoints'       => $breakpoints,
 				),
 				'gutenberg'           => array(
 					'active'         => true, // Core block editor is always available.

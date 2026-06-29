@@ -109,6 +109,16 @@ class XXXV_REST {
 				'permission_callback' => $auth,
 			)
 		);
+
+		register_rest_route(
+			XXXV_CONNECTOR_NS,
+			'/debug-log',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'debug_log' ),
+				'permission_callback' => $auth,
+			)
+		);
 	}
 
 	public function ping() {
@@ -119,6 +129,19 @@ class XXXV_REST {
 				'version'   => XXXV_CONNECTOR_VERSION,
 				'time'      => current_time( 'mysql' ),
 				'wp'        => get_bloginfo( 'version' ),
+			)
+		);
+	}
+
+	/**
+	 * Return the connector's recent debug/error log ring-buffer.
+	 */
+	public function debug_log() {
+		$log = get_option( 'xxxv_debug_log', array() );
+		return rest_ensure_response(
+			array(
+				'ok'      => true,
+				'entries' => is_array( $log ) ? array_reverse( $log ) : array(),
 			)
 		);
 	}
