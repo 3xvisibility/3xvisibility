@@ -53,6 +53,7 @@ export default function WebsitesPage() {
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [jwtToken, setJwtToken] = useState("");
+  const [wpTestError, setWpTestError] = useState<string | null>(null);
   const [connectorKey, setConnectorKey] = useState("");
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
@@ -397,14 +398,17 @@ export default function WebsitesPage() {
       return data;
     },
     onSuccess: (data) => {
+      setWpTestError(null);
       toast({ title: "Connection successful", description: data.message });
       // Auto-detect site language after successful connection (only if not already chosen).
       if (!siteLanguage) detectLanguageMutation.mutate();
     },
     onError: (err: Error) => {
+      setWpTestError(err.message);
       toast({ title: "Connection failed", description: err.message, variant: "destructive" });
     },
   });
+
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -551,7 +555,10 @@ export default function WebsitesPage() {
                     onJwtTokenChange={setJwtToken}
                     connectorKey={connectorKey}
                     onConnectorKeyChange={setConnectorKey}
+                    siteUrl={siteUrl}
+                    testError={wpTestError}
                   />
+
                 )}
                  {siteType === "shopify" && (
                       <ShopifyCredentialFields
