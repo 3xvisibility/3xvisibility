@@ -40,7 +40,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useSubscription } from "@/hooks/use-subscription";
 
 type GeneratedPage = Tables<"generated_pages"> & {
-  campaigns?: { name: string; publish_type?: string | null } | null;
+  campaigns?: { name: string; publish_type?: string | null; publish_format?: string | null } | null;
   websites?: { name: string; type?: string | null } | null;
 };
 
@@ -109,7 +109,7 @@ export default function GeneratedPagesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
-        .select("*, campaigns(name, publish_type), websites(name, type)")
+        .select("*, campaigns(name, publish_type, publish_format), websites(name, type)")
         .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -1296,6 +1296,7 @@ export default function GeneratedPagesPage() {
         page={elementorPreviewPage ? { id: elementorPreviewPage.id, title: elementorPreviewPage.title, content: elementorPreviewPage.content || "", slug: elementorPreviewPage.slug } : null}
         workspaceId={wsId}
         templateId={undefined}
+        publishFormat={elementorPreviewPage?.campaigns?.publish_format ?? null}
         publishedUrl={elementorPreviewPage?.external_url}
         baseline={baselineHtml ? { html: baselineHtml } : {}}
         onPublish={async (mode, gate) => {

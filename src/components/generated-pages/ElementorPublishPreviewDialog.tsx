@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
 import { Code2, Eye, FileCode2, Palette, UploadCloud, ShieldAlert } from "lucide-react";
 import {
   buildElementorDebugReport,
@@ -29,15 +29,29 @@ interface ElementorPublishPreviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   page: PreviewPage | null;
-  /** Called with the chosen widget mode when the user proceeds to publish. */
+  /** Called with the resolved widget mode when the user proceeds to publish. */
   onPublish?: (mode: ElementorWidgetMode, gate?: { overridden: boolean; checkId?: string | null }) => void;
   workspaceId?: string | null;
   templateId?: string | null;
+  /** Publish format chosen on the campaign: "elementor" | "gutenberg" | "shopify" | "html". */
+  publishFormat?: string | null;
   /** Expected/template render for the visual gate. */
   baseline?: ValidationSide;
   /** Live URL if the page is already published (used as the target render). */
   publishedUrl?: string | null;
 }
+
+/** Map the campaign publish format to the Elementor widget mode used for publishing. */
+function resolveMode(format?: string | null): ElementorWidgetMode {
+  return format === "elementor" ? "native" : "html";
+}
+
+const FORMAT_LABELS: Record<string, string> = {
+  elementor: "Native Elementor widgets",
+  gutenberg: "Gutenberg blocks",
+  shopify: "Shopify section",
+  html: "Single HTML widget",
+};
 
 function RenderableFrame({ html }: { html: string }) {
   const ref = useRef<HTMLIFrameElement>(null);
@@ -73,10 +87,11 @@ export function ElementorPublishPreviewDialog({
   onPublish,
   workspaceId,
   templateId,
+  publishFormat,
   baseline = {},
   publishedUrl,
 }: ElementorPublishPreviewDialogProps) {
-  const [mode, setMode] = useState<ElementorWidgetMode>("html");
+  const mode = resolveMode(publishFormat);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [override, setOverride] = useState(false);
 
@@ -99,6 +114,7 @@ export function ElementorPublishPreviewDialog({
   const publishBlocked = gateFailed && !override;
 
   if (!page) return null;
+
 
 
   return (
@@ -126,45 +142,21 @@ export function ElementorPublishPreviewDialog({
           </div>
         </DialogHeader>
 
-        {/* Widget mode selector */}
-        <div className="rounded-lg border border-border bg-muted/30 p-3">
-          <Label className="text-xs font-semibold mb-2 block">Elementor widget mode</Label>
-          <RadioGroup
-            value={mode}
-            onValueChange={(v) => setMode(v as ElementorWidgetMode)}
-            className="grid sm:grid-cols-2 gap-2"
-          >
-            <label
-              htmlFor="mode-html"
-              className={`flex items-start gap-2 rounded-md border p-2.5 cursor-pointer text-xs ${
-                mode === "html" ? "border-primary bg-primary/5" : "border-border"
-              }`}
-            >
-              <RadioGroupItem value="html" id="mode-html" className="mt-0.5" />
-              <span>
-                <span className="font-medium block">Single HTML widget (recommended)</span>
-                <span className="text-muted-foreground">
-                  Embeds full markup + CSS in one widget. Renders 1:1 with the template — correct spacing, backgrounds, fonts and layout on the published page.
-                </span>
-              </span>
-            </label>
-            <label
-              htmlFor="mode-native"
-              className={`flex items-start gap-2 rounded-md border p-2.5 cursor-pointer text-xs ${
-                mode === "native" ? "border-primary bg-primary/5" : "border-border"
-              }`}
-            >
-              <RadioGroupItem value="native" id="mode-native" className="mt-0.5" />
-              <span>
-                <span className="font-medium block">Native Elementor widgets</span>
-                <span className="text-muted-foreground">
-                  Editable widgets for in-Elementor editing. Note: CSS only appears after you open and re-save the page in Elementor (REST publishing can't pre-build the page CSS).
-                </span>
-              </span>
-            </label>
-
-          </RadioGroup>
+        {/* Publishing format (chosen on the campaign — not editable here) */}
+        <div className="rounded-lg border border-border bg-muted/30 p-3 flex items-center justify-between gap-3">
+          <div>
+            <Label className="text-xs font-semibold block">Publishing format</Label>
+            <span className="text-xs text-muted-foreground">
+              {mode === "native"
+                ? "Native Elementor widgets — editable inside the Elementor builder."
+                : "Single HTML widget — embeds full markup + CSS, renders 1:1 with the template."}
+            </span>
+          </div>
+          <Badge variant="secondary" className="shrink-0 text-[11px]">
+            {FORMAT_LABELS[publishFormat || (mode === "native" ? "elementor" : "html")] || "Single HTML widget"}
+          </Badge>
         </div>
+
 
         {/* Visual-validation gate (98% similarity) */}
         <VisualValidationPanel
@@ -240,7 +232,7 @@ export function ElementorPublishPreviewDialog({
               className="gap-1"
             >
               <UploadCloud className="h-4 w-4" />
-              {publishBlocked ? "Blocked by visual gate" : "Publish with this mode"}
+              {publishBlocked ? "Blocked by visual gate" : "Publish"}
             </Button>
           )}
         </DialogFooter>
