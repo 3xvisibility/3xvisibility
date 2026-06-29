@@ -31,9 +31,32 @@ interface PublishResponse {
   post_id: number;
   url: string;
   status: string;
+  elementor_data_valid?: boolean;
+  elementor_data_hash?: string;
+  elements?: number;
 }
 
 const CONNECTOR_TIMEOUT_MS = 25_000;
+export const REQUIRED_3XV_CONNECTOR_VERSION = "1.1.3";
+
+interface ConnectorPingResponse {
+  ok: boolean;
+  plugin?: string;
+  version?: string;
+  elementor_active?: boolean;
+  capabilities?: Record<string, boolean>;
+}
+
+function compareVersions(a = "0.0.0", b = "0.0.0"): number {
+  const pa = a.split(/[.-]/).map((part) => Number.parseInt(part, 10) || 0);
+  const pb = b.split(/[.-]/).map((part) => Number.parseInt(part, 10) || 0);
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const diff = (pa[i] || 0) - (pb[i] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
 
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = CONNECTOR_TIMEOUT_MS): Promise<Response> {
   const ac = new AbortController();
@@ -94,13 +117,68 @@ export class PgpConnector implements CmsConnector {
     });
     if (!res.ok) {
       const text = await res.text();
+      if (res.status === 401 || res.status === 403 || res.status === 404) {
+        throw this.connectorSetupError(path, res.status, text);
+      }
       throw new Error(`PGP Connector ${method} ${path} failed (${res.status}): ${text}`);
     }
     return (await res.json()) as T;
   }
 
+  private connectorSetupError(path: string, status: number, detail: string): Error {
+    if (status === 401 || status === 403) {
+      return new Error(
+        "3xVisibility Connector pre-flight failed: invalid or missing Connector API Key. " +
+        "Copy the key from WordPress → Settings → 3xVisibility WordPress Connector and save it in this website connection.",
+      );
+    }
+    if (status === 404) {
+      return new Error(
+        "3xVisibility Connector pre-flight failed: plugin endpoint was not found. " +
+        "Install and activate the 3xVisibility WordPress Connector plugin, then retry publishing.",
+      );
+    }
+    return new Error(`3xVisibility Connector pre-flight failed on ${path} (${status}): ${detail || "no detail returned"}`);
+  }
+
+  async preflight(): Promise<ConnectorPingResponse> {
+    if (!this.apiKey) {
+      throw new Error(
+        "3xVisibility Connector pre-flight failed: Connector API Key is missing. " +
+        "Install the connector plugin and paste its API key into the website settings before publishing.",
+      );
+    }
+
+    const path = "/ping";
+    const url = new URL(`${this.restBase}${path}`);
+    url.searchParams.set("connector_key", this.apiKey);
+    const res = await fetchWithTimeout(url.toString(), { method: "GET", headers: this.headers() });
+    if (!res.ok) {
+      throw this.connectorSetupError(path, res.status, await res.text());
+    }
+
+    const data = (await res.json()) as ConnectorPingResponse;
+    if (!data?.ok) {
+      throw new Error("3xVisibility Connector pre-flight failed: plugin did not return a healthy response.");
+    }
+
+    const installedVersion = data.version || "0.0.0";
+    if (compareVersions(installedVersion, REQUIRED_3XV_CONNECTOR_VERSION) < 0) {
+      throw new Error(
+        `3xVisibility Connector pre-flight failed: plugin version ${installedVersion} is active, ` +
+        `but version ${REQUIRED_3XV_CONNECTOR_VERSION}+ is required. Update/reinstall the connector plugin, then retry publishing.`,
+      );
+    }
+
+    if (data.elementor_active === false) {
+      throw new Error("3xVisibility Connector pre-flight failed: Elementor is not active on this WordPress site.");
+    }
+
+    return data;
+  }
+
   async testConnection(): Promise<boolean> {
-    const data = await this.call<{ ok: boolean }>("/ping", "GET");
+    const data = await this.preflight();
     return Boolean(data?.ok);
   }
 
@@ -202,6 +280,9 @@ export class PgpConnector implements CmsConnector {
       page_template: payload.page_template || "elementor_header_footer",
       meta,
     });
+    if (res.elementor_data_valid === false) {
+      throw new Error("3xVisibility Connector publish failed: WordPress saved the page, but _elementor_data did not load back correctly.");
+    }
     return { external_id: String(res.post_id), url: res.url };
   }
 

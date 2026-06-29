@@ -50,6 +50,14 @@ Deno.serve(async (req) => {
       console.log(`[test-connection] shopify domain=${url} token_len=${token.length} token_prefix=${token.substring(0, 8)}...`);
     }
     const connector = await createConnector(website);
+    const preflight = (connector as { preflight?: () => Promise<unknown> }).preflight;
+    if (type === "wordpress" && typeof preflight === "function") {
+      const info = await preflight.call(connector);
+      return new Response(
+        JSON.stringify({ success: true, message: "3xVisibility WordPress Connector is ready", connector: info }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     let ok = false;
     try {
       ok = await connector.testConnection();
