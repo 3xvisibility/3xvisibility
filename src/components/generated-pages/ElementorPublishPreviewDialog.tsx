@@ -232,7 +232,7 @@ export function ElementorPublishPreviewDialog({
               className="gap-1"
             >
               <UploadCloud className="h-4 w-4" />
-              {publishBlocked ? "Blocked by visual gate" : "Publish with this mode"}
+              {publishBlocked ? "Blocked by visual gate" : "Publish"}
             </Button>
           )}
         </DialogFooter>
