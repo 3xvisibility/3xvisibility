@@ -351,6 +351,7 @@ Deno.serve(async (req) => {
 
 
       try {
+        ensureBudget(functionStartedAt, "Manual CMS update", 35_000);
         const isProductContent = page_type === "product";
         const connector = isProductContent
           ? await createProductConnector(website as WebsiteRecord)
@@ -368,7 +369,11 @@ Deno.serve(async (req) => {
         if (seo_title) updatePayload.seo_title = seo_title;
         if (seo_description) updatePayload.seo_description = seo_description;
         if (seo_keywords?.length) updatePayload.seo_keywords = seo_keywords;
-        pushResult = await connector.updatePage(page_external_id, updatePayload);
+        pushResult = await withTimeout(
+          connector.updatePage(page_external_id, updatePayload),
+          Math.min(CMS_PUSH_TIMEOUT_MS, Math.max(8_000, remainingBudgetMs(functionStartedAt, 8_000))),
+          "CMS update timed out. The connected site did not respond quickly enough; please retry or update metadata only.",
+        );
         console.log(`[MANUAL] Updated existing ${isProductContent ? 'product' : 'page'} on CMS:`, pushResult);
       } catch (pushErr: any) {
         pushError = pushErr.message || "CMS update failed";
