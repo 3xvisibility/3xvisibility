@@ -1104,7 +1104,11 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
     });
   } catch (err: any) {
     console.error("optimize-seo-content error:", err);
-    return new Response(JSON.stringify({ error: err.message || "Unknown error" }), {
+    return new Response(JSON.stringify({
+      error: err.message || "Unknown error",
+      code: err.status === 504 ? "FUNCTION_SAFE_TIMEOUT" : undefined,
+      details: err.details,
+    }), {
       status: err.status || 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
