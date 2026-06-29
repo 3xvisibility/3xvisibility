@@ -397,14 +397,17 @@ export default function WebsitesPage() {
       return data;
     },
     onSuccess: (data) => {
+      setWpTestError(null);
       toast({ title: "Connection successful", description: data.message });
       // Auto-detect site language after successful connection (only if not already chosen).
       if (!siteLanguage) detectLanguageMutation.mutate();
     },
     onError: (err: Error) => {
+      setWpTestError(err.message);
       toast({ title: "Connection failed", description: err.message, variant: "destructive" });
     },
   });
+
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
