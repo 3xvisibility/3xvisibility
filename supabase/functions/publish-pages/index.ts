@@ -71,15 +71,22 @@ async function resolveCatalogElementorData(
         if (hasData) elementorJson = ed;
       }
 
-      // NO on-the-fly HTML→Elementor fallback. Stored Elementor JSON is the
-      // ONLY master format. If neither a catalog row nor the template's own
-      // elementor_data exists, publishing is blocked upstream so a forbidden
-      // raw-HTML conversion can never reach WordPress.
-
+      // 3) Last-resort fallback: convert the template's stored HTML markup into
+      // native Elementor JSON on the fly. This keeps WordPress publishing working
+      // for templates that were never pre-seeded into the catalog (no marketplace
+      // id and no stored elementor_data) instead of hard-blocking the publish.
       // Extract the template's <style> CSS so class-based design (grids, colors,
       // fonts, backgrounds, custom classes) renders 1:1 on the published page.
-      // Without this the Elementor widget tree has structure but no styling.
       templateCss = extractTemplateCss(tplRow?.content);
+
+      if (!elementorJson && tplRow?.content) {
+        try {
+          const tree = htmlToElementor(tplRow.content);
+          if (Array.isArray(tree) && tree.length > 0) elementorJson = tree;
+        } catch (e) {
+          console.warn("[publish-pages] on-the-fly HTML→Elementor conversion failed", e);
+        }
+      }
 
       cache.set(page.campaign_id, elementorJson ? { json: elementorJson, css: templateCss } : null);
     }
