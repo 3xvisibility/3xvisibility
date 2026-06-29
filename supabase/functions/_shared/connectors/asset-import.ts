@@ -78,15 +78,20 @@ function replaceAll(html: string, from: string, to: string): string {
 export async function importHtmlAssets(
   html: string,
   upload: MediaUploader,
-  baseUrl?: string
+  baseUrl?: string,
+  options: { maxAssets?: number; maxMs?: number } = {},
 ): Promise<string> {
   if (!html) return html;
-  const urls = collectAssetUrls(html);
+  const maxAssets = options.maxAssets ?? 8;
+  const maxMs = options.maxMs ?? 45_000;
+  const startedAt = Date.now();
+  const urls = collectAssetUrls(html).slice(0, maxAssets);
   if (urls.length === 0) return html;
 
   let result = html;
   // Sequential to avoid hammering the host; dedupe already handled by Set.
   for (const original of urls) {
+    if (Date.now() - startedAt > maxMs) break;
     const absolute = resolveUrl(original, baseUrl);
     if (!absolute) continue;
     try {
