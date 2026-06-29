@@ -679,9 +679,10 @@ export function buildElementorMeta(
     _elementor_data: dataStr,
     // NOTE: `_elementor_page_settings` is intentionally omitted. Elementor
     // registers it with an `object` REST schema, so sending a JSON string
-    // triggers `rest_invalid_type` (HTTP 400). Forcing the canvas template via
-    // `_wp_page_template` already yields the full-width, header/footer-less
-    // layout we need, so the page-settings meta is unnecessary.
-    _wp_page_template: "elementor_canvas",
+    // triggers `rest_invalid_type` (HTTP 400). Forcing the "Full Width"
+    // template via `_wp_page_template` already yields a full-width Elementor
+    // content area while KEEPING the active theme's global header/footer and
+    // site settings — matching the existing/old WordPress pages' layout.
+    _wp_page_template: "elementor_header_footer",
   };
 }

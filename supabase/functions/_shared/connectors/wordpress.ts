@@ -397,10 +397,12 @@ export class WordPressConnector implements CmsConnector {
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
 
-    // Force the full-width Elementor Canvas template (no theme header/footer) so
-    // the published page matches the template design 1:1.
+    // Force the Elementor "Full Width" template (elementor_header_footer): the
+    // page keeps the active theme's global header/footer + site settings while
+    // the Elementor content stretches to full width — matching the old/existing
+    // WordPress pages' global layout. (elementor_canvas would strip header/footer.)
     if (resolvedTemplate) body.template = resolvedTemplate;
-    else if (elementorApplied) body.template = "elementor_canvas";
+    else if (elementorApplied) body.template = "elementor_header_footer";
 
     const data = await this.executePageRequest(
       `${this.baseUrl}/wp-json/wp/v2/pages`,
@@ -479,7 +481,7 @@ export class WordPressConnector implements CmsConnector {
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
     if (!preserveDesign && resolvedTemplate) body.template = resolvedTemplate;
-    else if (!preserveDesign && elementorApplied) body.template = "elementor_canvas";
+    else if (!preserveDesign && elementorApplied) body.template = "elementor_header_footer";
 
     const data = await this.executePageRequest(
       `${this.baseUrl}/wp-json/wp/v2/${resourcePath}/${externalId}`,
