@@ -140,10 +140,9 @@ class XXXV_Elementor {
 			self::clear_runtime_caches( $post_id );
 
 			// ---- (9) Validate saved JSON + CSS --------------------------------
-			$saved = get_post_meta( $post_id, '_elementor_data', true );
-			$saved_decoded = json_decode( is_string( $saved ) ? wp_unslash( $saved ) : '', true );
-			if ( ! is_array( $saved_decoded ) || empty( $saved_decoded ) ) {
-				throw new Exception( 'Post-save validation failed: stored Elementor data is not readable.' );
+			$saved_check = self::validate_saved_elementor_data( $post_id, $elementor_data );
+			if ( is_wp_error( $saved_check ) ) {
+				throw new Exception( $saved_check->get_error_message() );
 			}
 
 			self::log( 'info', 'Published successfully.', array( 'post_id' => $post_id, 'css' => $css_ok ) );
@@ -157,8 +156,10 @@ class XXXV_Elementor {
 					'edit'       => admin_url( 'post.php?post=' . $post_id . '&action=elementor' ),
 					'status'     => get_post_status( $post_id ),
 					'css'        => $css_ok,
-					'elements'   => count( $saved_decoded ),
-					'validated'  => true,
+					'elements'             => $saved_check['elements'],
+					'validated'            => true,
+					'elementor_data_valid' => true,
+					'elementor_data_hash'  => $saved_check['hash'],
 				)
 			);
 		} catch ( \Throwable $e ) {
@@ -207,6 +208,42 @@ class XXXV_Elementor {
 	private static function sanitize_template_css( $css ) {
 		$css = str_replace( array( '</style', '<script', '</script' ), array( '<\/style', '', '' ), $css );
 		return trim( $css );
+	}
+
+	/**
+	 * Confirm `_elementor_data` was saved and can be loaded back as the same
+	 * Elementor element tree. This catches database/meta slashing issues before the
+	 * SaaS marks the page as published.
+	 *
+	 * @param int   $post_id  Page ID.
+	 * @param array $expected Incoming Elementor element model.
+	 * @return array|WP_Error
+	 */
+	private static function validate_saved_elementor_data( $post_id, $expected ) {
+		$saved = get_post_meta( $post_id, '_elementor_data', true );
+		if ( ! is_string( $saved ) || '' === trim( $saved ) ) {
+			return new WP_Error( 'xxxv_elementor_data_missing', 'Post-save validation failed: _elementor_data is missing.', array( 'status' => 500 ) );
+		}
+
+		$saved_decoded = json_decode( wp_unslash( $saved ), true );
+		if ( ! is_array( $saved_decoded ) || empty( $saved_decoded ) ) {
+			return new WP_Error( 'xxxv_elementor_data_unreadable', 'Post-save validation failed: stored _elementor_data is not readable.', array( 'status' => 500 ) );
+		}
+
+		$expected_json = wp_json_encode( $expected );
+		$saved_json    = wp_json_encode( $saved_decoded );
+		if ( false === $expected_json || false === $saved_json ) {
+			return new WP_Error( 'xxxv_elementor_data_encode_failed', 'Post-save validation failed: could not encode Elementor data for comparison.', array( 'status' => 500 ) );
+		}
+
+		if ( hash( 'sha256', $expected_json ) !== hash( 'sha256', $saved_json ) ) {
+			return new WP_Error( 'xxxv_elementor_data_mismatch', 'Post-save validation failed: saved _elementor_data does not match the submitted template JSON.', array( 'status' => 500 ) );
+		}
+
+		return array(
+			'elements' => count( $saved_decoded ),
+			'hash'     => hash( 'sha256', $saved_json ),
+		);
 	}
 
 	/**
