@@ -118,10 +118,12 @@ export function SeoOptimizeDialog({
     seoSnapshot,
     (s: any) => {
       if (!s || typeof s !== "object") return;
-      if (Array.isArray(s.selectedFields) && s.selectedFields.length) setSelectedFields(s.selectedFields);
+      if (Array.isArray(s.selectedFields) && s.selectedFields.length) {
+        setSelectedFields(s.selectedFields.filter((field: string) => field !== "content"));
+      }
       if (typeof s.instruction === "string") setInstruction(s.instruction);
     },
-    { version: 1 },
+    { version: 2 },
   );
 
   const toggleField = (field: string) => {
