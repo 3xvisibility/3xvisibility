@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { ScrollReveal } from "./ScrollReveal";
-import { Globe, ShoppingCart, Store, Search, FileText, BarChart3 } from "lucide-react";
+import { Globe, ShoppingCart, Store, Search, FileText, BarChart3, Download, Plug } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -134,6 +135,35 @@ export function IntegrationsSection() {
             </motion.div>
           ))}
         </div>
+
+        <ScrollReveal>
+          <div className="mt-16 md:mt-20 max-w-2xl mx-auto">
+            <div className="relative rounded-2xl border border-[hsl(96,90%,45%,0.18)] bg-[hsl(220,40%,7%)] p-6 md:p-8 text-center overflow-hidden">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(96,90%,45%,0.1),transparent_60%)] pointer-events-none" />
+              <div className="relative z-10">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[hsl(96,90%,45%,0.12)] border border-[hsl(96,90%,45%,0.25)]">
+                  <Plug className="h-5 w-5 text-[hsl(96,80%,52%)]" />
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold tracking-[-0.02em]">3xVisibility WordPress Connector</h3>
+                <p className="mt-2 text-sm text-[hsl(220,10%,70%)] max-w-md mx-auto leading-relaxed">
+                  Install our lightweight companion plugin to publish native Elementor &amp; Gutenberg pages that look exactly like they were built by hand inside WordPress.
+                </p>
+                <Button
+                  size="lg"
+                  className="mt-6 bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-xl px-7 text-sm font-semibold shadow-xl shadow-primary/25"
+                  asChild
+                >
+                  <a href="/3xvisibility-connector.zip" download>
+                    <Download className="mr-2 h-4 w-4" /> Download WordPress Plugin
+                  </a>
+                </Button>
+                <p className="mt-3 text-[11px] text-[hsl(220,10%,55%)]">
+                  Upload it in WordPress → Plugins → Add New → Upload Plugin, then activate.
+                </p>
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );
