@@ -590,7 +590,10 @@ async function handlePublishPages(req: Request): Promise<Response> {
       // Detect the site's preferred page template on first direct publish
       const templateInfo = await detectPageTemplate(supabase, website_id, website.type, connector);
 
-      for (const dp of directPages) {
+      const currentDirectPages = directPages.slice(0, PUBLISH_BATCH_SIZE);
+      const remainingDirectPages = directPages.slice(PUBLISH_BATCH_SIZE);
+
+      for (const dp of currentDirectPages) {
         try {
           const cleanedContent = stripHeadTagsForCms(dp.content);
           // Republish of an already-published page → preserve existing on-site design.
@@ -660,8 +663,30 @@ async function handlePublishPages(req: Request): Promise<Response> {
 
       const published = results.filter((r) => r.status === "published").length;
       const failed = results.filter((r) => r.status === "failed").length;
+
+      if (remainingDirectPages.length > 0) {
+        fetch(`${supabaseUrl}/functions/v1/publish-pages`, {
+          method: "POST",
+          headers: { Authorization: authHeader, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...body,
+            pages: remainingDirectPages,
+            publish_type: pubType,
+            website_id,
+            overwrite_design: allowOverwriteDesign,
+            elementor_mode: elementorMode,
+          }),
+        }).catch((e) => console.error("[PUBLISH] Direct self-chain failed:", e));
+      }
+
       return new Response(
-        JSON.stringify({ success: true, published, failed, results }),
+        JSON.stringify({
+          success: true,
+          published,
+          failed,
+          results,
+          ...(remainingDirectPages.length > 0 ? { remaining: remainingDirectPages.length, partial: true } : {}),
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
