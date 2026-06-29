@@ -152,6 +152,21 @@ function hasClass(node: HtmlNode, ...names: string[]): boolean {
   return names.some((n) => cls.includes(n));
 }
 
+function nativeIdentitySettings(node?: HtmlNode): Record<string, unknown> {
+  if (!node) return {};
+  const settings: Record<string, unknown> = {};
+  const cssClasses = (node.attrs.class || "")
+    .split(/\s+/)
+    .map((c) => c.trim())
+    .filter((c) => /^[a-zA-Z_-][\w-]*$/.test(c))
+    .slice(0, 24)
+    .join(" ");
+  if (cssClasses) settings._css_classes = cssClasses;
+  const elementId = (node.attrs.id || "").trim();
+  if (/^[a-zA-Z][\w-]*$/.test(elementId)) settings._element_id = elementId;
+  return settings;
+}
+
 function isButton(node: HtmlNode): boolean {
   if (node.tag === "button") return true;
   if (node.tag === "a" && (hasClass(node, "btn", "button") || node.attrs.role === "button")) return true;
@@ -170,6 +185,7 @@ function heading(node: HtmlNode): ElementorElement {
     elType: "widget",
     widgetType: "heading",
     settings: bakedSettings(node, styleHeading, {
+      ...nativeIdentitySettings(node),
       title: textContent(node),
       header_size: node.tag,
     }),
@@ -182,7 +198,7 @@ function textEditor(html: string, node?: HtmlNode): ElementorElement {
     id: genId(),
     elType: "widget",
     widgetType: "text-editor",
-    settings: bakedSettings(node, styleText, { editor: html.trim().startsWith("<") ? html : `<p>${html}</p>` }),
+    settings: bakedSettings(node, styleText, { ...nativeIdentitySettings(node), editor: html.trim().startsWith("<") ? html : `<p>${html}</p>` }),
     elements: [],
   };
 }
@@ -193,6 +209,7 @@ function image(node: HtmlNode): ElementorElement {
     elType: "widget",
     widgetType: "image",
     settings: bakedSettings(node, (s, p) => styleImage(s, p), {
+      ...nativeIdentitySettings(node),
       image: { url: node.attrs.src || "", alt: node.attrs.alt || "" },
     }),
     elements: [],
@@ -205,6 +222,7 @@ function button(node: HtmlNode): ElementorElement {
     elType: "widget",
     widgetType: "button",
     settings: bakedSettings(node, styleButton, {
+      ...nativeIdentitySettings(node),
       text: textContent(node) || "Button",
       link: node.attrs.href ? { url: node.attrs.href, is_external: "", nofollow: "" } : { url: "#" },
     }),
@@ -372,9 +390,13 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
 
 function container(children: ElementorElement[], node?: HtmlNode, topLevel = false): ElementorElement {
   const settings: Record<string, unknown> = {
+    ...nativeIdentitySettings(node),
     content_width: "boxed",
     flex_direction: "column",
   };
+  if (node && ["section", "header", "footer", "main", "article", "aside", "nav", "div"].includes(node.tag)) {
+    settings.html_tag = node.tag;
+  }
   // Top-level sections stretch edge-to-edge so the page matches the template
   // 1:1 (no theme gutters / boxed wrapper around each section).
   if (topLevel) {
@@ -432,6 +454,9 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
       flush();
       const inner = convertChildren(node.children);
       if (inner.length > 0) out.push(container(inner, node));
+    } else if (TEXT_TAGS.has(node.tag) && !["span", "strong", "em", "small", "label"].includes(node.tag)) {
+      flush();
+      out.push(textEditor(serialize(node), node));
     } else if (TEXT_TAGS.has(node.tag) || node.tag === "a") {
       // Inline/textual content -> accumulate as rich text editor block.
       textBuffer += serialize(node);
