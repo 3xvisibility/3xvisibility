@@ -21,7 +21,7 @@ define( 'XXXV_CONNECTOR_FILE', __FILE__ );
 define( 'XXXV_CONNECTOR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'XXXV_CONNECTOR_NS', 'pgp/v1' );
 define( 'XXXV_CONNECTOR_OPT_KEY', 'pgp_connector_api_key' );
-define( 'XXXV_CONNECTOR_UPDATE_URL', 'https://3xvisibility.com/wp-plugin/page-generator-pro-update.json' );
+define( 'XXXV_CONNECTOR_UPDATE_URL', 'https://3xvisibility.com/wp-plugin/3xvisibility-wordpress-connector-update.json' );
 
 require_once XXXV_CONNECTOR_DIR . 'includes/class-3xv-auth.php';
 require_once XXXV_CONNECTOR_DIR . 'includes/class-3xv-rest.php';
