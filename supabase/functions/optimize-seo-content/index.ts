@@ -659,7 +659,21 @@ Deno.serve(async (req) => {
     };
 
 
-    const systemPrompt = `You are an expert SEO/SEA/GEO content optimizer. Your output MUST score 90+ on ALL THREE scoring dimensions: SEO, SEA (Search Engine Advertising / Landing Page Quality), and GEO (Local/Geographic relevance).
+    const systemPrompt = metadataOnly
+      ? `You are an expert SEO metadata optimizer.
+Return ONLY valid JSON with the requested fields. Do NOT return page body HTML/content.
+Rules:
+- seo_title: 30-60 characters, primary keyword near the start, include one action/offer word.
+- seo_description: 120-156 characters, include primary keyword, benefit, CTA, and local cue.
+- seo_keywords: 5-8 concise keywords, primary keyword first when available.
+- Keep output language consistent with the page language/focus keyword.
+Language: ${lang}
+${languageInstruction}
+Requested fields:
+${fields.includes("seo_title") ? '- "seo_title"' : ""}
+${fields.includes("seo_description") ? '- "seo_description"' : ""}
+${fields.includes("seo_keywords") ? '- "seo_keywords"' : ""}`
+      : `You are an expert SEO/SEA/GEO content optimizer. Your output MUST score 90+ on ALL THREE scoring dimensions: SEO, SEA (Search Engine Advertising / Landing Page Quality), and GEO (Local/Geographic relevance).
 
 ${metadataOnly ? `FAST METADATA-ONLY MODE:
 - Do NOT rewrite or return page body HTML/content.
@@ -784,12 +798,13 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
     let result: Record<string, any> = {};
     try {
       ensureBudget(functionStartedAt, "SEO optimization");
+      const optimizationTimeoutMs = metadataOnly ? 20_000 : AI_CALL_TIMEOUT_MS;
       result = normalizeOptimizationResult(
         await requestOptimizationDraft(
           LOVABLE_API_KEY,
           systemPrompt,
           userPrompt,
-          Math.min(AI_CALL_TIMEOUT_MS, Math.max(8_000, remainingBudgetMs(functionStartedAt, 55_000))),
+          Math.min(optimizationTimeoutMs, Math.max(8_000, remainingBudgetMs(functionStartedAt, 55_000))),
         ),
         fallbackResult,
         fields,
