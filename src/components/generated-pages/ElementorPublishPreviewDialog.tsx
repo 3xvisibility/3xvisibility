@@ -29,15 +29,29 @@ interface ElementorPublishPreviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   page: PreviewPage | null;
-  /** Called with the chosen widget mode when the user proceeds to publish. */
+  /** Called with the resolved widget mode when the user proceeds to publish. */
   onPublish?: (mode: ElementorWidgetMode, gate?: { overridden: boolean; checkId?: string | null }) => void;
   workspaceId?: string | null;
   templateId?: string | null;
+  /** Publish format chosen on the campaign: "elementor" | "gutenberg" | "shopify" | "html". */
+  publishFormat?: string | null;
   /** Expected/template render for the visual gate. */
   baseline?: ValidationSide;
   /** Live URL if the page is already published (used as the target render). */
   publishedUrl?: string | null;
 }
+
+/** Map the campaign publish format to the Elementor widget mode used for publishing. */
+function resolveMode(format?: string | null): ElementorWidgetMode {
+  return format === "elementor" ? "native" : "html";
+}
+
+const FORMAT_LABELS: Record<string, string> = {
+  elementor: "Native Elementor widgets",
+  gutenberg: "Gutenberg blocks",
+  shopify: "Shopify section",
+  html: "Single HTML widget",
+};
 
 function RenderableFrame({ html }: { html: string }) {
   const ref = useRef<HTMLIFrameElement>(null);
