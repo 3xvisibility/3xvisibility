@@ -185,7 +185,7 @@ export class PgpConnector implements CmsConnector {
       status,
       post_id: postId,
       elementor_data: elementorData,
-      page_template: payload.page_template || "elementor_canvas",
+      page_template: payload.page_template || "elementor_header_footer",
       meta,
     });
     return { external_id: String(res.post_id), url: res.url };
