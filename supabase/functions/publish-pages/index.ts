@@ -603,6 +603,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           const isRepublish = !!dp.external_id;
           const preserveDesign = isRepublish && !allowOverwriteDesign;
 
+          const directElementorMode: "html" | "native" = website.type === "wordpress" ? "native" : elementorMode;
           const payload = buildPayload(
             { title: dp.title, content: cleanedContent, slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
             pubType,
@@ -610,7 +611,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
             // Mirror the site's preferred template.
             !preserveDesign ? templateInfo.pageTemplate : undefined,
             preserveDesign,
-            elementorMode,
+            directElementorMode,
           );
 
 
@@ -955,6 +956,16 @@ async function handlePublishPages(req: Request): Promise<Response> {
           }
         }
 
+        // Resolve the campaign's chosen publish format and forward it so the
+        // WordPress connector emits Elementor or Gutenberg content accordingly.
+        const publishFormat = await getCampaignPublishFormat(page.campaign_id);
+        const websiteType = (page.websites as { type?: string })?.type;
+        // WordPress + Elementor is a single fixed path: native, editable
+        // Elementor JSON/widgets only. Ignore any stale UI/request value that
+        // asks for a single HTML widget.
+        const effectiveElementorMode: "html" | "native" =
+          websiteType === "wordpress" && publishFormat === "elementor" ? "native" : elementorMode;
+
         const payload = buildPayload(
           { title: page.title, content: cleanedContent, slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
           resolvedPublishType,
@@ -963,12 +974,9 @@ async function handlePublishPages(req: Request): Promise<Response> {
             ? templateCache.get(page.website_id || "default")?.pageTemplate
             : undefined,
           preserveDesign,
-          elementorMode,
+          effectiveElementorMode,
         );
 
-        // Resolve the campaign's chosen publish format and forward it so the
-        // WordPress connector emits Elementor or Gutenberg content accordingly.
-        const publishFormat = await getCampaignPublishFormat(page.campaign_id);
         payload.publish_format = publishFormat;
 
         // WordPress page publishes: in Elementor format, ALWAYS use the stored
@@ -980,9 +988,9 @@ async function handlePublishPages(req: Request): Promise<Response> {
         let elementorSimilarity: number | undefined;
         if (
           resolvedPublishType === "page" && !preserveDesign && publishFormat === "elementor" &&
-          (page.websites as { type?: string })?.type === "wordpress"
+          websiteType === "wordpress"
         ) {
-          const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache, elementorMode);
+          const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache, effectiveElementorMode);
           if (!catalog) {
             const msg =
               "Publish blocked: no stored Elementor template found for this campaign. " +
