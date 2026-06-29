@@ -68,9 +68,10 @@ export function WordPressCredentialFields({
   const urlMissing = siteUrl !== undefined && urlTrimmed.length === 0;
   const urlMalformed = urlTrimmed.length > 0 && !/^https?:\/\/.+\..+/i.test(urlTrimmed);
   const connectorMissing = onConnectorKeyChange !== undefined && connectorKey.trim().length === 0;
-  const usernameMissing = authMethod === "application_password" && !connectorKey.trim() && username.trim().length === 0;
-  const passwordMissing = authMethod === "application_password" && !connectorKey.trim() && appPassword.trim().length === 0;
-  const jwtMissing = authMethod === "jwt" && !connectorKey.trim() && jwtToken.trim().length === 0;
+  const legacyAuthRequired = onConnectorKeyChange === undefined;
+  const usernameMissing = legacyAuthRequired && authMethod === "application_password" && username.trim().length === 0;
+  const passwordMissing = legacyAuthRequired && authMethod === "application_password" && appPassword.trim().length === 0;
+  const jwtMissing = legacyAuthRequired && authMethod === "jwt" && jwtToken.trim().length === 0;
 
   const warnings: string[] = [];
   if (urlMissing) warnings.push("Site URL is required.");
