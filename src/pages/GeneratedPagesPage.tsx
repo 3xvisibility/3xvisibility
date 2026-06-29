@@ -109,7 +109,7 @@ export default function GeneratedPagesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
-        .select("*, campaigns(name, publish_type), websites(name, type)")
+        .select("*, campaigns(name, publish_type, publish_format), websites(name, type)")
         .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
