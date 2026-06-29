@@ -31,7 +31,7 @@ async function resolveCatalogElementorData(
   page: { campaign_id?: string | null; title: string; content: string; seo_description?: string | null },
   cache: Map<string, unknown>,
   mode: "html" | "native" = "html",
-): Promise<{ data: string; similarity: number; truncatedFields: string[]; ok: boolean; mode: "html" | "native"; cssLength: number } | null> {
+): Promise<{ data: string; css: string; similarity: number; truncatedFields: string[]; ok: boolean; mode: "html" | "native"; cssLength: number } | null> {
   try {
     if (!page.campaign_id) return null;
 
@@ -132,7 +132,7 @@ async function resolveCatalogElementorData(
       `target ${ELEMENTOR_SIMILARITY_TARGET}%, ok=${ok}, truncated ${best.truncatedFields.length}, ` +
       `css ${templateCss.length} chars, data ${chosenData.length} chars)`,
     );
-    return { data: chosenData, similarity: best.similarity, truncatedFields: best.truncatedFields, ok, mode, cssLength: templateCss.length };
+    return { data: chosenData, css: templateCss, similarity: best.similarity, truncatedFields: best.truncatedFields, ok, mode, cssLength: templateCss.length };
   } catch (e) {
     console.warn("[publish-pages] catalog Elementor resolve failed", e);
     return null;
@@ -1024,6 +1024,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // HTML blob. Image URLs in the JSON are uploaded to the WP Media
           // Library by the connector before the page is created/updated.
           payload.elementor_data = catalog.data;
+          payload.elementor_css = catalog.css;
           elementorSource = "catalog";
           elementorSimilarity = catalog.similarity;
 

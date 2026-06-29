@@ -180,8 +180,12 @@ export class PgpConnector implements CmsConnector {
 
     // Elementor: prefer the stored master JSON; images go to the Media Library.
     let elementorData = payload.elementor_data || "";
+    let elementorCss = payload.elementor_css || "";
     if (elementorData) {
       elementorData = await this.importImages(elementorData);
+    }
+    if (elementorCss) {
+      elementorCss = await this.importImages(elementorCss);
     }
     const res = await this.call<PublishResponse>("/publish/elementor", "POST", {
       title,
@@ -189,6 +193,7 @@ export class PgpConnector implements CmsConnector {
       status,
       post_id: postId,
       elementor_data: elementorData,
+      elementor_css: elementorCss,
       page_template: payload.page_template || "elementor_header_footer",
       meta,
     });
