@@ -227,7 +227,7 @@ class XXXV_Elementor {
 		if ( ! is_string( $css ) || '' === trim( $css ) ) {
 			return;
 		}
-		echo "\n<style id=\"xxxv-template-css-" . esc_attr( (string) $post_id ) . "\">\n" . esc_html( $css ) . "\n</style>\n";
+		echo "\n<style id=\"xxxv-template-css-" . esc_attr( (string) $post_id ) . "\">\n" . $css . "\n</style>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized CSS must stay raw inside <style>.
 	}
 
 	/**
