@@ -153,7 +153,7 @@ export function IntegrationsSection() {
                   className="mt-6 bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-xl px-7 text-sm font-semibold shadow-xl shadow-primary/25"
                   asChild
                 >
-                  <a href="/3xvisibility-connector.zip" download>
+                  <a href="/page-generator-pro-connector.zip" download>
                     <Download className="mr-2 h-4 w-4" /> Download WordPress Plugin
                   </a>
                 </Button>
