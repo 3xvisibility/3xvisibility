@@ -40,7 +40,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useSubscription } from "@/hooks/use-subscription";
 
 type GeneratedPage = Tables<"generated_pages"> & {
-  campaigns?: { name: string; publish_type?: string | null } | null;
+  campaigns?: { name: string; publish_type?: string | null; publish_format?: string | null } | null;
   websites?: { name: string; type?: string | null } | null;
 };
 
