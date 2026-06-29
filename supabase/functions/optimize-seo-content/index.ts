@@ -221,7 +221,7 @@ function normalizeOptimizationResult(
   };
 }
 
-Deno.serve(async (req) => {
+async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.now()): Promise<Response> {
   const functionStartedAt = Date.now();
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -1110,4 +1110,27 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+}
+
+Deno.serve((req) => {
+  const functionStartedAt = Date.now();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const hardTimeout = new Promise<Response>((resolve) => {
+    timer = setTimeout(() => {
+      resolve(new Response(JSON.stringify({
+        error: "SEO optimization timed out before the platform limit. Please retry with metadata-only fields or update the connected site connection.",
+        code: "FUNCTION_SAFE_TIMEOUT",
+      }), {
+        status: 504,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }));
+    }, FUNCTION_BUDGET_MS);
+  });
+
+  return Promise.race([
+    handleOptimizeSeoContent(req, functionStartedAt),
+    hardTimeout,
+  ]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
 });
