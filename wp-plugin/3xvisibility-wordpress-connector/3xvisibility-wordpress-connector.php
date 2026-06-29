@@ -1,15 +1,15 @@
 <?php
 /**
- * Plugin Name:       Page Generator Pro Connector
+ * Plugin Name:       3xVisibility WordPress Connector
  * Plugin URI:        https://3xvisibility.com
- * Description:        Secure companion plugin that turns Page Generator Pro into the bridge between your SaaS and WordPress — publishing native Elementor (Free) & Gutenberg pages, uploading media, regenerating Elementor CSS, clearing caches, and detecting builders/themes/global styles so programmatic pages behave exactly like pages built manually inside WordPress.
+ * Description:        Secure companion plugin that bridges your 3xVisibility account and WordPress — publishing native Elementor (Free) & Gutenberg pages, uploading media, regenerating Elementor CSS, clearing caches, and detecting builders/themes/global styles so programmatic pages behave exactly like pages built manually inside WordPress.
  * Version:           1.0.0
- * Author:            Page Generator Pro
+ * Author:            3xVisibility
  * Author URI:        https://3xvisibility.com
  * License:           GPL-2.0+
- * Text Domain:       page-generator-pro-connector
+ * Text Domain:       3xvisibility-wordpress-connector
  *
- * @package PageGeneratorProConnector
+ * @package ThreeXVisibilityWordPressConnector
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
