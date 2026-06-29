@@ -226,10 +226,10 @@ function stripHeadTagsForCms(content: string): string {
  * active theme's preferred layout.
  */
 async function detectPageTemplate(
-  supabase: any,
-  websiteId: string,
+  _supabase: any,
+  _websiteId: string,
   websiteType: string,
-  connector: any
+  _connector: any
 ): Promise<{ pageTemplate?: string }> {
   if (websiteType !== "wordpress") return {};
 
