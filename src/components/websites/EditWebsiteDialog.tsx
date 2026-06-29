@@ -94,7 +94,9 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
 
   const hasCredentialInput = () => {
     if (site.type === "wordpress") {
-      return wpAuthMethod === "application_password" ? !!(username && appPassword) : !!jwtToken;
+      return wpAuthMethod === "application_password"
+        ? !!((username && appPassword) || connectorKey.trim())
+        : !!(jwtToken || connectorKey.trim());
     }
     if (site.type === "shopify") return false;
     if (site.type === "woocommerce") return !!(wooConsumerKey && wooConsumerSecret);
