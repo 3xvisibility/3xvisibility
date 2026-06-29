@@ -46,6 +46,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [jwtToken, setJwtToken] = useState("");
+  const [connectorKey, setConnectorKey] = useState("");
   // Shopify — OAuth only, token field for re-auth not needed
   const [shopifyToken, setShopifyToken] = useState("");
   // PrestaShop
@@ -67,6 +68,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
       setUsername("");
       setAppPassword("");
       setJwtToken("");
+      setConnectorKey("");
       setPrestashopApiKey("");
       setWooConsumerKey("");
       setWooConsumerSecret("");
@@ -77,9 +79,13 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
 
   const buildCredentials = () => {
     if (site.type === "wordpress") {
-      return wpAuthMethod === "application_password"
-        ? { username, app_password: appPassword, auth_method: "application_password" }
-        : { jwt_token: jwtToken, auth_method: "jwt" };
+      const base =
+        wpAuthMethod === "application_password"
+          ? { username, app_password: appPassword, auth_method: "application_password" }
+          : { jwt_token: jwtToken, auth_method: "jwt" };
+      return connectorKey.trim()
+        ? { ...base, pgp_connector_key: connectorKey.trim() }
+        : base;
     }
     if (site.type === "shopify") return {};
     if (site.type === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
@@ -88,7 +94,9 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
 
   const hasCredentialInput = () => {
     if (site.type === "wordpress") {
-      return wpAuthMethod === "application_password" ? !!(username && appPassword) : !!jwtToken;
+      return wpAuthMethod === "application_password"
+        ? !!((username && appPassword) || connectorKey.trim())
+        : !!(jwtToken || connectorKey.trim());
     }
     if (site.type === "shopify") return false;
     if (site.type === "woocommerce") return !!(wooConsumerKey && wooConsumerSecret);
@@ -219,6 +227,8 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
                 onAppPasswordChange={setAppPassword}
                 jwtToken={jwtToken}
                 onJwtTokenChange={setJwtToken}
+                connectorKey={connectorKey}
+                onConnectorKeyChange={setConnectorKey}
               />
             )}
             {site.type === "shopify" && (

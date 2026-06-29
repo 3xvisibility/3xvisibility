@@ -53,6 +53,7 @@ export default function WebsitesPage() {
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [jwtToken, setJwtToken] = useState("");
+  const [connectorKey, setConnectorKey] = useState("");
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
   const [shopifyAccessToken, setShopifyAccessToken] = useState("");
@@ -199,10 +200,15 @@ export default function WebsitesPage() {
 
   const buildCredentials = () => {
     if (siteType === "wordpress") {
-      return wpAuthMethod === "application_password"
-        ? { username, app_password: appPassword, auth_method: "application_password" }
-        : { jwt_token: jwtToken, auth_method: "jwt" };
+      const base =
+        wpAuthMethod === "application_password"
+          ? { username, app_password: appPassword, auth_method: "application_password" }
+          : { jwt_token: jwtToken, auth_method: "jwt" };
+      return connectorKey.trim()
+        ? { ...base, pgp_connector_key: connectorKey.trim() }
+        : base;
     }
+
     if (siteType === "shopify") return { shop_domain: shopDomain };
     if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
     return { api_key: prestashopApiKey };
@@ -422,6 +428,7 @@ export default function WebsitesPage() {
     setUsername("");
     setAppPassword("");
     setJwtToken("");
+    setConnectorKey("");
     setShopDomain("");
     setPrestashopApiKey("");
     setWooConsumerKey("");
@@ -542,6 +549,8 @@ export default function WebsitesPage() {
                     onAppPasswordChange={setAppPassword}
                     jwtToken={jwtToken}
                     onJwtTokenChange={setJwtToken}
+                    connectorKey={connectorKey}
+                    onConnectorKeyChange={setConnectorKey}
                   />
                 )}
                  {siteType === "shopify" && (

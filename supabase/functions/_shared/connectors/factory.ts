@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import type { CmsConnector, ConnectorConfig } from "./types.ts";
 import { WordPressConnector } from "./wordpress.ts";
+import { PgpConnector } from "./pgp-connector.ts";
 import { ShopifyConnector } from "./shopify.ts";
 import { PrestaShopConnector } from "./prestashop.ts";
 import { WooCommerceConnector } from "./woocommerce.ts";
@@ -25,6 +26,7 @@ function buildConfig(website: WebsiteRecord, creds: Record<string, string>): Con
     access_token: creds.admin_api_token || creds.access_token || creds.jwt_token,
     consumer_key: creds.consumer_key,
     consumer_secret: creds.consumer_secret,
+    connector_api_key: creds.pgp_connector_key || creds.connector_api_key,
   };
 }
 
@@ -86,8 +88,13 @@ export async function createConnector(website: WebsiteRecord): Promise<CmsConnec
   const creds = await decryptCreds(website);
 
   switch (website.type) {
-    case "wordpress":
-      return new WordPressConnector(buildConfig(website, creds));
+    case "wordpress": {
+      const config = buildConfig(website, creds);
+      // Prefer the Page Generator Pro Connector plugin when installed/configured.
+      return config.connector_api_key
+        ? new PgpConnector(config)
+        : new WordPressConnector(config);
+    }
     case "shopify": {
       const config = await resolveShopifyConfig(website, creds);
       return new ShopifyConnector(config);

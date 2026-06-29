@@ -15,6 +15,8 @@ interface WordPressCredentialFieldsProps {
   onAppPasswordChange: (v: string) => void;
   jwtToken: string;
   onJwtTokenChange: (v: string) => void;
+  connectorKey?: string;
+  onConnectorKeyChange?: (v: string) => void;
 }
 
 export function WordPressCredentialFields({
@@ -26,6 +28,8 @@ export function WordPressCredentialFields({
   onAppPasswordChange,
   jwtToken,
   onJwtTokenChange,
+  connectorKey = "",
+  onConnectorKeyChange,
 }: WordPressCredentialFieldsProps) {
   return (
     <div className="space-y-4">
@@ -92,6 +96,25 @@ export function WordPressCredentialFields({
           />
           <p className="text-[11px] text-muted-foreground mt-1">
             Obtain a token from your WordPress JWT Authentication endpoint (usually /wp-json/jwt-auth/v1/token)
+          </p>
+        </div>
+      )}
+
+      {onConnectorKeyChange && (
+        <div className="pt-2 border-t border-muted">
+          <Label htmlFor="wp-connector-key">
+            Page Generator Pro Connector Key <span className="text-muted-foreground font-normal">(optional)</span>
+          </Label>
+          <Input
+            id="wp-connector-key"
+            type="password"
+            placeholder="Paste the API key from the plugin settings"
+            value={connectorKey}
+            onChange={(e) => onConnectorKeyChange(e.target.value)}
+          />
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Install the <strong>Page Generator Pro Connector</strong> plugin, then paste its API key here to publish
+            native Elementor/Gutenberg pages (CSS &amp; cache handled automatically). Leave blank to use the standard REST API.
           </p>
         </div>
       )}
