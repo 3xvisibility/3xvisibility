@@ -1,7 +1,7 @@
 <?php
 /**
  * Admin settings screen: shows the connection URL + API key the user pastes
- * into the Page Generator Pro SaaS, with a one-click regenerate.
+ * into the 3xVisibility, with a one-click regenerate.
  *
  * @package 3xVisibilityConnector
  */
@@ -19,8 +19,8 @@ class XXXV_Admin {
 
 	public function menu() {
 		add_options_page(
-			'Page Generator Pro Connector',
-			'Page Generator Pro Connector',
+			'3xVisibility WordPress Connector',
+			'3xVisibility WordPress Connector',
 			'manage_options',
 			'pgp-connector',
 			array( $this, 'render' )
@@ -41,11 +41,11 @@ class XXXV_Admin {
 		$rest_url = rest_url( XXXV_CONNECTOR_NS . '/' );
 		?>
 		<div class="wrap">
-			<h1>Page Generator Pro Connector</h1>
-			<p>Connect this site to your Page Generator Pro account. Copy the values below into the SaaS when adding this website.</p>
+			<h1>3xVisibility WordPress Connector</h1>
+			<p>Connect this site to your 3xVisibility account. Copy the values below into the SaaS when adding this website.</p>
 
 			<?php if ( isset( $_GET['regenerated'] ) ) : ?>
-				<div class="notice notice-success is-dismissible"><p>A new API key was generated. Update it in your Page Generator Pro account.</p></div>
+				<div class="notice notice-success is-dismissible"><p>A new API key was generated. Update it in your 3xVisibility account.</p></div>
 			<?php endif; ?>
 
 			<table class="form-table" role="presentation">
