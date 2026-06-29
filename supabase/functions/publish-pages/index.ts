@@ -430,11 +430,24 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: str
   }
 }
 
-Deno.serve(async (req) => {
+Deno.serve((req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  return Promise.race([
+    handlePublishPages(req),
+    new Promise<Response>((resolve) => {
+      setTimeout(() => resolve(jsonResponse({
+        error: "Publish is still running in the background. Refresh the page in a moment to see progress.",
+        code: "FUNCTION_SAFE_TIMEOUT",
+        partial: true,
+      }, 504)), FUNCTION_SAFE_TIMEOUT_MS);
+    }),
+  ]);
+});
+
+async function handlePublishPages(req: Request): Promise<Response> {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -603,8 +616,8 @@ Deno.serve(async (req) => {
 
           // If an external_id is provided, update the existing page; otherwise create new
           const result = dp.external_id
-            ? await connector.updatePage(dp.external_id, payload)
-            : await connector.createPage(payload);
+            ? await withTimeout(connector.updatePage(dp.external_id, payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${dp.title}`)
+            : await withTimeout(connector.createPage(payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${dp.title}`);
 
           // Save to generated_pages so it appears in the Generated Pages view
           try {
@@ -998,8 +1011,8 @@ Deno.serve(async (req) => {
 
         // If page was previously published (has external_id), update instead of creating
         const result = page.external_id
-          ? await connector.updatePage(page.external_id, payload)
-          : await connector.createPage(payload);
+          ? await withTimeout(connector.updatePage(page.external_id, payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${page.title}`)
+          : await withTimeout(connector.createPage(payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${page.title}`);
 
         await supabase.from("generated_pages").update({
           status: "published",
@@ -1061,4 +1074,4 @@ Deno.serve(async (req) => {
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
-});
+}
