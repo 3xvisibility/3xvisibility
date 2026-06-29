@@ -144,7 +144,7 @@ export function IntegrationsSection() {
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[hsl(96,90%,45%,0.12)] border border-[hsl(96,90%,45%,0.25)]">
                   <Plug className="h-5 w-5 text-[hsl(96,80%,52%)]" />
                 </div>
-                <h3 className="text-xl md:text-2xl font-bold tracking-[-0.02em]">3xVisibility WordPress Connector</h3>
+                <h3 className="text-xl md:text-2xl font-bold tracking-[-0.02em]">Page Generator Pro Connector</h3>
                 <p className="mt-2 text-sm text-[hsl(220,10%,70%)] max-w-md mx-auto leading-relaxed">
                   Install our lightweight companion plugin to publish native Elementor &amp; Gutenberg pages that look exactly like they were built by hand inside WordPress.
                 </p>
@@ -153,7 +153,7 @@ export function IntegrationsSection() {
                   className="mt-6 bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-xl px-7 text-sm font-semibold shadow-xl shadow-primary/25"
                   asChild
                 >
-                  <a href="/3xvisibility-connector.zip" download>
+                  <a href="/page-generator-pro-connector.zip" download>
                     <Download className="mr-2 h-4 w-4" /> Download WordPress Plugin
                   </a>
                 </Button>

@@ -1,7 +1,7 @@
 <?php
 /**
  * Admin settings screen: shows the connection URL + API key the user pastes
- * into the 3xVisibility SaaS, with a one-click regenerate.
+ * into the Page Generator Pro SaaS, with a one-click regenerate.
  *
  * @package 3xVisibilityConnector
  */
@@ -19,10 +19,10 @@ class XXXV_Admin {
 
 	public function menu() {
 		add_options_page(
-			'3xVisibility Connector',
-			'3xVisibility Connector',
+			'Page Generator Pro Connector',
+			'Page Generator Pro Connector',
 			'manage_options',
-			'xxxv-connector',
+			'pgp-connector',
 			array( $this, 'render' )
 		);
 	}
@@ -32,7 +32,7 @@ class XXXV_Admin {
 			wp_die( 'Not allowed.' );
 		}
 		update_option( XXXV_CONNECTOR_OPT_KEY, wp_generate_password( 48, false, false ) );
-		wp_safe_redirect( admin_url( 'options-general.php?page=xxxv-connector&regenerated=1' ) );
+		wp_safe_redirect( admin_url( 'options-general.php?page=pgp-connector&regenerated=1' ) );
 		exit;
 	}
 
@@ -41,11 +41,11 @@ class XXXV_Admin {
 		$rest_url = rest_url( XXXV_CONNECTOR_NS . '/' );
 		?>
 		<div class="wrap">
-			<h1>3xVisibility WordPress Connector</h1>
-			<p>Connect this site to your 3xVisibility account. Copy the values below into the SaaS when adding this website.</p>
+			<h1>Page Generator Pro Connector</h1>
+			<p>Connect this site to your Page Generator Pro account. Copy the values below into the SaaS when adding this website.</p>
 
 			<?php if ( isset( $_GET['regenerated'] ) ) : ?>
-				<div class="notice notice-success is-dismissible"><p>A new API key was generated. Update it in your 3xVisibility account.</p></div>
+				<div class="notice notice-success is-dismissible"><p>A new API key was generated. Update it in your Page Generator Pro account.</p></div>
 			<?php endif; ?>
 
 			<table class="form-table" role="presentation">
@@ -61,7 +61,7 @@ class XXXV_Admin {
 					<th scope="row">API Key</th>
 					<td>
 						<input type="text" readonly value="<?php echo esc_attr( $key ); ?>" style="width:420px;font-family:monospace;" onclick="this.select();" />
-						<p class="description">Send this as the <code>X-3XV-Key</code> header. Keep it secret.</p>
+						<p class="description">Send this as the <code>X-PGP-Key</code> header. Keep it secret.</p>
 					</td>
 				</tr>
 				<tr>
