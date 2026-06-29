@@ -25,7 +25,7 @@ const OPTIMIZATION_MODEL = "google/gemini-2.5-flash-lite";
 const MAX_QUALITY_REPAIR_ATTEMPTS = 1;
 // Stop the repair loop once we're approaching the 150s edge function idle timeout.
 // Leaves headroom for CMS push + DB writes after the AI loop completes.
-const REPAIR_LOOP_BUDGET_MS = 90_000;
+const REPAIR_LOOP_BUDGET_MS = 70_000;
 
 function parseOptimizationResult(aiData: any): Record<string, any> {
   let result: Record<string, any> = {};
