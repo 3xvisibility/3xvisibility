@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { usePersistedSnapshot } from "@/hooks/use-persisted-state";
 import { handleApiError } from "@/lib/handle-api-error";
+import { extractEdgeError } from "@/lib/edge-function-error";
 import {
   Sparkles,
   Loader2,
@@ -91,7 +92,7 @@ export function SeoOptimizeDialog({
       const { data, error } = await supabase.functions.invoke("rollback-page", {
         body: { website_id: websiteId, page_external_id: page.id },
       });
-      if (error) throw error;
+      if (error) throw new Error(await extractEdgeError(error, "Optimization failed"));
       if (data?.error) throw new Error(data.error);
       setRolledBack(true);
       toast({

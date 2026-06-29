@@ -25,7 +25,9 @@ const OPTIMIZATION_MODEL = "google/gemini-2.5-flash-lite";
 const MAX_QUALITY_REPAIR_ATTEMPTS = 1;
 // Stop the repair loop once we're approaching the 150s edge function idle timeout.
 // Leaves headroom for CMS push + DB writes after the AI loop completes.
-const REPAIR_LOOP_BUDGET_MS = 70_000;
+const FUNCTION_BUDGET_MS = 115_000;
+const CMS_PUSH_TIMEOUT_MS = 25_000;
+const REPAIR_LOOP_BUDGET_MS = 35_000;
 
 function parseOptimizationResult(aiData: any): Record<string, any> {
   let result: Record<string, any> = {};
@@ -60,15 +62,47 @@ function parseOptimizationResult(aiData: any): Record<string, any> {
 
 // Hard per-call timeout so a slow AI response fails fast instead of hanging
 // until the edge function's 150s idle timeout (which returns an opaque 504).
-const AI_CALL_TIMEOUT_MS = 60_000;
+const AI_CALL_TIMEOUT_MS = 45_000;
+
+function timeoutError(message: string, status = 504, details?: string) {
+  const error = new Error(message) as Error & { status?: number; details?: string };
+  error.status = status;
+  error.details = details;
+  return error;
+}
+
+function remainingBudgetMs(startedAt: number, reserveMs = 10_000) {
+  return Math.max(0, FUNCTION_BUDGET_MS - (Date.now() - startedAt) - reserveMs);
+}
+
+function ensureBudget(startedAt: number, label: string, reserveMs = 10_000) {
+  if (remainingBudgetMs(startedAt, reserveMs) <= 0) {
+    throw timeoutError(`${label} timed out before the backend execution limit`, 504, `Exceeded ${FUNCTION_BUDGET_MS}ms safe function budget`);
+  }
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(timeoutError(message, 504, `Timed out after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 async function requestOptimizationDraft(
   apiKey: string,
   systemPrompt: string,
   userPrompt: string,
+  timeoutMs = AI_CALL_TIMEOUT_MS,
 ) {
   const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), AI_CALL_TIMEOUT_MS);
+  const timer = setTimeout(() => ac.abort(), timeoutMs);
   let response: Response;
   try {
     response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -107,10 +141,7 @@ async function requestOptimizationDraft(
     });
   } catch (err: any) {
     if (err?.name === "AbortError") {
-      const error = new Error("AI generation timed out") as Error & { status?: number; details?: string };
-      error.status = 504;
-      error.details = `AI call exceeded ${AI_CALL_TIMEOUT_MS}ms`;
-      throw error;
+      throw timeoutError("AI generation timed out", 504, `AI call exceeded ${timeoutMs}ms`);
     }
     throw err;
   } finally {
@@ -191,6 +222,7 @@ function normalizeOptimizationResult(
 }
 
 Deno.serve(async (req) => {
+  const functionStartedAt = Date.now();
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -319,6 +351,7 @@ Deno.serve(async (req) => {
 
 
       try {
+        ensureBudget(functionStartedAt, "Manual CMS update", 35_000);
         const isProductContent = page_type === "product";
         const connector = isProductContent
           ? await createProductConnector(website as WebsiteRecord)
@@ -336,7 +369,11 @@ Deno.serve(async (req) => {
         if (seo_title) updatePayload.seo_title = seo_title;
         if (seo_description) updatePayload.seo_description = seo_description;
         if (seo_keywords?.length) updatePayload.seo_keywords = seo_keywords;
-        pushResult = await connector.updatePage(page_external_id, updatePayload);
+        pushResult = await withTimeout(
+          connector.updatePage(page_external_id, updatePayload),
+          Math.min(CMS_PUSH_TIMEOUT_MS, Math.max(8_000, remainingBudgetMs(functionStartedAt, 8_000))),
+          "CMS update timed out. The connected site did not respond quickly enough; please retry or update metadata only.",
+        );
         console.log(`[MANUAL] Updated existing ${isProductContent ? 'product' : 'page'} on CMS:`, pushResult);
       } catch (pushErr: any) {
         pushError = pushErr.message || "CMS update failed";
@@ -730,8 +767,14 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
 
     let result: Record<string, any> = {};
     try {
+      ensureBudget(functionStartedAt, "SEO optimization");
       result = normalizeOptimizationResult(
-        await requestOptimizationDraft(LOVABLE_API_KEY, systemPrompt, userPrompt),
+        await requestOptimizationDraft(
+          LOVABLE_API_KEY,
+          systemPrompt,
+          userPrompt,
+          Math.min(AI_CALL_TIMEOUT_MS, Math.max(8_000, remainingBudgetMs(functionStartedAt, 55_000))),
+        ),
         fallbackResult,
         fields,
         includeContent,
@@ -748,7 +791,7 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
         });
       }
       console.error("AI error:", error?.status, error?.details || error);
-      throw new Error("AI generation failed");
+      throw timeoutError(error?.message || "AI generation failed", error?.status || 500, error?.details);
     }
 
     let qualityReport = analyzeSeoQuality({
@@ -786,8 +829,10 @@ ${buildQualityRepairChecklist(qualityReport.checks)}
 Revise and return the FULL JSON again. Fix every failed item, keep the exact primary keyword first in seo_keywords, and preserve HTML structure/classes/attributes exactly.`;
 
       try {
+        const repairTimeoutMs = Math.min(AI_CALL_TIMEOUT_MS, Math.max(8_000, remainingBudgetMs(functionStartedAt, 45_000)));
+        if (repairTimeoutMs < 8_000) break;
         result = normalizeOptimizationResult(
-          await requestOptimizationDraft(LOVABLE_API_KEY, systemPrompt, repairPrompt),
+          await requestOptimizationDraft(LOVABLE_API_KEY, systemPrompt, repairPrompt, repairTimeoutMs),
           fallbackResult,
           fields,
           includeContent,
@@ -900,6 +945,7 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
 
     if (website && page_external_id && !skip_push) {
       try {
+        ensureBudget(functionStartedAt, "CMS update", 35_000);
         const isProductContent = page_type === "product";
         const connector = isProductContent
           ? await createProductConnector(website as WebsiteRecord)
@@ -932,7 +978,11 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
         }
         if (nextSeoKeywords.length > 0) updatePayload.seo_keywords = nextSeoKeywords;
 
-        pushResult = await connector.updatePage(page_external_id, updatePayload);
+        pushResult = await withTimeout(
+          connector.updatePage(page_external_id, updatePayload),
+          Math.min(CMS_PUSH_TIMEOUT_MS, Math.max(8_000, remainingBudgetMs(functionStartedAt, 8_000))),
+          "CMS update timed out. The connected site did not respond quickly enough; please retry or update metadata only.",
+        );
         console.log(`[OPTIMIZE] Updated existing ${isProductContent ? 'product' : 'page'} on CMS:`, pushResult);
       } catch (pushErr: any) {
         pushError = pushErr.message || "CMS update failed";
@@ -1024,7 +1074,7 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
   } catch (err: any) {
     console.error("optimize-seo-content error:", err);
     return new Response(JSON.stringify({ error: err.message || "Unknown error" }), {
-      status: 500,
+      status: err.status || 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
