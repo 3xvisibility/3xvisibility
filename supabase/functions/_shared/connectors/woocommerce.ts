@@ -12,6 +12,23 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+const WOOCOMMERCE_TIMEOUT_MS = 25_000;
+
+async function wooFetch(url: string, init: RequestInit = {}, timeoutMs = WOOCOMMERCE_TIMEOUT_MS): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: init.signal ?? ctrl.signal });
+  } catch (err: any) {
+    if (err?.name === "AbortError") {
+      throw new Error(`WooCommerce request timed out after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /**
  * Build a clean WooCommerce product short_description.
  * WooCommerce expects this to be a SHORT teaser (the small text under the
@@ -120,7 +137,7 @@ export class WooCommerceConnector implements CmsConnector {
     if (shortDesc) body.short_description = shortDesc;
     if (metaData.length > 0) body.meta_data = metaData;
 
-    const res = await fetch(
+    const res = await wooFetch(
       `${this.baseUrl}/wp-json/wc/v3/products?${this.authQuery}`,
       {
         method: "POST",
@@ -143,7 +160,7 @@ export class WooCommerceConnector implements CmsConnector {
 
   async testConnection(): Promise<boolean> {
     try {
-      const res = await fetch(
+      const res = await wooFetch(
         `${this.baseUrl}/wp-json/wc/v3/system_status?${this.authQuery}`
       );
       return res.ok;
@@ -172,7 +189,7 @@ export class WooCommerceConnector implements CmsConnector {
     if (Object.keys(meta).length > 0) body.meta = meta;
     if (!preserveDesign && payload.page_template) body.template = payload.page_template;
 
-    const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/pages/${externalId}`, {
+    const res = await wooFetch(`${this.baseUrl}/wp-json/wp/v2/pages/${externalId}`, {
       method: "PUT",
       headers: {
         Authorization: `Basic ${auth}`,
@@ -223,7 +240,7 @@ export class WooCommerceConnector implements CmsConnector {
     const metaData = buildSeoMetaDataEntries(payload);
     if (metaData.length > 0) body.meta_data = metaData;
 
-    const res = await fetch(`${this.baseUrl}/wp-json/wc/v3/products/${externalId}?${this.authQuery}`, {
+    const res = await wooFetch(`${this.baseUrl}/wp-json/wc/v3/products/${externalId}?${this.authQuery}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -252,7 +269,7 @@ export class WooCommerceConnector implements CmsConnector {
         const url = `${this.baseUrl}/wp-json/wp/v2/pages?per_page=100&page=${page}&_embed&context=edit`;
         let response: Response;
         try {
-          response = await fetch(url, { headers: { Authorization: `Basic ${auth}` } });
+          response = await wooFetch(url, { headers: { Authorization: `Basic ${auth}` } }, 15_000);
         } catch {
           return items;
         }
@@ -297,7 +314,7 @@ export class WooCommerceConnector implements CmsConnector {
 
     while (true) {
       const url = `${this.baseUrl}/wp-json/wc/v3/products?per_page=100&page=${page}&${this.authQuery}`;
-      const response = await fetch(url);
+        const response = await wooFetch(url, {}, 15_000);
 
       if (!response.ok) {
         const err = await response.text();

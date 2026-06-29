@@ -70,7 +70,7 @@ export function SeoOptimizeDialog({
   onOptimized,
 }: SeoOptimizeDialogProps) {
   const { toast } = useToast();
-  const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords", "content"]);
+  const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords"]);
   const [instruction, setInstruction] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
@@ -165,7 +165,7 @@ export function SeoOptimizeDialog({
         },
       });
 
-      if (error) throw error;
+      if (error) throw new Error(await extractEdgeError(error, "Optimization failed"));
       if (data?.error) throw new Error(data.error);
 
       setResult({

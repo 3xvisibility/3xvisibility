@@ -12,9 +12,22 @@ async function shopifyFetch(
   url: string,
   init: RequestInit,
   maxRetries = 3,
+  timeoutMs = 25_000,
 ): Promise<Response> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const res = await fetch(url, init);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    let res: Response;
+    try {
+      res = await fetch(url, { ...init, signal: init.signal ?? ctrl.signal });
+    } catch (err: any) {
+      if (err?.name === "AbortError") {
+        throw new Error(`Shopify API request timed out after ${timeoutMs}ms`);
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
     if (res.status === 429) {
       const retryAfter = parseFloat(res.headers.get("Retry-After") || "2");
       const delay = Math.min(retryAfter * 1000, 10_000);
