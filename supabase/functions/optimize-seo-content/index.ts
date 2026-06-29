@@ -104,7 +104,18 @@ async function requestOptimizationDraft(
       ],
       tool_choice: { type: "function", function: { name: "seo_optimization_result" } },
     }),
-  });
+    });
+  } catch (err: any) {
+    if (err?.name === "AbortError") {
+      const error = new Error("AI generation timed out") as Error & { status?: number; details?: string };
+      error.status = 504;
+      error.details = `AI call exceeded ${AI_CALL_TIMEOUT_MS}ms`;
+      throw error;
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (!response.ok) {
     const details = await response.text();
