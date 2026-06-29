@@ -87,10 +87,11 @@ export function ElementorPublishPreviewDialog({
   onPublish,
   workspaceId,
   templateId,
+  publishFormat,
   baseline = {},
   publishedUrl,
 }: ElementorPublishPreviewDialogProps) {
-  const [mode, setMode] = useState<ElementorWidgetMode>("html");
+  const mode = resolveMode(publishFormat);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [override, setOverride] = useState(false);
 
@@ -113,6 +114,7 @@ export function ElementorPublishPreviewDialog({
   const publishBlocked = gateFailed && !override;
 
   if (!page) return null;
+
 
 
   return (
