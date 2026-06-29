@@ -58,12 +58,21 @@ function parseOptimizationResult(aiData: any): Record<string, any> {
   return result;
 }
 
+// Hard per-call timeout so a slow AI response fails fast instead of hanging
+// until the edge function's 150s idle timeout (which returns an opaque 504).
+const AI_CALL_TIMEOUT_MS = 60_000;
+
 async function requestOptimizationDraft(
   apiKey: string,
   systemPrompt: string,
   userPrompt: string,
 ) {
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), AI_CALL_TIMEOUT_MS);
+  let response: Response;
+  try {
+    response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    signal: ac.signal,
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
