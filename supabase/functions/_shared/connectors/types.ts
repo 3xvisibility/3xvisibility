@@ -135,6 +135,12 @@ export interface ConnectorConfig {
   access_token?: string;
   consumer_key?: string;
   consumer_secret?: string;
+  /**
+   * Page Generator Pro Connector plugin key. When present on a WordPress site,
+   * publishing is routed through the plugin (REST `pgp/v1`) instead of the raw
+   * WP REST API, so Elementor metadata/CSS/cache are handled natively.
+   */
+  connector_api_key?: string;
 }
 
 export interface CmsConnector {
