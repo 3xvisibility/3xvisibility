@@ -562,7 +562,7 @@ Deno.serve(async (req) => {
 
     const requestedFields = Array.isArray(optimize_fields) && optimize_fields.length > 0
       ? optimize_fields
-      : ["seo_title", "seo_description", "seo_keywords", "content"];
+      : ["seo_title", "seo_description", "seo_keywords"];
     // Live CMS optimizations preserve builder/design output by default. In that
     // mode, rewritten body HTML is intentionally not pushed, so asking the AI to
     // rewrite a full page only burns time until the 150s idle timeout. Keep the
@@ -613,7 +613,7 @@ Deno.serve(async (req) => {
 
     // Strip HTML to get plain text for AI analysis
     const plainText = page_content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-    const truncatedText = plainText.slice(0, 3000);
+    const truncatedText = plainText.slice(0, metadataOnly ? 1200 : 3000);
 
     // ── Reversible design preservation ──────────────────────────────────────
     // We must NEVER lose the page's <style>/<script> blocks (that's what
