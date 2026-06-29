@@ -126,10 +126,10 @@ export class PgpConnector implements CmsConnector {
   private async importImages(elementorJson: string): Promise<string> {
     if (!elementorJson) return elementorJson;
     const urls = new Set<string>();
-    const re = /"url"\s*:\s*"(https?:\/\/[^"]+\.(?:png|jpe?g|gif|webp|svg|avif))"/gi;
+    const re = /https?:\/\/[^\s"'\\)]+?\.(?:png|jpe?g|gif|webp|svg|avif|ico|bmp)(?:\?[^\s"'\\)]*)?/gi;
     let m: RegExpExecArray | null;
     while ((m = re.exec(elementorJson)) !== null) {
-      const u = m[1];
+      const u = m[0];
       if (!u.includes(this.baseUrl)) urls.add(u);
     }
     let out = elementorJson;

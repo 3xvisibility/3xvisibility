@@ -105,7 +105,7 @@ async function resolveCatalogElementorData(
         title: shrinkText(page.title, keepFraction),
         description: shrinkText(page.seo_description || undefined, keepFraction),
         bodyHtml: page.content,
-        injectCss: templateCss,
+        injectCss: mode === "html" ? templateCss : undefined,
       }, ELEMENTOR_SIMILARITY_TARGET);
       if (!built) return null;
       if (!best || built.similarity > best.similarity) best = built;
