@@ -15,6 +15,8 @@ interface WordPressCredentialFieldsProps {
   onAppPasswordChange: (v: string) => void;
   jwtToken: string;
   onJwtTokenChange: (v: string) => void;
+  connectorKey?: string;
+  onConnectorKeyChange?: (v: string) => void;
 }
 
 export function WordPressCredentialFields({
