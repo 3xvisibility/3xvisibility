@@ -41,6 +41,11 @@ export interface StyleProps {
   maxWidth?: string;
   borderRadius?: string;
   display?: string;
+  flexDirection?: string;
+  justifyContent?: string;
+  alignItems?: string;
+  gap?: string;
+  minHeight?: string;
 }
 
 interface Rule {
@@ -139,6 +144,11 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["max-width"]) p.maxWidth = d["max-width"];
   if (d["border-radius"]) p.borderRadius = d["border-radius"];
   if (d["display"]) p.display = d["display"];
+  if (d["flex-direction"]) p.flexDirection = d["flex-direction"];
+  if (d["justify-content"]) p.justifyContent = d["justify-content"];
+  if (d["align-items"]) p.alignItems = d["align-items"];
+  if (d["gap"]) p.gap = d["gap"];
+  if (d["min-height"]) p.minHeight = d["min-height"];
 
   const box = (prefix: "padding" | "margin"): Partial<BoxSides> | undefined => {
     const sides: Partial<BoxSides> = {};
@@ -314,6 +324,18 @@ export function styleContainer(settings: Record<string, unknown>, p: StyleProps,
   const mar = sidesToElementorSafe(p.margin);
   if (mar) settings.margin = mar;
   if (p.textAlign) settings.flex_align_items = p.textAlign === "center" ? "center" : p.textAlign === "right" ? "flex-end" : "flex-start";
+  if (p.display === "flex") settings.flex_direction = p.flexDirection || settings.flex_direction || "row";
+  if (p.display === "grid") settings.container_type = "grid";
+  if (p.alignItems) settings.flex_align_items = p.alignItems;
+  if (p.justifyContent) settings.flex_justify_content = p.justifyContent;
+  const gap = pxSize(p.gap);
+  if (gap) {
+    settings.gap = { unit: gap.unit, size: gap.size, sizes: [] };
+    settings.row_gap = { unit: gap.unit, size: gap.size, sizes: [] };
+    settings.column_gap = { unit: gap.unit, size: gap.size, sizes: [] };
+  }
+  const minH = pxSize(p.minHeight);
+  if (minH) settings.min_height = minH;
   const mw = pxSize(p.maxWidth);
   if (mw && mw.unit === "px") {
     settings.content_width = "boxed";

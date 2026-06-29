@@ -32,6 +32,8 @@ export interface PagePayload {
    * published page matches the stored template design 1:1.
    */
   elementor_data?: string;
+  /** Template CSS stored alongside native Elementor JSON so the connector plugin can print it on the published page. */
+  elementor_css?: string;
   /**
    * Desired publish format for WordPress pages: "elementor" (native Elementor,
    * default), "gutenberg" (native block editor), or "shopify" (routed to the

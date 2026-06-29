@@ -27,11 +27,11 @@ function shrinkText(text: string | undefined, keepFraction: number): string | un
 }
 
 async function resolveCatalogElementorData(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   page: { campaign_id?: string | null; title: string; content: string; seo_description?: string | null },
   cache: Map<string, unknown>,
   mode: "html" | "native" = "html",
-): Promise<{ data: string; similarity: number; truncatedFields: string[]; ok: boolean; mode: "html" | "native"; cssLength: number } | null> {
+): Promise<{ data: string; css: string; similarity: number; truncatedFields: string[]; ok: boolean; mode: "html" | "native"; cssLength: number } | null> {
   try {
     if (!page.campaign_id) return null;
 
@@ -77,7 +77,9 @@ async function resolveCatalogElementorData(
       // id and no stored elementor_data) instead of hard-blocking the publish.
       // Extract the template's <style> CSS so class-based design (grids, colors,
       // fonts, backgrounds, custom classes) renders 1:1 on the published page.
-      templateCss = extractTemplateCss(tplRow?.content);
+      templateCss = [extractTemplateCss(tplRow?.content), extractTemplateCss(page.content)]
+        .filter(Boolean)
+        .join("\n");
 
       if (!elementorJson && tplRow?.content) {
         try {
@@ -103,7 +105,7 @@ async function resolveCatalogElementorData(
         title: shrinkText(page.title, keepFraction),
         description: shrinkText(page.seo_description || undefined, keepFraction),
         bodyHtml: page.content,
-        injectCss: templateCss,
+        injectCss: mode === "html" ? templateCss : undefined,
       }, ELEMENTOR_SIMILARITY_TARGET);
       if (!built) return null;
       if (!best || built.similarity > best.similarity) best = built;
@@ -132,7 +134,7 @@ async function resolveCatalogElementorData(
       `target ${ELEMENTOR_SIMILARITY_TARGET}%, ok=${ok}, truncated ${best.truncatedFields.length}, ` +
       `css ${templateCss.length} chars, data ${chosenData.length} chars)`,
     );
-    return { data: chosenData, similarity: best.similarity, truncatedFields: best.truncatedFields, ok, mode, cssLength: templateCss.length };
+    return { data: chosenData, css: templateCss, similarity: best.similarity, truncatedFields: best.truncatedFields, ok, mode, cssLength: templateCss.length };
   } catch (e) {
     console.warn("[publish-pages] catalog Elementor resolve failed", e);
     return null;
@@ -146,7 +148,7 @@ async function resolveCatalogElementorData(
  * Returns a payload-ready section kit, or null when no stored kit matches.
  */
 async function resolveShopifySectionKit(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   page: { campaign_id?: string | null; title: string; seo_description?: string | null },
   cache: Map<string, unknown>,
 ): Promise<{ sectionId: string; sectionLiquid: string; template: Record<string, unknown>; suffix: string } | null> {
@@ -628,6 +630,19 @@ async function handlePublishPages(req: Request): Promise<Response> {
             : directShopifySuffixes;
           applyShopifySuffix(payload, website.type, dpSuffixes, pubType);
 
+          if (website.type === "wordpress" && pubType === "page" && !preserveDesign) {
+            try {
+              const css = extractTemplateCss(cleanedContent);
+              const tree = htmlToElementor(cleanedContent);
+              if (Array.isArray(tree) && tree.length > 0) {
+                payload.elementor_data = JSON.stringify(tree);
+                payload.elementor_css = css;
+              }
+            } catch (e) {
+              console.warn("[publish-pages] direct HTML→Elementor conversion failed", e);
+            }
+          }
+
           // If an external_id is provided, update the existing page; otherwise create new
           const result = dp.external_id
             ? await withTimeout(connector.updatePage(dp.external_id, payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${dp.title}`)
@@ -842,14 +857,15 @@ async function handlePublishPages(req: Request): Promise<Response> {
         if (resolvedPublishType === "product" && (page.websites as { type?: string }).type === "shopify") {
           try {
             const wsId = page.website_id;
-            let mapRow: { field_map?: Record<string, string>; variant_map?: Record<string, string>; metafields?: { namespace: string; key: string; type: string; value: string }[] } | null = null;
+              type ShopifyMapRow = { field_map?: Record<string, string>; variant_map?: Record<string, string>; metafields?: { namespace: string; key: string; type: string; value: string }[] };
+              let mapRow: ShopifyMapRow | null = null;
             if (page.campaign_id) {
               const { data } = await supabase.from("shopify_field_mappings" as never).select("field_map,variant_map,metafields").eq("website_id", wsId).eq("campaign_id", page.campaign_id).maybeSingle();
-              mapRow = (data as typeof mapRow) || null;
+                mapRow = (data as unknown as ShopifyMapRow | null) || null;
             }
             if (!mapRow && wsId) {
               const { data } = await supabase.from("shopify_field_mappings" as never).select("field_map,variant_map,metafields").eq("website_id", wsId).is("campaign_id", null).maybeSingle();
-              mapRow = (data as typeof mapRow) || null;
+                mapRow = (data as unknown as ShopifyMapRow | null) || null;
             }
             if (mapRow) {
               // Pull row data from the campaign CSV by page slug/title
@@ -1024,6 +1040,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // HTML blob. Image URLs in the JSON are uploaded to the WP Media
           // Library by the connector before the page is created/updated.
           payload.elementor_data = catalog.data;
+          payload.elementor_css = catalog.css;
           elementorSource = "catalog";
           elementorSimilarity = catalog.similarity;
 

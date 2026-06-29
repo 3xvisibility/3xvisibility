@@ -51,6 +51,7 @@ class XXXV_Elementor {
 		$status         = ( isset( $body['status'] ) && 'draft' === $body['status'] ) ? 'draft' : 'publish';
 		$post_id        = isset( $body['post_id'] ) ? absint( $body['post_id'] ) : 0;
 		$elementor_data = isset( $body['elementor_data'] ) ? $body['elementor_data'] : array();
+		$elementor_css  = isset( $body['elementor_css'] ) ? self::sanitize_template_css( (string) $body['elementor_css'] ) : '';
 		$page_template  = isset( $body['page_template'] ) ? sanitize_text_field( $body['page_template'] ) : 'elementor_header_footer';
 
 		// Elementor data may arrive as a JSON string; normalize to array.
@@ -105,6 +106,11 @@ class XXXV_Elementor {
 			update_post_meta( $post_id, '_elementor_version', defined( 'ELEMENTOR_VERSION' ) ? ELEMENTOR_VERSION : XXXV_CONNECTOR_VERSION );
 			update_post_meta( $post_id, '_elementor_pro_version', defined( 'ELEMENTOR_PRO_VERSION' ) ? ELEMENTOR_PRO_VERSION : '' );
 			update_post_meta( $post_id, '_wp_page_template', $page_template );
+			if ( '' !== $elementor_css ) {
+				update_post_meta( $post_id, '_xxxv_template_css', $elementor_css );
+			} else {
+				delete_post_meta( $post_id, '_xxxv_template_css' );
+			}
 
 			// Optional SEO / custom meta.
 			if ( ! empty( $body['meta'] ) && is_array( $body['meta'] ) ) {
@@ -190,6 +196,38 @@ class XXXV_Elementor {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Keep template CSS safe for a frontend <style> tag while preserving valid CSS.
+	 *
+	 * @param string $css Raw template CSS from the selected design.
+	 * @return string
+	 */
+	private static function sanitize_template_css( $css ) {
+		$css = str_replace( array( '</style', '<script', '</script' ), array( '<\/style', '', '' ), $css );
+		return trim( $css );
+	}
+
+	/**
+	 * Print template CSS stored with the Elementor JSON. This is required because
+	 * native REST-created widgets do not automatically carry arbitrary class-based
+	 * marketplace CSS; the classes stay editable on widgets, and this CSS restores
+	 * the exact spacing, colors, hero layout, and responsive design on the live page.
+	 */
+	public static function print_template_css() {
+		if ( ! is_singular( 'page' ) ) {
+			return;
+		}
+		$post_id = get_queried_object_id();
+		if ( ! $post_id ) {
+			return;
+		}
+		$css = get_post_meta( $post_id, '_xxxv_template_css', true );
+		if ( ! is_string( $css ) || '' === trim( $css ) ) {
+			return;
+		}
+		echo "\n<style id=\"xxxv-template-css-" . esc_attr( (string) $post_id ) . "\">\n" . $css . "\n</style>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized CSS must stay raw inside <style>.
 	}
 
 	/**
@@ -301,6 +339,7 @@ class XXXV_Elementor {
 			'post_name'      => $post ? $post->post_name : '',
 			'post_status'    => $post ? $post->post_status : 'draft',
 			'elementor_data' => get_post_meta( $post_id, '_elementor_data', true ),
+			'template_css'   => get_post_meta( $post_id, '_xxxv_template_css', true ),
 			'page_template'  => get_post_meta( $post_id, '_wp_page_template', true ),
 		);
 	}
@@ -331,6 +370,7 @@ class XXXV_Elementor {
 			)
 		);
 		update_post_meta( $post_id, '_elementor_data', $snap['elementor_data'] );
+		update_post_meta( $post_id, '_xxxv_template_css', isset( $snap['template_css'] ) ? $snap['template_css'] : '' );
 		update_post_meta( $post_id, '_wp_page_template', $snap['page_template'] );
 		self::regenerate_page_css( $post_id );
 		self::clear_runtime_caches( $post_id );
