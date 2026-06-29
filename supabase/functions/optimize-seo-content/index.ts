@@ -25,7 +25,7 @@ const OPTIMIZATION_MODEL = "google/gemini-2.5-flash-lite";
 const MAX_QUALITY_REPAIR_ATTEMPTS = 1;
 // Stop the repair loop once we're approaching the 150s edge function idle timeout.
 // Leaves headroom for CMS push + DB writes after the AI loop completes.
-const REPAIR_LOOP_BUDGET_MS = 90_000;
+const REPAIR_LOOP_BUDGET_MS = 70_000;
 
 function parseOptimizationResult(aiData: any): Record<string, any> {
   let result: Record<string, any> = {};
@@ -58,12 +58,21 @@ function parseOptimizationResult(aiData: any): Record<string, any> {
   return result;
 }
 
+// Hard per-call timeout so a slow AI response fails fast instead of hanging
+// until the edge function's 150s idle timeout (which returns an opaque 504).
+const AI_CALL_TIMEOUT_MS = 60_000;
+
 async function requestOptimizationDraft(
   apiKey: string,
   systemPrompt: string,
   userPrompt: string,
 ) {
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), AI_CALL_TIMEOUT_MS);
+  let response: Response;
+  try {
+    response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    signal: ac.signal,
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -95,7 +104,18 @@ async function requestOptimizationDraft(
       ],
       tool_choice: { type: "function", function: { name: "seo_optimization_result" } },
     }),
-  });
+    });
+  } catch (err: any) {
+    if (err?.name === "AbortError") {
+      const error = new Error("AI generation timed out") as Error & { status?: number; details?: string };
+      error.status = 504;
+      error.details = `AI call exceeded ${AI_CALL_TIMEOUT_MS}ms`;
+      throw error;
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (!response.ok) {
     const details = await response.text();
