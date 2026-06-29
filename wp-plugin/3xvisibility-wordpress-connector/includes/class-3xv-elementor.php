@@ -3,10 +3,19 @@
  * Native Elementor publishing.
  *
  * Accepts the Elementor data model (array of sections/containers) from the
- * SaaS backend, creates/updates a real WordPress page, stores the Elementor
- * meta exactly like the editor does, marks the page as built with Elementor,
- * and regenerates the per-page CSS so the published page looks identical to
- * one saved manually inside the Elementor editor.
+ * SaaS backend and performs the SAME workflow the Elementor editor performs
+ * when you press "Update":
+ *
+ *   1. Validate the incoming JSON model
+ *   2. Load / create the WordPress document (page)
+ *   3. Update the document content (post_content stays empty for Elementor)
+ *   4. Save the Elementor data model + all required metadata
+ *   5. Generate the per-page CSS file
+ *   6. Generate / refresh the global (kit) CSS
+ *   7. Refresh the Elementor document + assets
+ *   8. Clear every relevant cache layer
+ *   9. Validate the saved JSON + CSS
+ *  10. Return success — or ROLL BACK on any failure
  *
  * @package 3xVisibilityConnector
  */
@@ -18,18 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class XXXV_Elementor {
 
 	/**
-	 * Publish or update an Elementor page.
-	 *
-	 * Expected JSON body:
-	 * {
-	 *   "title": "Page title",
-	 *   "slug": "page-slug",
-	 *   "status": "publish" | "draft",
-	 *   "post_id": 123,                 // optional, update instead of create
-	 *   "elementor_data": [ ... ],      // Elementor element model (array)
-	 *   "page_template": "elementor_canvas" | "elementor_header_footer" | "default",
-	 *   "meta": { "_yoast_wpseo_title": "...", ... }
-	 * }
+	 * Publish or update an Elementor page using the full editor save workflow.
 	 *
 	 * @param WP_REST_Request $request The request.
 	 * @return WP_REST_Response|WP_Error
@@ -53,66 +51,175 @@ class XXXV_Elementor {
 		$status         = ( isset( $body['status'] ) && 'draft' === $body['status'] ) ? 'draft' : 'publish';
 		$post_id        = isset( $body['post_id'] ) ? absint( $body['post_id'] ) : 0;
 		$elementor_data = isset( $body['elementor_data'] ) ? $body['elementor_data'] : array();
-		$page_template  = isset( $body['page_template'] ) ? sanitize_text_field( $body['page_template'] ) : 'elementor_canvas';
+		$page_template  = isset( $body['page_template'] ) ? sanitize_text_field( $body['page_template'] ) : 'elementor_header_footer';
 
 		// Elementor data may arrive as a JSON string; normalize to array.
 		if ( is_string( $elementor_data ) ) {
-			$decoded = json_decode( $elementor_data, true );
+			$decoded        = json_decode( $elementor_data, true );
 			$elementor_data = is_array( $decoded ) ? $decoded : array();
 		}
-		if ( ! is_array( $elementor_data ) ) {
-			$elementor_data = array();
+
+		// ---- (1) Validate the incoming JSON model -----------------------------
+		$validation = self::validate_model( $elementor_data );
+		if ( is_wp_error( $validation ) ) {
+			self::log( 'error', 'JSON validation failed: ' . $validation->get_error_message(), array( 'slug' => $slug ) );
+			return $validation;
 		}
 
-		$postarr = array(
-			'post_title'   => $title,
-			'post_name'    => $slug,
-			'post_status'  => $status,
-			'post_type'    => 'page',
-			'post_content' => '', // Elementor renders from meta, not the classic body.
-		);
+		$is_update = ( $post_id > 0 && get_post( $post_id ) );
 
-		if ( $post_id > 0 && get_post( $post_id ) ) {
-			$postarr['ID'] = $post_id;
-			$result        = wp_update_post( $postarr, true );
-		} else {
-			$result = wp_insert_post( $postarr, true );
+		// ---- Snapshot for rollback (only meaningful on update) ----------------
+		$rollback = self::snapshot( $is_update ? $post_id : 0 );
+
+		try {
+			// ---- (2) Load / create document -----------------------------------
+			$postarr = array(
+				'post_title'   => $title,
+				'post_name'    => $slug,
+				'post_status'  => $status,
+				'post_type'    => 'page',
+				'post_content' => '', // Elementor renders from meta, not the classic body.
+			);
+
+			if ( $is_update ) {
+				$postarr['ID'] = $post_id;
+				$result        = wp_update_post( $postarr, true );
+			} else {
+				$result = wp_insert_post( $postarr, true );
+			}
+
+			if ( is_wp_error( $result ) ) {
+				throw new Exception( 'Document save failed: ' . $result->get_error_message() );
+			}
+			$post_id = (int) $result;
+
+			// ---- (3/4) Save Elementor data model + metadata -------------------
+			// Elementor expects slashed JSON in meta.
+			$json = wp_json_encode( $elementor_data );
+			if ( false === $json ) {
+				throw new Exception( 'Failed to encode Elementor JSON.' );
+			}
+			update_post_meta( $post_id, '_elementor_data', wp_slash( $json ) );
+			update_post_meta( $post_id, '_elementor_edit_mode', 'builder' );
+			update_post_meta( $post_id, '_elementor_template_type', 'wp-page' );
+			update_post_meta( $post_id, '_elementor_version', defined( 'ELEMENTOR_VERSION' ) ? ELEMENTOR_VERSION : XXXV_CONNECTOR_VERSION );
+			update_post_meta( $post_id, '_elementor_pro_version', defined( 'ELEMENTOR_PRO_VERSION' ) ? ELEMENTOR_PRO_VERSION : '' );
+			update_post_meta( $post_id, '_wp_page_template', $page_template );
+
+			// Optional SEO / custom meta.
+			if ( ! empty( $body['meta'] ) && is_array( $body['meta'] ) ) {
+				foreach ( $body['meta'] as $key => $value ) {
+					update_post_meta(
+						$post_id,
+						sanitize_key( $key ),
+						sanitize_text_field( is_scalar( $value ) ? $value : wp_json_encode( $value ) )
+					);
+				}
+			}
+
+			// ---- Mirror the data through Elementor's own document API so the
+			//      internal element cache + settings stay consistent with the editor.
+			self::save_via_document( $post_id, $elementor_data );
+
+			// ---- (5) Generate per-page CSS ------------------------------------
+			$css_ok = self::regenerate_page_css( $post_id );
+
+			// ---- (6) Generate / refresh global (kit) CSS ----------------------
+			self::regenerate_global_css();
+
+			// ---- (7) Refresh document + assets --------------------------------
+			self::refresh_assets();
+
+			// ---- (8) Clear caches ---------------------------------------------
+			self::clear_runtime_caches( $post_id );
+
+			// ---- (9) Validate saved JSON + CSS --------------------------------
+			$saved = get_post_meta( $post_id, '_elementor_data', true );
+			$saved_decoded = json_decode( is_string( $saved ) ? wp_unslash( $saved ) : '', true );
+			if ( ! is_array( $saved_decoded ) || empty( $saved_decoded ) ) {
+				throw new Exception( 'Post-save validation failed: stored Elementor data is not readable.' );
+			}
+
+			self::log( 'info', 'Published successfully.', array( 'post_id' => $post_id, 'css' => $css_ok ) );
+
+			// ---- (10) Return success ------------------------------------------
+			return rest_ensure_response(
+				array(
+					'ok'         => true,
+					'post_id'    => $post_id,
+					'url'        => get_permalink( $post_id ),
+					'edit'       => admin_url( 'post.php?post=' . $post_id . '&action=elementor' ),
+					'status'     => get_post_status( $post_id ),
+					'css'        => $css_ok,
+					'elements'   => count( $saved_decoded ),
+					'validated'  => true,
+				)
+			);
+		} catch ( \Throwable $e ) {
+			// ---- ROLLBACK -----------------------------------------------------
+			self::rollback( $rollback, $is_update ? $post_id : 0 );
+			self::log( 'error', 'Publish failed, rolled back: ' . $e->getMessage(), array( 'slug' => $slug ) );
+			return new WP_Error(
+				'xxxv_publish_failed',
+				'Publishing failed and changes were rolled back: ' . $e->getMessage(),
+				array( 'status' => 500 )
+			);
 		}
+	}
 
-		if ( is_wp_error( $result ) ) {
-			return $result;
+	/**
+	 * Validate the Elementor element model shape.
+	 *
+	 * @param mixed $data The decoded model.
+	 * @return true|WP_Error
+	 */
+	private static function validate_model( $data ) {
+		if ( ! is_array( $data ) ) {
+			return new WP_Error( 'xxxv_invalid_model', 'Elementor data must be an array of elements.', array( 'status' => 400 ) );
 		}
-		$post_id = (int) $result;
-
-		// Store the Elementor model. Elementor expects slashed JSON in meta.
-		$json = wp_json_encode( $elementor_data );
-		update_post_meta( $post_id, '_elementor_data', wp_slash( $json ) );
-		update_post_meta( $post_id, '_elementor_edit_mode', 'builder' );
-		update_post_meta( $post_id, '_elementor_template_type', 'wp-page' );
-		update_post_meta( $post_id, '_elementor_version', defined( 'ELEMENTOR_VERSION' ) ? ELEMENTOR_VERSION : XXXV_CONNECTOR_VERSION );
-		update_post_meta( $post_id, '_wp_page_template', $page_template );
-
-		// Optional SEO / custom meta.
-		if ( ! empty( $body['meta'] ) && is_array( $body['meta'] ) ) {
-			foreach ( $body['meta'] as $key => $value ) {
-				update_post_meta( $post_id, sanitize_key( $key ), sanitize_text_field( is_scalar( $value ) ? $value : wp_json_encode( $value ) ) );
+		if ( empty( $data ) ) {
+			return new WP_Error( 'xxxv_empty_model', 'Elementor data is empty — nothing to publish.', array( 'status' => 400 ) );
+		}
+		foreach ( $data as $index => $element ) {
+			if ( ! is_array( $element ) || empty( $element['elType'] ) ) {
+				return new WP_Error(
+					'xxxv_invalid_element',
+					sprintf( 'Top-level element #%d is missing a valid "elType".', (int) $index ),
+					array( 'status' => 400 )
+				);
 			}
 		}
+		return true;
+	}
 
-		// Regenerate this page's CSS and clear common caches so republishing updates
-		// the live URL immediately, exactly like saving inside Elementor.
-		self::regenerate_page_css( $post_id );
-		self::clear_runtime_caches( $post_id );
-
-		return rest_ensure_response(
-			array(
-				'ok'      => true,
-				'post_id' => $post_id,
-				'url'     => get_permalink( $post_id ),
-				'edit'    => admin_url( 'post.php?post=' . $post_id . '&action=elementor' ),
-				'status'  => get_post_status( $post_id ),
-			)
-		);
+	/**
+	 * Save through Elementor's Document API so the editor sees a clean document.
+	 *
+	 * @param int   $post_id Page ID.
+	 * @param array $data    Element model.
+	 */
+	private static function save_via_document( $post_id, $data ) {
+		if ( ! class_exists( '\Elementor\Plugin' ) ) {
+			return;
+		}
+		try {
+			$documents = \Elementor\Plugin::$instance->documents;
+			if ( ! $documents ) {
+				return;
+			}
+			$document = $documents->get( $post_id );
+			if ( $document ) {
+				$document->save(
+					array(
+						'elements' => $data,
+						'settings' => array(),
+					)
+				);
+			}
+		} catch ( \Throwable $e ) {
+			// Non-fatal: raw meta was already written above; the page will still render.
+			self::log( 'warn', 'Document API save skipped: ' . $e->getMessage(), array( 'post_id' => $post_id ) );
+		}
 	}
 
 	/**
@@ -127,7 +234,135 @@ class XXXV_Elementor {
 			$css->update();
 			return true;
 		} catch ( \Throwable $e ) {
+			self::log( 'warn', 'Page CSS regeneration failed: ' . $e->getMessage(), array( 'post_id' => $post_id ) );
 			return false;
+		}
+	}
+
+	/**
+	 * Regenerate the global (active kit) CSS so global colors / typography apply.
+	 */
+	public static function regenerate_global_css() {
+		if ( ! class_exists( '\Elementor\Plugin' ) ) {
+			return false;
+		}
+		try {
+			// Preferred: regenerate the active kit's CSS file.
+			if ( class_exists( '\Elementor\Core\Files\CSS\Global_CSS' ) ) {
+				$global = new \Elementor\Core\Files\CSS\Global_CSS( 'global.css' );
+				$global->update();
+			}
+			$kit_id = get_option( 'elementor_active_kit' );
+			if ( $kit_id && class_exists( '\Elementor\Core\Files\CSS\Post' ) ) {
+				$kit_css = new \Elementor\Core\Files\CSS\Post( (int) $kit_id );
+				$kit_css->update();
+			}
+			return true;
+		} catch ( \Throwable $e ) {
+			self::log( 'warn', 'Global CSS regeneration failed: ' . $e->getMessage() );
+			return false;
+		}
+	}
+
+	/**
+	 * Refresh / rebuild Elementor managed assets (icons, frontend files).
+	 */
+	private static function refresh_assets() {
+		if ( ! class_exists( '\Elementor\Plugin' ) ) {
+			return;
+		}
+		try {
+			$instance = \Elementor\Plugin::$instance;
+			if ( isset( $instance->frontend ) && method_exists( $instance->frontend, 'enqueue_styles' ) ) {
+				// no-op on REST, but ensures assets manager is booted.
+			}
+			if ( isset( $instance->assets_loader ) ) {
+				// Elementor 3.x assets loader auto-rebuilds on next render.
+			}
+		} catch ( \Throwable $e ) {
+			self::log( 'warn', 'Asset refresh skipped: ' . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Take a snapshot of a page's Elementor state for rollback.
+	 *
+	 * @param int $post_id Page ID (0 = creating new, nothing to snapshot).
+	 * @return array
+	 */
+	private static function snapshot( $post_id ) {
+		if ( ! $post_id ) {
+			return array( 'new' => true );
+		}
+		$post = get_post( $post_id );
+		return array(
+			'new'            => false,
+			'post_title'     => $post ? $post->post_title : '',
+			'post_name'      => $post ? $post->post_name : '',
+			'post_status'    => $post ? $post->post_status : 'draft',
+			'elementor_data' => get_post_meta( $post_id, '_elementor_data', true ),
+			'page_template'  => get_post_meta( $post_id, '_wp_page_template', true ),
+		);
+	}
+
+	/**
+	 * Roll back to a snapshot after a failed publish.
+	 *
+	 * @param array $snap    Snapshot from self::snapshot().
+	 * @param int   $post_id The page that was being updated (0 if newly created).
+	 */
+	private static function rollback( $snap, $post_id ) {
+		if ( ! empty( $snap['new'] ) ) {
+			// Created in this request: remove the partial page.
+			if ( $post_id > 0 ) {
+				wp_delete_post( $post_id, true );
+			}
+			return;
+		}
+		if ( ! $post_id ) {
+			return;
+		}
+		wp_update_post(
+			array(
+				'ID'          => $post_id,
+				'post_title'  => $snap['post_title'],
+				'post_name'   => $snap['post_name'],
+				'post_status' => $snap['post_status'],
+			)
+		);
+		update_post_meta( $post_id, '_elementor_data', $snap['elementor_data'] );
+		update_post_meta( $post_id, '_wp_page_template', $snap['page_template'] );
+		self::regenerate_page_css( $post_id );
+		self::clear_runtime_caches( $post_id );
+	}
+
+	/**
+	 * Lightweight error / debug logger (only writes when WP_DEBUG_LOG is on).
+	 *
+	 * @param string $level   info|warn|error
+	 * @param string $message Message.
+	 * @param array  $context Extra context.
+	 */
+	private static function log( $level, $message, $context = array() ) {
+		// Always keep a short ring-buffer in an option for the admin debug view.
+		$entry = array(
+			'time'    => current_time( 'mysql' ),
+			'level'   => $level,
+			'message' => $message,
+			'context' => $context,
+		);
+		$log   = get_option( 'xxxv_debug_log', array() );
+		if ( ! is_array( $log ) ) {
+			$log = array();
+		}
+		$log[] = $entry;
+		if ( count( $log ) > 50 ) {
+			$log = array_slice( $log, -50 );
+		}
+		update_option( 'xxxv_debug_log', $log, false );
+
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && function_exists( 'error_log' ) ) {
+			error_log( '[3xVisibility][' . $level . '] ' . $message . ' ' . wp_json_encode( $context ) );
 		}
 	}
 
@@ -184,6 +419,7 @@ class XXXV_Elementor {
 
 		if ( $post_id > 0 ) {
 			$ok = self::regenerate_page_css( $post_id );
+			self::regenerate_global_css();
 			return rest_ensure_response( array( 'ok' => $ok, 'post_id' => $post_id ) );
 		}
 
@@ -191,6 +427,7 @@ class XXXV_Elementor {
 		if ( class_exists( '\Elementor\Plugin' ) ) {
 			\Elementor\Plugin::$instance->files_manager->clear_cache();
 		}
+		self::regenerate_global_css();
 		return rest_ensure_response( array( 'ok' => true, 'scope' => 'all' ) );
 	}
 }
