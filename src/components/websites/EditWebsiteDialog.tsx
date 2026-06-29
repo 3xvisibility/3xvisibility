@@ -79,9 +79,13 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
 
   const buildCredentials = () => {
     if (site.type === "wordpress") {
-      return wpAuthMethod === "application_password"
-        ? { username, app_password: appPassword, auth_method: "application_password" }
-        : { jwt_token: jwtToken, auth_method: "jwt" };
+      const base =
+        wpAuthMethod === "application_password"
+          ? { username, app_password: appPassword, auth_method: "application_password" }
+          : { jwt_token: jwtToken, auth_method: "jwt" };
+      return connectorKey.trim()
+        ? { ...base, pgp_connector_key: connectorKey.trim() }
+        : base;
     }
     if (site.type === "shopify") return {};
     if (site.type === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
