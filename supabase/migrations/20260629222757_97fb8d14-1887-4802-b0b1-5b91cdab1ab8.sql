@@ -1,0 +1,2 @@
+ALTER TABLE public.campaigns DROP CONSTRAINT campaigns_website_id_fkey;
+ALTER TABLE public.campaigns ADD CONSTRAINT campaigns_website_id_fkey FOREIGN KEY (website_id) REFERENCES public.websites(id) ON DELETE CASCADE;
