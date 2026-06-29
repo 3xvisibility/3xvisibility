@@ -435,16 +435,20 @@ Deno.serve((req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let timer: number | undefined;
   return Promise.race([
     handlePublishPages(req),
     new Promise<Response>((resolve) => {
-      setTimeout(() => resolve(jsonResponse({
-        error: "Publish is still running in the background. Refresh the page in a moment to see progress.",
+      timer = setTimeout(() => resolve(jsonResponse({
+        success: true,
+        message: "Publish is still running in the background. Refresh the page in a moment to see progress.",
         code: "FUNCTION_SAFE_TIMEOUT",
         partial: true,
       }, 202)), FUNCTION_SAFE_TIMEOUT_MS);
     }),
-  ]);
+  ]).finally(() => {
+    if (timer !== undefined) clearTimeout(timer);
+  });
 });
 
 async function handlePublishPages(req: Request): Promise<Response> {
