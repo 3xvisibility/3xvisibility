@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import type { CmsConnector, ConnectorConfig } from "./types.ts";
 import { WordPressConnector } from "./wordpress.ts";
+import { PgpConnector } from "./pgp-connector.ts";
 import { ShopifyConnector } from "./shopify.ts";
 import { PrestaShopConnector } from "./prestashop.ts";
 import { WooCommerceConnector } from "./woocommerce.ts";
