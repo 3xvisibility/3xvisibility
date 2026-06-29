@@ -483,7 +483,7 @@ export function PageEditDialog({
       });
 
       if (error) {
-        const msg = typeof error === "object" && error?.message ? error.message : String(error);
+        const msg = await extractEdgeError(error, "Publish failed");
         if (msg.includes("402") || msg.includes("credits")) {
           toast({ title: "AI credits exhausted", description: "Please add more credits in Settings → Cloud & AI balance.", variant: "destructive" });
           setPublishing(false);
