@@ -67,9 +67,11 @@ export function WordPressCredentialFields({
   const urlTrimmed = (siteUrl ?? "").trim();
   const urlMissing = siteUrl !== undefined && urlTrimmed.length === 0;
   const urlMalformed = urlTrimmed.length > 0 && !/^https?:\/\/.+\..+/i.test(urlTrimmed);
-  const usernameMissing = authMethod === "application_password" && username.trim().length === 0;
-  const passwordMissing = authMethod === "application_password" && appPassword.trim().length === 0;
-  const jwtMissing = authMethod === "jwt" && jwtToken.trim().length === 0;
+  const connectorMissing = onConnectorKeyChange !== undefined && connectorKey.trim().length === 0;
+  const legacyAuthRequired = onConnectorKeyChange === undefined;
+  const usernameMissing = legacyAuthRequired && authMethod === "application_password" && username.trim().length === 0;
+  const passwordMissing = legacyAuthRequired && authMethod === "application_password" && appPassword.trim().length === 0;
+  const jwtMissing = legacyAuthRequired && authMethod === "jwt" && jwtToken.trim().length === 0;
 
   const warnings: string[] = [];
   if (urlMissing) warnings.push("Site URL is required.");
@@ -77,6 +79,7 @@ export function WordPressCredentialFields({
   if (usernameMissing) warnings.push("Username is required for Application Password auth.");
   if (passwordMissing) warnings.push("Application Password is required.");
   if (jwtMissing) warnings.push("JWT Token is required.");
+  if (connectorMissing) warnings.push("3xVisibility WordPress Connector Key is required for WordPress publishing.");
 
   return (
     <div className="space-y-4">
@@ -164,19 +167,26 @@ export function WordPressCredentialFields({
       {onConnectorKeyChange && (
         <div className="pt-2 border-t border-muted">
           <Label htmlFor="wp-connector-key">
-            3xVisibility WordPress Connector Key <span className="text-muted-foreground font-normal">(optional)</span>
+            3xVisibility WordPress Connector Key <span className="text-destructive font-normal">(required)</span>
           </Label>
           <Input
             id="wp-connector-key"
             type="password"
             placeholder="Paste the API key from the plugin settings"
             value={connectorKey}
+            aria-invalid={connectorMissing}
             onChange={(e) => onConnectorKeyChange(e.target.value)}
           />
-          <p className="text-[11px] text-muted-foreground mt-1">
-            Install the <strong>3xVisibility WordPress Connector</strong> plugin, then paste its API key here to publish
-            native Elementor/Gutenberg pages (CSS &amp; cache handled automatically). Leave blank to use the standard REST API.
-          </p>
+          {connectorMissing ? (
+            <p className="text-[11px] text-destructive mt-1">
+              Paste the plugin API key. WordPress publishing no longer uses the standard REST API for Elementor pages.
+            </p>
+          ) : (
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Install the <strong>3xVisibility WordPress Connector</strong> plugin, then paste its API key here to publish
+              native Elementor/Gutenberg pages with CSS, media, and cache handling.
+            </p>
+          )}
         </div>
       )}
 
