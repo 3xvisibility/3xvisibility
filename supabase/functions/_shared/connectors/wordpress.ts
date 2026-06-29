@@ -89,6 +89,23 @@ function isInvalidTemplateError(errorText: string): boolean {
     && errorText.includes('"template"');
 }
 
+const WORDPRESS_TIMEOUT_MS = 25_000;
+
+async function wordpressFetch(url: string, init: RequestInit = {}, timeoutMs = WORDPRESS_TIMEOUT_MS): Promise<Response> {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: init.signal ?? ac.signal });
+  } catch (err: any) {
+    if (err?.name === "AbortError") {
+      throw new Error(`WordPress request timed out after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export class WordPressConnector implements CmsConnector {
   readonly type = "wordpress";
   private baseUrl: string;
@@ -151,7 +168,7 @@ export class WordPressConnector implements CmsConnector {
   private async uploadMediaFromUrl(sourceUrl: string): Promise<string | null> {
     if (this.mediaCache.has(sourceUrl)) return this.mediaCache.get(sourceUrl)!;
     try {
-      const res = await fetch(sourceUrl);
+      const res = await wordpressFetch(sourceUrl, {}, 12_000);
       if (!res.ok) {
         this.mediaCache.set(sourceUrl, null);
         return null;
@@ -179,11 +196,11 @@ export class WordPressConnector implements CmsConnector {
         if (auth) uploadHeaders.Authorization = auth;
       }
 
-      const mediaRes = await fetch(`${this.baseUrl}/wp-json/wp/v2/media`, {
+      const mediaRes = await wordpressFetch(`${this.baseUrl}/wp-json/wp/v2/media`, {
         method: "POST",
         headers: uploadHeaders,
         body: bytes,
-      });
+      }, WORDPRESS_TIMEOUT_MS);
       if (!mediaRes.ok) {
         this.mediaCache.set(sourceUrl, null);
         return null;
@@ -232,7 +249,7 @@ export class WordPressConnector implements CmsConnector {
    */
   private async importElementorLibraryTemplate(title: string, elementorData: string): Promise<string | null> {
     try {
-      const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/elementor_library`, {
+      const res = await wordpressFetch(`${this.baseUrl}/wp-json/wp/v2/elementor_library`, {
         method: "POST",
         headers: this.headers,
         body: JSON.stringify({
@@ -245,7 +262,7 @@ export class WordPressConnector implements CmsConnector {
             _elementor_data: elementorData,
           },
         }),
-      });
+      }, WORDPRESS_TIMEOUT_MS);
       if (!res.ok) {
         await res.text();
         return null;
@@ -269,11 +286,11 @@ export class WordPressConnector implements CmsConnector {
     body: Record<string, unknown>,
     action: "publish" | "update"
   ) {
-    let response = await fetch(url, {
+    let response = await wordpressFetch(url, {
       method,
       headers: this.headers,
       body: JSON.stringify(body),
-    });
+    }, WORDPRESS_TIMEOUT_MS);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -282,11 +299,11 @@ export class WordPressConnector implements CmsConnector {
         const retryBody = { ...body };
         delete retryBody.template;
 
-        response = await fetch(url, {
+        response = await wordpressFetch(url, {
           method,
           headers: this.headers,
           body: JSON.stringify(retryBody),
-        });
+        }, WORDPRESS_TIMEOUT_MS);
 
         if (!response.ok) {
           throw new Error(await getWordPressError(response, action));
@@ -474,9 +491,9 @@ export class WordPressConnector implements CmsConnector {
 
   async testConnection(): Promise<boolean> {
     try {
-      const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/users/me?context=edit`, {
+      const res = await wordpressFetch(`${this.baseUrl}/wp-json/wp/v2/users/me?context=edit`, {
         headers: this.headers,
-      });
+      }, 12_000);
       return res.ok;
     } catch {
       return false;
@@ -490,7 +507,7 @@ export class WordPressConnector implements CmsConnector {
 
     while (true) {
       const url = `${this.baseUrl}/wp-json/wp/v2/${contentType === "products" ? "product" : "pages"}?per_page=${perPage}&page=${page}&_embed&context=edit`;
-      const response = await fetch(url, { headers: this.headers });
+      const response = await wordpressFetch(url, { headers: this.headers }, 15_000);
 
       if (!response.ok) {
         if (contentType === "products") { await response.text(); return items; }
@@ -531,9 +548,10 @@ export class WordPressConnector implements CmsConnector {
     for (const item of items) {
       if (item.type === "page") {
         try {
-          const singleResp = await fetch(
+          const singleResp = await wordpressFetch(
             `${this.baseUrl}/wp-json/wp/v2/pages/${item.id}?context=edit`,
-            { headers: this.headers }
+            { headers: this.headers },
+            15_000,
           );
           if (singleResp.ok) {
             const singleData = await singleResp.json();
