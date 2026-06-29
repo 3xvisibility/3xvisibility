@@ -87,7 +87,7 @@ export default function GeneratedPagesPage() {
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
   const [elementorPreviewPage, setElementorPreviewPage] = useState<GeneratedPage | null>(null);
   const [elementorMode, setElementorModeState] = useState<ElementorWidgetMode>("html");
-  const elementorModeRef = useRef<ElementorWidgetMode>("html");
+  const elementorModeRef = useRef<ElementorWidgetMode>("native");
   const setElementorMode = (m: ElementorWidgetMode) => { elementorModeRef.current = m; setElementorModeState(m); };
 
   const { toast } = useToast();
