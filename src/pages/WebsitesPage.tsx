@@ -555,7 +555,10 @@ export default function WebsitesPage() {
                     onJwtTokenChange={setJwtToken}
                     connectorKey={connectorKey}
                     onConnectorKeyChange={setConnectorKey}
+                    siteUrl={siteUrl}
+                    testError={wpTestError}
                   />
+
                 )}
                  {siteType === "shopify" && (
                       <ShopifyCredentialFields
