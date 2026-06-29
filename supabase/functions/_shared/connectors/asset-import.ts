@@ -82,8 +82,8 @@ export async function importHtmlAssets(
   options: { maxAssets?: number; maxMs?: number } = {},
 ): Promise<string> {
   if (!html) return html;
-  const maxAssets = options.maxAssets ?? 8;
-  const maxMs = options.maxMs ?? 45_000;
+  const maxAssets = options.maxAssets ?? 3;
+  const maxMs = options.maxMs ?? 35_000;
   const startedAt = Date.now();
   const urls = collectAssetUrls(html).slice(0, maxAssets);
   if (urls.length === 0) return html;

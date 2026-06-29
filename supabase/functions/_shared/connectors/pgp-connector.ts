@@ -133,7 +133,9 @@ export class PgpConnector implements CmsConnector {
       if (!u.includes(this.baseUrl)) urls.add(u);
     }
     let out = elementorJson;
-    for (const u of urls) {
+    const startedAt = Date.now();
+    for (const u of [...urls].slice(0, 3)) {
+      if (Date.now() - startedAt > 35_000) break;
       const local = await this.uploadMedia(u);
       if (local) {
         out = out.split(JSON.stringify(u).slice(1, -1)).join(JSON.stringify(local).slice(1, -1));

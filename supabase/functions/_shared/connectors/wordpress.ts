@@ -224,10 +224,12 @@ export class WordPressConnector implements CmsConnector {
   private async importElementorImages(elementorData: string): Promise<string> {
     if (!elementorData) return elementorData;
     const URL_RE = /https?:\/\/[^\s"'\\)]+?\.(?:png|jpe?g|gif|webp|avif|svg|ico|bmp)(?:\?[^\s"'\\)]*)?/gi;
-    const urls = [...new Set(elementorData.match(URL_RE) ?? [])];
+    const startedAt = Date.now();
+    const urls = [...new Set(elementorData.match(URL_RE) ?? [])].slice(0, 3);
     if (urls.length === 0) return elementorData;
     let result = elementorData;
     for (const original of urls) {
+      if (Date.now() - startedAt > 35_000) break;
       try {
         const uploaded = await this.uploadMediaFromUrl(original);
         if (uploaded && uploaded !== original) {

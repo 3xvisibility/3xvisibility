@@ -113,8 +113,8 @@ export class ShopifyConnector implements CmsConnector {
           ... on GenericFile { fileStatus url }
         }
       }`;
-      for (let attempt = 0; attempt < 10 && !url; attempt++) {
-        await new Promise((r) => setTimeout(r, 1500));
+      for (let attempt = 0; attempt < 3 && !url; attempt++) {
+        await new Promise((r) => setTimeout(r, 1000));
         const pollRes = await shopifyFetch(this.graphqlUrl, {
           method: "POST",
           headers: this.headers,
