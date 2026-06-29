@@ -439,6 +439,19 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: str
   }
 }
 
+async function runWordPressConnectorPreflight(connector: unknown, label: string): Promise<void> {
+  const maybePreflight = (connector as { preflight?: () => Promise<unknown> }).preflight;
+  if (typeof maybePreflight === "function") {
+    await withTimeout(maybePreflight.call(connector), 20_000, `${label} connector pre-flight`);
+    return;
+  }
+  const maybeTestConnection = (connector as { testConnection?: () => Promise<boolean> }).testConnection;
+  if (typeof maybeTestConnection === "function") {
+    const ok = await withTimeout(maybeTestConnection.call(connector), 20_000, `${label} connector pre-flight`);
+    if (!ok) throw new Error(`${label} connector pre-flight failed.`);
+  }
+}
+
 Deno.serve((req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -595,6 +608,9 @@ async function handlePublishPages(req: Request): Promise<Response> {
       }
 
       const connector = await createConnector(website as WebsiteRecord);
+      if (website.type === "wordpress") {
+        await runWordPressConnectorPreflight(connector, "3xVisibility WordPress Connector");
+      }
       const results: { title: string; status: string; external_url?: string; error?: string }[] = [];
       const workspaceId = website.workspace_id || body.workspace_id || null;
       const campaignId = body.campaign_id || null;
@@ -835,6 +851,9 @@ async function handlePublishPages(req: Request): Promise<Response> {
         const connector = resolvedPublishType === "product"
           ? await createProductConnector(page.websites as WebsiteRecord)
           : await createConnector(page.websites as WebsiteRecord);
+        if ((page.websites as { type?: string })?.type === "wordpress" && resolvedPublishType === "page") {
+          await runWordPressConnectorPreflight(connector, "3xVisibility WordPress Connector");
+        }
         const cleanedContent = stripHeadTagsForCms(page.content);
         // Republish of an already-published CMS page → preserve existing on-site
         // design. Only metadata (title, slug, SEO meta, canonical) flows through.
