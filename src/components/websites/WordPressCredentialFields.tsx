@@ -103,7 +103,7 @@ export function WordPressCredentialFields({
       {onConnectorKeyChange && (
         <div className="pt-2 border-t border-muted">
           <Label htmlFor="wp-connector-key">
-            Page Generator Pro Connector Key <span className="text-muted-foreground font-normal">(optional)</span>
+            3xVisibility WordPress Connector Key <span className="text-muted-foreground font-normal">(optional)</span>
           </Label>
           <Input
             id="wp-connector-key"
@@ -113,7 +113,7 @@ export function WordPressCredentialFields({
             onChange={(e) => onConnectorKeyChange(e.target.value)}
           />
           <p className="text-[11px] text-muted-foreground mt-1">
-            Install the <strong>Page Generator Pro Connector</strong> plugin, then paste its API key here to publish
+            Install the <strong>3xVisibility WordPress Connector</strong> plugin, then paste its API key here to publish
             native Elementor/Gutenberg pages (CSS &amp; cache handled automatically). Leave blank to use the standard REST API.
           </p>
         </div>
