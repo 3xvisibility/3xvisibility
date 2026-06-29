@@ -226,34 +226,18 @@ function stripHeadTagsForCms(content: string): string {
  * active theme's preferred layout.
  */
 async function detectPageTemplate(
-  supabase: any,
-  websiteId: string,
+  _supabase: any,
+  _websiteId: string,
   websiteType: string,
-  connector: any
+  _connector: any
 ): Promise<{ pageTemplate?: string }> {
   if (websiteType !== "wordpress") return {};
 
-  try {
-    if (typeof connector.listContent === "function") {
-      const pages = await connector.listContent("pages");
-      const templateCounts = new Map<string, number>();
-      for (const p of pages) {
-        const tmpl = (p.page_template && String(p.page_template).trim()) || "default";
-        templateCounts.set(tmpl, (templateCounts.get(tmpl) || 0) + 1);
-      }
-      let mostCommonTemplate: string | undefined;
-      let maxCount = 0;
-      for (const [tmpl, count] of templateCounts.entries()) {
-        if (count > maxCount) {
-          maxCount = count;
-          mostCommonTemplate = tmpl === "default" ? undefined : tmpl;
-        }
-      }
-      if (mostCommonTemplate) return { pageTemplate: mostCommonTemplate };
-    }
-  } catch (err) {
-    console.log("[PUBLISH] Template detection failed, using standard publish:", err);
-  }
+  // Do not call connector.listContent() here. The WordPress connector enriches
+  // every page with per-page REST reads, so using it during publish can trigger
+  // the 150s edge-function IDLE_TIMEOUT on normal sites with dozens of pages.
+  // Elementor publishes below explicitly force Elementor Canvas; Gutenberg/HTML
+  // publishes can safely use the active theme default.
   return {};
 }
 
@@ -411,22 +395,63 @@ function inferPublishType(
   return "page";
 }
 
-// Max pages to publish in a single invocation before self-chaining
-const PUBLISH_BATCH_SIZE = 10;
+// Max pages to publish in a single invocation before self-chaining.
+// Keep this intentionally small: a single WordPress/Shopify publish can include
+// remote CMS writes + media sync, so batching too many pages in one edge request
+// risks the platform 150s IDLE_TIMEOUT.
+const PUBLISH_BATCH_SIZE = 1;
 // Small delay (ms) between individual page publishes to reduce DB I/O pressure
 const INTER_PUBLISH_DELAY_MS = 200;
 // Edge function soft timeout — leave headroom for the self-chain call
-const PUBLISH_TIMEOUT_MS = 110_000;
+const PUBLISH_TIMEOUT_MS = 85_000;
+const FUNCTION_SAFE_TIMEOUT_MS = 120_000;
+const PAGE_PUBLISH_TIMEOUT_MS = 75_000;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-Deno.serve(async (req) => {
+function jsonResponse(body: Record<string, unknown>, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timer: number | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out after ${Math.round(timeoutMs / 1000)}s`)), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+Deno.serve((req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let timer: number | undefined;
+  return Promise.race([
+    handlePublishPages(req),
+    new Promise<Response>((resolve) => {
+      timer = setTimeout(() => resolve(jsonResponse({
+        success: true,
+        message: "Publish is still running in the background. Refresh the page in a moment to see progress.",
+        code: "FUNCTION_SAFE_TIMEOUT",
+        partial: true,
+      }, 202)), FUNCTION_SAFE_TIMEOUT_MS);
+    }),
+  ]).finally(() => {
+    if (timer !== undefined) clearTimeout(timer);
+  });
+});
+
+async function handlePublishPages(req: Request): Promise<Response> {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -569,7 +594,10 @@ Deno.serve(async (req) => {
       // Detect the site's preferred page template on first direct publish
       const templateInfo = await detectPageTemplate(supabase, website_id, website.type, connector);
 
-      for (const dp of directPages) {
+      const currentDirectPages = directPages.slice(0, PUBLISH_BATCH_SIZE);
+      const remainingDirectPages = directPages.slice(PUBLISH_BATCH_SIZE);
+
+      for (const dp of currentDirectPages) {
         try {
           const cleanedContent = stripHeadTagsForCms(dp.content);
           // Republish of an already-published page → preserve existing on-site design.
@@ -595,8 +623,8 @@ Deno.serve(async (req) => {
 
           // If an external_id is provided, update the existing page; otherwise create new
           const result = dp.external_id
-            ? await connector.updatePage(dp.external_id, payload)
-            : await connector.createPage(payload);
+            ? await withTimeout(connector.updatePage(dp.external_id, payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${dp.title}`)
+            : await withTimeout(connector.createPage(payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${dp.title}`);
 
           // Save to generated_pages so it appears in the Generated Pages view
           try {
@@ -639,8 +667,30 @@ Deno.serve(async (req) => {
 
       const published = results.filter((r) => r.status === "published").length;
       const failed = results.filter((r) => r.status === "failed").length;
+
+      if (remainingDirectPages.length > 0) {
+        fetch(`${supabaseUrl}/functions/v1/publish-pages`, {
+          method: "POST",
+          headers: { Authorization: authHeader, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...body,
+            pages: remainingDirectPages,
+            publish_type: pubType,
+            website_id,
+            overwrite_design: allowOverwriteDesign,
+            elementor_mode: elementorMode,
+          }),
+        }).catch((e) => console.error("[PUBLISH] Direct self-chain failed:", e));
+      }
+
       return new Response(
-        JSON.stringify({ success: true, published, failed, results }),
+        JSON.stringify({
+          success: true,
+          published,
+          failed,
+          results,
+          ...(remainingDirectPages.length > 0 ? { remaining: remainingDirectPages.length, partial: true } : {}),
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -990,8 +1040,8 @@ Deno.serve(async (req) => {
 
         // If page was previously published (has external_id), update instead of creating
         const result = page.external_id
-          ? await connector.updatePage(page.external_id, payload)
-          : await connector.createPage(payload);
+          ? await withTimeout(connector.updatePage(page.external_id, payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${page.title}`)
+          : await withTimeout(connector.createPage(payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${page.title}`);
 
         await supabase.from("generated_pages").update({
           status: "published",
@@ -1053,4 +1103,4 @@ Deno.serve(async (req) => {
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
-});
+}
