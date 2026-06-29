@@ -494,15 +494,32 @@ export class WordPressConnector implements CmsConnector {
   }
 
   async testConnection(): Promise<boolean> {
+    let res: Response;
     try {
-      const res = await wordpressFetch(`${this.baseUrl}/wp-json/wp/v2/users/me?context=edit`, {
+      res = await wordpressFetch(`${this.baseUrl}/wp-json/wp/v2/users/me?context=edit`, {
         headers: this.headers,
       }, 12_000);
-      return res.ok;
-    } catch {
-      return false;
+    } catch (e) {
+      throw new Error(`Could not reach WordPress at ${this.baseUrl} — ${(e as Error).message}. Check the site URL is correct and reachable.`);
     }
+    if (res.ok) return true;
+
+    let detail = "";
+    try {
+      const body = await res.json();
+      detail = body?.message || JSON.stringify(body);
+    } catch {
+      detail = (await res.text().catch(() => "")).slice(0, 300);
+    }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(`WordPress authentication failed [${res.status}] — verify the username and Application Password are correct. ${detail}`);
+    }
+    if (res.status === 404) {
+      throw new Error(`WordPress REST API not found [404] at ${this.baseUrl}/wp-json — ensure the REST API is enabled and the URL has no trailing path. ${detail}`);
+    }
+    throw new Error(`WordPress connection failed [${res.status}]: ${detail || "no detail returned by provider"}`);
   }
+
 
   async listContent(contentType: "pages" | "products"): Promise<ContentItem[]> {
     const items: ContentItem[] = [];
