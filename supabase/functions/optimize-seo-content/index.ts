@@ -222,7 +222,6 @@ function normalizeOptimizationResult(
 }
 
 async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.now()): Promise<Response> {
-  const functionStartedAt = Date.now();
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
