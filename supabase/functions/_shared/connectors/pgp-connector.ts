@@ -61,7 +61,7 @@ export class PgpConnector implements CmsConnector {
 
   constructor(config: ConnectorConfig) {
     this.baseUrl = config.base_url.replace(/\/+$/, "");
-    this.apiKey = config.connector_api_key || config.api_key || "";
+    this.apiKey = (config.connector_api_key || "").trim();
     this.restBase = `${this.baseUrl}/wp-json/pgp/v1`;
     if (config.username && config.password) {
       this.basicAuth = "Basic " + btoa(`${config.username}:${config.password}`);
@@ -73,6 +73,7 @@ export class PgpConnector implements CmsConnector {
       Accept: "application/json",
       "Content-Type": "application/json",
       "X-PGP-Key": this.apiKey,
+      "X-3XV-Key": this.apiKey,
       Authorization: `Bearer ${this.apiKey}`,
     };
   }
@@ -91,12 +92,8 @@ export class PgpConnector implements CmsConnector {
   }
 
   async testConnection(): Promise<boolean> {
-    try {
-      const data = await this.call<{ ok: boolean }>("/ping", "GET");
-      return Boolean(data?.ok);
-    } catch {
-      return false;
-    }
+    const data = await this.call<{ ok: boolean }>("/ping", "GET");
+    return Boolean(data?.ok);
   }
 
   /** Upload a remote image into the WP Media Library via the plugin (deduped). */
