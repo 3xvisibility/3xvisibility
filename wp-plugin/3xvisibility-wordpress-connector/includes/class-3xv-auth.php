@@ -39,12 +39,19 @@ class XXXV_Auth {
 
 		$provided = (string) $request->get_header( 'x_pgp_key' );
 		if ( empty( $provided ) ) {
+			$provided = (string) $request->get_header( 'x_3xv_key' );
+		}
+		if ( empty( $provided ) ) {
+			$provided = (string) $request->get_param( 'connector_key' );
+		}
+		if ( empty( $provided ) ) {
 			// Fallback: allow a Bearer token too.
 			$auth = (string) $request->get_header( 'authorization' );
 			if ( 0 === stripos( $auth, 'bearer ' ) ) {
 				$provided = trim( substr( $auth, 7 ) );
 			}
 		}
+		$provided = trim( $provided );
 
 		if ( empty( $provided ) || ! hash_equals( $stored, $provided ) ) {
 			return new WP_Error(
