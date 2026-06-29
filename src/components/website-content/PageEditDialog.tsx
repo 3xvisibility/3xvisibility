@@ -145,7 +145,11 @@ export function PageEditDialog({
   const iframeSyncRef = useRef(false);
 
   // SEO optimize state
-  const [seoFields, setSeoFields] = useState<string[]>(() => initialDraft?.seoFields?.length ? initialDraft.seoFields : ["seo_title", "seo_description", "seo_keywords"]);
+  const [seoFields, setSeoFields] = useState<string[]>(() => {
+    if (!initialDraft?.seoFields?.length) return ["seo_title", "seo_description", "seo_keywords"];
+    const restoredFields = initialDraft.seoFields.filter((field) => field !== "content");
+    return restoredFields.length ? restoredFields : ["seo_title", "seo_description", "seo_keywords"];
+  });
   const [seoInstruction, setSeoInstruction] = useState(() => initialDraft?.seoInstruction ?? "");
   const [optimizing, setOptimizing] = useState(false);
   const [seoResult, setSeoResult] = useState<PageEditorSeoResult | null>(initialSeoResult);
