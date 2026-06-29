@@ -21,7 +21,7 @@ class XXXV_Auth {
 	/**
 	 * Permission callback for protected REST routes.
 	 *
-	 * The SaaS backend must send the key in the `X-3XV-Key` header.
+	 * The SaaS backend must send the key in the `X-PGP-Key` header.
 	 * Uses hash_equals to avoid timing attacks.
 	 *
 	 * @param WP_REST_Request $request The request.
@@ -37,7 +37,7 @@ class XXXV_Auth {
 			);
 		}
 
-		$provided = (string) $request->get_header( 'x_3xv_key' );
+		$provided = (string) $request->get_header( 'x_pgp_key' );
 		if ( empty( $provided ) ) {
 			// Fallback: allow a Bearer token too.
 			$auth = (string) $request->get_header( 'authorization' );
