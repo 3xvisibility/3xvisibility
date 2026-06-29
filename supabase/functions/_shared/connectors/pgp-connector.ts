@@ -134,8 +134,12 @@ export class PgpConnector implements CmsConnector {
     }
     let out = elementorJson;
     const startedAt = Date.now();
-    for (const u of [...urls].slice(0, 3)) {
-      if (Date.now() - startedAt > 35_000) break;
+    // Upload EVERY template image to the WP Media Library so the published page
+    // never points at a foreign/broken URL. The plugin downloads each image
+    // server-side (fast) and one page is published per invocation, so the time
+    // budget is generous. A soft cap + time guard prevents runaway loops.
+    for (const u of [...urls].slice(0, 60)) {
+      if (Date.now() - startedAt > 90_000) break;
       const local = await this.uploadMedia(u);
       if (local) {
         out = out.split(JSON.stringify(u).slice(1, -1)).join(JSON.stringify(local).slice(1, -1));
