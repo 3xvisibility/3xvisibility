@@ -227,6 +227,8 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
                 onAppPasswordChange={setAppPassword}
                 jwtToken={jwtToken}
                 onJwtTokenChange={setJwtToken}
+                connectorKey={connectorKey}
+                onConnectorKeyChange={setConnectorKey}
               />
             )}
             {site.type === "shopify" && (
