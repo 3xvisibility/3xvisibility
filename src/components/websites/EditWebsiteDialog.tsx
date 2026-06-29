@@ -68,6 +68,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
       setUsername("");
       setAppPassword("");
       setJwtToken("");
+      setConnectorKey("");
       setPrestashopApiKey("");
       setWooConsumerKey("");
       setWooConsumerSecret("");
