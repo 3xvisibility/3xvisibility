@@ -26,6 +26,7 @@ function buildConfig(website: WebsiteRecord, creds: Record<string, string>): Con
     access_token: creds.admin_api_token || creds.access_token || creds.jwt_token,
     consumer_key: creds.consumer_key,
     consumer_secret: creds.consumer_secret,
+    connector_api_key: creds.pgp_connector_key || creds.connector_api_key,
   };
 }
 
