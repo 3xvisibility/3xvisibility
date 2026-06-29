@@ -53,6 +53,7 @@ export default function WebsitesPage() {
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [jwtToken, setJwtToken] = useState("");
+  const [connectorKey, setConnectorKey] = useState("");
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
   const [shopifyAccessToken, setShopifyAccessToken] = useState("");
