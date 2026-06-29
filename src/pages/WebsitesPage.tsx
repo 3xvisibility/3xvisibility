@@ -428,6 +428,7 @@ export default function WebsitesPage() {
     setUsername("");
     setAppPassword("");
     setJwtToken("");
+    setConnectorKey("");
     setShopDomain("");
     setPrestashopApiKey("");
     setWooConsumerKey("");
