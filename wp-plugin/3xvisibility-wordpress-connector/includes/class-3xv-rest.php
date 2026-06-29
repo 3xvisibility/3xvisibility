@@ -121,6 +121,28 @@ class XXXV_REST {
 				'wp'        => get_bloginfo( 'version' ),
 			)
 		);
+		register_rest_route(
+			XXXV_CONNECTOR_NS,
+			'/debug-log',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'debug_log' ),
+				'permission_callback' => $auth,
+			)
+		);
+	}
+
+	/**
+	 * Return the connector's recent debug/error log ring-buffer.
+	 */
+	public function debug_log() {
+		$log = get_option( 'xxxv_debug_log', array() );
+		return rest_ensure_response(
+			array(
+				'ok'      => true,
+				'entries' => is_array( $log ) ? array_reverse( $log ) : array(),
+			)
+		);
 	}
 
 	public function site_info() {
