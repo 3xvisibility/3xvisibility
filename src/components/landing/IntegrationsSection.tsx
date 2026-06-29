@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { ScrollReveal } from "./ScrollReveal";
-import { Globe, ShoppingCart, Store, Search, FileText, BarChart3 } from "lucide-react";
+import { Globe, ShoppingCart, Store, Search, FileText, BarChart3, Download, Plug } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
