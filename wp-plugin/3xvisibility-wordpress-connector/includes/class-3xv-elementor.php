@@ -230,8 +230,10 @@ class XXXV_Elementor {
 			return new WP_Error( 'xxxv_elementor_data_unreadable', 'Post-save validation failed: stored _elementor_data is not readable.', array( 'status' => 500 ) );
 		}
 
-		$expected_json = wp_json_encode( $expected );
-		$saved_json    = wp_json_encode( $saved_decoded );
+		$expected_normalized = self::normalize_elementor_data_for_compare( $expected );
+		$saved_normalized    = self::normalize_elementor_data_for_compare( $saved_decoded );
+		$expected_json       = wp_json_encode( $expected_normalized );
+		$saved_json          = wp_json_encode( $saved_normalized );
 		if ( false === $expected_json || false === $saved_json ) {
 			return new WP_Error( 'xxxv_elementor_data_encode_failed', 'Post-save validation failed: could not encode Elementor data for comparison.', array( 'status' => 500 ) );
 		}
@@ -244,6 +246,28 @@ class XXXV_Elementor {
 			'elements' => count( $saved_decoded ),
 			'hash'     => hash( 'sha256', $saved_json ),
 		);
+	}
+
+	/**
+	 * Recursively sort associative keys so the validation hash catches real data
+	 * changes, not harmless JSON key-order differences introduced by WordPress.
+	 *
+	 * @param mixed $data Elementor data.
+	 * @return mixed
+	 */
+	private static function normalize_elementor_data_for_compare( $data ) {
+		if ( ! is_array( $data ) ) {
+			return $data;
+		}
+
+		$is_list = array_keys( $data ) === range( 0, count( $data ) - 1 );
+		foreach ( $data as $key => $value ) {
+			$data[ $key ] = self::normalize_elementor_data_for_compare( $value );
+		}
+		if ( ! $is_list ) {
+			ksort( $data );
+		}
+		return $data;
 	}
 
 	/**
