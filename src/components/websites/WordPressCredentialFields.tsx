@@ -28,6 +28,8 @@ export function WordPressCredentialFields({
   onAppPasswordChange,
   jwtToken,
   onJwtTokenChange,
+  connectorKey = "",
+  onConnectorKeyChange,
 }: WordPressCredentialFieldsProps) {
   return (
     <div className="space-y-4">
