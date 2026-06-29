@@ -61,7 +61,7 @@ export class PgpConnector implements CmsConnector {
 
   constructor(config: ConnectorConfig) {
     this.baseUrl = config.base_url.replace(/\/+$/, "");
-    this.apiKey = config.connector_api_key || config.api_key || "";
+    this.apiKey = (config.connector_api_key || "").trim();
     this.restBase = `${this.baseUrl}/wp-json/pgp/v1`;
     if (config.username && config.password) {
       this.basicAuth = "Basic " + btoa(`${config.username}:${config.password}`);
@@ -73,15 +73,24 @@ export class PgpConnector implements CmsConnector {
       Accept: "application/json",
       "Content-Type": "application/json",
       "X-PGP-Key": this.apiKey,
+      "X-3XV-Key": this.apiKey,
       Authorization: `Bearer ${this.apiKey}`,
     };
   }
 
   private async call<T>(path: string, method: string, body?: unknown): Promise<T> {
-    const res = await fetchWithTimeout(`${this.restBase}${path}`, {
+    const url = new URL(`${this.restBase}${path}`);
+    // Some WordPress hosts/security plugins strip custom auth headers before
+    // PHP sees them. Keep the headers, but also send the connector key as a
+    // request parameter so the companion plugin can authenticate reliably.
+    url.searchParams.set("connector_key", this.apiKey);
+    const requestBody = body && typeof body === "object"
+      ? { ...(body as Record<string, unknown>), connector_key: this.apiKey }
+      : body;
+    const res = await fetchWithTimeout(url.toString(), {
       method,
       headers: this.headers(),
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: requestBody !== undefined ? JSON.stringify(requestBody) : undefined,
     });
     if (!res.ok) {
       const text = await res.text();
@@ -91,12 +100,8 @@ export class PgpConnector implements CmsConnector {
   }
 
   async testConnection(): Promise<boolean> {
-    try {
-      const data = await this.call<{ ok: boolean }>("/ping", "GET");
-      return Boolean(data?.ok);
-    } catch {
-      return false;
-    }
+    const data = await this.call<{ ok: boolean }>("/ping", "GET");
+    return Boolean(data?.ok);
   }
 
   /** Upload a remote image into the WP Media Library via the plugin (deduped). */

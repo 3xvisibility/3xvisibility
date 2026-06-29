@@ -28,6 +28,11 @@ function suggestFixes(error: string): string[] {
   const e = error.toLowerCase();
   const fixes: string[] = [];
 
+  if (e.includes("api key") || e.includes("connector") || e.includes("x-pgp-key")) {
+    fixes.push("Copy the API Key from WordPress → Settings → 3xVisibility WordPress Connector and paste it into the Connector Key field.");
+    fixes.push("If you regenerated the plugin key, update the saved website credentials with the new key.");
+    fixes.push("Update/reinstall the latest connector plugin, then test the connection again.");
+  }
   if (e.includes("auth") || e.includes("401") || e.includes("403") || e.includes("password") || e.includes("forbidden")) {
     fixes.push("Double-check the username and that the Application Password is copied exactly (spaces are fine).");
     fixes.push("Regenerate the Application Password under WordPress → Users → Profile if it may have been revoked.");
