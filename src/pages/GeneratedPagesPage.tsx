@@ -1296,6 +1296,7 @@ export default function GeneratedPagesPage() {
         page={elementorPreviewPage ? { id: elementorPreviewPage.id, title: elementorPreviewPage.title, content: elementorPreviewPage.content || "", slug: elementorPreviewPage.slug } : null}
         workspaceId={wsId}
         templateId={undefined}
+        publishFormat={elementorPreviewPage?.campaigns?.publish_format ?? null}
         publishedUrl={elementorPreviewPage?.external_url}
         baseline={baselineHtml ? { html: baselineHtml } : {}}
         onPublish={async (mode, gate) => {
