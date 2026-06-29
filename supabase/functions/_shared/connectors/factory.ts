@@ -18,6 +18,14 @@ export interface WebsiteRecord {
 }
 
 function buildConfig(website: WebsiteRecord, creds: Record<string, string>): ConnectorConfig {
+  const connectorKey =
+    creds.pgp_connector_key ||
+    creds.connector_api_key ||
+    creds.pgp_connector_api_key ||
+    creds.wordpress_connector_key ||
+    creds.xxxv_connector_key ||
+    creds.xxxv_connector_api_key;
+
   return {
     base_url: website.url,
     username: creds.username,
@@ -26,13 +34,10 @@ function buildConfig(website: WebsiteRecord, creds: Record<string, string>): Con
     access_token: creds.admin_api_token || creds.access_token || creds.jwt_token,
     consumer_key: creds.consumer_key,
     consumer_secret: creds.consumer_secret,
-    connector_api_key:
-      creds.pgp_connector_key ||
-      creds.connector_api_key ||
-      creds.pgp_connector_api_key ||
-      creds.wordpress_connector_key ||
-      creds.xxxv_connector_key ||
-      creds.api_key,
+    // Do NOT fall back to generic `api_key` for WordPress. Existing legacy
+    // records may contain unrelated API keys; using them as the connector key
+    // causes the plugin to return 401 "Invalid or missing API key".
+    connector_api_key: connectorKey?.trim(),
   };
 }
 
