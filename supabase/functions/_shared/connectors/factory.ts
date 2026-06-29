@@ -26,7 +26,13 @@ function buildConfig(website: WebsiteRecord, creds: Record<string, string>): Con
     access_token: creds.admin_api_token || creds.access_token || creds.jwt_token,
     consumer_key: creds.consumer_key,
     consumer_secret: creds.consumer_secret,
-    connector_api_key: creds.pgp_connector_key || creds.connector_api_key,
+    connector_api_key:
+      creds.pgp_connector_key ||
+      creds.connector_api_key ||
+      creds.pgp_connector_api_key ||
+      creds.wordpress_connector_key ||
+      creds.xxxv_connector_key ||
+      creds.api_key,
   };
 }
 
@@ -90,10 +96,15 @@ export async function createConnector(website: WebsiteRecord): Promise<CmsConnec
   switch (website.type) {
     case "wordpress": {
       const config = buildConfig(website, creds);
-      // Prefer the Page Generator Pro Connector plugin when installed/configured.
-      return config.connector_api_key
-        ? new PgpConnector(config)
-        : new WordPressConnector(config);
+      // Production WordPress publishing must go through the companion plugin.
+      // The standard WP REST API cannot reliably save advanced Elementor JSON/CSS
+      // and returns failures like `rest_database_error` for `_elementor_data`.
+      if (!config.connector_api_key) {
+        throw new Error(
+          "3xVisibility WordPress Connector key is required for WordPress publishing. Install/update the connector plugin, paste its API key in the site settings, then retry.",
+        );
+      }
+      return new PgpConnector(config);
     }
     case "shopify": {
       const config = await resolveShopifyConfig(website, creds);
