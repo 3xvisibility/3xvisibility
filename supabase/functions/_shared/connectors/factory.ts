@@ -88,8 +88,13 @@ export async function createConnector(website: WebsiteRecord): Promise<CmsConnec
   const creds = await decryptCreds(website);
 
   switch (website.type) {
-    case "wordpress":
-      return new WordPressConnector(buildConfig(website, creds));
+    case "wordpress": {
+      const config = buildConfig(website, creds);
+      // Prefer the Page Generator Pro Connector plugin when installed/configured.
+      return config.connector_api_key
+        ? new PgpConnector(config)
+        : new WordPressConnector(config);
+    }
     case "shopify": {
       const config = await resolveShopifyConfig(website, creds);
       return new ShopifyConnector(config);
