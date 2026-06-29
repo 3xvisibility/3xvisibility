@@ -50,6 +50,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
+import { extractEdgeError } from "@/lib/edge-function-error";
 import {
   readPageEditorDraft,
   writePageEditorDraft,
@@ -144,7 +145,11 @@ export function PageEditDialog({
   const iframeSyncRef = useRef(false);
 
   // SEO optimize state
-  const [seoFields, setSeoFields] = useState<string[]>(() => initialDraft?.seoFields?.length ? initialDraft.seoFields : ["seo_title", "seo_description", "seo_keywords", "content"]);
+  const [seoFields, setSeoFields] = useState<string[]>(() => {
+    if (!initialDraft?.seoFields?.length) return ["seo_title", "seo_description", "seo_keywords"];
+    const restoredFields = initialDraft.seoFields.filter((field) => field !== "content");
+    return restoredFields.length ? restoredFields : ["seo_title", "seo_description", "seo_keywords"];
+  });
   const [seoInstruction, setSeoInstruction] = useState(() => initialDraft?.seoInstruction ?? "");
   const [optimizing, setOptimizing] = useState(false);
   const [seoResult, setSeoResult] = useState<PageEditorSeoResult | null>(initialSeoResult);
@@ -182,7 +187,7 @@ export function PageEditDialog({
         },
       });
       if (error) {
-        const msg = typeof error === "object" && error?.message ? error.message : String(error);
+        const msg = await extractEdgeError(error, "Rollback failed");
         throw new Error(msg);
       }
       if (data?.error) throw new Error(data.error);
@@ -384,7 +389,7 @@ export function PageEditDialog({
       });
 
       if (error) {
-        const msg = typeof error === "object" && error?.message ? error.message : String(error);
+        const msg = await extractEdgeError(error, "Update failed");
         if (msg.includes("402") || msg.includes("credits exhausted") || (data && typeof data === "object" && data.error?.includes?.("credits"))) {
           toast({ title: "AI credits exhausted", description: "Your AI credits have run out. Please add more credits in Settings → Cloud & AI balance.", variant: "destructive" });
           setOptimizing(false);
@@ -478,7 +483,7 @@ export function PageEditDialog({
       });
 
       if (error) {
-        const msg = typeof error === "object" && error?.message ? error.message : String(error);
+        const msg = await extractEdgeError(error, "Publish failed");
         if (msg.includes("402") || msg.includes("credits")) {
           toast({ title: "AI credits exhausted", description: "Please add more credits in Settings → Cloud & AI balance.", variant: "destructive" });
           setPublishing(false);

@@ -70,7 +70,7 @@ export function SeoOptimizeDialog({
   onOptimized,
 }: SeoOptimizeDialogProps) {
   const { toast } = useToast();
-  const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords", "content"]);
+  const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords"]);
   const [instruction, setInstruction] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
@@ -92,7 +92,7 @@ export function SeoOptimizeDialog({
       const { data, error } = await supabase.functions.invoke("rollback-page", {
         body: { website_id: websiteId, page_external_id: page.id },
       });
-      if (error) throw new Error(await extractEdgeError(error, "Optimization failed"));
+      if (error) throw new Error(await extractEdgeError(error, "Rollback failed"));
       if (data?.error) throw new Error(data.error);
       setRolledBack(true);
       toast({
@@ -118,10 +118,12 @@ export function SeoOptimizeDialog({
     seoSnapshot,
     (s: any) => {
       if (!s || typeof s !== "object") return;
-      if (Array.isArray(s.selectedFields) && s.selectedFields.length) setSelectedFields(s.selectedFields);
+      if (Array.isArray(s.selectedFields) && s.selectedFields.length) {
+        setSelectedFields(s.selectedFields.filter((field: string) => field !== "content"));
+      }
       if (typeof s.instruction === "string") setInstruction(s.instruction);
     },
-    { version: 1 },
+    { version: 2 },
   );
 
   const toggleField = (field: string) => {
@@ -165,7 +167,7 @@ export function SeoOptimizeDialog({
         },
       });
 
-      if (error) throw error;
+      if (error) throw new Error(await extractEdgeError(error, "Optimization failed"));
       if (data?.error) throw new Error(data.error);
 
       setResult({

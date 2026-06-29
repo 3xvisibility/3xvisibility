@@ -14,6 +14,7 @@ import { analyzeKeywordUsage, resolvePrimaryKeyword, type KeywordUsageAnalysis }
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { friendlyError } from "@/lib/friendly-errors";
+import { extractEdgeError } from "@/lib/edge-function-error";
 
 interface SeoAnalysisDialogProps {
   open: boolean;
@@ -250,7 +251,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
             page_url: currentPage.external_url,
             page_type: inferPublishType(currentPage),
             workspace_id: currentPage.workspace_id,
-            optimize_fields: ["seo_title", "seo_description", "seo_keywords", "content"],
+            optimize_fields: ["seo_title", "seo_description", "seo_keywords"],
             page_seo_title: currentPage.seo_title,
             page_seo_description: currentPage.seo_description,
             page_seo_keywords: currentPage.seo_keywords || [],
@@ -258,7 +259,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           },
         });
 
-        if (optimizeErr) throw optimizeErr;
+        if (optimizeErr) throw new Error(await extractEdgeError(optimizeErr, "Optimization failed"));
         if (optimizeData?.error) throw new Error(optimizeData.error);
 
         const optimized = optimizeData?.result || {};

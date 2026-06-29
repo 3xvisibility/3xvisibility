@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
-import { aiGenerate, deductCreditsForRequest } from "../_shared/ai-service.ts";
+import { deductCreditsForRequest } from "../_shared/ai-service.ts";
 import {
   analyzeSeoQuality,
   autoRepairContent,
@@ -221,8 +221,7 @@ function normalizeOptimizationResult(
   };
 }
 
-Deno.serve(async (req) => {
-  const functionStartedAt = Date.now();
+async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.now()): Promise<Response> {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -560,7 +559,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    const fields = optimize_fields || ["seo_title", "seo_description", "seo_keywords", "content"];
+    const requestedFields = Array.isArray(optimize_fields) && optimize_fields.length > 0
+      ? optimize_fields
+      : ["seo_title", "seo_description", "seo_keywords"];
+    // Live CMS optimizations preserve builder/design output by default. In that
+    // mode, rewritten body HTML is intentionally not pushed, so asking the AI to
+    // rewrite a full page only burns time until the 150s idle timeout. Keep the
+    // request metadata-only unless the caller explicitly opted into design/content
+    // overwrite, or the caller is only drafting locally with skip_push.
+    const fields = preserveDesign && !skip_push
+      ? requestedFields.filter((field: string) => field !== "content")
+      : requestedFields;
+    const metadataOnly = !fields.includes("content");
     const existingSeoKeywords = Array.isArray(page_seo_keywords)
       ? page_seo_keywords.filter((keyword: unknown): keyword is string => typeof keyword === "string" && keyword.trim().length > 0)
       : [];
@@ -602,7 +612,7 @@ Deno.serve(async (req) => {
 
     // Strip HTML to get plain text for AI analysis
     const plainText = page_content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-    const truncatedText = plainText.slice(0, 3000);
+    const truncatedText = plainText.slice(0, metadataOnly ? 1200 : 3000);
 
     // ── Reversible design preservation ──────────────────────────────────────
     // We must NEVER lose the page's <style>/<script> blocks (that's what
@@ -648,7 +658,26 @@ Deno.serve(async (req) => {
     };
 
 
-    const systemPrompt = `You are an expert SEO/SEA/GEO content optimizer. Your output MUST score 90+ on ALL THREE scoring dimensions: SEO, SEA (Search Engine Advertising / Landing Page Quality), and GEO (Local/Geographic relevance).
+    const systemPrompt = metadataOnly
+      ? `You are an expert SEO metadata optimizer.
+Return ONLY valid JSON with the requested fields. Do NOT return page body HTML/content.
+Rules:
+- seo_title: 30-60 characters, primary keyword near the start, include one action/offer word.
+- seo_description: 120-156 characters, include primary keyword, benefit, CTA, and local cue.
+- seo_keywords: 5-8 concise keywords, primary keyword first when available.
+- Keep output language consistent with the page language/focus keyword.
+Language: ${lang}
+${languageInstruction}
+Requested fields:
+${fields.includes("seo_title") ? '- "seo_title"' : ""}
+${fields.includes("seo_description") ? '- "seo_description"' : ""}
+${fields.includes("seo_keywords") ? '- "seo_keywords"' : ""}`
+      : `You are an expert SEO/SEA/GEO content optimizer. Your output MUST score 90+ on ALL THREE scoring dimensions: SEO, SEA (Search Engine Advertising / Landing Page Quality), and GEO (Local/Geographic relevance).
+
+${metadataOnly ? `FAST METADATA-ONLY MODE:
+- Do NOT rewrite or return page body HTML/content.
+- Do NOT add links, schema, image alt text, paragraphs, sections, or any body copy.
+- Return only the requested metadata fields so the live page design remains untouched.` : ""}
 
 ABSOLUTE DESIGN PRESERVATION RULES (NEVER VIOLATE):
 - NEVER change ANY HTML tag, attribute, class, id, style, data-* attribute, or structure.
@@ -732,12 +761,12 @@ ${fields.includes("content") ? `HTML to optimize (PRESERVE ALL TAGS/CLASSES/ATTR
 ${truncatedHtml}` : ""}
 
 ${instruction ? `\nUser instruction: ${instruction}\n` : ""}
-IMPORTANT: Generate content that scores 90+ on ALL THREE metrics:
+${metadataOnly ? `IMPORTANT: Optimize metadata only. Do not return content/html. Use the current content summary only as context for title, description, and keywords.` : `IMPORTANT: Generate content that scores 90+ on ALL THREE metrics:
 - SEO: Use the exact focus keyword in SEO title (first 18 chars), meta description, opening lines, subheadings, and naturally in the content; density 0.5-2.5%; transition words (3+); active voice; 650+ words; at least one image alt text with keyword; at least one internal link (href="/...") and one outbound link (href="https://..."); JSON-LD schema markup
 - SEA: Include CTA words (buy/get/shop/order/contact), benefit words (save/fast/easy/reliable/premium), trust signals (trusted/guarantee/certified/proven), offer language (free/discount/deal), urgency cues (today/now/limited)
 - GEO: Include local signals (local/nearby/community/service area/serving), availability cues (available/today/same-day/contact us), local credibility (trusted locally/local team/area specialists)
 
-Weave all signals naturally — the text must read like professional marketing copy, not keyword spam.
+Weave all signals naturally — the text must read like professional marketing copy, not keyword spam.`}
 
 If a primary focus keyword is provided, the optimized metadata and rewritten content MUST revolve around that exact phrase so external WordPress SEO plugins score it correctly.`;
 
@@ -768,12 +797,13 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
     let result: Record<string, any> = {};
     try {
       ensureBudget(functionStartedAt, "SEO optimization");
+      const optimizationTimeoutMs = metadataOnly ? 20_000 : AI_CALL_TIMEOUT_MS;
       result = normalizeOptimizationResult(
         await requestOptimizationDraft(
           LOVABLE_API_KEY,
           systemPrompt,
           userPrompt,
-          Math.min(AI_CALL_TIMEOUT_MS, Math.max(8_000, remainingBudgetMs(functionStartedAt, 55_000))),
+          Math.min(optimizationTimeoutMs, Math.max(8_000, remainingBudgetMs(functionStartedAt, 55_000))),
         ),
         fallbackResult,
         fields,
@@ -808,6 +838,7 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
     for (
       let attempt = 0;
       attempt < MAX_QUALITY_REPAIR_ATTEMPTS &&
+      includeContent &&
       needsQualityRepair(qualityReport) &&
       Date.now() - repairLoopStart < REPAIR_LOOP_BUDGET_MS;
       attempt += 1
@@ -879,7 +910,7 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
     // SEA signals (CTA/benefit/trust/offer/urgency), and GEO signals (local/community/availability).
     // Run even when "content" wasn't explicitly requested — we still need the live page to score 10/10.
     const baseContentForRepair = designSafeContent || page_content;
-    if (baseContentForRepair) {
+    if (includeContent && baseContentForRepair) {
       result.content = autoRepairContent(baseContentForRepair, {
         title: page_title,
         seoTitle: result.seo_title || effectiveSeoTitle,
@@ -1073,9 +1104,36 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
     });
   } catch (err: any) {
     console.error("optimize-seo-content error:", err);
-    return new Response(JSON.stringify({ error: err.message || "Unknown error" }), {
+    return new Response(JSON.stringify({
+      error: err.message || "Unknown error",
+      code: err.status === 504 ? "FUNCTION_SAFE_TIMEOUT" : undefined,
+      details: err.details,
+    }), {
       status: err.status || 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+}
+
+Deno.serve((req) => {
+  const functionStartedAt = Date.now();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const hardTimeout = new Promise<Response>((resolve) => {
+    timer = setTimeout(() => {
+      resolve(new Response(JSON.stringify({
+        error: "SEO optimization timed out before the platform limit. Please retry with metadata-only fields or update the connected site connection.",
+        code: "FUNCTION_SAFE_TIMEOUT",
+      }), {
+        status: 504,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }));
+    }, FUNCTION_BUDGET_MS);
+  });
+
+  return Promise.race([
+    handleOptimizeSeoContent(req, functionStartedAt),
+    hardTimeout,
+  ]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
 });
