@@ -225,7 +225,13 @@ class XXXV_Elementor {
 			return new WP_Error( 'xxxv_elementor_data_missing', 'Post-save validation failed: _elementor_data is missing.', array( 'status' => 500 ) );
 		}
 
-		$saved_decoded = json_decode( wp_unslash( $saved ), true );
+		// update_post_meta() strips slashes on write, so after saving wp_slash($json)
+		// get_post_meta() normally returns valid JSON directly. Only fall back to
+		// wp_unslash() for older installs that may have double-slashed stored data.
+		$saved_decoded = json_decode( $saved, true );
+		if ( ! is_array( $saved_decoded ) ) {
+			$saved_decoded = json_decode( wp_unslash( $saved ), true );
+		}
 		if ( ! is_array( $saved_decoded ) || empty( $saved_decoded ) ) {
 			return new WP_Error( 'xxxv_elementor_data_unreadable', 'Post-save validation failed: stored _elementor_data is not readable.', array( 'status' => 500 ) );
 		}
