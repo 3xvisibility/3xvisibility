@@ -233,27 +233,11 @@ async function detectPageTemplate(
 ): Promise<{ pageTemplate?: string }> {
   if (websiteType !== "wordpress") return {};
 
-  try {
-    if (typeof connector.listContent === "function") {
-      const pages = await connector.listContent("pages");
-      const templateCounts = new Map<string, number>();
-      for (const p of pages) {
-        const tmpl = (p.page_template && String(p.page_template).trim()) || "default";
-        templateCounts.set(tmpl, (templateCounts.get(tmpl) || 0) + 1);
-      }
-      let mostCommonTemplate: string | undefined;
-      let maxCount = 0;
-      for (const [tmpl, count] of templateCounts.entries()) {
-        if (count > maxCount) {
-          maxCount = count;
-          mostCommonTemplate = tmpl === "default" ? undefined : tmpl;
-        }
-      }
-      if (mostCommonTemplate) return { pageTemplate: mostCommonTemplate };
-    }
-  } catch (err) {
-    console.log("[PUBLISH] Template detection failed, using standard publish:", err);
-  }
+  // Do not call connector.listContent() here. The WordPress connector enriches
+  // every page with per-page REST reads, so using it during publish can trigger
+  // the 150s edge-function IDLE_TIMEOUT on normal sites with dozens of pages.
+  // Elementor publishes below explicitly force Elementor Canvas; Gutenberg/HTML
+  // publishes can safely use the active theme default.
   return {};
 }
 
@@ -411,15 +395,39 @@ function inferPublishType(
   return "page";
 }
 
-// Max pages to publish in a single invocation before self-chaining
-const PUBLISH_BATCH_SIZE = 10;
+// Max pages to publish in a single invocation before self-chaining.
+// Keep this intentionally small: a single WordPress/Shopify publish can include
+// remote CMS writes + media sync, so batching too many pages in one edge request
+// risks the platform 150s IDLE_TIMEOUT.
+const PUBLISH_BATCH_SIZE = 1;
 // Small delay (ms) between individual page publishes to reduce DB I/O pressure
 const INTER_PUBLISH_DELAY_MS = 200;
 // Edge function soft timeout — leave headroom for the self-chain call
-const PUBLISH_TIMEOUT_MS = 110_000;
+const PUBLISH_TIMEOUT_MS = 85_000;
+const FUNCTION_SAFE_TIMEOUT_MS = 120_000;
+const PAGE_PUBLISH_TIMEOUT_MS = 75_000;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function jsonResponse(body: Record<string, unknown>, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timer: number | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out after ${Math.round(timeoutMs / 1000)}s`)), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
 }
 
 Deno.serve(async (req) => {
