@@ -92,7 +92,7 @@ export function SeoOptimizeDialog({
       const { data, error } = await supabase.functions.invoke("rollback-page", {
         body: { website_id: websiteId, page_external_id: page.id },
       });
-      if (error) throw new Error(await extractEdgeError(error, "Optimization failed"));
+      if (error) throw new Error(await extractEdgeError(error, "Rollback failed"));
       if (data?.error) throw new Error(data.error);
       setRolledBack(true);
       toast({

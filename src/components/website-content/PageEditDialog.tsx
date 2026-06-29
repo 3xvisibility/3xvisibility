@@ -187,7 +187,7 @@ export function PageEditDialog({
         },
       });
       if (error) {
-        const msg = await extractEdgeError(error, "Optimization failed");
+        const msg = await extractEdgeError(error, "Rollback failed");
         throw new Error(msg);
       }
       if (data?.error) throw new Error(data.error);
