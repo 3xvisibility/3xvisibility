@@ -481,7 +481,7 @@ export class WordPressConnector implements CmsConnector {
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
     if (!preserveDesign && resolvedTemplate) body.template = resolvedTemplate;
-    else if (!preserveDesign && elementorApplied) body.template = "elementor_canvas";
+    else if (!preserveDesign && elementorApplied) body.template = "elementor_header_footer";
 
     const data = await this.executePageRequest(
       `${this.baseUrl}/wp-json/wp/v2/${resourcePath}/${externalId}`,
