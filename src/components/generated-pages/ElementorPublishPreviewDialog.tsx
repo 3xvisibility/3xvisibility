@@ -142,45 +142,21 @@ export function ElementorPublishPreviewDialog({
           </div>
         </DialogHeader>
 
-        {/* Widget mode selector */}
-        <div className="rounded-lg border border-border bg-muted/30 p-3">
-          <Label className="text-xs font-semibold mb-2 block">Elementor widget mode</Label>
-          <RadioGroup
-            value={mode}
-            onValueChange={(v) => setMode(v as ElementorWidgetMode)}
-            className="grid sm:grid-cols-2 gap-2"
-          >
-            <label
-              htmlFor="mode-html"
-              className={`flex items-start gap-2 rounded-md border p-2.5 cursor-pointer text-xs ${
-                mode === "html" ? "border-primary bg-primary/5" : "border-border"
-              }`}
-            >
-              <RadioGroupItem value="html" id="mode-html" className="mt-0.5" />
-              <span>
-                <span className="font-medium block">Single HTML widget (recommended)</span>
-                <span className="text-muted-foreground">
-                  Embeds full markup + CSS in one widget. Renders 1:1 with the template — correct spacing, backgrounds, fonts and layout on the published page.
-                </span>
-              </span>
-            </label>
-            <label
-              htmlFor="mode-native"
-              className={`flex items-start gap-2 rounded-md border p-2.5 cursor-pointer text-xs ${
-                mode === "native" ? "border-primary bg-primary/5" : "border-border"
-              }`}
-            >
-              <RadioGroupItem value="native" id="mode-native" className="mt-0.5" />
-              <span>
-                <span className="font-medium block">Native Elementor widgets</span>
-                <span className="text-muted-foreground">
-                  Editable widgets for in-Elementor editing. Note: CSS only appears after you open and re-save the page in Elementor (REST publishing can't pre-build the page CSS).
-                </span>
-              </span>
-            </label>
-
-          </RadioGroup>
+        {/* Publishing format (chosen on the campaign — not editable here) */}
+        <div className="rounded-lg border border-border bg-muted/30 p-3 flex items-center justify-between gap-3">
+          <div>
+            <Label className="text-xs font-semibold block">Publishing format</Label>
+            <span className="text-xs text-muted-foreground">
+              {mode === "native"
+                ? "Native Elementor widgets — editable inside the Elementor builder."
+                : "Single HTML widget — embeds full markup + CSS, renders 1:1 with the template."}
+            </span>
+          </div>
+          <Badge variant="secondary" className="shrink-0 text-[11px]">
+            {FORMAT_LABELS[publishFormat || (mode === "native" ? "elementor" : "html")] || "Single HTML widget"}
+          </Badge>
         </div>
+
 
         {/* Visual-validation gate (98% similarity) */}
         <VisualValidationPanel
