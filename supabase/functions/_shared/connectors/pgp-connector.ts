@@ -33,6 +33,23 @@ interface PublishResponse {
   status: string;
 }
 
+const CONNECTOR_TIMEOUT_MS = 25_000;
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = CONNECTOR_TIMEOUT_MS): Promise<Response> {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: ac.signal });
+  } catch (err: any) {
+    if (err?.name === "AbortError") {
+      throw new Error(`3xVisibility WordPress Connector request timed out after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export class PgpConnector implements CmsConnector {
   readonly type = "wordpress";
   private baseUrl: string;
@@ -61,7 +78,7 @@ export class PgpConnector implements CmsConnector {
   }
 
   private async call<T>(path: string, method: string, body?: unknown): Promise<T> {
-    const res = await fetch(`${this.restBase}${path}`, {
+    const res = await fetchWithTimeout(`${this.restBase}${path}`, {
       method,
       headers: this.headers(),
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -184,7 +201,7 @@ export class PgpConnector implements CmsConnector {
   async listContent(contentType: "pages" | "products"): Promise<ContentItem[]> {
     if (contentType !== "pages" || !this.basicAuth) return [];
     try {
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `${this.baseUrl}/wp-json/wp/v2/pages?per_page=100&context=edit&status=publish,draft`,
         { headers: { Accept: "application/json", Authorization: this.basicAuth } },
       );
