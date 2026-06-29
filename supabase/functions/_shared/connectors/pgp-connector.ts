@@ -117,6 +117,9 @@ export class PgpConnector implements CmsConnector {
     });
     if (!res.ok) {
       const text = await res.text();
+      if (res.status === 401 || res.status === 403 || res.status === 404) {
+        throw this.connectorSetupError(path, res.status, text);
+      }
       throw new Error(`PGP Connector ${method} ${path} failed (${res.status}): ${text}`);
     }
     return (await res.json()) as T;
