@@ -453,9 +453,13 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { page_ids, publish_type, website_id, pages: directPages, overwrite_design, elementor_mode } = body;
-    // Default to NATIVE Elementor widgets (CSS baked into settings). Only the
-    // legacy single-HTML-widget embed path is used when explicitly requested.
-    const elementorMode: "html" | "native" = elementor_mode === "html" ? "html" : "native";
+    // Default to the EMBEDDED styled path ("html"): the full resolved template
+    // markup + its <style> CSS are baked into a single Elementor HTML widget so
+    // the published page renders 1:1 (spacing, backgrounds, fonts, layout).
+    // Native widget styling is NOT reliable over the REST API because Elementor
+    // never regenerates the per-page CSS file when a page is created via REST —
+    // so baked native settings ship with no CSS. Native is opt-in only.
+    const elementorMode: "html" | "native" = elementor_mode === "native" ? "native" : "html";
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
 

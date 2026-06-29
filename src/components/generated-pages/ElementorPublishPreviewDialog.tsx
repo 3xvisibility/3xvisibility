@@ -142,9 +142,9 @@ export function ElementorPublishPreviewDialog({
             >
               <RadioGroupItem value="html" id="mode-html" className="mt-0.5" />
               <span>
-                <span className="font-medium block">Single HTML widget</span>
+                <span className="font-medium block">Single HTML widget (recommended)</span>
                 <span className="text-muted-foreground">
-                  Embeds full markup + CSS in one widget. Renders 1:1 with the template design.
+                  Embeds full markup + CSS in one widget. Renders 1:1 with the template — correct spacing, backgrounds, fonts and layout on the published page.
                 </span>
               </span>
             </label>
@@ -158,10 +158,11 @@ export function ElementorPublishPreviewDialog({
               <span>
                 <span className="font-medium block">Native Elementor widgets</span>
                 <span className="text-muted-foreground">
-                  Maps markup to editable Elementor widgets. Best for in-Elementor editing.
+                  Editable widgets for in-Elementor editing. Note: CSS only appears after you open and re-save the page in Elementor (REST publishing can't pre-build the page CSS).
                 </span>
               </span>
             </label>
+
           </RadioGroup>
         </div>
 
