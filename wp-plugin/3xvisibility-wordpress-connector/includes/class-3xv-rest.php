@@ -122,13 +122,23 @@ class XXXV_REST {
 	}
 
 	public function ping() {
+		$capabilities = array(
+			'native_elementor_publish' => true,
+			'elementor_data_verify'     => true,
+			'template_css_meta'         => true,
+			'cache_clear'               => true,
+		);
+
 		return rest_ensure_response(
 			array(
-				'ok'        => true,
-				'plugin'    => '3xVisibility WordPress Connector',
-				'version'   => XXXV_CONNECTOR_VERSION,
-				'time'      => current_time( 'mysql' ),
-				'wp'        => get_bloginfo( 'version' ),
+				'ok'               => true,
+				'plugin'           => '3xVisibility WordPress Connector',
+				'version'          => XXXV_CONNECTOR_VERSION,
+				'time'             => current_time( 'mysql' ),
+				'wp'               => get_bloginfo( 'version' ),
+				'elementor_active' => did_action( 'elementor/loaded' ) > 0,
+				'elementor_version'=> defined( 'ELEMENTOR_VERSION' ) ? ELEMENTOR_VERSION : null,
+				'capabilities'     => $capabilities,
 			)
 		);
 	}
