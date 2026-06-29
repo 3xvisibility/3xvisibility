@@ -99,8 +99,10 @@ class XXXV_Elementor {
 			}
 		}
 
-		// Regenerate this page's CSS so it renders exactly like a manual save.
+		// Regenerate this page's CSS and clear common caches so republishing updates
+		// the live URL immediately, exactly like saving inside Elementor.
 		self::regenerate_page_css( $post_id );
+		self::clear_runtime_caches( $post_id );
 
 		return rest_ensure_response(
 			array(
@@ -126,6 +128,45 @@ class XXXV_Elementor {
 			return true;
 		} catch ( \Throwable $e ) {
 			return false;
+		}
+	}
+
+	/**
+	 * Clear WordPress/Elementor/page-cache layers after publish or republish.
+	 *
+	 * @param int $post_id Published page ID.
+	 */
+	private static function clear_runtime_caches( $post_id ) {
+		clean_post_cache( $post_id );
+		wp_cache_flush();
+
+		if ( did_action( 'elementor/loaded' ) && class_exists( '\Elementor\Plugin' ) ) {
+			try {
+				\Elementor\Plugin::$instance->files_manager->clear_cache();
+			} catch ( \Throwable $e ) {
+				// Non-fatal: per-page CSS was already regenerated above.
+			}
+		}
+
+		if ( function_exists( 'rocket_clean_post' ) ) {
+			rocket_clean_post( $post_id );
+		}
+		if ( function_exists( 'rocket_clean_domain' ) ) {
+			rocket_clean_domain();
+		}
+		if ( function_exists( 'w3tc_flush_post' ) ) {
+			w3tc_flush_post( $post_id );
+		} elseif ( function_exists( 'w3tc_flush_all' ) ) {
+			w3tc_flush_all();
+		}
+		if ( function_exists( 'wp_cache_post_change' ) ) {
+			wp_cache_post_change( $post_id );
+		} elseif ( function_exists( 'wp_cache_clear_cache' ) ) {
+			wp_cache_clear_cache();
+		}
+		if ( class_exists( 'LiteSpeed\Purge' ) ) {
+			do_action( 'litespeed_purge_post', $post_id );
+			do_action( 'litespeed_purge_all' );
 		}
 	}
 

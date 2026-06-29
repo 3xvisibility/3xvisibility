@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,8 +18,6 @@ import {
 } from "lucide-react";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
-import { ElementorPublishPreviewDialog } from "@/components/generated-pages/ElementorPublishPreviewDialog";
-import type { ElementorWidgetMode } from "@/lib/connectors/elementor-engine";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
@@ -85,10 +83,6 @@ export default function GeneratedPagesPage() {
   const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
-  const [elementorPreviewPage, setElementorPreviewPage] = useState<GeneratedPage | null>(null);
-  const [elementorMode, setElementorModeState] = useState<ElementorWidgetMode>("native");
-  const elementorModeRef = useRef<ElementorWidgetMode>("native");
-  const setElementorMode = (m: ElementorWidgetMode) => { elementorModeRef.current = m; setElementorModeState(m); };
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -118,7 +112,7 @@ export default function GeneratedPagesPage() {
   });
 
   // Baseline template HTML for the visual-validation gate (campaign → template).
-  const baselineCampaignId = elementorPreviewPage?.campaign_id || fidelityPage?.campaign_id || null;
+  const baselineCampaignId = fidelityPage?.campaign_id || null;
   const { data: baselineHtml } = useQuery({
     queryKey: ["template-baseline", baselineCampaignId],
     enabled: !!baselineCampaignId,
@@ -245,7 +239,7 @@ export default function GeneratedPagesPage() {
           page_ids: pageIds,
           publish_type: type,
           website_id: websiteId,
-          elementor_mode: elementorModeRef.current,
+          elementor_mode: "native",
           overwrite_design: true,
         },
       });
@@ -315,7 +309,7 @@ export default function GeneratedPagesPage() {
           page_ids: ids,
           publish_type: type ?? publishType,
           website_id: websiteId,
-          elementor_mode: elementorModeRef.current,
+          elementor_mode: "native",
           overwrite_design: true,
         },
       });
@@ -361,7 +355,7 @@ export default function GeneratedPagesPage() {
           page_ids: ids,
           publish_type: type ?? publishType,
           website_id: websiteId,
-          elementor_mode: elementorModeRef.current,
+          elementor_mode: "native",
           overwrite_design: true,
         },
       });
@@ -868,7 +862,6 @@ export default function GeneratedPagesPage() {
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setElementorPreviewPage(page)}><ScanEye className="h-3.5 w-3.5 mr-2" />Elementor preview &amp; publish</DropdownMenuItem>
                       {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                       {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</a></DropdownMenuItem>}
                       {page.external_url && <DropdownMenuItem onClick={() => setFidelityPage(page)}><ScanEye className="h-3.5 w-3.5 mr-2" />Visual fidelity</DropdownMenuItem>}
@@ -967,7 +960,6 @@ export default function GeneratedPagesPage() {
                               {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setElementorPreviewPage(page)}><ScanEye className="h-3.5 w-3.5 mr-2" />Elementor preview &amp; publish</DropdownMenuItem>
                               {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                               {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</a></DropdownMenuItem>}
                               {page.external_url && <DropdownMenuItem onClick={() => setFidelityPage(page)}><ScanEye className="h-3.5 w-3.5 mr-2" />Visual fidelity</DropdownMenuItem>}
@@ -1290,26 +1282,6 @@ export default function GeneratedPagesPage() {
         generatedPageId={fidelityPage?.id}
         templateId={undefined}
       />
-      <ElementorPublishPreviewDialog
-        open={!!elementorPreviewPage}
-        onOpenChange={(v) => { if (!v) setElementorPreviewPage(null); }}
-        page={elementorPreviewPage ? { id: elementorPreviewPage.id, title: elementorPreviewPage.title, content: elementorPreviewPage.content || "", slug: elementorPreviewPage.slug } : null}
-        workspaceId={wsId}
-        templateId={undefined}
-        publishFormat={elementorPreviewPage?.campaigns?.publish_format ?? null}
-        publishedUrl={elementorPreviewPage?.external_url}
-        baseline={baselineHtml ? { html: baselineHtml } : {}}
-        onPublish={async (mode, gate) => {
-          const pg = elementorPreviewPage;
-          if (gate?.overridden && gate.checkId) {
-            await supabase.from("page_render_checks").update({ overridden: true }).eq("id", gate.checkId);
-          }
-          setElementorMode(mode);
-          setElementorPreviewPage(null);
-          if (pg) handlePublish([pg.id], "publish");
-        }}
-      />
-
       <SeoAnalysisDialog open={!!seoAnalysisPage} onOpenChange={(open) => !open && setSeoAnalysisPage(null)} page={seoAnalysisPage}
         campaignTitles={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.title) : undefined}
         campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined}
