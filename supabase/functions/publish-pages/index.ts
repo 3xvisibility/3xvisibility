@@ -442,7 +442,7 @@ Deno.serve((req) => {
         error: "Publish is still running in the background. Refresh the page in a moment to see progress.",
         code: "FUNCTION_SAFE_TIMEOUT",
         partial: true,
-      }, 504)), FUNCTION_SAFE_TIMEOUT_MS);
+      }, 202)), FUNCTION_SAFE_TIMEOUT_MS);
     }),
   ]);
 });
