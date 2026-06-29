@@ -121,15 +121,6 @@ class XXXV_REST {
 				'wp'        => get_bloginfo( 'version' ),
 			)
 		);
-		register_rest_route(
-			XXXV_CONNECTOR_NS,
-			'/debug-log',
-			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'debug_log' ),
-				'permission_callback' => $auth,
-			)
-		);
 	}
 
 	/**
