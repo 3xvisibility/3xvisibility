@@ -46,6 +46,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [jwtToken, setJwtToken] = useState("");
+  const [connectorKey, setConnectorKey] = useState("");
   // Shopify — OAuth only, token field for re-auth not needed
   const [shopifyToken, setShopifyToken] = useState("");
   // PrestaShop
