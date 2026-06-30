@@ -80,6 +80,19 @@ export async function recordTemplateVersion(
 }
 
 /**
+ * Read the current template row by id and snapshot it as a new version. Use
+ * after an update/customize where the DB already holds the latest content.
+ */
+export async function recordVersionById(templateId: string, changeSummary = ""): Promise<void> {
+  const { data } = await supabase
+    .from("templates")
+    .select("id, workspace_id, name, content, elementor_data, seo_title_pattern, seo_description_pattern, schema_type, schema_config, template_kind, variables")
+    .eq("id", templateId)
+    .maybeSingle();
+  if (data) await recordTemplateVersion(data as TemplateSnapshot, changeSummary);
+}
+
+/**
  * Resolve the freshly-saved template row (by name within a workspace) when the
  * insert call did not return the new id, then record its first version.
  */
