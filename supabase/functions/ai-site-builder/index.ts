@@ -588,6 +588,8 @@ When ready is true, your reply should tell the user you'll build a preview now.`
         if (body.platform === "shopify" || body.platform === "wordpress") {
           parsed.collected.platform = body.platform;
         }
+        // Carry the manual brand theme into the collected input.
+        if (body.brandTheme) parsed.collected.brandTheme = body.brandTheme;
         const out = await generatePage(parsed.collected, authToken);
         if (out.ok && out.page) {
           pageResult = {
