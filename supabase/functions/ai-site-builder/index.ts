@@ -22,6 +22,8 @@ interface BuildInput {
   templateName?: string;
   freeText?: string;
   language?: string;
+  /** Target platform the AI should build for: "wordpress" (Elementor) or "shopify". */
+  platform?: "wordpress" | "shopify";
 }
 
 interface PageJson {
