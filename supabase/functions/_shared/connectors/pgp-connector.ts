@@ -339,7 +339,9 @@ export class PgpConnector implements CmsConnector {
       }));
     } catch {
       return [];
+    }
   }
+
 
   /* ----------------------------------------------------------------- */
   /* AI Action endpoints: menus / themes / page templates              */
