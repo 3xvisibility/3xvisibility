@@ -119,15 +119,18 @@ export default function AiSiteBuilderPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Before a page is built, keep the platform in sync with the selected website's type.
+  // Before a page is built, keep the platform in sync with the selected website
+  // (manual override wins over auto-detected type).
   useEffect(() => {
     if (page) return;
     const site = websites.find((w) => w.id === selectedWebsite);
-    const detected = (site?.type || "").toLowerCase();
-    if (detected === "shopify" || detected === "wordpress") {
-      setPlatform(detected);
+    if (!site) return;
+    const resolved = effectivePlatform(site);
+    if (resolved === "shopify" || resolved === "wordpress") {
+      setPlatform(resolved);
     }
-  }, [selectedWebsite, websites, page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWebsite, websites, page, platformOverrides]);
 
   // Keep the publish target in sync with the page's platform.
   useEffect(() => {
