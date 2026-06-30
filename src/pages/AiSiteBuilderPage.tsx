@@ -195,7 +195,7 @@ export default function AiSiteBuilderPage() {
     setChatLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("ai-site-builder", {
-        body: { action: "chat", messages: next, platform },
+        body: { action: "chat", messages: next, platform, brandTheme: brandThemePayload() },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
