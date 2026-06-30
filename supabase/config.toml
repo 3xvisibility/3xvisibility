@@ -31,6 +31,8 @@ project_id = "qmuxdkxdrxevlnckssuw"
     verify_jwt = true
   [functions.publish-pages]
     verify_jwt = false
+  [functions.recheck-editor-readiness]
+    verify_jwt = false
   [functions.publish-store]
     verify_jwt = false
   [functions.regenerate-product-image]
