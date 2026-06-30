@@ -285,6 +285,44 @@ export default function AiSiteBuilderPage() {
         </CardContent>
       </Card>
 
+      {/* Connected websites with auto-detected platform badge + last-checked time. */}
+      {websites.length > 0 && (
+        <Card>
+          <CardContent className="py-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-semibold">Connected websites</Label>
+            </div>
+            <ul className="space-y-2">
+              {websites.map((w) => {
+                const detected = detectPlatform(w.type);
+                return (
+                  <li key={w.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{w.name || w.url}</p>
+                      <p className="text-xs text-muted-foreground truncate">{formatChecked(w.last_sync || w.updated_at)}</p>
+                    </div>
+                    <span
+                      className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        detected === "wordpress"
+                          ? "bg-blue-500/10 text-blue-600"
+                          : detected === "shopify"
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {detected === "wordpress" ? "🟦 WordPress" : detected === "shopify" ? "🛍️ Shopify" : "❓ Unknown"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+
+
 
       <div className="grid lg:grid-cols-2 gap-6">
         <Tabs defaultValue="wizard">
