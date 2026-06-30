@@ -3,7 +3,6 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
-import { buildEmbeddedElementorData, htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
 
 
 /**
@@ -26,29 +25,11 @@ function shrinkText(text: string | undefined, keepFraction: number): string | un
   return words.slice(0, keep).join(" ");
 }
 
-/** Pull any `<style>` CSS embedded inside an Elementor JSON tree (HTML widgets). */
-function extractCssFromElementorJson(json: unknown): string {
-  try {
-    const str = typeof json === "string" ? json : JSON.stringify(json ?? "");
-    const blocks: string[] = [];
-    const re = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(str)) !== null) {
-      const css = (m[1] || "").trim();
-      if (css) blocks.push(css);
-    }
-    return blocks.join("\n");
-  } catch {
-    return "";
-  }
-}
-
 async function resolveCatalogElementorData(
   supabase: any,
   page: { campaign_id?: string | null; title: string; content: string; seo_description?: string | null },
   cache: Map<string, unknown>,
-  mode: "html" | "native" = "html",
-): Promise<{ data: string; css: string; similarity: number; truncatedFields: string[]; ok: boolean; mode: "html" | "native"; cssLength: number; cssOk: boolean; cssAutoFixed: boolean } | null> {
+): Promise<{ data: string; css: string; similarity: number; truncatedFields: string[]; ok: boolean; cssLength: number } | null> {
   try {
     if (!page.campaign_id) return null;
 
@@ -88,43 +69,18 @@ async function resolveCatalogElementorData(
         if (hasData) elementorJson = ed;
       }
 
-      // 3) Last-resort fallback: convert the template's stored HTML markup into
-      // native Elementor JSON on the fly. This keeps WordPress publishing working
-      // for templates that were never pre-seeded into the catalog (no marketplace
-      // id and no stored elementor_data) instead of hard-blocking the publish.
-      // Extract the template's <style> CSS so class-based design (grids, colors,
-      // fonts, backgrounds, custom classes) renders 1:1 on the published page.
+      // Extract legacy stored CSS only. Publishing never converts HTML here and
+      // never embeds HTML; missing Elementor JSON blocks WordPress publishing.
       templateCss = [extractTemplateCss(tplRow?.content), extractTemplateCss(page.content)]
         .filter(Boolean)
         .join("\n");
-
-      if (!elementorJson && tplRow?.content) {
-        try {
-          const tree = htmlToElementor(tplRow.content);
-          if (Array.isArray(tree) && tree.length > 0) elementorJson = tree;
-        } catch (e) {
-          console.warn("[publish-pages] on-the-fly HTML→Elementor conversion failed", e);
-        }
-      }
 
       cache.set(page.campaign_id, elementorJson ? { json: elementorJson, css: templateCss } : null);
     }
 
     if (!elementorJson) return null;
 
-    // ---- CSS integrity verification + auto-fix ----------------------------
-    // Marketplace catalog rows often store CSS *inside* the Elementor JSON
-    // (HTML widgets / custom CSS), while on-the-fly conversions extract it from
-    // <style> blocks. Merge every source so no design rule is lost. If nothing
-    // is found, auto-fix by pulling style from the generated page markup so a
-    // page is never shipped completely unstyled.
-    const cssFromJson = extractCssFromElementorJson(elementorJson);
-    let resolvedCss = [templateCss, cssFromJson].filter(Boolean).join("\n").trim();
-    let cssAutoFixed = false;
-    if (!resolvedCss) {
-      resolvedCss = extractTemplateCss(page.content).trim();
-      if (resolvedCss) cssAutoFixed = true;
-    }
+    let resolvedCss = templateCss.trim();
 
     // Automatic rebuild loop: regenerate fields (progressively shrinking content)
     // until the visual similarity check reaches the target or attempts run out.
@@ -136,61 +92,27 @@ async function resolveCatalogElementorData(
         title: shrinkText(page.title, keepFraction),
         description: shrinkText(page.seo_description || undefined, keepFraction),
         bodyHtml: page.content,
-        // CSS must travel with NATIVE Elementor too. We keep all page content as
-        // native containers/widgets, but prepend a tiny CSS-only HTML widget and
-        // also send the same CSS to the connector meta fallback. This fixes live
-        // WP pages where Elementor's generated CSS loads but marketplace class
-        // selectors/background styles would otherwise be missing.
-        injectCss: resolvedCss,
       }, ELEMENTOR_SIMILARITY_TARGET);
       if (!built) return null;
+      resolvedCss = [resolvedCss, built.extractedCss].filter(Boolean).join("\n").trim();
       if (!best || built.similarity > best.similarity) best = built;
       if (built.similarity >= ELEMENTOR_SIMILARITY_TARGET) break;
     }
     if (!best) return null;
 
-    // HTML mode legacy fallback: embed the full resolved page markup together
-    // with its CSS inside one Elementor HTML widget. WordPress production flow
-    // uses native mode, where only CSS is injected and content remains editable
-    // native Elementor containers/widgets.
-    const embeddedData = buildEmbeddedElementorData(page.content, resolvedCss);
-
-    // Mode selector: "html" embeds the full styled markup in a single HTML
-    // widget (renders 1:1 with the template); "native" ships the editable
-    // native Elementor widget tree built from the catalog.
-    let chosenData = mode === "native" ? best.data : embeddedData;
-    let chosenMode: "html" | "native" = mode;
-
-    // Verify the CSS actually made it into the data that ships to WordPress. In
-    // native mode CSS is injected as a top-of-tree <style> HTML widget; if it is
-    // missing (e.g. injection skipped), auto-fix by falling back to the embedded
-    // HTML payload which always carries the markup + <style> inline.
-    const cssExpected = resolvedCss.length > 0;
-    let cssInData = !cssExpected || chosenData.includes("<style");
-    if (cssExpected && !cssInData && embeddedData.includes("<style")) {
-      chosenData = embeddedData;
-      chosenMode = "html";
-      cssAutoFixed = true;
-      cssInData = true;
-    }
-    const cssOk = !cssExpected ? false : cssInData;
-
     const ok = best.similarity >= ELEMENTOR_SIMILARITY_TARGET;
     console.log(
-      `[publish-pages] catalog Elementor rebuilt (mode ${chosenMode}, similarity ${best.similarity}%, ` +
+      `[publish-pages] catalog Elementor rebuilt (native mode, similarity ${best.similarity}%, ` +
       `target ${ELEMENTOR_SIMILARITY_TARGET}%, ok=${ok}, truncated ${best.truncatedFields.length}, ` +
-      `css ${resolvedCss.length} chars, cssOk=${cssOk}, cssAutoFixed=${cssAutoFixed}, data ${chosenData.length} chars)`,
+      `css ${resolvedCss.length} chars, data ${best.data.length} chars)`,
     );
     return {
-      data: chosenData,
+      data: best.data,
       css: resolvedCss,
       similarity: best.similarity,
       truncatedFields: best.truncatedFields,
       ok,
-      mode: chosenMode,
       cssLength: resolvedCss.length,
-      cssOk,
-      cssAutoFixed,
     };
   } catch (e) {
     console.warn("[publish-pages] catalog Elementor resolve failed", e);
