@@ -36,6 +36,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.1.9 =
+* If the post-publish editor-readiness check fails, automatically purge WordPress caches and force an Elementor CSS/asset regeneration, then retry the check up to 3 times before rolling back.
+
 = 1.1.8 =
 * Add automatic post-publish editor-readiness check: confirm the page opens in "Edit with Elementor" mode (builder edit mode + Elementor document built) and that editable widgets are present before returning success; roll back otherwise.
 
