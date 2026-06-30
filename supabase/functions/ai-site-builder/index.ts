@@ -496,12 +496,16 @@ Schema:
   "metaTitle": string (<=60 chars),
   "metaDescription": string (<=158 chars),
   "theme": { "primary": hex, "accent": hex, "bg": hex, "text": hex },
-  "hero": { "eyebrow": string (2-4 words badge), "headline": string (punchy, <=9 words), "subheadline": string (1-2 sentences), "cta": string (action label) },
+  "hero": { "eyebrow": string (2-4 words badge), "headline": string (punchy, <=9 words), "subheadline": string (1-2 sentences), "cta": string (action label), "image": string (2-4 word concrete photo subject for the hero image) },
   "stats": [ { "value": string (e.g. "10k+", "98%", "24/7"), "label": string } ] (exactly 3-4 items),
-  "sections": [ { "title": string, "body": string } ] (3-5 items, body 2-4 sentences),
-  "features": [ { "title": string, "body": string } ] (3-6 items, body 1-2 sentences),
+  "sections": [ { "title": string, "body": string, "image": string (2-4 word concrete photo subject for THIS section) } ] (3-5 items, body 2-4 sentences),
+  "features": [ { "title": string, "body": string, "image": string (2-4 word concrete photo subject for THIS feature) } ] (3-6 items, body 1-2 sentences),
   "faqs": [ { "q": string, "a": string } ] (3-5 items)
 }
+Image rules (CRITICAL — images MUST match the content 100%):
+- Every "image" field is a SHORT, CONCRETE, photographable subject (2-4 words) that literally depicts what the section/feature is about — e.g. "modern dental clinic", "barista pouring coffee", "yoga studio class", "solar panels rooftop".
+- Always include the niche/industry in the keyword so the photo is on-topic (e.g. for a dentist: "dentist examining patient", not just "doctor").
+- Use real photographable nouns, never abstract words ("success", "quality", "trust") and never brand names.
 Design rules:
 - Pick a bold, cohesive, modern color theme that fits the brand/niche. "primary" and "accent" should be two harmonious colors that look great in a gradient (avoid generic blue+orange unless it truly fits). "bg" should be a near-white or soft tinted background; "text" a dark slate.
 - Choose colors with real contrast and personality — luxury = deep + gold, wellness = sage + cream, tech = indigo + cyan, food = warm terracotta, etc.
