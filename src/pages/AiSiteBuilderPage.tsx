@@ -72,6 +72,11 @@ export default function AiSiteBuilderPage() {
   const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [platform, setPlatform] = useState<"wordpress" | "shopify">("wordpress");
+  // Manual per-website platform overrides (id -> platform).
+  const [platformOverrides, setPlatformOverrides] = useState<Record<string, "wordpress" | "shopify">>({});
+
+  const effectivePlatform = (w: WebsiteRow): "wordpress" | "shopify" | "unknown" =>
+    platformOverrides[w.id] || detectPlatform(w.type);
 
   // Wizard fields
   const [brand, setBrand] = useState("");
@@ -114,15 +119,18 @@ export default function AiSiteBuilderPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Before a page is built, keep the platform in sync with the selected website's type.
+  // Before a page is built, keep the platform in sync with the selected website
+  // (manual override wins over auto-detected type).
   useEffect(() => {
     if (page) return;
     const site = websites.find((w) => w.id === selectedWebsite);
-    const detected = (site?.type || "").toLowerCase();
-    if (detected === "shopify" || detected === "wordpress") {
-      setPlatform(detected);
+    if (!site) return;
+    const resolved = effectivePlatform(site);
+    if (resolved === "shopify" || resolved === "wordpress") {
+      setPlatform(resolved);
     }
-  }, [selectedWebsite, websites, page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWebsite, websites, page, platformOverrides]);
 
   // Keep the publish target in sync with the page's platform.
   useEffect(() => {
@@ -295,24 +303,61 @@ export default function AiSiteBuilderPage() {
             </div>
             <ul className="space-y-2">
               {websites.map((w) => {
-                const detected = detectPlatform(w.type);
+                const resolved = effectivePlatform(w);
+                const overridden = !!platformOverrides[w.id];
                 return (
-                  <li key={w.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                  <li key={w.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{w.name || w.url}</p>
                       <p className="text-xs text-muted-foreground truncate">{formatChecked(w.last_sync || w.updated_at)}</p>
                     </div>
-                    <span
-                      className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        detected === "wordpress"
-                          ? "bg-blue-500/10 text-blue-600"
-                          : detected === "shopify"
-                            ? "bg-emerald-500/10 text-emerald-600"
-                            : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {detected === "wordpress" ? "🟦 WordPress" : detected === "shopify" ? "🛍️ Shopify" : "❓ Unknown"}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          resolved === "wordpress"
+                            ? "bg-blue-500/10 text-blue-600"
+                            : resolved === "shopify"
+                              ? "bg-emerald-500/10 text-emerald-600"
+                              : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {resolved === "wordpress" ? "🟦 WordPress" : resolved === "shopify" ? "🛍️ Shopify" : "❓ Unknown"}
+                        {overridden && <span className="opacity-70">(manual)</span>}
+                      </span>
+                      {/* Manual platform override toggle. */}
+                      <div className="inline-flex overflow-hidden rounded-md border text-xs">
+                        <button
+                          type="button"
+                          onClick={() => setPlatformOverrides((p) => ({ ...p, [w.id]: "wordpress" }))}
+                          className={`px-2 py-1 transition ${resolved === "wordpress" ? "bg-blue-500/10 text-blue-600 font-semibold" : "hover:bg-muted/50"}`}
+                        >
+                          WP
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPlatformOverrides((p) => ({ ...p, [w.id]: "shopify" }))}
+                          className={`px-2 py-1 border-l transition ${resolved === "shopify" ? "bg-emerald-500/10 text-emerald-600 font-semibold" : "hover:bg-muted/50"}`}
+                        >
+                          Shopify
+                        </button>
+                        {overridden && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPlatformOverrides((p) => {
+                                const next = { ...p };
+                                delete next[w.id];
+                                return next;
+                              })
+                            }
+                            title="Reset to auto-detected"
+                            className="px-2 py-1 border-l text-muted-foreground hover:bg-muted/50"
+                          >
+                            ↺
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </li>
                 );
               })}
