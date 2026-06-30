@@ -72,6 +72,11 @@ export default function AiSiteBuilderPage() {
   const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [platform, setPlatform] = useState<"wordpress" | "shopify">("wordpress");
+  // Manual per-website platform overrides (id -> platform).
+  const [platformOverrides, setPlatformOverrides] = useState<Record<string, "wordpress" | "shopify">>({});
+
+  const effectivePlatform = (w: WebsiteRow): "wordpress" | "shopify" | "unknown" =>
+    platformOverrides[w.id] || detectPlatform(w.type);
 
   // Wizard fields
   const [brand, setBrand] = useState("");
