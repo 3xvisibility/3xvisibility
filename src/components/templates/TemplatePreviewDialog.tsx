@@ -195,6 +195,16 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, primaryAct
               </pre>
             </ScrollArea>
           </TabsContent>
+
+          {elementorJson && (
+            <TabsContent value="elementor" className="flex-1 overflow-hidden m-0 data-[state=active]:flex data-[state=active]:flex-col">
+              <ScrollArea className="flex-1">
+                <pre className="px-6 py-4 text-[11px] font-mono leading-relaxed whitespace-pre-wrap break-all">
+                  {elementorJson}
+                </pre>
+              </ScrollArea>
+            </TabsContent>
+          )}
         </Tabs>
 
         <DialogFooter className="px-6 py-3 border-t shrink-0 gap-2 sm:gap-2">
