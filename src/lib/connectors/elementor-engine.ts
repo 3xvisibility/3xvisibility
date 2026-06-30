@@ -657,8 +657,8 @@ export function extractRenderableHtml(html: string): string {
 }
 
 export interface BuildElementorMetaOptions {
-  /** When true (default), embed full template markup + CSS in a single HTML widget. When false, rely on native Elementor widgets + Elementor-generated CSS. */
-  embedCss?: boolean;
+  /** Deprecated compatibility flag. WordPress publishing is native Elementor only. */
+  embedCss?: false;
   version?: string;
 }
 
@@ -669,29 +669,17 @@ export function buildElementorMeta(
   // Back-compat: allow passing version string as the 2nd arg.
   const opts: BuildElementorMetaOptions =
     typeof options === "string" ? { version: options } : options;
-  const { embedCss = true, version = "3.21.0" } = opts;
+  const { version = "3.21.0" } = opts;
 
   let data: ElementorElement[];
-  if (embedCss) {
-    const renderable = extractRenderableHtml(html);
-    const htmlWidget: ElementorElement = {
-      id: genId(),
-      elType: "widget",
-      widgetType: "html",
-      settings: { html: renderable },
-      elements: [],
-    };
-    data = [container([htmlWidget])];
-  } else {
-    data = htmlToElementor(html);
-  }
+  data = htmlToElementor(html);
 
   return {
     _elementor_edit_mode: "builder",
     _elementor_template_type: "wp-page",
     _elementor_version: version,
     _elementor_data: JSON.stringify(data),
-    _wp_page_template: "elementor_canvas",
+    _wp_page_template: "elementor_header_footer",
   };
 }
 
@@ -712,7 +700,7 @@ export function extractTemplateCss(html: string | null | undefined): string {
   return blocks.join("\n");
 }
 
-export type ElementorWidgetMode = "html" | "native";
+export type ElementorWidgetMode = "native";
 
 export interface ElementorDebugReport {
   /** Selected widget mode. */
@@ -752,11 +740,11 @@ function countNodes(nodes: ElementorElement[]): { widgets: number; containers: n
  */
 export function buildElementorDebugReport(
   html: string,
-  mode: ElementorWidgetMode = "html",
+  mode: ElementorWidgetMode = "native",
 ): ElementorDebugReport {
   const css = extractTemplateCss(html);
   const renderable = extractRenderableHtml(html);
-  const meta = buildElementorMeta(html, { embedCss: mode === "html" });
+  const meta = buildElementorMeta(html, { embedCss: false });
   const elementorData = String(meta._elementor_data || "[]");
   let tree: ElementorElement[] = [];
   try {
