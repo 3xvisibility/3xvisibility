@@ -8,6 +8,7 @@
 // stored template design 1:1 while carrying new SEO content.
 
 import type { ElementorElement } from "./elementor-engine.ts";
+import { sanitizeElementorTree } from "./elementor-engine.ts";
 import {
   applyEditableContent,
   defaultContentFor,
@@ -157,7 +158,7 @@ export function buildElementorFromCatalog(
   overrides: CatalogOverrides,
   target = 98,
 ): CatalogBuildResult | null {
-  const rawTree = coerceTree(elementorJson);
+  const rawTree = sanitizeElementorTree(coerceTree(elementorJson));
   const stripped = stripHtmlWidgets(rawTree);
   const tree = unwrapPageWrapper(stripped.tree);
   const extractedCss = stripped.css;
