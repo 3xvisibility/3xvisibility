@@ -42,6 +42,22 @@ interface WebsiteRow {
   name: string;
   url: string;
   type: string;
+  last_sync?: string | null;
+  updated_at?: string | null;
+}
+
+function detectPlatform(type?: string | null): "wordpress" | "shopify" | "unknown" {
+  const t = (type || "").toLowerCase();
+  if (t === "wordpress") return "wordpress";
+  if (t === "shopify") return "shopify";
+  return "unknown";
+}
+
+function formatChecked(ts?: string | null): string {
+  if (!ts) return "Not checked yet";
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return "Not checked yet";
+  return `Last checked ${d.toLocaleString()}`;
 }
 
 export default function AiSiteBuilderPage() {
@@ -76,7 +92,7 @@ export default function AiSiteBuilderPage() {
     if (!currentWorkspace?.id) return;
     supabase
       .from("websites")
-      .select("id, name, url, type")
+      .select("id, name, url, type, last_sync, updated_at")
       .eq("workspace_id", currentWorkspace.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
@@ -268,6 +284,44 @@ export default function AiSiteBuilderPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Connected websites with auto-detected platform badge + last-checked time. */}
+      {websites.length > 0 && (
+        <Card>
+          <CardContent className="py-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-semibold">Connected websites</Label>
+            </div>
+            <ul className="space-y-2">
+              {websites.map((w) => {
+                const detected = detectPlatform(w.type);
+                return (
+                  <li key={w.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{w.name || w.url}</p>
+                      <p className="text-xs text-muted-foreground truncate">{formatChecked(w.last_sync || w.updated_at)}</p>
+                    </div>
+                    <span
+                      className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        detected === "wordpress"
+                          ? "bg-blue-500/10 text-blue-600"
+                          : detected === "shopify"
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {detected === "wordpress" ? "🟦 WordPress" : detected === "shopify" ? "🛍️ Shopify" : "❓ Unknown"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+
 
 
       <div className="grid lg:grid-cols-2 gap-6">
