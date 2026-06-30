@@ -28,6 +28,8 @@ interface GeneratedPage {
   elementor_data?: string;
   elementor_css?: string;
   elementor_mode?: string;
+  publish_format?: string;
+  platform?: "wordpress" | "shopify";
 }
 
 interface ChatMsg {
