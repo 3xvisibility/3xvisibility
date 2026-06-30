@@ -85,7 +85,10 @@ function parseAttrs(raw: string): Record<string, string> {
 function parseHtml(html: string): HtmlNode[] {
   const root: HtmlNode = { tag: "#root", attrs: {}, children: [] };
   const stack: HtmlNode[] = [root];
-  const tagRe = /<\/?([a-zA-Z][a-zA-Z0-9-]*)((?:[^>"']|"[^"]*"|'[^']*')*)\/?>/g;
+  // NOTE: attributes are matched non-greedily up to the first `>` so an
+  // unterminated quote in a malformed source template cannot consume the rest
+  // of the document into a single tag.
+  const tagRe = /<\/?([a-zA-Z][a-zA-Z0-9-]*)([^>]*?)\/?>/g;
   let last = 0;
   let m: RegExpExecArray | null;
 
