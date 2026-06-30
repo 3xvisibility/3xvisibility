@@ -546,6 +546,81 @@ function flattenSections(elements: ElementorElement[]): ElementorElement[] {
 }
 
 /**
+ * Defense-in-depth: clean an already-built Elementor tree so the stored MASTER
+ * JSON can never carry malformed markup that breaks the live page. This runs on
+ * every conversion AND can be applied to previously-stored masters to repair
+ * them in place. It is idempotent.
+ *
+ * Rules:
+ *  - plain-text widget fields (heading `title`, button `text`) must contain NO
+ *    markup — cut at the first `<`/`>` so a truncated/unterminated source tag
+ *    cannot leak structure into the text.
+ *  - URL fields (`link.url`, `image.url`) must be a single token — cut at the
+ *    first whitespace, quote, or angle bracket.
+ *  - `text-editor` `editor` HTML is stripped of <script>/<style> and any stray
+ *    angle-bracket fragment at the very end (the classic "unterminated tag"
+ *    bug) is removed.
+ *  - `header_size` is coerced to a valid h1-h6 tag.
+ */
+function cleanText(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const cut = value.search(/[<>]/);
+  return (cut === -1 ? value : value.slice(0, cut)).replace(/\s+/g, " ").trim();
+}
+
+function cleanUrl(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const cut = value.search(/[\s"'<>]/);
+  return (cut === -1 ? value : value.slice(0, cut)).trim();
+}
+
+function cleanEditorHtml(value: unknown): string {
+  if (typeof value !== "string") return "";
+  let out = value
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "");
+  // Drop a trailing unterminated tag fragment (e.g. "...text <a href="#c").
+  const lastOpen = out.lastIndexOf("<");
+  if (lastOpen !== -1 && out.indexOf(">", lastOpen) === -1) {
+    out = out.slice(0, lastOpen);
+  }
+  return out.trim();
+}
+
+export function sanitizeElementorTree(tree: ElementorElement[]): ElementorElement[] {
+  const visit = (el: ElementorElement): ElementorElement => {
+    const s: Record<string, unknown> = { ...(el.settings || {}) };
+    if (el.elType === "widget") {
+      if (el.widgetType === "heading") {
+        if ("title" in s) s.title = cleanText(s.title);
+        if (typeof s.header_size !== "string" || !/^h[1-6]$/.test(s.header_size as string)) {
+          s.header_size = "h2";
+        }
+      } else if (el.widgetType === "button") {
+        if ("text" in s) s.text = cleanText(s.text) || "Button";
+      } else if (el.widgetType === "text-editor") {
+        if ("editor" in s) s.editor = cleanEditorHtml(s.editor);
+      } else if (el.widgetType === "image") {
+        const img = s.image as { url?: unknown; alt?: unknown } | undefined;
+        if (img && typeof img === "object") {
+          s.image = { ...img, url: cleanUrl(img.url), alt: cleanText(img.alt) };
+        }
+      }
+      const link = s.link as { url?: unknown } | undefined;
+      if (link && typeof link === "object" && "url" in link) {
+        s.link = { ...link, url: cleanUrl(link.url) || "#" };
+      }
+    }
+    return {
+      ...el,
+      settings: s,
+      elements: (el.elements || []).map(visit),
+    };
+  };
+  return tree.map(visit);
+}
+
+/**
  * Convert an HTML string into a top-level array of native Elementor elements
  * (each visual section becomes its own full-width top-level Container). When a
  * `siteContext` is supplied, the template's CSS is baked into each widget's
@@ -559,11 +634,13 @@ export function htmlToElementor(html: string, siteContext?: SiteContext): Elemen
     const tree = parseHtml(html || "");
     const converted = flattenSections(convertChildren(tree));
     // Ensure every top-level element is a full-width container (Elementor sections).
-    return converted.map((el) =>
+    const normalized = converted.map((el) =>
       el.elType === "container"
         ? { ...el, settings: { ...el.settings, content_width: "full", width: "100%" } }
         : container([el], undefined, true)
     );
+    // Guarantee the stored MASTER JSON is always clean.
+    return sanitizeElementorTree(normalized);
   } finally {
     CURRENT_RESOLVER = null;
     CURRENT_CTX = undefined;
