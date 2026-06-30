@@ -41,12 +41,12 @@ export interface PagePayload {
    */
   publish_format?: "elementor" | "gutenberg" | "shopify";
   /**
-   * Elementor build strategy. "native" (default) emits native Elementor
-   * Containers + widgets with the template CSS baked into each widget's
-   * settings (fully editable, no external CSS). "html" is a legacy escape hatch
-   * that embeds the full template markup + CSS into a single HTML widget.
+   * Elementor build strategy. WordPress publishing is native-only; this field is
+   * kept for old request bodies but any WordPress publish must resolve to
+   * native Elementor Containers + supported widgets. HTML-widget mode is
+   * forbidden by the connector plugin.
    */
-  elementor_mode?: "native" | "html";
+  elementor_mode?: "native";
   custom_fields?: Record<string, unknown>;
   taxonomies?: Record<string, string[]>;
   /**
