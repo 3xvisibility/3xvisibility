@@ -260,7 +260,7 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
   const sections = (p.sections || [])
     .map(
       (s, i) => {
-        const img = `<div style="flex:1 1 320px;min-width:280px;"><img src="${imgUrl(q, 100 + i)}" alt="${esc(s.title)}" loading="lazy" style="width:100%;height:340px;object-fit:cover;border-radius:24px;box-shadow:0 30px 60px -30px rgba(15,23,42,0.5);"/></div>`;
+        const img = `<div style="flex:1 1 320px;min-width:280px;"><img src="${imgUrl(slotImg(s.image, s.title, q), 100 + i)}" alt="${esc(s.title)}" loading="lazy" style="width:100%;height:340px;object-fit:cover;border-radius:24px;box-shadow:0 30px 60px -30px rgba(15,23,42,0.5);"/></div>`;
         const text = `<div style="flex:1 1 320px;min-width:280px;">
           <div style="font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${esc(t.primary)};margin:0 0 12px;">0${i + 1}</div>
           <h2 style="font-size:clamp(26px,3.4vw,36px);line-height:1.15;margin:0 0 16px;color:${esc(t.text)};font-weight:800;letter-spacing:-0.02em;">${esc(s.title)}</h2>
