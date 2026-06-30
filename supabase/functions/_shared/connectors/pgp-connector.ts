@@ -165,7 +165,10 @@ export class PgpConnector implements CmsConnector {
     if (compareVersions(installedVersion, REQUIRED_3XV_CONNECTOR_VERSION) < 0) {
       throw new Error(
         `3xVisibility Connector pre-flight failed: plugin version ${installedVersion} is active, ` +
-        `but version ${REQUIRED_3XV_CONNECTOR_VERSION}+ is required. Update/reinstall the connector plugin, then retry publishing.`,
+        `but version ${REQUIRED_3XV_CONNECTOR_VERSION}+ is required. ` +
+        `Download the latest plugin from https://3xvisibility.com/3xvisibility-wordpress-connector.zip ` +
+        `(or your app's Integrations page), then in WordPress go to Plugins → Add New → Upload Plugin, ` +
+        `replace the old version, activate it, and retry publishing.`,
       );
     }
 
