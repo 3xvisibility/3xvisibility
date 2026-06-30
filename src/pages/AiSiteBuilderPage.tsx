@@ -87,6 +87,27 @@ export default function AiSiteBuilderPage() {
   const [referenceUrl, setReferenceUrl] = useState("");
   const [freeText, setFreeText] = useState("");
 
+  // Brand theme control (colors, typography, gradient style).
+  const [themeOn, setThemeOn] = useState(false);
+  const [themePrimary, setThemePrimary] = useState("#6d28d9");
+  const [themeAccent, setThemeAccent] = useState("#f59e0b");
+  const [themeBg, setThemeBg] = useState("#ffffff");
+  const [themeText, setThemeText] = useState("#0f172a");
+  const [themeFont, setThemeFont] = useState("plus-jakarta");
+  const [themeGradient, setThemeGradient] = useState("diagonal");
+
+  const brandThemePayload = () =>
+    themeOn
+      ? {
+          primary: themePrimary,
+          accent: themeAccent,
+          bg: themeBg,
+          text: themeText,
+          font: themeFont,
+          gradientStyle: themeGradient,
+        }
+      : undefined;
+
   // Chat
   const [messages, setMessages] = useState<ChatMsg[]>([
     { role: "assistant", content: "Hi! Tell me about the site you want — brand, what it's about (niche), and a category. Or paste a reference website link, and I'll build a page for you." },
