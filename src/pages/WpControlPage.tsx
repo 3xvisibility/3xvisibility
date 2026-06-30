@@ -211,10 +211,10 @@ export default function WpControlPage() {
               <CardDescription>Assign a menu to each theme location.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {actions.menus.locations.length === 0 && (
+              {(actions.menus?.locations ?? []).length === 0 && (
                 <p className="text-sm text-muted-foreground">This theme registered no menu locations.</p>
               )}
-              {actions.menus.locations.map((loc) => (
+              {(actions.menus?.locations ?? []).map((loc) => (
                 <div key={loc.slug} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{loc.label}</p>
@@ -236,7 +236,7 @@ export default function WpControlPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={NONE}>— No menu —</SelectItem>
-                      {actions.menus.menus.map((m) => (
+                      {(actions.menus?.menus ?? []).map((m) => (
                         <SelectItem key={m.id} value={String(m.id)}>
                           {m.name} ({m.count})
                         </SelectItem>
@@ -257,7 +257,7 @@ export default function WpControlPage() {
               <CardDescription>Switch the active WordPress theme.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {actions.themes.themes.map((t) => (
+              {(actions.themes?.themes ?? []).map((t) => (
                 <div key={t.stylesheet} className="flex items-center justify-between gap-3 rounded-md border p-3">
                   <div className="min-w-0">
                     <p className="flex items-center gap-2 truncate text-sm font-medium">
@@ -312,7 +312,7 @@ export default function WpControlPage() {
                     <SelectValue placeholder="Select a template" />
                   </SelectTrigger>
                   <SelectContent>
-                    {actions.templates.templates.map((tpl) => (
+                    {(actions.templates?.templates ?? []).map((tpl) => (
                       <SelectItem key={tpl.slug} value={tpl.slug}>
                         {tpl.name}
                       </SelectItem>
