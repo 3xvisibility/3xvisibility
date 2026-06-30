@@ -26,12 +26,29 @@ function shrinkText(text: string | undefined, keepFraction: number): string | un
   return words.slice(0, keep).join(" ");
 }
 
+/** Pull any `<style>` CSS embedded inside an Elementor JSON tree (HTML widgets). */
+function extractCssFromElementorJson(json: unknown): string {
+  try {
+    const str = typeof json === "string" ? json : JSON.stringify(json ?? "");
+    const blocks: string[] = [];
+    const re = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(str)) !== null) {
+      const css = (m[1] || "").trim();
+      if (css) blocks.push(css);
+    }
+    return blocks.join("\n");
+  } catch {
+    return "";
+  }
+}
+
 async function resolveCatalogElementorData(
   supabase: any,
   page: { campaign_id?: string | null; title: string; content: string; seo_description?: string | null },
   cache: Map<string, unknown>,
   mode: "html" | "native" = "html",
-): Promise<{ data: string; css: string; similarity: number; truncatedFields: string[]; ok: boolean; mode: "html" | "native"; cssLength: number } | null> {
+): Promise<{ data: string; css: string; similarity: number; truncatedFields: string[]; ok: boolean; mode: "html" | "native"; cssLength: number; cssOk: boolean; cssAutoFixed: boolean } | null> {
   try {
     if (!page.campaign_id) return null;
 
