@@ -896,6 +896,15 @@ export default function GeneratedPagesPage() {
                       {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
+                      {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
+                        <DropdownMenuItem
+                          disabled={recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id}
+                          onClick={() => recheckReadinessMutation.mutate(page.id)}
+                        >
+                          <ShieldCheck className={`h-3.5 w-3.5 mr-2 ${recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id ? "animate-spin" : ""}`} />
+                          Re-check Elementor readiness
+                        </DropdownMenuItem>
+                      )}
                       {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                       {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</a></DropdownMenuItem>}
                       <DropdownMenuSeparator />
