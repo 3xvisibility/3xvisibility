@@ -853,13 +853,29 @@ async function handlePublishPages(req: Request): Promise<Response> {
         continue;
       }
 
+      // Per-page publish timeline so users can track exactly what happened.
+      const steps: PublishStep[] = [];
+      const step = (label: string, status: PublishStep["status"], detail?: string) => {
+        steps.push({ label, status, detail, at: new Date().toISOString() });
+      };
+      const finishRunning = (status: PublishStep["status"], detail?: string) => {
+        if (steps.length && steps[steps.length - 1].status === "running") {
+          steps[steps.length - 1].status = status;
+          if (detail !== undefined) steps[steps.length - 1].detail = detail;
+        }
+      };
       try {
         const resolvedPublishType = inferPublishType(page, pubType);
+        const platformLabel = (page.websites as { type?: string })?.type || "site";
+        step("Connecting to store", "running", `${platformLabel} · ${resolvedPublishType}`);
         const connector = resolvedPublishType === "product"
           ? await createProductConnector(page.websites as WebsiteRecord)
           : await createConnector(page.websites as WebsiteRecord);
+        finishRunning("ok");
         if ((page.websites as { type?: string })?.type === "wordpress" && resolvedPublishType === "page") {
+          step("Verifying connector plugin", "running");
           await runWordPressConnectorPreflight(connector, "3xVisibility WordPress Connector");
+          finishRunning("ok");
         }
         const cleanedContent = stripHeadTagsForCms(page.content);
         // Republish of an already-published CMS page → preserve existing on-site
