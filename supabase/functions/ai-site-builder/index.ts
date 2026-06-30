@@ -24,6 +24,19 @@ interface BuildInput {
   language?: string;
   /** Target platform the AI should build for: "wordpress" (Elementor) or "shopify". */
   platform?: "wordpress" | "shopify";
+  /** Optional manual brand theme that overrides AI-chosen colors/typography/gradient. */
+  brandTheme?: BrandTheme;
+}
+
+interface BrandTheme {
+  primary?: string;
+  accent?: string;
+  bg?: string;
+  text?: string;
+  /** Font preset key — see FONT_PRESETS. */
+  font?: string;
+  /** Gradient style for hero/CTA backgrounds. */
+  gradientStyle?: "diagonal" | "vertical" | "radial" | "conic" | "solid";
 }
 
 interface PageJson {
@@ -31,7 +44,7 @@ interface PageJson {
   slug: string;
   metaTitle: string;
   metaDescription: string;
-  theme: { primary: string; accent: string; bg: string; text: string };
+  theme: { primary: string; accent: string; bg: string; text: string; font?: string; gradientStyle?: string };
   hero: { headline: string; subheadline: string; cta: string; eyebrow?: string };
   stats?: { value: string; label: string }[];
   sections: { title: string; body: string }[];
