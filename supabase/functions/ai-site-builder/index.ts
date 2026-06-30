@@ -203,23 +203,21 @@ function gradientCss(primary: string, accent: string, style?: string): string {
   }
 }
 
-// Build a keyword-relevant photo URL. Uses LoremFlickr (free, no key, returns
-// Creative-Commons photos matching the keywords) so generated pages get
-// beautiful, on-topic imagery like Lovable does — without burning AI credits.
-// `query` should be a short, specific photographic subject so the returned
-// photo matches the section it illustrates (e.g. "dental clinic chair").
+// Build a keyword-relevant photo URL. LoremFlickr's tag matching is unreliable
+// and frequently returns random, off-topic photos (e.g. a street statue for
+// "landscape"). Instead we use Pollinations, which generates a photo that
+// literally depicts the requested subject — so every image is 100% on-topic
+// without burning AI credits. `query` should be a short, specific subject.
 function imgUrl(query: string, seed: number, w = 1200, h = 800): string {
-  const tags = (query || "business modern professional")
+  const subject = (query || "professional business")
     .toLowerCase()
     .replace(/[^a-z0-9 ]+/g, " ")
-    .trim()
-    .split(/\s+/)
-    .filter((word) => word.length > 1)
-    .slice(0, 4)
-    .join(",") || "business";
-  // `/all/` requires a photo matching ALL tags → far more on-topic results.
-  return `https://loremflickr.com/${w}/${h}/${encodeURIComponent(tags)}/all?lock=${seed}`;
+    .replace(/\s+/g, " ")
+    .trim() || "professional business";
+  const prompt = `professional high quality photograph of ${subject}, realistic, clean, well lit, no text, no watermark`;
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&seed=${seed}&nologo=true&model=flux`;
 }
+
 
 // Resolve the best image keyword for a slot: prefer the AI-provided per-slot
 // keyword, else combine the slot title with the page-level niche query.
