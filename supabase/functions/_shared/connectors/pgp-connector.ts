@@ -227,6 +227,14 @@ export class PgpConnector implements CmsConnector {
     if (res.elementor_data_valid === false) {
       throw new Error("3xVisibility Connector publish failed: WordPress saved the page, but _elementor_data did not load back correctly.");
     }
+    // Post-publish editor readiness: the page must open in "Edit with Elementor"
+    // mode and contain editable widgets, otherwise publishing is not a success.
+    if (res.editor_ready === false) {
+      throw new Error("3xVisibility Connector publish failed: the page did not open in \"Edit with Elementor\" mode after publishing.");
+    }
+    if (typeof res.editable_widgets === "number" && res.editable_widgets < 1) {
+      throw new Error("3xVisibility Connector publish failed: the published page has no editable Elementor widgets.");
+    }
     // Force a fresh Elementor CSS rebuild + cache purge AFTER the page is saved,
     // so the live page picks up the new styling immediately (no stale CSS).
     await this.forceCssRefresh(res.post_id);
