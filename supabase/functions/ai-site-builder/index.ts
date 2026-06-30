@@ -380,7 +380,7 @@ async function generatePage(input: BuildInput, authToken?: string): Promise<{ ok
 
 
   const lang = input.language || "en";
-  const system = `You are an expert web designer and conversion copywriter. Generate a complete, polished landing page as STRICT JSON only (no markdown, no commentary).
+  const system = `You are an award-winning web designer and conversion copywriter (think Awwwards-level landing pages). Generate a complete, polished landing page as STRICT JSON only (no markdown, no commentary).
 Schema:
 {
   "title": string,
@@ -388,12 +388,17 @@ Schema:
   "metaTitle": string (<=60 chars),
   "metaDescription": string (<=158 chars),
   "theme": { "primary": hex, "accent": hex, "bg": hex, "text": hex },
-  "hero": { "headline": string, "subheadline": string, "cta": string },
+  "hero": { "eyebrow": string (2-4 words badge), "headline": string (punchy, <=9 words), "subheadline": string (1-2 sentences), "cta": string (action label) },
+  "stats": [ { "value": string (e.g. "10k+", "98%", "24/7"), "label": string } ] (exactly 3-4 items),
   "sections": [ { "title": string, "body": string } ] (3-5 items, body 2-4 sentences),
   "features": [ { "title": string, "body": string } ] (3-6 items, body 1-2 sentences),
   "faqs": [ { "q": string, "a": string } ] (3-5 items)
 }
-Pick a tasteful, modern color theme that matches the brand/niche. Write all text in language code "${lang}". Be specific to the brand and niche, never generic placeholder text.
+Design rules:
+- Pick a bold, cohesive, modern color theme that fits the brand/niche. "primary" and "accent" should be two harmonious colors that look great in a gradient (avoid generic blue+orange unless it truly fits). "bg" should be a near-white or soft tinted background; "text" a dark slate.
+- Choose colors with real contrast and personality — luxury = deep + gold, wellness = sage + cream, tech = indigo + cyan, food = warm terracotta, etc.
+- Copy must be specific, confident and benefit-driven. Never generic placeholder text. Always fill "eyebrow" and "stats".
+Write all text in language code "${lang}".
 When a reference brief is provided, mirror its section structure and ordering closely (one "sections" item per reference section heading), reuse its feature and FAQ topics, and derive the theme from its brand colors — but rewrite ALL copy to fit the given brand, category and niche. Do not copy the reference text verbatim.`;
 
   const user = `Brand: ${input.brand || "(not given)"}
