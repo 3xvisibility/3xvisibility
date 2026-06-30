@@ -92,7 +92,7 @@ export default function AiSiteBuilderPage() {
     if (!currentWorkspace?.id) return;
     supabase
       .from("websites")
-      .select("id, name, url, type")
+      .select("id, name, url, type, last_sync, updated_at")
       .eq("workspace_id", currentWorkspace.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
