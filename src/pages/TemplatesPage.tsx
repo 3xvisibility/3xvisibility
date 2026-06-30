@@ -1197,6 +1197,32 @@ slug: ${fields.slug}`,
         } : undefined}
       />
 
+      {/* Rename Dialog */}
+      <Dialog open={!!renameTarget} onOpenChange={(v) => { if (!v) setRenameTarget(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Rename template</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="rename-input">Template name</Label>
+            <Input
+              id="rename-input"
+              value={renameValue}
+              autoFocus
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && renameTarget && renameValue.trim()) renameMutation.mutate({ id: renameTarget.id, name: renameValue }); }}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setRenameTarget(null)}>Cancel</Button>
+            <Button
+              disabled={!renameValue.trim() || renameMutation.isPending}
+              onClick={() => renameTarget && renameMutation.mutate({ id: renameTarget.id, name: renameValue })}
+            >
+              {renameMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* CSV Dialog */}
       <Dialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen}>
         <DialogContent className="sm:max-w-md">
