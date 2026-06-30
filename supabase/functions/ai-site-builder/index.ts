@@ -264,13 +264,14 @@ Schema:
   "features": [ { "title": string, "body": string } ] (3-6 items, body 1-2 sentences),
   "faqs": [ { "q": string, "a": string } ] (3-5 items)
 }
-Pick a tasteful, modern color theme that matches the brand/niche. Write all text in language code "${lang}". Be specific to the brand and niche, never generic placeholder text.`;
+Pick a tasteful, modern color theme that matches the brand/niche. Write all text in language code "${lang}". Be specific to the brand and niche, never generic placeholder text.
+When a reference brief is provided, mirror its section structure and ordering closely (one "sections" item per reference section heading), reuse its feature and FAQ topics, and derive the theme from its brand colors — but rewrite ALL copy to fit the given brand, category and niche. Do not copy the reference text verbatim.`;
 
   const user = `Brand: ${input.brand || "(not given)"}
 Category: ${input.category || "(not given)"}
 Niche / industry: ${input.niche || "(not given)"}
 Extra instructions: ${input.freeText || "(none)"}
-${referenceText ? `\nReference website content to match tone & structure:\n"""${referenceText}"""` : ""}
+${referenceBrief ? `\nReference brief (structure + palette to match, content to re-write for this brand):\n${referenceBrief}` : ""}
 
 Generate the landing page JSON now.`;
 
