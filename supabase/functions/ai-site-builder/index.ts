@@ -287,7 +287,7 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
           ${p.features
             .map(
               (f, i) => `<div style="background:${surface};border:1px solid ${border};border-radius:20px;overflow:hidden;box-shadow:0 18px 40px -30px rgba(15,23,42,0.5);transition:transform .2s ease;">
-            <img src="${imgUrl(q, 200 + i, 800, 480)}" alt="${esc(f.title)}" loading="lazy" style="width:100%;height:170px;object-fit:cover;"/>
+            <img src="${imgUrl(slotImg(f.image, f.title, q), 200 + i, 800, 480)}" alt="${esc(f.title)}" loading="lazy" style="width:100%;height:170px;object-fit:cover;"/>
             <div style="padding:28px 32px 32px;">
               <h3 style="margin:0 0 10px;font-size:20px;color:${esc(t.text)};font-weight:700;letter-spacing:-0.01em;">${esc(f.title)}</h3>
               <p style="margin:0;font-size:16px;line-height:1.65;color:${muted};">${esc(f.body)}</p>
