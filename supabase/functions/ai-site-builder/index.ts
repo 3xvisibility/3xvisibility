@@ -241,13 +241,7 @@ Deno.serve(async (req) => {
       const page = out.page!;
       return new Response(
         JSON.stringify({
-          page: {
-            title: page.title,
-            slug: page.slug,
-            seo_title: page.metaTitle,
-            seo_description: page.metaDescription,
-            content: renderHtml(page),
-          },
+          page: buildPagePayload(page),
           plan: page,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
