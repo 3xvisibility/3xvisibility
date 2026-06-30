@@ -392,11 +392,14 @@ class XXXV_Elementor {
 			'urls'     => array(),
 		);
 		self::walk_media_value( $data, $report );
+		// Non-fatal: a few images (e.g. CDN-protected icons) may fail to import.
+		// We keep their original URL and continue publishing so the page is never
+		// blocked over non-critical assets. Failures are logged for diagnostics.
 		if ( $report['failed'] > 0 ) {
-			return new WP_Error(
-				'xxxv_media_import_failed',
-				'One or more template images could not be uploaded to the WordPress Media Library. Publishing was stopped so the page does not render with broken/remote images.',
-				array( 'status' => 500, 'report' => $report )
+			self::log(
+				'warn',
+				$report['failed'] . ' template image(s) could not be uploaded; keeping original URLs.',
+				array( 'report' => $report )
 			);
 		}
 		return $report;
