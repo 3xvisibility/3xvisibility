@@ -71,6 +71,7 @@ export default function AiSiteBuilderPage() {
   const [publishing, setPublishing] = useState(false);
   const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const [platform, setPlatform] = useState<"wordpress" | "shopify">("wordpress");
   // Manual per-website platform overrides (id -> platform).
   const [platformOverrides, setPlatformOverrides] = useState<Record<string, "wordpress" | "shopify">>({});
@@ -241,6 +242,53 @@ export default function AiSiteBuilderPage() {
       toast({ title: "Publish failed", description: msg, variant: "destructive" });
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!page) return;
+    setSavingTemplate(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id;
+      if (!uid) throw new Error("You must be signed in.");
+      if (!currentWorkspace?.id) throw new Error("No workspace selected.");
+
+      let parsedElementor: unknown = null;
+      if (page.elementor_data) {
+        try {
+          parsedElementor =
+            typeof page.elementor_data === "string"
+              ? JSON.parse(page.elementor_data)
+              : page.elementor_data;
+        } catch {
+          parsedElementor = null;
+        }
+      }
+
+      const isElementor = !!parsedElementor && page.platform !== "shopify";
+
+      const { error } = await supabase.from("templates").insert({
+        user_id: uid,
+        workspace_id: currentWorkspace.id,
+        name: page.title || "AI Generated Template",
+        content: page.content,
+        variables: [],
+        seo_title_pattern: page.seo_title || "",
+        seo_description_pattern: page.seo_description || "",
+        template_kind: isElementor ? "elementor" : "html",
+        elementor_data: (parsedElementor ?? null) as any,
+        schema_config: {},
+      });
+      if (error) throw error;
+      toast({
+        title: "Saved as template",
+        description: "Find it under Templates to run a campaign and generate pages.",
+      });
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message || String(err), variant: "destructive" });
+    } finally {
+      setSavingTemplate(false);
     }
   };
 
@@ -498,6 +546,16 @@ export default function AiSiteBuilderPage() {
                     {publishing ? "Publishing…" : "Publish"}
                   </Button>
                 </div>
+
+                <Button
+                  variant="outline"
+                  onClick={handleSaveTemplate}
+                  disabled={savingTemplate}
+                  className="w-full gap-2"
+                >
+                  {savingTemplate ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                  {savingTemplate ? "Saving…" : "Save as template"}
+                </Button>
 
                 {publishSteps.length > 0 && (
                   <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
