@@ -109,6 +109,15 @@ export interface PagePayload {
 export interface ConnectorResult {
   external_id: string;
   url: string;
+  /** Post-publish editor-readiness result (WordPress/Elementor only). */
+  editor_readiness?: {
+    status: "passed" | "failed" | "unknown";
+    reason?: string | null;
+    attempts?: number | null;
+    editable_widgets?: number | null;
+    edit_mode?: string | null;
+    checked_at: string;
+  };
 }
 
 export interface ContentItem {
