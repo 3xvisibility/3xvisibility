@@ -129,6 +129,35 @@ function renderHtml(p: PageJson): string {
 </div>`;
 }
 
+// Build the publish-ready page payload from a generated PageJson.
+// Routes through the native Elementor master: the rendered HTML is converted to
+// a native Elementor JSON tree (full-width Containers + native widgets) so the
+// WordPress publish flow ships an editable, 1:1 page — never a raw HTML widget.
+function buildPagePayload(p: PageJson) {
+  const html = renderHtml(p);
+  let elementorData: string | undefined;
+  let elementorCss: string | undefined;
+  try {
+    const tree = htmlToElementor(html);
+    if (Array.isArray(tree) && tree.length) {
+      elementorData = JSON.stringify(tree);
+      elementorCss = extractTemplateCss(html) || undefined;
+    }
+  } catch (e) {
+    console.warn("[ai-site-builder] native Elementor conversion failed; falling back to HTML", e);
+  }
+  return {
+    title: p.title,
+    slug: p.slug,
+    seo_title: p.metaTitle,
+    seo_description: p.metaDescription,
+    content: html,
+    elementor_data: elementorData,
+    elementor_css: elementorCss,
+    elementor_mode: elementorData ? "native" : undefined,
+  };
+}
+
 async function generatePage(input: BuildInput, authToken?: string): Promise<{ ok: boolean; page?: PageJson; error?: string }> {
   let referenceText = "";
   if (input.referenceUrl) referenceText = await fetchReference(input.referenceUrl);
