@@ -52,13 +52,16 @@ class XXXV_Elementor {
 		$post_id        = isset( $body['post_id'] ) ? absint( $body['post_id'] ) : 0;
 		$elementor_data = isset( $body['elementor_data'] ) ? $body['elementor_data'] : array();
 		$elementor_css  = isset( $body['elementor_css'] ) ? self::sanitize_template_css( (string) $body['elementor_css'] ) : '';
-		$page_template  = isset( $body['page_template'] ) ? sanitize_text_field( $body['page_template'] ) : 'elementor_header_footer';
+		// WordPress Elementor pages are always published as Elementor Full Width.
+		// Do not let requests switch to theme default/canvas/HTML layouts.
+		$page_template  = 'elementor_header_footer';
 
 		// Elementor data may arrive as a JSON string; normalize to array.
 		if ( is_string( $elementor_data ) ) {
 			$decoded        = json_decode( $elementor_data, true );
 			$elementor_data = is_array( $decoded ) ? $decoded : array();
 		}
+		self::normalize_top_level_containers( $elementor_data );
 
 		// ---- (1) Validate the incoming JSON model -----------------------------
 		$validation = self::validate_model( $elementor_data );
