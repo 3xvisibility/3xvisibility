@@ -74,6 +74,7 @@ export default function TemplatesPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; linkedCampaigns: { id: string; name: string }[] } | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<Template | null>(null);
+  const [duplicateTarget, setDuplicateTarget] = useState<Template | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [historyTarget, setHistoryTarget] = useState<Template | null>(null);
 
