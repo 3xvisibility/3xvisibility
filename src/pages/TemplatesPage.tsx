@@ -39,6 +39,8 @@ import { TemplateCreationPicker, type CreationMethod, type ContentType } from "@
 import { TemplateCustomizerDialog } from "@/components/templates/TemplateCustomizerDialog";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { TemplateVersionBadge } from "@/components/templates/TemplateVersionBadge";
+import { TemplateVersionHistoryDialog } from "@/components/templates/TemplateVersionHistoryDialog";
+import { recordVersionById, recordVersionForLatest } from "@/lib/template-version-history";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 import { computeMarketplaceVersion } from "@/lib/marketplace-versioning";
