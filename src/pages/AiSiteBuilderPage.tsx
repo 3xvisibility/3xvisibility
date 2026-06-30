@@ -82,7 +82,14 @@ export default function AiSiteBuilderPage() {
       .then(({ data }) => {
         const rows = (data as WebsiteRow[]) || [];
         setWebsites(rows);
-        if (rows.length && !selectedWebsite) setSelectedWebsite(rows[0].id);
+        if (rows.length && !selectedWebsite) {
+          setSelectedWebsite(rows[0].id);
+          // Auto-detect platform from the connected website's type.
+          const detected = (rows[0].type || "").toLowerCase();
+          if (detected === "shopify" || detected === "wordpress") {
+            setPlatform(detected);
+          }
+        }
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWorkspace?.id]);
@@ -90,6 +97,16 @@ export default function AiSiteBuilderPage() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Before a page is built, keep the platform in sync with the selected website's type.
+  useEffect(() => {
+    if (page) return;
+    const site = websites.find((w) => w.id === selectedWebsite);
+    const detected = (site?.type || "").toLowerCase();
+    if (detected === "shopify" || detected === "wordpress") {
+      setPlatform(detected);
+    }
+  }, [selectedWebsite, websites, page]);
 
   // Keep the publish target in sync with the page's platform.
   useEffect(() => {
