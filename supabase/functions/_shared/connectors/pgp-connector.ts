@@ -28,12 +28,15 @@ interface PublishResponse {
   elementor_data_valid?: boolean;
   elementor_data_hash?: string;
   elements?: number;
+  editor_ready?: boolean;
+  editable_widgets?: number;
+  edit_mode?: string;
 }
 
 const CONNECTOR_TIMEOUT_MS = 25_000;
 const CONNECTOR_PUBLISH_TIMEOUT_MS = 70_000;
 const CONNECTOR_CSS_REFRESH_TIMEOUT_MS = 20_000;
-export const REQUIRED_3XV_CONNECTOR_VERSION = "1.1.7";
+export const REQUIRED_3XV_CONNECTOR_VERSION = "1.1.8";
 
 interface ConnectorPingResponse {
   ok: boolean;
@@ -223,6 +226,14 @@ export class PgpConnector implements CmsConnector {
     }, CONNECTOR_PUBLISH_TIMEOUT_MS);
     if (res.elementor_data_valid === false) {
       throw new Error("3xVisibility Connector publish failed: WordPress saved the page, but _elementor_data did not load back correctly.");
+    }
+    // Post-publish editor readiness: the page must open in "Edit with Elementor"
+    // mode and contain editable widgets, otherwise publishing is not a success.
+    if (res.editor_ready === false) {
+      throw new Error("3xVisibility Connector publish failed: the page did not open in \"Edit with Elementor\" mode after publishing.");
+    }
+    if (typeof res.editable_widgets === "number" && res.editable_widgets < 1) {
+      throw new Error("3xVisibility Connector publish failed: the published page has no editable Elementor widgets.");
     }
     // Force a fresh Elementor CSS rebuild + cache purge AFTER the page is saved,
     // so the live page picks up the new styling immediately (no stale CSS).
