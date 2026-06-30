@@ -854,6 +854,7 @@ export default function GeneratedPagesPage() {
                         {t(cfg.labelKey)}
                       </Badge>
                       {page.campaigns?.name && <Badge variant="outline" className="text-[10px]">{page.campaigns.name}</Badge>}
+                      <EditorReadinessBadge value={(page as { editor_readiness?: unknown }).editor_readiness} />
                       <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground truncate max-w-[180px]">{page.slug}</code>
                     </div>
                     <ScoresBadgeGroup title={page.title} content={page.content} slug={page.slug} size="sm" />
