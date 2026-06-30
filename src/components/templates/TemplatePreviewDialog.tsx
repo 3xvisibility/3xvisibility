@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { filterDesignVars } from "@/lib/design-vars-filter";
-import { Eye, Code2, Sparkles, FileText, X } from "lucide-react";
+import { Eye, Code2, Sparkles, FileText, X, Layers } from "lucide-react";
 
 export interface PreviewableTemplate {
   name: string;
@@ -17,6 +17,10 @@ export interface PreviewableTemplate {
   seo_description_pattern?: string | null;
   /** Optional source label, e.g. "Marketplace · WordPress" */
   source?: string;
+  /** Optional stored Elementor JSON (object or string). */
+  elementor_data?: unknown;
+  /** Template kind, e.g. "elementor" or "html". */
+  template_kind?: string | null;
 }
 
 interface Props {
