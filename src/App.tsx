@@ -21,6 +21,7 @@ import AdminLoginPage from "./pages/AdminLoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import CampaignsPage from "./pages/CampaignsPage";
+import AiSiteBuilderPage from "./pages/AiSiteBuilderPage";
 import CampaignDetailPage from "./pages/CampaignDetailPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import WebsitesPage from "./pages/WebsitesPage";
@@ -127,6 +128,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
     <Routes>
       <Route path="dashboard" element={wrap(<DashboardPage />)} />
       <Route path="campaigns" element={wrap(<CampaignsPage />)} />
+      <Route path="ai-site-builder" element={wrap(<AiSiteBuilderPage />)} />
       <Route path="campaigns/:id" element={wrap(<CampaignDetailPage />)} />
       <Route path="templates" element={wrap(<TemplatesPage />)} />
       <Route path="websites" element={wrap(<WebsitesPage />)} />

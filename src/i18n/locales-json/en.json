@@ -2212,5 +2212,6 @@
   "workspaceSettings.workspaceDetailsDesc": "Update your workspace name. Only workspace owners can rename.",
   "workspaceSettings.workspaceName": "Workspace Name",
   "workspaceSettings.workspaceRenamed": "Workspace renamed",
-  "workspaceSettings.workspaceRenamedDesc": "Workspace name has been updated."
+  "workspaceSettings.workspaceRenamedDesc": "Workspace name has been updated.",
+  "sidebar.aiSiteBuilder": "AI Site Builder"
 }
