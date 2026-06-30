@@ -1117,8 +1117,25 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // Library by the connector before the page is created/updated.
           payload.elementor_data = catalog.data;
           payload.elementor_css = catalog.css;
+          // Honor the resolved mode: a CSS auto-fix can flip native → html so the
+          // styling is guaranteed to travel with the page markup.
+          payload.elementor_mode = catalog.mode;
           elementorSource = "catalog";
           elementorSimilarity = catalog.similarity;
+
+          // CSS integrity check: warn loudly when a page would ship without any
+          // template CSS so it can be diagnosed instead of silently unstyled.
+          if (catalog.cssLength === 0) {
+            console.warn(
+              "[publish-pages] CSS integrity warning: no template CSS found for page",
+              { pageId: page.id, campaignId: page.campaign_id },
+            );
+          } else if (catalog.cssAutoFixed) {
+            console.log(
+              "[publish-pages] CSS auto-fixed (recovered/injected template CSS)",
+              { pageId: page.id, mode: catalog.mode, cssLength: catalog.cssLength },
+            );
+          }
 
         }
 
