@@ -1206,6 +1206,14 @@ slug: ${fields.slug}`,
         } : undefined}
       />
 
+      {/* Version History Dialog */}
+      <TemplateVersionHistoryDialog
+        open={!!historyTarget}
+        onOpenChange={(v) => { if (!v) setHistoryTarget(null); }}
+        templateId={historyTarget?.id ?? null}
+        templateName={historyTarget?.name}
+      />
+
       {/* Rename Dialog */}
       <Dialog open={!!renameTarget} onOpenChange={(v) => { if (!v) setRenameTarget(null); }}>
         <DialogContent className="sm:max-w-md">
