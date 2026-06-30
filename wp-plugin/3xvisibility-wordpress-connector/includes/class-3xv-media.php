@@ -60,7 +60,7 @@ class XXXV_Media {
 			}
 			file_put_contents( $tmp, $decoded );
 		} elseif ( $source ) {
-			$response = wp_remote_get( $source, array( 'timeout' => 30 ) );
+			$response = self::remote_get_image( $source );
 			if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 				@unlink( $tmp );
 				return new WP_Error( 'xxxv_fetch', 'Could not download source URL.', array( 'status' => 400 ) );
