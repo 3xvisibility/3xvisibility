@@ -45,10 +45,10 @@ interface PageJson {
   metaTitle: string;
   metaDescription: string;
   theme: { primary: string; accent: string; bg: string; text: string; font?: string; gradientStyle?: string };
-  hero: { headline: string; subheadline: string; cta: string; eyebrow?: string };
+  hero: { headline: string; subheadline: string; cta: string; eyebrow?: string; image?: string };
   stats?: { value: string; label: string }[];
-  sections: { title: string; body: string }[];
-  features?: { title: string; body: string }[];
+  sections: { title: string; body: string; image?: string }[];
+  features?: { title: string; body: string; image?: string }[];
   faqs?: { q: string; a: string }[];
 }
 
