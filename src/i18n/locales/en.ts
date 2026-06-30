@@ -1832,6 +1832,7 @@ const en: Record<string, string> = {
   "sidebar.settings": "Settings",
   "sidebar.storeGenerator": "Store Generator",
   "sidebar.templateKit": "Template Kit",
+  "sidebar.wpControl": "WordPress Control",
   "sidebar.templateMapping": "Variable Mapping",
   "sidebar.templates": "Templates",
   "sidebar.tools": "Tools",

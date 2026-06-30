@@ -341,4 +341,51 @@ export class PgpConnector implements CmsConnector {
       return [];
     }
   }
+
+
+  /* ----------------------------------------------------------------- */
+  /* AI Action endpoints: menus / themes / page templates              */
+  /* ----------------------------------------------------------------- */
+
+  async listMenus(): Promise<{
+    menus: Array<{ id: number; name: string; slug: string; count: number }>;
+    locations: Array<{ slug: string; label: string; assigned_id: number }>;
+  }> {
+    const res = await this.call<{ menus?: any[]; locations?: any[] }>("/site-actions/menus", "GET");
+    return { menus: res.menus ?? [], locations: res.locations ?? [] };
+  }
+
+  async assignMenu(location: string, menuId: number): Promise<{ location: string; menu_id: number }> {
+    const res = await this.call<{ location: string; menu_id: number }>(
+      "/site-actions/assign-menu",
+      "POST",
+      { location, menu_id: menuId },
+    );
+    return res;
+  }
+
+  async listThemes(): Promise<{
+    active: string;
+    themes: Array<{ stylesheet: string; name: string; version: string; is_block: boolean; active: boolean }>;
+  }> {
+    const res = await this.call<{ active?: string; themes?: any[] }>("/site-actions/themes", "GET");
+    return { active: res.active ?? "", themes: res.themes ?? [] };
+  }
+
+  async activateTheme(stylesheet: string): Promise<{ active: string }> {
+    return await this.call<{ active: string }>("/site-actions/activate-theme", "POST", { stylesheet });
+  }
+
+  async listPageTemplates(): Promise<{ templates: Array<{ slug: string; name: string }> }> {
+    const res = await this.call<{ templates?: any[] }>("/site-actions/page-templates", "GET");
+    return { templates: res.templates ?? [] };
+  }
+
+  async setPageTemplate(postId: number, template: string): Promise<{ post_id: number; template: string }> {
+    return await this.call<{ post_id: number; template: string }>(
+      "/site-actions/set-page-template",
+      "POST",
+      { post_id: postId, template },
+    );
+  }
 }

@@ -120,6 +120,62 @@ class XXXV_REST {
 			)
 		);
 
+		// AI Action endpoints: menus, themes, page templates.
+		register_rest_route(
+			XXXV_CONNECTOR_NS,
+			'/site-actions/menus',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( 'XXXV_Site_Actions', 'list_menus' ),
+				'permission_callback' => $auth,
+			)
+		);
+		register_rest_route(
+			XXXV_CONNECTOR_NS,
+			'/site-actions/assign-menu',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( 'XXXV_Site_Actions', 'assign_menu' ),
+				'permission_callback' => $auth,
+			)
+		);
+		register_rest_route(
+			XXXV_CONNECTOR_NS,
+			'/site-actions/themes',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( 'XXXV_Site_Actions', 'list_themes' ),
+				'permission_callback' => $auth,
+			)
+		);
+		register_rest_route(
+			XXXV_CONNECTOR_NS,
+			'/site-actions/activate-theme',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( 'XXXV_Site_Actions', 'activate_theme' ),
+				'permission_callback' => $auth,
+			)
+		);
+		register_rest_route(
+			XXXV_CONNECTOR_NS,
+			'/site-actions/page-templates',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( 'XXXV_Site_Actions', 'list_page_templates' ),
+				'permission_callback' => $auth,
+			)
+		);
+		register_rest_route(
+			XXXV_CONNECTOR_NS,
+			'/site-actions/set-page-template',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( 'XXXV_Site_Actions', 'set_page_template' ),
+				'permission_callback' => $auth,
+			)
+		);
+
 		register_rest_route(
 			XXXV_CONNECTOR_NS,
 			'/debug-log',

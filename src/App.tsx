@@ -48,6 +48,7 @@ import PgpTermsPage from "./pages/PgpTermsPage";
 import TemplateMappingPage from "./pages/TemplateMappingPage";
 import TemplateKitPage from "./pages/TemplateKitPage";
 import ElementorTestPage from "./pages/ElementorTestPage";
+import WpControlPage from "./pages/WpControlPage";
 import NotFound from "./pages/NotFound";
 import ShopifyCallbackPage from "./pages/ShopifyCallbackPage";
 import ShopifyOAuthLaunchPage from "./pages/ShopifyOAuthLaunchPage";
@@ -160,6 +161,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="template-mapping" element={wrap(<FeatureGate feature="discovery"><TemplateMappingPage /></FeatureGate>)} />
       <Route path="template-kit" element={wrap(<FeatureGate feature="discovery"><TemplateKitPage /></FeatureGate>)} />
       <Route path="elementor-test" element={wrap(<ElementorTestPage />)} />
+      <Route path="wp-control" element={wrap(<WpControlPage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   );
