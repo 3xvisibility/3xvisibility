@@ -24,6 +24,19 @@ interface BuildInput {
   language?: string;
   /** Target platform the AI should build for: "wordpress" (Elementor) or "shopify". */
   platform?: "wordpress" | "shopify";
+  /** Optional manual brand theme that overrides AI-chosen colors/typography/gradient. */
+  brandTheme?: BrandTheme;
+}
+
+interface BrandTheme {
+  primary?: string;
+  accent?: string;
+  bg?: string;
+  text?: string;
+  /** Font preset key — see FONT_PRESETS. */
+  font?: string;
+  /** Gradient style for hero/CTA backgrounds. */
+  gradientStyle?: "diagonal" | "vertical" | "radial" | "conic" | "solid";
 }
 
 interface PageJson {
@@ -31,7 +44,7 @@ interface PageJson {
   slug: string;
   metaTitle: string;
   metaDescription: string;
-  theme: { primary: string; accent: string; bg: string; text: string };
+  theme: { primary: string; accent: string; bg: string; text: string; font?: string; gradientStyle?: string };
   hero: { headline: string; subheadline: string; cta: string; eyebrow?: string };
   stats?: { value: string; label: string }[];
   sections: { title: string; body: string }[];
@@ -145,6 +158,50 @@ async function fetchReference(url: string): Promise<ReferenceAnalysis> {
   }
 }
 
+// Typography presets: key -> { family (CSS stack), import (Google Fonts URL) }.
+const FONT_PRESETS: Record<string, { family: string; import: string }> = {
+  "plus-jakarta": {
+    family: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    import: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+  },
+  inter: {
+    family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    import: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+  },
+  poppins: {
+    family: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    import: "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap",
+  },
+  "space-grotesk": {
+    family: "'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    import: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap",
+  },
+  sora: {
+    family: "'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    import: "https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap",
+  },
+  playfair: {
+    family: "'Playfair Display', Georgia, 'Times New Roman', serif",
+    import: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&display=swap",
+  },
+};
+
+// Build a CSS background for hero/CTA bands given the two theme colors + style.
+function gradientCss(primary: string, accent: string, style?: string): string {
+  switch (style) {
+    case "vertical":
+      return `linear-gradient(180deg,${primary} 0%,${accent} 100%)`;
+    case "radial":
+      return `radial-gradient(circle at 30% 20%,${primary} 0%,${accent} 100%)`;
+    case "conic":
+      return `conic-gradient(from 210deg at 50% 50%,${primary},${accent},${primary})`;
+    case "solid":
+      return primary;
+    case "diagonal":
+    default:
+      return `linear-gradient(135deg,${primary} 0%,${accent} 100%)`;
+  }
+}
 
 function renderHtml(p: PageJson): string {
   const t = p.theme || { primary: "#6d28d9", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
@@ -153,14 +210,17 @@ function renderHtml(p: PageJson): string {
   const softBg = "#f6f7fb";
   const border = "rgba(15,23,42,0.08)";
   const muted = "rgba(15,23,42,0.62)";
-  const font = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  const fontPreset = FONT_PRESETS[t.font || "plus-jakarta"] || FONT_PRESETS["plus-jakarta"];
+  const font = fontPreset.family;
+  const heroGradient = gradientCss(esc(t.primary), esc(t.accent), t.gradientStyle);
+
 
   const stats = (p.stats && p.stats.length)
     ? `
     <section style="max-width:1120px;margin:-40px auto 0;padding:0 24px;position:relative;z-index:2;">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:${border};border:1px solid ${border};border-radius:20px;overflow:hidden;box-shadow:0 24px 60px -28px rgba(15,23,42,0.35);">
         ${p.stats.map((s) => `<div style="background:${surface};padding:28px 20px;text-align:center;">
-          <div style="font-size:34px;font-weight:800;letter-spacing:-0.02em;background:linear-gradient(135deg,${esc(t.primary)},${esc(t.accent)});-webkit-background-clip:text;background-clip:text;color:transparent;">${esc(s.value)}</div>
+          <div style="font-size:34px;font-weight:800;letter-spacing:-0.02em;background:${heroGradient};-webkit-background-clip:text;background-clip:text;color:transparent;">${esc(s.value)}</div>
           <div style="margin-top:6px;font-size:14px;font-weight:600;color:${muted};">${esc(s.label)}</div>
         </div>`).join("")}
       </div>
@@ -188,7 +248,7 @@ function renderHtml(p: PageJson): string {
           ${p.features
             .map(
               (f, i) => `<div style="background:${surface};border:1px solid ${border};border-radius:20px;padding:32px;box-shadow:0 18px 40px -30px rgba(15,23,42,0.5);transition:transform .2s ease;">
-            <div style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;background:linear-gradient(135deg,${esc(t.primary)},${esc(t.accent)});margin:0 0 18px;">${i + 1}</div>
+            <div style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;background:${heroGradient};margin:0 0 18px;">${i + 1}</div>
             <h3 style="margin:0 0 10px;font-size:20px;color:${esc(t.text)};font-weight:700;letter-spacing:-0.01em;">${esc(f.title)}</h3>
             <p style="margin:0;font-size:16px;line-height:1.65;color:${muted};">${esc(f.body)}</p>
           </div>`,
@@ -219,8 +279,8 @@ function renderHtml(p: PageJson): string {
     : "";
 
   return `<div style="font-family:${font};background:${esc(t.bg)};color:${esc(t.text)};overflow:hidden;">
-  <style>@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');</style>
-  <section style="position:relative;padding:120px 24px 96px;text-align:center;background:linear-gradient(135deg,${esc(t.primary)} 0%,${esc(t.accent)} 100%);color:#fff;">
+  <style>@import url('${fontPreset.import}');</style>
+  <section style="position:relative;padding:120px 24px 96px;text-align:center;background:${heroGradient};color:#fff;">
     <div style="position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(255,255,255,0.18),transparent 45%),radial-gradient(circle at 80% 0%,rgba(255,255,255,0.12),transparent 40%);pointer-events:none;"></div>
     <div style="position:relative;max-width:860px;margin:0 auto;">
       ${eyebrow}
@@ -233,7 +293,7 @@ function renderHtml(p: PageJson): string {
   ${sections}
   ${features}
   ${faqs}
-  <section style="padding:80px 24px;text-align:center;background:linear-gradient(135deg,${esc(t.primary)},${esc(t.accent)});color:#fff;">
+  <section style="padding:80px 24px;text-align:center;background:${heroGradient};color:#fff;">
     <div style="max-width:680px;margin:0 auto;">
       <h2 style="font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-0.02em;margin:0 0 16px;">${esc(p.hero.headline)}</h2>
       <p style="font-size:19px;line-height:1.6;opacity:.95;margin:0 0 32px;">${esc(p.hero.subheadline)}</p>
@@ -432,6 +492,16 @@ Generate the landing page JSON now.`;
 
   parsed.slug = slugify(parsed.slug || parsed.title || input.brand || "page");
   parsed.theme = parsed.theme || { primary: "#2563eb", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
+  // Apply a manual brand theme override on top of the AI-chosen palette.
+  const bt = input.brandTheme;
+  if (bt) {
+    if (bt.primary) parsed.theme.primary = bt.primary;
+    if (bt.accent) parsed.theme.accent = bt.accent;
+    if (bt.bg) parsed.theme.bg = bt.bg;
+    if (bt.text) parsed.theme.text = bt.text;
+    if (bt.font) parsed.theme.font = bt.font;
+    if (bt.gradientStyle) parsed.theme.gradientStyle = bt.gradientStyle;
+  }
   parsed.hero = parsed.hero || { headline: parsed.title || "Welcome", subheadline: "", cta: "Get Started" };
   parsed.sections = Array.isArray(parsed.sections) ? parsed.sections : [];
   const hints = [
@@ -518,6 +588,8 @@ When ready is true, your reply should tell the user you'll build a preview now.`
         if (body.platform === "shopify" || body.platform === "wordpress") {
           parsed.collected.platform = body.platform;
         }
+        // Carry the manual brand theme into the collected input.
+        if (body.brandTheme) parsed.collected.brandTheme = body.brandTheme;
         const out = await generatePage(parsed.collected, authToken);
         if (out.ok && out.page) {
           pageResult = {
