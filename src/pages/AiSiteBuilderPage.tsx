@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Send, Loader2, Rocket, Wand2, MessageSquare, Globe, CheckCircle2, XCircle, AlertTriangle, CircleDot } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Sparkles, Send, Loader2, Rocket, Wand2, MessageSquare, Globe, CheckCircle2, XCircle, AlertTriangle, CircleDot, Palette } from "lucide-react";
 
 interface PublishStep {
   label: string;
