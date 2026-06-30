@@ -42,6 +42,22 @@ interface WebsiteRow {
   name: string;
   url: string;
   type: string;
+  last_sync?: string | null;
+  updated_at?: string | null;
+}
+
+function detectPlatform(type?: string | null): "wordpress" | "shopify" | "unknown" {
+  const t = (type || "").toLowerCase();
+  if (t === "wordpress") return "wordpress";
+  if (t === "shopify") return "shopify";
+  return "unknown";
+}
+
+function formatChecked(ts?: string | null): string {
+  if (!ts) return "Not checked yet";
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return "Not checked yet";
+  return `Last checked ${d.toLocaleString()}`;
 }
 
 export default function AiSiteBuilderPage() {
