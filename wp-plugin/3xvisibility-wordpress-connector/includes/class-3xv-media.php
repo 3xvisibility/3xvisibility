@@ -99,9 +99,77 @@ class XXXV_Media {
 	}
 
 	/**
+	 * Import a remote template image into the Media Library and return attachment
+	 * metadata. Used by the Elementor publisher before saving `_elementor_data` so
+	 * widgets/backgrounds reference local attachment IDs, not remote URLs.
+	 *
+	 * @param string $source Remote image URL.
+	 * @param string $alt    Optional alt text.
+	 * @return array|WP_Error { id, url, duplicate }
+	 */
+	public static function import_from_url( $source, $alt = '' ) {
+		$source = esc_url_raw( $source );
+		if ( ! $source || ! preg_match( '#^https?://#i', $source ) ) {
+			return new WP_Error( 'xxxv_no_src', 'Invalid media source URL.', array( 'status' => 400 ) );
+		}
+
+		$existing = self::find_existing( $source );
+		if ( $existing ) {
+			return array(
+				'id'        => $existing,
+				'url'       => wp_get_attachment_url( $existing ),
+				'duplicate' => true,
+			);
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+
+		$filename = sanitize_file_name( basename( strtok( $source, '?' ) ) );
+		if ( ! $filename || false === strpos( $filename, '.' ) ) {
+			$filename = 'template-image-' . time() . '.jpg';
+		}
+		$tmp = wp_tempnam( $filename );
+		if ( ! $tmp ) {
+			return new WP_Error( 'xxxv_tmp', 'Could not create temp file.', array( 'status' => 500 ) );
+		}
+
+		$response = wp_remote_get( $source, array( 'timeout' => 30 ) );
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			@unlink( $tmp );
+			return new WP_Error( 'xxxv_fetch', 'Could not download source URL.', array( 'status' => 400 ) );
+		}
+		file_put_contents( $tmp, wp_remote_retrieve_body( $response ) );
+
+		$attachment_id = media_handle_sideload(
+			array(
+				'name'     => $filename,
+				'tmp_name' => $tmp,
+			),
+			0
+		);
+		if ( is_wp_error( $attachment_id ) ) {
+			@unlink( $tmp );
+			return $attachment_id;
+		}
+
+		if ( $alt ) {
+			update_post_meta( $attachment_id, '_wp_attachment_image_alt', sanitize_text_field( $alt ) );
+		}
+		update_post_meta( $attachment_id, '_xxxv_source_url', $source );
+
+		return array(
+			'id'        => (int) $attachment_id,
+			'url'       => wp_get_attachment_url( $attachment_id ),
+			'duplicate' => false,
+		);
+	}
+
+	/**
 	 * Look up a previously imported attachment by its remote source URL.
 	 */
-	protected static function find_existing( $source ) {
+	public static function find_existing( $source ) {
 		$q = new WP_Query(
 			array(
 				'post_type'      => 'attachment',
