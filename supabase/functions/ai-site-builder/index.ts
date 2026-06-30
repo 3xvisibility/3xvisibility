@@ -640,7 +640,8 @@ Generate the landing page JSON now.`;
       { role: "system", content: system },
       { role: "user", content: user },
     ],
-    response_format: { type: "json_object" },
+    response_format: PAGE_JSON_SCHEMA,
+
   });
 
   if (!result.success) return { ok: false, error: result.content };
