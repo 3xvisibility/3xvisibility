@@ -953,6 +953,7 @@ export type Database = {
           canonical_url: string | null
           content: string
           created_at: string
+          editor_readiness: Json | null
           error_message: string | null
           external_id: string | null
           external_url: string | null
@@ -975,6 +976,7 @@ export type Database = {
           canonical_url?: string | null
           content: string
           created_at?: string
+          editor_readiness?: Json | null
           error_message?: string | null
           external_id?: string | null
           external_url?: string | null
@@ -997,6 +999,7 @@ export type Database = {
           canonical_url?: string | null
           content?: string
           created_at?: string
+          editor_readiness?: Json | null
           error_message?: string | null
           external_id?: string | null
           external_url?: string | null

@@ -32,6 +32,7 @@ import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeo
 import { calculateFreshness } from "@/lib/content-freshness";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { EditorReadinessBadge } from "@/components/generated-pages/EditorReadinessBadge";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { logAudit } from "@/lib/audit";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -853,6 +854,7 @@ export default function GeneratedPagesPage() {
                         {t(cfg.labelKey)}
                       </Badge>
                       {page.campaigns?.name && <Badge variant="outline" className="text-[10px]">{page.campaigns.name}</Badge>}
+                      <EditorReadinessBadge value={(page as { editor_readiness?: unknown }).editor_readiness} />
                       <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground truncate max-w-[180px]">{page.slug}</code>
                     </div>
                     <ScoresBadgeGroup title={page.title} content={page.content} slug={page.slug} size="sm" />
@@ -933,6 +935,9 @@ export default function GeneratedPagesPage() {
                             </Tooltip>
                           </TooltipProvider>
                         )}
+                        <div className="mt-1">
+                          <EditorReadinessBadge value={(page as { editor_readiness?: unknown }).editor_readiness} />
+                        </div>
                       </td>
                       <td className="p-3 hidden xl:table-cell">
                         {page.campaigns?.name ? (
