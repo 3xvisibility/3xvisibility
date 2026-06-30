@@ -75,6 +75,7 @@ export default function TemplatesPage() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<Template | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [historyTarget, setHistoryTarget] = useState<Template | null>(null);
 
   // AI Regenerate Design state
   const [regenTarget, setRegenTarget] = useState<Template | null>(null);
