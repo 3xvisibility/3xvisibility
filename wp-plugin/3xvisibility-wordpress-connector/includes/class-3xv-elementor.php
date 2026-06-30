@@ -151,7 +151,7 @@ class XXXV_Elementor {
 			update_post_meta( $post_id, '_elementor_data', wp_slash( $json ) );
 
 			// ---- (5) Generate per-page CSS ------------------------------------
-			self::refresh_elementor_files();
+			self::refresh_elementor_files( $post_id );
 			$css_ok = self::regenerate_page_css( $post_id );
 			if ( ! $css_ok ) {
 				throw new Exception( 'Elementor page CSS regeneration failed.' );
@@ -521,25 +521,37 @@ class XXXV_Elementor {
 	 */
 	private static function save_via_document( $post_id, $data ) {
 		if ( ! class_exists( '\Elementor\Plugin' ) ) {
-			return;
+			throw new Exception( 'Elementor Plugin class is not available.' );
 		}
 		try {
 			$documents = \Elementor\Plugin::$instance->documents;
 			if ( ! $documents ) {
-				return;
+				throw new Exception( 'Elementor documents manager is not available.' );
 			}
 			$document = $documents->get( $post_id );
-			if ( $document ) {
-				$document->save(
-					array(
-						'elements' => $data,
-						'settings' => array(),
-					)
-				);
+			if ( ! $document ) {
+				throw new Exception( 'Elementor document could not be initialized for page ' . (int) $post_id . '.' );
+			}
+
+			$document->save(
+				array(
+					'elements' => $data,
+					'settings' => array(
+						'post_status'  => get_post_status( $post_id ),
+						'page_template'=> get_post_meta( $post_id, '_wp_page_template', true ),
+					),
+				)
+			);
+
+			if ( method_exists( $document, 'save_template_type' ) ) {
+				$document->save_template_type();
+			}
+			if ( method_exists( $document, 'clear_cache' ) ) {
+				$document->clear_cache();
 			}
 		} catch ( \Throwable $e ) {
-			// Non-fatal: raw meta was already written above; the page will still render.
-			self::log( 'warn', 'Document API save skipped: ' . $e->getMessage(), array( 'post_id' => $post_id ) );
+			self::log( 'error', 'Document API save failed: ' . $e->getMessage(), array( 'post_id' => $post_id ) );
+			throw new Exception( 'Elementor document lifecycle save failed: ' . $e->getMessage() );
 		}
 	}
 
@@ -558,6 +570,61 @@ class XXXV_Elementor {
 			self::log( 'warn', 'Page CSS regeneration failed: ' . $e->getMessage(), array( 'post_id' => $post_id ) );
 			return false;
 		}
+	}
+
+	/**
+	 * Force Elementor's files/document caches to refresh before CSS generation.
+	 * Called BEFORE `regenerate_page_css()` so the regenerated CSS file is fresh.
+	 */
+	private static function refresh_elementor_files( $post_id ) {
+		if ( ! class_exists( '\Elementor\Plugin' ) ) {
+			return false;
+		}
+		try {
+			$instance = \Elementor\Plugin::$instance;
+			if ( isset( $instance->files_manager ) && method_exists( $instance->files_manager, 'clear_cache' ) ) {
+				$instance->files_manager->clear_cache();
+			}
+			if ( isset( $instance->documents ) ) {
+				$document = $instance->documents->get( $post_id );
+				if ( $document && method_exists( $document, 'clear_cache' ) ) {
+					$document->clear_cache();
+				}
+			}
+			return true;
+		} catch ( \Throwable $e ) {
+			self::log( 'warn', 'Elementor file/document refresh failed: ' . $e->getMessage(), array( 'post_id' => $post_id ) );
+			return false;
+		}
+	}
+
+	/**
+	 * Validate that Elementor's generated post CSS exists and that optional stored
+	 * template CSS is available. Success is returned only when styling assets are
+	 * present after publish.
+	 */
+	private static function validate_generated_css( $post_id, $expects_template_css ) {
+		if ( $expects_template_css ) {
+			$template_css = get_post_meta( $post_id, '_xxxv_template_css', true );
+			if ( ! is_string( $template_css ) || '' === trim( $template_css ) ) {
+				return new WP_Error( 'xxxv_template_css_missing', 'Post-save validation failed: template CSS meta is missing.', array( 'status' => 500 ) );
+			}
+		}
+
+		$upload = wp_upload_dir();
+		$path   = trailingslashit( $upload['basedir'] ) . 'elementor/css/post-' . (int) $post_id . '.css';
+		if ( file_exists( $path ) && filesize( $path ) > 0 ) {
+			return true;
+		}
+
+		// One more rebuild attempt after cache refresh for slow/locked filesystems.
+		self::refresh_elementor_files( $post_id );
+		self::regenerate_page_css( $post_id );
+		if ( file_exists( $path ) && filesize( $path ) > 0 ) {
+			return true;
+		}
+
+		return new WP_Error( 'xxxv_elementor_css_missing', 'Post-save validation failed: Elementor generated CSS file is missing or empty.', array( 'status' => 500 ) );
 	}
 
 	/**
