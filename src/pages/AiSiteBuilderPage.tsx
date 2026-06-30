@@ -269,6 +269,11 @@ export default function AiSiteBuilderPage() {
                 <div className="text-xs space-y-1">
                   <p><span className="font-semibold">SEO title:</span> {page.seo_title}</p>
                   <p className="text-muted-foreground">{page.seo_description}</p>
+                  {page.elementor_data && (
+                    <p className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-2 py-0.5 font-medium">
+                      <Sparkles className="h-3 w-3" /> Native Elementor JSON ready
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
