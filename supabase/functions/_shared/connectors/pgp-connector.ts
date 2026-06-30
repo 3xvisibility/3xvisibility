@@ -278,6 +278,41 @@ export class PgpConnector implements CmsConnector {
     return this.publish(payload, Number(externalId) || undefined);
   }
 
+  /**
+   * Re-run the post-publish "Edit with Elementor" readiness check against an
+   * already-published post, WITHOUT republishing. Used by the on-demand
+   * "Re-check Elementor readiness" action in the Generated Pages view.
+   */
+  async recheckEditorReadiness(externalId: string): Promise<NonNullable<ConnectorResult["editor_readiness"]>> {
+    const postId = Number(externalId) || undefined;
+    if (!postId) {
+      return {
+        status: "unknown",
+        reason: "This page has no WordPress post id to verify.",
+        attempts: null,
+        editable_widgets: null,
+        edit_mode: null,
+        checked_at: new Date().toISOString(),
+      };
+    }
+    const res = await this.call<{
+      ok?: boolean;
+      editor_ready?: boolean;
+      editable_widgets?: number;
+      edit_mode?: string;
+      reason?: string | null;
+    }>("/validate-editor", "POST", { post_id: postId }, CONNECTOR_CSS_REFRESH_TIMEOUT_MS);
+    const passed = res.editor_ready === true && (typeof res.editable_widgets !== "number" || res.editable_widgets >= 1);
+    return {
+      status: passed ? "passed" : "failed",
+      reason: passed ? null : (res.reason || "The page did not pass the Edit with Elementor readiness check."),
+      attempts: 1,
+      editable_widgets: typeof res.editable_widgets === "number" ? res.editable_widgets : null,
+      edit_mode: res.edit_mode ?? null,
+      checked_at: new Date().toISOString(),
+    };
+  }
+
   /** Listing is not part of the plugin surface; fall back to standard WP REST. */
   async listContent(contentType: "pages" | "products"): Promise<ContentItem[]> {
     if (contentType !== "pages" || !this.basicAuth) return [];
