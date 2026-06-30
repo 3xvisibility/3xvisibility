@@ -367,7 +367,12 @@ Generate the landing page JSON now.`;
   parsed.theme = parsed.theme || { primary: "#2563eb", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
   parsed.hero = parsed.hero || { headline: parsed.title || "Welcome", subheadline: "", cta: "Get Started" };
   parsed.sections = Array.isArray(parsed.sections) ? parsed.sections : [];
-  return { ok: true, page: parsed };
+  const hints = [
+    ...(ref?.sectionTitles ?? []),
+    ...(ref?.featureTitles ?? []),
+    ...parsed.sections.map((s) => s.title),
+  ].filter(Boolean);
+  return { ok: true, page: parsed, hints };
 }
 
 Deno.serve(async (req) => {
