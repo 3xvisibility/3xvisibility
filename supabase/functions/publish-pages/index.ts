@@ -641,6 +641,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
               status: "published",
               external_id: result.external_id,
               external_url: result.url,
+              editor_readiness: result.editor_readiness ?? null,
             });
           } catch (insertErr) {
             console.error("Failed to save to generated_pages:", insertErr);
