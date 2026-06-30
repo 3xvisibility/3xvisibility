@@ -75,6 +75,48 @@ function stripHtmlWidgets(tree: ElementorElement[]): { tree: ElementorElement[];
   };
 }
 
+function hasLayoutMeaning(el: ElementorElement): boolean {
+  if (el.elType !== "container") return false;
+  const s = el.settings || {};
+  return Boolean(
+    s.container_type === "grid" ||
+    s.flex_direction === "row" ||
+    s.background_background ||
+    s.background_color ||
+    s.background_image ||
+    s._background_background ||
+    s._background_color ||
+    s._background_image ||
+    s.padding ||
+    s.margin ||
+    s._css_classes ||
+    s._element_id
+  );
+}
+
+/**
+ * Prevent the whole page being wrapped in one generic parent container. A true
+ * Elementor page must contain independent top-level section Containers so each
+ * section remains editable and responsive exactly like a manually-built page.
+ */
+function unwrapPageWrapper(tree: ElementorElement[]): ElementorElement[] {
+  let current = tree;
+  while (
+    current.length === 1 &&
+    current[0]?.elType === "container" &&
+    !hasLayoutMeaning(current[0]) &&
+    (current[0].elements || []).length > 1 &&
+    (current[0].elements || []).every((child) => child.elType === "container")
+  ) {
+    current = current[0].elements;
+  }
+  return current.map((el) =>
+    el.elType === "container"
+      ? { ...el, settings: { ...(el.settings || {}), content_width: "full", width: "100%" } }
+      : el,
+  );
+}
+
 
 /** Coerce stored `elementor_json` (array, {data:[]}, or {elements:[]}) into a tree. */
 function coerceTree(json: unknown): ElementorElement[] {
@@ -116,7 +158,9 @@ export function buildElementorFromCatalog(
   target = 98,
 ): CatalogBuildResult | null {
   const rawTree = coerceTree(elementorJson);
-  const { tree, css: extractedCss } = stripHtmlWidgets(rawTree);
+  const stripped = stripHtmlWidgets(rawTree);
+  const tree = unwrapPageWrapper(stripped.tree);
+  const extractedCss = stripped.css;
   if (tree.length === 0) return null;
 
   const fields = extractEditableFields(tree);
