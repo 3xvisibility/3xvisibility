@@ -51,6 +51,8 @@ export default function AiSiteBuilderPage() {
   const [page, setPage] = useState<GeneratedPage | null>(null);
   const [building, setBuilding] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
 
   // Wizard fields
   const [brand, setBrand] = useState("");
