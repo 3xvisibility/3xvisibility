@@ -37,7 +37,7 @@ interface PublishResponse {
 }
 
 const CONNECTOR_TIMEOUT_MS = 25_000;
-export const REQUIRED_3XV_CONNECTOR_VERSION = "1.1.4";
+export const REQUIRED_3XV_CONNECTOR_VERSION = "1.1.5";
 
 interface ConnectorPingResponse {
   ok: boolean;
@@ -283,7 +283,27 @@ export class PgpConnector implements CmsConnector {
     if (res.elementor_data_valid === false) {
       throw new Error("3xVisibility Connector publish failed: WordPress saved the page, but _elementor_data did not load back correctly.");
     }
+    // Force a fresh Elementor CSS rebuild + cache purge AFTER the page is saved,
+    // so the live page picks up the new styling immediately (no stale CSS).
+    await this.forceCssRefresh(res.post_id);
     return { external_id: String(res.post_id), url: res.url };
+  }
+
+  /**
+   * Force Elementor to regenerate the per-page (and global) CSS for a published
+   * page and purge runtime caches. Best-effort: a failure here never breaks the
+   * publish, since the publish endpoint already regenerates CSS once.
+   */
+  private async forceCssRefresh(postId?: number): Promise<boolean> {
+    if (!postId) return false;
+    try {
+      const res = await this.call<{ ok?: boolean }>("/regenerate-css", "POST", {
+        post_id: postId,
+      });
+      return Boolean(res?.ok);
+    } catch {
+      return false;
+    }
   }
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {

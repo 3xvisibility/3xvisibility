@@ -549,7 +549,15 @@ class XXXV_Elementor {
 		if ( $post_id > 0 ) {
 			$ok = self::regenerate_page_css( $post_id );
 			self::regenerate_global_css();
-			return rest_ensure_response( array( 'ok' => $ok, 'post_id' => $post_id ) );
+			// Purge page/object/CDN caches so the freshly regenerated CSS goes live now.
+			self::clear_runtime_caches( $post_id );
+			return rest_ensure_response(
+				array(
+					'ok'      => $ok,
+					'post_id' => $post_id,
+					'css_url' => wp_upload_dir()['baseurl'] . '/elementor/css/post-' . $post_id . '.css',
+				)
+			);
 		}
 
 		// No id supplied: clear the whole CSS cache so it rebuilds on demand.
