@@ -263,7 +263,7 @@ export default function GeneratedPagesPage() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       toast({ title: "Publishing complete", description: `${data.published} published, ${data.failed} failed.` });
-      if (Array.isArray(data?.results) && data.results.length) setPublishLog(data.results as PublishLogResult[]);
+      if (Array.isArray(data?.results) && data.results.length) setPublishLog((data.results as PublishLogResult[]).map((r) => ({ ...r, title: r.title || pages.find((p) => p.id === r.id)?.title })));
       if (wsId) logAudit(wsId, "page_published", "page", variables.pageIds[0], { count: variables.pageIds.length });
       setShowWebsiteSelector(false);
       setPendingPublishIds([]);
@@ -335,7 +335,7 @@ export default function GeneratedPagesPage() {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       setSelectedIds(new Set());
       toast({ title: "Bulk publish complete", description: `${data.published} published, ${data.failed} failed.` });
-      if (Array.isArray(data?.results) && data.results.length) setPublishLog(data.results as PublishLogResult[]);
+      if (Array.isArray(data?.results) && data.results.length) setPublishLog((data.results as PublishLogResult[]).map((r) => ({ ...r, title: r.title || pages.find((p) => p.id === r.id)?.title })));
       if (wsId) logAudit(wsId, "pages_bulk_published", "page", null, { count: ids.length, published: data.published });
       setShowWebsiteSelector(false);
       setPendingPublishIds([]);
@@ -382,7 +382,7 @@ export default function GeneratedPagesPage() {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       setSelectedIds(new Set());
       toast({ title: "Retry complete", description: `${data.published} published, ${data.failed} failed.` });
-      if (Array.isArray(data?.results) && data.results.length) setPublishLog(data.results as PublishLogResult[]);
+      if (Array.isArray(data?.results) && data.results.length) setPublishLog((data.results as PublishLogResult[]).map((r) => ({ ...r, title: r.title || pages.find((p) => p.id === r.id)?.title })));
       setShowWebsiteSelector(false);
       setPendingPublishIds([]);
     },
