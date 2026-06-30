@@ -101,8 +101,19 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, primaryAct
               <TabsTrigger value="source" className="text-xs gap-1.5">
                 <Code2 className="h-3.5 w-3.5" /> Source
               </TabsTrigger>
+              {elementorJson && (
+                <TabsTrigger value="elementor" className="text-xs gap-1.5">
+                  <Layers className="h-3.5 w-3.5" /> Elementor
+                  {template.template_kind && (
+                    <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px]">
+                      {template.template_kind}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
+
 
           <TabsContent value="preview" className="flex-1 overflow-hidden m-0 p-0 data-[state=active]:flex data-[state=active]:flex-col">
             <ScrollArea className="flex-1">
