@@ -323,6 +323,13 @@ class XXXV_Elementor {
 			'urls'     => array(),
 		);
 		self::walk_media_value( $data, $report );
+		if ( $report['failed'] > 0 ) {
+			return new WP_Error(
+				'xxxv_media_import_failed',
+				'One or more template images could not be uploaded to the WordPress Media Library. Publishing was stopped so the page does not render with broken/remote images.',
+				array( 'status' => 500, 'report' => $report )
+			);
+		}
 		return $report;
 	}
 
@@ -330,11 +337,11 @@ class XXXV_Elementor {
 		return is_string( $value ) && preg_match( '#^https?://[^\s"\']+\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(\?[^\s"\']*)?$#i', $value );
 	}
 
-	private static function import_media_url_for_report( $url, &$report ) {
+	private static function import_media_url_for_report( $url, &$report, $alt = '' ) {
 		if ( isset( $report['urls'][ $url ] ) ) {
 			return $report['urls'][ $url ];
 		}
-		$result = XXXV_Media::import_from_url( $url );
+		$result = XXXV_Media::import_from_url( $url, $alt );
 		if ( is_wp_error( $result ) ) {
 			$report['failed']++;
 			self::log( 'warn', 'Template media import failed: ' . $result->get_error_message(), array( 'url' => $url ) );
@@ -358,7 +365,8 @@ class XXXV_Elementor {
 			// Elementor image controls are arrays like { id, url, alt }. Preserve all
 			// existing keys and add the Media Library attachment id.
 			if ( isset( $value['url'] ) && self::is_remote_image_url( $value['url'] ) ) {
-				$mapped = self::import_media_url_for_report( $value['url'], $report );
+				$alt    = isset( $value['alt'] ) ? (string) $value['alt'] : '';
+				$mapped = self::import_media_url_for_report( $value['url'], $report, $alt );
 				if ( empty( $mapped['failed'] ) ) {
 					$value['id']  = (int) $mapped['id'];
 					$value['url'] = (string) $mapped['url'];
@@ -379,6 +387,17 @@ class XXXV_Elementor {
 	}
 
 	private static function map_css_media_references( $css, $report ) {
+		if ( ! isset( $report['urls'] ) || ! is_array( $report['urls'] ) ) {
+			$report['urls'] = array();
+		}
+
+		// CSS may contain background URLs that do not appear in widget controls. Import
+		// those as well, then replace url(...) references with local Media Library URLs.
+		if ( preg_match_all( '#https?://[^\s"\'\)]+\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(\?[^\s"\'\)]*)?#i', $css, $matches ) ) {
+			foreach ( array_unique( $matches[0] ) as $source ) {
+				self::import_media_url_for_report( $source, $report );
+			}
+		}
 		if ( empty( $report['urls'] ) || ! is_array( $report['urls'] ) ) {
 			return $css;
 		}
