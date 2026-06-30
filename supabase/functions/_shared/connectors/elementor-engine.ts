@@ -650,7 +650,7 @@ export function buildElementorMeta(
   // Back-compat: allow passing version string as the 2nd arg.
   const opts: BuildElementorMetaOptions =
     typeof options === "string" ? { version: options } : options;
-  const { embedCss = false, version = "3.21.0", prebuiltData, siteContext } = opts;
+  const { version = "3.21.0", prebuiltData, siteContext } = opts;
 
   let dataStr: string;
   if (prebuiltData) {
