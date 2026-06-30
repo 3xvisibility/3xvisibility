@@ -312,7 +312,7 @@ export default function WpControlPage() {
                     <SelectValue placeholder="Select a template" />
                   </SelectTrigger>
                   <SelectContent>
-                    {actions.templates.templates.map((tpl) => (
+                    {(actions.templates?.templates ?? []).map((tpl) => (
                       <SelectItem key={tpl.slug} value={tpl.slug}>
                         {tpl.name}
                       </SelectItem>
