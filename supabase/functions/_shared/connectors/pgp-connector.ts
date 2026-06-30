@@ -239,7 +239,18 @@ export class PgpConnector implements CmsConnector {
     // Force a fresh Elementor CSS rebuild + cache purge AFTER the page is saved,
     // so the live page picks up the new styling immediately (no stale CSS).
     await this.forceCssRefresh(res.post_id);
-    return { external_id: String(res.post_id), url: res.url };
+    return {
+      external_id: String(res.post_id),
+      url: res.url,
+      editor_readiness: {
+        status: "passed",
+        reason: null,
+        attempts: typeof res.editor_attempts === "number" ? res.editor_attempts : 1,
+        editable_widgets: typeof res.editable_widgets === "number" ? res.editable_widgets : null,
+        edit_mode: res.edit_mode ?? null,
+        checked_at: new Date().toISOString(),
+      },
+    };
   }
 
   /**
