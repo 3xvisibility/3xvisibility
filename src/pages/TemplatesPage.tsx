@@ -289,6 +289,7 @@ export default function TemplatesPage() {
         schema_config: params.schemaConfig || {},
       } as any).eq("id", params.id);
       if (error) throw error;
+      await recordVersionById(params.id, "Edited template");
     },
     onSuccess: async () => {
       await refreshTemplates();
