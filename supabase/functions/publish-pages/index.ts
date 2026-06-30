@@ -1061,6 +1061,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           external_id: result.external_id,
           external_url: result.url,
           error_message: null,
+          editor_readiness: result.editor_readiness ?? null,
         }).eq("id", page.id);
 
         results.push({ id: page.id, status: "published", external_url: result.url, elementor_source: elementorSource, elementor_similarity: elementorSimilarity });
