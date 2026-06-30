@@ -772,7 +772,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
       });
     }
 
-    const results: { id: string; status: string; external_url?: string; error?: string; elementor_source?: "catalog"; elementor_similarity?: number }[] = [];
+    const results: { id: string; status: string; external_url?: string; error?: string; elementor_source?: "catalog"; elementor_similarity?: number; steps?: PublishStep[] }[] = [];
 
     // Cache page-template detection per website to avoid redundant checks
     const templateCache = new Map<string, { pageTemplate?: string }>();
