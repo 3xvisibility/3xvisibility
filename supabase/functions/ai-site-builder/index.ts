@@ -742,7 +742,7 @@ When ready is true, your reply should tell the user you'll build a preview now.`
         promptType: "short_content",
         model: "google/gemini-2.5-flash",
         messages: [{ role: "system", content: system }, ...messages],
-        response_format: { type: "json_object" },
+        response_format: CHAT_JSON_SCHEMA,
       });
 
       if (!result.success) {
