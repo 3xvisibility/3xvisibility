@@ -16,6 +16,14 @@ import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connec
 const ELEMENTOR_SIMILARITY_TARGET = 98;
 const MAX_REBUILD_ATTEMPTS = 4;
 
+/** A single step in the publish timeline returned to the client for tracking. */
+interface PublishStep {
+  label: string;
+  status: "running" | "ok" | "warn" | "error";
+  detail?: string;
+  at: string;
+}
+
 /** Trim a string to a fraction of its words (used by the rebuild loop). */
 function shrinkText(text: string | undefined, keepFraction: number): string | undefined {
   if (!text) return text;
