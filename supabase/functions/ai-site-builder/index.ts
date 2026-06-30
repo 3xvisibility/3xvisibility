@@ -295,7 +295,7 @@ async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: st
   };
 }
 
-async function generatePage(input: BuildInput, authToken?: string): Promise<{ ok: boolean; page?: PageJson; error?: string }> {
+async function generatePage(input: BuildInput, authToken?: string): Promise<{ ok: boolean; page?: PageJson; hints?: string[]; error?: string }> {
   let ref: ReferenceAnalysis | null = null;
   if (input.referenceUrl) ref = await fetchReference(input.referenceUrl);
 
