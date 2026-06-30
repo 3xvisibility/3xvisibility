@@ -3,6 +3,7 @@ import logo3x from "@/assets/logo-3x.png";
 import {
   LayoutDashboard,
   Rocket,
+  Sparkles,
   FileText,
   Layers,
   BarChart3,
