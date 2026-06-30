@@ -91,6 +91,19 @@ export default function AiSiteBuilderPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Keep the publish target in sync with the page's platform.
+  useEffect(() => {
+    if (!page) return;
+    const target = page.platform || platform;
+    const matches = websites.filter((w) => (w.type || "").toLowerCase() === target);
+    if (!matches.some((w) => w.id === selectedWebsite)) {
+      setSelectedWebsite(matches[0]?.id || "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, websites]);
+
+
+
   const handleBuild = async () => {
     setBuilding(true);
     setPage(null);
