@@ -71,6 +71,8 @@ export default function TemplatesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; linkedCampaigns: { id: string; name: string }[] } | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<Template | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   // AI Regenerate Design state
   const [regenTarget, setRegenTarget] = useState<Template | null>(null);
