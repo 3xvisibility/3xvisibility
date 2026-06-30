@@ -941,7 +941,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
                   status: "failed",
                   error_message: msg.slice(0, 1000),
                 }).eq("id", page.id);
-                results.push({ id: page.id, status: "failed", error: msg });
+                step("Validation failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
                 continue;
               }
 
@@ -982,7 +982,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
                 const msg = `Shopify field mapping invalid: price resolved to non-numeric value "${priceResolved}"`;
                 console.error("[publish-pages]", msg, { pageId: page.id });
                 await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
-                results.push({ id: page.id, status: "failed", error: msg });
+                step("Validation failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
                 continue;
               }
 
@@ -1010,7 +1010,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
                 const msg = "Shopify field mapping invalid: product title resolved to empty string";
                 console.error("[publish-pages]", msg, { pageId: page.id });
                 await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
-                results.push({ id: page.id, status: "failed", error: msg });
+                step("Validation failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
                 continue;
               }
               if (fm.title) page.title = resolvedTitle;
@@ -1056,7 +1056,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
               "Seed the template via seed-elementor-templates before publishing to WordPress.";
             console.error("[publish-pages]", msg, { pageId: page.id });
             await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
-            results.push({ id: page.id, status: "failed", error: msg });
+            step("Validation failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
             continue;
           }
           if (!catalog.ok) {
@@ -1066,7 +1066,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
               `Content could not be fit into the template design.`;
             console.error("[publish-pages]", msg, { pageId: page.id });
             await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
-            results.push({ id: page.id, status: "failed", error: msg, elementor_similarity: catalog.similarity });
+            step("Visual similarity gate failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, elementor_similarity: catalog.similarity, steps });
             continue;
           }
           // Template-Kit architecture: ship the NATIVE Elementor JSON tree from
