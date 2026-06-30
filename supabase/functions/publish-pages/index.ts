@@ -633,13 +633,25 @@ async function handlePublishPages(req: Request): Promise<Response> {
             payload.elementor_data = dpElementorData;
             payload.elementor_css = typeof dp.elementor_css === "string" ? dp.elementor_css : undefined;
             payload.elementor_mode = "native";
+            step("Routing native Elementor JSON", "ok", "Full-width containers + native widgets");
           }
 
 
           // If an external_id is provided, update the existing page; otherwise create new
+          step(dp.external_id ? "Updating existing page" : "Creating page on site", "running");
           const result = dp.external_id
             ? await withTimeout(connector.updatePage(dp.external_id, payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${dp.title}`)
             : await withTimeout(connector.createPage(payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${dp.title}`);
+          steps[steps.length - 1].status = "ok";
+          steps[steps.length - 1].detail = result.url || result.external_id;
+
+          if (result.editor_readiness) {
+            step(
+              "Verifying editor readiness",
+              result.editor_readiness.ready ? "ok" : "warn",
+              result.editor_readiness.ready ? "Page opens in Elementor editor" : "Editor verification incomplete",
+            );
+          }
 
           // Save to generated_pages so it appears in the Generated Pages view
           try {
@@ -659,11 +671,14 @@ async function handlePublishPages(req: Request): Promise<Response> {
               external_url: result.url,
               editor_readiness: result.editor_readiness ?? null,
             });
+            step("Saving to Generated Pages", "ok");
           } catch (insertErr) {
             console.error("Failed to save to generated_pages:", insertErr);
+            step("Saving to Generated Pages", "warn", "Saved on site but local record failed");
           }
 
-          results.push({ title: dp.title, status: "published", external_url: result.url });
+          step("Published", "ok", result.url);
+          results.push({ title: dp.title, status: "published", external_url: result.url, steps });
 
           // Audit log for publish
           try {
@@ -677,7 +692,13 @@ async function handlePublishPages(req: Request): Promise<Response> {
             });
           } catch (_) { /* non-critical */ }
         } catch (err) {
-          results.push({ title: dp.title, status: "failed", error: err instanceof Error ? err.message : "Unknown error" });
+          const msg = err instanceof Error ? err.message : "Unknown error";
+          if (steps.length && steps[steps.length - 1].status === "running") {
+            steps[steps.length - 1].status = "error";
+            steps[steps.length - 1].detail = msg;
+          }
+          step("Publish failed", "error", msg);
+          results.push({ title: dp.title, status: "failed", error: msg, steps });
         }
       }
 
