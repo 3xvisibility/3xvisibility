@@ -220,7 +220,7 @@ function renderHtml(p: PageJson): string {
     <section style="max-width:1120px;margin:-40px auto 0;padding:0 24px;position:relative;z-index:2;">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:${border};border:1px solid ${border};border-radius:20px;overflow:hidden;box-shadow:0 24px 60px -28px rgba(15,23,42,0.35);">
         ${p.stats.map((s) => `<div style="background:${surface};padding:28px 20px;text-align:center;">
-          <div style="font-size:34px;font-weight:800;letter-spacing:-0.02em;background:linear-gradient(135deg,${esc(t.primary)},${esc(t.accent)});-webkit-background-clip:text;background-clip:text;color:transparent;">${esc(s.value)}</div>
+          <div style="font-size:34px;font-weight:800;letter-spacing:-0.02em;background:${heroGradient};-webkit-background-clip:text;background-clip:text;color:transparent;">${esc(s.value)}</div>
           <div style="margin-top:6px;font-size:14px;font-weight:600;color:${muted};">${esc(s.label)}</div>
         </div>`).join("")}
       </div>
