@@ -235,6 +235,7 @@ class XXXV_Elementor {
 					'editor_ready'         => true,
 					'editable_widgets'     => $editor_check['widgets'],
 					'edit_mode'            => $editor_check['edit_mode'],
+					'editor_attempts'      => $editor_attempts,
 				)
 			);
 
