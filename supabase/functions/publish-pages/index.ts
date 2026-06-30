@@ -1101,8 +1101,10 @@ async function handlePublishPages(req: Request): Promise<Response> {
           resolvedPublishType === "page" && !preserveDesign &&
           (page.websites as { type?: string })?.type === "shopify"
         ) {
+          step("Loading Shopify section template", "running");
           const kit = await resolveShopifySectionKit(supabase, page, shopifySectionKitCache);
           if (kit) payload.shopify_section_kit = kit;
+          finishRunning(kit ? "ok" : "warn", kit ? "Native OS 2.0 section attached" : "No section kit — using body HTML");
         }
 
 
