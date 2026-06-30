@@ -168,7 +168,7 @@ export class WordPressConnector implements CmsConnector {
   private async uploadMediaFromUrl(sourceUrl: string): Promise<string | null> {
     if (this.mediaCache.has(sourceUrl)) return this.mediaCache.get(sourceUrl)!;
     try {
-      const res = await wordpressFetch(sourceUrl, {}, 12_000);
+      let res = await wordpressFetch(sourceUrl, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", "Accept": "image/avif,image/webp,image/*,*/*;q=0.8" } }, 12_000);
       if (!res.ok) {
         this.mediaCache.set(sourceUrl, null);
         return null;
