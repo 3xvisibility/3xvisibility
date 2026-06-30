@@ -211,6 +211,35 @@ export default function AiSiteBuilderPage() {
         </div>
       </div>
 
+      {/* Platform choice — decides which template system the AI builds into. */}
+      <Card>
+        <CardContent className="py-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-primary" />
+            <Label className="text-sm font-semibold">Build for which platform?</Label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setPlatform("wordpress")}
+              className={`rounded-lg border p-3 text-left transition ${platform === "wordpress" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"}`}
+            >
+              <p className="text-sm font-semibold">WordPress</p>
+              <p className="text-xs text-muted-foreground">Builds into the native Elementor template system.</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlatform("shopify")}
+              className={`rounded-lg border p-3 text-left transition ${platform === "shopify" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"}`}
+            >
+              <p className="text-sm font-semibold">Shopify</p>
+              <p className="text-xs text-muted-foreground">Builds into the Shopify-style page template.</p>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+
+
       <div className="grid lg:grid-cols-2 gap-6">
         <Tabs defaultValue="wizard">
           <TabsList className="grid w-full grid-cols-2">
