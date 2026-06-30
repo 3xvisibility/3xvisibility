@@ -60,6 +60,13 @@ class XXXV_Elementor {
 			$elementor_data = is_array( $decoded ) ? $decoded : array();
 		}
 
+		// ---- (1) Validate the incoming JSON model -----------------------------
+		$validation = self::validate_model( $elementor_data );
+		if ( is_wp_error( $validation ) ) {
+			self::log( 'error', 'JSON validation failed: ' . $validation->get_error_message(), array( 'slug' => $slug ) );
+			return $validation;
+		}
+
 		// Upload every template image/background to this WordPress Media Library and
 		// replace Elementor image objects with local attachment IDs + URLs before any
 		// document is saved. The SaaS must never send AI/stock replacement images;
@@ -73,10 +80,9 @@ class XXXV_Elementor {
 			$elementor_css = self::map_css_media_references( $elementor_css, $media_report );
 		}
 
-		// ---- (1) Validate the incoming JSON model -----------------------------
 		$validation = self::validate_model( $elementor_data );
 		if ( is_wp_error( $validation ) ) {
-			self::log( 'error', 'JSON validation failed: ' . $validation->get_error_message(), array( 'slug' => $slug ) );
+			self::log( 'error', 'JSON validation failed after media mapping: ' . $validation->get_error_message(), array( 'slug' => $slug ) );
 			return $validation;
 		}
 
@@ -135,8 +141,9 @@ class XXXV_Elementor {
 			// Elementor save. This is REQUIRED and fatal on failure.
 			self::save_via_document( $post_id, $elementor_data );
 
-			// Elementor's document API may normalize meta; write the exact final JSON
-			// after the document save and verify it below.
+			// Elementor's document API may normalize meta. We write the final native JSON
+			// after the document save only to preserve exact attachment IDs/URLs and then
+			// validate the stored model. Publishing never writes HTML or fallback content.
 			$json = wp_json_encode( $elementor_data );
 			if ( false === $json ) {
 				throw new Exception( 'Failed to encode Elementor JSON.' );
