@@ -173,7 +173,7 @@ export default function AiSiteBuilderPage() {
     setPage(null);
     try {
       const { data, error } = await supabase.functions.invoke("ai-site-builder", {
-        body: { action: "build", input: { brand, category, niche, referenceUrl, freeText, platform } },
+        body: { action: "build", input: { brand, category, niche, referenceUrl, freeText, platform, brandTheme: brandThemePayload() } },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
