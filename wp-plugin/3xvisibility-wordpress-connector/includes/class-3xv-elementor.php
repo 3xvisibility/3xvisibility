@@ -213,6 +213,11 @@ class XXXV_Elementor {
 		if ( empty( $data ) ) {
 			return new WP_Error( 'xxxv_empty_model', 'Elementor data is empty — nothing to publish.', array( 'status' => 400 ) );
 		}
+		$supported_widgets = array(
+			'heading', 'text-editor', 'image', 'button', 'icon-box', 'accordion',
+			'counter', 'gallery', 'divider', 'spacer', 'testimonial', 'icon-list',
+			'image-box',
+		);
 		foreach ( $data as $index => $element ) {
 			if ( ! is_array( $element ) || empty( $element['elType'] ) ) {
 				return new WP_Error(
@@ -221,8 +226,141 @@ class XXXV_Elementor {
 					array( 'status' => 400 )
 				);
 			}
+			if ( 'container' !== $element['elType'] ) {
+				return new WP_Error(
+					'xxxv_top_level_container_required',
+					sprintf( 'Top-level element #%d must be an Elementor Container section.', (int) $index ),
+					array( 'status' => 400 )
+				);
+			}
+			$nested = self::validate_element_recursive( $element, $supported_widgets );
+			if ( is_wp_error( $nested ) ) {
+				return $nested;
+			}
 		}
 		return true;
+	}
+
+	/**
+	 * Validate one element recursively: native Elementor only, no HTML widgets, no
+	 * raw markup injection into text-editor settings.
+	 *
+	 * @param array $element Element.
+	 * @param array $supported_widgets Allowed free widgets.
+	 * @return true|WP_Error
+	 */
+	private static function validate_element_recursive( $element, $supported_widgets ) {
+		$el_type = isset( $element['elType'] ) ? $element['elType'] : '';
+		if ( 'widget' === $el_type ) {
+			$widget = isset( $element['widgetType'] ) ? $element['widgetType'] : '';
+			if ( 'html' === $widget ) {
+				return new WP_Error( 'xxxv_html_widget_forbidden', 'HTML widgets are forbidden. WordPress publishing requires native Elementor widgets only.', array( 'status' => 400 ) );
+			}
+			if ( ! in_array( $widget, $supported_widgets, true ) ) {
+				return new WP_Error( 'xxxv_unsupported_widget', 'Unsupported Elementor widget type: ' . sanitize_text_field( $widget ), array( 'status' => 400 ) );
+			}
+			$settings = isset( $element['settings'] ) && is_array( $element['settings'] ) ? $element['settings'] : array();
+			if ( 'text-editor' === $widget && isset( $settings['editor'] ) && preg_match( '#<(script|style|iframe|html|body|head)\b#i', (string) $settings['editor'] ) ) {
+				return new WP_Error( 'xxxv_raw_html_forbidden', 'Raw HTML/style/script injection inside Text Editor widgets is forbidden.', array( 'status' => 400 ) );
+			}
+		} elseif ( 'container' !== $el_type ) {
+			return new WP_Error( 'xxxv_invalid_eltype', 'Only Elementor Containers and supported Widgets are allowed.', array( 'status' => 400 ) );
+		}
+
+		$children = isset( $element['elements'] ) && is_array( $element['elements'] ) ? $element['elements'] : array();
+		foreach ( $children as $child ) {
+			if ( ! is_array( $child ) ) {
+				return new WP_Error( 'xxxv_invalid_child', 'Invalid Elementor child element.', array( 'status' => 400 ) );
+			}
+			$valid = self::validate_element_recursive( $child, $supported_widgets );
+			if ( is_wp_error( $valid ) ) {
+				return $valid;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Walk Elementor JSON and replace remote template image URLs with local Media
+	 * Library attachment IDs + URLs. Handles image widgets, gallery controls,
+	 * background images, carousel-like arrays, and any nested settings.
+	 *
+	 * @param array $data Elementor data, modified in place.
+	 * @return array|WP_Error Import report.
+	 */
+	private static function map_media_library_references( &$data ) {
+		$report = array(
+			'imported' => 0,
+			'reused'   => 0,
+			'failed'   => 0,
+			'urls'     => array(),
+		);
+		self::walk_media_value( $data, $report );
+		return $report;
+	}
+
+	private static function is_remote_image_url( $value ) {
+		return is_string( $value ) && preg_match( '#^https?://[^\s"\']+\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(\?[^\s"\']*)?$#i', $value );
+	}
+
+	private static function import_media_url_for_report( $url, &$report ) {
+		if ( isset( $report['urls'][ $url ] ) ) {
+			return $report['urls'][ $url ];
+		}
+		$result = XXXV_Media::import_from_url( $url );
+		if ( is_wp_error( $result ) ) {
+			$report['failed']++;
+			self::log( 'warn', 'Template media import failed: ' . $result->get_error_message(), array( 'url' => $url ) );
+			$report['urls'][ $url ] = array( 'id' => 0, 'url' => $url, 'failed' => true );
+			return $report['urls'][ $url ];
+		}
+		if ( ! empty( $result['duplicate'] ) ) {
+			$report['reused']++;
+		} else {
+			$report['imported']++;
+		}
+		$report['urls'][ $url ] = array(
+			'id'  => isset( $result['id'] ) ? (int) $result['id'] : 0,
+			'url' => isset( $result['url'] ) ? (string) $result['url'] : $url,
+		);
+		return $report['urls'][ $url ];
+	}
+
+	private static function walk_media_value( &$value, &$report ) {
+		if ( is_array( $value ) ) {
+			// Elementor image controls are arrays like { id, url, alt }. Preserve all
+			// existing keys and add the Media Library attachment id.
+			if ( isset( $value['url'] ) && self::is_remote_image_url( $value['url'] ) ) {
+				$mapped = self::import_media_url_for_report( $value['url'], $report );
+				if ( empty( $mapped['failed'] ) ) {
+					$value['id']  = (int) $mapped['id'];
+					$value['url'] = (string) $mapped['url'];
+				}
+			}
+			foreach ( $value as $key => &$child ) {
+				if ( is_string( $child ) && self::is_remote_image_url( $child ) ) {
+					$mapped = self::import_media_url_for_report( $child, $report );
+					if ( empty( $mapped['failed'] ) ) {
+						$child = (string) $mapped['url'];
+					}
+					continue;
+				}
+				self::walk_media_value( $child, $report );
+			}
+			unset( $child );
+		}
+	}
+
+	private static function map_css_media_references( $css, $report ) {
+		if ( empty( $report['urls'] ) || ! is_array( $report['urls'] ) ) {
+			return $css;
+		}
+		foreach ( $report['urls'] as $source => $mapped ) {
+			if ( empty( $mapped['failed'] ) && ! empty( $mapped['url'] ) ) {
+				$css = str_replace( $source, $mapped['url'], $css );
+			}
+		}
+		return $css;
 	}
 
 	/**
