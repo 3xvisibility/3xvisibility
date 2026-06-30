@@ -581,7 +581,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
       if (website.type === "wordpress") {
         await runWordPressConnectorPreflight(connector, "3xVisibility WordPress Connector");
       }
-      const results: { title: string; status: string; external_url?: string; error?: string }[] = [];
+      const results: { title: string; status: string; external_url?: string; error?: string; steps?: PublishStep[] }[] = [];
       const workspaceId = website.workspace_id || body.workspace_id || null;
       const campaignId = body.campaign_id || null;
 
@@ -592,7 +592,12 @@ async function handlePublishPages(req: Request): Promise<Response> {
       const remainingDirectPages = directPages.slice(PUBLISH_BATCH_SIZE);
 
       for (const dp of currentDirectPages) {
+        const steps: PublishStep[] = [];
+        const step = (label: string, status: PublishStep["status"], detail?: string) => {
+          steps.push({ label, status, detail, at: new Date().toISOString() });
+        };
         try {
+          step("Validating page payload", "ok", `${website.type} · ${pubType}`);
           const cleanedContent = stripHeadTagsForCms(dp.content);
           // Republish of an already-published page → preserve existing on-site design.
           const isRepublish = !!dp.external_id;
