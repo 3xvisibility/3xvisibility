@@ -1559,6 +1559,30 @@ slug: ${fields.slug}`,
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={!!duplicateTarget} onOpenChange={() => setDuplicateTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duplicate template?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will create a copy of "{duplicateTarget?.name}" that you can edit independently.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (duplicateTarget) duplicateMutation.mutate(duplicateTarget);
+                setDuplicateTarget(null);
+              }}
+            >
+              Duplicate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
+
       {/* Bulk Delete Confirmation */}
       <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
         <AlertDialogContent>
