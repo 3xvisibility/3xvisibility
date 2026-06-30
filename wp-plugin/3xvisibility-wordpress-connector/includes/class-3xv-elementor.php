@@ -1011,4 +1011,50 @@ class XXXV_Elementor {
 		self::regenerate_global_css();
 		return rest_ensure_response( array( 'ok' => true, 'scope' => 'all' ) );
 	}
+
+	/**
+	 * REST endpoint: re-run the "Edit with Elementor" readiness check for an
+	 * already-published post on demand, without republishing it.
+	 *
+	 * @param WP_REST_Request $request The request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function validate_editor( WP_REST_Request $request ) {
+		if ( ! did_action( 'elementor/loaded' ) ) {
+			return new WP_Error( 'xxxv_no_elementor', 'Elementor is not active.', array( 'status' => 400 ) );
+		}
+
+		$post_id = absint( $request->get_param( 'post_id' ) );
+		if ( $post_id < 1 || ! get_post( $post_id ) ) {
+			return new WP_Error( 'xxxv_bad_post', 'A valid post_id is required.', array( 'status' => 400 ) );
+		}
+
+		// Refresh Elementor files/CSS first so the check reflects current state.
+		self::refresh_elementor_files( $post_id );
+
+		$check = self::validate_editor_ready( $post_id );
+		if ( is_wp_error( $check ) ) {
+			return rest_ensure_response(
+				array(
+					'ok'               => true,
+					'post_id'          => $post_id,
+					'editor_ready'     => false,
+					'editable_widgets' => 0,
+					'edit_mode'        => get_post_meta( $post_id, '_elementor_edit_mode', true ),
+					'reason'           => $check->get_error_message(),
+				)
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'ok'               => true,
+				'post_id'          => $post_id,
+				'editor_ready'     => true,
+				'editable_widgets' => isset( $check['widgets'] ) ? (int) $check['widgets'] : null,
+				'edit_mode'        => isset( $check['edit_mode'] ) ? $check['edit_mode'] : null,
+				'reason'           => null,
+			)
+		);
+	}
 }

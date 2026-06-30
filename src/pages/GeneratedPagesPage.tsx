@@ -14,7 +14,7 @@ import {
   Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save,
   Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight,
   RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3,
-  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, Send as SendIcon
+  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Send as SendIcon
 } from "lucide-react";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
@@ -449,6 +449,32 @@ export default function GeneratedPagesPage() {
     onError: (err: Error) => toast({ title: "Translation failed", description: err.message, variant: "destructive" }),
   });
 
+  const recheckReadinessMutation = useMutation({
+    mutationFn: async (pageId: string) => {
+      const { data, error } = await supabase.functions.invoke("recheck-editor-readiness", {
+        body: { page_id: pageId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data?.editor_readiness as { status?: string; reason?: string | null } | undefined;
+    },
+    onSuccess: (readiness) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      if (readiness?.status === "passed") {
+        toast({ title: "Editor ready", description: "The page opens in Edit with Elementor." });
+      } else {
+        toast({
+          title: "Editor check failed",
+          description: readiness?.reason || "The page did not pass the readiness check.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (err: Error) => toast({ title: "Re-check failed", description: err.message, variant: "destructive" }),
+  });
+
+
+
   const inlineSeoSaveMutation = useMutation({
     mutationFn: async (edits: Record<string, { seo_title: string; seo_description: string; seo_keywords: string }>) => {
       const promises = Object.entries(edits).map(([id, fields]) => {
@@ -870,6 +896,15 @@ export default function GeneratedPagesPage() {
                       {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
+                      {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
+                        <DropdownMenuItem
+                          disabled={recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id}
+                          onClick={() => recheckReadinessMutation.mutate(page.id)}
+                        >
+                          <ShieldCheck className={`h-3.5 w-3.5 mr-2 ${recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id ? "animate-spin" : ""}`} />
+                          Re-check Elementor readiness
+                        </DropdownMenuItem>
+                      )}
                       {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                       {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</a></DropdownMenuItem>}
                       <DropdownMenuSeparator />
@@ -969,6 +1004,15 @@ export default function GeneratedPagesPage() {
                               {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
                               {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
+                              {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
+                                <DropdownMenuItem
+                                  disabled={recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id}
+                                  onClick={() => recheckReadinessMutation.mutate(page.id)}
+                                >
+                                  <ShieldCheck className={`h-3.5 w-3.5 mr-2 ${recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id ? "animate-spin" : ""}`} />
+                                  Re-check Elementor readiness
+                                </DropdownMenuItem>
+                              )}
                               {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                               {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</a></DropdownMenuItem>}
                               <DropdownMenuSeparator />

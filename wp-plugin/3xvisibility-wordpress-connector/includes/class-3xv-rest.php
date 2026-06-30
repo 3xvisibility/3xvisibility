@@ -102,6 +102,16 @@ class XXXV_REST {
 
 		register_rest_route(
 			XXXV_CONNECTOR_NS,
+			'/validate-editor',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( 'XXXV_Elementor', 'validate_editor' ),
+				'permission_callback' => $auth,
+			)
+		);
+
+		register_rest_route(
+			XXXV_CONNECTOR_NS,
 			'/clear-cache',
 			array(
 				'methods'             => 'POST',
