@@ -46,6 +46,17 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, primaryAct
     () => (template?.variables || []).filter(v => !contentVars.includes(v)),
     [template?.variables, contentVars],
   );
+  const elementorJson = useMemo(() => {
+    const data = template?.elementor_data;
+    if (data == null || data === "") return null;
+    try {
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+      const str = JSON.stringify(parsed, null, 2);
+      return str === "null" || str === "{}" || str === "[]" ? null : str;
+    } catch {
+      return typeof data === "string" ? data : null;
+    }
+  }, [template?.elementor_data]);
 
   if (!template) return null;
 
