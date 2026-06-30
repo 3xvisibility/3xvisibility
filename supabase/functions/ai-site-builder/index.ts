@@ -402,7 +402,7 @@ Deno.serve(async (req) => {
       const page = out.page!;
       return new Response(
         JSON.stringify({
-          page: buildPagePayload(page),
+          page: await buildPagePayload(page, input, out.hints ?? []),
           plan: page,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
