@@ -157,6 +157,7 @@ export default function AiSiteBuilderPage() {
               elementor_data: page.elementor_data,
               elementor_css: page.elementor_css,
               elementor_mode: page.elementor_mode,
+              publish_format: page.publish_format,
             },
           ],
         },
