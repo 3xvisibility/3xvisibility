@@ -4,6 +4,8 @@
 // HTML page that can be published to WordPress/Shopify via the existing publish flow.
 
 import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
+import { htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
+import { extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
