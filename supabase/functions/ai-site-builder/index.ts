@@ -251,6 +251,23 @@ async function pickMasterTemplate(
 // Elementor conversion; (3) raw HTML fallback.
 async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: string[]) {
   const html = renderHtml(p);
+  const platform = input.platform === "shopify" ? "shopify" : "wordpress";
+
+  // Shopify pages do NOT use Elementor — they publish into Shopify's own
+  // section/page template (rich HTML body). Skip all Elementor routing so the
+  // page lands in the Shopify-style template instead of the WordPress one.
+  if (platform === "shopify") {
+    return {
+      title: p.title,
+      slug: p.slug,
+      seo_title: p.metaTitle,
+      seo_description: p.metaDescription,
+      content: html,
+      publish_format: "shopify",
+      platform,
+    };
+  }
+
   let elementorData: string | undefined;
   let elementorCss: string | undefined;
 
@@ -294,6 +311,8 @@ async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: st
     elementor_data: elementorData,
     elementor_css: elementorCss,
     elementor_mode: elementorData ? "native" : undefined,
+    publish_format: "elementor",
+    platform,
   };
 }
 
