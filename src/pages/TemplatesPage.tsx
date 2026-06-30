@@ -313,6 +313,23 @@ export default function TemplatesPage() {
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
+  const renameMutation = useMutation({
+    mutationFn: async (params: { id: string; name: string }) => {
+      const name = params.name.trim();
+      if (!name) throw new Error("Name cannot be empty");
+      const { error } = await supabase.from("templates").update({ name } as any).eq("id", params.id);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await refreshTemplates();
+      toast({ title: "Template renamed" });
+      setRenameTarget(null);
+    },
+    onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const openRename = (tpl: Template) => { setRenameTarget(tpl); setRenameValue(tpl.name); };
+
   const duplicateMutation = useMutation({
     mutationFn: async (tpl: Template) => {
       const { data: { user } } = await supabase.auth.getUser();
