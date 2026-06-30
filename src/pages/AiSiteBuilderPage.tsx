@@ -303,7 +303,6 @@ export default function AiSiteBuilderPage() {
             </div>
             <ul className="space-y-2">
               {websites.map((w) => {
-                const detected = detectPlatform(w.type);
                 const resolved = effectivePlatform(w);
                 const overridden = !!platformOverrides[w.id];
                 return (
