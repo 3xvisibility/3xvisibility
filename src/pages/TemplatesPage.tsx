@@ -267,6 +267,7 @@ export default function TemplatesPage() {
         schema_config: params.schemaConfig || {},
       } as any);
       if (error) throw error;
+      await recordVersionForLatest(wsId, params.name, "Created template");
     },
     onSuccess: async () => {
       await refreshTemplates();
