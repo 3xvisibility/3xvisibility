@@ -614,11 +614,22 @@ async function handlePublishPages(req: Request): Promise<Response> {
             : directShopifySuffixes;
           applyShopifySuffix(payload, website.type, dpSuffixes, pubType);
 
+          // Native Elementor master routing for direct publishes (e.g. AI Site
+          // Builder). When the caller supplies a pre-built native Elementor JSON
+          // tree, ship it directly so the WordPress page is fully editable in
+          // Elementor — no raw HTML fallback.
+          const dpElementorData = typeof dp.elementor_data === "string" ? dp.elementor_data : undefined;
           if (website.type === "wordpress" && pubType === "page" && !preserveDesign) {
-            throw new Error(
-              "WordPress publishing is native Elementor only. Direct HTML publishing is disabled; publish from a campaign with a stored Elementor JSON template.",
-            );
+            if (!dpElementorData) {
+              throw new Error(
+                "WordPress publishing is native Elementor only. Provide native Elementor JSON (elementor_data) or publish from a campaign with a stored Elementor JSON template.",
+              );
+            }
+            payload.elementor_data = dpElementorData;
+            payload.elementor_css = typeof dp.elementor_css === "string" ? dp.elementor_css : undefined;
+            payload.elementor_mode = "native";
           }
+
 
           // If an external_id is provided, update the existing page; otherwise create new
           const result = dp.external_id
