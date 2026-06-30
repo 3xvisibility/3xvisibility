@@ -229,8 +229,26 @@ function buildPagePayload(p: PageJson) {
 }
 
 async function generatePage(input: BuildInput, authToken?: string): Promise<{ ok: boolean; page?: PageJson; error?: string }> {
-  let referenceText = "";
-  if (input.referenceUrl) referenceText = await fetchReference(input.referenceUrl);
+  let ref: ReferenceAnalysis | null = null;
+  if (input.referenceUrl) ref = await fetchReference(input.referenceUrl);
+
+  // Build a structured brief so generated Elementor sections map to the
+  // reference outline AND the brand/category/niche inputs.
+  let referenceBrief = "";
+  if (ref && (ref.sectionTitles.length || ref.featureTitles.length || ref.text)) {
+    const parts: string[] = [];
+    if (ref.hero?.headline) parts.push(`Hero headline: "${ref.hero.headline}"`);
+    if (ref.hero?.subheadline) parts.push(`Hero subheadline: "${ref.hero.subheadline}"`);
+    if (ref.hero?.cta) parts.push(`Primary CTA label: "${ref.hero.cta}"`);
+    if (ref.sectionTitles.length) parts.push(`Section headings (mirror these as "sections", one per heading, same order): ${ref.sectionTitles.map((s) => `"${s}"`).join(", ")}`);
+    if (ref.featureTitles.length) parts.push(`Feature/card titles (map these into "features"): ${ref.featureTitles.map((s) => `"${s}"`).join(", ")}`);
+    if (ref.faqs.length) parts.push(`FAQ questions (reuse as "faqs"): ${ref.faqs.map((s) => `"${s}"`).join(", ")}`);
+    if (ref.colors.length) parts.push(`Reference brand colors (derive theme from these): ${ref.colors.join(", ")}`);
+    if (ref.text) parts.push(`Reference body copy for tone:\n"""${ref.text.slice(0, 2000)}"""`);
+    referenceBrief = parts.join("\n");
+  }
+
+
 
   const lang = input.language || "en";
   const system = `You are an expert web designer and conversion copywriter. Generate a complete, polished landing page as STRICT JSON only (no markdown, no commentary).
