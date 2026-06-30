@@ -348,8 +348,11 @@ export default function TemplatesPage() {
         seo_description_pattern: (tpl as any).seo_description_pattern || "",
         schema_type: (tpl as any).schema_type || "WebPage",
         schema_config: (tpl as any).schema_config || {},
+        elementor_data: (tpl as any).elementor_data ?? null,
+        template_kind: (tpl as any).template_kind || "html",
       } as any);
       if (error) throw error;
+      await recordVersionForLatest(wsId, `${tpl.name} (Copy)`, "Duplicated template");
     },
     onSuccess: async () => {
       await refreshTemplates();
