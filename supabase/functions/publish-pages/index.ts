@@ -1154,6 +1154,8 @@ async function handlePublishPages(req: Request): Promise<Response> {
         } catch (_) { /* non-critical */ }
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown publishing error";
+        finishRunning("error", errorMsg.slice(0, 200));
+        step("Publish failed", "error", errorMsg.slice(0, 200));
         // If the failure came from the post-publish editor-readiness check, record
         // it as a structured readiness result so it surfaces in the pages list.
         const isEditorReadinessFailure = /edit with elementor|editor-readiness|editable .*widget/i.test(errorMsg);
@@ -1169,7 +1171,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           };
         }
         await supabase.from("generated_pages").update(failureUpdate).eq("id", page.id);
-        results.push({ id: page.id, status: "failed", error: errorMsg });
+        results.push({ id: page.id, status: "failed", error: errorMsg, steps });
       }
     }
 
