@@ -158,6 +158,50 @@ async function fetchReference(url: string): Promise<ReferenceAnalysis> {
   }
 }
 
+// Typography presets: key -> { family (CSS stack), import (Google Fonts URL) }.
+const FONT_PRESETS: Record<string, { family: string; import: string }> = {
+  "plus-jakarta": {
+    family: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    import: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+  },
+  inter: {
+    family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    import: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+  },
+  poppins: {
+    family: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    import: "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap",
+  },
+  "space-grotesk": {
+    family: "'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    import: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap",
+  },
+  sora: {
+    family: "'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    import: "https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap",
+  },
+  playfair: {
+    family: "'Playfair Display', Georgia, 'Times New Roman', serif",
+    import: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&display=swap",
+  },
+};
+
+// Build a CSS background for hero/CTA bands given the two theme colors + style.
+function gradientCss(primary: string, accent: string, style?: string): string {
+  switch (style) {
+    case "vertical":
+      return `linear-gradient(180deg,${primary} 0%,${accent} 100%)`;
+    case "radial":
+      return `radial-gradient(circle at 30% 20%,${primary} 0%,${accent} 100%)`;
+    case "conic":
+      return `conic-gradient(from 210deg at 50% 50%,${primary},${accent},${primary})`;
+    case "solid":
+      return primary;
+    case "diagonal":
+    default:
+      return `linear-gradient(135deg,${primary} 0%,${accent} 100%)`;
+  }
+}
 
 function renderHtml(p: PageJson): string {
   const t = p.theme || { primary: "#6d28d9", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
@@ -166,7 +210,10 @@ function renderHtml(p: PageJson): string {
   const softBg = "#f6f7fb";
   const border = "rgba(15,23,42,0.08)";
   const muted = "rgba(15,23,42,0.62)";
-  const font = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  const fontPreset = FONT_PRESETS[t.font || "plus-jakarta"] || FONT_PRESETS["plus-jakarta"];
+  const font = fontPreset.family;
+  const heroGradient = gradientCss(esc(t.primary), esc(t.accent), t.gradientStyle);
+
 
   const stats = (p.stats && p.stats.length)
     ? `
