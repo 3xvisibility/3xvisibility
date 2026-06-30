@@ -137,6 +137,8 @@ export default function AiSiteBuilderPage() {
       return;
     }
     setPublishing(true);
+    setPublishedUrl(null);
+    setPublishSteps([{ label: "Sending page to publisher", status: "running" }]);
     try {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
         body: {
@@ -158,16 +160,37 @@ export default function AiSiteBuilderPage() {
       });
       if (error) throw error;
       const result = data?.results?.[0];
+      if (Array.isArray(result?.steps) && result.steps.length) {
+        setPublishSteps(result.steps);
+      }
       if (result?.status === "published") {
-        toast({ title: "Published!", description: result.url ? `Live at ${result.url}` : "Page is live." });
+        const url = result.external_url || result.url || null;
+        setPublishedUrl(url);
+        if (!Array.isArray(result?.steps) || !result.steps.length) {
+          setPublishSteps([{ label: "Published", status: "ok", detail: url || undefined }]);
+        }
+        toast({ title: "Published!", description: url ? `Live at ${url}` : "Page is live." });
       } else {
         throw new Error(result?.error || "Publish did not complete.");
       }
     } catch (err: any) {
-      toast({ title: "Publish failed", description: err.message || String(err), variant: "destructive" });
+      const msg = err.message || String(err);
+      setPublishSteps((prev) => {
+        const next = prev.map((s) => (s.status === "running" ? { ...s, status: "error" as const, detail: msg } : s));
+        if (!next.some((s) => s.status === "error")) next.push({ label: "Publish failed", status: "error", detail: msg });
+        return next;
+      });
+      toast({ title: "Publish failed", description: msg, variant: "destructive" });
     } finally {
       setPublishing(false);
     }
+  };
+
+  const stepIcon = (status: PublishStep["status"]) => {
+    if (status === "ok") return <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />;
+    if (status === "error") return <XCircle className="h-4 w-4 text-destructive shrink-0" />;
+    if (status === "warn") return <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />;
+    return <Loader2 className="h-4 w-4 text-primary animate-spin shrink-0" />;
   };
 
   return (
