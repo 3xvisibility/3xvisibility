@@ -267,8 +267,12 @@ class XXXV_Elementor {
 				return new WP_Error( 'xxxv_unsupported_widget', 'Unsupported Elementor widget type: ' . sanitize_text_field( $widget ), array( 'status' => 400 ) );
 			}
 			$settings = isset( $element['settings'] ) && is_array( $element['settings'] ) ? $element['settings'] : array();
-			if ( 'text-editor' === $widget && isset( $settings['editor'] ) && preg_match( '#<(script|style|iframe|html|body|head)\b#i', (string) $settings['editor'] ) ) {
+			if ( 'text-editor' === $widget && isset( $settings['editor'] ) && preg_match( '#<(script|style|iframe|html|body|head|section|article|main|link|canvas|svg)\b#i', (string) $settings['editor'] ) ) {
 				return new WP_Error( 'xxxv_raw_html_forbidden', 'Raw HTML/style/script injection inside Text Editor widgets is forbidden.', array( 'status' => 400 ) );
+			}
+			$settings_valid = self::validate_settings_no_raw_html( $settings );
+			if ( is_wp_error( $settings_valid ) ) {
+				return $settings_valid;
 			}
 		} elseif ( 'container' !== $el_type ) {
 			return new WP_Error( 'xxxv_invalid_eltype', 'Only Elementor Containers and supported Widgets are allowed.', array( 'status' => 400 ) );
@@ -282,6 +286,22 @@ class XXXV_Elementor {
 			$valid = self::validate_element_recursive( $child, $supported_widgets );
 			if ( is_wp_error( $valid ) ) {
 				return $valid;
+			}
+		}
+		return true;
+	}
+
+	private static function validate_settings_no_raw_html( $settings ) {
+		foreach ( $settings as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$nested = self::validate_settings_no_raw_html( $value );
+				if ( is_wp_error( $nested ) ) {
+					return $nested;
+				}
+				continue;
+			}
+			if ( is_string( $value ) && preg_match( '#<(script|style|iframe|html|body|head|link)\b#i', $value ) ) {
+				return new WP_Error( 'xxxv_raw_html_forbidden', 'Raw HTML/style/script injection is forbidden in Elementor settings.', array( 'status' => 400 ) );
 			}
 		}
 		return true;
