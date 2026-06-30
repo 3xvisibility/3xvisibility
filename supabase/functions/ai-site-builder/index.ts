@@ -52,6 +52,119 @@ interface PageJson {
   faqs?: { q: string; a: string }[];
 }
 
+// Strict JSON Schema for structured outputs. Passing this to the AI gateway via
+// response_format forces the model to emit JSON that matches this shape exactly,
+// eliminating the "AI returned invalid JSON" failures from prose-wrapped or
+// malformed responses.
+const PAGE_JSON_SCHEMA = {
+  type: "json_schema",
+  json_schema: {
+    name: "landing_page",
+    strict: true,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["title", "slug", "metaTitle", "metaDescription", "theme", "hero", "stats", "sections", "features", "faqs"],
+      properties: {
+        title: { type: "string" },
+        slug: { type: "string" },
+        metaTitle: { type: "string" },
+        metaDescription: { type: "string" },
+        theme: {
+          type: "object",
+          additionalProperties: false,
+          required: ["primary", "accent", "bg", "text"],
+          properties: {
+            primary: { type: "string" },
+            accent: { type: "string" },
+            bg: { type: "string" },
+            text: { type: "string" },
+          },
+        },
+        hero: {
+          type: "object",
+          additionalProperties: false,
+          required: ["eyebrow", "headline", "subheadline", "cta", "image"],
+          properties: {
+            eyebrow: { type: "string" },
+            headline: { type: "string" },
+            subheadline: { type: "string" },
+            cta: { type: "string" },
+            image: { type: "string" },
+          },
+        },
+        stats: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["value", "label"],
+            properties: { value: { type: "string" }, label: { type: "string" } },
+          },
+        },
+        sections: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["title", "body", "image"],
+            properties: { title: { type: "string" }, body: { type: "string" }, image: { type: "string" } },
+          },
+        },
+        features: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["title", "body", "image"],
+            properties: { title: { type: "string" }, body: { type: "string" }, image: { type: "string" } },
+          },
+        },
+        faqs: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["q", "a"],
+            properties: { q: { type: "string" }, a: { type: "string" } },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
+// Strict JSON Schema for the conversational "chat" step.
+const CHAT_JSON_SCHEMA = {
+  type: "json_schema",
+  json_schema: {
+    name: "chat_turn",
+    strict: true,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["reply", "collected", "ready"],
+      properties: {
+        reply: { type: "string" },
+        collected: {
+          type: "object",
+          additionalProperties: false,
+          required: ["brand", "category", "niche", "referenceUrl", "freeText"],
+          properties: {
+            brand: { type: ["string", "null"] },
+            category: { type: ["string", "null"] },
+            niche: { type: ["string", "null"] },
+            referenceUrl: { type: ["string", "null"] },
+            freeText: { type: ["string", "null"] },
+          },
+        },
+        ready: { type: "boolean" },
+      },
+    },
+  },
+} as const;
+
+
 const slugify = (s: string) =>
   (s || "page")
     .toLowerCase()
