@@ -245,7 +245,6 @@ function buildPayload(
   extraData?: Record<string, unknown>,
   pageTemplate?: string,
   preserveDesign?: boolean,
-  elementorMode?: "native" | "html",
 ): PagePayload {
   const payload: PagePayload = {
     title: page.title,
@@ -259,8 +258,6 @@ function buildPayload(
   };
 
   if (page.seo_description) payload.excerpt = page.seo_description;
-
-  if (elementorMode) payload.elementor_mode = elementorMode;
 
   if (preserveDesign) payload.preserve_design = true;
 
@@ -478,13 +475,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
     }
 
     const body = await req.json();
-    const { page_ids, publish_type, website_id, pages: directPages, overwrite_design, elementor_mode } = body;
-    // WordPress publishing ALWAYS uses native Elementor widgets — never a single
-    // HTML widget. The 3xVisibility WordPress Connector plugin regenerates the
-    // per-page Elementor CSS server-side after a REST publish, so native widget
-    // styling renders 1:1 with the template. Only an explicit "html" request
-    // (legacy fallback for sites without the connector) opts out.
-    const elementorMode: "html" | "native" = elementor_mode === "html" ? "html" : "native";
+    const { page_ids, publish_type, website_id, pages: directPages, overwrite_design } = body;
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
 
@@ -607,7 +598,6 @@ async function handlePublishPages(req: Request): Promise<Response> {
           const isRepublish = !!dp.external_id;
           const preserveDesign = isRepublish && !allowOverwriteDesign;
 
-          const directElementorMode: "html" | "native" = website.type === "wordpress" ? "native" : elementorMode;
           const payload = buildPayload(
             { title: dp.title, content: cleanedContent, slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
             pubType,
@@ -615,7 +605,6 @@ async function handlePublishPages(req: Request): Promise<Response> {
             // Mirror the site's preferred template.
             !preserveDesign ? templateInfo.pageTemplate : undefined,
             preserveDesign,
-            directElementorMode,
           );
 
 
@@ -626,16 +615,9 @@ async function handlePublishPages(req: Request): Promise<Response> {
           applyShopifySuffix(payload, website.type, dpSuffixes, pubType);
 
           if (website.type === "wordpress" && pubType === "page" && !preserveDesign) {
-            try {
-              const css = extractTemplateCss(cleanedContent);
-              const tree = htmlToElementor(cleanedContent);
-              if (Array.isArray(tree) && tree.length > 0) {
-                payload.elementor_data = JSON.stringify(tree);
-                payload.elementor_css = css;
-              }
-            } catch (e) {
-              console.warn("[publish-pages] direct HTML→Elementor conversion failed", e);
-            }
+            throw new Error(
+              "WordPress publishing is native Elementor only. Direct HTML publishing is disabled; publish from a campaign with a stored Elementor JSON template.",
+            );
           }
 
           // If an external_id is provided, update the existing page; otherwise create new
@@ -695,7 +677,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
             publish_type: pubType,
             website_id,
             overwrite_design: allowOverwriteDesign,
-            elementor_mode: elementorMode,
+            elementor_mode: "native",
           }),
         }).catch((e) => console.error("[PUBLISH] Direct self-chain failed:", e));
       }
@@ -765,7 +747,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
             headers: { Authorization: authHeader, "Content-Type": "application/json" },
             body: JSON.stringify({
               page_ids: allRemaining, publish_type: pubType, website_id: fallbackWebsiteId,
-              overwrite_design: allowOverwriteDesign, elementor_mode: elementorMode, _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
+              overwrite_design: allowOverwriteDesign, elementor_mode: "native", _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
             }),
           }).catch(() => {});
         }
@@ -981,12 +963,6 @@ async function handlePublishPages(req: Request): Promise<Response> {
         // WordPress connector emits Elementor or Gutenberg content accordingly.
         const publishFormat = await getCampaignPublishFormat(page.campaign_id);
         const websiteType = (page.websites as { type?: string })?.type;
-        // WordPress + Elementor is a single fixed path: native, editable
-        // Elementor JSON/widgets only. Ignore any stale UI/request value that
-        // asks for a single HTML widget.
-        const effectiveElementorMode: "html" | "native" =
-          websiteType === "wordpress" && publishFormat === "elementor" ? "native" : elementorMode;
-
         const payload = buildPayload(
           { title: page.title, content: cleanedContent, slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
           resolvedPublishType,
@@ -995,7 +971,6 @@ async function handlePublishPages(req: Request): Promise<Response> {
             ? templateCache.get(page.website_id || "default")?.pageTemplate
             : undefined,
           preserveDesign,
-          effectiveElementorMode,
         );
 
         payload.publish_format = publishFormat;
@@ -1011,7 +986,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           resolvedPublishType === "page" && !preserveDesign && publishFormat === "elementor" &&
           websiteType === "wordpress"
         ) {
-          const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache, effectiveElementorMode);
+          const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
           if (!catalog) {
             const msg =
               "Publish blocked: no stored Elementor template found for this campaign. " +
@@ -1032,16 +1007,12 @@ async function handlePublishPages(req: Request): Promise<Response> {
             continue;
           }
           // Template-Kit architecture: ship the NATIVE Elementor JSON tree from
-          // the catalog (placeholder-only content applied, template CSS injected
-          // as a top-of-tree HTML widget). The page is fully editable inside
-          // Elementor as native Containers + widgets — NOT a single embedded
-          // HTML blob. Image URLs in the JSON are uploaded to the WP Media
-          // Library by the connector before the page is created/updated.
+          // the catalog (placeholder-only content applied). The page is fully
+          // editable inside Elementor as native Containers + widgets. Image URLs
+          // and CSS assets are uploaded/mapped by the connector plugin.
           payload.elementor_data = catalog.data;
           payload.elementor_css = catalog.css;
-          // Honor the resolved mode: a CSS auto-fix can flip native → html so the
-          // styling is guaranteed to travel with the page markup.
-          payload.elementor_mode = catalog.mode;
+          payload.elementor_mode = "native";
           elementorSource = "catalog";
           elementorSimilarity = catalog.similarity;
 
@@ -1051,11 +1022,6 @@ async function handlePublishPages(req: Request): Promise<Response> {
             console.warn(
               "[publish-pages] CSS integrity warning: no template CSS found for page",
               { pageId: page.id, campaignId: page.campaign_id },
-            );
-          } else if (catalog.cssAutoFixed) {
-            console.log(
-              "[publish-pages] CSS auto-fixed (recovered/injected template CSS)",
-              { pageId: page.id, mode: catalog.mode, cssLength: catalog.cssLength },
             );
           }
 
@@ -1127,7 +1093,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         headers: { Authorization: authHeader, "Content-Type": "application/json" },
         body: JSON.stringify({
           page_ids: remainingIds, publish_type: pubType, website_id: fallbackWebsiteId,
-          overwrite_design: allowOverwriteDesign, elementor_mode: elementorMode, _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
+          overwrite_design: allowOverwriteDesign, elementor_mode: "native", _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
         }),
       }).catch((e) => console.error("[PUBLISH] Self-chain failed:", e));
     }
