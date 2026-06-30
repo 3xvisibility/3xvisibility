@@ -308,6 +308,7 @@ export default function TemplatesPage() {
         content: params.content, variables,
       } as any).eq("id", params.id);
       if (error) throw error;
+      await recordVersionById(params.id, "Customized design");
     },
     onSuccess: async () => {
       await refreshTemplates();
