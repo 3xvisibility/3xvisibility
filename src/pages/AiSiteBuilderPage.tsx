@@ -370,6 +370,102 @@ export default function AiSiteBuilderPage() {
         </CardContent>
       </Card>
 
+      {/* Brand theme control — colors, typography, gradient style. */}
+      <Card>
+        <CardContent className="py-4 space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Palette className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-semibold">Brand theme</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{themeOn ? "Using my colors" : "AI picks colors"}</span>
+              <Switch checked={themeOn} onCheckedChange={setThemeOn} />
+            </div>
+          </div>
+
+          {themeOn && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: "Primary", value: themePrimary, set: setThemePrimary },
+                  { label: "Accent", value: themeAccent, set: setThemeAccent },
+                  { label: "Background", value: themeBg, set: setThemeBg },
+                  { label: "Text", value: themeText, set: setThemeText },
+                ].map((c) => (
+                  <div key={c.label} className="space-y-1.5">
+                    <Label className="text-xs">{c.label}</Label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={c.value}
+                        onChange={(e) => c.set(e.target.value)}
+                        className="h-9 w-9 shrink-0 cursor-pointer rounded-md border bg-transparent p-0.5"
+                        aria-label={`${c.label} color`}
+                      />
+                      <Input value={c.value} onChange={(e) => c.set(e.target.value)} className="h-9 font-mono text-xs" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Typography</Label>
+                  <Select value={themeFont} onValueChange={setThemeFont}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="plus-jakarta">Plus Jakarta Sans (modern)</SelectItem>
+                      <SelectItem value="inter">Inter (clean)</SelectItem>
+                      <SelectItem value="poppins">Poppins (friendly)</SelectItem>
+                      <SelectItem value="space-grotesk">Space Grotesk (techy)</SelectItem>
+                      <SelectItem value="sora">Sora (geometric)</SelectItem>
+                      <SelectItem value="playfair">Playfair Display (elegant serif)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Gradient style</Label>
+                  <Select value={themeGradient} onValueChange={setThemeGradient}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="diagonal">Diagonal</SelectItem>
+                      <SelectItem value="vertical">Vertical</SelectItem>
+                      <SelectItem value="radial">Radial glow</SelectItem>
+                      <SelectItem value="conic">Conic</SelectItem>
+                      <SelectItem value="solid">Solid (no gradient)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div
+                className="h-16 rounded-lg border flex items-center justify-center text-sm font-semibold text-white"
+                style={{
+                  background:
+                    themeGradient === "vertical"
+                      ? `linear-gradient(180deg, ${themePrimary}, ${themeAccent})`
+                      : themeGradient === "radial"
+                        ? `radial-gradient(circle at 30% 20%, ${themePrimary}, ${themeAccent})`
+                        : themeGradient === "conic"
+                          ? `conic-gradient(from 210deg at 50% 50%, ${themePrimary}, ${themeAccent}, ${themePrimary})`
+                          : themeGradient === "solid"
+                            ? themePrimary
+                            : `linear-gradient(135deg, ${themePrimary}, ${themeAccent})`,
+                }}
+              >
+                Theme preview
+              </div>
+              <p className="text-xs text-muted-foreground">
+                These values override the AI palette. Adjust and click <span className="font-medium">Build with AI</span> to regenerate.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
+
       {/* Connected websites with auto-detected platform badge + last-checked time. */}
       {websites.length > 0 && (
         <Card>
