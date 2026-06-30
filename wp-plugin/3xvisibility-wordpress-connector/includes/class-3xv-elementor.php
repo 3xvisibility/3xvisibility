@@ -298,6 +298,31 @@ class XXXV_Elementor {
 	}
 
 	/**
+	 * Enqueue stored template CSS as real frontend CSS. Some optimization/cache
+	 * plugins move or strip late wp_head style tags, while wp_add_inline_style()
+	 * is handled as an enqueued stylesheet dependency. We keep print_template_css()
+	 * as a backup, but this is the primary live-page CSS path.
+	 */
+	public static function enqueue_template_css() {
+		if ( ! is_singular( 'page' ) ) {
+			return;
+		}
+		$post_id = get_queried_object_id();
+		if ( ! $post_id ) {
+			return;
+		}
+		$css = get_post_meta( $post_id, '_xxxv_template_css', true );
+		if ( ! is_string( $css ) || '' === trim( $css ) ) {
+			return;
+		}
+
+		$handle = 'xxxv-template-css-' . (int) $post_id;
+		wp_register_style( $handle, false, array(), XXXV_CONNECTOR_VERSION );
+		wp_enqueue_style( $handle );
+		wp_add_inline_style( $handle, $css );
+	}
+
+	/**
 	 * Save through Elementor's Document API so the editor sees a clean document.
 	 *
 	 * @param int   $post_id Page ID.
@@ -482,13 +507,10 @@ class XXXV_Elementor {
 		clean_post_cache( $post_id );
 		wp_cache_flush();
 
-		if ( did_action( 'elementor/loaded' ) && class_exists( '\Elementor\Plugin' ) ) {
-			try {
-				\Elementor\Plugin::$instance->files_manager->clear_cache();
-			} catch ( \Throwable $e ) {
-				// Non-fatal: per-page CSS was already regenerated above.
-			}
-		}
+		// Do NOT clear Elementor's files_manager cache here. The publish flow just
+		// regenerated the per-page CSS file; clearing the file cache immediately
+		// after that can delete/invalidates the fresh CSS before visitors load it,
+		// causing live pages to look unstyled. We only purge page/object caches.
 
 		if ( function_exists( 'rocket_clean_post' ) ) {
 			rocket_clean_post( $post_id );
