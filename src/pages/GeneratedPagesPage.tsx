@@ -85,6 +85,7 @@ export default function GeneratedPagesPage() {
   const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
+  const [publishLog, setPublishLog] = useState<PublishLogResult[] | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
