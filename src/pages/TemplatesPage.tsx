@@ -18,7 +18,7 @@ import {
   Search as SearchIcon, Pencil, MoreVertical, LayoutGrid, List,
   ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet, Link2,
   ChevronLeft, ChevronRight, Loader2, MonitorSmartphone, ShoppingBag, Briefcase,
-  Wand2, Eye, AlertTriangle, Crown, Palette,
+  Wand2, Eye, AlertTriangle, Crown, Palette, History,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
@@ -39,6 +39,8 @@ import { TemplateCreationPicker, type CreationMethod, type ContentType } from "@
 import { TemplateCustomizerDialog } from "@/components/templates/TemplateCustomizerDialog";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { TemplateVersionBadge } from "@/components/templates/TemplateVersionBadge";
+import { TemplateVersionHistoryDialog } from "@/components/templates/TemplateVersionHistoryDialog";
+import { recordVersionById, recordVersionForLatest } from "@/lib/template-version-history";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 import { computeMarketplaceVersion } from "@/lib/marketplace-versioning";
@@ -73,6 +75,7 @@ export default function TemplatesPage() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<Template | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [historyTarget, setHistoryTarget] = useState<Template | null>(null);
 
   // AI Regenerate Design state
   const [regenTarget, setRegenTarget] = useState<Template | null>(null);
@@ -265,6 +268,7 @@ export default function TemplatesPage() {
         schema_config: params.schemaConfig || {},
       } as any);
       if (error) throw error;
+      await recordVersionForLatest(wsId, params.name, "Created template");
     },
     onSuccess: async () => {
       await refreshTemplates();
@@ -286,6 +290,7 @@ export default function TemplatesPage() {
         schema_config: params.schemaConfig || {},
       } as any).eq("id", params.id);
       if (error) throw error;
+      await recordVersionById(params.id, "Edited template");
     },
     onSuccess: async () => {
       await refreshTemplates();
@@ -304,6 +309,7 @@ export default function TemplatesPage() {
         content: params.content, variables,
       } as any).eq("id", params.id);
       if (error) throw error;
+      await recordVersionById(params.id, "Customized design");
     },
     onSuccess: async () => {
       await refreshTemplates();
@@ -1009,6 +1015,7 @@ slug: ${fields.slug}`,
                       <DropdownMenuItem onClick={() => openPreview(tpl)}><Eye className="h-3.5 w-3.5 mr-2" /> Preview</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRename(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Rename</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setHistoryTarget(tpl)}><History className="h-3.5 w-3.5 mr-2" /> Version history</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setCustomizeTemplate(tpl)}><Palette className="h-3.5 w-3.5 mr-2" /> Customize</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openRegenDialog(tpl)}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
@@ -1068,6 +1075,7 @@ slug: ${fields.slug}`,
                             <DropdownMenuItem onClick={() => openPreview(tpl)}><Eye className="h-3.5 w-3.5 mr-2" /> Preview</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRename(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Rename</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setHistoryTarget(tpl)}><History className="h-3.5 w-3.5 mr-2" /> Version history</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setCustomizeTemplate(tpl)}><Palette className="h-3.5 w-3.5 mr-2" /> Customize</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRegenDialog(tpl)}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
@@ -1127,6 +1135,7 @@ slug: ${fields.slug}`,
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openPreview(tpl); }}><Eye className="h-3.5 w-3.5 mr-2" /> Preview</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRename(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Rename</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setHistoryTarget(tpl)}><History className="h-3.5 w-3.5 mr-2" /> Version history</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setCustomizeTemplate(tpl); }}><Palette className="h-3.5 w-3.5 mr-2" /> Customize</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl); }}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl, "variants-only"); }}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
@@ -1195,6 +1204,14 @@ slug: ${fields.slug}`,
           label: "Edit template",
           onClick: () => { const t = previewTemplateRow; setPreviewTemplate(null); setPreviewTemplateRow(null); openEditor(t); },
         } : undefined}
+      />
+
+      {/* Version History Dialog */}
+      <TemplateVersionHistoryDialog
+        open={!!historyTarget}
+        onOpenChange={(v) => { if (!v) setHistoryTarget(null); }}
+        templateId={historyTarget?.id ?? null}
+        templateName={historyTarget?.name}
       />
 
       {/* Rename Dialog */}

@@ -2486,6 +2486,78 @@ export type Database = {
           },
         ]
       }
+      template_versions: {
+        Row: {
+          change_summary: string | null
+          content: string
+          created_at: string
+          elementor_data: Json | null
+          id: string
+          name: string
+          schema_config: Json | null
+          schema_type: string | null
+          seo_description_pattern: string | null
+          seo_title_pattern: string | null
+          template_id: string
+          template_kind: string | null
+          user_id: string
+          variables: string[] | null
+          version_number: number
+          workspace_id: string | null
+        }
+        Insert: {
+          change_summary?: string | null
+          content?: string
+          created_at?: string
+          elementor_data?: Json | null
+          id?: string
+          name: string
+          schema_config?: Json | null
+          schema_type?: string | null
+          seo_description_pattern?: string | null
+          seo_title_pattern?: string | null
+          template_id: string
+          template_kind?: string | null
+          user_id: string
+          variables?: string[] | null
+          version_number?: number
+          workspace_id?: string | null
+        }
+        Update: {
+          change_summary?: string | null
+          content?: string
+          created_at?: string
+          elementor_data?: Json | null
+          id?: string
+          name?: string
+          schema_config?: Json | null
+          schema_type?: string | null
+          seo_description_pattern?: string | null
+          seo_title_pattern?: string | null
+          template_id?: string
+          template_kind?: string | null
+          user_id?: string
+          variables?: string[] | null
+          version_number?: number
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_versions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       templates: {
         Row: {
           content: string

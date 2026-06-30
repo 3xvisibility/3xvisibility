@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { recordVersionForLatest } from "@/lib/template-version-history";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
 import { Seo } from "@/components/Seo";
@@ -281,6 +282,12 @@ export default function AiSiteBuilderPage() {
         schema_config: {},
       });
       if (error) throw error;
+      // Record the first version snapshot for the new template.
+      await recordVersionForLatest(
+        currentWorkspace.id,
+        page.title || "AI Generated Template",
+        "Saved from AI Site Builder",
+      );
       toast({
         title: "Saved as template",
         description: "Find it under Templates to run a campaign and generate pages.",
