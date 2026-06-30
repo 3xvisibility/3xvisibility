@@ -186,7 +186,14 @@ class XXXV_Elementor {
 				throw new Exception( $css_check->get_error_message() );
 			}
 
-			self::log( 'info', 'Published successfully.', array( 'post_id' => $post_id, 'css' => $css_ok ) );
+			// ---- (9b) Confirm the page opens in "Edit with Elementor" mode and
+			//          that editable regions/widgets are actually present --------
+			$editor_check = self::validate_editor_ready( $post_id );
+			if ( is_wp_error( $editor_check ) ) {
+				throw new Exception( $editor_check->get_error_message() );
+			}
+
+			self::log( 'info', 'Published successfully.', array( 'post_id' => $post_id, 'css' => $css_ok, 'widgets' => $editor_check['widgets'] ) );
 
 			// ---- (10) Return success ------------------------------------------
 			return rest_ensure_response(
@@ -203,8 +210,12 @@ class XXXV_Elementor {
 					'elementor_data_hash'  => $saved_check['hash'],
 					'media'                => $media_report,
 					'css_validated'        => true,
+					'editor_ready'         => true,
+					'editable_widgets'     => $editor_check['widgets'],
+					'edit_mode'            => $editor_check['edit_mode'],
 				)
 			);
+
 		} catch ( \Throwable $e ) {
 			// ---- ROLLBACK -----------------------------------------------------
 			self::rollback( $rollback, $is_update ? $post_id : 0 );
