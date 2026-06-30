@@ -2212,5 +2212,6 @@
   "workspaceSettings.workspaceDetailsDesc": "Aktualisieren Sie den Namen Ihres Arbeitsbereichs. Nur Arbeitsbereichs-Inhaber können den Namen ändern.",
   "workspaceSettings.workspaceName": "Workspace-Name",
   "workspaceSettings.workspaceRenamed": "Arbeitsbereich umbenannt",
-  "workspaceSettings.workspaceRenamedDesc": "Der Name des Arbeitsbereichs wurde aktualisiert."
+  "workspaceSettings.workspaceRenamedDesc": "Der Name des Arbeitsbereichs wurde aktualisiert.",
+  "sidebar.aiSiteBuilder": "KI-Website-Builder"
 }
