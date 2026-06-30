@@ -897,6 +897,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         // Resolve Shopify field mapping (campaign override → website default)
         let shopifyExtraData: Record<string, unknown> | undefined;
         if (resolvedPublishType === "product" && (page.websites as { type?: string }).type === "shopify") {
+          step("Resolving Shopify field mapping", "running");
           try {
             const wsId = page.website_id;
               type ShopifyMapRow = { field_map?: Record<string, string>; variant_map?: Record<string, string>; metafields?: { namespace: string; key: string; type: string; value: string }[] };
