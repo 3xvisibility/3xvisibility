@@ -60,6 +60,19 @@ class XXXV_Elementor {
 			$elementor_data = is_array( $decoded ) ? $decoded : array();
 		}
 
+		// Upload every template image/background to this WordPress Media Library and
+		// replace Elementor image objects with local attachment IDs + URLs before any
+		// document is saved. The SaaS must never send AI/stock replacement images;
+		// this only imports references already present in the selected template JSON.
+		$media_report = self::map_media_library_references( $elementor_data );
+		if ( is_wp_error( $media_report ) ) {
+			self::log( 'error', 'Media import failed: ' . $media_report->get_error_message(), array( 'slug' => $slug ) );
+			return $media_report;
+		}
+		if ( '' !== $elementor_css ) {
+			$elementor_css = self::map_css_media_references( $elementor_css, $media_report );
+		}
+
 		// ---- (1) Validate the incoming JSON model -----------------------------
 		$validation = self::validate_model( $elementor_data );
 		if ( is_wp_error( $validation ) ) {
@@ -95,12 +108,6 @@ class XXXV_Elementor {
 			$post_id = (int) $result;
 
 			// ---- (3/4) Save Elementor data model + metadata -------------------
-			// Elementor expects slashed JSON in meta.
-			$json = wp_json_encode( $elementor_data );
-			if ( false === $json ) {
-				throw new Exception( 'Failed to encode Elementor JSON.' );
-			}
-			update_post_meta( $post_id, '_elementor_data', wp_slash( $json ) );
 			update_post_meta( $post_id, '_elementor_edit_mode', 'builder' );
 			update_post_meta( $post_id, '_elementor_template_type', 'wp-page' );
 			update_post_meta( $post_id, '_elementor_version', defined( 'ELEMENTOR_VERSION' ) ? ELEMENTOR_VERSION : XXXV_CONNECTOR_VERSION );
@@ -123,12 +130,25 @@ class XXXV_Elementor {
 				}
 			}
 
-			// ---- Mirror the data through Elementor's own document API so the
-			//      internal element cache + settings stay consistent with the editor.
+			// ---- Save through Elementor's own document API so internal element cache,
+			// controls, breakpoints, responsive data and editor state match a manual
+			// Elementor save. This is REQUIRED and fatal on failure.
 			self::save_via_document( $post_id, $elementor_data );
 
+			// Elementor's document API may normalize meta; write the exact final JSON
+			// after the document save and verify it below.
+			$json = wp_json_encode( $elementor_data );
+			if ( false === $json ) {
+				throw new Exception( 'Failed to encode Elementor JSON.' );
+			}
+			update_post_meta( $post_id, '_elementor_data', wp_slash( $json ) );
+
 			// ---- (5) Generate per-page CSS ------------------------------------
+			self::refresh_elementor_files();
 			$css_ok = self::regenerate_page_css( $post_id );
+			if ( ! $css_ok ) {
+				throw new Exception( 'Elementor page CSS regeneration failed.' );
+			}
 
 			// ---- (6) Generate / refresh global (kit) CSS ----------------------
 			self::regenerate_global_css();
@@ -143,6 +163,10 @@ class XXXV_Elementor {
 			$saved_check = self::validate_saved_elementor_data( $post_id, $elementor_data );
 			if ( is_wp_error( $saved_check ) ) {
 				throw new Exception( $saved_check->get_error_message() );
+			}
+			$css_check = self::validate_generated_css( $post_id, '' !== $elementor_css );
+			if ( is_wp_error( $css_check ) ) {
+				throw new Exception( $css_check->get_error_message() );
 			}
 
 			self::log( 'info', 'Published successfully.', array( 'post_id' => $post_id, 'css' => $css_ok ) );
@@ -160,6 +184,8 @@ class XXXV_Elementor {
 					'validated'            => true,
 					'elementor_data_valid' => true,
 					'elementor_data_hash'  => $saved_check['hash'],
+					'media'                => $media_report,
+					'css_validated'        => true,
 				)
 			);
 		} catch ( \Throwable $e ) {
