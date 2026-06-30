@@ -241,19 +241,8 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
     </section>`
     : "";
 
-  const sections = (p.sections || [])
-    .map(
-      (s, i) => `
-    <section style="padding:64px 24px;max-width:920px;margin:0 auto;">
-      <div style="font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${esc(t.primary)};margin:0 0 12px;">0${i + 1}</div>
-      <h2 style="font-size:clamp(26px,3.4vw,36px);line-height:1.15;margin:0 0 16px;color:${esc(t.text)};font-weight:800;letter-spacing:-0.02em;">${esc(s.title)}</h2>
-      <p style="font-size:18px;line-height:1.75;color:${muted};margin:0;max-width:680px;">${esc(s.body)}</p>
-    </section>`,
-    )
-    .join("");
-
-  const features = (p.features && p.features.length)
   const q = imgQuery || p.title || "business modern";
+
 
   const sections = (p.sections || [])
     .map(
