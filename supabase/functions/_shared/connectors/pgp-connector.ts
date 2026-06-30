@@ -37,7 +37,7 @@ interface PublishResponse {
 }
 
 const CONNECTOR_TIMEOUT_MS = 25_000;
-export const REQUIRED_3XV_CONNECTOR_VERSION = "1.1.4";
+export const REQUIRED_3XV_CONNECTOR_VERSION = "1.1.5";
 
 interface ConnectorPingResponse {
   ok: boolean;
