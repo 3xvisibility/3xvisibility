@@ -257,7 +257,7 @@ export default function WpControlPage() {
               <CardDescription>Switch the active WordPress theme.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {actions.themes.themes.map((t) => (
+              {(actions.themes?.themes ?? []).map((t) => (
                 <div key={t.stylesheet} className="flex items-center justify-between gap-3 rounded-md border p-3">
                   <div className="min-w-0">
                     <p className="flex items-center gap-2 truncate text-sm font-medium">
