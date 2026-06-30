@@ -492,6 +492,16 @@ Generate the landing page JSON now.`;
 
   parsed.slug = slugify(parsed.slug || parsed.title || input.brand || "page");
   parsed.theme = parsed.theme || { primary: "#2563eb", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
+  // Apply a manual brand theme override on top of the AI-chosen palette.
+  const bt = input.brandTheme;
+  if (bt) {
+    if (bt.primary) parsed.theme.primary = bt.primary;
+    if (bt.accent) parsed.theme.accent = bt.accent;
+    if (bt.bg) parsed.theme.bg = bt.bg;
+    if (bt.text) parsed.theme.text = bt.text;
+    if (bt.font) parsed.theme.font = bt.font;
+    if (bt.gradientStyle) parsed.theme.gradientStyle = bt.gradientStyle;
+  }
   parsed.hero = parsed.hero || { headline: parsed.title || "Welcome", subheadline: "", cta: "Get Started" };
   parsed.sections = Array.isArray(parsed.sections) ? parsed.sections : [];
   const hints = [
