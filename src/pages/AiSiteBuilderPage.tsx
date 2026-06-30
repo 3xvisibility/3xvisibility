@@ -82,7 +82,14 @@ export default function AiSiteBuilderPage() {
       .then(({ data }) => {
         const rows = (data as WebsiteRow[]) || [];
         setWebsites(rows);
-        if (rows.length && !selectedWebsite) setSelectedWebsite(rows[0].id);
+        if (rows.length && !selectedWebsite) {
+          setSelectedWebsite(rows[0].id);
+          // Auto-detect platform from the connected website's type.
+          const detected = (rows[0].type || "").toLowerCase();
+          if (detected === "shopify" || detected === "wordpress") {
+            setPlatform(detected);
+          }
+        }
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWorkspace?.id]);
