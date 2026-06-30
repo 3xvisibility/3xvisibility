@@ -36,6 +36,10 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.1.8 =
+* Add automatic post-publish editor-readiness check: confirm the page opens in "Edit with Elementor" mode (builder edit mode + Elementor document built) and that editable widgets are present before returning success; roll back otherwise.
+
+
 = 1.1.7 =
 * Enforce native Elementor-only publishing: reject HTML widgets/raw HTML injection, save through Elementor's document lifecycle, import/map all template images and CSS backgrounds to Media Library attachment IDs/URLs, regenerate and validate Elementor CSS before returning success.
 
