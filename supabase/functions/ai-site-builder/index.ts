@@ -32,7 +32,8 @@ interface PageJson {
   metaTitle: string;
   metaDescription: string;
   theme: { primary: string; accent: string; bg: string; text: string };
-  hero: { headline: string; subheadline: string; cta: string };
+  hero: { headline: string; subheadline: string; cta: string; eyebrow?: string };
+  stats?: { value: string; label: string }[];
   sections: { title: string; body: string }[];
   features?: { title: string; body: string }[];
   faqs?: { q: string; a: string }[];
