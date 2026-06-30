@@ -96,7 +96,7 @@ export default function AiSiteBuilderPage() {
     setPage(null);
     try {
       const { data, error } = await supabase.functions.invoke("ai-site-builder", {
-        body: { action: "build", input: { brand, category, niche, referenceUrl, freeText } },
+        body: { action: "build", input: { brand, category, niche, referenceUrl, freeText, platform } },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
