@@ -22,6 +22,8 @@ interface BuildInput {
   templateName?: string;
   freeText?: string;
   language?: string;
+  /** Target platform the AI should build for: "wordpress" (Elementor) or "shopify". */
+  platform?: "wordpress" | "shopify";
 }
 
 interface PageJson {
@@ -249,6 +251,23 @@ async function pickMasterTemplate(
 // Elementor conversion; (3) raw HTML fallback.
 async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: string[]) {
   const html = renderHtml(p);
+  const platform = input.platform === "shopify" ? "shopify" : "wordpress";
+
+  // Shopify pages do NOT use Elementor — they publish into Shopify's own
+  // section/page template (rich HTML body). Skip all Elementor routing so the
+  // page lands in the Shopify-style template instead of the WordPress one.
+  if (platform === "shopify") {
+    return {
+      title: p.title,
+      slug: p.slug,
+      seo_title: p.metaTitle,
+      seo_description: p.metaDescription,
+      content: html,
+      publish_format: "shopify",
+      platform,
+    };
+  }
+
   let elementorData: string | undefined;
   let elementorCss: string | undefined;
 
@@ -292,6 +311,8 @@ async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: st
     elementor_data: elementorData,
     elementor_css: elementorCss,
     elementor_mode: elementorData ? "native" : undefined,
+    publish_format: "elementor",
+    platform,
   };
 }
 
@@ -447,6 +468,10 @@ When ready is true, your reply should tell the user you'll build a preview now.`
 
       let pageResult: any = null;
       if (parsed.ready && parsed.collected) {
+        // Carry the platform choice from the request into the collected input.
+        if (body.platform === "shopify" || body.platform === "wordpress") {
+          parsed.collected.platform = body.platform;
+        }
         const out = await generatePage(parsed.collected, authToken);
         if (out.ok && out.page) {
           pageResult = {

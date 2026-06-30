@@ -28,6 +28,8 @@ interface GeneratedPage {
   elementor_data?: string;
   elementor_css?: string;
   elementor_mode?: string;
+  publish_format?: string;
+  platform?: "wordpress" | "shopify";
 }
 
 interface ChatMsg {
@@ -53,6 +55,7 @@ export default function AiSiteBuilderPage() {
   const [publishing, setPublishing] = useState(false);
   const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [platform, setPlatform] = useState<"wordpress" | "shopify">("wordpress");
 
   // Wizard fields
   const [brand, setBrand] = useState("");
@@ -88,12 +91,25 @@ export default function AiSiteBuilderPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Keep the publish target in sync with the page's platform.
+  useEffect(() => {
+    if (!page) return;
+    const target = page.platform || platform;
+    const matches = websites.filter((w) => (w.type || "").toLowerCase() === target);
+    if (!matches.some((w) => w.id === selectedWebsite)) {
+      setSelectedWebsite(matches[0]?.id || "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, websites]);
+
+
+
   const handleBuild = async () => {
     setBuilding(true);
     setPage(null);
     try {
       const { data, error } = await supabase.functions.invoke("ai-site-builder", {
-        body: { action: "build", input: { brand, category, niche, referenceUrl, freeText } },
+        body: { action: "build", input: { brand, category, niche, referenceUrl, freeText, platform } },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -115,7 +131,7 @@ export default function AiSiteBuilderPage() {
     setChatLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("ai-site-builder", {
-        body: { action: "chat", messages: next },
+        body: { action: "chat", messages: next, platform },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -154,6 +170,7 @@ export default function AiSiteBuilderPage() {
               elementor_data: page.elementor_data,
               elementor_css: page.elementor_css,
               elementor_mode: page.elementor_mode,
+              publish_format: page.publish_format,
             },
           ],
         },
@@ -206,6 +223,35 @@ export default function AiSiteBuilderPage() {
           <p className="text-sm text-muted-foreground">Give a brand, niche, link or description — AI designs and publishes the page.</p>
         </div>
       </div>
+
+      {/* Platform choice — decides which template system the AI builds into. */}
+      <Card>
+        <CardContent className="py-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-primary" />
+            <Label className="text-sm font-semibold">Build for which platform?</Label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setPlatform("wordpress")}
+              className={`rounded-lg border p-3 text-left transition ${platform === "wordpress" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"}`}
+            >
+              <p className="text-sm font-semibold">WordPress</p>
+              <p className="text-xs text-muted-foreground">Builds into the native Elementor template system.</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlatform("shopify")}
+              className={`rounded-lg border p-3 text-left transition ${platform === "shopify" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"}`}
+            >
+              <p className="text-sm font-semibold">Shopify</p>
+              <p className="text-xs text-muted-foreground">Builds into the Shopify-style page template.</p>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+
 
       <div className="grid lg:grid-cols-2 gap-6">
         <Tabs defaultValue="wizard">
@@ -301,7 +347,11 @@ export default function AiSiteBuilderPage() {
                 <div className="text-xs space-y-1">
                   <p><span className="font-semibold">SEO title:</span> {page.seo_title}</p>
                   <p className="text-muted-foreground">{page.seo_description}</p>
-                  {page.elementor_data && (
+                  {page.platform === "shopify" ? (
+                    <p className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-2 py-0.5 font-medium">
+                      <Sparkles className="h-3 w-3" /> Shopify-style template ready
+                    </p>
+                  ) : page.elementor_data && (
                     <p className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-2 py-0.5 font-medium">
                       <Sparkles className="h-3 w-3" /> Native Elementor JSON ready
                     </p>
@@ -314,15 +364,19 @@ export default function AiSiteBuilderPage() {
                       <SelectValue placeholder="Choose a website" />
                     </SelectTrigger>
                     <SelectContent>
-                      {websites.length === 0 ? (
-                        <SelectItem value="__none__" disabled>No connected websites</SelectItem>
-                      ) : (
-                        websites.map((w) => (
+                      {(() => {
+                        const target = page.platform || platform;
+                        const matches = websites.filter((w) => (w.type || "").toLowerCase() === target);
+                        if (!matches.length) {
+                          return <SelectItem value="__none__" disabled>No connected {target} sites</SelectItem>;
+                        }
+                        return matches.map((w) => (
                           <SelectItem key={w.id} value={w.id}>{w.name} ({w.type})</SelectItem>
-                        ))
-                      )}
+                        ));
+                      })()}
                     </SelectContent>
                   </Select>
+
                   <Button onClick={handlePublish} disabled={publishing || !selectedWebsite} className="gap-2">
                     {publishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
                     {publishing ? "Publishing…" : "Publish"}
