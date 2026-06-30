@@ -859,8 +859,13 @@ class XXXV_Elementor {
 		$post_id = absint( $request->get_param( 'post_id' ) );
 
 		if ( $post_id > 0 ) {
+			self::refresh_elementor_files( $post_id );
 			$ok = self::regenerate_page_css( $post_id );
 			self::regenerate_global_css();
+			$css_check = self::validate_generated_css( $post_id, is_string( get_post_meta( $post_id, '_xxxv_template_css', true ) ) && '' !== trim( get_post_meta( $post_id, '_xxxv_template_css', true ) ) );
+			if ( is_wp_error( $css_check ) ) {
+				return $css_check;
+			}
 			// Purge page/object/CDN caches so the freshly regenerated CSS goes live now.
 			self::clear_runtime_caches( $post_id );
 			return rest_ensure_response(
