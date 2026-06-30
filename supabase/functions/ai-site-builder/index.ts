@@ -147,59 +147,99 @@ async function fetchReference(url: string): Promise<ReferenceAnalysis> {
 
 
 function renderHtml(p: PageJson): string {
-  const t = p.theme || { primary: "#2563eb", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
+  const t = p.theme || { primary: "#6d28d9", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
+  // Derive a soft surface + subtle border from the text color for depth.
+  const surface = "#ffffff";
+  const softBg = "#f6f7fb";
+  const border = "rgba(15,23,42,0.08)";
+  const muted = "rgba(15,23,42,0.62)";
+  const font = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
+  const stats = (p.stats && p.stats.length)
+    ? `
+    <section style="max-width:1120px;margin:-40px auto 0;padding:0 24px;position:relative;z-index:2;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:${border};border:1px solid ${border};border-radius:20px;overflow:hidden;box-shadow:0 24px 60px -28px rgba(15,23,42,0.35);">
+        ${p.stats.map((s) => `<div style="background:${surface};padding:28px 20px;text-align:center;">
+          <div style="font-size:34px;font-weight:800;letter-spacing:-0.02em;background:linear-gradient(135deg,${esc(t.primary)},${esc(t.accent)});-webkit-background-clip:text;background-clip:text;color:transparent;">${esc(s.value)}</div>
+          <div style="margin-top:6px;font-size:14px;font-weight:600;color:${muted};">${esc(s.label)}</div>
+        </div>`).join("")}
+      </div>
+    </section>`
+    : "";
+
   const sections = (p.sections || [])
     .map(
-      (s) => `
-    <section style="padding:56px 24px;max-width:1080px;margin:0 auto;">
-      <h2 style="font-size:30px;line-height:1.2;margin:0 0 16px;color:${esc(t.text)};font-weight:700;">${esc(s.title)}</h2>
-      <p style="font-size:18px;line-height:1.7;color:${esc(t.text)};opacity:.85;margin:0;">${esc(s.body)}</p>
+      (s, i) => `
+    <section style="padding:64px 24px;max-width:920px;margin:0 auto;">
+      <div style="font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${esc(t.primary)};margin:0 0 12px;">0${i + 1}</div>
+      <h2 style="font-size:clamp(26px,3.4vw,36px);line-height:1.15;margin:0 0 16px;color:${esc(t.text)};font-weight:800;letter-spacing:-0.02em;">${esc(s.title)}</h2>
+      <p style="font-size:18px;line-height:1.75;color:${muted};margin:0;max-width:680px;">${esc(s.body)}</p>
     </section>`,
     )
     .join("");
 
   const features = (p.features && p.features.length)
     ? `
-    <section style="padding:48px 24px;background:#f8fafc;">
-      <div style="max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;">
-        ${p.features
-          .map(
-            (f) => `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:24px;">
-          <h3 style="margin:0 0 8px;font-size:19px;color:${esc(t.text)};font-weight:700;">${esc(f.title)}</h3>
-          <p style="margin:0;font-size:16px;line-height:1.6;color:${esc(t.text)};opacity:.8;">${esc(f.body)}</p>
-        </div>`,
-          )
-          .join("")}
+    <section style="padding:72px 24px;background:${softBg};">
+      <div style="max-width:1120px;margin:0 auto;">
+        <h2 style="text-align:center;font-size:clamp(26px,3.4vw,38px);font-weight:800;letter-spacing:-0.02em;margin:0 0 12px;color:${esc(t.text)};">Why choose us</h2>
+        <p style="text-align:center;font-size:18px;color:${muted};max-width:560px;margin:0 auto 48px;">Everything you need, crafted with care.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;">
+          ${p.features
+            .map(
+              (f, i) => `<div style="background:${surface};border:1px solid ${border};border-radius:20px;padding:32px;box-shadow:0 18px 40px -30px rgba(15,23,42,0.5);transition:transform .2s ease;">
+            <div style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;background:linear-gradient(135deg,${esc(t.primary)},${esc(t.accent)});margin:0 0 18px;">${i + 1}</div>
+            <h3 style="margin:0 0 10px;font-size:20px;color:${esc(t.text)};font-weight:700;letter-spacing:-0.01em;">${esc(f.title)}</h3>
+            <p style="margin:0;font-size:16px;line-height:1.65;color:${muted};">${esc(f.body)}</p>
+          </div>`,
+            )
+            .join("")}
+        </div>
       </div>
     </section>`
     : "";
 
   const faqs = (p.faqs && p.faqs.length)
     ? `
-    <section style="padding:56px 24px;max-width:880px;margin:0 auto;">
-      <h2 style="font-size:28px;margin:0 0 24px;color:${esc(t.text)};font-weight:700;">FAQ</h2>
+    <section style="padding:72px 24px;max-width:760px;margin:0 auto;">
+      <h2 style="text-align:center;font-size:clamp(26px,3.4vw,38px);margin:0 0 40px;color:${esc(t.text)};font-weight:800;letter-spacing:-0.02em;">Frequently asked questions</h2>
       ${p.faqs
         .map(
-          (f) => `<div style="margin-bottom:18px;">
-        <h3 style="margin:0 0 6px;font-size:18px;color:${esc(t.text)};font-weight:600;">${esc(f.q)}</h3>
-        <p style="margin:0;font-size:16px;line-height:1.6;color:${esc(t.text)};opacity:.8;">${esc(f.a)}</p>
+          (f) => `<div style="background:${surface};border:1px solid ${border};border-radius:16px;padding:24px 26px;margin-bottom:14px;">
+        <h3 style="margin:0 0 8px;font-size:18px;color:${esc(t.text)};font-weight:700;">${esc(f.q)}</h3>
+        <p style="margin:0;font-size:16px;line-height:1.65;color:${muted};">${esc(f.a)}</p>
       </div>`,
         )
         .join("")}
     </section>`
     : "";
 
-  return `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:${esc(t.bg)};color:${esc(t.text)};">
-  <section style="padding:80px 24px;text-align:center;background:linear-gradient(135deg,${esc(t.primary)},${esc(t.accent)});color:#fff;">
-    <div style="max-width:820px;margin:0 auto;">
-      <h1 style="font-size:44px;line-height:1.1;margin:0 0 18px;font-weight:800;">${esc(p.hero.headline)}</h1>
-      <p style="font-size:20px;line-height:1.6;margin:0 0 28px;opacity:.95;">${esc(p.hero.subheadline)}</p>
-      <a href="#contact" style="display:inline-block;background:#fff;color:${esc(t.primary)};padding:14px 32px;border-radius:999px;font-weight:700;text-decoration:none;font-size:17px;">${esc(p.hero.cta)}</a>
+  const eyebrow = p.hero.eyebrow
+    ? `<div style="display:inline-block;padding:8px 18px;border-radius:999px;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.28);color:#fff;font-size:13px;font-weight:600;letter-spacing:0.04em;margin:0 0 24px;backdrop-filter:blur(6px);">${esc(p.hero.eyebrow)}</div>`
+    : "";
+
+  return `<div style="font-family:${font};background:${esc(t.bg)};color:${esc(t.text)};overflow:hidden;">
+  <style>@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');</style>
+  <section style="position:relative;padding:120px 24px 96px;text-align:center;background:linear-gradient(135deg,${esc(t.primary)} 0%,${esc(t.accent)} 100%);color:#fff;">
+    <div style="position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(255,255,255,0.18),transparent 45%),radial-gradient(circle at 80% 0%,rgba(255,255,255,0.12),transparent 40%);pointer-events:none;"></div>
+    <div style="position:relative;max-width:860px;margin:0 auto;">
+      ${eyebrow}
+      <h1 style="font-size:clamp(36px,6vw,60px);line-height:1.05;margin:0 0 22px;font-weight:800;letter-spacing:-0.03em;">${esc(p.hero.headline)}</h1>
+      <p style="font-size:clamp(17px,2.4vw,21px);line-height:1.6;margin:0 auto 36px;max-width:620px;opacity:.95;">${esc(p.hero.subheadline)}</p>
+      <a href="#contact" style="display:inline-block;background:#fff;color:${esc(t.primary)};padding:16px 38px;border-radius:999px;font-weight:700;text-decoration:none;font-size:17px;box-shadow:0 16px 40px -12px rgba(0,0,0,0.4);">${esc(p.hero.cta)}</a>
     </div>
   </section>
+  ${stats}
   ${sections}
   ${features}
   ${faqs}
+  <section style="padding:80px 24px;text-align:center;background:linear-gradient(135deg,${esc(t.primary)},${esc(t.accent)});color:#fff;">
+    <div style="max-width:680px;margin:0 auto;">
+      <h2 style="font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-0.02em;margin:0 0 16px;">${esc(p.hero.headline)}</h2>
+      <p style="font-size:19px;line-height:1.6;opacity:.95;margin:0 0 32px;">${esc(p.hero.subheadline)}</p>
+      <a href="#contact" style="display:inline-block;background:#fff;color:${esc(t.primary)};padding:16px 38px;border-radius:999px;font-weight:700;text-decoration:none;font-size:17px;">${esc(p.hero.cta)}</a>
+    </div>
+  </section>
 </div>`;
 }
 
