@@ -522,10 +522,56 @@ function flattenSections(elements: ElementorElement[]): ElementorElement[] {
  * Convert an HTML string into a top-level array of Elementor elements
  * (each visual section becomes its own top-level Container).
  */
+function cleanText(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const cut = value.search(/[<>]/);
+  return (cut === -1 ? value : value.slice(0, cut)).replace(/\s+/g, " ").trim();
+}
+
+function cleanUrl(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const cut = value.search(/[\s"'<>]/);
+  return (cut === -1 ? value : value.slice(0, cut)).trim();
+}
+
+function cleanEditorHtml(value: unknown): string {
+  if (typeof value !== "string") return "";
+  let out = value
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "");
+  const lastOpen = out.lastIndexOf("<");
+  if (lastOpen !== -1 && out.indexOf(">", lastOpen) === -1) out = out.slice(0, lastOpen);
+  return out.trim();
+}
+
+/** Idempotent cleaner that guarantees a stored master JSON carries no malformed markup. */
+export function sanitizeElementorTree(tree: ElementorElement[]): ElementorElement[] {
+  const visit = (el: ElementorElement): ElementorElement => {
+    const s: Record<string, unknown> = { ...(el.settings || {}) };
+    if (el.elType === "widget") {
+      if (el.widgetType === "heading") {
+        if ("title" in s) s.title = cleanText(s.title);
+        if (typeof s.header_size !== "string" || !/^h[1-6]$/.test(s.header_size as string)) s.header_size = "h2";
+      } else if (el.widgetType === "button") {
+        if ("text" in s) s.text = cleanText(s.text) || "Button";
+      } else if (el.widgetType === "text-editor") {
+        if ("editor" in s) s.editor = cleanEditorHtml(s.editor);
+      } else if (el.widgetType === "image") {
+        const img = s.image as { url?: unknown; alt?: unknown } | undefined;
+        if (img && typeof img === "object") s.image = { ...img, url: cleanUrl(img.url), alt: cleanText(img.alt) };
+      }
+      const link = s.link as { url?: unknown } | undefined;
+      if (link && typeof link === "object" && "url" in link) s.link = { ...link, url: cleanUrl(link.url) || "#" };
+    }
+    return { ...el, settings: s, elements: ((el.elements as ElementorElement[]) || []).map(visit) };
+  };
+  return tree.map(visit);
+}
+
 export function htmlToElementor(html: string): ElementorElement[] {
   const tree = parseHtml(html || "");
   const converted = convertChildren(tree);
-  return flattenSections(converted);
+  return sanitizeElementorTree(flattenSections(converted));
 }
 
 /* --------------------- visual regression workflow ------------------------ */
