@@ -259,6 +259,31 @@ class XXXV_Elementor {
 	}
 
 	/**
+	 * Ensure every top-level section is a full-width Elementor Container. This avoids
+	 * the old single-wrapper layout problem and mirrors manually-created Elementor
+	 * landing pages using the Elementor Full Width template.
+	 */
+	private static function normalize_top_level_containers( &$data ) {
+		if ( ! is_array( $data ) ) {
+			return;
+		}
+		foreach ( $data as &$element ) {
+			if ( is_array( $element ) && isset( $element['elType'] ) && 'container' === $element['elType'] ) {
+				if ( ! isset( $element['settings'] ) || ! is_array( $element['settings'] ) ) {
+					$element['settings'] = array();
+				}
+				$element['settings']['content_width'] = 'full';
+				$element['settings']['width']         = array(
+					'unit'  => '%',
+					'size'  => 100,
+					'sizes' => array(),
+				);
+			}
+		}
+		unset( $element );
+	}
+
+	/**
 	 * Validate one element recursively: native Elementor only, no HTML widgets, no
 	 * raw markup injection into text-editor settings.
 	 *
