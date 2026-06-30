@@ -1353,6 +1353,11 @@ export default function GeneratedPagesPage() {
         pageCount={pendingPublishIds.length}
         onConfirm={handleWebsiteSelected}
       />
+      <PublishLogDialog
+        open={!!publishLog}
+        onOpenChange={(open) => { if (!open) setPublishLog(null); }}
+        results={publishLog || []}
+      />
     </div>
   );
 }
