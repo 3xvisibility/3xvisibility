@@ -535,10 +535,25 @@ Generate the landing page JSON now.`;
   let raw = result.content.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
   let parsed: PageJson;
   try {
-    parsed = JSON.parse(raw);
+    parsed = JSON.parse(raw) as PageJson;
   } catch {
-    return { ok: false, error: "AI returned invalid JSON. Please try again." };
+    // The model sometimes wraps JSON in prose or emits trailing commas /
+    // control chars. Extract the outermost object and clean common issues.
+    try {
+      const start = raw.indexOf("{");
+      const end = raw.lastIndexOf("}");
+      if (start === -1 || end === -1 || end <= start) throw new Error("no object");
+      const slice = raw
+        .slice(start, end + 1)
+        .replace(/,\s*}/g, "}")
+        .replace(/,\s*]/g, "]")
+        .replace(/[\u0000-\u001F\u007F]/g, " ");
+      parsed = JSON.parse(slice) as PageJson;
+    } catch {
+      return { ok: false, error: "AI returned invalid JSON. Please try again." };
+    }
   }
+
 
   parsed.slug = slugify(parsed.slug || parsed.title || input.brand || "page");
   parsed.theme = parsed.theme || { primary: "#2563eb", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
