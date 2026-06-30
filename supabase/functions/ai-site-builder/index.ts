@@ -248,7 +248,7 @@ function renderHtml(p: PageJson): string {
           ${p.features
             .map(
               (f, i) => `<div style="background:${surface};border:1px solid ${border};border-radius:20px;padding:32px;box-shadow:0 18px 40px -30px rgba(15,23,42,0.5);transition:transform .2s ease;">
-            <div style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;background:linear-gradient(135deg,${esc(t.primary)},${esc(t.accent)});margin:0 0 18px;">${i + 1}</div>
+            <div style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;background:${heroGradient};margin:0 0 18px;">${i + 1}</div>
             <h3 style="margin:0 0 10px;font-size:20px;color:${esc(t.text)};font-weight:700;letter-spacing:-0.01em;">${esc(f.title)}</h3>
             <p style="margin:0;font-size:16px;line-height:1.65;color:${muted};">${esc(f.body)}</p>
           </div>`,
