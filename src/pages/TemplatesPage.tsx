@@ -1015,6 +1015,7 @@ slug: ${fields.slug}`,
                       <DropdownMenuItem onClick={() => openPreview(tpl)}><Eye className="h-3.5 w-3.5 mr-2" /> Preview</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRename(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Rename</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setHistoryTarget(tpl)}><History className="h-3.5 w-3.5 mr-2" /> Version history</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setCustomizeTemplate(tpl)}><Palette className="h-3.5 w-3.5 mr-2" /> Customize</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openRegenDialog(tpl)}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
@@ -1074,6 +1075,7 @@ slug: ${fields.slug}`,
                             <DropdownMenuItem onClick={() => openPreview(tpl)}><Eye className="h-3.5 w-3.5 mr-2" /> Preview</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRename(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Rename</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setHistoryTarget(tpl)}><History className="h-3.5 w-3.5 mr-2" /> Version history</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setCustomizeTemplate(tpl)}><Palette className="h-3.5 w-3.5 mr-2" /> Customize</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRegenDialog(tpl)}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
@@ -1133,6 +1135,7 @@ slug: ${fields.slug}`,
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openPreview(tpl); }}><Eye className="h-3.5 w-3.5 mr-2" /> Preview</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRename(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Rename</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setHistoryTarget(tpl)}><History className="h-3.5 w-3.5 mr-2" /> Version history</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setCustomizeTemplate(tpl); }}><Palette className="h-3.5 w-3.5 mr-2" /> Customize</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl); }}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl, "variants-only"); }}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
