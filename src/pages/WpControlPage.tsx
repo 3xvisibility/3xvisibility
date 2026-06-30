@@ -236,7 +236,7 @@ export default function WpControlPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={NONE}>— No menu —</SelectItem>
-                      {actions.menus.menus.map((m) => (
+                      {(actions.menus?.menus ?? []).map((m) => (
                         <SelectItem key={m.id} value={String(m.id)}>
                           {m.name} ({m.count})
                         </SelectItem>
