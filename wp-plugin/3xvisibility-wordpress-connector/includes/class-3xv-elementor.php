@@ -188,9 +188,31 @@ class XXXV_Elementor {
 
 			// ---- (9b) Confirm the page opens in "Edit with Elementor" mode and
 			//          that editable regions/widgets are actually present --------
-			$editor_check = self::validate_editor_ready( $post_id );
+			// If the readiness check fails, automatically purge caches and force
+			// an Elementor CSS/asset regeneration, then retry — up to 3 attempts.
+			$editor_check    = self::validate_editor_ready( $post_id );
+			$editor_attempts = 1;
+			$max_editor_attempts = 3;
+			while ( is_wp_error( $editor_check ) && $editor_attempts < $max_editor_attempts ) {
+				self::log(
+					'warning',
+					'Editor-readiness check failed; purging caches and regenerating Elementor before retry.',
+					array( 'post_id' => $post_id, 'attempt' => $editor_attempts, 'error' => $editor_check->get_error_message() )
+				);
+				// Force a fresh Elementor render + CSS rebuild and clear caches.
+				self::refresh_elementor_files( $post_id );
+				self::regenerate_page_css( $post_id );
+				self::regenerate_global_css();
+				self::refresh_assets();
+				self::clear_runtime_caches( $post_id );
+				$editor_attempts++;
+				$editor_check = self::validate_editor_ready( $post_id );
+			}
 			if ( is_wp_error( $editor_check ) ) {
-				throw new Exception( $editor_check->get_error_message() );
+				throw new Exception(
+					$editor_check->get_error_message() .
+					' (failed after ' . $editor_attempts . ' editor-readiness attempts)'
+				);
 			}
 
 			self::log( 'info', 'Published successfully.', array( 'post_id' => $post_id, 'css' => $css_ok, 'widgets' => $editor_check['widgets'] ) );
