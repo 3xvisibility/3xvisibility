@@ -293,7 +293,7 @@ function renderHtml(p: PageJson): string {
   ${sections}
   ${features}
   ${faqs}
-  <section style="padding:80px 24px;text-align:center;background:linear-gradient(135deg,${esc(t.primary)},${esc(t.accent)});color:#fff;">
+  <section style="padding:80px 24px;text-align:center;background:${heroGradient};color:#fff;">
     <div style="max-width:680px;margin:0 auto;">
       <h2 style="font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-0.02em;margin:0 0 16px;">${esc(p.hero.headline)}</h2>
       <p style="font-size:19px;line-height:1.6;opacity:.95;margin:0 0 32px;">${esc(p.hero.subheadline)}</p>
