@@ -18,6 +18,9 @@ interface GeneratedPage {
   seo_title: string;
   seo_description: string;
   content: string;
+  elementor_data?: string;
+  elementor_css?: string;
+  elementor_mode?: string;
 }
 
 interface ChatMsg {
