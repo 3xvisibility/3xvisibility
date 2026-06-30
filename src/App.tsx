@@ -161,6 +161,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="template-mapping" element={wrap(<FeatureGate feature="discovery"><TemplateMappingPage /></FeatureGate>)} />
       <Route path="template-kit" element={wrap(<FeatureGate feature="discovery"><TemplateKitPage /></FeatureGate>)} />
       <Route path="elementor-test" element={wrap(<ElementorTestPage />)} />
+      <Route path="wp-control" element={wrap(<WpControlPage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   );
