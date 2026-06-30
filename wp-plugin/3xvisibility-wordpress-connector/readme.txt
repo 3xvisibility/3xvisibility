@@ -4,7 +4,7 @@ Tags: elementor, gutenberg, rest-api, programmatic-seo, page-builder
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.1.6
+Stable tag: 1.1.7
 License: GPLv2 or later
 
 Secure companion plugin that lets the 3xVisibility publish native Elementor & Gutenberg pages, upload media, regenerate CSS, clear caches, and detect builders/themes.
@@ -36,7 +36,7 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
-= 1.1.6 =
+= 1.1.7 =
 * Enforce native Elementor-only publishing: reject HTML widgets/raw HTML injection, save through Elementor's document lifecycle, import/map all template images and CSS backgrounds to Media Library attachment IDs/URLs, regenerate and validate Elementor CSS before returning success.
 
 = 1.1.4 =
