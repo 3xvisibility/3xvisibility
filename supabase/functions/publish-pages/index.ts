@@ -772,7 +772,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
       });
     }
 
-    const results: { id: string; status: string; external_url?: string; error?: string; elementor_source?: "catalog"; elementor_similarity?: number }[] = [];
+    const results: { id: string; status: string; external_url?: string; error?: string; elementor_source?: "catalog"; elementor_similarity?: number; steps?: PublishStep[] }[] = [];
 
     // Cache page-template detection per website to avoid redundant checks
     const templateCache = new Map<string, { pageTemplate?: string }>();
@@ -853,13 +853,29 @@ async function handlePublishPages(req: Request): Promise<Response> {
         continue;
       }
 
+      // Per-page publish timeline so users can track exactly what happened.
+      const steps: PublishStep[] = [];
+      const step = (label: string, status: PublishStep["status"], detail?: string) => {
+        steps.push({ label, status, detail, at: new Date().toISOString() });
+      };
+      const finishRunning = (status: PublishStep["status"], detail?: string) => {
+        if (steps.length && steps[steps.length - 1].status === "running") {
+          steps[steps.length - 1].status = status;
+          if (detail !== undefined) steps[steps.length - 1].detail = detail;
+        }
+      };
       try {
         const resolvedPublishType = inferPublishType(page, pubType);
+        const platformLabel = (page.websites as { type?: string })?.type || "site";
+        step("Connecting to store", "running", `${platformLabel} · ${resolvedPublishType}`);
         const connector = resolvedPublishType === "product"
           ? await createProductConnector(page.websites as WebsiteRecord)
           : await createConnector(page.websites as WebsiteRecord);
+        finishRunning("ok");
         if ((page.websites as { type?: string })?.type === "wordpress" && resolvedPublishType === "page") {
+          step("Verifying connector plugin", "running");
           await runWordPressConnectorPreflight(connector, "3xVisibility WordPress Connector");
+          finishRunning("ok");
         }
         const cleanedContent = stripHeadTagsForCms(page.content);
         // Republish of an already-published CMS page → preserve existing on-site
@@ -881,6 +897,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         // Resolve Shopify field mapping (campaign override → website default)
         let shopifyExtraData: Record<string, unknown> | undefined;
         if (resolvedPublishType === "product" && (page.websites as { type?: string }).type === "shopify") {
+          step("Resolving Shopify field mapping", "running");
           try {
             const wsId = page.website_id;
               type ShopifyMapRow = { field_map?: Record<string, string>; variant_map?: Record<string, string>; metafields?: { namespace: string; key: string; type: string; value: string }[] };
@@ -924,7 +941,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
                   status: "failed",
                   error_message: msg.slice(0, 1000),
                 }).eq("id", page.id);
-                results.push({ id: page.id, status: "failed", error: msg });
+                step("Validation failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
                 continue;
               }
 
@@ -965,7 +982,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
                 const msg = `Shopify field mapping invalid: price resolved to non-numeric value "${priceResolved}"`;
                 console.error("[publish-pages]", msg, { pageId: page.id });
                 await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
-                results.push({ id: page.id, status: "failed", error: msg });
+                step("Validation failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
                 continue;
               }
 
@@ -993,17 +1010,20 @@ async function handlePublishPages(req: Request): Promise<Response> {
                 const msg = "Shopify field mapping invalid: product title resolved to empty string";
                 console.error("[publish-pages]", msg, { pageId: page.id });
                 await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
-                results.push({ id: page.id, status: "failed", error: msg });
+                step("Validation failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
                 continue;
               }
               if (fm.title) page.title = resolvedTitle;
               if (fm.seo_title) page.seo_title = interp(fm.seo_title) || page.seo_title;
               if (fm.seo_description) page.seo_description = interp(fm.seo_description) || page.seo_description;
             }
+            finishRunning("ok", mapRow ? "Mapping applied" : "No mapping — using page fields");
           } catch (e) {
             console.warn("[publish-pages] shopify mapping resolve failed", e);
+            finishRunning("warn", "Mapping resolve failed — using page fields");
           }
         }
+
 
         // Resolve the campaign's chosen publish format and forward it so the
         // WordPress connector emits Elementor or Gutenberg content accordingly.
@@ -1039,7 +1059,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
               "Seed the template via seed-elementor-templates before publishing to WordPress.";
             console.error("[publish-pages]", msg, { pageId: page.id });
             await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
-            results.push({ id: page.id, status: "failed", error: msg });
+            step("Validation failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
             continue;
           }
           if (!catalog.ok) {
@@ -1049,7 +1069,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
               `Content could not be fit into the template design.`;
             console.error("[publish-pages]", msg, { pageId: page.id });
             await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
-            results.push({ id: page.id, status: "failed", error: msg, elementor_similarity: catalog.similarity });
+            step("Visual similarity gate failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, elementor_similarity: catalog.similarity, steps });
             continue;
           }
           // Template-Kit architecture: ship the NATIVE Elementor JSON tree from
@@ -1081,8 +1101,10 @@ async function handlePublishPages(req: Request): Promise<Response> {
           resolvedPublishType === "page" && !preserveDesign &&
           (page.websites as { type?: string })?.type === "shopify"
         ) {
+          step("Loading Shopify section template", "running");
           const kit = await resolveShopifySectionKit(supabase, page, shopifySectionKitCache);
           if (kit) payload.shopify_section_kit = kit;
+          finishRunning(kit ? "ok" : "warn", kit ? "Native OS 2.0 section attached" : "No section kit — using body HTML");
         }
 
 
@@ -1097,10 +1119,13 @@ async function handlePublishPages(req: Request): Promise<Response> {
         applyShopifySuffix(payload, (page.websites as { type?: string })?.type, pageSuffixes, resolvedPublishType);
 
         // If page was previously published (has external_id), update instead of creating
+        step(page.external_id ? "Updating on store" : "Creating on store", "running");
         const result = page.external_id
           ? await withTimeout(connector.updatePage(page.external_id, payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${page.title}`)
           : await withTimeout(connector.createPage(payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${page.title}`);
+        finishRunning("ok", result.url || result.external_id);
 
+        step("Saving record", "running");
         await supabase.from("generated_pages").update({
           status: "published",
           external_id: result.external_id,
@@ -1108,8 +1133,10 @@ async function handlePublishPages(req: Request): Promise<Response> {
           error_message: null,
           editor_readiness: result.editor_readiness ?? null,
         }).eq("id", page.id);
+        finishRunning("ok");
 
-        results.push({ id: page.id, status: "published", external_url: result.url, elementor_source: elementorSource, elementor_similarity: elementorSimilarity });
+        step("Published", "ok", result.url);
+        results.push({ id: page.id, status: "published", external_url: result.url, elementor_source: elementorSource, elementor_similarity: elementorSimilarity, steps });
 
         // Audit log for publish
         try {
@@ -1127,6 +1154,8 @@ async function handlePublishPages(req: Request): Promise<Response> {
         } catch (_) { /* non-critical */ }
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown publishing error";
+        finishRunning("error", errorMsg.slice(0, 200));
+        step("Publish failed", "error", errorMsg.slice(0, 200));
         // If the failure came from the post-publish editor-readiness check, record
         // it as a structured readiness result so it surfaces in the pages list.
         const isEditorReadinessFailure = /edit with elementor|editor-readiness|editable .*widget/i.test(errorMsg);
@@ -1142,7 +1171,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           };
         }
         await supabase.from("generated_pages").update(failureUpdate).eq("id", page.id);
-        results.push({ id: page.id, status: "failed", error: errorMsg });
+        results.push({ id: page.id, status: "failed", error: errorMsg, steps });
       }
     }
 

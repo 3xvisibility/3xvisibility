@@ -22,6 +22,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
+import { PublishLogDialog, type PublishLogResult } from "@/components/campaigns/PublishLogDialog";
 import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,6 +85,7 @@ export default function GeneratedPagesPage() {
   const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
+  const [publishLog, setPublishLog] = useState<PublishLogResult[] | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -261,6 +263,7 @@ export default function GeneratedPagesPage() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       toast({ title: "Publishing complete", description: `${data.published} published, ${data.failed} failed.` });
+      if (Array.isArray(data?.results) && data.results.length) setPublishLog((data.results as PublishLogResult[]).map((r) => ({ ...r, title: r.title || pages.find((p) => p.id === r.id)?.title })));
       if (wsId) logAudit(wsId, "page_published", "page", variables.pageIds[0], { count: variables.pageIds.length });
       setShowWebsiteSelector(false);
       setPendingPublishIds([]);
@@ -332,6 +335,7 @@ export default function GeneratedPagesPage() {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       setSelectedIds(new Set());
       toast({ title: "Bulk publish complete", description: `${data.published} published, ${data.failed} failed.` });
+      if (Array.isArray(data?.results) && data.results.length) setPublishLog((data.results as PublishLogResult[]).map((r) => ({ ...r, title: r.title || pages.find((p) => p.id === r.id)?.title })));
       if (wsId) logAudit(wsId, "pages_bulk_published", "page", null, { count: ids.length, published: data.published });
       setShowWebsiteSelector(false);
       setPendingPublishIds([]);
@@ -378,6 +382,7 @@ export default function GeneratedPagesPage() {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       setSelectedIds(new Set());
       toast({ title: "Retry complete", description: `${data.published} published, ${data.failed} failed.` });
+      if (Array.isArray(data?.results) && data.results.length) setPublishLog((data.results as PublishLogResult[]).map((r) => ({ ...r, title: r.title || pages.find((p) => p.id === r.id)?.title })));
       setShowWebsiteSelector(false);
       setPendingPublishIds([]);
     },
@@ -1347,6 +1352,11 @@ export default function GeneratedPagesPage() {
         isPending={publishMutation.isPending || bulkPublishMutation.isPending || retryFailedMutation.isPending}
         pageCount={pendingPublishIds.length}
         onConfirm={handleWebsiteSelected}
+      />
+      <PublishLogDialog
+        open={!!publishLog}
+        onOpenChange={(open) => { if (!open) setPublishLog(null); }}
+        results={publishLog || []}
       />
     </div>
   );
