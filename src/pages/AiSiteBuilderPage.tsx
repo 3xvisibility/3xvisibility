@@ -328,6 +328,35 @@ export default function AiSiteBuilderPage() {
                     {publishing ? "Publishing…" : "Publish"}
                   </Button>
                 </div>
+
+                {publishSteps.length > 0 && (
+                  <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                      <CircleDot className="h-3.5 w-3.5" /> Publish status
+                    </div>
+                    <ol className="space-y-1.5">
+                      {publishSteps.map((s, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs">
+                          {stepIcon(s.status)}
+                          <div className="min-w-0">
+                            <p className="font-medium leading-tight">{s.label}</p>
+                            {s.detail && <p className="text-muted-foreground break-words leading-tight">{s.detail}</p>}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                    {publishedUrl && (
+                      <a
+                        href={publishedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                      >
+                        <Globe className="h-3.5 w-3.5" /> View live page
+                      </a>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </CardContent>
