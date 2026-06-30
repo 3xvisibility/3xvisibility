@@ -203,7 +203,21 @@ function gradientCss(primary: string, accent: string, style?: string): string {
   }
 }
 
-function renderHtml(p: PageJson): string {
+// Build a keyword-relevant photo URL. Uses LoremFlickr (free, no key, returns
+// Creative-Commons photos matching the keywords) so generated pages get
+// beautiful, on-topic imagery like Lovable does — without burning AI credits.
+function imgUrl(query: string, seed: number, w = 1200, h = 800): string {
+  const tags = (query || "business modern")
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 3)
+    .join(",") || "business";
+  return `https://loremflickr.com/${w}/${h}/${encodeURIComponent(tags)}?lock=${seed}`;
+}
+
+function renderHtml(p: PageJson, imgQuery = ""): string {
   const t = p.theme || { primary: "#6d28d9", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
   // Derive a soft surface + subtle border from the text color for depth.
   const surface = "#ffffff";
@@ -227,14 +241,26 @@ function renderHtml(p: PageJson): string {
     </section>`
     : "";
 
+  const q = imgQuery || p.title || "business modern";
+
+
   const sections = (p.sections || [])
     .map(
-      (s, i) => `
-    <section style="padding:64px 24px;max-width:920px;margin:0 auto;">
-      <div style="font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${esc(t.primary)};margin:0 0 12px;">0${i + 1}</div>
-      <h2 style="font-size:clamp(26px,3.4vw,36px);line-height:1.15;margin:0 0 16px;color:${esc(t.text)};font-weight:800;letter-spacing:-0.02em;">${esc(s.title)}</h2>
-      <p style="font-size:18px;line-height:1.75;color:${muted};margin:0;max-width:680px;">${esc(s.body)}</p>
-    </section>`,
+      (s, i) => {
+        const img = `<div style="flex:1 1 320px;min-width:280px;"><img src="${imgUrl(q, 100 + i)}" alt="${esc(s.title)}" loading="lazy" style="width:100%;height:340px;object-fit:cover;border-radius:24px;box-shadow:0 30px 60px -30px rgba(15,23,42,0.5);"/></div>`;
+        const text = `<div style="flex:1 1 320px;min-width:280px;">
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${esc(t.primary)};margin:0 0 12px;">0${i + 1}</div>
+          <h2 style="font-size:clamp(26px,3.4vw,36px);line-height:1.15;margin:0 0 16px;color:${esc(t.text)};font-weight:800;letter-spacing:-0.02em;">${esc(s.title)}</h2>
+          <p style="font-size:18px;line-height:1.75;color:${muted};margin:0;">${esc(s.body)}</p>
+        </div>`;
+        return `
+    <section style="padding:56px 24px;max-width:1120px;margin:0 auto;">
+      <div style="display:flex;flex-wrap:wrap;gap:48px;align-items:center;${i % 2 === 1 ? "flex-direction:row-reverse;" : ""}">
+        ${text}
+        ${img}
+      </div>
+    </section>`;
+      },
     )
     .join("");
 
@@ -247,10 +273,12 @@ function renderHtml(p: PageJson): string {
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;">
           ${p.features
             .map(
-              (f, i) => `<div style="background:${surface};border:1px solid ${border};border-radius:20px;padding:32px;box-shadow:0 18px 40px -30px rgba(15,23,42,0.5);transition:transform .2s ease;">
-            <div style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;background:${heroGradient};margin:0 0 18px;">${i + 1}</div>
-            <h3 style="margin:0 0 10px;font-size:20px;color:${esc(t.text)};font-weight:700;letter-spacing:-0.01em;">${esc(f.title)}</h3>
-            <p style="margin:0;font-size:16px;line-height:1.65;color:${muted};">${esc(f.body)}</p>
+              (f, i) => `<div style="background:${surface};border:1px solid ${border};border-radius:20px;overflow:hidden;box-shadow:0 18px 40px -30px rgba(15,23,42,0.5);transition:transform .2s ease;">
+            <img src="${imgUrl(q, 200 + i, 800, 480)}" alt="${esc(f.title)}" loading="lazy" style="width:100%;height:170px;object-fit:cover;"/>
+            <div style="padding:28px 32px 32px;">
+              <h3 style="margin:0 0 10px;font-size:20px;color:${esc(t.text)};font-weight:700;letter-spacing:-0.01em;">${esc(f.title)}</h3>
+              <p style="margin:0;font-size:16px;line-height:1.65;color:${muted};">${esc(f.body)}</p>
+            </div>
           </div>`,
             )
             .join("")}
@@ -287,6 +315,9 @@ function renderHtml(p: PageJson): string {
       <h1 style="font-size:clamp(36px,6vw,60px);line-height:1.05;margin:0 0 22px;font-weight:800;letter-spacing:-0.03em;">${esc(p.hero.headline)}</h1>
       <p style="font-size:clamp(17px,2.4vw,21px);line-height:1.6;margin:0 auto 36px;max-width:620px;opacity:.95;">${esc(p.hero.subheadline)}</p>
       <a href="#contact" style="display:inline-block;background:#fff;color:${esc(t.primary)};padding:16px 38px;border-radius:999px;font-weight:700;text-decoration:none;font-size:17px;box-shadow:0 16px 40px -12px rgba(0,0,0,0.4);">${esc(p.hero.cta)}</a>
+    </div>
+    <div style="position:relative;max-width:1040px;margin:56px auto 0;">
+      <img src="${imgUrl(q, 1, 1600, 900)}" alt="${esc(p.hero.headline)}" loading="lazy" style="width:100%;height:auto;border-radius:24px;box-shadow:0 40px 80px -30px rgba(0,0,0,0.55);border:6px solid rgba(255,255,255,0.18);"/>
     </div>
   </section>
   ${stats}
@@ -351,7 +382,11 @@ async function pickMasterTemplate(
 // overlaid onto its editable fields for a 1:1 native design; (2) HTML→native
 // Elementor conversion; (3) raw HTML fallback.
 async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: string[]) {
-  const html = renderHtml(p);
+  const imgQuery = [input.niche, input.category, input.brand]
+    .filter(Boolean)
+    .join(" ")
+    .trim() || p.title;
+  const html = renderHtml(p, imgQuery);
   const platform = input.platform === "shopify" ? "shopify" : "wordpress";
 
   // Shopify pages do NOT use Elementor — they publish into Shopify's own
