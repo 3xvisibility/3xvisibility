@@ -203,7 +203,21 @@ function gradientCss(primary: string, accent: string, style?: string): string {
   }
 }
 
-function renderHtml(p: PageJson): string {
+// Build a keyword-relevant photo URL. Uses LoremFlickr (free, no key, returns
+// Creative-Commons photos matching the keywords) so generated pages get
+// beautiful, on-topic imagery like Lovable does — without burning AI credits.
+function imgUrl(query: string, seed: number, w = 1200, h = 800): string {
+  const tags = (query || "business modern")
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 3)
+    .join(",") || "business";
+  return `https://loremflickr.com/${w}/${h}/${encodeURIComponent(tags)}?lock=${seed}`;
+}
+
+function renderHtml(p: PageJson, imgQuery = ""): string {
   const t = p.theme || { primary: "#6d28d9", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
   // Derive a soft surface + subtle border from the text color for depth.
   const surface = "#ffffff";
