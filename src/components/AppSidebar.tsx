@@ -27,6 +27,7 @@ import {
   Columns3,
   Boxes,
   Link2,
+  SlidersHorizontal,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
