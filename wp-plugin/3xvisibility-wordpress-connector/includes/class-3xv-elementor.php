@@ -511,6 +511,99 @@ class XXXV_Elementor {
 	}
 
 	/**
+	 * Post-publish verification that the saved page actually opens in Elementor's
+	 * "Edit with Elementor" mode AND contains editable regions/widgets.
+	 *
+	 * This guards against pages that save with valid JSON but would land the
+	 * client in the classic/Gutenberg editor, or that contain only structural
+	 * containers with nothing to edit. Any failure aborts publishing (rollback).
+	 *
+	 * @param int $post_id Page ID.
+	 * @return array|WP_Error { edit_mode, widgets } on success.
+	 */
+	private static function validate_editor_ready( $post_id ) {
+		// (a) Edit mode must be the Elementor builder, otherwise the page opens in
+		//     the classic editor instead of "Edit with Elementor".
+		$edit_mode = get_post_meta( $post_id, '_elementor_edit_mode', true );
+		if ( 'builder' !== $edit_mode ) {
+			return new WP_Error(
+				'xxxv_editor_not_builder',
+				'Post-publish check failed: the page is not set to open with "Edit with Elementor" (edit mode: ' . ( $edit_mode ? $edit_mode : 'none' ) . ').',
+				array( 'status' => 500 )
+			);
+		}
+
+		// (b) Confirm Elementor itself recognizes this post as built with Elementor,
+		//     which is exactly what gates the "Edit with Elementor" entry point.
+		if ( class_exists( '\\Elementor\\Plugin' ) ) {
+			$plugin = \Elementor\Plugin::$instance;
+			if ( $plugin && isset( $plugin->documents ) ) {
+				$document = $plugin->documents->get( $post_id );
+				if ( ! $document ) {
+					return new WP_Error(
+						'xxxv_editor_no_document',
+						'Post-publish check failed: Elementor could not load a document for this page, so "Edit with Elementor" would not open it.',
+						array( 'status' => 500 )
+					);
+				}
+				if ( method_exists( $document, 'is_built_with_elementor' ) && ! $document->is_built_with_elementor() ) {
+					return new WP_Error(
+						'xxxv_editor_not_built',
+						'Post-publish check failed: Elementor does not consider this page built with Elementor.',
+						array( 'status' => 500 )
+					);
+				}
+			}
+		}
+
+		// (c) Count actual editable widgets in the saved model. A page with zero
+		//     widgets has no editable regions for the client to work with.
+		$saved   = get_post_meta( $post_id, '_elementor_data', true );
+		$decoded = is_string( $saved ) ? json_decode( $saved, true ) : null;
+		if ( ! is_array( $decoded ) ) {
+			$decoded = is_string( $saved ) ? json_decode( wp_unslash( $saved ), true ) : null;
+		}
+		$widgets = is_array( $decoded ) ? self::count_widgets( $decoded ) : 0;
+		if ( $widgets < 1 ) {
+			return new WP_Error(
+				'xxxv_editor_no_widgets',
+				'Post-publish check failed: the saved page has no editable Elementor widgets.',
+				array( 'status' => 500 )
+			);
+		}
+
+		return array(
+			'edit_mode' => $edit_mode,
+			'widgets'   => $widgets,
+		);
+	}
+
+	/**
+	 * Recursively count widget elements in an Elementor data tree.
+	 *
+	 * @param array $elements Element list.
+	 * @return int
+	 */
+	private static function count_widgets( $elements ) {
+		$count = 0;
+		if ( ! is_array( $elements ) ) {
+			return 0;
+		}
+		foreach ( $elements as $element ) {
+			if ( ! is_array( $element ) ) {
+				continue;
+			}
+			if ( isset( $element['elType'] ) && 'widget' === $element['elType'] ) {
+				$count++;
+			}
+			if ( ! empty( $element['elements'] ) && is_array( $element['elements'] ) ) {
+				$count += self::count_widgets( $element['elements'] );
+			}
+		}
+		return $count;
+	}
+
+	/**
 	 * Recursively sort associative keys so the validation hash catches real data
 	 * changes, not harmless JSON key-order differences introduced by WordPress.
 	 *
