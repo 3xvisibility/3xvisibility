@@ -1017,10 +1017,13 @@ async function handlePublishPages(req: Request): Promise<Response> {
               if (fm.seo_title) page.seo_title = interp(fm.seo_title) || page.seo_title;
               if (fm.seo_description) page.seo_description = interp(fm.seo_description) || page.seo_description;
             }
+            finishRunning("ok", mapRow ? "Mapping applied" : "No mapping — using page fields");
           } catch (e) {
             console.warn("[publish-pages] shopify mapping resolve failed", e);
+            finishRunning("warn", "Mapping resolve failed — using page fields");
           }
         }
+
 
         // Resolve the campaign's chosen publish format and forward it so the
         // WordPress connector emits Elementor or Gutenberg content accordingly.
