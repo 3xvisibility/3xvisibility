@@ -167,8 +167,38 @@ class XXXV_Media {
 	}
 
 	/**
-	 * Look up a previously imported attachment by its remote source URL.
+	 * Download a remote image with a real browser User-Agent + Referer.
+	 *
+	 * Many image CDNs (e.g. framerusercontent.com, some Cloudflare configs) return
+	 * 403/HTML for the default "WordPress/x.x" agent. Sending a browser UA and
+	 * following redirects makes these downloads succeed so template images import
+	 * instead of failing and aborting the publish. Falls back to the source host
+	 * as Referer for hotlink-protected CDNs.
 	 */
+	private static function remote_get_image( $source ) {
+		$host    = wp_parse_url( $source, PHP_URL_HOST );
+		$scheme  = wp_parse_url( $source, PHP_URL_SCHEME );
+		$referer = ( $host && $scheme ) ? $scheme . '://' . $host . '/' : '';
+		$args    = array(
+			'timeout'     => 30,
+			'redirection' => 5,
+			'sslverify'   => true,
+			'headers'     => array(
+				'User-Agent'      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+				'Accept'          => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+				'Accept-Language' => 'en-US,en;q=0.9',
+				'Referer'         => $referer,
+			),
+		);
+		$response = wp_remote_get( $source, $args );
+		// Some hosts reject the Referer; retry once without it.
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			unset( $args['headers']['Referer'] );
+			$response = wp_remote_get( $source, $args );
+		}
+		return $response;
+	}
+
 	public static function find_existing( $source ) {
 		$q = new WP_Query(
 			array(
