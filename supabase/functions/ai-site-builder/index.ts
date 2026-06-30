@@ -450,7 +450,7 @@ When ready is true, your reply should tell the user you'll build a preview now.`
         const out = await generatePage(parsed.collected, authToken);
         if (out.ok && out.page) {
           pageResult = {
-            page: buildPagePayload(out.page),
+            page: await buildPagePayload(out.page, parsed.collected, out.hints ?? []),
             plan: out.page,
           };
         }
