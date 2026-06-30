@@ -334,7 +334,11 @@ export default function AiSiteBuilderPage() {
                 <div className="text-xs space-y-1">
                   <p><span className="font-semibold">SEO title:</span> {page.seo_title}</p>
                   <p className="text-muted-foreground">{page.seo_description}</p>
-                  {page.elementor_data && (
+                  {page.platform === "shopify" ? (
+                    <p className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-2 py-0.5 font-medium">
+                      <Sparkles className="h-3 w-3" /> Shopify-style template ready
+                    </p>
+                  ) : page.elementor_data && (
                     <p className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-2 py-0.5 font-medium">
                       <Sparkles className="h-3 w-3" /> Native Elementor JSON ready
                     </p>
@@ -347,15 +351,19 @@ export default function AiSiteBuilderPage() {
                       <SelectValue placeholder="Choose a website" />
                     </SelectTrigger>
                     <SelectContent>
-                      {websites.length === 0 ? (
-                        <SelectItem value="__none__" disabled>No connected websites</SelectItem>
-                      ) : (
-                        websites.map((w) => (
+                      {(() => {
+                        const target = page.platform || platform;
+                        const matches = websites.filter((w) => (w.type || "").toLowerCase() === target);
+                        if (!matches.length) {
+                          return <SelectItem value="__none__" disabled>No connected {target} sites</SelectItem>;
+                        }
+                        return matches.map((w) => (
                           <SelectItem key={w.id} value={w.id}>{w.name} ({w.type})</SelectItem>
-                        ))
-                      )}
+                        ));
+                      })()}
                     </SelectContent>
                   </Select>
+
                   <Button onClick={handlePublish} disabled={publishing || !selectedWebsite} className="gap-2">
                     {publishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
                     {publishing ? "Publishing…" : "Publish"}
