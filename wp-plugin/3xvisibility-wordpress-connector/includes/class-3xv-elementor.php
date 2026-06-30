@@ -79,6 +79,13 @@ class XXXV_Elementor {
 		if ( '' !== $elementor_css ) {
 			$elementor_css = self::map_css_media_references( $elementor_css, $media_report );
 		}
+		if ( is_array( $media_report ) && ! empty( $media_report['failed'] ) ) {
+			return new WP_Error(
+				'xxxv_css_media_import_failed',
+				'One or more template CSS background images could not be uploaded to the WordPress Media Library. Publishing was stopped so the page does not render with broken/remote backgrounds.',
+				array( 'status' => 500, 'report' => $media_report )
+			);
+		}
 
 		$validation = self::validate_model( $elementor_data );
 		if ( is_wp_error( $validation ) ) {
@@ -386,7 +393,7 @@ class XXXV_Elementor {
 		}
 	}
 
-	private static function map_css_media_references( $css, $report ) {
+	private static function map_css_media_references( $css, &$report ) {
 		if ( ! isset( $report['urls'] ) || ! is_array( $report['urls'] ) ) {
 			$report['urls'] = array();
 		}
