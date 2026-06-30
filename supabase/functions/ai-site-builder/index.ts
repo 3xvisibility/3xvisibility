@@ -316,6 +316,9 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
       <p style="font-size:clamp(17px,2.4vw,21px);line-height:1.6;margin:0 auto 36px;max-width:620px;opacity:.95;">${esc(p.hero.subheadline)}</p>
       <a href="#contact" style="display:inline-block;background:#fff;color:${esc(t.primary)};padding:16px 38px;border-radius:999px;font-weight:700;text-decoration:none;font-size:17px;box-shadow:0 16px 40px -12px rgba(0,0,0,0.4);">${esc(p.hero.cta)}</a>
     </div>
+    <div style="position:relative;max-width:1040px;margin:56px auto 0;">
+      <img src="${imgUrl(q, 1, 1600, 900)}" alt="${esc(p.hero.headline)}" loading="lazy" style="width:100%;height:auto;border-radius:24px;box-shadow:0 40px 80px -30px rgba(0,0,0,0.55);border:6px solid rgba(255,255,255,0.18);"/>
+    </div>
   </section>
   ${stats}
   ${sections}
