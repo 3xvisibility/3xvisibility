@@ -126,6 +126,7 @@ class XXXV_REST {
 			'native_elementor_publish' => true,
 			'elementor_data_verify'     => true,
 			'template_css_meta'         => true,
+			'template_css_enqueue'      => true,
 			'cache_clear'               => true,
 		);
 
@@ -185,11 +186,9 @@ class XXXV_REST {
 	public function clear_cache() {
 		$cleared = array();
 
-		// Elementor file cache.
-		if ( did_action( 'elementor/loaded' ) && class_exists( '\Elementor\Plugin' ) ) {
-			\Elementor\Plugin::$instance->files_manager->clear_cache();
-			$cleared[] = 'elementor';
-		}
+		// Do not clear Elementor's generated CSS files here; publish/regenerate-css
+		// writes fresh page CSS and clearing immediately after can make live pages
+		// appear unstyled until Elementor lazily rebuilds assets.
 
 		// WordPress object cache.
 		wp_cache_flush();
