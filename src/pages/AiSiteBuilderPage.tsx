@@ -55,6 +55,7 @@ export default function AiSiteBuilderPage() {
   const [publishing, setPublishing] = useState(false);
   const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [platform, setPlatform] = useState<"wordpress" | "shopify">("wordpress");
 
   // Wizard fields
   const [brand, setBrand] = useState("");
