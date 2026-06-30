@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { filterDesignVars } from "@/lib/design-vars-filter";
-import { Eye, Code2, Sparkles, FileText, X } from "lucide-react";
+import { Eye, Code2, Sparkles, FileText, X, Layers } from "lucide-react";
 
 export interface PreviewableTemplate {
   name: string;
@@ -17,6 +17,10 @@ export interface PreviewableTemplate {
   seo_description_pattern?: string | null;
   /** Optional source label, e.g. "Marketplace · WordPress" */
   source?: string;
+  /** Optional stored Elementor JSON (object or string). */
+  elementor_data?: unknown;
+  /** Template kind, e.g. "elementor" or "html". */
+  template_kind?: string | null;
 }
 
 interface Props {
@@ -42,6 +46,17 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, primaryAct
     () => (template?.variables || []).filter(v => !contentVars.includes(v)),
     [template?.variables, contentVars],
   );
+  const elementorJson = useMemo(() => {
+    const data = template?.elementor_data;
+    if (data == null || data === "") return null;
+    try {
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+      const str = JSON.stringify(parsed, null, 2);
+      return str === "null" || str === "{}" || str === "[]" ? null : str;
+    } catch {
+      return typeof data === "string" ? data : null;
+    }
+  }, [template?.elementor_data]);
 
   if (!template) return null;
 
@@ -86,8 +101,19 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, primaryAct
               <TabsTrigger value="source" className="text-xs gap-1.5">
                 <Code2 className="h-3.5 w-3.5" /> Source
               </TabsTrigger>
+              {elementorJson && (
+                <TabsTrigger value="elementor" className="text-xs gap-1.5">
+                  <Layers className="h-3.5 w-3.5" /> Elementor
+                  {template.template_kind && (
+                    <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px]">
+                      {template.template_kind}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
+
 
           <TabsContent value="preview" className="flex-1 overflow-hidden m-0 p-0 data-[state=active]:flex data-[state=active]:flex-col">
             <ScrollArea className="flex-1">
@@ -169,6 +195,16 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, primaryAct
               </pre>
             </ScrollArea>
           </TabsContent>
+
+          {elementorJson && (
+            <TabsContent value="elementor" className="flex-1 overflow-hidden m-0 data-[state=active]:flex data-[state=active]:flex-col">
+              <ScrollArea className="flex-1">
+                <pre className="px-6 py-4 text-[11px] font-mono leading-relaxed whitespace-pre-wrap break-all">
+                  {elementorJson}
+                </pre>
+              </ScrollArea>
+            </TabsContent>
+          )}
         </Tabs>
 
         <DialogFooter className="px-6 py-3 border-t shrink-0 gap-2 sm:gap-2">

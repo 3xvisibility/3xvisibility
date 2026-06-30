@@ -788,6 +788,8 @@ slug: ${fields.slug}`,
       variables: (tpl.variables as string[]) || [],
       seo_title_pattern: (tpl as any).seo_title_pattern || "",
       seo_description_pattern: (tpl as any).seo_description_pattern || "",
+      elementor_data: (tpl as any).elementor_data ?? null,
+      template_kind: (tpl as any).template_kind || null,
       source: (tpl as any).source_marketplace_id ? "Marketplace snapshot" : "Workspace template",
     });
   };
