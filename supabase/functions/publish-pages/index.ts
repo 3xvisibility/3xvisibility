@@ -112,6 +112,20 @@ async function resolveCatalogElementorData(
 
     if (!elementorJson) return null;
 
+    // ---- CSS integrity verification + auto-fix ----------------------------
+    // Marketplace catalog rows often store CSS *inside* the Elementor JSON
+    // (HTML widgets / custom CSS), while on-the-fly conversions extract it from
+    // <style> blocks. Merge every source so no design rule is lost. If nothing
+    // is found, auto-fix by pulling style from the generated page markup so a
+    // page is never shipped completely unstyled.
+    const cssFromJson = extractCssFromElementorJson(elementorJson);
+    let resolvedCss = [templateCss, cssFromJson].filter(Boolean).join("\n").trim();
+    let cssAutoFixed = false;
+    if (!resolvedCss) {
+      resolvedCss = extractTemplateCss(page.content).trim();
+      if (resolvedCss) cssAutoFixed = true;
+    }
+
     // Automatic rebuild loop: regenerate fields (progressively shrinking content)
     // until the visual similarity check reaches the target or attempts run out.
     // This still validates that the new content FITS the template design.
@@ -127,7 +141,7 @@ async function resolveCatalogElementorData(
         // also send the same CSS to the connector meta fallback. This fixes live
         // WP pages where Elementor's generated CSS loads but marketplace class
         // selectors/background styles would otherwise be missing.
-        injectCss: templateCss,
+        injectCss: resolvedCss,
       }, ELEMENTOR_SIMILARITY_TARGET);
       if (!built) return null;
       if (!best || built.similarity > best.similarity) best = built;
@@ -139,20 +153,45 @@ async function resolveCatalogElementorData(
     // with its CSS inside one Elementor HTML widget. WordPress production flow
     // uses native mode, where only CSS is injected and content remains editable
     // native Elementor containers/widgets.
-    const embeddedData = buildEmbeddedElementorData(page.content, templateCss);
+    const embeddedData = buildEmbeddedElementorData(page.content, resolvedCss);
 
     // Mode selector: "html" embeds the full styled markup in a single HTML
     // widget (renders 1:1 with the template); "native" ships the editable
     // native Elementor widget tree built from the catalog.
-    const chosenData = mode === "native" ? best.data : embeddedData;
+    let chosenData = mode === "native" ? best.data : embeddedData;
+    let chosenMode: "html" | "native" = mode;
+
+    // Verify the CSS actually made it into the data that ships to WordPress. In
+    // native mode CSS is injected as a top-of-tree <style> HTML widget; if it is
+    // missing (e.g. injection skipped), auto-fix by falling back to the embedded
+    // HTML payload which always carries the markup + <style> inline.
+    const cssExpected = resolvedCss.length > 0;
+    let cssInData = !cssExpected || chosenData.includes("<style");
+    if (cssExpected && !cssInData && embeddedData.includes("<style")) {
+      chosenData = embeddedData;
+      chosenMode = "html";
+      cssAutoFixed = true;
+      cssInData = true;
+    }
+    const cssOk = !cssExpected ? false : cssInData;
 
     const ok = best.similarity >= ELEMENTOR_SIMILARITY_TARGET;
     console.log(
-      `[publish-pages] catalog Elementor rebuilt (mode ${mode}, similarity ${best.similarity}%, ` +
+      `[publish-pages] catalog Elementor rebuilt (mode ${chosenMode}, similarity ${best.similarity}%, ` +
       `target ${ELEMENTOR_SIMILARITY_TARGET}%, ok=${ok}, truncated ${best.truncatedFields.length}, ` +
-      `css ${templateCss.length} chars, data ${chosenData.length} chars)`,
+      `css ${resolvedCss.length} chars, cssOk=${cssOk}, cssAutoFixed=${cssAutoFixed}, data ${chosenData.length} chars)`,
     );
-    return { data: chosenData, css: templateCss, similarity: best.similarity, truncatedFields: best.truncatedFields, ok, mode, cssLength: templateCss.length };
+    return {
+      data: chosenData,
+      css: resolvedCss,
+      similarity: best.similarity,
+      truncatedFields: best.truncatedFields,
+      ok,
+      mode: chosenMode,
+      cssLength: resolvedCss.length,
+      cssOk,
+      cssAutoFixed,
+    };
   } catch (e) {
     console.warn("[publish-pages] catalog Elementor resolve failed", e);
     return null;
