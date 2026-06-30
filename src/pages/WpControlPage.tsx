@@ -211,10 +211,10 @@ export default function WpControlPage() {
               <CardDescription>Assign a menu to each theme location.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {actions.menus.locations.length === 0 && (
+              {(actions.menus?.locations ?? []).length === 0 && (
                 <p className="text-sm text-muted-foreground">This theme registered no menu locations.</p>
               )}
-              {actions.menus.locations.map((loc) => (
+              {(actions.menus?.locations ?? []).map((loc) => (
                 <div key={loc.slug} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{loc.label}</p>
