@@ -304,23 +304,61 @@ export default function AiSiteBuilderPage() {
             <ul className="space-y-2">
               {websites.map((w) => {
                 const detected = detectPlatform(w.type);
+                const resolved = effectivePlatform(w);
+                const overridden = !!platformOverrides[w.id];
                 return (
-                  <li key={w.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                  <li key={w.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{w.name || w.url}</p>
                       <p className="text-xs text-muted-foreground truncate">{formatChecked(w.last_sync || w.updated_at)}</p>
                     </div>
-                    <span
-                      className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        detected === "wordpress"
-                          ? "bg-blue-500/10 text-blue-600"
-                          : detected === "shopify"
-                            ? "bg-emerald-500/10 text-emerald-600"
-                            : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {detected === "wordpress" ? "🟦 WordPress" : detected === "shopify" ? "🛍️ Shopify" : "❓ Unknown"}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          resolved === "wordpress"
+                            ? "bg-blue-500/10 text-blue-600"
+                            : resolved === "shopify"
+                              ? "bg-emerald-500/10 text-emerald-600"
+                              : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {resolved === "wordpress" ? "🟦 WordPress" : resolved === "shopify" ? "🛍️ Shopify" : "❓ Unknown"}
+                        {overridden && <span className="opacity-70">(manual)</span>}
+                      </span>
+                      {/* Manual platform override toggle. */}
+                      <div className="inline-flex overflow-hidden rounded-md border text-xs">
+                        <button
+                          type="button"
+                          onClick={() => setPlatformOverrides((p) => ({ ...p, [w.id]: "wordpress" }))}
+                          className={`px-2 py-1 transition ${resolved === "wordpress" ? "bg-blue-500/10 text-blue-600 font-semibold" : "hover:bg-muted/50"}`}
+                        >
+                          WP
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPlatformOverrides((p) => ({ ...p, [w.id]: "shopify" }))}
+                          className={`px-2 py-1 border-l transition ${resolved === "shopify" ? "bg-emerald-500/10 text-emerald-600 font-semibold" : "hover:bg-muted/50"}`}
+                        >
+                          Shopify
+                        </button>
+                        {overridden && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPlatformOverrides((p) => {
+                                const next = { ...p };
+                                delete next[w.id];
+                                return next;
+                              })
+                            }
+                            title="Reset to auto-detected"
+                            className="px-2 py-1 border-l text-muted-foreground hover:bg-muted/50"
+                          >
+                            ↺
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </li>
                 );
               })}
