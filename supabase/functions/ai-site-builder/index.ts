@@ -45,10 +45,10 @@ interface PageJson {
   metaTitle: string;
   metaDescription: string;
   theme: { primary: string; accent: string; bg: string; text: string; font?: string; gradientStyle?: string };
-  hero: { headline: string; subheadline: string; cta: string; eyebrow?: string };
+  hero: { headline: string; subheadline: string; cta: string; eyebrow?: string; image?: string };
   stats?: { value: string; label: string }[];
-  sections: { title: string; body: string }[];
-  features?: { title: string; body: string }[];
+  sections: { title: string; body: string; image?: string }[];
+  features?: { title: string; body: string; image?: string }[];
   faqs?: { q: string; a: string }[];
 }
 
@@ -206,15 +206,28 @@ function gradientCss(primary: string, accent: string, style?: string): string {
 // Build a keyword-relevant photo URL. Uses LoremFlickr (free, no key, returns
 // Creative-Commons photos matching the keywords) so generated pages get
 // beautiful, on-topic imagery like Lovable does — without burning AI credits.
+// `query` should be a short, specific photographic subject so the returned
+// photo matches the section it illustrates (e.g. "dental clinic chair").
 function imgUrl(query: string, seed: number, w = 1200, h = 800): string {
-  const tags = (query || "business modern")
+  const tags = (query || "business modern professional")
     .toLowerCase()
     .replace(/[^a-z0-9 ]+/g, " ")
     .trim()
     .split(/\s+/)
-    .slice(0, 3)
+    .filter((word) => word.length > 1)
+    .slice(0, 4)
     .join(",") || "business";
-  return `https://loremflickr.com/${w}/${h}/${encodeURIComponent(tags)}?lock=${seed}`;
+  // `/all/` requires a photo matching ALL tags → far more on-topic results.
+  return `https://loremflickr.com/${w}/${h}/${encodeURIComponent(tags)}/all?lock=${seed}`;
+}
+
+// Resolve the best image keyword for a slot: prefer the AI-provided per-slot
+// keyword, else combine the slot title with the page-level niche query.
+function slotImg(slotKeyword: string | undefined, fallbackTitle: string, baseQuery: string): string {
+  const kw = (slotKeyword || "").trim();
+  if (kw) return kw;
+  const title = (fallbackTitle || "").trim();
+  return [title, baseQuery].filter(Boolean).join(" ").trim() || baseQuery;
 }
 
 function renderHtml(p: PageJson, imgQuery = ""): string {
@@ -247,7 +260,7 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
   const sections = (p.sections || [])
     .map(
       (s, i) => {
-        const img = `<div style="flex:1 1 320px;min-width:280px;"><img src="${imgUrl(q, 100 + i)}" alt="${esc(s.title)}" loading="lazy" style="width:100%;height:340px;object-fit:cover;border-radius:24px;box-shadow:0 30px 60px -30px rgba(15,23,42,0.5);"/></div>`;
+        const img = `<div style="flex:1 1 320px;min-width:280px;"><img src="${imgUrl(slotImg(s.image, s.title, q), 100 + i)}" alt="${esc(s.title)}" loading="lazy" style="width:100%;height:340px;object-fit:cover;border-radius:24px;box-shadow:0 30px 60px -30px rgba(15,23,42,0.5);"/></div>`;
         const text = `<div style="flex:1 1 320px;min-width:280px;">
           <div style="font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${esc(t.primary)};margin:0 0 12px;">0${i + 1}</div>
           <h2 style="font-size:clamp(26px,3.4vw,36px);line-height:1.15;margin:0 0 16px;color:${esc(t.text)};font-weight:800;letter-spacing:-0.02em;">${esc(s.title)}</h2>
@@ -274,7 +287,7 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
           ${p.features
             .map(
               (f, i) => `<div style="background:${surface};border:1px solid ${border};border-radius:20px;overflow:hidden;box-shadow:0 18px 40px -30px rgba(15,23,42,0.5);transition:transform .2s ease;">
-            <img src="${imgUrl(q, 200 + i, 800, 480)}" alt="${esc(f.title)}" loading="lazy" style="width:100%;height:170px;object-fit:cover;"/>
+            <img src="${imgUrl(slotImg(f.image, f.title, q), 200 + i, 800, 480)}" alt="${esc(f.title)}" loading="lazy" style="width:100%;height:170px;object-fit:cover;"/>
             <div style="padding:28px 32px 32px;">
               <h3 style="margin:0 0 10px;font-size:20px;color:${esc(t.text)};font-weight:700;letter-spacing:-0.01em;">${esc(f.title)}</h3>
               <p style="margin:0;font-size:16px;line-height:1.65;color:${muted};">${esc(f.body)}</p>
@@ -317,7 +330,7 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
       <a href="#contact" style="display:inline-block;background:#fff;color:${esc(t.primary)};padding:16px 38px;border-radius:999px;font-weight:700;text-decoration:none;font-size:17px;box-shadow:0 16px 40px -12px rgba(0,0,0,0.4);">${esc(p.hero.cta)}</a>
     </div>
     <div style="position:relative;max-width:1040px;margin:56px auto 0;">
-      <img src="${imgUrl(q, 1, 1600, 900)}" alt="${esc(p.hero.headline)}" loading="lazy" style="width:100%;height:auto;border-radius:24px;box-shadow:0 40px 80px -30px rgba(0,0,0,0.55);border:6px solid rgba(255,255,255,0.18);"/>
+      <img src="${imgUrl(slotImg(p.hero.image, p.hero.headline, q), 1, 1600, 900)}" alt="${esc(p.hero.headline)}" loading="lazy" style="width:100%;height:auto;border-radius:24px;box-shadow:0 40px 80px -30px rgba(0,0,0,0.55);border:6px solid rgba(255,255,255,0.18);"/>
     </div>
   </section>
   ${stats}
@@ -483,12 +496,16 @@ Schema:
   "metaTitle": string (<=60 chars),
   "metaDescription": string (<=158 chars),
   "theme": { "primary": hex, "accent": hex, "bg": hex, "text": hex },
-  "hero": { "eyebrow": string (2-4 words badge), "headline": string (punchy, <=9 words), "subheadline": string (1-2 sentences), "cta": string (action label) },
+  "hero": { "eyebrow": string (2-4 words badge), "headline": string (punchy, <=9 words), "subheadline": string (1-2 sentences), "cta": string (action label), "image": string (2-4 word concrete photo subject for the hero image) },
   "stats": [ { "value": string (e.g. "10k+", "98%", "24/7"), "label": string } ] (exactly 3-4 items),
-  "sections": [ { "title": string, "body": string } ] (3-5 items, body 2-4 sentences),
-  "features": [ { "title": string, "body": string } ] (3-6 items, body 1-2 sentences),
+  "sections": [ { "title": string, "body": string, "image": string (2-4 word concrete photo subject for THIS section) } ] (3-5 items, body 2-4 sentences),
+  "features": [ { "title": string, "body": string, "image": string (2-4 word concrete photo subject for THIS feature) } ] (3-6 items, body 1-2 sentences),
   "faqs": [ { "q": string, "a": string } ] (3-5 items)
 }
+Image rules (CRITICAL — images MUST match the content 100%):
+- Every "image" field is a SHORT, CONCRETE, photographable subject (2-4 words) that literally depicts what the section/feature is about — e.g. "modern dental clinic", "barista pouring coffee", "yoga studio class", "solar panels rooftop".
+- Always include the niche/industry in the keyword so the photo is on-topic (e.g. for a dentist: "dentist examining patient", not just "doctor").
+- Use real photographable nouns, never abstract words ("success", "quality", "trust") and never brand names.
 Design rules:
 - Pick a bold, cohesive, modern color theme that fits the brand/niche. "primary" and "accent" should be two harmonious colors that look great in a gradient (avoid generic blue+orange unless it truly fits). "bg" should be a near-white or soft tinted background; "text" a dark slate.
 - Choose colors with real contrast and personality — luxury = deep + gold, wellness = sage + cream, tech = indigo + cyan, food = warm terracotta, etc.
