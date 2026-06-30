@@ -48,8 +48,34 @@ const esc = (s: string) =>
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-// Fetch a reference site's visible text to inspire style/structure.
-async function fetchReference(url: string): Promise<string> {
+// Structured analysis of a reference site so generated sections map 1:1.
+interface ReferenceAnalysis {
+  text: string;
+  hero?: { headline?: string; subheadline?: string; cta?: string };
+  sectionTitles: string[];
+  featureTitles: string[];
+  faqs: string[];
+  colors: string[];
+}
+
+// Decode a handful of common HTML entities for cleaner extracted copy.
+const decodeEntities = (s: string) =>
+  s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;|&apos;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const stripTags = (s: string) => decodeEntities(s.replace(/<[^>]+>/g, " "));
+
+// Fetch a reference site and extract its structural outline + palette so the
+// AI can produce Elementor sections that match the reference brand/niche.
+async function fetchReference(url: string): Promise<ReferenceAnalysis> {
+  const empty: ReferenceAnalysis = { text: "", sectionTitles: [], featureTitles: [], faqs: [], colors: [] };
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 12_000);
@@ -58,19 +84,63 @@ async function fetchReference(url: string): Promise<string> {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; 3xVisibilityBot/1.0)" },
     });
     clearTimeout(t);
-    if (!res.ok) return "";
+    if (!res.ok) return empty;
     const html = await res.text();
-    const text = html
+    const cleaned = html
       .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    return text.slice(0, 4000);
+      .replace(/<style[\s\S]*?<\/style>/gi, " ");
+
+    const grab = (re: RegExp, max: number) => {
+      const out: string[] = [];
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(cleaned)) && out.length < max) {
+        const v = stripTags(m[1]);
+        if (v && v.length > 1 && v.length < 160 && !out.includes(v)) out.push(v);
+      }
+      return out;
+    };
+
+    const h1s = grab(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, 3);
+    const h2s = grab(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, 12);
+    const h3s = grab(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, 12);
+
+    // Hero: first H1 + the paragraph closest to it + first button/CTA.
+    const heroHeadline = h1s[0];
+    const firstP = stripTags((cleaned.match(/<p[^>]*>([\s\S]*?)<\/p>/i)?.[1]) || "");
+    const ctaMatch = stripTags(
+      (cleaned.match(/<(?:a|button)[^>]*class="[^"]*(?:btn|button|cta)[^"]*"[^>]*>([\s\S]*?)<\/(?:a|button)>/i)?.[1]) || "",
+    );
+
+    // FAQ heuristic: H3 lines ending in "?" plus questions inside summary/dt tags.
+    const summaries = grab(/<(?:summary|dt)[^>]*>([\s\S]*?)<\/(?:summary|dt)>/gi, 8);
+    const faqs = [...h3s.filter((x) => x.includes("?")), ...summaries.filter((x) => x.includes("?"))]
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .slice(0, 6);
+
+    // Features are short H3s that are not questions; sections are H2s.
+    const featureTitles = h3s.filter((x) => !x.includes("?") && x.length <= 60).slice(0, 6);
+
+    // Extract a small color palette from inline styles / hex codes.
+    const colors = (cleaned.match(/#[0-9a-fA-F]{6}\b/g) || [])
+      .map((c) => c.toLowerCase())
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .slice(0, 6);
+
+    const text = stripTags(cleaned).slice(0, 3500);
+
+    return {
+      text,
+      hero: { headline: heroHeadline, subheadline: firstP.slice(0, 200), cta: ctaMatch.slice(0, 40) },
+      sectionTitles: h2s.slice(0, 10),
+      featureTitles,
+      faqs,
+      colors,
+    };
   } catch {
-    return "";
+    return empty;
   }
 }
+
 
 function renderHtml(p: PageJson): string {
   const t = p.theme || { primary: "#2563eb", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
