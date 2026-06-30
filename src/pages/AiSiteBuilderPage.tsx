@@ -547,6 +547,16 @@ export default function AiSiteBuilderPage() {
                   </Button>
                 </div>
 
+                <Button
+                  variant="outline"
+                  onClick={handleSaveTemplate}
+                  disabled={savingTemplate}
+                  className="w-full gap-2"
+                >
+                  {savingTemplate ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                  {savingTemplate ? "Saving…" : "Save as template"}
+                </Button>
+
                 {publishSteps.length > 0 && (
                   <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
                     <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
