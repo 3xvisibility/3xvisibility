@@ -155,7 +155,7 @@ export function ElementorPublishPreviewDialog({
             </span>
           </div>
           <Badge variant="secondary" className="shrink-0 text-[11px]">
-            {FORMAT_LABELS[publishFormat || (mode === "native" ? "elementor" : "html")] || "Single HTML widget"}
+            {FORMAT_LABELS[publishFormat || "elementor"] || "Native Elementor widgets"}
           </Badge>
         </div>
 
