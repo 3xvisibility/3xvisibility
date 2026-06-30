@@ -52,18 +52,47 @@ class XXXV_Elementor {
 		$post_id        = isset( $body['post_id'] ) ? absint( $body['post_id'] ) : 0;
 		$elementor_data = isset( $body['elementor_data'] ) ? $body['elementor_data'] : array();
 		$elementor_css  = isset( $body['elementor_css'] ) ? self::sanitize_template_css( (string) $body['elementor_css'] ) : '';
-		$page_template  = isset( $body['page_template'] ) ? sanitize_text_field( $body['page_template'] ) : 'elementor_header_footer';
+		// WordPress Elementor pages are always published as Elementor Full Width.
+		// Do not let requests switch to theme default/canvas/HTML layouts.
+		$page_template  = 'elementor_header_footer';
 
 		// Elementor data may arrive as a JSON string; normalize to array.
 		if ( is_string( $elementor_data ) ) {
 			$decoded        = json_decode( $elementor_data, true );
 			$elementor_data = is_array( $decoded ) ? $decoded : array();
 		}
+		self::normalize_top_level_containers( $elementor_data );
 
 		// ---- (1) Validate the incoming JSON model -----------------------------
 		$validation = self::validate_model( $elementor_data );
 		if ( is_wp_error( $validation ) ) {
 			self::log( 'error', 'JSON validation failed: ' . $validation->get_error_message(), array( 'slug' => $slug ) );
+			return $validation;
+		}
+
+		// Upload every template image/background to this WordPress Media Library and
+		// replace Elementor image objects with local attachment IDs + URLs before any
+		// document is saved. The SaaS must never send AI/stock replacement images;
+		// this only imports references already present in the selected template JSON.
+		$media_report = self::map_media_library_references( $elementor_data );
+		if ( is_wp_error( $media_report ) ) {
+			self::log( 'error', 'Media import failed: ' . $media_report->get_error_message(), array( 'slug' => $slug ) );
+			return $media_report;
+		}
+		if ( '' !== $elementor_css ) {
+			$elementor_css = self::map_css_media_references( $elementor_css, $media_report );
+		}
+		if ( is_array( $media_report ) && ! empty( $media_report['failed'] ) ) {
+			return new WP_Error(
+				'xxxv_css_media_import_failed',
+				'One or more template CSS background images could not be uploaded to the WordPress Media Library. Publishing was stopped so the page does not render with broken/remote backgrounds.',
+				array( 'status' => 500, 'report' => $media_report )
+			);
+		}
+
+		$validation = self::validate_model( $elementor_data );
+		if ( is_wp_error( $validation ) ) {
+			self::log( 'error', 'JSON validation failed after media mapping: ' . $validation->get_error_message(), array( 'slug' => $slug ) );
 			return $validation;
 		}
 
@@ -95,12 +124,6 @@ class XXXV_Elementor {
 			$post_id = (int) $result;
 
 			// ---- (3/4) Save Elementor data model + metadata -------------------
-			// Elementor expects slashed JSON in meta.
-			$json = wp_json_encode( $elementor_data );
-			if ( false === $json ) {
-				throw new Exception( 'Failed to encode Elementor JSON.' );
-			}
-			update_post_meta( $post_id, '_elementor_data', wp_slash( $json ) );
 			update_post_meta( $post_id, '_elementor_edit_mode', 'builder' );
 			update_post_meta( $post_id, '_elementor_template_type', 'wp-page' );
 			update_post_meta( $post_id, '_elementor_version', defined( 'ELEMENTOR_VERSION' ) ? ELEMENTOR_VERSION : XXXV_CONNECTOR_VERSION );
@@ -123,12 +146,26 @@ class XXXV_Elementor {
 				}
 			}
 
-			// ---- Mirror the data through Elementor's own document API so the
-			//      internal element cache + settings stay consistent with the editor.
+			// ---- Save through Elementor's own document API so internal element cache,
+			// controls, breakpoints, responsive data and editor state match a manual
+			// Elementor save. This is REQUIRED and fatal on failure.
 			self::save_via_document( $post_id, $elementor_data );
 
+			// Elementor's document API may normalize meta. We write the final native JSON
+			// after the document save only to preserve exact attachment IDs/URLs and then
+			// validate the stored model. Publishing never writes HTML or fallback content.
+			$json = wp_json_encode( $elementor_data );
+			if ( false === $json ) {
+				throw new Exception( 'Failed to encode Elementor JSON.' );
+			}
+			update_post_meta( $post_id, '_elementor_data', wp_slash( $json ) );
+
 			// ---- (5) Generate per-page CSS ------------------------------------
+			self::refresh_elementor_files( $post_id );
 			$css_ok = self::regenerate_page_css( $post_id );
+			if ( ! $css_ok ) {
+				throw new Exception( 'Elementor page CSS regeneration failed.' );
+			}
 
 			// ---- (6) Generate / refresh global (kit) CSS ----------------------
 			self::regenerate_global_css();
@@ -143,6 +180,10 @@ class XXXV_Elementor {
 			$saved_check = self::validate_saved_elementor_data( $post_id, $elementor_data );
 			if ( is_wp_error( $saved_check ) ) {
 				throw new Exception( $saved_check->get_error_message() );
+			}
+			$css_check = self::validate_generated_css( $post_id, '' !== $elementor_css );
+			if ( is_wp_error( $css_check ) ) {
+				throw new Exception( $css_check->get_error_message() );
 			}
 
 			self::log( 'info', 'Published successfully.', array( 'post_id' => $post_id, 'css' => $css_ok ) );
@@ -160,6 +201,8 @@ class XXXV_Elementor {
 					'validated'            => true,
 					'elementor_data_valid' => true,
 					'elementor_data_hash'  => $saved_check['hash'],
+					'media'                => $media_report,
+					'css_validated'        => true,
 				)
 			);
 		} catch ( \Throwable $e ) {
@@ -187,6 +230,11 @@ class XXXV_Elementor {
 		if ( empty( $data ) ) {
 			return new WP_Error( 'xxxv_empty_model', 'Elementor data is empty — nothing to publish.', array( 'status' => 400 ) );
 		}
+		$supported_widgets = array(
+			'heading', 'text-editor', 'image', 'button', 'icon-box', 'accordion',
+			'counter', 'gallery', 'divider', 'spacer', 'testimonial', 'icon-list',
+			'image-box',
+		);
 		foreach ( $data as $index => $element ) {
 			if ( ! is_array( $element ) || empty( $element['elType'] ) ) {
 				return new WP_Error(
@@ -195,8 +243,205 @@ class XXXV_Elementor {
 					array( 'status' => 400 )
 				);
 			}
+			if ( 'container' !== $element['elType'] ) {
+				return new WP_Error(
+					'xxxv_top_level_container_required',
+					sprintf( 'Top-level element #%d must be an Elementor Container section.', (int) $index ),
+					array( 'status' => 400 )
+				);
+			}
+			$nested = self::validate_element_recursive( $element, $supported_widgets );
+			if ( is_wp_error( $nested ) ) {
+				return $nested;
+			}
 		}
 		return true;
+	}
+
+	/**
+	 * Ensure every top-level section is a full-width Elementor Container. This avoids
+	 * the old single-wrapper layout problem and mirrors manually-created Elementor
+	 * landing pages using the Elementor Full Width template.
+	 */
+	private static function normalize_top_level_containers( &$data ) {
+		if ( ! is_array( $data ) ) {
+			return;
+		}
+		foreach ( $data as &$element ) {
+			if ( is_array( $element ) && isset( $element['elType'] ) && 'container' === $element['elType'] ) {
+				if ( ! isset( $element['settings'] ) || ! is_array( $element['settings'] ) ) {
+					$element['settings'] = array();
+				}
+				$element['settings']['content_width'] = 'full';
+				$element['settings']['width']         = array(
+					'unit'  => '%',
+					'size'  => 100,
+					'sizes' => array(),
+				);
+			}
+		}
+		unset( $element );
+	}
+
+	/**
+	 * Validate one element recursively: native Elementor only, no HTML widgets, no
+	 * raw markup injection into text-editor settings.
+	 *
+	 * @param array $element Element.
+	 * @param array $supported_widgets Allowed free widgets.
+	 * @return true|WP_Error
+	 */
+	private static function validate_element_recursive( $element, $supported_widgets ) {
+		$el_type = isset( $element['elType'] ) ? $element['elType'] : '';
+		if ( 'widget' === $el_type ) {
+			$widget = isset( $element['widgetType'] ) ? $element['widgetType'] : '';
+			if ( 'html' === $widget ) {
+				return new WP_Error( 'xxxv_html_widget_forbidden', 'HTML widgets are forbidden. WordPress publishing requires native Elementor widgets only.', array( 'status' => 400 ) );
+			}
+			if ( ! in_array( $widget, $supported_widgets, true ) ) {
+				return new WP_Error( 'xxxv_unsupported_widget', 'Unsupported Elementor widget type: ' . sanitize_text_field( $widget ), array( 'status' => 400 ) );
+			}
+			$settings = isset( $element['settings'] ) && is_array( $element['settings'] ) ? $element['settings'] : array();
+			if ( 'text-editor' === $widget && isset( $settings['editor'] ) && preg_match( '#<(script|style|iframe|html|body|head|section|article|main|link|canvas|svg)\b#i', (string) $settings['editor'] ) ) {
+				return new WP_Error( 'xxxv_raw_html_forbidden', 'Raw HTML/style/script injection inside Text Editor widgets is forbidden.', array( 'status' => 400 ) );
+			}
+			$settings_valid = self::validate_settings_no_raw_html( $settings );
+			if ( is_wp_error( $settings_valid ) ) {
+				return $settings_valid;
+			}
+		} elseif ( 'container' !== $el_type ) {
+			return new WP_Error( 'xxxv_invalid_eltype', 'Only Elementor Containers and supported Widgets are allowed.', array( 'status' => 400 ) );
+		}
+
+		$children = isset( $element['elements'] ) && is_array( $element['elements'] ) ? $element['elements'] : array();
+		foreach ( $children as $child ) {
+			if ( ! is_array( $child ) ) {
+				return new WP_Error( 'xxxv_invalid_child', 'Invalid Elementor child element.', array( 'status' => 400 ) );
+			}
+			$valid = self::validate_element_recursive( $child, $supported_widgets );
+			if ( is_wp_error( $valid ) ) {
+				return $valid;
+			}
+		}
+		return true;
+	}
+
+	private static function validate_settings_no_raw_html( $settings ) {
+		foreach ( $settings as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$nested = self::validate_settings_no_raw_html( $value );
+				if ( is_wp_error( $nested ) ) {
+					return $nested;
+				}
+				continue;
+			}
+			if ( is_string( $value ) && preg_match( '#<(script|style|iframe|html|body|head|link)\b#i', $value ) ) {
+				return new WP_Error( 'xxxv_raw_html_forbidden', 'Raw HTML/style/script injection is forbidden in Elementor settings.', array( 'status' => 400 ) );
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Walk Elementor JSON and replace remote template image URLs with local Media
+	 * Library attachment IDs + URLs. Handles image widgets, gallery controls,
+	 * background images, carousel-like arrays, and any nested settings.
+	 *
+	 * @param array $data Elementor data, modified in place.
+	 * @return array|WP_Error Import report.
+	 */
+	private static function map_media_library_references( &$data ) {
+		$report = array(
+			'imported' => 0,
+			'reused'   => 0,
+			'failed'   => 0,
+			'urls'     => array(),
+		);
+		self::walk_media_value( $data, $report );
+		if ( $report['failed'] > 0 ) {
+			return new WP_Error(
+				'xxxv_media_import_failed',
+				'One or more template images could not be uploaded to the WordPress Media Library. Publishing was stopped so the page does not render with broken/remote images.',
+				array( 'status' => 500, 'report' => $report )
+			);
+		}
+		return $report;
+	}
+
+	private static function is_remote_image_url( $value ) {
+		return is_string( $value ) && preg_match( '#^https?://[^\s"\']+\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(\?[^\s"\']*)?$#i', $value );
+	}
+
+	private static function import_media_url_for_report( $url, &$report, $alt = '' ) {
+		if ( isset( $report['urls'][ $url ] ) ) {
+			return $report['urls'][ $url ];
+		}
+		$result = XXXV_Media::import_from_url( $url, $alt );
+		if ( is_wp_error( $result ) ) {
+			$report['failed']++;
+			self::log( 'warn', 'Template media import failed: ' . $result->get_error_message(), array( 'url' => $url ) );
+			$report['urls'][ $url ] = array( 'id' => 0, 'url' => $url, 'failed' => true );
+			return $report['urls'][ $url ];
+		}
+		if ( ! empty( $result['duplicate'] ) ) {
+			$report['reused']++;
+		} else {
+			$report['imported']++;
+		}
+		$report['urls'][ $url ] = array(
+			'id'  => isset( $result['id'] ) ? (int) $result['id'] : 0,
+			'url' => isset( $result['url'] ) ? (string) $result['url'] : $url,
+		);
+		return $report['urls'][ $url ];
+	}
+
+	private static function walk_media_value( &$value, &$report ) {
+		if ( is_array( $value ) ) {
+			// Elementor image controls are arrays like { id, url, alt }. Preserve all
+			// existing keys and add the Media Library attachment id.
+			if ( isset( $value['url'] ) && self::is_remote_image_url( $value['url'] ) ) {
+				$alt    = isset( $value['alt'] ) ? (string) $value['alt'] : '';
+				$mapped = self::import_media_url_for_report( $value['url'], $report, $alt );
+				if ( empty( $mapped['failed'] ) ) {
+					$value['id']  = (int) $mapped['id'];
+					$value['url'] = (string) $mapped['url'];
+				}
+			}
+			foreach ( $value as $key => &$child ) {
+				if ( is_string( $child ) && self::is_remote_image_url( $child ) ) {
+					$mapped = self::import_media_url_for_report( $child, $report );
+					if ( empty( $mapped['failed'] ) ) {
+						$child = (string) $mapped['url'];
+					}
+					continue;
+				}
+				self::walk_media_value( $child, $report );
+			}
+			unset( $child );
+		}
+	}
+
+	private static function map_css_media_references( $css, &$report ) {
+		if ( ! isset( $report['urls'] ) || ! is_array( $report['urls'] ) ) {
+			$report['urls'] = array();
+		}
+
+		// CSS may contain background URLs that do not appear in widget controls. Import
+		// those as well, then replace url(...) references with local Media Library URLs.
+		if ( preg_match_all( '#https?://[^\s"\'\)]+\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(\?[^\s"\'\)]*)?#i', $css, $matches ) ) {
+			foreach ( array_unique( $matches[0] ) as $source ) {
+				self::import_media_url_for_report( $source, $report );
+			}
+		}
+		if ( empty( $report['urls'] ) || ! is_array( $report['urls'] ) ) {
+			return $css;
+		}
+		foreach ( $report['urls'] as $source => $mapped ) {
+			if ( empty( $mapped['failed'] ) && ! empty( $mapped['url'] ) ) {
+				$css = str_replace( $source, $mapped['url'], $css );
+			}
+		}
+		return $css;
 	}
 
 	/**
@@ -330,25 +575,37 @@ class XXXV_Elementor {
 	 */
 	private static function save_via_document( $post_id, $data ) {
 		if ( ! class_exists( '\Elementor\Plugin' ) ) {
-			return;
+			throw new Exception( 'Elementor Plugin class is not available.' );
 		}
 		try {
 			$documents = \Elementor\Plugin::$instance->documents;
 			if ( ! $documents ) {
-				return;
+				throw new Exception( 'Elementor documents manager is not available.' );
 			}
 			$document = $documents->get( $post_id );
-			if ( $document ) {
-				$document->save(
-					array(
-						'elements' => $data,
-						'settings' => array(),
-					)
-				);
+			if ( ! $document ) {
+				throw new Exception( 'Elementor document could not be initialized for page ' . (int) $post_id . '.' );
+			}
+
+			$document->save(
+				array(
+					'elements' => $data,
+					'settings' => array(
+						'post_status'  => get_post_status( $post_id ),
+						'page_template'=> get_post_meta( $post_id, '_wp_page_template', true ),
+					),
+				)
+			);
+
+			if ( method_exists( $document, 'save_template_type' ) ) {
+				$document->save_template_type();
+			}
+			if ( method_exists( $document, 'clear_cache' ) ) {
+				$document->clear_cache();
 			}
 		} catch ( \Throwable $e ) {
-			// Non-fatal: raw meta was already written above; the page will still render.
-			self::log( 'warn', 'Document API save skipped: ' . $e->getMessage(), array( 'post_id' => $post_id ) );
+			self::log( 'error', 'Document API save failed: ' . $e->getMessage(), array( 'post_id' => $post_id ) );
+			throw new Exception( 'Elementor document lifecycle save failed: ' . $e->getMessage() );
 		}
 	}
 
@@ -367,6 +624,61 @@ class XXXV_Elementor {
 			self::log( 'warn', 'Page CSS regeneration failed: ' . $e->getMessage(), array( 'post_id' => $post_id ) );
 			return false;
 		}
+	}
+
+	/**
+	 * Force Elementor's files/document caches to refresh before CSS generation.
+	 * Called BEFORE `regenerate_page_css()` so the regenerated CSS file is fresh.
+	 */
+	private static function refresh_elementor_files( $post_id ) {
+		if ( ! class_exists( '\Elementor\Plugin' ) ) {
+			return false;
+		}
+		try {
+			$instance = \Elementor\Plugin::$instance;
+			if ( isset( $instance->files_manager ) && method_exists( $instance->files_manager, 'clear_cache' ) ) {
+				$instance->files_manager->clear_cache();
+			}
+			if ( isset( $instance->documents ) ) {
+				$document = $instance->documents->get( $post_id );
+				if ( $document && method_exists( $document, 'clear_cache' ) ) {
+					$document->clear_cache();
+				}
+			}
+			return true;
+		} catch ( \Throwable $e ) {
+			self::log( 'warn', 'Elementor file/document refresh failed: ' . $e->getMessage(), array( 'post_id' => $post_id ) );
+			return false;
+		}
+	}
+
+	/**
+	 * Validate that Elementor's generated post CSS exists and that optional stored
+	 * template CSS is available. Success is returned only when styling assets are
+	 * present after publish.
+	 */
+	private static function validate_generated_css( $post_id, $expects_template_css ) {
+		if ( $expects_template_css ) {
+			$template_css = get_post_meta( $post_id, '_xxxv_template_css', true );
+			if ( ! is_string( $template_css ) || '' === trim( $template_css ) ) {
+				return new WP_Error( 'xxxv_template_css_missing', 'Post-save validation failed: template CSS meta is missing.', array( 'status' => 500 ) );
+			}
+		}
+
+		$upload = wp_upload_dir();
+		$path   = trailingslashit( $upload['basedir'] ) . 'elementor/css/post-' . (int) $post_id . '.css';
+		if ( file_exists( $path ) && filesize( $path ) > 0 ) {
+			return true;
+		}
+
+		// One more rebuild attempt after cache refresh for slow/locked filesystems.
+		self::refresh_elementor_files( $post_id );
+		self::regenerate_page_css( $post_id );
+		if ( file_exists( $path ) && filesize( $path ) > 0 ) {
+			return true;
+		}
+
+		return new WP_Error( 'xxxv_elementor_css_missing', 'Post-save validation failed: Elementor generated CSS file is missing or empty.', array( 'status' => 500 ) );
 	}
 
 	/**
@@ -547,8 +859,13 @@ class XXXV_Elementor {
 		$post_id = absint( $request->get_param( 'post_id' ) );
 
 		if ( $post_id > 0 ) {
+			self::refresh_elementor_files( $post_id );
 			$ok = self::regenerate_page_css( $post_id );
 			self::regenerate_global_css();
+			$css_check = self::validate_generated_css( $post_id, is_string( get_post_meta( $post_id, '_xxxv_template_css', true ) ) && '' !== trim( get_post_meta( $post_id, '_xxxv_template_css', true ) ) );
+			if ( is_wp_error( $css_check ) ) {
+				return $css_check;
+			}
 			// Purge page/object/CDN caches so the freshly regenerated CSS goes live now.
 			self::clear_runtime_caches( $post_id );
 			return rest_ensure_response(

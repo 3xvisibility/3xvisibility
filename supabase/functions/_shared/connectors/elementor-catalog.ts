@@ -20,6 +20,8 @@ import { enforceBudget } from "../template-length-budget.ts";
 export interface CatalogBuildResult {
   /** Serialized Elementor tree ready for `_elementor_data`. */
   data: string;
+  /** CSS recovered from legacy HTML/CSS widgets that were removed from the native tree. */
+  extractedCss: string;
   /** Final visual-fidelity score (0-100). */
   similarity: number;
   /** Field keys that were truncated to satisfy the budget. */
@@ -28,12 +30,6 @@ export interface CatalogBuildResult {
 
 const stripTags = (s: string): string =>
   s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-
-let cssWidgetCounter = 0;
-function genCssWidgetId(): string {
-  cssWidgetCounter = (cssWidgetCounter + 1) % 0xffffff;
-  return `css${cssWidgetCounter.toString(16).padStart(7, "0")}`.slice(0, 7);
-}
 
 /**
  * Extract every `<style>…</style>` block from raw template HTML and return the
@@ -54,24 +50,71 @@ export function extractTemplateCss(html: string | null | undefined): string {
 }
 
 /**
- * Build an Elementor HTML widget (wrapped in a thin full-width container) that
- * injects the template's class-based CSS so the published page renders 1:1.
- * Placed at the very top of the tree so styles apply to all widgets below.
+ * Extract CSS from legacy HTML widgets, then remove every HTML widget from the
+ * native Elementor tree. WordPress publishing is native Elementor only; CSS is
+ * sent separately to the connector plugin and enqueued by WordPress, never
+ * embedded through Elementor HTML widgets.
  */
-function buildCssInjectionElement(css: string): ElementorElement {
-  const widget: ElementorElement = {
-    id: genCssWidgetId(),
-    elType: "widget",
-    widgetType: "html",
-    elements: [],
-    settings: { html: `<style>\n${css}\n</style>` },
+function stripHtmlWidgets(tree: ElementorElement[]): { tree: ElementorElement[]; css: string } {
+  const cssBlocks: string[] = [];
+  const cleanElement = (el: ElementorElement): ElementorElement | null => {
+    if (el.elType === "widget" && el.widgetType === "html") {
+      const html = typeof el.settings?.html === "string" ? el.settings.html : "";
+      const css = extractTemplateCss(html);
+      if (css) cssBlocks.push(css);
+      return null;
+    }
+    return {
+      ...el,
+      elements: (el.elements || []).map(cleanElement).filter(Boolean) as ElementorElement[],
+    };
   };
   return {
-    id: genCssWidgetId(),
-    elType: "container",
-    elements: [widget],
-    settings: { content_width: "full", padding: { unit: "px", top: "0", bottom: "0", left: "0", right: "0", isLinked: false } },
-  } as unknown as ElementorElement;
+    tree: tree.map(cleanElement).filter(Boolean) as ElementorElement[],
+    css: cssBlocks.join("\n"),
+  };
+}
+
+function hasLayoutMeaning(el: ElementorElement): boolean {
+  if (el.elType !== "container") return false;
+  const s = el.settings || {};
+  return Boolean(
+    s.container_type === "grid" ||
+    s.flex_direction === "row" ||
+    s.background_background ||
+    s.background_color ||
+    s.background_image ||
+    s._background_background ||
+    s._background_color ||
+    s._background_image ||
+    s.padding ||
+    s.margin ||
+    s._css_classes ||
+    s._element_id
+  );
+}
+
+/**
+ * Prevent the whole page being wrapped in one generic parent container. A true
+ * Elementor page must contain independent top-level section Containers so each
+ * section remains editable and responsive exactly like a manually-built page.
+ */
+function unwrapPageWrapper(tree: ElementorElement[]): ElementorElement[] {
+  let current = tree;
+  while (
+    current.length === 1 &&
+    current[0]?.elType === "container" &&
+    !hasLayoutMeaning(current[0]) &&
+    (current[0].elements || []).length > 1 &&
+    (current[0].elements || []).every((child) => child.elType === "container")
+  ) {
+    current = current[0].elements;
+  }
+  return current.map((el) =>
+    el.elType === "container"
+      ? { ...el, settings: { ...(el.settings || {}), content_width: "full", width: "100%" } }
+      : el,
+  );
 }
 
 
@@ -102,15 +145,6 @@ export interface CatalogOverrides {
   title?: string;
   description?: string;
   bodyHtml?: string;
-  /** Template `<style>` CSS to inject so class-based design renders 1:1. */
-  injectCss?: string;
-}
-
-/** Prepend a CSS-injection element to the tree when template CSS is provided. */
-function withInjectedCss(tree: ElementorElement[], css?: string): ElementorElement[] {
-  const clean = (css || "").trim();
-  if (!clean) return tree;
-  return [buildCssInjectionElement(clean), ...tree];
 }
 
 /**
@@ -123,14 +157,17 @@ export function buildElementorFromCatalog(
   overrides: CatalogOverrides,
   target = 98,
 ): CatalogBuildResult | null {
-  const tree = coerceTree(elementorJson);
+  const rawTree = coerceTree(elementorJson);
+  const stripped = stripHtmlWidgets(rawTree);
+  const tree = unwrapPageWrapper(stripped.tree);
+  const extractedCss = stripped.css;
   if (tree.length === 0) return null;
 
   const fields = extractEditableFields(tree);
   // No editable fields detected: still publish the resolved Elementor tree as-is
-  // (with template CSS injected) so the design renders 1:1 rather than blocking.
+  // so the design renders 1:1 rather than blocking.
   if (fields.length === 0) {
-    return { data: JSON.stringify(withInjectedCss(tree, overrides.injectCss)), similarity: 100, truncatedFields: [] };
+    return { data: JSON.stringify(tree), extractedCss, similarity: 100, truncatedFields: [] };
   }
 
   const limits = limitsFor(fields);
@@ -170,7 +207,8 @@ export function buildElementorFromCatalog(
 
   const applied = applyEditableContent(tree, fields, content);
   return {
-    data: JSON.stringify(withInjectedCss(applied, overrides.injectCss)),
+    data: JSON.stringify(applied),
+    extractedCss,
     similarity: report.similarity,
     truncatedFields,
   };

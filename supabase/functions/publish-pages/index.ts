@@ -3,7 +3,6 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
-import { buildEmbeddedElementorData, htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
 
 
 /**
@@ -26,29 +25,11 @@ function shrinkText(text: string | undefined, keepFraction: number): string | un
   return words.slice(0, keep).join(" ");
 }
 
-/** Pull any `<style>` CSS embedded inside an Elementor JSON tree (HTML widgets). */
-function extractCssFromElementorJson(json: unknown): string {
-  try {
-    const str = typeof json === "string" ? json : JSON.stringify(json ?? "");
-    const blocks: string[] = [];
-    const re = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(str)) !== null) {
-      const css = (m[1] || "").trim();
-      if (css) blocks.push(css);
-    }
-    return blocks.join("\n");
-  } catch {
-    return "";
-  }
-}
-
 async function resolveCatalogElementorData(
   supabase: any,
   page: { campaign_id?: string | null; title: string; content: string; seo_description?: string | null },
   cache: Map<string, unknown>,
-  mode: "html" | "native" = "html",
-): Promise<{ data: string; css: string; similarity: number; truncatedFields: string[]; ok: boolean; mode: "html" | "native"; cssLength: number; cssOk: boolean; cssAutoFixed: boolean } | null> {
+): Promise<{ data: string; css: string; similarity: number; truncatedFields: string[]; ok: boolean; cssLength: number } | null> {
   try {
     if (!page.campaign_id) return null;
 
@@ -88,43 +69,18 @@ async function resolveCatalogElementorData(
         if (hasData) elementorJson = ed;
       }
 
-      // 3) Last-resort fallback: convert the template's stored HTML markup into
-      // native Elementor JSON on the fly. This keeps WordPress publishing working
-      // for templates that were never pre-seeded into the catalog (no marketplace
-      // id and no stored elementor_data) instead of hard-blocking the publish.
-      // Extract the template's <style> CSS so class-based design (grids, colors,
-      // fonts, backgrounds, custom classes) renders 1:1 on the published page.
+      // Extract legacy stored CSS only. Publishing never converts HTML here and
+      // never embeds HTML; missing Elementor JSON blocks WordPress publishing.
       templateCss = [extractTemplateCss(tplRow?.content), extractTemplateCss(page.content)]
         .filter(Boolean)
         .join("\n");
-
-      if (!elementorJson && tplRow?.content) {
-        try {
-          const tree = htmlToElementor(tplRow.content);
-          if (Array.isArray(tree) && tree.length > 0) elementorJson = tree;
-        } catch (e) {
-          console.warn("[publish-pages] on-the-fly HTML→Elementor conversion failed", e);
-        }
-      }
 
       cache.set(page.campaign_id, elementorJson ? { json: elementorJson, css: templateCss } : null);
     }
 
     if (!elementorJson) return null;
 
-    // ---- CSS integrity verification + auto-fix ----------------------------
-    // Marketplace catalog rows often store CSS *inside* the Elementor JSON
-    // (HTML widgets / custom CSS), while on-the-fly conversions extract it from
-    // <style> blocks. Merge every source so no design rule is lost. If nothing
-    // is found, auto-fix by pulling style from the generated page markup so a
-    // page is never shipped completely unstyled.
-    const cssFromJson = extractCssFromElementorJson(elementorJson);
-    let resolvedCss = [templateCss, cssFromJson].filter(Boolean).join("\n").trim();
-    let cssAutoFixed = false;
-    if (!resolvedCss) {
-      resolvedCss = extractTemplateCss(page.content).trim();
-      if (resolvedCss) cssAutoFixed = true;
-    }
+    let resolvedCss = templateCss.trim();
 
     // Automatic rebuild loop: regenerate fields (progressively shrinking content)
     // until the visual similarity check reaches the target or attempts run out.
@@ -136,61 +92,27 @@ async function resolveCatalogElementorData(
         title: shrinkText(page.title, keepFraction),
         description: shrinkText(page.seo_description || undefined, keepFraction),
         bodyHtml: page.content,
-        // CSS must travel with NATIVE Elementor too. We keep all page content as
-        // native containers/widgets, but prepend a tiny CSS-only HTML widget and
-        // also send the same CSS to the connector meta fallback. This fixes live
-        // WP pages where Elementor's generated CSS loads but marketplace class
-        // selectors/background styles would otherwise be missing.
-        injectCss: resolvedCss,
       }, ELEMENTOR_SIMILARITY_TARGET);
       if (!built) return null;
+      resolvedCss = [resolvedCss, built.extractedCss].filter(Boolean).join("\n").trim();
       if (!best || built.similarity > best.similarity) best = built;
       if (built.similarity >= ELEMENTOR_SIMILARITY_TARGET) break;
     }
     if (!best) return null;
 
-    // HTML mode legacy fallback: embed the full resolved page markup together
-    // with its CSS inside one Elementor HTML widget. WordPress production flow
-    // uses native mode, where only CSS is injected and content remains editable
-    // native Elementor containers/widgets.
-    const embeddedData = buildEmbeddedElementorData(page.content, resolvedCss);
-
-    // Mode selector: "html" embeds the full styled markup in a single HTML
-    // widget (renders 1:1 with the template); "native" ships the editable
-    // native Elementor widget tree built from the catalog.
-    let chosenData = mode === "native" ? best.data : embeddedData;
-    let chosenMode: "html" | "native" = mode;
-
-    // Verify the CSS actually made it into the data that ships to WordPress. In
-    // native mode CSS is injected as a top-of-tree <style> HTML widget; if it is
-    // missing (e.g. injection skipped), auto-fix by falling back to the embedded
-    // HTML payload which always carries the markup + <style> inline.
-    const cssExpected = resolvedCss.length > 0;
-    let cssInData = !cssExpected || chosenData.includes("<style");
-    if (cssExpected && !cssInData && embeddedData.includes("<style")) {
-      chosenData = embeddedData;
-      chosenMode = "html";
-      cssAutoFixed = true;
-      cssInData = true;
-    }
-    const cssOk = !cssExpected ? false : cssInData;
-
     const ok = best.similarity >= ELEMENTOR_SIMILARITY_TARGET;
     console.log(
-      `[publish-pages] catalog Elementor rebuilt (mode ${chosenMode}, similarity ${best.similarity}%, ` +
+      `[publish-pages] catalog Elementor rebuilt (native mode, similarity ${best.similarity}%, ` +
       `target ${ELEMENTOR_SIMILARITY_TARGET}%, ok=${ok}, truncated ${best.truncatedFields.length}, ` +
-      `css ${resolvedCss.length} chars, cssOk=${cssOk}, cssAutoFixed=${cssAutoFixed}, data ${chosenData.length} chars)`,
+      `css ${resolvedCss.length} chars, data ${best.data.length} chars)`,
     );
     return {
-      data: chosenData,
+      data: best.data,
       css: resolvedCss,
       similarity: best.similarity,
       truncatedFields: best.truncatedFields,
       ok,
-      mode: chosenMode,
       cssLength: resolvedCss.length,
-      cssOk,
-      cssAutoFixed,
     };
   } catch (e) {
     console.warn("[publish-pages] catalog Elementor resolve failed", e);
@@ -323,7 +245,6 @@ function buildPayload(
   extraData?: Record<string, unknown>,
   pageTemplate?: string,
   preserveDesign?: boolean,
-  elementorMode?: "native" | "html",
 ): PagePayload {
   const payload: PagePayload = {
     title: page.title,
@@ -337,8 +258,6 @@ function buildPayload(
   };
 
   if (page.seo_description) payload.excerpt = page.seo_description;
-
-  if (elementorMode) payload.elementor_mode = elementorMode;
 
   if (preserveDesign) payload.preserve_design = true;
 
@@ -556,13 +475,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
     }
 
     const body = await req.json();
-    const { page_ids, publish_type, website_id, pages: directPages, overwrite_design, elementor_mode } = body;
-    // WordPress publishing ALWAYS uses native Elementor widgets — never a single
-    // HTML widget. The 3xVisibility WordPress Connector plugin regenerates the
-    // per-page Elementor CSS server-side after a REST publish, so native widget
-    // styling renders 1:1 with the template. Only an explicit "html" request
-    // (legacy fallback for sites without the connector) opts out.
-    const elementorMode: "html" | "native" = elementor_mode === "html" ? "html" : "native";
+    const { page_ids, publish_type, website_id, pages: directPages, overwrite_design } = body;
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
 
@@ -685,7 +598,6 @@ async function handlePublishPages(req: Request): Promise<Response> {
           const isRepublish = !!dp.external_id;
           const preserveDesign = isRepublish && !allowOverwriteDesign;
 
-          const directElementorMode: "html" | "native" = website.type === "wordpress" ? "native" : elementorMode;
           const payload = buildPayload(
             { title: dp.title, content: cleanedContent, slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
             pubType,
@@ -693,7 +605,6 @@ async function handlePublishPages(req: Request): Promise<Response> {
             // Mirror the site's preferred template.
             !preserveDesign ? templateInfo.pageTemplate : undefined,
             preserveDesign,
-            directElementorMode,
           );
 
 
@@ -704,16 +615,9 @@ async function handlePublishPages(req: Request): Promise<Response> {
           applyShopifySuffix(payload, website.type, dpSuffixes, pubType);
 
           if (website.type === "wordpress" && pubType === "page" && !preserveDesign) {
-            try {
-              const css = extractTemplateCss(cleanedContent);
-              const tree = htmlToElementor(cleanedContent);
-              if (Array.isArray(tree) && tree.length > 0) {
-                payload.elementor_data = JSON.stringify(tree);
-                payload.elementor_css = css;
-              }
-            } catch (e) {
-              console.warn("[publish-pages] direct HTML→Elementor conversion failed", e);
-            }
+            throw new Error(
+              "WordPress publishing is native Elementor only. Direct HTML publishing is disabled; publish from a campaign with a stored Elementor JSON template.",
+            );
           }
 
           // If an external_id is provided, update the existing page; otherwise create new
@@ -773,7 +677,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
             publish_type: pubType,
             website_id,
             overwrite_design: allowOverwriteDesign,
-            elementor_mode: elementorMode,
+            elementor_mode: "native",
           }),
         }).catch((e) => console.error("[PUBLISH] Direct self-chain failed:", e));
       }
@@ -843,7 +747,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
             headers: { Authorization: authHeader, "Content-Type": "application/json" },
             body: JSON.stringify({
               page_ids: allRemaining, publish_type: pubType, website_id: fallbackWebsiteId,
-              overwrite_design: allowOverwriteDesign, elementor_mode: elementorMode, _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
+              overwrite_design: allowOverwriteDesign, elementor_mode: "native", _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
             }),
           }).catch(() => {});
         }
@@ -1059,12 +963,6 @@ async function handlePublishPages(req: Request): Promise<Response> {
         // WordPress connector emits Elementor or Gutenberg content accordingly.
         const publishFormat = await getCampaignPublishFormat(page.campaign_id);
         const websiteType = (page.websites as { type?: string })?.type;
-        // WordPress + Elementor is a single fixed path: native, editable
-        // Elementor JSON/widgets only. Ignore any stale UI/request value that
-        // asks for a single HTML widget.
-        const effectiveElementorMode: "html" | "native" =
-          websiteType === "wordpress" && publishFormat === "elementor" ? "native" : elementorMode;
-
         const payload = buildPayload(
           { title: page.title, content: cleanedContent, slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
           resolvedPublishType,
@@ -1073,7 +971,6 @@ async function handlePublishPages(req: Request): Promise<Response> {
             ? templateCache.get(page.website_id || "default")?.pageTemplate
             : undefined,
           preserveDesign,
-          effectiveElementorMode,
         );
 
         payload.publish_format = publishFormat;
@@ -1089,7 +986,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           resolvedPublishType === "page" && !preserveDesign && publishFormat === "elementor" &&
           websiteType === "wordpress"
         ) {
-          const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache, effectiveElementorMode);
+          const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
           if (!catalog) {
             const msg =
               "Publish blocked: no stored Elementor template found for this campaign. " +
@@ -1110,16 +1007,12 @@ async function handlePublishPages(req: Request): Promise<Response> {
             continue;
           }
           // Template-Kit architecture: ship the NATIVE Elementor JSON tree from
-          // the catalog (placeholder-only content applied, template CSS injected
-          // as a top-of-tree HTML widget). The page is fully editable inside
-          // Elementor as native Containers + widgets — NOT a single embedded
-          // HTML blob. Image URLs in the JSON are uploaded to the WP Media
-          // Library by the connector before the page is created/updated.
+          // the catalog (placeholder-only content applied). The page is fully
+          // editable inside Elementor as native Containers + widgets. Image URLs
+          // and CSS assets are uploaded/mapped by the connector plugin.
           payload.elementor_data = catalog.data;
           payload.elementor_css = catalog.css;
-          // Honor the resolved mode: a CSS auto-fix can flip native → html so the
-          // styling is guaranteed to travel with the page markup.
-          payload.elementor_mode = catalog.mode;
+          payload.elementor_mode = "native";
           elementorSource = "catalog";
           elementorSimilarity = catalog.similarity;
 
@@ -1129,11 +1022,6 @@ async function handlePublishPages(req: Request): Promise<Response> {
             console.warn(
               "[publish-pages] CSS integrity warning: no template CSS found for page",
               { pageId: page.id, campaignId: page.campaign_id },
-            );
-          } else if (catalog.cssAutoFixed) {
-            console.log(
-              "[publish-pages] CSS auto-fixed (recovered/injected template CSS)",
-              { pageId: page.id, mode: catalog.mode, cssLength: catalog.cssLength },
             );
           }
 
@@ -1205,7 +1093,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         headers: { Authorization: authHeader, "Content-Type": "application/json" },
         body: JSON.stringify({
           page_ids: remainingIds, publish_type: pubType, website_id: fallbackWebsiteId,
-          overwrite_design: allowOverwriteDesign, elementor_mode: elementorMode, _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
+          overwrite_design: allowOverwriteDesign, elementor_mode: "native", _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
         }),
       }).catch((e) => console.error("[PUBLISH] Self-chain failed:", e));
     }

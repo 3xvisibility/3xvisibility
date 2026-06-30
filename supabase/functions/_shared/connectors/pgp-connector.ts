@@ -3,8 +3,9 @@
  *
  * Routes publishing through the "Page Generator Pro Connector" WordPress plugin
  * (REST namespace `pgp/v1`) instead of the standard WP REST API. The plugin
- * saves native Elementor metadata, regenerates the per-page Elementor CSS, and
- * clears caches server-side — so a published page behaves exactly like one
+ * saves native Elementor metadata via Elementor's document lifecycle, imports
+ * template images into the Media Library, maps attachment IDs, regenerates CSS,
+ * and clears caches server-side — so a published page behaves exactly like one
  * built and saved manually inside the Elementor editor.
  *
  *   SaaS edge fn  ->  PgpConnector  ->  /wp-json/pgp/v1/*  ->  Elementor / Gutenberg
@@ -19,13 +20,6 @@ import type {
   PagePayload,
 } from "./types.ts";
 
-interface MediaResponse {
-  ok: boolean;
-  id: number;
-  url: string;
-  duplicate?: boolean;
-}
-
 interface PublishResponse {
   ok: boolean;
   post_id: number;
@@ -37,7 +31,9 @@ interface PublishResponse {
 }
 
 const CONNECTOR_TIMEOUT_MS = 25_000;
-export const REQUIRED_3XV_CONNECTOR_VERSION = "1.1.5";
+const CONNECTOR_PUBLISH_TIMEOUT_MS = 70_000;
+const CONNECTOR_CSS_REFRESH_TIMEOUT_MS = 20_000;
+export const REQUIRED_3XV_CONNECTOR_VERSION = "1.1.7";
 
 interface ConnectorPingResponse {
   ok: boolean;
@@ -80,7 +76,6 @@ export class PgpConnector implements CmsConnector {
   private restBase: string;
   // Basic-auth header for the (optional) listing fallback over standard WP REST.
   private basicAuth?: string;
-  private mediaCache = new Map<string, string | null>();
 
   constructor(config: ConnectorConfig) {
     this.baseUrl = config.base_url.replace(/\/+$/, "");
@@ -101,7 +96,7 @@ export class PgpConnector implements CmsConnector {
     };
   }
 
-  private async call<T>(path: string, method: string, body?: unknown): Promise<T> {
+  private async call<T>(path: string, method: string, body?: unknown, timeoutMs = CONNECTOR_TIMEOUT_MS): Promise<T> {
     const url = new URL(`${this.restBase}${path}`);
     // Some WordPress hosts/security plugins strip custom auth headers before
     // PHP sees them. Keep the headers, but also send the connector key as a
@@ -114,7 +109,7 @@ export class PgpConnector implements CmsConnector {
       method,
       headers: this.headers(),
       body: requestBody !== undefined ? JSON.stringify(requestBody) : undefined,
-    });
+    }, timeoutMs);
     if (!res.ok) {
       const text = await res.text();
       if (res.status === 401 || res.status === 403 || res.status === 404) {
@@ -182,55 +177,6 @@ export class PgpConnector implements CmsConnector {
     return Boolean(data?.ok);
   }
 
-  /** Upload a remote image into the WP Media Library via the plugin (deduped). */
-  private async uploadMedia(sourceUrl: string): Promise<string | null> {
-    if (this.mediaCache.has(sourceUrl)) return this.mediaCache.get(sourceUrl)!;
-    try {
-      const filename = sourceUrl.split("/").pop()?.split("?")[0] || `image-${Date.now()}.jpg`;
-      const data = await this.call<MediaResponse>("/media", "POST", {
-        url: sourceUrl,
-        filename,
-      });
-      const url = data?.ok ? data.url : null;
-      this.mediaCache.set(sourceUrl, url);
-      return url;
-    } catch {
-      this.mediaCache.set(sourceUrl, null);
-      return null;
-    }
-  }
-
-  /**
-   * Upload every external image referenced inside the Elementor JSON and swap the
-   * URLs for site-hosted Media Library URLs so the published page never points at
-   * a broken/foreign URL. Template-only image policy: we only move existing
-   * template images, we never invent new ones.
-   */
-  private async importImages(elementorJson: string): Promise<string> {
-    if (!elementorJson) return elementorJson;
-    const urls = new Set<string>();
-    const re = /https?:\/\/[^\s"'\\)]+?\.(?:png|jpe?g|gif|webp|svg|avif|ico|bmp)(?:\?[^\s"'\\)]*)?/gi;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(elementorJson)) !== null) {
-      const u = m[0];
-      if (!u.includes(this.baseUrl)) urls.add(u);
-    }
-    let out = elementorJson;
-    const startedAt = Date.now();
-    // Upload EVERY template image to the WP Media Library so the published page
-    // never points at a foreign/broken URL. The plugin downloads each image
-    // server-side (fast) and one page is published per invocation, so the time
-    // budget is generous. A soft cap + time guard prevents runaway loops.
-    for (const u of [...urls].slice(0, 60)) {
-      if (Date.now() - startedAt > 90_000) break;
-      const local = await this.uploadMedia(u);
-      if (local) {
-        out = out.split(JSON.stringify(u).slice(1, -1)).join(JSON.stringify(local).slice(1, -1));
-      }
-    }
-    return out;
-  }
-
   private buildMeta(payload: Partial<PagePayload>): Record<string, string> {
     const meta: Record<string, string> = {};
     if (payload.seo_title) meta._yoast_wpseo_title = payload.seo_title;
@@ -261,15 +207,10 @@ export class PgpConnector implements CmsConnector {
       return { external_id: String(res.post_id), url: res.url };
     }
 
-    // Elementor: prefer the stored master JSON; images go to the Media Library.
-    let elementorData = payload.elementor_data || "";
-    let elementorCss = payload.elementor_css || "";
-    if (elementorData) {
-      elementorData = await this.importImages(elementorData);
-    }
-    if (elementorCss) {
-      elementorCss = await this.importImages(elementorCss);
-    }
+    // Elementor: send the stored master JSON verbatim. The connector plugin owns
+    // Media Library imports + attachment-id mapping inside the Elementor model.
+    const elementorData = payload.elementor_data || "";
+    const elementorCss = payload.elementor_css || "";
     const res = await this.call<PublishResponse>("/publish/elementor", "POST", {
       title,
       slug,
@@ -279,7 +220,7 @@ export class PgpConnector implements CmsConnector {
       elementor_css: elementorCss,
       page_template: payload.page_template || "elementor_header_footer",
       meta,
-    });
+    }, CONNECTOR_PUBLISH_TIMEOUT_MS);
     if (res.elementor_data_valid === false) {
       throw new Error("3xVisibility Connector publish failed: WordPress saved the page, but _elementor_data did not load back correctly.");
     }
@@ -299,7 +240,7 @@ export class PgpConnector implements CmsConnector {
     try {
       const res = await this.call<{ ok?: boolean }>("/regenerate-css", "POST", {
         post_id: postId,
-      });
+      }, CONNECTOR_CSS_REFRESH_TIMEOUT_MS);
       return Boolean(res?.ok);
     } catch {
       return false;

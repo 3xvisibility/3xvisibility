@@ -560,30 +560,12 @@ export function htmlToElementor(html: string, siteContext?: SiteContext): Elemen
 }
 
 /**
- * Build an importable Elementor `_elementor_data` JSON string that renders the
- * template 1:1 with PERFECT CSS. Instead of mapping the markup onto native
- * Elementor widgets (which would replace the template's own class names and drop
- * its <style> CSS), the FULL rendered template markup + every <style> block is
- * embedded verbatim inside a single Elementor "html" widget. The original
- * classes are preserved, so class-based design (grids, colors, fonts,
- * backgrounds) styles correctly — exactly like importing a ready-made template.
- *
- * @param html  Rendered template HTML (content already applied). Its <style>
- *              blocks are kept automatically.
- * @param extraCss Optional additional CSS prepended to guarantee styling even if
- *              `html` lost its <style> blocks upstream.
+ * Legacy helper retained for compatibility with old imports. It no longer builds
+ * HTML widgets: WordPress publishing is native Elementor JSON only.
  */
 export function buildEmbeddedElementorData(html: string, extraCss?: string): string {
   const css = (extraCss || "").trim();
-  const renderable = (css ? `<style>\n${css}\n</style>\n` : "") + extractRenderableHtml(html || "");
-  const htmlWidget: ElementorElement = {
-    id: genId(),
-    elType: "widget",
-    widgetType: "html",
-    settings: { html: renderable },
-    elements: [],
-  };
-  return JSON.stringify([container([htmlWidget], undefined, true)]);
+  return JSON.stringify(htmlToElementor(`${css ? `<style>\n${css}\n</style>\n` : ""}${html || ""}`));
 }
 
 /**
@@ -649,13 +631,8 @@ function extractRenderableHtml(html: string): string {
  * theme header/footer/sidebar and full width — matching the original design.
  */
 export interface BuildElementorMetaOptions {
-  /**
-   * When false (default), build NATIVE Elementor containers/widgets with the
-   * template's CSS baked into widget style settings (no HTML widget, fully
-   * editable). When true, embed full template markup + CSS in a single HTML
-   * widget (legacy fallback, kept only for explicit opt-in / debugging).
-   */
-  embedCss?: boolean;
+  /** Deprecated compatibility flag. WordPress publishing is native-only. */
+  embedCss?: false;
   version?: string;
   /**
    * Pre-built `_elementor_data` JSON string (from the stored catalog with editable
@@ -673,7 +650,7 @@ export function buildElementorMeta(
   // Back-compat: allow passing version string as the 2nd arg.
   const opts: BuildElementorMetaOptions =
     typeof options === "string" ? { version: options } : options;
-  const { embedCss = false, version = "3.21.0", prebuiltData, siteContext } = opts;
+  const { version = "3.21.0", prebuiltData, siteContext } = opts;
 
   let dataStr: string;
   if (prebuiltData) {
@@ -681,20 +658,8 @@ export function buildElementorMeta(
     dataStr = prebuiltData;
   } else {
     let data: ElementorElement[];
-    if (embedCss) {
-      const renderable = extractRenderableHtml(html);
-      const htmlWidget: ElementorElement = {
-        id: genId(),
-        elType: "widget",
-        widgetType: "html",
-        settings: { html: renderable },
-        elements: [],
-      };
-      data = [container([htmlWidget], undefined, true)];
-    } else {
-      // Native Elementor widgets with the template CSS baked into settings.
-      data = htmlToElementor(html, siteContext);
-    }
+    // Native Elementor widgets with the template CSS baked into settings.
+    data = htmlToElementor(html, siteContext);
     dataStr = JSON.stringify(data);
   }
   return {

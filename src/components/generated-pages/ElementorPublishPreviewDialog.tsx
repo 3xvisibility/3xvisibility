@@ -43,14 +43,16 @@ interface ElementorPublishPreviewDialogProps {
 
 /** Map the campaign publish format to the Elementor widget mode used for publishing. */
 function resolveMode(format?: string | null): ElementorWidgetMode {
-  return format === "elementor" ? "native" : "html";
+  // WordPress publishing is now native Elementor only. HTML-widget mode is no
+  // longer available for WordPress publishes.
+  return "native";
 }
 
 const FORMAT_LABELS: Record<string, string> = {
   elementor: "Native Elementor widgets",
   gutenberg: "Gutenberg blocks",
   shopify: "Shopify section",
-  html: "Single HTML widget",
+  html: "Native Elementor widgets",
 };
 
 function RenderableFrame({ html }: { html: string }) {
@@ -148,12 +150,12 @@ export function ElementorPublishPreviewDialog({
             <Label className="text-xs font-semibold block">Publishing format</Label>
             <span className="text-xs text-muted-foreground">
               {mode === "native"
-                ? "Native Elementor widgets — editable inside the Elementor builder."
-                : "Single HTML widget — embeds full markup + CSS, renders 1:1 with the template."}
+                ? "Native Elementor JSON only — editable inside Elementor; no HTML widgets or fallback HTML mode."
+                : "Native Elementor JSON only — editable inside Elementor; no HTML widgets or fallback HTML mode."}
             </span>
           </div>
           <Badge variant="secondary" className="shrink-0 text-[11px]">
-            {FORMAT_LABELS[publishFormat || (mode === "native" ? "elementor" : "html")] || "Single HTML widget"}
+            {FORMAT_LABELS[publishFormat || "elementor"] || "Native Elementor widgets"}
           </Badge>
         </div>
 

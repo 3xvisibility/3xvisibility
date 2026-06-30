@@ -125,6 +125,10 @@ class XXXV_REST {
 		$capabilities = array(
 			'native_elementor_publish' => true,
 			'elementor_data_verify'     => true,
+			'elementor_document_lifecycle' => true,
+			'elementor_native_only'      => true,
+			'elementor_media_mapping'    => true,
+			'elementor_css_validation'   => true,
 			'template_css_meta'         => true,
 			'template_css_enqueue'      => true,
 			'cache_clear'               => true,
