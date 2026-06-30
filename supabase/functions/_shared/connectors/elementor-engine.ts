@@ -62,6 +62,14 @@ function genId(): string {
 
 /* ----------------------------- HTML tokenizer ----------------------------- */
 
+function sanitizeAttrValue(value: string): string {
+  // Malformed source templates (unterminated quotes, stray `<`) must never let
+  // raw markup leak into an attribute value (e.g. href="#c</div></div>...").
+  // Cut the value at the first angle bracket so structure can't be swallowed.
+  const cut = value.search(/[<>]/);
+  return (cut === -1 ? value : value.slice(0, cut)).trim();
+}
+
 function parseAttrs(raw: string): Record<string, string> {
   const attrs: Record<string, string> = {};
   const re = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*(?:=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g;
@@ -69,7 +77,7 @@ function parseAttrs(raw: string): Record<string, string> {
   while ((m = re.exec(raw)) !== null) {
     const name = m[1].toLowerCase();
     const value = m[2] ?? m[3] ?? m[4] ?? "";
-    attrs[name] = value;
+    attrs[name] = sanitizeAttrValue(value);
   }
   return attrs;
 }
