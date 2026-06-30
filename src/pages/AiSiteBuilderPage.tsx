@@ -157,7 +157,7 @@ export default function AiSiteBuilderPage() {
 
   return (
     <div className="container max-w-6xl py-6 space-y-6">
-      <Seo title="AI Site Builder — 3xVisibility" description="Describe your brand and let AI build and publish a full page to WordPress or Shopify." />
+      <Seo title="AI Site Builder" description="Describe your brand and let AI build and publish a full page to WordPress or Shopify." path="/ai-site-builder" />
 
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
