@@ -10,7 +10,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Send, Loader2, Rocket, Wand2, MessageSquare, Globe } from "lucide-react";
+import { Sparkles, Send, Loader2, Rocket, Wand2, MessageSquare, Globe, CheckCircle2, XCircle, AlertTriangle, CircleDot } from "lucide-react";
+
+interface PublishStep {
+  label: string;
+  status: "running" | "ok" | "warn" | "error";
+  detail?: string;
+  at?: string;
+}
 
 interface GeneratedPage {
   title: string;
@@ -44,6 +51,8 @@ export default function AiSiteBuilderPage() {
   const [page, setPage] = useState<GeneratedPage | null>(null);
   const [building, setBuilding] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
 
   // Wizard fields
   const [brand, setBrand] = useState("");
@@ -128,6 +137,8 @@ export default function AiSiteBuilderPage() {
       return;
     }
     setPublishing(true);
+    setPublishedUrl(null);
+    setPublishSteps([{ label: "Sending page to publisher", status: "running" }]);
     try {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
         body: {
@@ -149,16 +160,37 @@ export default function AiSiteBuilderPage() {
       });
       if (error) throw error;
       const result = data?.results?.[0];
+      if (Array.isArray(result?.steps) && result.steps.length) {
+        setPublishSteps(result.steps);
+      }
       if (result?.status === "published") {
-        toast({ title: "Published!", description: result.url ? `Live at ${result.url}` : "Page is live." });
+        const url = result.external_url || result.url || null;
+        setPublishedUrl(url);
+        if (!Array.isArray(result?.steps) || !result.steps.length) {
+          setPublishSteps([{ label: "Published", status: "ok", detail: url || undefined }]);
+        }
+        toast({ title: "Published!", description: url ? `Live at ${url}` : "Page is live." });
       } else {
         throw new Error(result?.error || "Publish did not complete.");
       }
     } catch (err: any) {
-      toast({ title: "Publish failed", description: err.message || String(err), variant: "destructive" });
+      const msg = err.message || String(err);
+      setPublishSteps((prev) => {
+        const next = prev.map((s) => (s.status === "running" ? { ...s, status: "error" as const, detail: msg } : s));
+        if (!next.some((s) => s.status === "error")) next.push({ label: "Publish failed", status: "error", detail: msg });
+        return next;
+      });
+      toast({ title: "Publish failed", description: msg, variant: "destructive" });
     } finally {
       setPublishing(false);
     }
+  };
+
+  const stepIcon = (status: PublishStep["status"]) => {
+    if (status === "ok") return <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />;
+    if (status === "error") return <XCircle className="h-4 w-4 text-destructive shrink-0" />;
+    if (status === "warn") return <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />;
+    return <Loader2 className="h-4 w-4 text-primary animate-spin shrink-0" />;
   };
 
   return (
@@ -296,6 +328,35 @@ export default function AiSiteBuilderPage() {
                     {publishing ? "Publishing…" : "Publish"}
                   </Button>
                 </div>
+
+                {publishSteps.length > 0 && (
+                  <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                      <CircleDot className="h-3.5 w-3.5" /> Publish status
+                    </div>
+                    <ol className="space-y-1.5">
+                      {publishSteps.map((s, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs">
+                          {stepIcon(s.status)}
+                          <div className="min-w-0">
+                            <p className="font-medium leading-tight">{s.label}</p>
+                            {s.detail && <p className="text-muted-foreground break-words leading-tight">{s.detail}</p>}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                    {publishedUrl && (
+                      <a
+                        href={publishedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                      >
+                        <Globe className="h-3.5 w-3.5" /> View live page
+                      </a>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </CardContent>
