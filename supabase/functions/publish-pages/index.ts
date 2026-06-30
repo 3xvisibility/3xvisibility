@@ -105,7 +105,12 @@ async function resolveCatalogElementorData(
         title: shrinkText(page.title, keepFraction),
         description: shrinkText(page.seo_description || undefined, keepFraction),
         bodyHtml: page.content,
-        injectCss: mode === "html" ? templateCss : undefined,
+        // CSS must travel with NATIVE Elementor too. We keep all page content as
+        // native containers/widgets, but prepend a tiny CSS-only HTML widget and
+        // also send the same CSS to the connector meta fallback. This fixes live
+        // WP pages where Elementor's generated CSS loads but marketplace class
+        // selectors/background styles would otherwise be missing.
+        injectCss: templateCss,
       }, ELEMENTOR_SIMILARITY_TARGET);
       if (!built) return null;
       if (!best || built.similarity > best.similarity) best = built;
@@ -113,14 +118,10 @@ async function resolveCatalogElementorData(
     }
     if (!best) return null;
 
-    // CSS-fidelity fix: native Elementor widgets carry Elementor's own class
-    // names, so the template's class-based CSS (`<style>` blocks targeting the
-    // ORIGINAL template classes) never matched and the published page rendered
-    // unstyled. Instead, embed the FULL resolved page markup (which keeps the
-    // template's original classes) together with its `<style>` CSS inside a
-    // single Elementor HTML widget. The design — layout, colors, fonts,
-    // background images — renders 1:1 because both the markup and the CSS that
-    // styles it travel together inside the `_elementor_data` JSON.
+    // HTML mode legacy fallback: embed the full resolved page markup together
+    // with its CSS inside one Elementor HTML widget. WordPress production flow
+    // uses native mode, where only CSS is injected and content remains editable
+    // native Elementor containers/widgets.
     const embeddedData = buildEmbeddedElementorData(page.content, templateCss);
 
     // Mode selector: "html" embeds the full styled markup in a single HTML
