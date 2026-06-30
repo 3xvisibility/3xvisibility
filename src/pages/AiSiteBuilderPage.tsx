@@ -277,7 +277,7 @@ export default function AiSiteBuilderPage() {
         seo_title_pattern: page.seo_title || "",
         seo_description_pattern: page.seo_description || "",
         template_kind: isElementor ? "elementor" : "html",
-        elementor_data: parsedElementor ?? null,
+        elementor_data: (parsedElementor ?? null) as any,
         schema_config: {},
       });
       if (error) throw error;
