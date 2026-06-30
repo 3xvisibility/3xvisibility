@@ -31,6 +31,7 @@ interface PublishResponse {
   editor_ready?: boolean;
   editable_widgets?: number;
   edit_mode?: string;
+  editor_attempts?: number;
 }
 
 const CONNECTOR_TIMEOUT_MS = 25_000;
