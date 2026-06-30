@@ -253,6 +253,29 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
     .join("");
 
   const features = (p.features && p.features.length)
+  const q = imgQuery || p.title || "business modern";
+
+  const sections = (p.sections || [])
+    .map(
+      (s, i) => {
+        const img = `<div style="flex:1 1 320px;min-width:280px;"><img src="${imgUrl(q, 100 + i)}" alt="${esc(s.title)}" loading="lazy" style="width:100%;height:340px;object-fit:cover;border-radius:24px;box-shadow:0 30px 60px -30px rgba(15,23,42,0.5);"/></div>`;
+        const text = `<div style="flex:1 1 320px;min-width:280px;">
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${esc(t.primary)};margin:0 0 12px;">0${i + 1}</div>
+          <h2 style="font-size:clamp(26px,3.4vw,36px);line-height:1.15;margin:0 0 16px;color:${esc(t.text)};font-weight:800;letter-spacing:-0.02em;">${esc(s.title)}</h2>
+          <p style="font-size:18px;line-height:1.75;color:${muted};margin:0;">${esc(s.body)}</p>
+        </div>`;
+        return `
+    <section style="padding:56px 24px;max-width:1120px;margin:0 auto;">
+      <div style="display:flex;flex-wrap:wrap;gap:48px;align-items:center;${i % 2 === 1 ? "flex-direction:row-reverse;" : ""}">
+        ${text}
+        ${img}
+      </div>
+    </section>`;
+      },
+    )
+    .join("");
+
+  const features = (p.features && p.features.length)
     ? `
     <section style="padding:72px 24px;background:${softBg};">
       <div style="max-width:1120px;margin:0 auto;">
@@ -261,10 +284,12 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;">
           ${p.features
             .map(
-              (f, i) => `<div style="background:${surface};border:1px solid ${border};border-radius:20px;padding:32px;box-shadow:0 18px 40px -30px rgba(15,23,42,0.5);transition:transform .2s ease;">
-            <div style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;background:${heroGradient};margin:0 0 18px;">${i + 1}</div>
-            <h3 style="margin:0 0 10px;font-size:20px;color:${esc(t.text)};font-weight:700;letter-spacing:-0.01em;">${esc(f.title)}</h3>
-            <p style="margin:0;font-size:16px;line-height:1.65;color:${muted};">${esc(f.body)}</p>
+              (f, i) => `<div style="background:${surface};border:1px solid ${border};border-radius:20px;overflow:hidden;box-shadow:0 18px 40px -30px rgba(15,23,42,0.5);transition:transform .2s ease;">
+            <img src="${imgUrl(q, 200 + i, 800, 480)}" alt="${esc(f.title)}" loading="lazy" style="width:100%;height:170px;object-fit:cover;"/>
+            <div style="padding:28px 32px 32px;">
+              <h3 style="margin:0 0 10px;font-size:20px;color:${esc(t.text)};font-weight:700;letter-spacing:-0.01em;">${esc(f.title)}</h3>
+              <p style="margin:0;font-size:16px;line-height:1.65;color:${muted};">${esc(f.body)}</p>
+            </div>
           </div>`,
             )
             .join("")}
