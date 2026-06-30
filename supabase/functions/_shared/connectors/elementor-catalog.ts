@@ -8,6 +8,7 @@
 // stored template design 1:1 while carrying new SEO content.
 
 import type { ElementorElement } from "./elementor-engine.ts";
+import { sanitizeElementorTree } from "./elementor-engine.ts";
 import {
   applyEditableContent,
   defaultContentFor,
