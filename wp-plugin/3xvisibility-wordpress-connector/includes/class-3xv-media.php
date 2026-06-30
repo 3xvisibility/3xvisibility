@@ -135,7 +135,7 @@ class XXXV_Media {
 			return new WP_Error( 'xxxv_tmp', 'Could not create temp file.', array( 'status' => 500 ) );
 		}
 
-		$response = wp_remote_get( $source, array( 'timeout' => 30 ) );
+		$response = self::remote_get_image( $source );
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			@unlink( $tmp );
 			return new WP_Error( 'xxxv_fetch', 'Could not download source URL.', array( 'status' => 400 ) );
