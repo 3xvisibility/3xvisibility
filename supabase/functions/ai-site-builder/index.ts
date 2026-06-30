@@ -206,15 +206,28 @@ function gradientCss(primary: string, accent: string, style?: string): string {
 // Build a keyword-relevant photo URL. Uses LoremFlickr (free, no key, returns
 // Creative-Commons photos matching the keywords) so generated pages get
 // beautiful, on-topic imagery like Lovable does — without burning AI credits.
+// `query` should be a short, specific photographic subject so the returned
+// photo matches the section it illustrates (e.g. "dental clinic chair").
 function imgUrl(query: string, seed: number, w = 1200, h = 800): string {
-  const tags = (query || "business modern")
+  const tags = (query || "business modern professional")
     .toLowerCase()
     .replace(/[^a-z0-9 ]+/g, " ")
     .trim()
     .split(/\s+/)
-    .slice(0, 3)
+    .filter((word) => word.length > 1)
+    .slice(0, 4)
     .join(",") || "business";
-  return `https://loremflickr.com/${w}/${h}/${encodeURIComponent(tags)}?lock=${seed}`;
+  // `/all/` requires a photo matching ALL tags → far more on-topic results.
+  return `https://loremflickr.com/${w}/${h}/${encodeURIComponent(tags)}/all?lock=${seed}`;
+}
+
+// Resolve the best image keyword for a slot: prefer the AI-provided per-slot
+// keyword, else combine the slot title with the page-level niche query.
+function slotImg(slotKeyword: string | undefined, fallbackTitle: string, baseQuery: string): string {
+  const kw = (slotKeyword || "").trim();
+  if (kw) return kw;
+  const title = (fallbackTitle || "").trim();
+  return [title, baseQuery].filter(Boolean).join(" ").trim() || baseQuery;
 }
 
 function renderHtml(p: PageJson, imgQuery = ""): string {
