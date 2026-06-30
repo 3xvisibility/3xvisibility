@@ -158,7 +158,7 @@ export function buildElementorFromCatalog(
   overrides: CatalogOverrides,
   target = 98,
 ): CatalogBuildResult | null {
-  const rawTree = coerceTree(elementorJson);
+  const rawTree = sanitizeElementorTree(coerceTree(elementorJson));
   const stripped = stripHtmlWidgets(rawTree);
   const tree = unwrapPageWrapper(stripped.tree);
   const extractedCss = stripped.css;
