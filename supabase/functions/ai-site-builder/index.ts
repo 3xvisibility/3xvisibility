@@ -382,7 +382,11 @@ async function pickMasterTemplate(
 // overlaid onto its editable fields for a 1:1 native design; (2) HTML→native
 // Elementor conversion; (3) raw HTML fallback.
 async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: string[]) {
-  const html = renderHtml(p);
+  const imgQuery = [input.niche, input.category, input.brand]
+    .filter(Boolean)
+    .join(" ")
+    .trim() || p.title;
+  const html = renderHtml(p, imgQuery);
   const platform = input.platform === "shopify" ? "shopify" : "wordpress";
 
   // Shopify pages do NOT use Elementor — they publish into Shopify's own
