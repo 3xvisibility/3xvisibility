@@ -468,6 +468,10 @@ When ready is true, your reply should tell the user you'll build a preview now.`
 
       let pageResult: any = null;
       if (parsed.ready && parsed.collected) {
+        // Carry the platform choice from the request into the collected input.
+        if (body.platform === "shopify" || body.platform === "wordpress") {
+          parsed.collected.platform = body.platform;
+        }
         const out = await generatePage(parsed.collected, authToken);
         if (out.ok && out.page) {
           pageResult = {
