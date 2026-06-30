@@ -279,8 +279,8 @@ function renderHtml(p: PageJson): string {
     : "";
 
   return `<div style="font-family:${font};background:${esc(t.bg)};color:${esc(t.text)};overflow:hidden;">
-  <style>@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');</style>
-  <section style="position:relative;padding:120px 24px 96px;text-align:center;background:linear-gradient(135deg,${esc(t.primary)} 0%,${esc(t.accent)} 100%);color:#fff;">
+  <style>@import url('${fontPreset.import}');</style>
+  <section style="position:relative;padding:120px 24px 96px;text-align:center;background:${heroGradient};color:#fff;">
     <div style="position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(255,255,255,0.18),transparent 45%),radial-gradient(circle at 80% 0%,rgba(255,255,255,0.12),transparent 40%);pointer-events:none;"></div>
     <div style="position:relative;max-width:860px;margin:0 auto;">
       ${eyebrow}
