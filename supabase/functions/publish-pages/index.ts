@@ -1119,10 +1119,13 @@ async function handlePublishPages(req: Request): Promise<Response> {
         applyShopifySuffix(payload, (page.websites as { type?: string })?.type, pageSuffixes, resolvedPublishType);
 
         // If page was previously published (has external_id), update instead of creating
+        step(page.external_id ? "Updating on store" : "Creating on store", "running");
         const result = page.external_id
           ? await withTimeout(connector.updatePage(page.external_id, payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${page.title}`)
           : await withTimeout(connector.createPage(payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${page.title}`);
+        finishRunning("ok", result.url || result.external_id);
 
+        step("Saving record", "running");
         await supabase.from("generated_pages").update({
           status: "published",
           external_id: result.external_id,
@@ -1130,8 +1133,10 @@ async function handlePublishPages(req: Request): Promise<Response> {
           error_message: null,
           editor_readiness: result.editor_readiness ?? null,
         }).eq("id", page.id);
+        finishRunning("ok");
 
-        results.push({ id: page.id, status: "published", external_url: result.url, elementor_source: elementorSource, elementor_similarity: elementorSimilarity });
+        step("Published", "ok", result.url);
+        results.push({ id: page.id, status: "published", external_url: result.url, elementor_source: elementorSource, elementor_similarity: elementorSimilarity, steps });
 
         // Audit log for publish
         try {
