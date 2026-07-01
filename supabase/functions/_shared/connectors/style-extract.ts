@@ -286,7 +286,7 @@ function applyTypography(
     const fs = pxSize(p.fontSize);
     if (fs) settings[`${prefix}_font_size`] = fs;
     if (p.fontWeight) settings[`${prefix}_font_weight`] = p.fontWeight;
-    const lh = pxSize(p.lineHeight);
+    const lh = lineHeightSize(p.lineHeight);
     if (lh) settings[`${prefix}_line_height`] = lh;
     const ls = pxSize(p.letterSpacing);
     if (ls) settings[`${prefix}_letter_spacing`] = ls;
