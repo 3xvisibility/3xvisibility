@@ -46,6 +46,7 @@ export interface StyleProps {
   justifyContent?: string;
   alignItems?: string;
   gap?: string;
+  gridTemplateColumns?: string;
   minHeight?: string;
   overflow?: string;
   boxShadow?: string;
