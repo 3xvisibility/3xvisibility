@@ -50,7 +50,16 @@ function xxxv_connector_boot() {
 	new XXXV_Admin();
 	new XXXV_REST();
 	new XXXV_Updater();
-	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'enqueue_template_css' ), 20 );
-	add_action( 'wp_head', array( 'XXXV_Elementor', 'print_template_css' ), 99 );
+	// Enqueue as late as possible so our inline stylesheet is registered AFTER
+	// Elementor's per-post CSS in the queue and therefore wins equal-specificity
+	// cascade conflicts (e.g. template grid vs. Elementor container flex).
+	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'enqueue_template_css' ), PHP_INT_MAX );
+	// Print inside <head> after every other style tag.
+	add_action( 'wp_head', array( 'XXXV_Elementor', 'print_template_css' ), PHP_INT_MAX );
+	// Last-resort guarantee: re-emit the template CSS just before </body>. At equal
+	// specificity, a rule declared later in document order wins — a footer <style>
+	// beats any head style Elementor or the active theme injected, so the published
+	// page renders 1:1 with the template even when caching plugins reorder head CSS.
+	add_action( 'wp_footer', array( 'XXXV_Elementor', 'print_template_css' ), PHP_INT_MAX );
 }
 add_action( 'plugins_loaded', 'xxxv_connector_boot' );
