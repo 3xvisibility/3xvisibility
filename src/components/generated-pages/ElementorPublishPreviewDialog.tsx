@@ -263,6 +263,9 @@ export function ElementorPublishPreviewDialog({
             <TabsTrigger value="preview" className="gap-1 text-xs">
               <Eye className="h-3.5 w-3.5" /> Preview
             </TabsTrigger>
+            <TabsTrigger value="map" className="gap-1 text-xs">
+              <Boxes className="h-3.5 w-3.5" /> Widget Map
+            </TabsTrigger>
             <TabsTrigger value="css" className="gap-1 text-xs">
               <Palette className="h-3.5 w-3.5" /> CSS
             </TabsTrigger>
