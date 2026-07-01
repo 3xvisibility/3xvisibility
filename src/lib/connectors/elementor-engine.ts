@@ -759,6 +759,18 @@ export function extractTemplateCss(html: string | null | undefined): string {
 
 export type ElementorWidgetMode = "native";
 
+export interface ElementorMapNode {
+  /** Nesting depth (0 = top-level section). */
+  depth: number;
+  elType: "container" | "widget";
+  /** Native Elementor widget type (heading, image, testimonial, ...). */
+  widgetType?: string;
+  /** Human label: for widgets a content snippet; for containers a layout hint. */
+  label: string;
+  /** How many direct children this node has. */
+  childCount: number;
+}
+
 export interface ElementorDebugReport {
   /** Selected widget mode. */
   mode: ElementorWidgetMode;
@@ -774,6 +786,10 @@ export interface ElementorDebugReport {
   widgetCount: number;
   /** Number of top-level containers/sections. */
   containerCount: number;
+  /** Flattened, depth-ordered map of every element -> native widget. */
+  mapping: ElementorMapNode[];
+  /** Count of each native widget type produced (e.g. { heading: 4, image: 3 }). */
+  widgetSummary: Record<string, number>;
 }
 
 function countNodes(nodes: ElementorElement[]): { widgets: number; containers: number } {
