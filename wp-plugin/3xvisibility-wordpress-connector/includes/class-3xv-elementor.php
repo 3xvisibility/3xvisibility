@@ -332,6 +332,19 @@ class XXXV_Elementor {
 					$element['settings']['editor'] = self::sanitize_inline_editor_html( $element['settings']['editor'] );
 				}
 			}
+			// Fix line-heights that a legacy converter baked as tiny px values
+			// (a unitless CSS 1.5 stored as 1.5px) which collapses lines on top
+			// of each other. Convert any implausibly small px line-height to em.
+			if ( ! empty( $element['settings'] ) && is_array( $element['settings'] ) ) {
+				foreach ( $element['settings'] as $key => &$val ) {
+					if ( false !== strpos( (string) $key, 'line_height' ) && is_array( $val )
+						&& isset( $val['unit'], $val['size'] ) && 'px' === $val['unit']
+						&& is_numeric( $val['size'] ) && (float) $val['size'] < 6 ) {
+						$val['unit'] = 'em';
+					}
+				}
+				unset( $val );
+			}
 			if ( ! empty( $element['elements'] ) && is_array( $element['elements'] ) ) {
 				self::sanitize_elementor_text_fields( $element['elements'] );
 			}
