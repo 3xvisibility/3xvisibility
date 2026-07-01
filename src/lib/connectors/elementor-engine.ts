@@ -450,8 +450,23 @@ function isLayoutContainer(el: ElementorElement): boolean {
   );
 }
 
+// Settings that indicate a container carries real design intent (styling or
+// identity) and must never be collapsed away.
+const VISUAL_STYLE_KEYS = [
+  "_css_classes", "_element_id", "background_background", "background_color", "background_image",
+  "__xxxv_background", "__xxxv_box_shadow", "__xxxv_border", "padding", "margin", "min_height",
+  "max_width", "border_radius", "overflow",
+];
+
+function hasVisualStyling(el: ElementorElement): boolean {
+  if (el.elType !== "container") return false;
+  const s = el.settings || {};
+  return VISUAL_STYLE_KEYS.some((key) => key in s && s[key] !== undefined && s[key] !== "");
+}
+
 function isPlainWrapper(el: ElementorElement): boolean {
   if (el.elType !== "container") return false;
+  if (hasVisualStyling(el)) return false;
   // Grid / row / column containers are REQUIRED for layout — never unwrap.
   return !isLayoutContainer(el);
 }
@@ -461,13 +476,14 @@ function isPlainWrapper(el: ElementorElement): boolean {
  * container that carries real layout meaning (grid / flex-row / columns).
  *
  * Heuristics:
- *   1. A plain wrapper that holds exactly one child is redundant — replace it
- *      with its child (collapse the chain), unless the child is a bare widget
- *      that still needs a section wrapper at the top level.
+ *   1. A container (grid, flex, or plain) with NO visual styling of its own
+ *      that wraps a single child container is a redundant nesting level — a
+ *      grid/flex wrapper holding exactly one item adds nothing. Collapse it
+ *      into its child, looping to flatten deep grid-in-grid chains.
  *   2. A plain wrapper holding multiple children where ALL siblings are
  *      containers is a pure grouping shell — unwrap into its children.
- *   3. Layout containers (grid/row) are kept intact; only their descendants
- *      are cleaned recursively.
+ *   3. Layout containers (grid/row) that carry real content are kept intact;
+ *      only their descendants are cleaned recursively.
  */
 function unwrapRedundant(elements: ElementorElement[]): ElementorElement[] {
   const out: ElementorElement[] = [];
@@ -476,6 +492,19 @@ function unwrapRedundant(elements: ElementorElement[]): ElementorElement[] {
     const cleanedChildren = unwrapRedundant(el.elements);
     el.elements = cleanedChildren;
 
+    // Collapse redundant single-container nesting (grid-in-grid / flex-in-flex
+    // / plain-in-plain) as long as the OUTER carries no styling of its own.
+    while (
+      el.elType === "container" &&
+      !hasVisualStyling(el) &&
+      el.elements.length === 1 &&
+      el.elements[0].elType === "container"
+    ) {
+      const child = el.elements[0];
+      el.settings = child.settings;
+      el.elements = child.elements;
+    }
+
     if (isLayoutContainer(el)) {
       out.push(el); // required wrapper, keep as-is
       continue;
@@ -483,16 +512,16 @@ function unwrapRedundant(elements: ElementorElement[]): ElementorElement[] {
 
     if (isPlainWrapper(el)) {
       // Collapse single-child redundant wrapper.
-      if (cleanedChildren.length === 1 && cleanedChildren[0].elType === "container") {
-        out.push(cleanedChildren[0]);
+      if (el.elements.length === 1 && el.elements[0].elType === "container") {
+        out.push(el.elements[0]);
         continue;
       }
       // Pure grouping shell (all children are containers) -> dissolve.
       if (
-        cleanedChildren.length > 1 &&
-        cleanedChildren.every((c) => c.elType === "container")
+        el.elements.length > 1 &&
+        el.elements.every((c) => c.elType === "container")
       ) {
-        out.push(...cleanedChildren);
+        out.push(...el.elements);
         continue;
       }
     }
