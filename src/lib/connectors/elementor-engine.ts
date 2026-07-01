@@ -396,6 +396,25 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
     }
   }
 
+  // Guard: when this node is really a container wrapping MULTIPLE card-like
+  // children (a grid/list of cards), do NOT collapse it into a single widget.
+  // Return null so it becomes a layout container and each child is mapped to
+  // its own native widget (image-box / icon-box / testimonial / ...).
+  const cardLikeChildren = itemChildren.filter(
+    (c) =>
+      !!findNode(c, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "heading", "name")) ||
+      (!!findNode(
+        c,
+        (n) =>
+          n.tag === "img" ||
+          n.tag === "i" ||
+          n.tag === "svg" ||
+          hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
+      ) &&
+        !!findNode(c, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description"))),
+  );
+  if (cardLikeChildren.length >= 2) return null;
+
   // Structural single-card fallbacks: map recognizable compositions to native
   // widgets instead of yet another nested container.
   if (hasClass(node, "card", "box", "tile", "feature", "service", "item") || (hasText && (directImg || iconNode))) {
@@ -403,6 +422,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
     if (iconNode && !directImg && hasText) return iconBox(node);
   }
   return null;
+
 }
 
 function container(children: ElementorElement[], node?: HtmlNode): ElementorElement {
