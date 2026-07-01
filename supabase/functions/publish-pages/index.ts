@@ -3,7 +3,7 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
-import { htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
+import { buildExactElementorData, htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
 
 
 /**
@@ -377,6 +377,13 @@ function stripHeadTagsForCms(content: string): string {
     .trim();
 
   return cleaned;
+}
+
+function shouldUseExactElementorRender(content: string): boolean {
+  if (!content || typeof content !== "string") return false;
+  // Styled imported/AI templates are where native conversion can lose fidelity.
+  // Preserve the exact rendered DOM/CSS inside Elementor instead.
+  return /<style[\s>]/i.test(content) || /\bclass\s*=\s*["'][^"']{8,}["']/i.test(content);
 }
 
 /**
@@ -789,12 +796,21 @@ async function handlePublishPages(req: Request): Promise<Response> {
             : directShopifySuffixes;
           applyShopifySuffix(payload, website.type, dpSuffixes, pubType);
 
+          // Exact Elementor render for complex styled pages: publish the original
+          // DOM/CSS inside Elementor so the live page matches the template 1:1.
+          const useExactDirectElementor = website.type === "wordpress" && pubType === "page" && !preserveDesign && shouldUseExactElementorRender(cleanedContent);
+
           // Native Elementor master routing for direct publishes (e.g. AI Site
           // Builder). When the caller supplies a pre-built native Elementor JSON
           // tree, ship it directly so the WordPress page is fully editable in
           // Elementor — no raw HTML fallback.
-          let dpElementorData = typeof dp.elementor_data === "string" ? dp.elementor_data : undefined;
+          let dpElementorData = useExactDirectElementor
+            ? buildExactElementorData(cleanedContent, typeof dp.elementor_css === "string" ? dp.elementor_css : undefined)
+            : (typeof dp.elementor_data === "string" ? dp.elementor_data : undefined);
           let dpElementorCss = typeof dp.elementor_css === "string" ? dp.elementor_css : undefined;
+          if (useExactDirectElementor) {
+            dpElementorCss = [dpElementorCss, extractTemplateCss(cleanedContent)].filter(Boolean).join("\n") || undefined;
+          }
           if (
             website.type === "wordpress" && pubType === "page" && !preserveDesign &&
             dpElementorData && dp.content && !dpElementorData.includes("xxxv-s-")
@@ -818,8 +834,8 @@ async function handlePublishPages(req: Request): Promise<Response> {
             }
             payload.elementor_data = dpElementorData;
             payload.elementor_css = dpElementorCss;
-            payload.elementor_mode = "native";
-            step("Routing native Elementor JSON", "ok", "Full-width containers + native widgets");
+            payload.elementor_mode = useExactDirectElementor ? "exact" : "native";
+            step(useExactDirectElementor ? "Routing exact Elementor render" : "Routing native Elementor JSON", "ok", useExactDirectElementor ? "Original HTML/CSS preserved inside Elementor" : "Full-width containers + native widgets");
           }
 
 
@@ -1225,12 +1241,20 @@ async function handlePublishPages(req: Request): Promise<Response> {
         // validated). There is NO raw-HTML fallback. In Gutenberg format we skip
         // the catalog gate and publish native block content built from the
         // template HTML (images still imported into the WP Media Library).
-        let elementorSource: "catalog" | undefined;
+        let elementorSource: "catalog" | "exact" | undefined;
         let elementorSimilarity: number | undefined;
         if (
           resolvedPublishType === "page" && !preserveDesign && publishFormat === "elementor" &&
           websiteType === "wordpress"
         ) {
+          if (shouldUseExactElementorRender(cleanedContent)) {
+            payload.elementor_data = buildExactElementorData(cleanedContent);
+            payload.elementor_css = extractTemplateCss(cleanedContent);
+            payload.elementor_mode = "exact";
+            elementorSource = "exact";
+            elementorSimilarity = 100;
+            step("Routing exact Elementor render", "ok", "Original template HTML/CSS preserved for 1:1 output");
+          } else {
           const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
           if (!catalog) {
             const msg =
@@ -1270,6 +1294,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
             );
           }
 
+          }
         }
 
         // Shopify page publishes: attach the stored Online Store 2.0 section kit

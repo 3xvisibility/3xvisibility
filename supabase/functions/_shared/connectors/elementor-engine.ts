@@ -886,7 +886,7 @@ function extractStylesheetImports(html: string): string {
   return imports.length ? `<style>\n${imports.join("\n")}\n</style>` : "";
 }
 
-function extractRenderableHtml(html: string): string {
+export function extractRenderableHtml(html: string): string {
   const input = html || "";
   // Preserve external fonts/CSS as @import (the <link> tags get stripped below).
   const fontImports = extractStylesheetImports(input);
@@ -904,6 +904,46 @@ function extractRenderableHtml(html: string): string {
     .replace(/<\/?(?:html|head|body)\b[^>]*>/gi, "")
     .trim();
   return `${styles}\n${body}`.trim();
+}
+
+/**
+ * Pixel-faithful Elementor fallback: keep the original template markup/CSS
+ * intact inside one Elementor HTML widget. This is intentionally separate from
+ * the native converter so production can choose exact visual parity when a
+ * complex marketplace/AI design cannot be losslessly mapped to controls.
+ */
+export function buildExactElementorData(html: string, extraCss?: string): string {
+  const bridgeCss = `
+<style>
+.elementor .xxxv-exact-template{width:100%!important;max-width:none!important;padding:0!important;margin:0!important;--width:100%;}
+.elementor .xxxv-exact-template>.e-con-inner{width:100%!important;max-width:none!important;padding:0!important;}
+.elementor .xxxv-exact-template .xxxv-exact-html,.elementor .xxxv-exact-template .elementor-widget-html,.elementor .xxxv-exact-template .elementor-widget-container{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;}
+.elementor .xxxv-exact-template .xxxv-exact-html>*{max-width:none;}
+</style>`;
+  const source = `${bridgeCss}\n${extraCss ? `<style>\n${extraCss}\n</style>` : ""}\n${html || ""}`;
+  const renderable = extractRenderableHtml(source);
+  const data: ElementorElement[] = [{
+    id: genId(),
+    elType: "container",
+    settings: {
+      content_width: "full",
+      width: "100%",
+      flex_direction: "column",
+      html_tag: "main",
+      _css_classes: "xxxv-exact-template",
+    },
+    elements: [{
+      id: genId(),
+      elType: "widget",
+      widgetType: "html",
+      settings: {
+        _css_classes: "xxxv-exact-html",
+        html: renderable,
+      },
+      elements: [],
+    }],
+  }];
+  return JSON.stringify(data);
 }
 
 /**

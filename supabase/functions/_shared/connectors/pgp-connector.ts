@@ -37,7 +37,7 @@ interface PublishResponse {
 const CONNECTOR_TIMEOUT_MS = 25_000;
 const CONNECTOR_PUBLISH_TIMEOUT_MS = 120_000;
 const CONNECTOR_CSS_REFRESH_TIMEOUT_MS = 20_000;
-export const REQUIRED_3XV_CONNECTOR_VERSION = "1.3.5";
+export const REQUIRED_3XV_CONNECTOR_VERSION = "1.3.6";
 
 interface ConnectorPingResponse {
   ok: boolean;
@@ -225,6 +225,7 @@ export class PgpConnector implements CmsConnector {
       post_id: postId,
       elementor_data: elementorData,
       elementor_css: elementorCss,
+      exact_render: payload.elementor_mode === "exact",
       page_template: payload.page_template || "elementor_header_footer",
       meta,
     }, CONNECTOR_PUBLISH_TIMEOUT_MS);
