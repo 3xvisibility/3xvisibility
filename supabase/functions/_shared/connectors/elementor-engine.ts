@@ -699,6 +699,7 @@ export function sanitizeElementorTree(tree: ElementorElement[]): ElementorElemen
 export function htmlToElementor(html: string, siteContext?: SiteContext): ElementorElement[] {
   CURRENT_RESOLVER = new StyleResolver(html || "");
   CURRENT_CTX = siteContext;
+  CURRENT_COLOR_STACK = [];
   try {
     const tree = parseHtml(html || "");
     const converted = flattenSections(convertChildren(tree));
