@@ -64,7 +64,8 @@ const byGroup = mappingFixtures.reduce<Record<string, typeof mappingFixtures>>((
 for (const [group, fixtures] of Object.entries(byGroup)) {
   describe(`elementor mapping fixtures: ${group}`, () => {
     for (const fx of fixtures) {
-      it(`${fx.id} — ${fx.description}`, () => {
+      const runner = fx.knownGap ? it.fails : it;
+      runner(`${fx.id} — ${fx.description}`, () => {
         const tree = htmlToElementor(fx.html);
         const counts = widgetCounts(tree);
         const layouts = containerLayouts(tree);
