@@ -1407,6 +1407,12 @@ export default function GeneratedPagesPage() {
         onOpenChange={(open) => { if (!open) setPublishLog(null); }}
         results={publishLog || []}
       />
+      <RepublishDiffDialog
+        open={!!diffState}
+        onOpenChange={(open) => { if (!open) setDiffState(null); }}
+        before={diffState?.before}
+        after={diffState?.after}
+      />
     </div>
   );
 }
