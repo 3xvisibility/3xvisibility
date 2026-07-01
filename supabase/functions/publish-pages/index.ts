@@ -113,6 +113,25 @@ function storedJsonHasBadLineHeight(elementorJson: unknown): boolean {
   return false;
 }
 
+/**
+ * Detect stored JSON produced by the OLD converter that mis-parsed `@media`
+ * blocks: the mobile override `grid-template-columns:1fr` leaked into the base
+ * rules, so every responsive grid was baked as a 1-column grid. A
+ * `container_type:"grid"` whose `grid_columns_grid.size` is 1 is meaningless
+ * (a real single column is just a flex column) and is the fingerprint of that
+ * bug — reconvert from clean source HTML so multi-column grids come back.
+ */
+function storedJsonHasCollapsedGrid(elementorJson: unknown): boolean {
+  const jsonStr = JSON.stringify(elementorJson ?? "");
+  if (!jsonStr || !jsonStr.includes('"grid"')) return false;
+  const re = /"container_type"\s*:\s*"grid"[\s\S]{0,400}?"grid_columns_grid"\s*:\s*\{[^}]*?"size"\s*:\s*([\d.]+)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(jsonStr)) !== null) {
+    if (parseFloat(m[1]) <= 1) return true;
+  }
+  return false;
+}
+
 
 
 async function resolveCatalogElementorData(
