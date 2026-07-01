@@ -381,9 +381,10 @@ function stripHeadTagsForCms(content: string): string {
 
 function shouldUseExactElementorRender(content: string): boolean {
   if (!content || typeof content !== "string") return false;
-  // Styled imported/AI templates are where native conversion can lose fidelity.
-  // Preserve the exact rendered DOM/CSS inside Elementor instead.
-  return /<style[\s>]/i.test(content) || /\bclass\s*=\s*["'][^"']{8,}["']/i.test(content);
+  // Any real template markup can lose fidelity when converted into Elementor
+  // controls. For WordPress Elementor publishes, preserve the rendered DOM/CSS
+  // inside Elementor unless this is truly plain text.
+  return /<(section|main|header|footer|div|article|nav|style|img|h[1-6]|p|a|ul|ol|li)\b/i.test(content);
 }
 
 /**
