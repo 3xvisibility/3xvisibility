@@ -462,44 +462,6 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
 // Routes through the native Elementor master: the rendered HTML is converted to
 // a native Elementor JSON tree (full-width Containers + native widgets) so the
 // WordPress publish flow ships an editable, 1:1 page — never a raw HTML widget.
-// Pick the stored master Elementor template whose category/name best matches the
-// brand/category/niche inputs (and any reference section headings). Returns the
-// raw `elementor_json` of the best match, or null when nothing scores.
-async function pickMasterTemplate(
-  input: BuildInput,
-  hints: string[],
-): Promise<unknown | null> {
-  try {
-    const url = Deno.env.get("SUPABASE_URL");
-    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!url || !key) return null;
-    const supabase = createClient(url, key);
-    const { data, error } = await supabase
-      .from("elementor_templates")
-      .select("id, name, category, elementor_json")
-      .eq("status", "active")
-      .limit(200);
-    if (error || !data?.length) return null;
-
-    const needles = [input.category, input.niche, input.brand, ...hints]
-      .filter(Boolean)
-      .flatMap((s) => String(s).toLowerCase().split(/[^a-z0-9]+/))
-      .filter((w) => w.length >= 3);
-    if (!needles.length) return null;
-
-    let best: { json: unknown; score: number } | null = null;
-    for (const row of data) {
-      const hay = `${row.category ?? ""} ${row.name ?? ""}`.toLowerCase();
-      let score = 0;
-      for (const n of needles) if (hay.includes(n)) score += 1;
-      if (score > 0 && (!best || score > best.score)) best = { json: row.elementor_json, score };
-    }
-    return best?.json ?? null;
-  } catch (e) {
-    console.warn("[ai-site-builder] master template lookup failed", e);
-    return null;
-  }
-}
 
 // Build the publish-ready page payload from a generated PageJson.
 // Routing priority: (1) a matching stored master Elementor template, content
