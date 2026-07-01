@@ -14,7 +14,7 @@
  * a small, tolerant HTML tokenizer.
  */
 
-import { StyleResolver, styleButton, styleContainer, styleHeading, styleImage, styleText, type NodeLike } from "./style-extract.ts";
+import { StyleResolver, styleButton, styleContainer, styleContainerResponsive, styleHeading, styleImage, styleText, styleTypographyResponsive, type NodeLike, type StyleProps } from "./style-extract.ts";
 import type { SiteContext } from "./wp-site-context.ts";
 
 // Module-scoped style baking state. Set by `htmlToElementor` so the widget
@@ -39,7 +39,8 @@ function bakedSettings(
   settings: Record<string, unknown>,
 ): Record<string, unknown> {
   if (!CURRENT_RESOLVER || !node) return settings;
-  const props = CURRENT_RESOLVER.resolve(node as NodeLike);
+  const devices = CURRENT_RESOLVER.resolveDevices(node as NodeLike);
+  const props = devices.desktop;
   // Inherit text color from the nearest styled ancestor for text/heading widgets
   // that don't set their own color, mirroring the CSS cascade.
   if ((apply === styleText || apply === styleHeading) && !props.color) {
@@ -47,8 +48,18 @@ function bakedSettings(
     if (inherited) props.color = inherited;
   }
   apply(settings, props, CURRENT_CTX);
+
+  // Bake tablet/mobile overrides so the published page is responsive in Elementor.
+  if (apply === styleContainer) {
+    styleContainerResponsive(settings, props, devices.tablet as StyleProps, "_tablet");
+    styleContainerResponsive(settings, props, devices.mobile as StyleProps, "_mobile");
+  } else if (apply === styleText || apply === styleHeading) {
+    styleTypographyResponsive(settings, props, devices.tablet as StyleProps, "_tablet");
+    styleTypographyResponsive(settings, props, devices.mobile as StyleProps, "_mobile");
+  }
   return settings;
 }
+
 
 export interface ElementorElement {
   id: string;

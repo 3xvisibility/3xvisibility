@@ -55,9 +55,44 @@ export interface StyleProps {
   opacity?: string;
 }
 
+interface MediaCond {
+  min?: number;
+  max?: number;
+}
+
 interface Rule {
   selectors: ParsedSelector[];
   decls: Record<string, string>;
+  /** The @media condition this rule lives under (undefined = base/desktop). */
+  media?: MediaCond;
+  /** Source order — used as a stable tiebreaker so later rules win. */
+  order: number;
+}
+
+/**
+ * Representative viewport widths per Elementor device. We resolve the effective
+ * style for each device by including every rule whose @media condition is active
+ * at that width. This correctly handles BOTH desktop-first (`max-width`) and
+ * mobile-first (`min-width`) templates — the latter previously collapsed to a
+ * single column because only the mobile base was baked.
+ */
+export const DEVICE_WIDTHS = { desktop: 1440, tablet: 900, mobile: 400 } as const;
+export type Device = keyof typeof DEVICE_WIDTHS;
+
+function mediaActiveAt(media: MediaCond | undefined, width: number): boolean {
+  if (!media) return true;
+  if (media.min !== undefined && width < media.min) return false;
+  if (media.max !== undefined && width > media.max) return false;
+  return true;
+}
+
+function parseMediaCond(prelude: string): MediaCond {
+  const min = prelude.match(/min-width\s*:\s*([\d.]+)px/i);
+  const max = prelude.match(/max-width\s*:\s*([\d.]+)px/i);
+  return {
+    min: min ? parseFloat(min[1]) : undefined,
+    max: max ? parseFloat(max[1]) : undefined,
+  };
 }
 
 interface ParsedSelector {
@@ -97,76 +132,75 @@ function parseSelector(sel: string): ParsedSelector | null {
   return { tag, classes, id, specificity };
 }
 
-/**
- * Remove entire at-rule blocks (@media / @supports / @container / @keyframes /
- * @font-face …) INCLUDING their nested contents. The naive rule regex below
- * cannot see nested braces, so without this step the declarations inside a
- * `@media (max-width:900px){ .grid{grid-template-columns:1fr} }` block leak out
- * and get applied as BASE (desktop) rules — collapsing every responsive grid to
- * a single column. We intentionally bake only the base (widest) styles.
- */
-function stripAtBlocks(css: string): string {
-  let out = "";
-  let i = 0;
-  while (i < css.length) {
-    if (css[i] === "@") {
-      // Find where this at-rule ends: a `;` (statement) or `{` (block).
-      let j = i;
-      while (j < css.length && css[j] !== "{" && css[j] !== ";") j++;
-      if (css[j] === ";") {
-        // Statement at-rule (e.g. @import ...;) — drop it.
-        i = j + 1;
-        continue;
-      }
-      if (css[j] === "{") {
-        // Block at-rule — skip to its matching closing brace (balanced).
-        let depth = 0;
-        let k = j;
-        for (; k < css.length; k++) {
-          if (css[k] === "{") depth++;
-          else if (css[k] === "}") {
-            depth--;
-            if (depth === 0) { k++; break; }
-          }
-        }
-        i = k;
-        continue;
-      }
+/** Read a balanced `{...}` block starting at the `{` index. Returns inner text + index after closing `}`. */
+function readBlock(css: string, openIdx: number): { inner: string; end: number } {
+  let depth = 0;
+  for (let k = openIdx; k < css.length; k++) {
+    if (css[k] === "{") depth++;
+    else if (css[k] === "}") {
+      depth--;
+      if (depth === 0) return { inner: css.slice(openIdx + 1, k), end: k + 1 };
     }
-    out += css[i];
-    i++;
   }
-  return out;
+  return { inner: css.slice(openIdx + 1), end: css.length };
 }
 
-/** Parse all <style> blocks of a template into an ordered rule set. */
-export function parseStylesheet(html: string): Rule[] {
-  const rules: Rule[] = [];
-  const styleRe = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
-  let block: RegExpExecArray | null;
-  const cssChunks: string[] = [];
-  while ((block = styleRe.exec(html || "")) !== null) cssChunks.push(block[1] || "");
-  const css = stripAtBlocks(
-    cssChunks.join("\n")
-      // strip comments first so `/* @media */` etc. can't confuse the scanner
-      .replace(/\/\*[\s\S]*?\*\//g, ""),
-  );
-
-  const ruleRe = /([^{}]+)\{([^{}]*)\}/g;
-  let m: RegExpExecArray | null;
-  while ((m = ruleRe.exec(css)) !== null) {
-    const selectorList = m[1].trim();
-    if (selectorList.startsWith("@")) continue; // skip at-rules
-    const decls = parseDecls(m[2] || "");
-    if (Object.keys(decls).length === 0) continue;
+/**
+ * Recursively parse CSS into a flat rule list, tagging each rule with the
+ * @media condition it lives under. Unlike the old approach we no longer DISCARD
+ * media blocks — we keep them so the engine can bake proper Elementor responsive
+ * (tablet/mobile) settings AND correctly pick the desktop base for mobile-first
+ * templates (where the grid lives inside a `@media (min-width:…)` block).
+ */
+function parseCssRules(css: string, media: MediaCond | undefined, out: Rule[]): void {
+  let i = 0;
+  while (i < css.length) {
+    const ch = css[i];
+    if (ch === "}" || ch === ";" || /\s/.test(ch)) { i++; continue; }
+    if (ch === "@") {
+      let j = i;
+      while (j < css.length && css[j] !== "{" && css[j] !== ";") j++;
+      const prelude = css.slice(i, j).trim();
+      if (css[j] === ";" || j >= css.length) { i = j + 1; continue; }
+      const { inner, end } = readBlock(css, j);
+      if (/^@media/i.test(prelude)) {
+        parseCssRules(inner, parseMediaCond(prelude), out);
+      } else if (/^@supports/i.test(prelude)) {
+        parseCssRules(inner, media, out); // @supports: treat inner as same context
+      }
+      // @keyframes / @font-face / @import / @container etc. are dropped.
+      i = end;
+      continue;
+    }
+    // Selector rule.
+    let j = i;
+    while (j < css.length && css[j] !== "{" && css[j] !== "}") j++;
+    if (css[j] !== "{") { i = j + 1; continue; }
+    const selectorList = css.slice(i, j).trim();
+    const { inner, end } = readBlock(css, j);
+    i = end;
+    const decls = parseDecls(inner);
+    if (!selectorList || Object.keys(decls).length === 0) continue;
     const selectors = selectorList
       .split(",")
       .map(parseSelector)
       .filter((s): s is ParsedSelector => s !== null);
-    if (selectors.length) rules.push({ selectors, decls });
+    if (selectors.length) out.push({ selectors, decls, media, order: out.length });
   }
+}
+
+/** Parse all <style> blocks of a template into an ordered rule set. */
+export function parseStylesheet(html: string): Rule[] {
+  const styleRe = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
+  let block: RegExpExecArray | null;
+  const cssChunks: string[] = [];
+  while ((block = styleRe.exec(html || "")) !== null) cssChunks.push(block[1] || "");
+  const css = cssChunks.join("\n").replace(/\/\*[\s\S]*?\*\//g, "");
+  const rules: Rule[] = [];
+  parseCssRules(css, undefined, rules);
   return rules;
 }
+
 
 /* ----------------------------- resolution -------------------------------- */
 
@@ -231,21 +265,27 @@ export class StyleResolver {
     this.rules = parseStylesheet(html);
   }
 
-  resolve(node: NodeLike): StyleProps {
+  /**
+   * Resolve the effective style for a node at a given viewport width. Only rules
+   * whose @media condition is active at `width` participate. Winner order:
+   * specificity, then source order (later wins) so media overrides win over base.
+   */
+  resolve(node: NodeLike, width: number = DEVICE_WIDTHS.desktop): StyleProps {
     const tag = (node.tag || "").toLowerCase();
     const classes = (node.attrs?.class || "").toLowerCase().split(/\s+/).filter(Boolean);
     const id = (node.attrs?.id || "").toLowerCase();
 
-    const matched: { spec: number; decls: Record<string, string> }[] = [];
+    const matched: { spec: number; order: number; decls: Record<string, string> }[] = [];
     for (const rule of this.rules) {
+      if (!mediaActiveAt(rule.media, width)) continue;
       for (const sel of rule.selectors) {
         if (sel.tag && sel.tag !== tag) continue;
         if (sel.id && sel.id !== id) continue;
         if (sel.classes.length && !sel.classes.every((c) => classes.includes(c))) continue;
-        matched.push({ spec: sel.specificity, decls: rule.decls });
+        matched.push({ spec: sel.specificity, order: rule.order, decls: rule.decls });
       }
     }
-    matched.sort((a, b) => a.spec - b.spec);
+    matched.sort((a, b) => (a.spec - b.spec) || (a.order - b.order));
     const merged: Record<string, string> = {};
     for (const mm of matched) Object.assign(merged, mm.decls);
 
@@ -253,7 +293,17 @@ export class StyleResolver {
     if (node.attrs?.style) Object.assign(merged, parseDecls(node.attrs.style));
     return declsToProps(merged);
   }
+
+  /** Resolve base (desktop) + tablet + mobile props for a node in one call. */
+  resolveDevices(node: NodeLike): { desktop: StyleProps; tablet: StyleProps; mobile: StyleProps } {
+    return {
+      desktop: this.resolve(node, DEVICE_WIDTHS.desktop),
+      tablet: this.resolve(node, DEVICE_WIDTHS.tablet),
+      mobile: this.resolve(node, DEVICE_WIDTHS.mobile),
+    };
+  }
 }
+
 
 /* ------------------------- Elementor mapping ----------------------------- */
 
@@ -455,6 +505,73 @@ export function styleContainer(settings: Record<string, unknown>, p: StyleProps,
   }
   if (Object.keys(globals).length) settings.__globals__ = globals;
 }
+
+/* --------------------------- responsive baking --------------------------- */
+
+function eqJson(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+}
+
+/**
+ * Bake tablet/mobile overrides onto a container's Elementor settings. Only emits
+ * a responsive key when the device value actually DIFFERS from the desktop base
+ * (so Elementor keeps inheriting from desktop otherwise). This is what makes the
+ * published page responsive inside Elementor — grids stack, gaps shrink, etc.
+ */
+export function styleContainerResponsive(
+  settings: Record<string, unknown>,
+  base: StyleProps,
+  dev: StyleProps,
+  suffix: "_tablet" | "_mobile",
+): void {
+  if (dev.display === "grid") {
+    const cols = gridColumnCount(dev.gridTemplateColumns);
+    const baseCols = base.display === "grid" ? gridColumnCount(base.gridTemplateColumns) : -1;
+    if (cols > 0 && cols !== baseCols) {
+      settings[`grid_columns_grid${suffix}`] = { unit: "fr", size: cols, sizes: [] };
+    }
+  }
+  if (dev.display === "flex" && dev.flexDirection && dev.flexDirection !== base.flexDirection) {
+    settings[`flex_direction${suffix}`] = dev.flexDirection;
+  }
+  const pad = sidesToElementor(dev.padding);
+  if (pad && !eqJson(pad, sidesToElementor(base.padding))) settings[`padding${suffix}`] = pad;
+  const mar = sidesToElementor(dev.margin);
+  if (mar && !eqJson(mar, sidesToElementor(base.margin))) settings[`margin${suffix}`] = mar;
+  const gap = pxSize(dev.gap);
+  if (gap && !eqJson(gap, pxSize(base.gap))) {
+    settings[`gap${suffix}`] = { unit: gap.unit, size: gap.size, sizes: [] };
+  }
+  if (dev.alignItems && dev.alignItems !== base.alignItems) settings[`flex_align_items${suffix}`] = dev.alignItems;
+  if (dev.justifyContent && dev.justifyContent !== base.justifyContent) settings[`flex_justify_content${suffix}`] = dev.justifyContent;
+  const minH = pxSize(dev.minHeight);
+  if (minH && !eqJson(minH, pxSize(base.minHeight))) settings[`min_height${suffix}`] = minH;
+  const w = pxSize(dev.width || dev.maxWidth);
+  if (w && w.unit === "px" && !eqJson(w, pxSize(base.width || base.maxWidth))) {
+    settings[`width${suffix}`] = { unit: "px", size: w.size };
+  }
+}
+
+/** Bake tablet/mobile typography + alignment overrides onto a text/heading widget. */
+export function styleTypographyResponsive(
+  settings: Record<string, unknown>,
+  base: StyleProps,
+  dev: StyleProps,
+  suffix: "_tablet" | "_mobile",
+): void {
+  const fs = pxSize(dev.fontSize);
+  if (fs && !eqJson(fs, pxSize(base.fontSize))) {
+    settings["typography_typography"] = "custom";
+    settings[`typography_font_size${suffix}`] = fs;
+  }
+  const lh = lineHeightSize(dev.lineHeight);
+  if (lh && !eqJson(lh, lineHeightSize(base.lineHeight))) {
+    settings["typography_typography"] = "custom";
+    settings[`typography_line_height${suffix}`] = lh;
+  }
+  if (dev.textAlign && dev.textAlign !== base.textAlign) settings[`align${suffix}`] = dev.textAlign;
+}
+
 
 function sidesToElementorSafe(sides?: Partial<BoxSides>): Record<string, unknown> | undefined {
   return sidesToElementor(sides);
