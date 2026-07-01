@@ -35,9 +35,9 @@ interface PublishResponse {
 }
 
 const CONNECTOR_TIMEOUT_MS = 25_000;
-const CONNECTOR_PUBLISH_TIMEOUT_MS = 70_000;
+const CONNECTOR_PUBLISH_TIMEOUT_MS = 120_000;
 const CONNECTOR_CSS_REFRESH_TIMEOUT_MS = 20_000;
-export const REQUIRED_3XV_CONNECTOR_VERSION = "1.3.3";
+export const REQUIRED_3XV_CONNECTOR_VERSION = "1.3.4";
 
 interface ConnectorPingResponse {
   ok: boolean;
@@ -239,9 +239,10 @@ export class PgpConnector implements CmsConnector {
     if (typeof res.editable_widgets === "number" && res.editable_widgets < 1) {
       throw new Error("3xVisibility Connector publish failed: the published page has no editable Elementor widgets.");
     }
-    // Force a fresh Elementor CSS rebuild + cache purge AFTER the page is saved,
-    // so the live page picks up the new styling immediately (no stale CSS).
-    await this.forceCssRefresh(res.post_id);
+    // The connector plugin already regenerates CSS + purges page caches inside
+    // /publish/elementor before returning. Do not run a second blocking refresh
+    // here; on slower WordPress hosts that extra REST call was pushing publishes
+    // past the edge timeout even after the page had saved successfully.
     return {
       external_id: String(res.post_id),
       url: res.url,

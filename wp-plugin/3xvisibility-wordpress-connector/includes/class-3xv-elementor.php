@@ -33,6 +33,10 @@ class XXXV_Elementor {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public static function publish( WP_REST_Request $request ) {
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( 140 );
+		}
+
 		if ( ! did_action( 'elementor/loaded' ) ) {
 			return new WP_Error(
 				'xxxv_no_elementor',
@@ -1136,32 +1140,28 @@ class XXXV_Elementor {
 	 */
 	private static function clear_runtime_caches( $post_id ) {
 		clean_post_cache( $post_id );
-		wp_cache_flush();
+		if ( function_exists( 'wp_cache_delete' ) ) {
+			wp_cache_delete( $post_id, 'posts' );
+		}
 
 		// Do NOT clear Elementor's files_manager cache here. The publish flow just
 		// regenerated the per-page CSS file; clearing the file cache immediately
 		// after that can delete/invalidates the fresh CSS before visitors load it,
-		// causing live pages to look unstyled. We only purge page/object caches.
+		// causing live pages to look unstyled. We only purge page-scoped caches;
+		// full-site/domain purges are intentionally skipped because they can block
+		// REST publishing long enough for slow hosts to hit the SaaS timeout.
 
 		if ( function_exists( 'rocket_clean_post' ) ) {
 			rocket_clean_post( $post_id );
 		}
-		if ( function_exists( 'rocket_clean_domain' ) ) {
-			rocket_clean_domain();
-		}
 		if ( function_exists( 'w3tc_flush_post' ) ) {
 			w3tc_flush_post( $post_id );
-		} elseif ( function_exists( 'w3tc_flush_all' ) ) {
-			w3tc_flush_all();
 		}
 		if ( function_exists( 'wp_cache_post_change' ) ) {
 			wp_cache_post_change( $post_id );
-		} elseif ( function_exists( 'wp_cache_clear_cache' ) ) {
-			wp_cache_clear_cache();
 		}
 		if ( class_exists( 'LiteSpeed\Purge' ) ) {
 			do_action( 'litespeed_purge_post', $post_id );
-			do_action( 'litespeed_purge_all' );
 		}
 	}
 
