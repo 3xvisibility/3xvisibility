@@ -66,6 +66,33 @@ function storedJsonIsStale(elementorJson: unknown, content: string | null | unde
   return missing / classHooks.size >= 0.3;
 }
 
+/**
+ * Detect a stored Elementor JSON that was produced by an OLD, buggy converter
+ * which let raw markup leak into attribute values / text fields. The classic
+ * signature is document structure swallowed into an anchor href, e.g.
+ * `href="#c</div></div><div class=..."` — which becomes URL-encoded
+ * (`%3C/div%3E`) once WordPress renders it and collapses the whole page
+ * (overlapping text, broken grids, no full width). These pages carry
+ * `xxxv-s-*` classes and the template's own class hooks, so `storedJsonIsStale`
+ * never flags them — we must reconvert from the clean source HTML.
+ */
+function storedJsonIsCorrupt(elementorJson: unknown): boolean {
+  const jsonStr = JSON.stringify(elementorJson ?? "");
+  if (!jsonStr) return false;
+  // Markup structure or URL-encoded markup that leaked into field/attr values.
+  const corruptionMarkers = [
+    "%3C/div", "%3E%3C", "%3C/section",
+    "#c</div", "</div></div><div", "</section><section",
+  ];
+  for (const marker of corruptionMarkers) {
+    if (jsonStr.includes(marker)) return true;
+  }
+  // A link/button URL that contains raw markup (`<`) is always corrupt.
+  if (/"url"\s*:\s*"[^"]*<[^"]*"/.test(jsonStr)) return true;
+  return false;
+}
+
+
 
 async function resolveCatalogElementorData(
   supabase: any,
