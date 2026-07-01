@@ -886,6 +886,13 @@ function extractStylesheetImports(html: string): string {
   return imports.length ? `<style>\n${imports.join("\n")}\n</style>` : "";
 }
 
+function scopeExactHtml(html: string): string {
+  const body = (html || "").trim();
+  if (!body) return "";
+  if (/^<div\b[^>]*\bclass\s*=\s*["'][^"']*\bxxxv-exact-scope\b/i.test(body)) return body;
+  return `<div class="xxxv-exact-scope">${body}</div>`;
+}
+
 export function extractRenderableHtml(html: string): string {
   const input = html || "";
   // Preserve external fonts/CSS as @import (the <link> tags get stripped below).
@@ -903,7 +910,7 @@ export function extractRenderableHtml(html: string): string {
     .replace(/<link\b[^>]*>/gi, "")
     .replace(/<\/?(?:html|head|body)\b[^>]*>/gi, "")
     .trim();
-  return `${styles}\n${body}`.trim();
+  return `${styles}\n${scopeExactHtml(body)}`.trim();
 }
 
 /**
@@ -919,6 +926,7 @@ export function buildExactElementorData(html: string, extraCss?: string): string
 .elementor .xxxv-exact-template>.e-con-inner{width:100%!important;max-width:none!important;padding:0!important;}
 .elementor .xxxv-exact-template .xxxv-exact-html,.elementor .xxxv-exact-template .elementor-widget-html,.elementor .xxxv-exact-template .elementor-widget-container{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;}
 .elementor .xxxv-exact-template .xxxv-exact-html>*{max-width:none;}
+.elementor .xxxv-exact-template .xxxv-exact-scope{width:100%;max-width:none;}
 </style>`;
   const source = `${bridgeCss}\n${extraCss ? `<style>\n${extraCss}\n</style>` : ""}\n${html || ""}`;
   const renderable = extractRenderableHtml(source);
