@@ -893,12 +893,35 @@ function scopeExactHtml(html: string): string {
   return `<div class="xxxv-exact-scope">${body}</div>`;
 }
 
+function scopeBodyCssSelectors(css: string): string {
+  const input = css || "";
+  // Duplicate common page-level selectors (`body`, `html body`) so CSS that was
+  // written for a standalone HTML document still applies inside the Elementor
+  // HTML widget wrapper.
+  return input
+    .replace(/(^|[,{}]\s*)(html\s+body|html|body)(?=\s*(?:[,>{:+~.#\[]|\{))/gi, (_m, prefix) => `${prefix}.xxxv-exact-scope`)
+    .replace(/(^|[,{}]\s*)body(\.[a-zA-Z0-9_-]+)(?=\s*(?:[,>{:+~.#\[]|\{))/gi, (_m, prefix, cls) => `${prefix}.xxxv-exact-scope${cls}`);
+}
+
+function prepareExactStyleTags(input: string): string[] {
+  const tags = input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || [];
+  return tags.map((tag) => {
+    const m = tag.match(/<style\b([^>]*)>([\s\S]*?)<\/style>/i);
+    if (!m) return tag;
+    const attrs = m[1] || "";
+    const css = m[2] || "";
+    const scoped = scopeBodyCssSelectors(css);
+    return scoped && scoped !== css ? `<style${attrs}>${css}\n${scoped}</style>` : tag;
+  });
+}
+
 export function extractRenderableHtml(html: string): string {
   const input = html || "";
   // Preserve external fonts/CSS as @import (the <link> tags get stripped below).
   const fontImports = extractStylesheetImports(input);
-  // Collect every <style> block verbatim (keeps fonts, layout, bg images).
-  const styles = [fontImports, ...(input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || [])].filter(Boolean).join("\n");
+  // Collect every <style> block (keeps fonts, layout, bg images), duplicating
+  // standalone body/html selectors onto the exact-render wrapper.
+  const styles = [fontImports, ...prepareExactStyleTags(input)].filter(Boolean).join("\n");
   // Prefer the <body> inner markup; fall back to the whole document.
   const bodyMatch = input.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i);
   let body = bodyMatch ? bodyMatch[1] : input;
