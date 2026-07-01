@@ -198,6 +198,16 @@ export default function GeneratedPagesPage() {
                 title: "Page published",
                 description: next.external_url ? `Live at ${next.external_url}` : next.title,
               });
+              // If this was a republish we captured a "before" snapshot for,
+              // surface the before/after diff automatically.
+              const snap = republishSnapshotsRef.current[next.id];
+              if (snap) {
+                delete republishSnapshotsRef.current[next.id];
+                setDiffState({
+                  before: snap,
+                  after: { content: next.content, external_url: next.external_url, title: next.title },
+                });
+              }
             } else if (next.status === "failed" && prev?.status === "publishing") {
               toast({
                 title: "Publish failed",
