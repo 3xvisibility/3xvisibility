@@ -97,6 +97,48 @@ function parseSelector(sel: string): ParsedSelector | null {
   return { tag, classes, id, specificity };
 }
 
+/**
+ * Remove entire at-rule blocks (@media / @supports / @container / @keyframes /
+ * @font-face …) INCLUDING their nested contents. The naive rule regex below
+ * cannot see nested braces, so without this step the declarations inside a
+ * `@media (max-width:900px){ .grid{grid-template-columns:1fr} }` block leak out
+ * and get applied as BASE (desktop) rules — collapsing every responsive grid to
+ * a single column. We intentionally bake only the base (widest) styles.
+ */
+function stripAtBlocks(css: string): string {
+  let out = "";
+  let i = 0;
+  while (i < css.length) {
+    if (css[i] === "@") {
+      // Find where this at-rule ends: a `;` (statement) or `{` (block).
+      let j = i;
+      while (j < css.length && css[j] !== "{" && css[j] !== ";") j++;
+      if (css[j] === ";") {
+        // Statement at-rule (e.g. @import ...;) — drop it.
+        i = j + 1;
+        continue;
+      }
+      if (css[j] === "{") {
+        // Block at-rule — skip to its matching closing brace (balanced).
+        let depth = 0;
+        let k = j;
+        for (; k < css.length; k++) {
+          if (css[k] === "{") depth++;
+          else if (css[k] === "}") {
+            depth--;
+            if (depth === 0) { k++; break; }
+          }
+        }
+        i = k;
+        continue;
+      }
+    }
+    out += css[i];
+    i++;
+  }
+  return out;
+}
+
 /** Parse all <style> blocks of a template into an ordered rule set. */
 export function parseStylesheet(html: string): Rule[] {
   const rules: Rule[] = [];
@@ -104,9 +146,11 @@ export function parseStylesheet(html: string): Rule[] {
   let block: RegExpExecArray | null;
   const cssChunks: string[] = [];
   while ((block = styleRe.exec(html || "")) !== null) cssChunks.push(block[1] || "");
-  const css = cssChunks.join("\n")
-    // strip comments + @media/@font-face blocks (we bake base styles only)
-    .replace(/\/\*[\s\S]*?\*\//g, "");
+  const css = stripAtBlocks(
+    cssChunks.join("\n")
+      // strip comments first so `/* @media */` etc. can't confuse the scanner
+      .replace(/\/\*[\s\S]*?\*\//g, ""),
+  );
 
   const ruleRe = /([^{}]+)\{([^{}]*)\}/g;
   let m: RegExpExecArray | null;
