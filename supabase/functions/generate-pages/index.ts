@@ -1312,7 +1312,7 @@ Deno.serve(async (req) => {
     // Fetch campaign
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
-      .select("id, name, user_id, workspace_id, website_id, campaign_type, publish_mode, max_rows, scheduled_at, processed_rows, failed_rows, current_batch, is_paused, geo_settings, utm_settings, mapping, language, ai_max_lines, ai_max_words, generation_method, directory_structure, templates(content, variables, seo_title_pattern, seo_description_pattern, schema_type, schema_config)")
+      .select("id, name, user_id, workspace_id, website_id, campaign_type, publish_mode, max_rows, scheduled_at, processed_rows, failed_rows, current_batch, is_paused, geo_settings, utm_settings, mapping, language, ai_max_lines, ai_max_words, generation_method, directory_structure, template_id, templates(content, variables, seo_title_pattern, seo_description_pattern, schema_type, schema_config)")
       .eq("id", campaign_id)
       .eq("user_id", user.id)
       .maybeSingle();
