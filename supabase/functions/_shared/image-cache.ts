@@ -140,14 +140,24 @@ export interface CacheResult {
  * URL, so an image is only downloaded the first time it is ever seen. On later
  * runs the existing public bucket URL is reused without any network fetch to the
  * volatile host.
+ *
+ * Cache invalidation:
+ *   - TTL: a cached object older than `ttlMs` (default 30 days) is treated as
+ *     stale, deleted, and re-downloaded so images never persist forever.
+ *   - Version busting: pass `cacheVersion` (e.g. the template's `updated_at`)
+ *     to fold it into the cache key. When a template is updated its version
+ *     changes, producing a new key so fresh images are generated instead of
+ *     serving the previous template's cached copies.
  */
 export async function cacheVolatileTemplateImages(
   supabase: any,
   html: string,
-  options: { bucket?: string; maxImages?: number } = {},
+  options: { bucket?: string; maxImages?: number; ttlMs?: number; cacheVersion?: string } = {},
 ): Promise<CacheResult> {
   const bucket = options.bucket ?? "ai-images";
   const maxImages = options.maxImages ?? 40;
+  const ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
+  const cacheVersion = options.cacheVersion ?? "";
   const urlMap: Record<string, string> = {};
   if (!html) return { html, changed: false, urlMap };
 
@@ -162,7 +172,10 @@ export async function cacheVolatileTemplateImages(
   const inFlight = inFlightByBucket.get(bucket) ?? new Map<string, Promise<string | null>>();
   inFlightByBucket.set(bucket, inFlight);
 
-  /** Probe the stable candidate paths for an already-cached copy. */
+  /**
+   * Probe the stable candidate paths for an already-cached copy. A copy older
+   * than the TTL is deleted and treated as a miss so it gets re-downloaded.
+   */
   const findCached = async (hash: string): Promise<string | null> => {
     for (const ext of ["jpg", "png", "webp"]) {
       const path = `${CACHE_PREFIX}/${hash}.${ext}`;
@@ -170,7 +183,15 @@ export async function cacheVolatileTemplateImages(
       if (!pub) continue;
       try {
         const head = await fetch(pub, { method: "HEAD" });
-        if (head.ok) return pub;
+        if (!head.ok) continue;
+        const lastModified = head.headers.get("last-modified");
+        const age = lastModified ? Date.now() - new Date(lastModified).getTime() : 0;
+        if (Number.isFinite(age) && age > ttlMs) {
+          // Stale — invalidate so the caller re-downloads a fresh copy.
+          try { await store.remove([path]); } catch (_) { /* best effort */ }
+          continue;
+        }
+        return pub;
       } catch (_) { /* not cached yet */ }
     }
     return null;
