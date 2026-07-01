@@ -22,6 +22,13 @@ const VOLATILE_IMAGE_HOST_RE =
 
 const CACHE_PREFIX = "template-cache";
 
+/** How long a lock-loser waits between polls, and how many times, for the winner's result. */
+const LOCK_WAIT_MS = 2000;
+const LOCK_WAIT_ATTEMPTS = 20; // ~40s worst case before falling back to self-download
+
+/** Per-bucket, per-isolate in-flight cache promises for same-run dedup. */
+const inFlightByBucket = new Map<string, Map<string, Promise<string | null>>>();
+
 function isHttpUrl(u: string): boolean {
   return /^https?:\/\//i.test(u);
 }
