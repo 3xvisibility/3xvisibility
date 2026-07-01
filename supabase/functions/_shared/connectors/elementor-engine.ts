@@ -587,31 +587,64 @@ function isLayoutContainer(el: ElementorElement): boolean {
   );
 }
 
-function isPlainWrapper(el: ElementorElement): boolean {
+// Settings that indicate a container carries real design intent (styling or
+// identity) and must never be collapsed away.
+const VISUAL_STYLE_KEYS = [
+  "_css_classes", "_element_id", "background_background", "background_color", "background_image",
+  "__xxxv_background", "__xxxv_box_shadow", "__xxxv_border", "padding", "margin", "min_height",
+  "max_width", "border_radius", "overflow",
+];
+
+function hasVisualStyling(el: ElementorElement): boolean {
   if (el.elType !== "container") return false;
   const s = el.settings || {};
+  return VISUAL_STYLE_KEYS.some((key) => key in s && s[key] !== undefined && s[key] !== "");
+}
+
+function isPlainWrapper(el: ElementorElement): boolean {
+  if (el.elType !== "container") return false;
   // Never unwrap a container that carries visual styling or identity. AI Site
   // Builder sections often use simple column wrappers with inline CSS for
   // gradients, padding, max-width, shadows, etc. Treating those as "plain"
   // deleted the actual design and left published WordPress pages as unstyled
   // Elementor skeletons.
-  const visualKeys = [
-    "_css_classes", "_element_id", "background_background", "background_color", "background_image",
-    "__xxxv_background", "__xxxv_box_shadow", "__xxxv_border", "padding", "margin", "min_height",
-    "max_width", "border_radius", "overflow",
-  ];
-  if (visualKeys.some((key) => key in s && s[key] !== undefined && s[key] !== "")) return false;
+  if (hasVisualStyling(el)) return false;
   return !isLayoutContainer(el);
 }
 
 /**
  * Recursively remove redundant wrapper containers while preserving any
- * container that carries real layout meaning (grid / flex-row / columns).
+ * container that carries real layout meaning (grid / flex-row / columns) or
+ * visual styling.
+ *
+ * Nested-grid hardening: a container (grid, flex, or plain) that has NO visual
+ * styling of its own and only wraps a single child container is a pure nesting
+ * level with no design meaning — a grid/flex wrapper holding exactly one item
+ * adds nothing. We replace it with its child so grid-in-grid / flex-in-flex
+ * stacks collapse to a single meaningful layout level instead of piling up.
  */
 function unwrapRedundant(elements: ElementorElement[]): ElementorElement[] {
   const out: ElementorElement[] = [];
   for (const el of elements) {
     el.elements = unwrapRedundant(el.elements);
+
+    // Collapse a redundant single-container nesting level. Applies to layout
+    // AND plain containers, as long as the OUTER carries no styling/identity of
+    // its own (the child keeps its own layout + styling). Loop to flatten deep
+    // wrapper chains (grid > grid > grid > content) in one pass.
+    while (
+      el.elType === "container" &&
+      !hasVisualStyling(el) &&
+      el.elements.length === 1 &&
+      el.elements[0].elType === "container"
+    ) {
+      const child = el.elements[0];
+      // Adopt the child entirely — it already holds the meaningful layout,
+      // styling, and grandchildren. This removes the empty outer wrapper.
+      el.settings = child.settings;
+      el.elements = child.elements;
+    }
+
     if (isLayoutContainer(el)) {
       out.push(el);
       continue;
