@@ -220,6 +220,24 @@ function pxSize(v?: string): { unit: string; size: number } | undefined {
   return { unit: m[2] || "px", size };
 }
 
+/**
+ * Line-height needs special handling: a unitless CSS value like `1.5` is a
+ * multiplier of the font-size, NOT pixels. Treating it as px collapses every
+ * line on top of the next. Map unitless -> "em" (Elementor's multiplier unit).
+ */
+function lineHeightSize(v?: string): { unit: string; size: number } | undefined {
+  if (!v) return undefined;
+  const trimmed = v.trim().toLowerCase();
+  if (trimmed === "normal" || trimmed === "inherit" || trimmed === "initial") return undefined;
+  const m = trimmed.match(/(-?[\d.]+)\s*(px|em|rem|%|vw|vh)?/);
+  if (!m) return undefined;
+  const size = parseFloat(m[1]);
+  if (!Number.isFinite(size)) return undefined;
+  // Unitless -> multiplier (em). Guard against absurdly small px values.
+  const unit = m[2] || "em";
+  return { unit, size };
+}
+
 function sidesToElementor(sides?: Partial<BoxSides>): Record<string, unknown> | undefined {
   if (!sides) return undefined;
   const num = (v?: string) => (v ? (v.match(/-?[\d.]+/)?.[0] ?? "") : "");
