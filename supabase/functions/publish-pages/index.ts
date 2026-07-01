@@ -678,6 +678,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
               external_id: result.external_id,
               external_url: result.url,
               editor_readiness: result.editor_readiness ?? null,
+              publish_steps: steps,
             });
             step("Saving to Generated Pages", "ok");
           } catch (insertErr) {
@@ -1136,6 +1137,11 @@ async function handlePublishPages(req: Request): Promise<Response> {
         finishRunning("ok");
 
         step("Published", "ok", result.url);
+        // Persist the full step timeline so the per-page publish status is
+        // visible in the Campaigns UI after the request completes.
+        try {
+          await supabase.from("generated_pages").update({ publish_steps: steps }).eq("id", page.id);
+        } catch (_) { /* non-critical */ }
         results.push({ id: page.id, status: "published", external_url: result.url, elementor_source: elementorSource, elementor_similarity: elementorSimilarity, steps });
 
         // Audit log for publish
@@ -1159,7 +1165,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         // If the failure came from the post-publish editor-readiness check, record
         // it as a structured readiness result so it surfaces in the pages list.
         const isEditorReadinessFailure = /edit with elementor|editor-readiness|editable .*widget/i.test(errorMsg);
-        const failureUpdate: Record<string, unknown> = { status: "failed", error_message: errorMsg };
+        const failureUpdate: Record<string, unknown> = { status: "failed", error_message: errorMsg, publish_steps: steps };
         if (isEditorReadinessFailure) {
           failureUpdate.editor_readiness = {
             status: "failed",

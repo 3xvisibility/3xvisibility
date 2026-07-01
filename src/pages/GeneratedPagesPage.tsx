@@ -22,7 +22,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
-import { PublishLogDialog, type PublishLogResult } from "@/components/campaigns/PublishLogDialog";
+import { PublishLogDialog, type PublishLogResult, type PublishStep } from "@/components/campaigns/PublishLogDialog";
 import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,6 +105,23 @@ export default function GeneratedPagesPage() {
     }
     return msg;
   };
+
+  // Show the persisted per-page publish timeline (validation, media import,
+  // WordPress/Shopify publishing progress + results) in the publish-log dialog.
+  const openPublishStatus = (page: GeneratedPage) => {
+    const steps = (page as unknown as { publish_steps?: PublishStep[] | null }).publish_steps;
+    setPublishLog([{
+      id: page.id,
+      title: page.title,
+      status: page.status,
+      external_url: page.external_url || undefined,
+      error: page.error_message || undefined,
+      steps: Array.isArray(steps) ? steps : undefined,
+    }]);
+  };
+  const hasPublishStatus = (page: GeneratedPage) =>
+    Array.isArray((page as { publish_steps?: unknown }).publish_steps) ||
+    ["published", "failed", "publishing"].includes(page.status);
 
   // ─── Data Query ────────────────────────────────────────────
   const { data: pages = [], isLoading } = useQuery({
@@ -901,6 +918,7 @@ export default function GeneratedPagesPage() {
                       {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
+                      {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
                         <DropdownMenuItem
                           disabled={recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id}
@@ -1009,6 +1027,7 @@ export default function GeneratedPagesPage() {
                               {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
                               {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
+                              {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
                               {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
                                 <DropdownMenuItem
                                   disabled={recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id}
