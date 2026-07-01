@@ -1164,7 +1164,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         // If the failure came from the post-publish editor-readiness check, record
         // it as a structured readiness result so it surfaces in the pages list.
         const isEditorReadinessFailure = /edit with elementor|editor-readiness|editable .*widget/i.test(errorMsg);
-        const failureUpdate: Record<string, unknown> = { status: "failed", error_message: errorMsg };
+        const failureUpdate: Record<string, unknown> = { status: "failed", error_message: errorMsg, publish_steps: steps };
         if (isEditorReadinessFailure) {
           failureUpdate.editor_readiness = {
             status: "failed",
