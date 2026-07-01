@@ -46,6 +46,7 @@ export interface StyleProps {
   justifyContent?: string;
   alignItems?: string;
   gap?: string;
+  gridTemplateColumns?: string;
   minHeight?: string;
   overflow?: string;
   boxShadow?: string;
@@ -155,6 +156,7 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["justify-content"]) p.justifyContent = d["justify-content"];
   if (d["align-items"]) p.alignItems = d["align-items"];
   if (d["gap"]) p.gap = d["gap"];
+  if (d["grid-template-columns"]) p.gridTemplateColumns = d["grid-template-columns"];
   if (d["min-height"]) p.minHeight = d["min-height"];
   if (d["overflow"]) p.overflow = d["overflow"];
   if (d["box-shadow"]) p.boxShadow = d["box-shadow"];
@@ -236,6 +238,26 @@ function lineHeightSize(v?: string): { unit: string; size: number } | undefined 
   // Unitless -> multiplier (em). Guard against absurdly small px values.
   const unit = m[2] || "em";
   return { unit, size };
+}
+
+/**
+ * Count the number of columns in a `grid-template-columns` value so we can bake
+ * an accurate Elementor grid. Handles `repeat(3, 1fr)`, explicit track lists
+ * (`1fr 1fr 1fr`), and `repeat(auto-fill/auto-fit, ...)` (falls back to 3).
+ */
+function gridColumnCount(v?: string): number {
+  if (!v) return 0;
+  const val = v.trim().toLowerCase();
+  if (!val || val === "none") return 0;
+  const repeat = val.match(/repeat\(\s*([a-z0-9-]+)\s*,/);
+  if (repeat) {
+    const n = parseInt(repeat[1], 10);
+    return Number.isFinite(n) && n > 0 ? n : 3;
+  }
+  // Explicit track list: count top-level tokens (ignore nested function commas).
+  const flattened = val.replace(/\([^)]*\)/g, "x");
+  const tokens = flattened.split(/\s+/).filter(Boolean);
+  return tokens.length;
 }
 
 function sidesToElementor(sides?: Partial<BoxSides>): Record<string, unknown> | undefined {
@@ -360,7 +382,13 @@ export function styleContainer(settings: Record<string, unknown>, p: StyleProps,
   if (mar) settings.margin = mar;
   if (p.textAlign) settings.flex_align_items = p.textAlign === "center" ? "center" : p.textAlign === "right" ? "flex-end" : "flex-start";
   if (p.display === "flex") settings.flex_direction = p.flexDirection || settings.flex_direction || "row";
-  if (p.display === "grid") settings.container_type = "grid";
+  if (p.display === "grid") {
+    settings.container_type = "grid";
+    const cols = gridColumnCount(p.gridTemplateColumns);
+    if (cols > 0) {
+      settings.grid_columns_grid = { unit: "fr", size: cols, sizes: [] };
+    }
+  }
   if (p.alignItems) settings.flex_align_items = p.alignItems;
   if (p.justifyContent) settings.flex_justify_content = p.justifyContent;
   const gap = pxSize(p.gap);
