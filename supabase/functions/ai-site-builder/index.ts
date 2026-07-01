@@ -6,7 +6,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
 import { htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
-import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
+import { extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
