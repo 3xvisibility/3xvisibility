@@ -191,7 +191,8 @@ async function resolveCatalogElementorData(
         !JSON.stringify(elementorJson).includes("xxxv-s-") ||
         storedJsonIsStale(elementorJson, tplRow?.content) ||
         storedJsonIsCorrupt(elementorJson) ||
-        storedJsonHasBadLineHeight(elementorJson)
+        storedJsonHasBadLineHeight(elementorJson) ||
+        storedJsonHasCollapsedGrid(elementorJson)
       );
 
       if (needsRepair) {
