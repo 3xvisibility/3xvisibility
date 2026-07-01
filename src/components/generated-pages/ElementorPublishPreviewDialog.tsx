@@ -83,6 +83,71 @@ function RenderableFrame({ html }: { html: string }) {
   );
 }
 
+/** Distinct badge color per native widget type for the overlay/map. */
+const WIDGET_COLORS: Record<string, string> = {
+  heading: "bg-blue-500/15 text-blue-600 border-blue-500/30",
+  "text-editor": "bg-slate-500/15 text-slate-600 border-slate-500/30",
+  image: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
+  button: "bg-orange-500/15 text-orange-600 border-orange-500/30",
+  "icon-box": "bg-violet-500/15 text-violet-600 border-violet-500/30",
+  "image-box": "bg-teal-500/15 text-teal-600 border-teal-500/30",
+  testimonial: "bg-pink-500/15 text-pink-600 border-pink-500/30",
+  counter: "bg-amber-500/15 text-amber-600 border-amber-500/30",
+  "icon-list": "bg-cyan-500/15 text-cyan-600 border-cyan-500/30",
+  accordion: "bg-indigo-500/15 text-indigo-600 border-indigo-500/30",
+  tabs: "bg-fuchsia-500/15 text-fuchsia-600 border-fuchsia-500/30",
+};
+
+function widgetColor(type?: string): string {
+  return (type && WIDGET_COLORS[type]) || "bg-muted text-muted-foreground border-border";
+}
+
+/** Renders the element → native widget mapping as an indented, color-coded tree. */
+function WidgetMap({ mapping, summary }: { mapping: ElementorMapNode[]; summary: Record<string, number> }) {
+  if (!mapping.length) {
+    return <p className="p-3 text-xs text-muted-foreground">No elements were produced for this page.</p>;
+  }
+  return (
+    <div className="p-3 space-y-3">
+      {/* Summary of native widgets produced */}
+      <div className="flex flex-wrap gap-1.5">
+        {Object.entries(summary).sort((a, b) => b[1] - a[1]).map(([type, n]) => (
+          <Badge key={type} variant="outline" className={`text-[10px] gap-1 ${widgetColor(type)}`}>
+            <Package className="h-3 w-3" /> {type} × {n}
+          </Badge>
+        ))}
+        {Object.keys(summary).length === 0 && (
+          <span className="text-xs text-muted-foreground">No widgets mapped.</span>
+        )}
+      </div>
+
+      {/* Indented tree overlay */}
+      <div className="font-mono text-[11px] space-y-0.5">
+        {mapping.map((node, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-2 py-0.5 rounded hover:bg-muted/40"
+            style={{ paddingLeft: `${node.depth * 16}px` }}
+          >
+            {node.elType === "container" ? (
+              <span className="inline-flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                <Boxes className="h-3 w-3" /> {node.label}
+              </span>
+            ) : (
+              <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-semibold ${widgetColor(node.widgetType)}`}>
+                {node.widgetType}
+              </span>
+            )}
+            {node.label && node.elType === "widget" && (
+              <span className="truncate text-muted-foreground">{node.label}</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ElementorPublishPreviewDialog({
   open,
   onOpenChange,
