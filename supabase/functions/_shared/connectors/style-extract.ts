@@ -240,6 +240,26 @@ function lineHeightSize(v?: string): { unit: string; size: number } | undefined 
   return { unit, size };
 }
 
+/**
+ * Count the number of columns in a `grid-template-columns` value so we can bake
+ * an accurate Elementor grid. Handles `repeat(3, 1fr)`, explicit track lists
+ * (`1fr 1fr 1fr`), and `repeat(auto-fill/auto-fit, ...)` (falls back to 3).
+ */
+function gridColumnCount(v?: string): number {
+  if (!v) return 0;
+  const val = v.trim().toLowerCase();
+  if (!val || val === "none") return 0;
+  const repeat = val.match(/repeat\(\s*([a-z0-9-]+)\s*,/);
+  if (repeat) {
+    const n = parseInt(repeat[1], 10);
+    return Number.isFinite(n) && n > 0 ? n : 3;
+  }
+  // Explicit track list: count top-level tokens (ignore nested function commas).
+  const flattened = val.replace(/\([^)]*\)/g, "x");
+  const tokens = flattened.split(/\s+/).filter(Boolean);
+  return tokens.length;
+}
+
 function sidesToElementor(sides?: Partial<BoxSides>): Record<string, unknown> | undefined {
   if (!sides) return undefined;
   const num = (v?: string) => (v ? (v.match(/-?[\d.]+/)?.[0] ?? "") : "");
