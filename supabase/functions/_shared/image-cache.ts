@@ -146,27 +146,71 @@ export async function cacheVolatileTemplateImages(
 
   const store = supabase.storage.from(bucket);
 
-  const cacheOne = async (url: string): Promise<void> => {
-    try {
-      const hash = await sha256Hex(url);
-      // Determine the expected object path. We may not know the extension until
-      // we download, but reuse relies on a stable path — so we probe the two
-      // most common extensions for an already-cached copy before downloading.
-      const candidates = ["jpg", "png", "webp"].map((e) => `${CACHE_PREFIX}/${hash}.${e}`);
-      for (const path of candidates) {
-        const pub = store.getPublicUrl(path)?.data?.publicUrl;
-        if (!pub) continue;
-        try {
-          const head = await fetch(pub, { method: "HEAD" });
-          if (head.ok) {
-            urlMap[url] = pub; // already cached — reuse, no download
-            return;
-          }
-        } catch (_) { /* not cached yet */ }
+  // In-process dedup: if this same isolate is already caching a URL (e.g. it
+  // appears multiple times in the HTML), reuse the same in-flight promise
+  // instead of downloading it twice.
+  const inFlight = inFlightByBucket.get(bucket) ?? new Map<string, Promise<string | null>>();
+  inFlightByBucket.set(bucket, inFlight);
+
+  /** Probe the stable candidate paths for an already-cached copy. */
+  const findCached = async (hash: string): Promise<string | null> => {
+    for (const ext of ["jpg", "png", "webp"]) {
+      const path = `${CACHE_PREFIX}/${hash}.${ext}`;
+      const pub = store.getPublicUrl(path)?.data?.publicUrl;
+      if (!pub) continue;
+      try {
+        const head = await fetch(pub, { method: "HEAD" });
+        if (head.ok) return pub;
+      } catch (_) { /* not cached yet */ }
+    }
+    return null;
+  };
+
+  /**
+   * Cross-process lock: only one publish may download a given image at a time.
+   * The lock is a zero-byte marker object created atomically with `upsert:false`
+   * — Storage rejects a duplicate create, so exactly one worker wins. Losers
+   * poll for the winner's cached image to appear instead of re-downloading.
+   */
+  const acquireLock = async (hash: string): Promise<boolean> => {
+    const lockPath = `${CACHE_PREFIX}/${hash}.lock`;
+    const { error } = await store.upload(lockPath, new Uint8Array(0), {
+      contentType: "application/octet-stream",
+      upsert: false, // atomic create — fails if another worker already holds it
+    });
+    return !error;
+  };
+  const releaseLock = async (hash: string): Promise<void> => {
+    try { await store.remove([`${CACHE_PREFIX}/${hash}.lock`]); } catch (_) { /* best effort */ }
+  };
+
+  const doCacheOne = async (url: string): Promise<string | null> => {
+    const hash = await sha256Hex(url);
+
+    // 1. Already cached? Reuse without downloading.
+    const existing = await findCached(hash);
+    if (existing) return existing;
+
+    // 2. Try to acquire the cross-process lock.
+    if (!(await acquireLock(hash))) {
+      // Another publish is downloading this exact image right now. Poll for its
+      // cached result rather than downloading the same image a second time.
+      for (let i = 0; i < LOCK_WAIT_ATTEMPTS; i++) {
+        await sleep(LOCK_WAIT_MS);
+        const cached = await findCached(hash);
+        if (cached) return cached;
       }
+      // Lock holder stalled/failed — fall through and download ourselves.
+    }
+
+    try {
+      // Re-check after acquiring the lock in case the winner finished between
+      // our probe and our lock acquisition.
+      const cached = await findCached(hash);
+      if (cached) return cached;
 
       const bytes = await downloadWithRetry(url);
-      if (!bytes) return; // leave original URL; validation retry-logic handles it
+      if (!bytes) return null; // leave original URL; validation retry-logic handles it
 
       // We can't cheaply read content-type from downloadWithRetry, so infer
       // from the URL; default jpg. (Bucket serves whatever bytes we store.)
@@ -178,9 +222,22 @@ export async function cacheVolatileTemplateImages(
       });
       if (upErr) {
         console.error("[image-cache] upload failed:", upErr.message || upErr);
-        return;
+        return null;
       }
-      const pub = store.getPublicUrl(path)?.data?.publicUrl;
+      return store.getPublicUrl(path)?.data?.publicUrl ?? null;
+    } finally {
+      await releaseLock(hash);
+    }
+  };
+
+  const cacheOne = async (url: string): Promise<void> => {
+    try {
+      let promise = inFlight.get(url);
+      if (!promise) {
+        promise = doCacheOne(url);
+        inFlight.set(url, promise);
+      }
+      const pub = await promise;
       if (pub) urlMap[url] = pub;
     } catch (e) {
       console.error("[image-cache] cacheOne error:", (e as Error).message);
