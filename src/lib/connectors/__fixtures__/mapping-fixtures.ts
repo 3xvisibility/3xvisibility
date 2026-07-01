@@ -242,9 +242,6 @@ const mixedFixtures: MappingFixture[] = [
       </div>`,
     widgets: [{ type: "image-box", atLeast: 2 }],
     containers: { gridAtLeast: 1 },
-    // KNOWN GAP: grid of image cards currently yields a single image-box
-    // rather than one per card. Remove `knownGap` once fixed.
-    knownGap: true,
   },
 ];
 
