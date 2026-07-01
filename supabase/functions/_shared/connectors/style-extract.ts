@@ -362,7 +362,13 @@ export function styleContainer(settings: Record<string, unknown>, p: StyleProps,
   if (mar) settings.margin = mar;
   if (p.textAlign) settings.flex_align_items = p.textAlign === "center" ? "center" : p.textAlign === "right" ? "flex-end" : "flex-start";
   if (p.display === "flex") settings.flex_direction = p.flexDirection || settings.flex_direction || "row";
-  if (p.display === "grid") settings.container_type = "grid";
+  if (p.display === "grid") {
+    settings.container_type = "grid";
+    const cols = gridColumnCount(p.gridTemplateColumns);
+    if (cols > 0) {
+      settings.grid_columns_grid = { unit: "fr", size: cols, sizes: [] };
+    }
+  }
   if (p.alignItems) settings.flex_align_items = p.alignItems;
   if (p.justifyContent) settings.flex_justify_content = p.justifyContent;
   const gap = pxSize(p.gap);
