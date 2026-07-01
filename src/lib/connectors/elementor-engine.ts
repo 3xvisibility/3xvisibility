@@ -410,15 +410,22 @@ function container(children: ElementorElement[], node?: HtmlNode): ElementorElem
     content_width: "boxed",
     flex_direction: "column",
   };
-  // Detect column/row layouts to preserve responsive grids.
-  if (node && hasClass(node, "grid", "services", "features", "team", "pricing", "cards")) {
+  const style = (node?.attrs.style || "").toLowerCase();
+  const displayGrid = /display\s*:\s*grid/.test(style);
+  const displayFlex = /display\s*:\s*flex/.test(style);
+  const flexRow = displayFlex && !/flex-direction\s*:\s*column/.test(style);
+  // Prefer explicit CSS `display` (matches the publish engine) and fall back to
+  // framework class hints so preview parity holds either way.
+  if (displayGrid || (node && hasClass(node, "grid", "services", "features", "team", "pricing", "cards"))) {
     // Native Elementor Grid Container (responsive, mobile-optimized).
     settings.container_type = "grid";
-    settings.grid_columns = { unit: "fr", size: 3, sizes: [] };
+    const colsMatch = style.match(/grid-template-columns\s*:\s*([^;]+)/);
+    const colCount = colsMatch ? colsMatch[1].trim().split(/\s+/).filter(Boolean).length : 3;
+    settings.grid_columns = { unit: "fr", size: colCount || 3, sizes: [] };
     settings.grid_columns_tablet = { unit: "fr", size: 2, sizes: [] };
     settings.grid_columns_mobile = { unit: "fr", size: 1, sizes: [] };
     settings.grid_gaps = { column: "24", row: "24", unit: "px" };
-  } else if (node && hasClass(node, "row", "columns", "flex", "d-flex")) {
+  } else if (flexRow || (node && hasClass(node, "row", "columns", "flex", "d-flex"))) {
     settings.flex_direction = "row";
     settings.flex_wrap = "wrap";
   }
