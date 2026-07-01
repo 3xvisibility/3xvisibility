@@ -519,6 +519,145 @@ class XXXV_Elementor {
 		return trim( $css );
 	}
 
+	private static function css_value( $value ) {
+		$value = trim( (string) $value );
+		if ( '' === $value || preg_match( '#[{}<>]#', $value ) ) {
+			return '';
+		}
+		return str_replace( array( ';', '"' ), array( '', '\"' ), $value );
+	}
+
+	private static function css_size( $value ) {
+		if ( is_array( $value ) ) {
+			$size = isset( $value['size'] ) ? $value['size'] : '';
+			$unit = isset( $value['unit'] ) ? $value['unit'] : 'px';
+			if ( '' === $size || null === $size ) {
+				return '';
+			}
+			return self::css_value( $size . $unit );
+		}
+		return self::css_value( $value );
+	}
+
+	private static function css_box( $value ) {
+		if ( ! is_array( $value ) ) {
+			return self::css_value( $value );
+		}
+		$unit = isset( $value['unit'] ) ? $value['unit'] : 'px';
+		$top = isset( $value['top'] ) ? $value['top'] : '';
+		$right = isset( $value['right'] ) ? $value['right'] : $top;
+		$bottom = isset( $value['bottom'] ) ? $value['bottom'] : $top;
+		$left = isset( $value['left'] ) ? $value['left'] : $right;
+		if ( '' === (string) $top && '' === (string) $right && '' === (string) $bottom && '' === (string) $left ) {
+			return '';
+		}
+		return self::css_value( $top . $unit . ' ' . $right . $unit . ' ' . $bottom . $unit . ' ' . $left . $unit );
+	}
+
+	private static function css_decls( $decls ) {
+		$out = array();
+		foreach ( $decls as $prop => $value ) {
+			$value = self::css_value( $value );
+			if ( '' !== $value ) {
+				$out[] = $prop . ':' . $value . ' !important';
+			}
+		}
+		return implode( ';', $out );
+	}
+
+	private static function collect_critical_css_rules( $elements, $post_id, &$rules ) {
+		if ( ! is_array( $elements ) ) {
+			return;
+		}
+		foreach ( $elements as $element ) {
+			if ( ! is_array( $element ) ) {
+				continue;
+			}
+			$id = isset( $element['id'] ) ? preg_replace( '/[^a-zA-Z0-9_-]/', '', (string) $element['id'] ) : '';
+			$settings = isset( $element['settings'] ) && is_array( $element['settings'] ) ? $element['settings'] : array();
+			$base = $id ? '.elementor-' . (int) $post_id . ' .elementor-element.elementor-element-' . $id : '';
+			$decls = array();
+
+			if ( 'container' === ( isset( $element['elType'] ) ? $element['elType'] : '' ) ) {
+				$decls['display'] = ( isset( $settings['container_type'] ) && 'grid' === $settings['container_type'] ) ? 'grid' : 'flex';
+				if ( isset( $settings['flex_direction'] ) ) $decls['flex-direction'] = $settings['flex_direction'];
+				if ( isset( $settings['flex_wrap'] ) ) $decls['flex-wrap'] = $settings['flex_wrap'];
+				if ( isset( $settings['flex_align_items'] ) ) $decls['align-items'] = $settings['flex_align_items'];
+				if ( isset( $settings['flex_justify_content'] ) ) $decls['justify-content'] = $settings['flex_justify_content'];
+				if ( isset( $settings['width'] ) ) $decls['width'] = self::css_size( $settings['width'] );
+				if ( isset( $settings['min_height'] ) ) $decls['min-height'] = self::css_size( $settings['min_height'] );
+				if ( isset( $settings['padding'] ) ) $decls['padding'] = self::css_box( $settings['padding'] );
+				if ( isset( $settings['margin'] ) ) $decls['margin'] = self::css_box( $settings['margin'] );
+				if ( isset( $settings['border_radius'] ) ) $decls['border-radius'] = self::css_box( $settings['border_radius'] );
+				if ( isset( $settings['background_color'] ) ) $decls['background-color'] = $settings['background_color'];
+				if ( isset( $settings['background_image']['url'] ) ) $decls['background-image'] = 'url(' . $settings['background_image']['url'] . ')';
+				if ( isset( $settings['__xxxv_background'] ) ) $decls['background'] = $settings['__xxxv_background'];
+				if ( isset( $settings['background_size'] ) ) $decls['background-size'] = $settings['background_size'];
+				if ( isset( $settings['background_position'] ) ) $decls['background-position'] = $settings['background_position'];
+				if ( isset( $settings['gap'] ) ) $decls['gap'] = self::css_size( $settings['gap'] );
+				if ( isset( $settings['row_gap'] ) ) $decls['row-gap'] = self::css_size( $settings['row_gap'] );
+				if ( isset( $settings['column_gap'] ) ) $decls['column-gap'] = self::css_size( $settings['column_gap'] );
+				if ( isset( $settings['overflow'] ) ) $decls['overflow'] = $settings['overflow'];
+				if ( isset( $settings['__xxxv_box_shadow'] ) ) $decls['box-shadow'] = $settings['__xxxv_box_shadow'];
+				if ( isset( $settings['__xxxv_border'] ) ) $decls['border'] = $settings['__xxxv_border'];
+			}
+
+			if ( 'widget' === ( isset( $element['elType'] ) ? $element['elType'] : '' ) ) {
+				$widget = isset( $element['widgetType'] ) ? $element['widgetType'] : '';
+				if ( 'heading' === $widget ) {
+					$base .= ' .elementor-heading-title';
+					if ( isset( $settings['title_color'] ) ) $decls['color'] = $settings['title_color'];
+				} elseif ( 'button' === $widget ) {
+					$base .= ' .elementor-button';
+					if ( isset( $settings['button_text_color'] ) ) $decls['color'] = $settings['button_text_color'];
+					if ( isset( $settings['background_color'] ) ) $decls['background-color'] = $settings['background_color'];
+					if ( isset( $settings['border_radius'] ) ) $decls['border-radius'] = self::css_box( $settings['border_radius'] );
+				} elseif ( 'image' === $widget ) {
+					$base .= ' img';
+					if ( isset( $settings['width'] ) ) $decls['width'] = self::css_size( $settings['width'] );
+					if ( isset( $settings['image_border_radius'] ) ) $decls['border-radius'] = self::css_box( $settings['image_border_radius'] );
+					if ( isset( $settings['object_fit'] ) ) $decls['object-fit'] = $settings['object_fit'];
+				} else {
+					if ( isset( $settings['text_color'] ) ) $decls['color'] = $settings['text_color'];
+				}
+				if ( isset( $settings['typography_font_family'] ) ) $decls['font-family'] = $settings['typography_font_family'];
+				if ( isset( $settings['typography_font_size'] ) ) $decls['font-size'] = self::css_size( $settings['typography_font_size'] );
+				if ( isset( $settings['typography_font_weight'] ) ) $decls['font-weight'] = $settings['typography_font_weight'];
+				if ( isset( $settings['typography_line_height'] ) ) $decls['line-height'] = self::css_size( $settings['typography_line_height'] );
+				if ( isset( $settings['typography_letter_spacing'] ) ) $decls['letter-spacing'] = self::css_size( $settings['typography_letter_spacing'] );
+				if ( isset( $settings['align'] ) ) $decls['text-align'] = $settings['align'];
+			}
+
+			$decl_text = self::css_decls( $decls );
+			if ( $base && $decl_text ) {
+				$rules[] = $base . '{' . $decl_text . '}';
+			}
+			if ( ! empty( $element['elements'] ) ) {
+				self::collect_critical_css_rules( $element['elements'], $post_id, $rules );
+			}
+		}
+	}
+
+	private static function compile_critical_css( $elementor_data, $post_id ) {
+		$rules = array(
+			'.elementor-' . (int) $post_id . '{width:100% !important;max-width:none !important}',
+			'.elementor-' . (int) $post_id . ' .e-con{box-sizing:border-box}',
+		);
+		self::collect_critical_css_rules( $elementor_data, $post_id, $rules );
+		return trim( implode( "\n", array_unique( array_filter( $rules ) ) ) );
+	}
+
+	private static function get_runtime_template_css( $post_id ) {
+		$chunks = array();
+		foreach ( array( '_xxxv_template_css', '_xxxv_critical_css' ) as $key ) {
+			$css = get_post_meta( $post_id, $key, true );
+			if ( is_string( $css ) && '' !== trim( $css ) ) {
+				$chunks[] = trim( $css );
+			}
+		}
+		return trim( implode( "\n", $chunks ) );
+	}
+
 	/**
 	 * Confirm `_elementor_data` was saved and can be loaded back as the same
 	 * Elementor element tree. This catches database/meta slashing issues before the
