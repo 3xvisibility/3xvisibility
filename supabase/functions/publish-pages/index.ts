@@ -813,7 +813,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           }
           if (
             website.type === "wordpress" && pubType === "page" && !preserveDesign &&
-            dpElementorData && dp.content && !dpElementorData.includes("xxxv-s-")
+            !useExactDirectElementor && dpElementorData && dp.content && !dpElementorData.includes("xxxv-s-")
           ) {
             try {
               const repaired = htmlToElementor(dp.content);
