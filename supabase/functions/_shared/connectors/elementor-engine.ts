@@ -515,7 +515,12 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
       out.push(button(node));
     } else if (CONTAINER_TAGS.has(node.tag)) {
       flush();
+      // Track this container's own text color so descendant text/heading widgets
+      // inherit it (CSS cascade parity) when they declare no color of their own.
+      const ownColor = CURRENT_RESOLVER ? CURRENT_RESOLVER.resolve(node as NodeLike).color : undefined;
+      if (ownColor) CURRENT_COLOR_STACK.push(ownColor);
       const inner = convertChildren(node.children);
+      if (ownColor) CURRENT_COLOR_STACK.pop();
       if (inner.length > 0) out.push(container(inner, node));
     } else if (TEXT_TAGS.has(node.tag) && !["span", "strong", "em", "small", "label"].includes(node.tag)) {
       flush();
