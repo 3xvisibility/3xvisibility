@@ -441,12 +441,28 @@ export default function GeneratedPagesPage() {
   };
 
   // Helper: check if pages have website_id, if not show selector
+  // Snapshot already-published pages before a republish so we can show a
+  // before/after diff once the new version goes live.
+  const captureRepublishSnapshots = (ids: string[]) => {
+    for (const id of ids) {
+      const p = pages.find((pg) => pg.id === id);
+      if (p && p.status === "published") {
+        republishSnapshotsRef.current[id] = {
+          content: p.content,
+          external_url: p.external_url,
+          title: p.title,
+        };
+      }
+    }
+  };
+
   const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
     const pagesWithoutSite = ids.filter((pid) => {
       const p = pages.find((pg) => pg.id === pid);
       return !p?.website_id;
     });
     const effType = resolvePublishTypeFor(ids);
+    captureRepublishSnapshots(ids);
     if (pagesWithoutSite.length > 0) {
       setPendingPublishIds(ids);
       setPendingPublishAction(action);
