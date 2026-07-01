@@ -449,6 +449,23 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   if (hasClass(node, "testimonial", "review", "quote-card")) return testimonial(node);
   if (hasClass(node, "image-box", "img-box")) return imageBox(node);
   if (hasClass(node, "icon-box", "feature-box", "feature-card", "service-box")) return iconBox(node);
+
+  // Structural fallback: a "card"-like block that pairs a title with descriptive
+  // text maps to a native Elementor widget instead of yet another nested
+  // container. This keeps the design intent (image-box / icon-box) and avoids
+  // exploding the tree into empty grid/flex wrappers.
+  if (hasClass(node, "card", "box", "tile", "feature", "service", "item")) {
+    const title = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title"));
+    const desc = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description"));
+    if (title && desc) {
+      const hasLink = !!findNode(node, (n) => isButton(n));
+      // Direct image (not a background) -> image-box; otherwise icon-box.
+      const directImg = findNode(node, (n) => n.tag === "img");
+      const icon = findNode(node, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon"));
+      if (directImg && !hasLink) return imageBox(node);
+      if (icon && !directImg) return iconBox(node);
+    }
+  }
   return null;
 }
 
