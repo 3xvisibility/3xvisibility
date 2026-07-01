@@ -990,7 +990,7 @@ class XXXV_Elementor {
 		// If Elementor's physical CSS file is unavailable on this host, the connector
 		// critical CSS is still enough to render the page styled instead of rolling
 		// back or leaving a broken unstyled page live.
-		$critical_css = get_post_meta( $post_id, '_xxxv_critical_css', true );
+		$critical_css = self::get_runtime_template_css( $post_id );
 		if ( is_string( $critical_css ) && '' !== trim( $critical_css ) ) {
 			return true;
 		}
