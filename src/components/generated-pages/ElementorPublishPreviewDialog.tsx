@@ -7,10 +7,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 
-import { Code2, Eye, FileCode2, Palette, UploadCloud, ShieldAlert } from "lucide-react";
+import { Code2, Eye, FileCode2, Palette, UploadCloud, ShieldAlert, Boxes, Package } from "lucide-react";
 import {
   buildElementorDebugReport,
   type ElementorWidgetMode,
+  type ElementorMapNode,
 } from "@/lib/connectors/elementor-engine";
 import {
   VisualValidationPanel,
