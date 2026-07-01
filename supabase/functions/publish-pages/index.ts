@@ -34,6 +34,39 @@ function shrinkText(text: string | undefined, keepFraction: number): string | un
   return words.slice(0, keep).join(" ");
 }
 
+/**
+ * Decide whether a stored Elementor JSON is a STALE conversion that must be
+ * regenerated from the template's source HTML.
+ *
+ * Self-styled templates (marketplace / AI designs) carry a `<style>` block whose
+ * selectors target class hooks on the markup — including STRUCTURAL container
+ * classes like `.rf-hero`, `.rf-wrap`, `.rf-grid2`, `.rf-stats`. Older versions
+ * of the converter only preserved classes on leaf widgets (headings, buttons,
+ * text) and dropped them from containers, so grids/flex/hero layouts collapsed
+ * and the published page looked unstyled. The current converter keeps container
+ * classes, so when we detect that a large share of the CSS class hooks are
+ * missing from the stored JSON we reconvert from source for a 1:1 match.
+ */
+function storedJsonIsStale(elementorJson: unknown, content: string | null | undefined): boolean {
+  if (!content || !/<style[\s>]/i.test(content)) return false;
+  const styleBlocks = content.match(/<style[^>]*>([\s\S]*?)<\/style>/gi) || [];
+  if (styleBlocks.length === 0) return false;
+  const cssText = styleBlocks.join("\n");
+  // Collect class hooks referenced by the stylesheet (e.g. `.rf-wrap`).
+  const classHooks = new Set<string>();
+  for (const m of cssText.matchAll(/\.([a-zA-Z_][\w-]*)/g)) classHooks.add(m[1]);
+  if (classHooks.size === 0) return false;
+  const jsonStr = JSON.stringify(elementorJson ?? "");
+  let missing = 0;
+  for (const cls of classHooks) {
+    if (!jsonStr.includes(cls)) missing++;
+  }
+  // If a meaningful share of the styled hooks never made it into the JSON, the
+  // stored conversion predates container-class preservation → regenerate.
+  return missing / classHooks.size >= 0.3;
+}
+
+
 async function resolveCatalogElementorData(
   supabase: any,
   page: { campaign_id?: string | null; title: string; content: string; seo_description?: string | null },
@@ -78,16 +111,25 @@ async function resolveCatalogElementorData(
         if (hasData) elementorJson = ed;
       }
 
-      // AI Site Builder templates saved before the inline-style bridge existed
-      // contain native Elementor JSON but no `xxxv-s-*` classes, while their
-      // design lives in `templates.content` as inline CSS. Repair those masters
-      // on the fly by reconverting the stored template HTML so campaigns publish
-      // the AI-built design, not an unstyled/native skeleton.
-      if (tplRow?.content && elementorJson && !JSON.stringify(elementorJson).includes("xxxv-s-")) {
+      // Repair stale MASTER JSON on the fly by reconverting the template's
+      // source HTML with the current converter. Two cases:
+      //  1) AI Site Builder masters saved before the inline-style bridge (no
+      //     `xxxv-s-*` classes) — their design lives in `templates.content`.
+      //  2) Marketplace/self-styled masters converted before container-class
+      //     preservation existed: leaf widgets kept their classes but structural
+      //     containers (`.rf-hero`, `.rf-wrap`, `.rf-grid2`, `.rf-stats`, …) lost
+      //     theirs, so grids/flex/hero layouts collapsed and pages looked
+      //     unstyled. `storedJsonIsStale` detects the missing class hooks.
+      const needsRepair = !!tplRow?.content && !!elementorJson && (
+        !JSON.stringify(elementorJson).includes("xxxv-s-") ||
+        storedJsonIsStale(elementorJson, tplRow?.content)
+      );
+      if (needsRepair) {
         try {
-          const repaired = htmlToElementor(tplRow.content);
+          const repaired = htmlToElementor(tplRow!.content as string);
           if (Array.isArray(repaired) && repaired.length) {
             elementorJson = repaired;
+            // Persist so future publishes read the corrected JSON directly.
             supabase
               .from("templates")
               .update({ elementor_data: repaired })
@@ -95,11 +137,21 @@ async function resolveCatalogElementorData(
               .then(({ error }: { error?: unknown }) => {
                 if (error) console.warn("[publish-pages] template Elementor repair persist failed", error);
               });
+            if (marketplaceId) {
+              supabase
+                .from("elementor_templates")
+                .update({ elementor_json: repaired })
+                .eq("source_template_id", marketplaceId)
+                .then(({ error }: { error?: unknown }) => {
+                  if (error) console.warn("[publish-pages] catalog Elementor repair persist failed", error);
+                });
+            }
           }
         } catch (e) {
           console.warn("[publish-pages] template Elementor repair failed", e);
         }
       }
+
 
       // Extract legacy stored CSS only. Publishing never converts HTML here and
       // never embeds HTML; missing Elementor JSON blocks WordPress publishing.
