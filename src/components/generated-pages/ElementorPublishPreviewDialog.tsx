@@ -174,6 +174,26 @@ export function ElementorPublishPreviewDialog({
     setOverride(false);
   }, [page?.id, mode]);
 
+  // Debug logs: dump the element -> native widget mapping to the console when the
+  // dialog opens, so the mapping is inspectable outside the UI too.
+  useEffect(() => {
+    if (!open || !report) return;
+    console.groupCollapsed(
+      `%c[Elementor Debug] ${page?.title ?? ""} — ${report.widgetCount} widgets / ${report.containerCount} containers`,
+      "color:#6366f1;font-weight:bold",
+    );
+    console.table(report.widgetSummary);
+    for (const n of report.mapping) {
+      const indent = "  ".repeat(n.depth);
+      if (n.elType === "widget") {
+        console.log(`%c${indent}▸ ${n.widgetType}`, "color:#0ea5e9", n.label);
+      } else {
+        console.log(`%c${indent}▦ container (${n.label})`, "color:#64748b");
+      }
+    }
+    console.groupEnd();
+  }, [open, report, page?.title]);
+
   const target: ValidationSide = publishedUrl
     ? { url: publishedUrl }
     : { html: report?.renderable || page?.content || "" };
