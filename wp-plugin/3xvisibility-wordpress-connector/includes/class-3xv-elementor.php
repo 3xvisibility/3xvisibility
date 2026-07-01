@@ -477,10 +477,12 @@ class XXXV_Elementor {
 		}
 
 		// CSS may contain background URLs that do not appear in widget controls. Import
-		// those as well, then replace url(...) references with local Media Library URLs.
-		if ( preg_match_all( '#https?://[^\s"\'\)]+\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(\?[^\s"\'\)]*)?#i', $css, $matches ) ) {
-			foreach ( array_unique( $matches[0] ) as $source ) {
-				self::import_media_url_for_report( $source, $report );
+		// those as well, including extensionless AI image URLs such as Pollinations.
+		if ( preg_match_all( '#url\(\s*["\']?(https?://[^\s"\'\)]+)["\']?\s*\)#i', $css, $matches ) ) {
+			foreach ( array_unique( $matches[1] ) as $source ) {
+				if ( self::is_remote_image_url( $source ) ) {
+					self::import_media_url_for_report( $source, $report );
+				}
 			}
 		}
 		if ( empty( $report['urls'] ) || ! is_array( $report['urls'] ) ) {
