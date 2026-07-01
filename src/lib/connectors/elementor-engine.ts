@@ -806,6 +806,57 @@ function countNodes(nodes: ElementorElement[]): { widgets: number; containers: n
   return { widgets, containers };
 }
 
+/** Short human label describing a node's content or layout intent. */
+function mapNodeLabel(el: ElementorElement): string {
+  const s = el.settings || {};
+  if (el.elType === "widget") {
+    switch (el.widgetType) {
+      case "heading": return String(s.title || "").slice(0, 60);
+      case "text-editor": return String(s.editor || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+      case "button": return String(s.text || "").slice(0, 60);
+      case "image": return String((s.image as { url?: string })?.url || "").split("/").pop() || "image";
+      case "image-box":
+      case "icon-box": return String(s.title_text || "").slice(0, 60);
+      case "testimonial": return String(s.testimonial_name || s.testimonial_content || "").slice(0, 60);
+      case "counter": return String(s.ending_number ?? "") + (s.title ? ` · ${s.title}` : "");
+      case "icon-list": return `${(s.icon_list as unknown[])?.length || 0} items`;
+      case "accordion":
+      case "tabs": return `${(s.tabs as unknown[])?.length || 0} sections`;
+      default: return "";
+    }
+  }
+  // Container layout hint.
+  if (s.container_type === "grid") {
+    const cols = (s.grid_columns_grid as { size?: number })?.size;
+    return cols ? `grid · ${cols} cols` : "grid";
+  }
+  if (s.flex_direction === "row") return "flex · row";
+  return "flex · column";
+}
+
+function buildMapping(nodes: ElementorElement[]): { mapping: ElementorMapNode[]; summary: Record<string, number> } {
+  const mapping: ElementorMapNode[] = [];
+  const summary: Record<string, number> = {};
+  const walk = (list: ElementorElement[], depth: number) => {
+    for (const n of list) {
+      mapping.push({
+        depth,
+        elType: n.elType,
+        widgetType: n.widgetType,
+        label: mapNodeLabel(n),
+        childCount: n.elements?.length || 0,
+      });
+      if (n.elType === "widget") {
+        const key = n.widgetType || "widget";
+        summary[key] = (summary[key] || 0) + 1;
+      }
+      if (n.elements?.length) walk(n.elements, depth + 1);
+    }
+  };
+  walk(nodes, 0);
+  return { mapping, summary };
+}
+
 /**
  * Produce a full debug report describing exactly what CSS + HTML get embedded
  * into the Elementor JSON for a generated page, in the selected widget mode.
@@ -826,6 +877,7 @@ export function buildElementorDebugReport(
     tree = [];
   }
   const counts = countNodes(tree);
+  const { mapping, summary } = buildMapping(tree);
   return {
     mode,
     css,
@@ -834,6 +886,8 @@ export function buildElementorDebugReport(
     dataLength: elementorData.length,
     widgetCount: counts.widgets,
     containerCount: counts.containers,
+    mapping,
+    widgetSummary: summary,
   };
 }
 
