@@ -831,7 +831,7 @@ class XXXV_Elementor {
 		if ( ! $post_id ) {
 			return;
 		}
-		$css = get_post_meta( $post_id, '_xxxv_template_css', true );
+		$css = self::get_runtime_template_css( $post_id );
 		if ( ! is_string( $css ) || '' === trim( $css ) ) {
 			return;
 		}
@@ -852,7 +852,7 @@ class XXXV_Elementor {
 		if ( ! $post_id ) {
 			return;
 		}
-		$css = get_post_meta( $post_id, '_xxxv_template_css', true );
+		$css = self::get_runtime_template_css( $post_id );
 		if ( ! is_string( $css ) || '' === trim( $css ) ) {
 			return;
 		}
@@ -955,7 +955,7 @@ class XXXV_Elementor {
 	 */
 	private static function validate_generated_css( $post_id, $expects_template_css ) {
 		if ( $expects_template_css ) {
-			$template_css = get_post_meta( $post_id, '_xxxv_template_css', true );
+			$template_css = self::get_runtime_template_css( $post_id );
 			if ( ! is_string( $template_css ) || '' === trim( $template_css ) ) {
 				return new WP_Error( 'xxxv_template_css_missing', 'Post-save validation failed: template CSS meta is missing.', array( 'status' => 500 ) );
 			}
@@ -971,6 +971,14 @@ class XXXV_Elementor {
 		self::refresh_elementor_files( $post_id );
 		self::regenerate_page_css( $post_id );
 		if ( file_exists( $path ) && filesize( $path ) > 0 ) {
+			return true;
+		}
+
+		// If Elementor's physical CSS file is unavailable on this host, the connector
+		// critical CSS is still enough to render the page styled instead of rolling
+		// back or leaving a broken unstyled page live.
+		$critical_css = get_post_meta( $post_id, '_xxxv_critical_css', true );
+		if ( is_string( $critical_css ) && '' !== trim( $critical_css ) ) {
 			return true;
 		}
 
@@ -1040,6 +1048,7 @@ class XXXV_Elementor {
 			'post_status'    => $post ? $post->post_status : 'draft',
 			'elementor_data' => get_post_meta( $post_id, '_elementor_data', true ),
 			'template_css'   => get_post_meta( $post_id, '_xxxv_template_css', true ),
+			'critical_css'   => get_post_meta( $post_id, '_xxxv_critical_css', true ),
 			'page_template'  => get_post_meta( $post_id, '_wp_page_template', true ),
 		);
 	}
@@ -1071,6 +1080,7 @@ class XXXV_Elementor {
 		);
 		update_post_meta( $post_id, '_elementor_data', $snap['elementor_data'] );
 		update_post_meta( $post_id, '_xxxv_template_css', isset( $snap['template_css'] ) ? $snap['template_css'] : '' );
+		update_post_meta( $post_id, '_xxxv_critical_css', isset( $snap['critical_css'] ) ? $snap['critical_css'] : '' );
 		update_post_meta( $post_id, '_wp_page_template', $snap['page_template'] );
 		self::regenerate_page_css( $post_id );
 		self::clear_runtime_caches( $post_id );
