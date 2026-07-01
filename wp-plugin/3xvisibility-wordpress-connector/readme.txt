@@ -37,6 +37,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 == Changelog ==
 
 = 1.3.5 =
+* Fixed overlapping / collapsed text lines on published pages caused by legacy line-height values baked as tiny pixel sizes (a unitless CSS 1.5 stored as 1.5px). Line-heights are now normalized to em multipliers, and existing pages self-heal on republish.
+
+= 1.3.4 =
 * Fixed slow-host publish timeouts by removing the duplicate post-publish CSS refresh, shortening blocked image-download waits, and making cache purges page-scoped instead of full-site.
 
 = 1.3.3 =
