@@ -714,6 +714,7 @@ export function htmlToElementor(html: string, siteContext?: SiteContext): Elemen
   } finally {
     CURRENT_RESOLVER = null;
     CURRENT_CTX = undefined;
+    CURRENT_COLOR_STACK = [];
   }
 }
 
