@@ -409,7 +409,17 @@ class XXXV_Elementor {
 	}
 
 	private static function is_remote_image_url( $value ) {
-		return is_string( $value ) && preg_match( '#^https?://[^\s"\']+\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(\?[^\s"\']*)?$#i', $value );
+		if ( ! is_string( $value ) || ! preg_match( '#^https?://#i', $value ) ) {
+			return false;
+		}
+		if ( preg_match( '#\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(\?[^\s"\']*)?$#i', $value ) ) {
+			return true;
+		}
+		$host = wp_parse_url( $value, PHP_URL_HOST );
+		// AI image providers often return images from extensionless URLs, e.g.
+		// image.pollinations.ai/prompt/...?...; those must still be imported into
+		// the WordPress Media Library during Elementor publish.
+		return is_string( $host ) && preg_match( '#(^|\.)image\.pollinations\.ai$#i', $host );
 	}
 
 	private static function import_media_url_for_report( $url, &$report, $alt = '' ) {
