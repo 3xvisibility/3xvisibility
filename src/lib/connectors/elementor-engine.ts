@@ -396,6 +396,32 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
     }
   }
 
+  // Guard: when this node is really a container wrapping MULTIPLE card-like
+  // children (a grid/list of cards), do NOT collapse it into a single widget.
+  // Return null so it becomes a layout container and each child is mapped to
+  // its own native widget (image-box / icon-box / testimonial / ...).
+  //
+  // A helper matching the node itself OR any descendant (findNode only probes
+  // descendants), used to count independent card compositions.
+  const selfOrDescendant = (c: HtmlNode, pred: (n: HtmlNode) => boolean) =>
+    pred(c) || !!findNode(c, pred);
+  const cardLikeChildren = itemChildren.filter((c) =>
+    selfOrDescendant(
+      c,
+      (n) =>
+        n.tag === "img" ||
+        n.tag === "i" ||
+        n.tag === "svg" ||
+        hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
+    ) && selfOrDescendant(c, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description")),
+  );
+  // Multiple sibling cards, or several headings scattered across the subtree
+  // (a section wrapping a grid of cards), both mean this is a group — not one
+  // card. Let it become a container so each card is mapped individually.
+  const headingCount = findAll(node, (n) => HEADINGS.has(n.tag)).length;
+  if (cardLikeChildren.length >= 2 || headingCount >= 2) return null;
+
+
   // Structural single-card fallbacks: map recognizable compositions to native
   // widgets instead of yet another nested container.
   if (hasClass(node, "card", "box", "tile", "feature", "service", "item") || (hasText && (directImg || iconNode))) {
@@ -403,6 +429,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
     if (iconNode && !directImg && hasText) return iconBox(node);
   }
   return null;
+
 }
 
 function container(children: ElementorElement[], node?: HtmlNode): ElementorElement {

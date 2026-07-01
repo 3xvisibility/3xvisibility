@@ -230,9 +230,6 @@ const mixedFixtures: MappingFixture[] = [
       </section>`,
     widgets: [{ type: "icon-box", atLeast: 3 }],
     containers: { gridAtLeast: 1 },
-    // KNOWN GAP: the engine currently collapses the whole grid into a single
-    // icon-box instead of one per card. Remove `knownGap` once fixed.
-    knownGap: true,
   },
   {
     id: "mixed-image-cards-grid",
@@ -245,9 +242,6 @@ const mixedFixtures: MappingFixture[] = [
       </div>`,
     widgets: [{ type: "image-box", atLeast: 2 }],
     containers: { gridAtLeast: 1 },
-    // KNOWN GAP: grid of image cards currently yields a single image-box
-    // rather than one per card. Remove `knownGap` once fixed.
-    knownGap: true,
   },
 ];
 
