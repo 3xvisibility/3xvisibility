@@ -432,7 +432,13 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
 function container(children: ElementorElement[], node?: HtmlNode, topLevel = false): ElementorElement {
   const settings: Record<string, unknown> = {
     ...nativeIdentitySettings(node),
-    content_width: "boxed",
+    // Use full containers at every level. The source HTML/CSS already carries
+    // max-width/margins; Elementor's boxed containers insert an extra
+    // `.e-con-inner` wrapper, which breaks converted CSS selectors/layouts
+    // (grid/flex children become grandchildren). Full containers preserve the
+    // source DOM shape much more closely while staying fully editable.
+    content_width: "full",
+    width: "100%",
     flex_direction: "column",
   };
   if (node && ["section", "header", "footer", "main", "article", "aside", "nav", "div"].includes(node.tag)) {
