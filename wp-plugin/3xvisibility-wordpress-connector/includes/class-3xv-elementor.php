@@ -651,6 +651,19 @@ class XXXV_Elementor {
 		$chunks = array();
 		foreach ( array( '_xxxv_template_css', '_xxxv_critical_css' ) as $key ) {
 			$css = get_post_meta( $post_id, $key, true );
+			if ( '_xxxv_critical_css' === $key && ( ! is_string( $css ) || '' === trim( $css ) ) ) {
+				$saved = get_post_meta( $post_id, '_elementor_data', true );
+				$data  = is_string( $saved ) ? json_decode( $saved, true ) : null;
+				if ( ! is_array( $data ) && is_string( $saved ) ) {
+					$data = json_decode( wp_unslash( $saved ), true );
+				}
+				if ( is_array( $data ) && ! empty( $data ) ) {
+					$css = self::compile_critical_css( $data, $post_id );
+					if ( is_string( $css ) && '' !== trim( $css ) ) {
+						update_post_meta( $post_id, '_xxxv_critical_css', $css );
+					}
+				}
+			}
 			if ( is_string( $css ) && '' !== trim( $css ) ) {
 				$chunks[] = trim( $css );
 			}
