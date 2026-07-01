@@ -6,7 +6,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
 import { htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
-import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
+import { extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -462,44 +462,6 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
 // Routes through the native Elementor master: the rendered HTML is converted to
 // a native Elementor JSON tree (full-width Containers + native widgets) so the
 // WordPress publish flow ships an editable, 1:1 page — never a raw HTML widget.
-// Pick the stored master Elementor template whose category/name best matches the
-// brand/category/niche inputs (and any reference section headings). Returns the
-// raw `elementor_json` of the best match, or null when nothing scores.
-async function pickMasterTemplate(
-  input: BuildInput,
-  hints: string[],
-): Promise<unknown | null> {
-  try {
-    const url = Deno.env.get("SUPABASE_URL");
-    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!url || !key) return null;
-    const supabase = createClient(url, key);
-    const { data, error } = await supabase
-      .from("elementor_templates")
-      .select("id, name, category, elementor_json")
-      .eq("status", "active")
-      .limit(200);
-    if (error || !data?.length) return null;
-
-    const needles = [input.category, input.niche, input.brand, ...hints]
-      .filter(Boolean)
-      .flatMap((s) => String(s).toLowerCase().split(/[^a-z0-9]+/))
-      .filter((w) => w.length >= 3);
-    if (!needles.length) return null;
-
-    let best: { json: unknown; score: number } | null = null;
-    for (const row of data) {
-      const hay = `${row.category ?? ""} ${row.name ?? ""}`.toLowerCase();
-      let score = 0;
-      for (const n of needles) if (hay.includes(n)) score += 1;
-      if (score > 0 && (!best || score > best.score)) best = { json: row.elementor_json, score };
-    }
-    return best?.json ?? null;
-  } catch (e) {
-    console.warn("[ai-site-builder] master template lookup failed", e);
-    return null;
-  }
-}
 
 // Build the publish-ready page payload from a generated PageJson.
 // Routing priority: (1) a matching stored master Elementor template, content
@@ -531,35 +493,18 @@ async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: st
   let elementorData: string | undefined;
   let elementorCss: string | undefined;
 
-  // (1) Master Elementor template routing.
+  // The AI-generated design IS the source of truth. Convert the freshly
+  // rendered HTML directly into a native Elementor JSON tree so the published
+  // WordPress page is 1:1 with what the user built — never an old marketplace
+  // master template matched by category.
   try {
-    const master = await pickMasterTemplate(input, sectionHints);
-    if (master) {
-      const built = buildElementorFromCatalog(master, {
-        title: p.hero?.headline || p.title,
-        description: p.hero?.subheadline || p.sections?.[0]?.body || p.metaDescription,
-        bodyHtml: html,
-      });
-      if (built && built.data) {
-        elementorData = built.data;
-        elementorCss = built.extractedCss || undefined;
-      }
+    const tree = htmlToElementor(html);
+    if (Array.isArray(tree) && tree.length) {
+      elementorData = JSON.stringify(tree);
+      elementorCss = extractTemplateCss(html) || undefined;
     }
   } catch (e) {
-    console.warn("[ai-site-builder] master routing failed; falling back", e);
-  }
-
-  // (2) HTML → native Elementor conversion.
-  if (!elementorData) {
-    try {
-      const tree = htmlToElementor(html);
-      if (Array.isArray(tree) && tree.length) {
-        elementorData = JSON.stringify(tree);
-        elementorCss = extractTemplateCss(html) || undefined;
-      }
-    } catch (e) {
-      console.warn("[ai-site-builder] native Elementor conversion failed; falling back to HTML", e);
-    }
+    console.warn("[ai-site-builder] native Elementor conversion failed; falling back to HTML", e);
   }
 
   return {
