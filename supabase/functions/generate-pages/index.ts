@@ -1591,7 +1591,34 @@ Deno.serve(async (req) => {
     };
 
 
-    const templateContent = campaign.templates.content as string;
+    let templateContent = campaign.templates.content as string;
+
+    // ── Image caching ──────────────────────────────────────────────
+    // AI-built pages reference on-demand generators (pollinations.ai, etc.)
+    // whose URLs are slow and rate-limited (HTTP 429). Download each volatile
+    // image ONCE into the ai-images bucket and rewrite the template to those
+    // stable, un-throttled URLs. Persist the rewrite back to the template so it
+    // is only ever downloaded on the first run — every later publish reuses the
+    // cached copies without touching the volatile host.
+    if (!test_mode) {
+      try {
+        const cached = await cacheVolatileTemplateImages(supabase, templateContent);
+        if (cached.changed) {
+          templateContent = cached.html;
+          (campaign.templates as { content: string }).content = cached.html;
+          const tplId = (campaign as { template_id?: string | null }).template_id;
+          if (tplId) {
+            await supabase.from("templates").update({ content: cached.html }).eq("id", tplId);
+          }
+          console.log(
+            `[GENERATE-PAGES] Cached ${Object.keys(cached.urlMap).length} volatile template image(s) to ai-images bucket.`,
+          );
+        }
+      } catch (e) {
+        console.error("[GENERATE-PAGES] Image caching skipped:", (e as Error).message);
+      }
+    }
+
     // Whitelist of images that ship with the template. Every generated page is
     // validated against this set so it can ONLY use the template's own images.
     const templateImageUrls = extractTemplateImageUrls(templateContent);
