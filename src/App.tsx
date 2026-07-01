@@ -292,6 +292,9 @@ const App = () => {
             <Route path="/shopify/oauth-launch" element={<ShopifyOAuthLaunchPage />} />
             <Route path="/shopify/callback" element={<ShopifyCallbackPage />} />
             <Route path="/api/shopify/callback" element={<ShopifyCallbackPage />} />
+            {import.meta.env.DEV && (
+              <Route path="/__dev/republish-diff" element={<RepublishDiffHarnessPage />} />
+            )}
 
             {/* Workspace-prefixed routes */}
             <Route path="/w/:workspaceSlug" element={<WorkspaceRouter />}>
