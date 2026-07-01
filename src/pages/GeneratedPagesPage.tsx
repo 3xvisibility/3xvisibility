@@ -87,6 +87,9 @@ export default function GeneratedPagesPage() {
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
   const [publishLog, setPublishLog] = useState<PublishLogResult[] | null>(null);
+  // Before/after republish diff: snapshots captured at trigger time, keyed by page id.
+  const republishSnapshotsRef = useRef<Record<string, RepublishSnapshot>>({});
+  const [diffState, setDiffState] = useState<{ before: RepublishSnapshot; after: RepublishSnapshot } | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
