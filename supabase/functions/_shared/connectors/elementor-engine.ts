@@ -180,6 +180,12 @@ function hasClass(node: HtmlNode, ...names: string[]): boolean {
   return names.some((n) => cls.includes(n));
 }
 
+/** Whole-token class match (avoids "grid-item" matching "grid"). */
+function hasClassToken(node: HtmlNode, ...names: string[]): boolean {
+  const tokens = (node.attrs.class || "").toLowerCase().split(/\s+/).filter(Boolean);
+  return names.some((n) => tokens.includes(n));
+}
+
 function hashInlineStyle(input: string): string {
   let h = 2166136261;
   for (let i = 0; i < input.length; i++) {
