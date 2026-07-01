@@ -149,8 +149,10 @@ async function resolveCatalogElementorData(
       //     unstyled. `storedJsonIsStale` detects the missing class hooks.
       const needsRepair = !!tplRow?.content && !!elementorJson && (
         !JSON.stringify(elementorJson).includes("xxxv-s-") ||
-        storedJsonIsStale(elementorJson, tplRow?.content)
+        storedJsonIsStale(elementorJson, tplRow?.content) ||
+        storedJsonIsCorrupt(elementorJson)
       );
+
       if (needsRepair) {
         try {
           const repaired = htmlToElementor(tplRow!.content as string);
