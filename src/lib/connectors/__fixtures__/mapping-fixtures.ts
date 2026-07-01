@@ -46,6 +46,14 @@ export interface MappingFixture {
   widgets?: WidgetExpectation[];
   /** Container/layout expectations. */
   containers?: ContainerExpectation;
+  /**
+   * Marks a fixture whose expectations describe DESIRED behavior the engine
+   * does not yet produce. The runner asserts these currently fail (via
+   * `it.fails`), so when a future mapping change makes them pass, vitest flags
+   * the fixture and the `knownGap` flag can be removed — turning it into a
+   * normal regression guard.
+   */
+  knownGap?: boolean;
 }
 
 /* ------------------------------- grid cases ------------------------------ */
