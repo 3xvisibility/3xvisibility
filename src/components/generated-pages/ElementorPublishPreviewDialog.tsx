@@ -281,6 +281,11 @@ export function ElementorPublishPreviewDialog({
             <TabsContent value="preview" className="m-0">
               {report && <RenderableFrame html={report.renderable} />}
             </TabsContent>
+            <TabsContent value="map" className="m-0">
+              <ScrollArea className="h-[520px] rounded-md border border-border bg-muted/30">
+                {report && <WidgetMap mapping={report.mapping} summary={report.widgetSummary} />}
+              </ScrollArea>
+            </TabsContent>
             <TabsContent value="css" className="m-0">
               <ScrollArea className="h-[520px] rounded-md border border-border bg-muted/30">
                 <pre className="p-3 text-[11px] font-mono whitespace-pre-wrap break-words">
