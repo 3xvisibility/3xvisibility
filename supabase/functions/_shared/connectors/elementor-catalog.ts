@@ -8,7 +8,7 @@
 // stored template design 1:1 while carrying new SEO content.
 
 import type { ElementorElement } from "./elementor-engine.ts";
-import { sanitizeElementorTree } from "./elementor-engine.ts";
+import { inlineStyleClassFor, sanitizeElementorTree } from "./elementor-engine.ts";
 import {
   applyEditableContent,
   defaultContentFor,
@@ -47,7 +47,49 @@ export function extractTemplateCss(html: string | null | undefined): string {
     const css = (m[1] || "").trim();
     if (css) blocks.push(css);
   }
+  const inlineCss = extractInlineStyleCss(html);
+  if (inlineCss) blocks.push(inlineCss);
   return blocks.join("\n");
+}
+
+function parseInlineAttrs(raw: string): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  const re = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*(?:=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(raw)) !== null) {
+    attrs[m[1].toLowerCase()] = (m[2] ?? m[3] ?? m[4] ?? "").trim();
+  }
+  return attrs;
+}
+
+function isSafeInlineDeclaration(style: string): boolean {
+  return Boolean(style) && !/[{}<>]/.test(style) && !/expression\s*\(|javascript:/i.test(style);
+}
+
+/**
+ * Convert inline style attributes into stable class rules. The native Elementor
+ * converter assigns the same generated class (`xxxv-s-*`) to each converted
+ * widget/container. This is the critical bridge for AI Site Builder pages, whose
+ * preview design is mostly inline CSS rather than `<style>` blocks.
+ */
+export function extractInlineStyleCss(html: string | null | undefined): string {
+  if (!html) return "";
+  const rules: string[] = [];
+  const seen = new Set<string>();
+  const tagRe = /<([a-zA-Z][a-zA-Z0-9-]*)([^>]*)>/g;
+  let m: RegExpExecArray | null;
+  while ((m = tagRe.exec(html)) !== null) {
+    const tag = (m[1] || "").toLowerCase();
+    if (["style", "script", "link", "meta", "head", "html", "body"].includes(tag)) continue;
+    const attrs = parseInlineAttrs(m[2] || "");
+    const style = attrs.style;
+    if (!isSafeInlineDeclaration(style)) continue;
+    const cls = inlineStyleClassFor(tag, style);
+    if (!cls || seen.has(cls)) continue;
+    seen.add(cls);
+    rules.push(`.${cls}{${style}}`);
+  }
+  return rules.join("\n");
 }
 
 /**
