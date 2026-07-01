@@ -66,6 +66,17 @@ function isSafeInlineDeclaration(style: string): boolean {
   return Boolean(style) && !/[{}<>]/.test(style) && !/expression\s*\(|javascript:/i.test(style);
 }
 
+function selectorsForInlineStyle(tag: string, cls: string): string[] {
+  const base = `.${cls}`;
+  if (/^h[1-6]$/.test(tag)) return [base, `${base} .elementor-heading-title`];
+  if (tag === "img") return [base, `${base} img`];
+  if (tag === "a" || tag === "button") return [base, `${base} .elementor-button`, `${base} a`];
+  if (["p", "span", "small", "strong", "em", "label", "blockquote", "li"].includes(tag)) {
+    return [base, `${base} .elementor-widget-container`, `${base} .elementor-widget-container > *`];
+  }
+  return [base];
+}
+
 /**
  * Convert inline style attributes into stable class rules. The native Elementor
  * converter assigns the same generated class (`xxxv-s-*`) to each converted
@@ -87,7 +98,7 @@ export function extractInlineStyleCss(html: string | null | undefined): string {
     const cls = inlineStyleClassFor(tag, style);
     if (!cls || seen.has(cls)) continue;
     seen.add(cls);
-    rules.push(`.${cls}{${style}}`);
+    rules.push(`${selectorsForInlineStyle(tag, cls).join(",")}{${style}}`);
   }
   return rules.join("\n");
 }
