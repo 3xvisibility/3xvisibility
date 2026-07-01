@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
+import { RepublishDiffDialog, type RepublishSnapshot } from "@/components/generated-pages/RepublishDiffDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
@@ -86,6 +87,9 @@ export default function GeneratedPagesPage() {
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
   const [publishLog, setPublishLog] = useState<PublishLogResult[] | null>(null);
+  // Before/after republish diff: snapshots captured at trigger time, keyed by page id.
+  const republishSnapshotsRef = useRef<Record<string, RepublishSnapshot>>({});
+  const [diffState, setDiffState] = useState<{ before: RepublishSnapshot; after: RepublishSnapshot } | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -194,6 +198,16 @@ export default function GeneratedPagesPage() {
                 title: "Page published",
                 description: next.external_url ? `Live at ${next.external_url}` : next.title,
               });
+              // If this was a republish we captured a "before" snapshot for,
+              // surface the before/after diff automatically.
+              const snap = republishSnapshotsRef.current[next.id];
+              if (snap) {
+                delete republishSnapshotsRef.current[next.id];
+                setDiffState({
+                  before: snap,
+                  after: { content: next.content, external_url: next.external_url, title: next.title },
+                });
+              }
             } else if (next.status === "failed" && prev?.status === "publishing") {
               toast({
                 title: "Publish failed",
@@ -427,12 +441,28 @@ export default function GeneratedPagesPage() {
   };
 
   // Helper: check if pages have website_id, if not show selector
+  // Snapshot already-published pages before a republish so we can show a
+  // before/after diff once the new version goes live.
+  const captureRepublishSnapshots = (ids: string[]) => {
+    for (const id of ids) {
+      const p = pages.find((pg) => pg.id === id);
+      if (p && p.status === "published") {
+        republishSnapshotsRef.current[id] = {
+          content: p.content,
+          external_url: p.external_url,
+          title: p.title,
+        };
+      }
+    }
+  };
+
   const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
     const pagesWithoutSite = ids.filter((pid) => {
       const p = pages.find((pg) => pg.id === pid);
       return !p?.website_id;
     });
     const effType = resolvePublishTypeFor(ids);
+    captureRepublishSnapshots(ids);
     if (pagesWithoutSite.length > 0) {
       setPendingPublishIds(ids);
       setPendingPublishAction(action);
@@ -1376,6 +1406,12 @@ export default function GeneratedPagesPage() {
         open={!!publishLog}
         onOpenChange={(open) => { if (!open) setPublishLog(null); }}
         results={publishLog || []}
+      />
+      <RepublishDiffDialog
+        open={!!diffState}
+        onOpenChange={(open) => { if (!open) setDiffState(null); }}
+        before={diffState?.before}
+        after={diffState?.after}
       />
     </div>
   );
