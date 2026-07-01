@@ -66,6 +66,7 @@ class XXXV_Elementor {
 			$elementor_data = is_array( $decoded ) ? $decoded : array();
 		}
 		self::normalize_top_level_containers( $elementor_data );
+		self::sanitize_elementor_text_fields( $elementor_data );
 
 		// ---- (1) Validate the incoming JSON model -----------------------------
 		$validation = self::validate_model( $elementor_data );
@@ -309,6 +310,70 @@ class XXXV_Elementor {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Defense-in-depth for old malformed template JSON: Text Editor fields may
+	 * contain an opening inline tag like `<span class="badge">Welcome` without its
+	 * closing tag. Elementor renders that raw HTML, so the open tag can swallow the
+	 * following widget markup and collapse the whole page. Close allowed inline tags
+	 * and cut any leaked structural markup before saving.
+	 */
+	private static function sanitize_elementor_text_fields( &$elements ) {
+		if ( ! is_array( $elements ) ) {
+			return;
+		}
+		foreach ( $elements as &$element ) {
+			if ( ! is_array( $element ) ) {
+				continue;
+			}
+			if ( isset( $element['elType'], $element['widgetType'] ) && 'widget' === $element['elType'] && 'text-editor' === $element['widgetType'] ) {
+				if ( isset( $element['settings']['editor'] ) && is_string( $element['settings']['editor'] ) ) {
+					$element['settings']['editor'] = self::sanitize_inline_editor_html( $element['settings']['editor'] );
+				}
+			}
+			if ( ! empty( $element['elements'] ) && is_array( $element['elements'] ) ) {
+				self::sanitize_elementor_text_fields( $element['elements'] );
+			}
+		}
+		unset( $element );
+	}
+
+	private static function sanitize_inline_editor_html( $html ) {
+		$html = preg_replace( '#<script\b[^>]*>[\s\S]*?</script>#i', '', (string) $html );
+		$html = preg_replace( '#<style\b[^>]*>[\s\S]*?</style>#i', '', $html );
+		if ( preg_match( '#</?(div|section|header|footer|main|article|nav|aside)\b|%3c/?(div|section|header|footer|main|article|nav|aside)\b|&lt;/?(div|section|header|footer|main|article|nav|aside)\b#i', $html, $m, PREG_OFFSET_CAPTURE ) ) {
+			$html = substr( $html, 0, $m[0][1] );
+		}
+		$last_open = strrpos( $html, '<' );
+		if ( false !== $last_open && false === strpos( $html, '>', $last_open ) ) {
+			$html = substr( $html, 0, $last_open );
+		}
+
+		$allowed = array( 'a', 'span', 'p', 'strong', 'em', 'b', 'i', 'small', 'ul', 'ol', 'li' );
+		$stack   = array();
+		if ( preg_match_all( '#</?([a-z][a-z0-9]*)\b[^>]*>#i', $html, $tags, PREG_SET_ORDER ) ) {
+			foreach ( $tags as $tag_match ) {
+				$full = $tag_match[0];
+				$tag  = strtolower( $tag_match[1] );
+				if ( ! in_array( $tag, $allowed, true ) || preg_match( '#/>$#', $full ) ) {
+					continue;
+				}
+				if ( 0 === strpos( $full, '</' ) ) {
+					$idx = array_search( $tag, array_reverse( $stack, true ), true );
+					if ( false !== $idx ) {
+						unset( $stack[ $idx ] );
+						$stack = array_values( $stack );
+					}
+				} else {
+					$stack[] = $tag;
+				}
+			}
+		}
+		foreach ( array_reverse( $stack ) as $tag ) {
+			$html .= '</' . $tag . '>';
+		}
+		return trim( $html );
 	}
 
 	/**
