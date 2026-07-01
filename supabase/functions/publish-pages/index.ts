@@ -3,6 +3,7 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
+import { htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
 
 
 /**
@@ -75,6 +76,29 @@ async function resolveCatalogElementorData(
         const ed = tplRow.elementor_data;
         const hasData = Array.isArray(ed) ? ed.length > 0 : !!ed;
         if (hasData) elementorJson = ed;
+      }
+
+      // AI Site Builder templates saved before the inline-style bridge existed
+      // contain native Elementor JSON but no `xxxv-s-*` classes, while their
+      // design lives in `templates.content` as inline CSS. Repair those masters
+      // on the fly by reconverting the stored template HTML so campaigns publish
+      // the AI-built design, not an unstyled/native skeleton.
+      if (tplRow?.content && elementorJson && !JSON.stringify(elementorJson).includes("xxxv-s-")) {
+        try {
+          const repaired = htmlToElementor(tplRow.content);
+          if (Array.isArray(repaired) && repaired.length) {
+            elementorJson = repaired;
+            supabase
+              .from("templates")
+              .update({ elementor_data: repaired })
+              .eq("id", templateId)
+              .then(({ error }: { error?: unknown }) => {
+                if (error) console.warn("[publish-pages] template Elementor repair persist failed", error);
+              });
+          }
+        } catch (e) {
+          console.warn("[publish-pages] template Elementor repair failed", e);
+        }
       }
 
       // Extract legacy stored CSS only. Publishing never converts HTML here and
@@ -631,7 +655,23 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // Builder). When the caller supplies a pre-built native Elementor JSON
           // tree, ship it directly so the WordPress page is fully editable in
           // Elementor — no raw HTML fallback.
-          const dpElementorData = typeof dp.elementor_data === "string" ? dp.elementor_data : undefined;
+          let dpElementorData = typeof dp.elementor_data === "string" ? dp.elementor_data : undefined;
+          let dpElementorCss = typeof dp.elementor_css === "string" ? dp.elementor_css : undefined;
+          if (
+            website.type === "wordpress" && pubType === "page" && !preserveDesign &&
+            dpElementorData && dp.content && !dpElementorData.includes("xxxv-s-")
+          ) {
+            try {
+              const repaired = htmlToElementor(dp.content);
+              if (Array.isArray(repaired) && repaired.length) {
+                dpElementorData = JSON.stringify(repaired);
+                dpElementorCss = [dpElementorCss, extractTemplateCss(dp.content)].filter(Boolean).join("\n") || undefined;
+                step("Repairing AI Builder styles", "ok", "Inline CSS preserved as native Elementor classes");
+              }
+            } catch (e) {
+              console.warn("[publish-pages] direct Elementor repair failed", e);
+            }
+          }
           if (website.type === "wordpress" && pubType === "page" && !preserveDesign) {
             if (!dpElementorData) {
               throw new Error(
@@ -639,7 +679,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
               );
             }
             payload.elementor_data = dpElementorData;
-            payload.elementor_css = typeof dp.elementor_css === "string" ? dp.elementor_css : undefined;
+            payload.elementor_css = dpElementorCss;
             payload.elementor_mode = "native";
             step("Routing native Elementor JSON", "ok", "Full-width containers + native widgets");
           }

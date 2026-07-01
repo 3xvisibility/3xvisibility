@@ -163,10 +163,40 @@ function hasClass(node: HtmlNode, ...names: string[]): boolean {
   return names.some((n) => cls.includes(n));
 }
 
+function hashInlineStyle(input: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(36).slice(0, 8);
+}
+
+/**
+ * Deterministic class used to preserve inline CSS from generated HTML while
+ * still publishing native Elementor widgets. `extractTemplateCss()` emits the
+ * matching CSS rules and this converter attaches the same class to the native
+ * Elementor element, so complex AI-builder styles (gradient/flex/grid/shadow)
+ * survive WordPress publishing without an HTML widget.
+ */
+export function inlineStyleClassFor(tag: string | undefined, style: string | undefined): string {
+  const normalized = (style || "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\s+/g, " ")
+    .replace(/\s*([:;,()])\s*/g, "$1")
+    .trim()
+    .toLowerCase();
+  if (!normalized) return "";
+  return `xxxv-s-${hashInlineStyle(`${(tag || "div").toLowerCase()}|${normalized}`)}`;
+}
+
 function nativeIdentitySettings(node?: HtmlNode): Record<string, unknown> {
   if (!node) return {};
   const settings: Record<string, unknown> = {};
-  const cssClasses = (node.attrs.class || "")
+  const autoStyleClass = inlineStyleClassFor(node.tag, node.attrs.style);
+  const cssClasses = [node.attrs.class || "", autoStyleClass]
+    .filter(Boolean)
+    .join(" ")
     .split(/\s+/)
     .map((c) => c.trim())
     .filter((c) => /^[a-zA-Z_-][\w-]*$/.test(c))
@@ -402,7 +432,13 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
 function container(children: ElementorElement[], node?: HtmlNode, topLevel = false): ElementorElement {
   const settings: Record<string, unknown> = {
     ...nativeIdentitySettings(node),
-    content_width: "boxed",
+    // Use full containers at every level. The source HTML/CSS already carries
+    // max-width/margins; Elementor's boxed containers insert an extra
+    // `.e-con-inner` wrapper, which breaks converted CSS selectors/layouts
+    // (grid/flex children become grandchildren). Full containers preserve the
+    // source DOM shape much more closely while staying fully editable.
+    content_width: "full",
+    width: "100%",
     flex_direction: "column",
   };
   if (node && ["section", "header", "footer", "main", "article", "aside", "nav", "div"].includes(node.tag)) {
@@ -501,6 +537,18 @@ function isLayoutContainer(el: ElementorElement): boolean {
 
 function isPlainWrapper(el: ElementorElement): boolean {
   if (el.elType !== "container") return false;
+  const s = el.settings || {};
+  // Never unwrap a container that carries visual styling or identity. AI Site
+  // Builder sections often use simple column wrappers with inline CSS for
+  // gradients, padding, max-width, shadows, etc. Treating those as "plain"
+  // deleted the actual design and left published WordPress pages as unstyled
+  // Elementor skeletons.
+  const visualKeys = [
+    "_css_classes", "_element_id", "background_background", "background_color", "background_image",
+    "__xxxv_background", "__xxxv_box_shadow", "__xxxv_border", "padding", "margin", "min_height",
+    "max_width", "border_radius", "overflow",
+  ];
+  if (visualKeys.some((key) => key in s && s[key] !== undefined && s[key] !== "")) return false;
   return !isLayoutContainer(el);
 }
 

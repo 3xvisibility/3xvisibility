@@ -29,6 +29,7 @@ export interface StyleProps {
   color?: string;
   backgroundColor?: string;
   backgroundImage?: string;
+  background?: string;
   fontFamily?: string;
   fontSize?: string;
   fontWeight?: string;
@@ -46,6 +47,11 @@ export interface StyleProps {
   alignItems?: string;
   gap?: string;
   minHeight?: string;
+  overflow?: string;
+  boxShadow?: string;
+  border?: string;
+  objectFit?: string;
+  opacity?: string;
 }
 
 interface Rule {
@@ -125,6 +131,7 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["background-color"]) p.backgroundColor = d["background-color"];
   if (d["background"]) {
     const bg = d["background"];
+    p.background = bg;
     const urlM = bg.match(/url\(([^)]+)\)/i);
     if (urlM) p.backgroundImage = urlM[1].replace(/['"]/g, "").trim();
     const colM = bg.match(/#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)/);
@@ -149,6 +156,11 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["align-items"]) p.alignItems = d["align-items"];
   if (d["gap"]) p.gap = d["gap"];
   if (d["min-height"]) p.minHeight = d["min-height"];
+  if (d["overflow"]) p.overflow = d["overflow"];
+  if (d["box-shadow"]) p.boxShadow = d["box-shadow"];
+  if (d["border"]) p.border = d["border"];
+  if (d["object-fit"]) p.objectFit = d["object-fit"];
+  if (d["opacity"]) p.opacity = d["opacity"];
 
   const box = (prefix: "padding" | "margin"): Partial<BoxSides> | undefined => {
     const sides: Partial<BoxSides> = {};
@@ -302,6 +314,7 @@ export function styleImage(settings: Record<string, unknown>, p: StyleProps): vo
   if (w) settings.width = w;
   const br = pxSize(p.borderRadius);
   if (br) settings.image_border_radius = { unit: br.unit, top: String(br.size), right: String(br.size), bottom: String(br.size), left: String(br.size), isLinked: true };
+  if (p.objectFit) settings.object_fit = p.objectFit;
 }
 
 /** Bake container styles (background, padding, margin, alignment, width). */
@@ -312,6 +325,10 @@ export function styleContainer(settings: Record<string, unknown>, p: StyleProps,
     const bgGlobal = globalColorId(p.backgroundColor, ctx);
     if (bgGlobal) globals["background_color"] = `globals/colors?id=${bgGlobal}`;
     else settings.background_color = p.backgroundColor;
+  }
+  if (p.background && !p.backgroundImage && /gradient\s*\(/i.test(p.background)) {
+    settings.background_background = "gradient";
+    settings.__xxxv_background = p.background;
   }
   if (p.backgroundImage) {
     settings.background_background = "classic";
@@ -336,6 +353,11 @@ export function styleContainer(settings: Record<string, unknown>, p: StyleProps,
   }
   const minH = pxSize(p.minHeight);
   if (minH) settings.min_height = minH;
+  if (p.overflow) settings.overflow = p.overflow;
+  if (p.boxShadow) settings.__xxxv_box_shadow = p.boxShadow;
+  if (p.border) settings.__xxxv_border = p.border;
+  const br = pxSize(p.borderRadius);
+  if (br) settings.border_radius = { unit: br.unit, top: String(br.size), right: String(br.size), bottom: String(br.size), left: String(br.size), isLinked: true };
   const mw = pxSize(p.maxWidth);
   if (mw && mw.unit === "px") {
     settings.content_width = "boxed";

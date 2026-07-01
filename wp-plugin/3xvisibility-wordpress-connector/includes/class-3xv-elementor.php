@@ -138,6 +138,18 @@ class XXXV_Elementor {
 				delete_post_meta( $post_id, '_xxxv_template_css' );
 			}
 
+			// Store a deterministic critical stylesheet compiled from the submitted
+			// Elementor JSON itself. This is a hard fallback for hosts where
+			// /uploads/elementor/css/post-{id}.css is deleted, blocked, or returns 404:
+			// the live page still receives the same padding/background/flex/typography
+			// rules inline through the connector.
+			$critical_css = self::compile_critical_css( $elementor_data, $post_id );
+			if ( '' !== $critical_css ) {
+				update_post_meta( $post_id, '_xxxv_critical_css', $critical_css );
+			} else {
+				delete_post_meta( $post_id, '_xxxv_critical_css' );
+			}
+
 			// Optional SEO / custom meta.
 			if ( ! empty( $body['meta'] ) && is_array( $body['meta'] ) ) {
 				foreach ( $body['meta'] as $key => $value ) {
@@ -166,8 +178,8 @@ class XXXV_Elementor {
 			// ---- (5) Generate per-page CSS ------------------------------------
 			self::refresh_elementor_files( $post_id );
 			$css_ok = self::regenerate_page_css( $post_id );
-			if ( ! $css_ok ) {
-				throw new Exception( 'Elementor page CSS regeneration failed.' );
+			if ( ! $css_ok && '' === $critical_css ) {
+				throw new Exception( 'Elementor page CSS regeneration failed and no connector critical CSS fallback could be generated.' );
 			}
 
 			// ---- (6) Generate / refresh global (kit) CSS ----------------------
@@ -184,7 +196,7 @@ class XXXV_Elementor {
 			if ( is_wp_error( $saved_check ) ) {
 				throw new Exception( $saved_check->get_error_message() );
 			}
-			$css_check = self::validate_generated_css( $post_id, '' !== $elementor_css );
+			$css_check = self::validate_generated_css( $post_id, '' !== $elementor_css || '' !== $critical_css );
 			if ( is_wp_error( $css_check ) ) {
 				throw new Exception( $css_check->get_error_message() );
 			}
@@ -409,7 +421,17 @@ class XXXV_Elementor {
 	}
 
 	private static function is_remote_image_url( $value ) {
-		return is_string( $value ) && preg_match( '#^https?://[^\s"\']+\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(\?[^\s"\']*)?$#i', $value );
+		if ( ! is_string( $value ) || ! preg_match( '#^https?://#i', $value ) ) {
+			return false;
+		}
+		if ( preg_match( '#\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(\?[^\s"\']*)?$#i', $value ) ) {
+			return true;
+		}
+		$host = wp_parse_url( $value, PHP_URL_HOST );
+		// AI image providers often return images from extensionless URLs, e.g.
+		// image.pollinations.ai/prompt/...?...; those must still be imported into
+		// the WordPress Media Library during Elementor publish.
+		return is_string( $host ) && preg_match( '#(^|\.)image\.pollinations\.ai$#i', $host );
 	}
 
 	private static function import_media_url_for_report( $url, &$report, $alt = '' ) {
@@ -467,10 +489,12 @@ class XXXV_Elementor {
 		}
 
 		// CSS may contain background URLs that do not appear in widget controls. Import
-		// those as well, then replace url(...) references with local Media Library URLs.
-		if ( preg_match_all( '#https?://[^\s"\'\)]+\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(\?[^\s"\'\)]*)?#i', $css, $matches ) ) {
-			foreach ( array_unique( $matches[0] ) as $source ) {
-				self::import_media_url_for_report( $source, $report );
+		// those as well, including extensionless AI image URLs such as Pollinations.
+		if ( preg_match_all( '#url\(\s*["\']?(https?://[^\s"\'\)]+)["\']?\s*\)#i', $css, $matches ) ) {
+			foreach ( array_unique( $matches[1] ) as $source ) {
+				if ( self::is_remote_image_url( $source ) ) {
+					self::import_media_url_for_report( $source, $report );
+				}
 			}
 		}
 		if ( empty( $report['urls'] ) || ! is_array( $report['urls'] ) ) {
@@ -493,6 +517,158 @@ class XXXV_Elementor {
 	private static function sanitize_template_css( $css ) {
 		$css = str_replace( array( '</style', '<script', '</script' ), array( '<\/style', '', '' ), $css );
 		return trim( $css );
+	}
+
+	private static function css_value( $value ) {
+		$value = trim( (string) $value );
+		if ( '' === $value || preg_match( '#[{}<>]#', $value ) ) {
+			return '';
+		}
+		return str_replace( array( ';', '"' ), array( '', '\"' ), $value );
+	}
+
+	private static function css_size( $value ) {
+		if ( is_array( $value ) ) {
+			$size = isset( $value['size'] ) ? $value['size'] : '';
+			$unit = isset( $value['unit'] ) ? $value['unit'] : 'px';
+			if ( '' === $size || null === $size ) {
+				return '';
+			}
+			return self::css_value( $size . $unit );
+		}
+		return self::css_value( $value );
+	}
+
+	private static function css_box( $value ) {
+		if ( ! is_array( $value ) ) {
+			return self::css_value( $value );
+		}
+		$unit = isset( $value['unit'] ) ? $value['unit'] : 'px';
+		$top = isset( $value['top'] ) ? $value['top'] : '';
+		$right = isset( $value['right'] ) ? $value['right'] : $top;
+		$bottom = isset( $value['bottom'] ) ? $value['bottom'] : $top;
+		$left = isset( $value['left'] ) ? $value['left'] : $right;
+		if ( '' === (string) $top && '' === (string) $right && '' === (string) $bottom && '' === (string) $left ) {
+			return '';
+		}
+		return self::css_value( $top . $unit . ' ' . $right . $unit . ' ' . $bottom . $unit . ' ' . $left . $unit );
+	}
+
+	private static function css_decls( $decls ) {
+		$out = array();
+		foreach ( $decls as $prop => $value ) {
+			$value = self::css_value( $value );
+			if ( '' !== $value ) {
+				$out[] = $prop . ':' . $value . ' !important';
+			}
+		}
+		return implode( ';', $out );
+	}
+
+	private static function collect_critical_css_rules( $elements, $post_id, &$rules ) {
+		if ( ! is_array( $elements ) ) {
+			return;
+		}
+		foreach ( $elements as $element ) {
+			if ( ! is_array( $element ) ) {
+				continue;
+			}
+			$id = isset( $element['id'] ) ? preg_replace( '/[^a-zA-Z0-9_-]/', '', (string) $element['id'] ) : '';
+			$settings = isset( $element['settings'] ) && is_array( $element['settings'] ) ? $element['settings'] : array();
+			$base = $id ? '.elementor-' . (int) $post_id . ' .elementor-element.elementor-element-' . $id : '';
+			$decls = array();
+
+			if ( 'container' === ( isset( $element['elType'] ) ? $element['elType'] : '' ) ) {
+				$decls['display'] = ( isset( $settings['container_type'] ) && 'grid' === $settings['container_type'] ) ? 'grid' : 'flex';
+				if ( isset( $settings['flex_direction'] ) ) $decls['flex-direction'] = $settings['flex_direction'];
+				if ( isset( $settings['flex_wrap'] ) ) $decls['flex-wrap'] = $settings['flex_wrap'];
+				if ( isset( $settings['flex_align_items'] ) ) $decls['align-items'] = $settings['flex_align_items'];
+				if ( isset( $settings['flex_justify_content'] ) ) $decls['justify-content'] = $settings['flex_justify_content'];
+				if ( isset( $settings['width'] ) ) $decls['width'] = self::css_size( $settings['width'] );
+				if ( isset( $settings['min_height'] ) ) $decls['min-height'] = self::css_size( $settings['min_height'] );
+				if ( isset( $settings['padding'] ) ) $decls['padding'] = self::css_box( $settings['padding'] );
+				if ( isset( $settings['margin'] ) ) $decls['margin'] = self::css_box( $settings['margin'] );
+				if ( isset( $settings['border_radius'] ) ) $decls['border-radius'] = self::css_box( $settings['border_radius'] );
+				if ( isset( $settings['background_color'] ) ) $decls['background-color'] = $settings['background_color'];
+				if ( isset( $settings['background_image']['url'] ) ) $decls['background-image'] = 'url(' . $settings['background_image']['url'] . ')';
+				if ( isset( $settings['__xxxv_background'] ) ) $decls['background'] = $settings['__xxxv_background'];
+				if ( isset( $settings['background_size'] ) ) $decls['background-size'] = $settings['background_size'];
+				if ( isset( $settings['background_position'] ) ) $decls['background-position'] = $settings['background_position'];
+				if ( isset( $settings['gap'] ) ) $decls['gap'] = self::css_size( $settings['gap'] );
+				if ( isset( $settings['row_gap'] ) ) $decls['row-gap'] = self::css_size( $settings['row_gap'] );
+				if ( isset( $settings['column_gap'] ) ) $decls['column-gap'] = self::css_size( $settings['column_gap'] );
+				if ( isset( $settings['overflow'] ) ) $decls['overflow'] = $settings['overflow'];
+				if ( isset( $settings['__xxxv_box_shadow'] ) ) $decls['box-shadow'] = $settings['__xxxv_box_shadow'];
+				if ( isset( $settings['__xxxv_border'] ) ) $decls['border'] = $settings['__xxxv_border'];
+			}
+
+			if ( 'widget' === ( isset( $element['elType'] ) ? $element['elType'] : '' ) ) {
+				$widget = isset( $element['widgetType'] ) ? $element['widgetType'] : '';
+				if ( 'heading' === $widget ) {
+					$base .= ' .elementor-heading-title';
+					if ( isset( $settings['title_color'] ) ) $decls['color'] = $settings['title_color'];
+				} elseif ( 'button' === $widget ) {
+					$base .= ' .elementor-button';
+					if ( isset( $settings['button_text_color'] ) ) $decls['color'] = $settings['button_text_color'];
+					if ( isset( $settings['background_color'] ) ) $decls['background-color'] = $settings['background_color'];
+					if ( isset( $settings['border_radius'] ) ) $decls['border-radius'] = self::css_box( $settings['border_radius'] );
+				} elseif ( 'image' === $widget ) {
+					$base .= ' img';
+					if ( isset( $settings['width'] ) ) $decls['width'] = self::css_size( $settings['width'] );
+					if ( isset( $settings['image_border_radius'] ) ) $decls['border-radius'] = self::css_box( $settings['image_border_radius'] );
+					if ( isset( $settings['object_fit'] ) ) $decls['object-fit'] = $settings['object_fit'];
+				} else {
+					if ( isset( $settings['text_color'] ) ) $decls['color'] = $settings['text_color'];
+				}
+				if ( isset( $settings['typography_font_family'] ) ) $decls['font-family'] = $settings['typography_font_family'];
+				if ( isset( $settings['typography_font_size'] ) ) $decls['font-size'] = self::css_size( $settings['typography_font_size'] );
+				if ( isset( $settings['typography_font_weight'] ) ) $decls['font-weight'] = $settings['typography_font_weight'];
+				if ( isset( $settings['typography_line_height'] ) ) $decls['line-height'] = self::css_size( $settings['typography_line_height'] );
+				if ( isset( $settings['typography_letter_spacing'] ) ) $decls['letter-spacing'] = self::css_size( $settings['typography_letter_spacing'] );
+				if ( isset( $settings['align'] ) ) $decls['text-align'] = $settings['align'];
+			}
+
+			$decl_text = self::css_decls( $decls );
+			if ( $base && $decl_text ) {
+				$rules[] = $base . '{' . $decl_text . '}';
+			}
+			if ( ! empty( $element['elements'] ) ) {
+				self::collect_critical_css_rules( $element['elements'], $post_id, $rules );
+			}
+		}
+	}
+
+	private static function compile_critical_css( $elementor_data, $post_id ) {
+		$rules = array(
+			'.elementor-' . (int) $post_id . '{width:100% !important;max-width:none !important}',
+			'.elementor-' . (int) $post_id . ' .e-con{box-sizing:border-box}',
+		);
+		self::collect_critical_css_rules( $elementor_data, $post_id, $rules );
+		return trim( implode( "\n", array_unique( array_filter( $rules ) ) ) );
+	}
+
+	private static function get_runtime_template_css( $post_id ) {
+		$chunks = array();
+		foreach ( array( '_xxxv_template_css', '_xxxv_critical_css' ) as $key ) {
+			$css = get_post_meta( $post_id, $key, true );
+			if ( '_xxxv_critical_css' === $key && ( ! is_string( $css ) || '' === trim( $css ) ) ) {
+				$saved = get_post_meta( $post_id, '_elementor_data', true );
+				$data  = is_string( $saved ) ? json_decode( $saved, true ) : null;
+				if ( ! is_array( $data ) && is_string( $saved ) ) {
+					$data = json_decode( wp_unslash( $saved ), true );
+				}
+				if ( is_array( $data ) && ! empty( $data ) ) {
+					$css = self::compile_critical_css( $data, $post_id );
+					if ( is_string( $css ) && '' !== trim( $css ) ) {
+						update_post_meta( $post_id, '_xxxv_critical_css', $css );
+					}
+				}
+			}
+			if ( is_string( $css ) && '' !== trim( $css ) ) {
+				$chunks[] = trim( $css );
+			}
+		}
+		return trim( implode( "\n", $chunks ) );
 	}
 
 	/**
@@ -668,7 +844,7 @@ class XXXV_Elementor {
 		if ( ! $post_id ) {
 			return;
 		}
-		$css = get_post_meta( $post_id, '_xxxv_template_css', true );
+		$css = self::get_runtime_template_css( $post_id );
 		if ( ! is_string( $css ) || '' === trim( $css ) ) {
 			return;
 		}
@@ -689,7 +865,7 @@ class XXXV_Elementor {
 		if ( ! $post_id ) {
 			return;
 		}
-		$css = get_post_meta( $post_id, '_xxxv_template_css', true );
+		$css = self::get_runtime_template_css( $post_id );
 		if ( ! is_string( $css ) || '' === trim( $css ) ) {
 			return;
 		}
@@ -792,7 +968,7 @@ class XXXV_Elementor {
 	 */
 	private static function validate_generated_css( $post_id, $expects_template_css ) {
 		if ( $expects_template_css ) {
-			$template_css = get_post_meta( $post_id, '_xxxv_template_css', true );
+			$template_css = self::get_runtime_template_css( $post_id );
 			if ( ! is_string( $template_css ) || '' === trim( $template_css ) ) {
 				return new WP_Error( 'xxxv_template_css_missing', 'Post-save validation failed: template CSS meta is missing.', array( 'status' => 500 ) );
 			}
@@ -808,6 +984,14 @@ class XXXV_Elementor {
 		self::refresh_elementor_files( $post_id );
 		self::regenerate_page_css( $post_id );
 		if ( file_exists( $path ) && filesize( $path ) > 0 ) {
+			return true;
+		}
+
+		// If Elementor's physical CSS file is unavailable on this host, the connector
+		// critical CSS is still enough to render the page styled instead of rolling
+		// back or leaving a broken unstyled page live.
+		$critical_css = self::get_runtime_template_css( $post_id );
+		if ( is_string( $critical_css ) && '' !== trim( $critical_css ) ) {
 			return true;
 		}
 
@@ -877,6 +1061,7 @@ class XXXV_Elementor {
 			'post_status'    => $post ? $post->post_status : 'draft',
 			'elementor_data' => get_post_meta( $post_id, '_elementor_data', true ),
 			'template_css'   => get_post_meta( $post_id, '_xxxv_template_css', true ),
+			'critical_css'   => get_post_meta( $post_id, '_xxxv_critical_css', true ),
 			'page_template'  => get_post_meta( $post_id, '_wp_page_template', true ),
 		);
 	}
@@ -908,6 +1093,7 @@ class XXXV_Elementor {
 		);
 		update_post_meta( $post_id, '_elementor_data', $snap['elementor_data'] );
 		update_post_meta( $post_id, '_xxxv_template_css', isset( $snap['template_css'] ) ? $snap['template_css'] : '' );
+		update_post_meta( $post_id, '_xxxv_critical_css', isset( $snap['critical_css'] ) ? $snap['critical_css'] : '' );
 		update_post_meta( $post_id, '_wp_page_template', $snap['page_template'] );
 		self::regenerate_page_css( $post_id );
 		self::clear_runtime_caches( $post_id );

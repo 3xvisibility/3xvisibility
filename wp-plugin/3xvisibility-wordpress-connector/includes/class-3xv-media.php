@@ -128,7 +128,7 @@ class XXXV_Media {
 
 		$filename = sanitize_file_name( basename( strtok( $source, '?' ) ) );
 		if ( ! $filename || false === strpos( $filename, '.' ) ) {
-			$filename = 'template-image-' . time() . '.jpg';
+			$filename = 'template-image-' . time() . '-' . substr( md5( $source ), 0, 8 ) . '.jpg';
 		}
 		$tmp = wp_tempnam( $filename );
 		if ( ! $tmp ) {
