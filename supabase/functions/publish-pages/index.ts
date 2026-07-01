@@ -1136,6 +1136,11 @@ async function handlePublishPages(req: Request): Promise<Response> {
         finishRunning("ok");
 
         step("Published", "ok", result.url);
+        // Persist the full step timeline so the per-page publish status is
+        // visible in the Campaigns UI after the request completes.
+        try {
+          await supabase.from("generated_pages").update({ publish_steps: steps }).eq("id", page.id);
+        } catch (_) { /* non-critical */ }
         results.push({ id: page.id, status: "published", external_url: result.url, elementor_source: elementorSource, elementor_similarity: elementorSimilarity, steps });
 
         // Audit log for publish
