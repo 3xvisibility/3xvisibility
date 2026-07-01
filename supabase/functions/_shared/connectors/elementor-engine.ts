@@ -450,21 +450,50 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   if (hasClass(node, "image-box", "img-box")) return imageBox(node);
   if (hasClass(node, "icon-box", "feature-box", "feature-card", "service-box")) return iconBox(node);
 
-  // Structural fallback: a "card"-like block that pairs a title with descriptive
-  // text maps to a native Elementor widget instead of yet another nested
-  // container. This keeps the design intent (image-box / icon-box) and avoids
-  // exploding the tree into empty grid/flex wrappers.
-  if (hasClass(node, "card", "box", "tile", "feature", "service", "item")) {
-    const title = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title"));
-    const desc = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description"));
-    if (title && desc) {
-      const hasLink = !!findNode(node, (n) => isButton(n));
-      // Direct image (not a background) -> image-box; otherwise icon-box.
-      const directImg = findNode(node, (n) => n.tag === "img");
-      const icon = findNode(node, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon"));
-      if (directImg && !hasLink) return imageBox(node);
-      if (icon && !directImg) return iconBox(node);
+  // Composition probes so we can classify a block by its own contents.
+  const directImg = findNode(node, (n) => n.tag === "img");
+  const iconNode = findNode(
+    node,
+    (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
+  );
+  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "heading", "name"));
+  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description", "subtitle"));
+  const hasText = !!titleNode || !!descNode;
+  const hasLink = !!findNode(node, (n) => isButton(n));
+
+  // A repeating list of icon+text rows -> native icon-list (feature / service
+  // lists), even when built from plain <div>s rather than <ul><li>.
+  const itemChildren = node.children.filter((c) => c.tag);
+  if (itemChildren.length >= 3) {
+    const iconTextItems = itemChildren.filter(
+      (c) =>
+        !!findNode(c, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa")) &&
+        !findNode(c, (n) => n.tag === "img") &&
+        !findNode(c, (n) => HEADINGS.has(n.tag)),
+    );
+    if (iconTextItems.length >= Math.ceil(itemChildren.length * 0.6)) {
+      const items = iconTextItems.map((c) => ({
+        _id: genId(),
+        text: textContent(c),
+        selected_icon: { value: "fas fa-check", library: "fa-solid" },
+      }));
+      return {
+        id: genId(),
+        elType: "widget",
+        widgetType: "icon-list",
+        settings: { icon_list: items },
+        elements: [],
+      };
     }
+  }
+
+  // Structural single-card fallbacks: map recognizable compositions to native
+  // widgets instead of yet another nested container.
+  if (hasClass(node, "card", "box", "tile", "feature", "service", "item") || (hasText && (directImg || iconNode))) {
+    // image + title/text -> image-box (unless it's a CTA card with a button).
+    if (directImg && hasText && !hasLink) return imageBox(node);
+    // icon + title/text -> icon-box.
+    if (iconNode && !directImg && hasText) return iconBox(node);
   }
   return null;
 }
