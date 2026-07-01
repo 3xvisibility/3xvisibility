@@ -36,6 +36,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.3.1 =
+* Fixed native Elementor pages rendering with broken layout/CSS: the stored template stylesheet is now emitted after every Elementor and theme stylesheet (wp_head + wp_footer at max priority) so equal-specificity rules (template grid/flex vs. Elementor container defaults) win the cascade and the published page matches the design 1:1.
+
 = 1.2.0 =
 * Added a `/validate-editor` endpoint so the app can re-run the "Edit with Elementor" readiness check for any already-published page on demand, without republishing.
 
