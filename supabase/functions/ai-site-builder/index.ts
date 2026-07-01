@@ -531,35 +531,18 @@ async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: st
   let elementorData: string | undefined;
   let elementorCss: string | undefined;
 
-  // (1) Master Elementor template routing.
+  // The AI-generated design IS the source of truth. Convert the freshly
+  // rendered HTML directly into a native Elementor JSON tree so the published
+  // WordPress page is 1:1 with what the user built — never an old marketplace
+  // master template matched by category.
   try {
-    const master = await pickMasterTemplate(input, sectionHints);
-    if (master) {
-      const built = buildElementorFromCatalog(master, {
-        title: p.hero?.headline || p.title,
-        description: p.hero?.subheadline || p.sections?.[0]?.body || p.metaDescription,
-        bodyHtml: html,
-      });
-      if (built && built.data) {
-        elementorData = built.data;
-        elementorCss = built.extractedCss || undefined;
-      }
+    const tree = htmlToElementor(html);
+    if (Array.isArray(tree) && tree.length) {
+      elementorData = JSON.stringify(tree);
+      elementorCss = extractTemplateCss(html) || undefined;
     }
   } catch (e) {
-    console.warn("[ai-site-builder] master routing failed; falling back", e);
-  }
-
-  // (2) HTML → native Elementor conversion.
-  if (!elementorData) {
-    try {
-      const tree = htmlToElementor(html);
-      if (Array.isArray(tree) && tree.length) {
-        elementorData = JSON.stringify(tree);
-        elementorCss = extractTemplateCss(html) || undefined;
-      }
-    } catch (e) {
-      console.warn("[ai-site-builder] native Elementor conversion failed; falling back to HTML", e);
-    }
+    console.warn("[ai-site-builder] native Elementor conversion failed; falling back to HTML", e);
   }
 
   return {
