@@ -138,6 +138,18 @@ class XXXV_Elementor {
 				delete_post_meta( $post_id, '_xxxv_template_css' );
 			}
 
+			// Store a deterministic critical stylesheet compiled from the submitted
+			// Elementor JSON itself. This is a hard fallback for hosts where
+			// /uploads/elementor/css/post-{id}.css is deleted, blocked, or returns 404:
+			// the live page still receives the same padding/background/flex/typography
+			// rules inline through the connector.
+			$critical_css = self::compile_critical_css( $elementor_data, $post_id );
+			if ( '' !== $critical_css ) {
+				update_post_meta( $post_id, '_xxxv_critical_css', $critical_css );
+			} else {
+				delete_post_meta( $post_id, '_xxxv_critical_css' );
+			}
+
 			// Optional SEO / custom meta.
 			if ( ! empty( $body['meta'] ) && is_array( $body['meta'] ) ) {
 				foreach ( $body['meta'] as $key => $value ) {
@@ -166,8 +178,8 @@ class XXXV_Elementor {
 			// ---- (5) Generate per-page CSS ------------------------------------
 			self::refresh_elementor_files( $post_id );
 			$css_ok = self::regenerate_page_css( $post_id );
-			if ( ! $css_ok ) {
-				throw new Exception( 'Elementor page CSS regeneration failed.' );
+			if ( ! $css_ok && '' === $critical_css ) {
+				throw new Exception( 'Elementor page CSS regeneration failed and no connector critical CSS fallback could be generated.' );
 			}
 
 			// ---- (6) Generate / refresh global (kit) CSS ----------------------
@@ -184,7 +196,7 @@ class XXXV_Elementor {
 			if ( is_wp_error( $saved_check ) ) {
 				throw new Exception( $saved_check->get_error_message() );
 			}
-			$css_check = self::validate_generated_css( $post_id, '' !== $elementor_css );
+			$css_check = self::validate_generated_css( $post_id, '' !== $elementor_css || '' !== $critical_css );
 			if ( is_wp_error( $css_check ) ) {
 				throw new Exception( $css_check->get_error_message() );
 			}
