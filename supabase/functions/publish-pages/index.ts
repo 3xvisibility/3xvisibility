@@ -3,6 +3,7 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
+import { htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
 
 
 /**
@@ -75,6 +76,29 @@ async function resolveCatalogElementorData(
         const ed = tplRow.elementor_data;
         const hasData = Array.isArray(ed) ? ed.length > 0 : !!ed;
         if (hasData) elementorJson = ed;
+      }
+
+      // AI Site Builder templates saved before the inline-style bridge existed
+      // contain native Elementor JSON but no `xxxv-s-*` classes, while their
+      // design lives in `templates.content` as inline CSS. Repair those masters
+      // on the fly by reconverting the stored template HTML so campaigns publish
+      // the AI-built design, not an unstyled/native skeleton.
+      if (tplRow?.content && elementorJson && !JSON.stringify(elementorJson).includes("xxxv-s-")) {
+        try {
+          const repaired = htmlToElementor(tplRow.content);
+          if (Array.isArray(repaired) && repaired.length) {
+            elementorJson = repaired;
+            supabase
+              .from("templates")
+              .update({ elementor_data: repaired })
+              .eq("id", templateId)
+              .then(({ error }: { error?: unknown }) => {
+                if (error) console.warn("[publish-pages] template Elementor repair persist failed", error);
+              });
+          }
+        } catch (e) {
+          console.warn("[publish-pages] template Elementor repair failed", e);
+        }
       }
 
       // Extract legacy stored CSS only. Publishing never converts HTML here and
