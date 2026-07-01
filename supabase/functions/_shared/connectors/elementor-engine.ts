@@ -544,9 +544,9 @@ function isPlainWrapper(el: ElementorElement): boolean {
   // deleted the actual design and left published WordPress pages as unstyled
   // Elementor skeletons.
   const visualKeys = [
-    "_css_classes", "_element_id", "html_tag", "background_background", "background_color", "background_image",
+    "_css_classes", "_element_id", "background_background", "background_color", "background_image",
     "__xxxv_background", "__xxxv_box_shadow", "__xxxv_border", "padding", "margin", "min_height",
-    "max_width", "width", "border_radius", "overflow",
+    "max_width", "border_radius", "overflow",
   ];
   if (visualKeys.some((key) => key in s && s[key] !== undefined && s[key] !== "")) return false;
   return !isLayoutContainer(el);
