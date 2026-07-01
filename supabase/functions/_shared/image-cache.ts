@@ -26,6 +26,9 @@ const CACHE_PREFIX = "template-cache";
 const LOCK_WAIT_MS = 2000;
 const LOCK_WAIT_ATTEMPTS = 20; // ~40s worst case before falling back to self-download
 
+/** Default time-to-live for a cached image before it is considered stale and re-fetched. */
+const DEFAULT_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
 /** Per-bucket, per-isolate in-flight cache promises for same-run dedup. */
 const inFlightByBucket = new Map<string, Map<string, Promise<string | null>>>();
 
