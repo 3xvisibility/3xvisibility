@@ -41,6 +41,17 @@ const stripTags = (s: string): string =>
 export function extractTemplateCss(html: string | null | undefined): string {
   if (!html) return "";
   const blocks: string[] = [];
+  const linkRe = /<link\b[^>]*>/gi;
+  let lm: RegExpExecArray | null;
+  while ((lm = linkRe.exec(html)) !== null) {
+    const tag = lm[0];
+    if (!/rel\s*=\s*("|')?[^"'>]*stylesheet/i.test(tag)) continue;
+    const hrefMatch = tag.match(/href\s*=\s*("([^"]*)"|'([^']*)')/i);
+    let href = (hrefMatch ? (hrefMatch[2] ?? hrefMatch[3] ?? "") : "").trim();
+    if (!href) continue;
+    if (href.startsWith("//")) href = "https:" + href;
+    if (/^https?:\/\//i.test(href)) blocks.push(`@import url("${href.replace(/"/g, "%22")}");`);
+  }
   const re = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
