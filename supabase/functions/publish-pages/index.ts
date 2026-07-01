@@ -132,6 +132,20 @@ function storedJsonHasCollapsedGrid(elementorJson: unknown): boolean {
   return false;
 }
 
+/**
+ * Pages converted before responsive baking existed have grid/flex containers but
+ * ZERO tablet/mobile override keys — so they don't adapt on smaller screens.
+ * Detect that shape and force a fresh conversion so the page becomes responsive.
+ */
+function storedJsonLacksResponsive(elementorJson: unknown): boolean {
+  const jsonStr = JSON.stringify(elementorJson ?? "");
+  if (!jsonStr) return false;
+  const hasLayout = jsonStr.includes('"grid"') || jsonStr.includes('"flex_direction"');
+  if (!hasLayout) return false;
+  // If any responsive override key is present, assume it was baked responsively.
+  return !/_(tablet|mobile)"/.test(jsonStr);
+}
+
 
 
 async function resolveCatalogElementorData(
