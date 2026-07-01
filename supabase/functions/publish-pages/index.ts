@@ -678,6 +678,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
               external_id: result.external_id,
               external_url: result.url,
               editor_readiness: result.editor_readiness ?? null,
+              publish_steps: steps,
             });
             step("Saving to Generated Pages", "ok");
           } catch (insertErr) {
