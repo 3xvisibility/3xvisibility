@@ -1603,23 +1603,48 @@ Deno.serve(async (req) => {
     if (!test_mode && templateImageUrls.size > 0) {
       const httpImages = [...templateImageUrls].filter((u) => /^https?:\/\//i.test(u));
       const broken: string[] = [];
-      await Promise.all(
-        httpImages.map(async (url) => {
+      // Some on-demand image hosts (e.g. pollinations.ai) rate-limit (HTTP 429)
+      // or briefly stall while rendering. These are transient, NOT missing
+      // images — we must never abort a publish because of them. We retry with
+      // backoff and only mark an image broken on a definitive not-found style
+      // status (400/401/403/404/410) after all retries.
+      const isTransient = (status: number) => status === 429 || status === 408 || status >= 500;
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      const checkOne = async (url: string): Promise<void> => {
+        let lastStatus = 0;
+        let lastErr = "";
+        for (let attempt = 0; attempt < 3; attempt++) {
+          if (attempt > 0) await sleep(1500 * attempt);
           try {
             const ctrl = new AbortController();
-            const t = setTimeout(() => ctrl.abort(), 10_000);
+            const t = setTimeout(() => ctrl.abort(), 15_000);
             let res = await fetch(url, { method: "HEAD", signal: ctrl.signal });
-            // Some CDNs reject HEAD — retry with a ranged GET.
             if (!res.ok || res.status === 405) {
               res = await fetch(url, { method: "GET", headers: { Range: "bytes=0-0" }, signal: ctrl.signal });
             }
             clearTimeout(t);
-            if (!res.ok) broken.push(`${url} (HTTP ${res.status})`);
+            if (res.ok) return; // reachable — done
+            lastStatus = res.status;
+            if (!isTransient(res.status)) {
+              broken.push(`${url} (HTTP ${res.status})`);
+              return; // definitively broken, no point retrying
+            }
+            // transient → retry
           } catch (e) {
-            broken.push(`${url} (${(e as Error).message})`);
+            lastErr = (e as Error).message; // network/abort → transient, retry
           }
-        }),
-      );
+        }
+        // Exhausted retries on a transient condition. Do NOT abort the publish —
+        // the image most likely exists but is rate-limited/slow. Log and allow.
+        console.warn(
+          `[GENERATE-PAGES] Image not confirmed after retries (allowed, likely rate-limited): ${url} ${lastStatus ? `HTTP ${lastStatus}` : lastErr}`,
+        );
+      };
+      // Check with limited concurrency to avoid triggering rate limits ourselves.
+      const CONCURRENCY = 3;
+      for (let i = 0; i < httpImages.length; i += CONCURRENCY) {
+        await Promise.all(httpImages.slice(i, i + CONCURRENCY).map(checkOne));
+      }
       if (broken.length > 0) {
         const msg = `Template has ${broken.length} missing/broken image(s). Generation aborted so no broken page is published:\n- ${broken.slice(0, 10).join("\n- ")}`;
         console.error("[GENERATE-PAGES] " + msg);
@@ -1630,6 +1655,7 @@ Deno.serve(async (req) => {
         );
       }
     }
+
     // ── Template Structure Analyzer / Design Integrity Protection ──
     // Derive per-variable length budgets from the template's ORIGINAL sample
     // values (default_values). Generated/CSV/AI content is clamped to the same
