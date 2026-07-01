@@ -537,6 +537,18 @@ function isLayoutContainer(el: ElementorElement): boolean {
 
 function isPlainWrapper(el: ElementorElement): boolean {
   if (el.elType !== "container") return false;
+  const s = el.settings || {};
+  // Never unwrap a container that carries visual styling or identity. AI Site
+  // Builder sections often use simple column wrappers with inline CSS for
+  // gradients, padding, max-width, shadows, etc. Treating those as "plain"
+  // deleted the actual design and left published WordPress pages as unstyled
+  // Elementor skeletons.
+  const visualKeys = [
+    "_css_classes", "_element_id", "html_tag", "background_background", "background_color", "background_image",
+    "__xxxv_background", "__xxxv_box_shadow", "__xxxv_border", "padding", "margin", "min_height",
+    "max_width", "width", "border_radius", "overflow",
+  ];
+  if (visualKeys.some((key) => key in s && s[key] !== undefined && s[key] !== "")) return false;
   return !isLayoutContainer(el);
 }
 
