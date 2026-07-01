@@ -216,7 +216,8 @@ export async function cacheVolatileTemplateImages(
   };
 
   const doCacheOne = async (url: string): Promise<string | null> => {
-    const hash = await sha256Hex(url);
+    // Fold the cache version into the key so a template update busts the cache.
+    const hash = await sha256Hex(cacheVersion ? `${cacheVersion}::${url}` : url);
 
     // 1. Already cached? Reuse without downloading.
     const existing = await findCached(hash);
