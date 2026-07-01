@@ -92,6 +92,27 @@ function storedJsonIsCorrupt(elementorJson: unknown): boolean {
   return false;
 }
 
+/**
+ * Detect stored JSON produced by the OLD converter that baked a unitless CSS
+ * line-height (e.g. `1.5`) as PIXELS (`{"unit":"px","size":1.5}`). Elementor
+ * then renders every line collapsed on top of the next (overlapping text). The
+ * current converter emits `em` for unitless values, so any tiny px line-height
+ * is a fingerprint of the bug and must be reconverted from clean source HTML.
+ */
+function storedJsonHasBadLineHeight(elementorJson: unknown): boolean {
+  const jsonStr = JSON.stringify(elementorJson ?? "");
+  if (!jsonStr) return false;
+  // Match "..._line_height":{"unit":"px","size":<n>} where n is an implausibly
+  // small pixel value for a line height (a real one is >= ~10px).
+  const re = /"[a-z_]*line_height"\s*:\s*\{\s*"unit"\s*:\s*"px"\s*,\s*"size"\s*:\s*([\d.]+)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(jsonStr)) !== null) {
+    const size = parseFloat(m[1]);
+    if (Number.isFinite(size) && size < 6) return true;
+  }
+  return false;
+}
+
 
 
 async function resolveCatalogElementorData(
