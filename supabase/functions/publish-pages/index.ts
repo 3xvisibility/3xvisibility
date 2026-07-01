@@ -206,7 +206,8 @@ async function resolveCatalogElementorData(
         storedJsonIsStale(elementorJson, tplRow?.content) ||
         storedJsonIsCorrupt(elementorJson) ||
         storedJsonHasBadLineHeight(elementorJson) ||
-        storedJsonHasCollapsedGrid(elementorJson)
+        storedJsonHasCollapsedGrid(elementorJson) ||
+        storedJsonLacksResponsive(elementorJson)
       );
 
       if (needsRepair) {
