@@ -1312,7 +1312,7 @@ Deno.serve(async (req) => {
     // Fetch campaign
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
-      .select("id, name, user_id, workspace_id, website_id, campaign_type, publish_mode, max_rows, scheduled_at, processed_rows, failed_rows, current_batch, is_paused, geo_settings, utm_settings, mapping, language, ai_max_lines, ai_max_words, generation_method, directory_structure, template_id, templates(content, variables, seo_title_pattern, seo_description_pattern, schema_type, schema_config)")
+      .select("id, name, user_id, workspace_id, website_id, campaign_type, publish_mode, max_rows, scheduled_at, processed_rows, failed_rows, current_batch, is_paused, geo_settings, utm_settings, mapping, language, ai_max_lines, ai_max_words, generation_method, directory_structure, template_id, templates(content, variables, seo_title_pattern, seo_description_pattern, schema_type, schema_config, updated_at)")
       .eq("id", campaign_id)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -1602,7 +1602,12 @@ Deno.serve(async (req) => {
     // cached copies without touching the volatile host.
     if (!test_mode) {
       try {
-        const cached = await cacheVolatileTemplateImages(supabase, templateContent);
+        // Bust the cache when the template changes so a stale image from a
+        // previous template revision never persists after an edit.
+        const tplVersion = (campaign.templates as { updated_at?: string }).updated_at || "";
+        const cached = await cacheVolatileTemplateImages(supabase, templateContent, {
+          cacheVersion: tplVersion,
+        });
         if (cached.changed) {
           templateContent = cached.html;
           (campaign.templates as { content: string }).content = cached.html;
