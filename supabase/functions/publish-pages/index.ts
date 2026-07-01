@@ -420,9 +420,9 @@ const PUBLISH_BATCH_SIZE = 1;
 // Small delay (ms) between individual page publishes to reduce DB I/O pressure
 const INTER_PUBLISH_DELAY_MS = 200;
 // Edge function soft timeout — leave headroom for the self-chain call
-const PUBLISH_TIMEOUT_MS = 85_000;
-const FUNCTION_SAFE_TIMEOUT_MS = 120_000;
-const PAGE_PUBLISH_TIMEOUT_MS = 75_000;
+const PUBLISH_TIMEOUT_MS = 115_000;
+const FUNCTION_SAFE_TIMEOUT_MS = 140_000;
+const PAGE_PUBLISH_TIMEOUT_MS = 125_000;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

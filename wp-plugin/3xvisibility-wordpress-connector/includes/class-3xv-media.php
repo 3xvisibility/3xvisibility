@@ -19,6 +19,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 class XXXV_Media {
 
 	public static function upload( WP_REST_Request $request ) {
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( 90 );
+		}
+
 		$body = $request->get_json_params();
 		if ( empty( $body ) || ! is_array( $body ) ) {
 			return new WP_Error( 'xxxv_bad_body', 'Missing or invalid JSON body.', array( 'status' => 400 ) );
@@ -108,6 +112,10 @@ class XXXV_Media {
 	 * @return array|WP_Error { id, url, duplicate }
 	 */
 	public static function import_from_url( $source, $alt = '' ) {
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( 90 );
+		}
+
 		$source = esc_url_raw( $source );
 		if ( ! $source || ! preg_match( '#^https?://#i', $source ) ) {
 			return new WP_Error( 'xxxv_no_src', 'Invalid media source URL.', array( 'status' => 400 ) );
@@ -180,7 +188,7 @@ class XXXV_Media {
 		$scheme  = wp_parse_url( $source, PHP_URL_SCHEME );
 		$referer = ( $host && $scheme ) ? $scheme . '://' . $host . '/' : '';
 		$args    = array(
-			'timeout'     => 30,
+			'timeout'     => 8,
 			'redirection' => 5,
 			'sslverify'   => true,
 			'headers'     => array(
