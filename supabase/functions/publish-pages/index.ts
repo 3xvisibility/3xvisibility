@@ -171,7 +171,8 @@ async function resolveCatalogElementorData(
       const needsRepair = !!tplRow?.content && !!elementorJson && (
         !JSON.stringify(elementorJson).includes("xxxv-s-") ||
         storedJsonIsStale(elementorJson, tplRow?.content) ||
-        storedJsonIsCorrupt(elementorJson)
+        storedJsonIsCorrupt(elementorJson) ||
+        storedJsonHasBadLineHeight(elementorJson)
       );
 
       if (needsRepair) {
