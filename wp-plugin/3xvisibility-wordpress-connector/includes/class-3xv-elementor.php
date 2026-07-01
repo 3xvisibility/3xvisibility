@@ -56,6 +56,7 @@ class XXXV_Elementor {
 		$post_id        = isset( $body['post_id'] ) ? absint( $body['post_id'] ) : 0;
 		$elementor_data = isset( $body['elementor_data'] ) ? $body['elementor_data'] : array();
 		$elementor_css  = isset( $body['elementor_css'] ) ? self::sanitize_template_css( (string) $body['elementor_css'] ) : '';
+		$exact_render   = ! empty( $body['exact_render'] );
 		// WordPress Elementor pages are always published as Elementor Full Width.
 		// Do not let requests switch to theme default/canvas/HTML layouts.
 		$page_template  = 'elementor_header_footer';
@@ -69,7 +70,7 @@ class XXXV_Elementor {
 		self::sanitize_elementor_text_fields( $elementor_data );
 
 		// ---- (1) Validate the incoming JSON model -----------------------------
-		$validation = self::validate_model( $elementor_data );
+		$validation = self::validate_model( $elementor_data, $exact_render );
 		if ( is_wp_error( $validation ) ) {
 			self::log( 'error', 'JSON validation failed: ' . $validation->get_error_message(), array( 'slug' => $slug ) );
 			return $validation;
@@ -87,6 +88,9 @@ class XXXV_Elementor {
 		if ( '' !== $elementor_css ) {
 			$elementor_css = self::map_css_media_references( $elementor_css, $media_report );
 		}
+		if ( $exact_render ) {
+			self::map_exact_html_media_references( $elementor_data, $media_report );
+		}
 		if ( is_array( $media_report ) && ! empty( $media_report['failed'] ) ) {
 			// Non-fatal: keep original URLs for any images that could not be
 			// imported (e.g. hotlink-protected CDN assets) and continue so the
@@ -98,7 +102,7 @@ class XXXV_Elementor {
 			);
 		}
 
-		$validation = self::validate_model( $elementor_data );
+		$validation = self::validate_model( $elementor_data, $exact_render );
 		if ( is_wp_error( $validation ) ) {
 			self::log( 'error', 'JSON validation failed after media mapping: ' . $validation->get_error_message(), array( 'slug' => $slug ) );
 			return $validation;
@@ -277,7 +281,7 @@ class XXXV_Elementor {
 	 * @param mixed $data The decoded model.
 	 * @return true|WP_Error
 	 */
-	private static function validate_model( $data ) {
+	private static function validate_model( $data, $exact_render = false ) {
 		if ( ! is_array( $data ) ) {
 			return new WP_Error( 'xxxv_invalid_model', 'Elementor data must be an array of elements.', array( 'status' => 400 ) );
 		}
@@ -289,6 +293,9 @@ class XXXV_Elementor {
 			'counter', 'gallery', 'divider', 'spacer', 'testimonial', 'icon-list',
 			'image-box',
 		);
+		if ( $exact_render ) {
+			$supported_widgets[] = 'html';
+		}
 		foreach ( $data as $index => $element ) {
 			if ( ! is_array( $element ) || empty( $element['elType'] ) ) {
 				return new WP_Error(
@@ -304,7 +311,7 @@ class XXXV_Elementor {
 					array( 'status' => 400 )
 				);
 			}
-			$nested = self::validate_element_recursive( $element, $supported_widgets );
+			$nested = self::validate_element_recursive( $element, $supported_widgets, $exact_render );
 			if ( is_wp_error( $nested ) ) {
 				return $nested;
 			}
@@ -422,11 +429,11 @@ class XXXV_Elementor {
 	 * @param array $supported_widgets Allowed free widgets.
 	 * @return true|WP_Error
 	 */
-	private static function validate_element_recursive( $element, $supported_widgets ) {
+	private static function validate_element_recursive( $element, $supported_widgets, $exact_render = false ) {
 		$el_type = isset( $element['elType'] ) ? $element['elType'] : '';
 		if ( 'widget' === $el_type ) {
 			$widget = isset( $element['widgetType'] ) ? $element['widgetType'] : '';
-			if ( 'html' === $widget ) {
+			if ( 'html' === $widget && ! $exact_render ) {
 				return new WP_Error( 'xxxv_html_widget_forbidden', 'HTML widgets are forbidden. WordPress publishing requires native Elementor widgets only.', array( 'status' => 400 ) );
 			}
 			if ( ! in_array( $widget, $supported_widgets, true ) ) {
@@ -436,9 +443,13 @@ class XXXV_Elementor {
 			if ( 'text-editor' === $widget && isset( $settings['editor'] ) && preg_match( '#<(script|style|iframe|html|body|head|section|article|main|link|canvas|svg)\b#i', (string) $settings['editor'] ) ) {
 				return new WP_Error( 'xxxv_raw_html_forbidden', 'Raw HTML/style/script injection inside Text Editor widgets is forbidden.', array( 'status' => 400 ) );
 			}
-			$settings_valid = self::validate_settings_no_raw_html( $settings );
-			if ( is_wp_error( $settings_valid ) ) {
-				return $settings_valid;
+			if ( 'html' === $widget && $exact_render && isset( $settings['html'] ) ) {
+				$settings['html'] = self::sanitize_exact_render_html( (string) $settings['html'] );
+			} else {
+				$settings_valid = self::validate_settings_no_raw_html( $settings );
+				if ( is_wp_error( $settings_valid ) ) {
+					return $settings_valid;
+				}
 			}
 		} elseif ( 'container' !== $el_type ) {
 			return new WP_Error( 'xxxv_invalid_eltype', 'Only Elementor Containers and supported Widgets are allowed.', array( 'status' => 400 ) );
@@ -449,12 +460,21 @@ class XXXV_Elementor {
 			if ( ! is_array( $child ) ) {
 				return new WP_Error( 'xxxv_invalid_child', 'Invalid Elementor child element.', array( 'status' => 400 ) );
 			}
-			$valid = self::validate_element_recursive( $child, $supported_widgets );
+			$valid = self::validate_element_recursive( $child, $supported_widgets, $exact_render );
 			if ( is_wp_error( $valid ) ) {
 				return $valid;
 			}
 		}
 		return true;
+	}
+
+	private static function sanitize_exact_render_html( $html ) {
+		$html = (string) $html;
+		$html = preg_replace( '#<script\b[^>]*>[\s\S]*?</script>#i', '', $html );
+		$html = preg_replace( '#<iframe\b[^>]*>[\s\S]*?</iframe>#i', '', $html );
+		$html = preg_replace( '#\son[a-z]+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)#i', '', $html );
+		$html = preg_replace( '#javascript\s*:#i', '', $html );
+		return trim( $html );
 	}
 
 	private static function validate_settings_no_raw_html( $settings ) {
@@ -588,6 +608,36 @@ class XXXV_Elementor {
 			}
 		}
 		return $css;
+	}
+
+	private static function map_exact_html_media_references( &$elements, &$report ) {
+		if ( ! is_array( $elements ) ) {
+			return;
+		}
+		foreach ( $elements as &$element ) {
+			if ( ! is_array( $element ) ) {
+				continue;
+			}
+			if ( isset( $element['elType'], $element['widgetType'] ) && 'widget' === $element['elType'] && 'html' === $element['widgetType'] && isset( $element['settings']['html'] ) && is_string( $element['settings']['html'] ) ) {
+				$html = self::sanitize_exact_render_html( $element['settings']['html'] );
+				if ( preg_match_all( '#https?://[^\s"\'\)<>]+#i', $html, $matches ) ) {
+					foreach ( array_unique( $matches[0] ) as $url ) {
+						$clean_url = rtrim( $url, '.,;:' );
+						if ( self::is_remote_image_url( $clean_url ) ) {
+							$mapped = self::import_media_url_for_report( $clean_url, $report );
+							if ( empty( $mapped['failed'] ) && ! empty( $mapped['url'] ) ) {
+								$html = str_replace( $clean_url, (string) $mapped['url'], $html );
+							}
+						}
+					}
+				}
+				$element['settings']['html'] = $html;
+			}
+			if ( ! empty( $element['elements'] ) && is_array( $element['elements'] ) ) {
+				self::map_exact_html_media_references( $element['elements'], $report );
+			}
+		}
+		unset( $element );
 	}
 
 	/**

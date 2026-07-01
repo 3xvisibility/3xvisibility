@@ -886,12 +886,42 @@ function extractStylesheetImports(html: string): string {
   return imports.length ? `<style>\n${imports.join("\n")}\n</style>` : "";
 }
 
-function extractRenderableHtml(html: string): string {
+function scopeExactHtml(html: string): string {
+  const body = (html || "").trim();
+  if (!body) return "";
+  if (/^<div\b[^>]*\bclass\s*=\s*["'][^"']*\bxxxv-exact-scope\b/i.test(body)) return body;
+  return `<div class="xxxv-exact-scope">${body}</div>`;
+}
+
+function scopeBodyCssSelectors(css: string): string {
+  const input = css || "";
+  // Duplicate common page-level selectors (`body`, `html body`) so CSS that was
+  // written for a standalone HTML document still applies inside the Elementor
+  // HTML widget wrapper.
+  return input
+    .replace(/(^|[,{}]\s*)(html\s+body|html|body)(?=\s*(?:[,>{:+~.#\[]|\{))/gi, (_m, prefix) => `${prefix}.xxxv-exact-scope`)
+    .replace(/(^|[,{}]\s*)body(\.[a-zA-Z0-9_-]+)(?=\s*(?:[,>{:+~.#\[]|\{))/gi, (_m, prefix, cls) => `${prefix}.xxxv-exact-scope${cls}`);
+}
+
+function prepareExactStyleTags(input: string): string[] {
+  const tags = input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || [];
+  return tags.map((tag) => {
+    const m = tag.match(/<style\b([^>]*)>([\s\S]*?)<\/style>/i);
+    if (!m) return tag;
+    const attrs = m[1] || "";
+    const css = m[2] || "";
+    const scoped = scopeBodyCssSelectors(css);
+    return scoped && scoped !== css ? `<style${attrs}>${css}\n${scoped}</style>` : tag;
+  });
+}
+
+export function extractRenderableHtml(html: string): string {
   const input = html || "";
   // Preserve external fonts/CSS as @import (the <link> tags get stripped below).
   const fontImports = extractStylesheetImports(input);
-  // Collect every <style> block verbatim (keeps fonts, layout, bg images).
-  const styles = [fontImports, ...(input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || [])].filter(Boolean).join("\n");
+  // Collect every <style> block (keeps fonts, layout, bg images), duplicating
+  // standalone body/html selectors onto the exact-render wrapper.
+  const styles = [fontImports, ...prepareExactStyleTags(input)].filter(Boolean).join("\n");
   // Prefer the <body> inner markup; fall back to the whole document.
   const bodyMatch = input.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i);
   let body = bodyMatch ? bodyMatch[1] : input;
@@ -903,7 +933,48 @@ function extractRenderableHtml(html: string): string {
     .replace(/<link\b[^>]*>/gi, "")
     .replace(/<\/?(?:html|head|body)\b[^>]*>/gi, "")
     .trim();
-  return `${styles}\n${body}`.trim();
+  return `${styles}\n${scopeExactHtml(body)}`.trim();
+}
+
+/**
+ * Pixel-faithful Elementor fallback: keep the original template markup/CSS
+ * intact inside one Elementor HTML widget. This is intentionally separate from
+ * the native converter so production can choose exact visual parity when a
+ * complex marketplace/AI design cannot be losslessly mapped to controls.
+ */
+export function buildExactElementorData(html: string, extraCss?: string): string {
+  const bridgeCss = `
+<style>
+.elementor .xxxv-exact-template{width:100%!important;max-width:none!important;padding:0!important;margin:0!important;--width:100%;}
+.elementor .xxxv-exact-template>.e-con-inner{width:100%!important;max-width:none!important;padding:0!important;}
+.elementor .xxxv-exact-template .xxxv-exact-html,.elementor .xxxv-exact-template .elementor-widget-html,.elementor .xxxv-exact-template .elementor-widget-container{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;}
+.elementor .xxxv-exact-template .xxxv-exact-html>*{max-width:none;}
+.elementor .xxxv-exact-template .xxxv-exact-scope{width:100%;max-width:none;}
+</style>`;
+  const source = `${bridgeCss}\n${extraCss ? `<style>\n${extraCss}\n</style>` : ""}\n${html || ""}`;
+  const renderable = extractRenderableHtml(source);
+  const data: ElementorElement[] = [{
+    id: genId(),
+    elType: "container",
+    settings: {
+      content_width: "full",
+      width: "100%",
+      flex_direction: "column",
+      html_tag: "main",
+      _css_classes: "xxxv-exact-template",
+    },
+    elements: [{
+      id: genId(),
+      elType: "widget",
+      widgetType: "html",
+      settings: {
+        _css_classes: "xxxv-exact-html",
+        html: renderable,
+      },
+      elements: [],
+    }],
+  }];
+  return JSON.stringify(data);
 }
 
 /**

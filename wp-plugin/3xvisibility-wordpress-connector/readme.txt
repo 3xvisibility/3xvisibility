@@ -4,7 +4,7 @@ Tags: elementor, gutenberg, rest-api, programmatic-seo, page-builder
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.3.5
+Stable tag: 1.3.6
 License: GPLv2 or later
 
 Secure companion plugin that lets the 3xVisibility publish native Elementor & Gutenberg pages, upload media, regenerate CSS, clear caches, and detect builders/themes.
@@ -35,6 +35,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 4. Open Settings → 3xVisibility WordPress Connector and copy the Site URL + API Key into your 3xVisibility account.
 
 == Changelog ==
+
+= 1.3.6 =
+* Added exact-render Elementor fallback for complex marketplace/AI templates: original HTML/CSS can be preserved inside Elementor while still saving through the Elementor document lifecycle, importing media, forcing full width, regenerating CSS, and validating editor readiness.
 
 = 1.3.5 =
 * Fixed overlapping / collapsed text lines on published pages caused by legacy line-height values baked as tiny pixel sizes (a unitless CSS 1.5 stored as 1.5px). Line-heights are now normalized to em multipliers, and existing pages self-heal on republish.
