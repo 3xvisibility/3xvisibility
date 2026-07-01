@@ -109,7 +109,7 @@ export default function GeneratedPagesPage() {
   // Show the persisted per-page publish timeline (validation, media import,
   // WordPress/Shopify publishing progress + results) in the publish-log dialog.
   const openPublishStatus = (page: GeneratedPage) => {
-    const steps = (page as { publish_steps?: PublishStep[] | null }).publish_steps;
+    const steps = (page as unknown as { publish_steps?: PublishStep[] | null }).publish_steps;
     setPublishLog([{
       id: page.id,
       title: page.title,
