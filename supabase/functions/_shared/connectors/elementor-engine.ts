@@ -468,14 +468,21 @@ function container(children: ElementorElement[], node?: HtmlNode, topLevel = fal
     settings.width = "100%";
     settings.flex_align_items = "center";
   }
-  // Detect column/row layouts to preserve responsive grids.
-  if (node && hasClass(node, "row", "columns", "flex", "grid", "d-flex")) {
+  // Bake the template's section background/padding/margin/layout into the
+  // container FIRST, so real CSS (display:flex / display:grid + column count)
+  // decides the layout type.
+  const props = node && CURRENT_RESOLVER ? CURRENT_RESOLVER.resolve(node as NodeLike) : undefined;
+  if (props) styleContainer(settings, props, CURRENT_CTX);
+
+  // Only fall back to framework class hints (Bootstrap-style .row/.columns) when
+  // the CSS declared no explicit flex/grid layout. This prevents forcing a
+  // flex-row (or a spurious grid) onto containers that are really plain column
+  // stacks — the root cause of "too many grid/row containers".
+  const cssDeclaredLayout =
+    settings.container_type === "grid" || (props && props.display === "flex");
+  if (!cssDeclaredLayout && node && hasClassToken(node, "row", "columns", "d-flex", "flex-row")) {
     settings.flex_direction = "row";
     settings.flex_wrap = "wrap";
-  }
-  // Bake the template's section background/padding/margin into the container.
-  if (node && CURRENT_RESOLVER) {
-    styleContainer(settings, CURRENT_RESOLVER.resolve(node as NodeLike), CURRENT_CTX);
   }
   return { id: genId(), elType: "container", settings, elements: children };
 }
