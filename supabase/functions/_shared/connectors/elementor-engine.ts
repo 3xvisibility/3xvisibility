@@ -22,6 +22,16 @@ import type { SiteContext } from "./wp-site-context.ts";
 // changing every builder signature. Null when styling is unavailable.
 let CURRENT_RESOLVER: StyleResolver | null = null;
 let CURRENT_CTX: SiteContext | undefined = undefined;
+// Ancestor text-color stack. Normal HTML text inherits `color` from its nearest
+// styled ancestor (e.g. a hero <section style="color:#fff">). Native Elementor
+// widgets do NOT inherit container colors, so we propagate the nearest ancestor
+// color down and bake it onto text/heading widgets that declare no own color —
+// otherwise light-on-dark hero copy renders as invisible dark-on-dark text.
+let CURRENT_COLOR_STACK: string[] = [];
+
+function inheritedColor(): string | undefined {
+  return CURRENT_COLOR_STACK.length ? CURRENT_COLOR_STACK[CURRENT_COLOR_STACK.length - 1] : undefined;
+}
 
 function bakedSettings(
   node: HtmlNode | undefined,
@@ -30,6 +40,12 @@ function bakedSettings(
 ): Record<string, unknown> {
   if (!CURRENT_RESOLVER || !node) return settings;
   const props = CURRENT_RESOLVER.resolve(node as NodeLike);
+  // Inherit text color from the nearest styled ancestor for text/heading widgets
+  // that don't set their own color, mirroring the CSS cascade.
+  if ((apply === styleText || apply === styleHeading) && !props.color) {
+    const inherited = inheritedColor();
+    if (inherited) props.color = inherited;
+  }
   apply(settings, props, CURRENT_CTX);
   return settings;
 }
@@ -499,7 +515,12 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
       out.push(button(node));
     } else if (CONTAINER_TAGS.has(node.tag)) {
       flush();
+      // Track this container's own text color so descendant text/heading widgets
+      // inherit it (CSS cascade parity) when they declare no color of their own.
+      const ownColor = CURRENT_RESOLVER ? CURRENT_RESOLVER.resolve(node as NodeLike).color : undefined;
+      if (ownColor) CURRENT_COLOR_STACK.push(ownColor);
       const inner = convertChildren(node.children);
+      if (ownColor) CURRENT_COLOR_STACK.pop();
       if (inner.length > 0) out.push(container(inner, node));
     } else if (TEXT_TAGS.has(node.tag) && !["span", "strong", "em", "small", "label"].includes(node.tag)) {
       flush();
@@ -678,6 +699,7 @@ export function sanitizeElementorTree(tree: ElementorElement[]): ElementorElemen
 export function htmlToElementor(html: string, siteContext?: SiteContext): ElementorElement[] {
   CURRENT_RESOLVER = new StyleResolver(html || "");
   CURRENT_CTX = siteContext;
+  CURRENT_COLOR_STACK = [];
   try {
     const tree = parseHtml(html || "");
     const converted = flattenSections(convertChildren(tree));
@@ -692,6 +714,7 @@ export function htmlToElementor(html: string, siteContext?: SiteContext): Elemen
   } finally {
     CURRENT_RESOLVER = null;
     CURRENT_CTX = undefined;
+    CURRENT_COLOR_STACK = [];
   }
 }
 
