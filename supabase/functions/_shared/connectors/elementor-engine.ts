@@ -81,8 +81,9 @@ function genId(): string {
 function sanitizeAttrValue(value: string): string {
   // Malformed source templates (unterminated quotes, stray `<`) must never let
   // raw markup leak into an attribute value (e.g. href="#c</div></div>...").
-  // Cut the value at the first angle bracket so structure can't be swallowed.
-  const cut = value.search(/[<>]/);
+  // Cut the value at the first angle bracket OR URL/entity-encoded angle bracket
+  // so structure can't be swallowed after WordPress encodes the bad value.
+  const cut = value.search(/[<>]|%3c|%3e|&lt;|&gt;/i);
   return (cut === -1 ? value : value.slice(0, cut)).trim();
 }
 
@@ -633,14 +634,33 @@ function flattenSections(elements: ElementorElement[]): ElementorElement[] {
  */
 function cleanText(value: unknown): string {
   if (typeof value !== "string") return "";
-  const cut = value.search(/[<>]/);
+  const cut = value.search(/[<>]|%3c|%3e|&lt;|&gt;/i);
   return (cut === -1 ? value : value.slice(0, cut)).replace(/\s+/g, " ").trim();
 }
 
 function cleanUrl(value: unknown): string {
   if (typeof value !== "string") return "";
-  const cut = value.search(/[\s"'<>]/);
+  const cut = value.search(/[\s"'<>]|%3c|%3e|&lt;|&gt;/i);
   return (cut === -1 ? value : value.slice(0, cut)).trim();
+}
+
+function closeUnbalancedInlineTags(html: string): string {
+  const allowed = ["a", "span", "p", "strong", "em", "b", "i", "small", "ul", "ol", "li"];
+  const stack: string[] = [];
+  const tagRe = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = tagRe.exec(html)) !== null) {
+    const full = m[0];
+    const tag = m[1].toLowerCase();
+    if (!allowed.includes(tag) || /\/>$/.test(full)) continue;
+    if (full.startsWith("</")) {
+      const idx = stack.lastIndexOf(tag);
+      if (idx !== -1) stack.splice(idx, 1);
+    } else {
+      stack.push(tag);
+    }
+  }
+  return html + stack.reverse().map((tag) => `</${tag}>`).join("");
 }
 
 function cleanEditorHtml(value: unknown): string {
@@ -648,12 +668,17 @@ function cleanEditorHtml(value: unknown): string {
   let out = value
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "");
+  // Text Editor widgets may contain inline rich text only. If an old malformed
+  // conversion swallowed page structure into this field, cut before that block
+  // markup so Elementor cannot render an open <span>/<p> across the whole page.
+  const structuralCut = out.search(/<\/?(?:div|section|header|footer|main|article|nav|aside)\b|%3c\/?(?:div|section|header|footer|main|article|nav|aside)\b|&lt;\/?(?:div|section|header|footer|main|article|nav|aside)\b/i);
+  if (structuralCut !== -1) out = out.slice(0, structuralCut);
   // Drop a trailing unterminated tag fragment (e.g. "...text <a href="#c").
   const lastOpen = out.lastIndexOf("<");
   if (lastOpen !== -1 && out.indexOf(">", lastOpen) === -1) {
     out = out.slice(0, lastOpen);
   }
-  return out.trim();
+  return closeUnbalancedInlineTags(out.trim());
 }
 
 export function sanitizeElementorTree(tree: ElementorElement[]): ElementorElement[] {
