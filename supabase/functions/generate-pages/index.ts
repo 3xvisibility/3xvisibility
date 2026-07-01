@@ -5,6 +5,7 @@ import { validateJsonLdInHtml, summarizeValidation } from "../_shared/jsonld-val
 import { resolveLanguageName } from "../_shared/languages.ts";
 import { buildVibeOverrideStyles, type VibeTheme } from "../_shared/vibe-theme.ts";
 import { aiGenerate } from "../_shared/ai-service.ts";
+import { cacheVolatileTemplateImages } from "../_shared/image-cache.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
