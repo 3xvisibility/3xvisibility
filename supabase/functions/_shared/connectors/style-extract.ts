@@ -156,6 +156,7 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["justify-content"]) p.justifyContent = d["justify-content"];
   if (d["align-items"]) p.alignItems = d["align-items"];
   if (d["gap"]) p.gap = d["gap"];
+  if (d["grid-template-columns"]) p.gridTemplateColumns = d["grid-template-columns"];
   if (d["min-height"]) p.minHeight = d["min-height"];
   if (d["overflow"]) p.overflow = d["overflow"];
   if (d["box-shadow"]) p.boxShadow = d["box-shadow"];
