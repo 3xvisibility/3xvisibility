@@ -1602,7 +1602,12 @@ Deno.serve(async (req) => {
     // cached copies without touching the volatile host.
     if (!test_mode) {
       try {
-        const cached = await cacheVolatileTemplateImages(supabase, templateContent);
+        // Bust the cache when the template changes so a stale image from a
+        // previous template revision never persists after an edit.
+        const tplVersion = (campaign.templates as { updated_at?: string }).updated_at || "";
+        const cached = await cacheVolatileTemplateImages(supabase, templateContent, {
+          cacheVersion: tplVersion,
+        });
         if (cached.changed) {
           templateContent = cached.html;
           (campaign.templates as { content: string }).content = cached.html;
