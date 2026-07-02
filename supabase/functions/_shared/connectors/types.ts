@@ -46,6 +46,12 @@ export interface PagePayload {
    * for pixel-faithful fallback when native conversion cannot match the design.
    */
   elementor_mode?: "native" | "exact";
+  /**
+   * WordPress compatibility mode for sites without the connector plugin or with
+   * an older connector: publish the fully-rendered HTML/CSS body through the
+   * standard WordPress REST API instead of attempting Elementor meta writes.
+   */
+  wordpress_fallback_html?: boolean;
   custom_fields?: Record<string, unknown>;
   taxonomies?: Record<string, string[]>;
   /**

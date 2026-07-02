@@ -38,6 +38,7 @@ const CONNECTOR_TIMEOUT_MS = 25_000;
 const CONNECTOR_PUBLISH_TIMEOUT_MS = 120_000;
 const CONNECTOR_CSS_REFRESH_TIMEOUT_MS = 20_000;
 export const REQUIRED_3XV_CONNECTOR_VERSION = "1.3.7";
+const COMPRESSED_PAYLOAD_CONNECTOR_VERSION = "1.3.7";
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -89,6 +90,12 @@ interface ConnectorPingResponse {
   capabilities?: Record<string, boolean>;
 }
 
+function supportsCompressedPayloads(info: ConnectorPingResponse | null | undefined): boolean {
+  if (!info?.version) return false;
+  if (info.capabilities?.compressed_payloads === true) return true;
+  return compareVersions(info.version, COMPRESSED_PAYLOAD_CONNECTOR_VERSION) >= 0;
+}
+
 function compareVersions(a = "0.0.0", b = "0.0.0"): number {
   const pa = a.split(/[.-]/).map((part) => Number.parseInt(part, 10) || 0);
   const pb = b.split(/[.-]/).map((part) => Number.parseInt(part, 10) || 0);
@@ -134,6 +141,7 @@ export class PgpConnector implements CmsConnector {
   private baseUrl: string;
   private apiKey: string;
   private restBase: string;
+  private preflightInfo: ConnectorPingResponse | null = null;
   // Basic-auth header for the (optional) listing fallback over standard WP REST.
   private basicAuth?: string;
 
@@ -233,12 +241,9 @@ export class PgpConnector implements CmsConnector {
 
     const installedVersion = data.version || "0.0.0";
     if (compareVersions(installedVersion, REQUIRED_3XV_CONNECTOR_VERSION) < 0) {
-      throw new Error(
-        `3xVisibility Connector pre-flight failed: plugin version ${installedVersion} is active, ` +
-        `but version ${REQUIRED_3XV_CONNECTOR_VERSION}+ is required. ` +
-        `Download the latest plugin from https://3xvisibility.com/3xvisibility-wordpress-connector.zip ` +
-        `(or your app's Integrations page), then in WordPress go to Plugins → Add New → Upload Plugin, ` +
-        `replace the old version, activate it, and retry publishing.`,
+      console.warn(
+        `[3xVisibility Connector] plugin ${installedVersion} is older than ${REQUIRED_3XV_CONNECTOR_VERSION}; ` +
+        "publishing will use compatibility mode instead of blocking.",
       );
     }
 
@@ -246,6 +251,7 @@ export class PgpConnector implements CmsConnector {
       throw new Error("3xVisibility Connector pre-flight failed: Elementor is not active on this WordPress site.");
     }
 
+    this.preflightInfo = data;
     return data;
   }
 
@@ -291,6 +297,8 @@ export class PgpConnector implements CmsConnector {
     const elementorData = payload.elementor_data || "";
     const elementorCss = payload.elementor_css || "";
     const exactRender = payload.elementor_mode === "exact";
+    const connectorInfo = this.preflightInfo ?? await this.preflight().catch(() => null);
+    const canCompressPayloads = supportsCompressedPayloads(connectorInfo);
     const body: Record<string, unknown> = {
       title,
       slug,
@@ -300,7 +308,7 @@ export class PgpConnector implements CmsConnector {
       page_template: payload.page_template || "elementor_header_footer",
       meta,
     };
-    const compressedData = typeof elementorData === "string" && (exactRender || elementorData.length > 150_000)
+    const compressedData = canCompressPayloads && typeof elementorData === "string" && (exactRender || elementorData.length > 150_000)
       ? await gzipBase64(elementorData).catch(() => null)
       : null;
     if (compressedData && compressedData.length < elementorData.length) {
@@ -309,7 +317,7 @@ export class PgpConnector implements CmsConnector {
     } else {
       body.elementor_data = elementorData;
     }
-    const compressedCss = typeof elementorCss === "string" && elementorCss.length > 100_000
+    const compressedCss = canCompressPayloads && typeof elementorCss === "string" && elementorCss.length > 100_000
       ? await gzipBase64(elementorCss).catch(() => null)
       : null;
     if (compressedCss && compressedCss.length < elementorCss.length) {

@@ -358,12 +358,18 @@ export class WordPressConnector implements CmsConnector {
 
     // Publish format: "gutenberg" emits native block-editor content (no Elementor
     // meta / canvas), otherwise the default Elementor flow runs.
-    const format = payload.publish_format || "elementor";
+    const format = payload.wordpress_fallback_html ? "html" : (payload.publish_format || "elementor");
 
     // WordPress Template Compatibility Engine: build a native, editable Elementor
     // page from the HTML template (pages only, not Shopify-style products).
     let elementorApplied = false;
-    if (!payload.product_data && format === "gutenberg") {
+    if (!payload.product_data && format === "html") {
+      // Permanent no-plugin compatibility path: publish the exact resolved
+      // template HTML/CSS into the page body. This does not require the connector
+      // plugin and avoids brittle direct `_elementor_data` REST writes. It is not
+      // Elementor-editable, but live rendering remains stable and full-width.
+      body.content = adapted;
+    } else if (!payload.product_data && format === "gutenberg") {
       // Gutenberg path: wrap the asset-imported template HTML in block markup so
       // images render from the WP Media Library and the design matches 1:1.
       body.content = htmlToGutenberg(payload.content || "") || adapted;
@@ -401,7 +407,8 @@ export class WordPressConnector implements CmsConnector {
     // page keeps the active theme's global header/footer + site settings while
     // the Elementor content stretches to full width — matching the old/existing
     // WordPress pages' global layout. (elementor_canvas would strip header/footer.)
-    if (resolvedTemplate) body.template = resolvedTemplate;
+    if (payload.wordpress_fallback_html) body.template = "elementor_header_footer";
+    else if (resolvedTemplate) body.template = resolvedTemplate;
     else if (elementorApplied) body.template = "elementor_header_footer";
 
     const data = await this.executePageRequest(
@@ -460,9 +467,11 @@ export class WordPressConnector implements CmsConnector {
 
     // Rebuild the native Elementor layout when the body content is being updated
     // (skipped in design-preservation mode and for products).
-    const format = payload.publish_format || "elementor";
+    const format = payload.wordpress_fallback_html ? "html" : (payload.publish_format || "elementor");
     let elementorApplied = false;
-    if (!preserveDesign && !payload.product_data && format === "gutenberg" && typeof payload.content === "string") {
+    if (!preserveDesign && !payload.product_data && format === "html" && typeof payload.content === "string") {
+      body.content = sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content, "page", await this.themeAssets())) || "<p></p>";
+    } else if (!preserveDesign && !payload.product_data && format === "gutenberg" && typeof payload.content === "string") {
       body.content = htmlToGutenberg(payload.content) || (body.content as string);
     } else if (!preserveDesign && !payload.product_data && (typeof payload.content === "string" || payload.elementor_data)) {
       const elementorData = payload.elementor_data
@@ -480,7 +489,8 @@ export class WordPressConnector implements CmsConnector {
 
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
-    if (!preserveDesign && resolvedTemplate) body.template = resolvedTemplate;
+    if (!preserveDesign && payload.wordpress_fallback_html) body.template = "elementor_header_footer";
+    else if (!preserveDesign && resolvedTemplate) body.template = resolvedTemplate;
     else if (!preserveDesign && elementorApplied) body.template = "elementor_header_footer";
 
     const data = await this.executePageRequest(

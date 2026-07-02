@@ -101,15 +101,12 @@ export async function createConnector(website: WebsiteRecord): Promise<CmsConnec
   switch (website.type) {
     case "wordpress": {
       const config = buildConfig(website, creds);
-      // Production WordPress publishing must go through the companion plugin.
-      // The standard WP REST API cannot reliably save advanced Elementor JSON/CSS
-      // and returns failures like `rest_database_error` for `_elementor_data`.
-      if (!config.connector_api_key) {
-        throw new Error(
-          "3xVisibility WordPress Connector key is required for WordPress publishing. Install/update the connector plugin, paste its API key in the site settings, then retry.",
-        );
-      }
-      return new PgpConnector(config);
+      // Prefer the companion plugin when a key exists because it can save through
+      // Elementor's document lifecycle, regenerate CSS, clear caches, and verify
+      // editor readiness. Do not hard-block sites without the plugin: fall back to
+      // the standard WordPress REST connector so users can publish exact HTML / Gutenberg
+      // pages with Application Password or JWT credentials.
+      return config.connector_api_key ? new PgpConnector(config) : new WordPressConnector(config);
     }
     case "shopify": {
       const config = await resolveShopifyConfig(website, creds);
