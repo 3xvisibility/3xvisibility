@@ -114,7 +114,7 @@ class XXXV_Updater {
 		}
 		$data = json_decode( wp_remote_retrieve_body( $res ), true );
 		$data = is_array( $data ) ? $data : array();
-		set_transient( 'xxxv_connector_manifest', $data, 6 * HOUR_IN_SECONDS );
+		set_transient( 'xxxv_connector_manifest', $data, HOUR_IN_SECONDS );
 		return $data;
 	}
 
