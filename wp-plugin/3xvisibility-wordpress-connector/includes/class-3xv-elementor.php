@@ -88,9 +88,11 @@ class XXXV_Elementor {
 		if ( '' !== $elementor_css ) {
 			$elementor_css = self::map_css_media_references( $elementor_css, $media_report );
 		}
-		if ( $exact_render ) {
-			self::map_exact_html_media_references( $elementor_data, $media_report );
-		}
+		// Exact-render pages can contain many large inline/background image URLs in a
+		// single HTML widget. Importing every one inside the publish REST request is
+		// what pushes shared LiteSpeed hosts into 503/timeouts. Native Elementor media
+		// controls are still synced synchronously; exact HTML assets are synced in a
+		// deferred cron task immediately after the page is saved.
 		if ( is_array( $media_report ) && ! empty( $media_report['failed'] ) ) {
 			// Non-fatal: keep original URLs for any images that could not be
 			// imported (e.g. hotlink-protected CDN assets) and continue so the
@@ -183,6 +185,9 @@ class XXXV_Elementor {
 				throw new Exception( 'Failed to encode Elementor JSON.' );
 			}
 			update_post_meta( $post_id, '_elementor_data', wp_slash( $json ) );
+			if ( $exact_render ) {
+				self::schedule_deferred_exact_media_sync( $post_id );
+			}
 
 			// ---- (5) Generate per-page CSS ------------------------------------
 			self::refresh_elementor_files( $post_id );
