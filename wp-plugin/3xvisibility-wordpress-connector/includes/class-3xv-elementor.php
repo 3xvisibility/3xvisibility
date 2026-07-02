@@ -54,8 +54,15 @@ class XXXV_Elementor {
 		$slug           = isset( $body['slug'] ) ? sanitize_title( $body['slug'] ) : sanitize_title( $title );
 		$status         = ( isset( $body['status'] ) && 'draft' === $body['status'] ) ? 'draft' : 'publish';
 		$post_id        = isset( $body['post_id'] ) ? absint( $body['post_id'] ) : 0;
-		$elementor_data = isset( $body['elementor_data'] ) ? $body['elementor_data'] : array();
-		$elementor_css  = isset( $body['elementor_css'] ) ? self::sanitize_template_css( (string) $body['elementor_css'] ) : '';
+		$elementor_data = self::decode_payload_field( $body, 'elementor_data', array() );
+		if ( is_wp_error( $elementor_data ) ) {
+			return $elementor_data;
+		}
+		$raw_elementor_css = self::decode_payload_field( $body, 'elementor_css', '' );
+		if ( is_wp_error( $raw_elementor_css ) ) {
+			return $raw_elementor_css;
+		}
+		$elementor_css  = self::sanitize_template_css( (string) $raw_elementor_css );
 		$exact_render   = ! empty( $body['exact_render'] );
 		// WordPress Elementor pages are always published as Elementor Full Width.
 		// Do not let requests switch to theme default/canvas/HTML layouts.
@@ -278,6 +285,36 @@ class XXXV_Elementor {
 				array( 'status' => 500 )
 			);
 		}
+	}
+
+	/**
+	 * Decode normal JSON fields, or gzip+base64 fields sent by the SaaS for very
+	 * large exact-render Elementor payloads. Compression keeps LiteSpeed/shared
+	 * hosts from rejecting /wp-json requests before this plugin can handle them.
+	 */
+	private static function decode_payload_field( $body, $field, $default ) {
+		if ( isset( $body[ $field ] ) ) {
+			return $body[ $field ];
+		}
+		$gzip_field = $field . '_gzip';
+		if ( empty( $body[ $gzip_field ] ) || ! is_string( $body[ $gzip_field ] ) ) {
+			return $default;
+		}
+		$binary = base64_decode( $body[ $gzip_field ], true );
+		if ( false === $binary ) {
+			return new WP_Error( 'xxxv_bad_compressed_payload', 'Compressed Elementor payload is not valid base64.', array( 'status' => 400 ) );
+		}
+		if ( function_exists( 'gzdecode' ) ) {
+			$decoded = @gzdecode( $binary );
+		} elseif ( function_exists( 'zlib_decode' ) ) {
+			$decoded = @zlib_decode( $binary );
+		} else {
+			return new WP_Error( 'xxxv_no_zlib', 'This WordPress server cannot decode compressed Elementor payloads because PHP zlib is unavailable.', array( 'status' => 500 ) );
+		}
+		if ( false === $decoded ) {
+			return new WP_Error( 'xxxv_bad_compressed_payload', 'Compressed Elementor payload could not be decoded.', array( 'status' => 400 ) );
+		}
+		return $decoded;
 	}
 
 	/**
