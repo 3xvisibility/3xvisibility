@@ -61,6 +61,6 @@ function xxxv_connector_boot() {
 	// beats any head style Elementor or the active theme injected, so the published
 	// page renders 1:1 with the template even when caching plugins reorder head CSS.
 	add_action( 'wp_footer', array( 'XXXV_Elementor', 'print_template_css' ), PHP_INT_MAX );
- add_action( 'xxxv_deferred_exact_media_sync', array( 'XXXV_Elementor', 'deferred_exact_media_sync' ), 10, 1 );
+	add_action( 'xxxv_deferred_exact_media_sync', array( 'XXXV_Elementor', 'deferred_exact_media_sync' ), 10, 1 );
 }
 add_action( 'plugins_loaded', 'xxxv_connector_boot' );
