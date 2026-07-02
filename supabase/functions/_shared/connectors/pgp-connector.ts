@@ -19,6 +19,7 @@ import type {
   ContentItem,
   PagePayload,
 } from "./types.ts";
+import { WordPressConnector } from "./wordpress.ts";
 
 interface PublishResponse {
   ok: boolean;
@@ -142,6 +143,7 @@ export class PgpConnector implements CmsConnector {
   private apiKey: string;
   private restBase: string;
   private preflightInfo: ConnectorPingResponse | null = null;
+  private standardFallback?: WordPressConnector;
   // Basic-auth header for the (optional) listing fallback over standard WP REST.
   private basicAuth?: string;
 
@@ -149,9 +151,45 @@ export class PgpConnector implements CmsConnector {
     this.baseUrl = config.base_url.replace(/\/+$/, "");
     this.apiKey = (config.connector_api_key || "").trim();
     this.restBase = `${this.baseUrl}/wp-json/pgp/v1`;
+    if (config.access_token || (config.username && config.password)) {
+      this.standardFallback = new WordPressConnector(config);
+    }
     if (config.username && config.password) {
       this.basicAuth = "Basic " + btoa(`${config.username}:${config.password}`);
     }
+  }
+
+  private standardFallbackPreflight(reason: string): ConnectorPingResponse {
+    const data: ConnectorPingResponse = {
+      ok: true,
+      plugin: "standard-wordpress-rest",
+      version: "0.0.0",
+      elementor_active: false,
+      capabilities: { standard_rest_fallback: true },
+    };
+    console.warn(`[3xVisibility Connector] ${reason}; using standard WordPress REST compatibility mode.`);
+    this.preflightInfo = data;
+    return data;
+  }
+
+  private shouldUseStandardFallback(info: ConnectorPingResponse | null | undefined, payload: Partial<PagePayload>): boolean {
+    if (!this.standardFallback || !payload.content) return false;
+    if (!info) return true;
+    if (info.capabilities?.standard_rest_fallback === true) return true;
+    if (info.elementor_active === false) return true;
+    return compareVersions(info.version || "0.0.0", REQUIRED_3XV_CONNECTOR_VERSION) < 0;
+  }
+
+  private async publishViaStandardFallback(payload: Partial<PagePayload>, postId?: number): Promise<ConnectorResult> {
+    if (!this.standardFallback || !payload.content) {
+      throw new Error("WordPress standard REST fallback is unavailable: Application Password or JWT credentials are missing.");
+    }
+    const fallbackPayload = { ...payload, wordpress_fallback_html: true } as Partial<PagePayload>;
+    delete fallbackPayload.elementor_data;
+    delete fallbackPayload.elementor_css;
+    delete fallbackPayload.elementor_mode;
+    if (postId) return this.standardFallback.updatePage(String(postId), fallbackPayload);
+    return this.standardFallback.createPage(fallbackPayload as PagePayload);
   }
 
   private headers(): Record<string, string> {
@@ -231,11 +269,15 @@ export class PgpConnector implements CmsConnector {
     url.searchParams.set("connector_key", this.apiKey);
     const res = await fetchWithTimeout(url.toString(), { method: "GET", headers: this.headers() });
     if (!res.ok) {
+      if (this.standardFallback && (res.status === 401 || res.status === 403 || res.status === 404)) {
+        return this.standardFallbackPreflight(`plugin pre-flight returned ${res.status}`);
+      }
       throw this.connectorSetupError(path, res.status, await res.text());
     }
 
     const data = (await res.json()) as ConnectorPingResponse;
     if (!data?.ok) {
+      if (this.standardFallback) return this.standardFallbackPreflight("plugin did not return a healthy response");
       throw new Error("3xVisibility Connector pre-flight failed: plugin did not return a healthy response.");
     }
 
@@ -248,6 +290,7 @@ export class PgpConnector implements CmsConnector {
     }
 
     if (data.elementor_active === false) {
+      if (this.standardFallback) return this.standardFallbackPreflight("Elementor is not active");
       throw new Error("3xVisibility Connector pre-flight failed: Elementor is not active on this WordPress site.");
     }
 
@@ -298,6 +341,9 @@ export class PgpConnector implements CmsConnector {
     const elementorCss = payload.elementor_css || "";
     const exactRender = payload.elementor_mode === "exact";
     const connectorInfo = this.preflightInfo ?? await this.preflight().catch(() => null);
+    if (this.shouldUseStandardFallback(connectorInfo, payload)) {
+      return this.publishViaStandardFallback(payload, postId);
+    }
     const canCompressPayloads = supportsCompressedPayloads(connectorInfo);
     const body: Record<string, unknown> = {
       title,
