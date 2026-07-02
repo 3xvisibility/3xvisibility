@@ -31,6 +31,75 @@ class XXXV_Updater {
 		$this->slug     = dirname( $this->basename );
 		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_update' ) );
 		add_filter( 'plugins_api', array( $this, 'plugin_info' ), 20, 3 );
+		// Keep the extracted folder name stable so WordPress does not deactivate
+		// the plugin after an auto-update (manifest zips can unzip into a
+		// differently named folder).
+		add_filter( 'upgrader_source_selection', array( $this, 'fix_source_dir' ), 10, 4 );
+		// After any plugin update, drop the cached manifest so the next check is fresh.
+		add_action( 'upgrader_process_complete', array( $this, 'clear_manifest_cache' ), 10, 2 );
+		// Add a "Check for updates" action link on the Plugins screen.
+		add_filter( 'plugin_action_links_' . $this->basename, array( $this, 'action_links' ) );
+		add_action( 'admin_init', array( $this, 'maybe_force_check' ) );
+		// Enable auto-updates for this plugin by default.
+		add_filter( 'auto_update_plugin', array( $this, 'enable_auto_update' ), 10, 2 );
+	}
+
+	/**
+	 * Turn on WordPress background auto-updates for this plugin.
+	 */
+	public function enable_auto_update( $update, $item ) {
+		if ( isset( $item->plugin ) && $item->plugin === $this->basename ) {
+			return true;
+		}
+		return $update;
+	}
+
+	/**
+	 * Force WordPress to re-check for updates when the user clicks our link.
+	 */
+	public function maybe_force_check() {
+		if ( isset( $_GET['xxxv_check_update'] ) && current_user_can( 'update_plugins' ) ) {
+			check_admin_referer( 'xxxv_check_update' );
+			$this->clear_manifest_cache();
+			delete_site_transient( 'update_plugins' );
+			wp_safe_redirect( self_admin_url( 'plugins.php' ) );
+			exit;
+		}
+	}
+
+	/**
+	 * "Check for updates" link under the plugin row.
+	 */
+	public function action_links( $links ) {
+		$url = wp_nonce_url( self_admin_url( 'plugins.php?xxxv_check_update=1' ), 'xxxv_check_update' );
+		$links[] = '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Check for updates', '3xvisibility-wordpress-connector' ) . '</a>';
+		return $links;
+	}
+
+	/**
+	 * Clear cached manifest so a new version is detected immediately.
+	 */
+	public function clear_manifest_cache( $upgrader = null, $data = null ) {
+		delete_transient( 'xxxv_connector_manifest' );
+	}
+
+	/**
+	 * Ensure the unzipped directory is renamed to the plugin slug so the update
+	 * replaces the existing plugin in place (prevents post-update deactivation).
+	 */
+	public function fix_source_dir( $source, $remote_source, $upgrader, $args = array() ) {
+		global $wp_filesystem;
+		if ( empty( $args['plugin'] ) || $args['plugin'] !== $this->basename ) {
+			return $source;
+		}
+		$desired = trailingslashit( $remote_source ) . $this->slug;
+		if ( untrailingslashit( $source ) === untrailingslashit( $desired ) ) {
+			return $source;
+		}
+		if ( $wp_filesystem && $wp_filesystem->move( untrailingslashit( $source ), untrailingslashit( $desired ) ) ) {
+			return trailingslashit( $desired );
+		}
+		return $source;
 	}
 
 	private function fetch_manifest() {
@@ -45,7 +114,7 @@ class XXXV_Updater {
 		}
 		$data = json_decode( wp_remote_retrieve_body( $res ), true );
 		$data = is_array( $data ) ? $data : array();
-		set_transient( 'xxxv_connector_manifest', $data, 6 * HOUR_IN_SECONDS );
+		set_transient( 'xxxv_connector_manifest', $data, HOUR_IN_SECONDS );
 		return $data;
 	}
 
