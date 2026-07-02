@@ -379,12 +379,13 @@ function stripHeadTagsForCms(content: string): string {
   return cleaned;
 }
 
-function shouldUseExactElementorRender(content: string): boolean {
-  if (!content || typeof content !== "string") return false;
-  // Any real template markup can lose fidelity when converted into Elementor
-  // controls. For WordPress Elementor publishes, preserve the rendered DOM/CSS
-  // inside Elementor unless this is truly plain text.
-  return /<(section|main|header|footer|div|article|nav|style|img|h[1-6]|p|a|ul|ol|li)\b/i.test(content);
+function shouldUseExactElementorRender(_content: string): boolean {
+  // Native Elementor widget publishing is the default and required output:
+  // pages must be built as native Elementor containers + widgets that are fully
+  // editable in Elementor (free), NOT wrapped in a single HTML widget. The old
+  // "exact render" path produced an HTML-widget page that looked like raw HTML
+  // and was not editable, so it is disabled.
+  return false;
 }
 
 /**
@@ -828,6 +829,21 @@ async function handlePublishPages(req: Request): Promise<Response> {
             }
           }
           if (website.type === "wordpress" && pubType === "page" && !preserveDesign) {
+            // No stored native JSON: convert the rendered template HTML into
+            // native Elementor containers + widgets so the page is fully
+            // editable in Elementor (free) instead of a raw HTML widget.
+            if (!dpElementorData && dp.content) {
+              try {
+                const converted = htmlToElementor(dp.content);
+                if (Array.isArray(converted) && converted.length) {
+                  dpElementorData = JSON.stringify(converted);
+                  dpElementorCss = [dpElementorCss, extractTemplateCss(dp.content)].filter(Boolean).join("\n") || undefined;
+                  step("Building native Elementor widgets", "ok", "Template HTML converted to native containers + widgets");
+                }
+              } catch (e) {
+                console.warn("[publish-pages] direct native Elementor conversion failed", e);
+              }
+            }
             if (!dpElementorData) {
               throw new Error(
                 "WordPress publishing is native Elementor only. Provide native Elementor JSON (elementor_data) or publish from a campaign with a stored Elementor JSON template.",
@@ -835,8 +851,8 @@ async function handlePublishPages(req: Request): Promise<Response> {
             }
             payload.elementor_data = dpElementorData;
             payload.elementor_css = dpElementorCss;
-            payload.elementor_mode = useExactDirectElementor ? "exact" : "native";
-            step(useExactDirectElementor ? "Routing exact Elementor render" : "Routing native Elementor JSON", "ok", useExactDirectElementor ? "Original HTML/CSS preserved inside Elementor" : "Full-width containers + native widgets");
+            payload.elementor_mode = "native";
+            step("Routing native Elementor JSON", "ok", "Full-width containers + native widgets");
           }
 
 
