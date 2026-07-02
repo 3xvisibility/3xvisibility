@@ -169,6 +169,9 @@ export class PgpConnector implements CmsConnector {
       await sleep(1_500 * attempt);
     }
     if (!res || !res.ok) {
+      if (!res) {
+        throw new Error(`3xVisibility WordPress Connector ${method} ${path} failed: no response from WordPress.`);
+      }
       if (res.status === 401 || res.status === 403 || res.status === 404) {
         throw this.connectorSetupError(path, res.status, lastText);
       }
