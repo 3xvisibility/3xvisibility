@@ -37,7 +37,49 @@ interface PublishResponse {
 const CONNECTOR_TIMEOUT_MS = 25_000;
 const CONNECTOR_PUBLISH_TIMEOUT_MS = 120_000;
 const CONNECTOR_CSS_REFRESH_TIMEOUT_MS = 20_000;
-export const REQUIRED_3XV_CONNECTOR_VERSION = "1.3.6";
+export const REQUIRED_3XV_CONNECTOR_VERSION = "1.3.7";
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function stripHtml(raw: string): string {
+  return raw
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function friendlyConnectorHttpError(method: string, path: string, status: number, rawBody: string): string {
+  const text = stripHtml(rawBody || "");
+  const lower = `${rawBody} ${text}`.toLowerCase();
+  const serverLabel = lower.includes("litespeed") ? "LiteSpeed" : "WordPress";
+
+  if (status === 503 || status === 504) {
+    return (
+      `3xVisibility WordPress Connector ${method} ${path} failed (${status}): ${serverLabel} temporarily stopped the publish request. ` +
+      "This usually happens when the host is busy or PHP/REST limits are hit while saving Elementor. " +
+      "I reduced exact-render payloads and made media syncing asynchronous; please retry publishing once. " +
+      "If it still fails, increase PHP memory/time limits or ask the host to allow long wp-json requests."
+    );
+  }
+
+  if (status === 413 || lower.includes("request entity too large") || lower.includes("payload too large")) {
+    return (
+      `3xVisibility WordPress Connector ${method} ${path} failed (${status}): the WordPress server rejected the Elementor payload as too large. ` +
+      "Use the latest connector and retry; exact-render CSS is now sent only once to reduce request size."
+    );
+  }
+
+  const detail = text ? text.slice(0, 700) : "no detail returned";
+  return `3xVisibility WordPress Connector ${method} ${path} failed (${status}): ${detail}`;
+}
 
 interface ConnectorPingResponse {
   ok: boolean;
@@ -100,7 +142,7 @@ export class PgpConnector implements CmsConnector {
     };
   }
 
-  private async call<T>(path: string, method: string, body?: unknown, timeoutMs = CONNECTOR_TIMEOUT_MS): Promise<T> {
+  private async call<T>(path: string, method: string, body?: unknown, timeoutMs = CONNECTOR_TIMEOUT_MS, retryTransient = false): Promise<T> {
     const url = new URL(`${this.restBase}${path}`);
     // Some WordPress hosts/security plugins strip custom auth headers before
     // PHP sees them. Keep the headers, but also send the connector key as a
@@ -109,17 +151,28 @@ export class PgpConnector implements CmsConnector {
     const requestBody = body && typeof body === "object"
       ? { ...(body as Record<string, unknown>), connector_key: this.apiKey }
       : body;
-    const res = await fetchWithTimeout(url.toString(), {
-      method,
-      headers: this.headers(),
-      body: requestBody !== undefined ? JSON.stringify(requestBody) : undefined,
-    }, timeoutMs);
-    if (!res.ok) {
-      const text = await res.text();
-      if (res.status === 401 || res.status === 403 || res.status === 404) {
-        throw this.connectorSetupError(path, res.status, text);
+    let res: Response;
+    let lastText = "";
+    const maxAttempts = retryTransient ? 2 : 1;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      res = await fetchWithTimeout(url.toString(), {
+        method,
+        headers: this.headers(),
+        body: requestBody !== undefined ? JSON.stringify(requestBody) : undefined,
+      }, timeoutMs);
+      if (res.ok) {
+        return (await res.json()) as T;
       }
-      throw new Error(`PGP Connector ${method} ${path} failed (${res.status}): ${text}`);
+      lastText = await res.text();
+      const transient = res.status === 502 || res.status === 503 || res.status === 504 || res.status === 429;
+      if (!retryTransient || !transient || attempt >= maxAttempts) break;
+      await sleep(1_500 * attempt);
+    }
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403 || res.status === 404) {
+        throw this.connectorSetupError(path, res.status, lastText);
+      }
+      throw new Error(friendlyConnectorHttpError(method, path, res.status, lastText));
     }
     return (await res.json()) as T;
   }
@@ -228,7 +281,7 @@ export class PgpConnector implements CmsConnector {
       exact_render: payload.elementor_mode === "exact",
       page_template: payload.page_template || "elementor_header_footer",
       meta,
-    }, CONNECTOR_PUBLISH_TIMEOUT_MS);
+    }, CONNECTOR_PUBLISH_TIMEOUT_MS, Boolean(postId));
     if (res.elementor_data_valid === false) {
       throw new Error("3xVisibility Connector publish failed: WordPress saved the page, but _elementor_data did not load back correctly.");
     }
