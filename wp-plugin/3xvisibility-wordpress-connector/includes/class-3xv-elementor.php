@@ -645,6 +645,56 @@ class XXXV_Elementor {
 		unset( $element );
 	}
 
+	private static function schedule_deferred_exact_media_sync( $post_id ) {
+		$post_id = absint( $post_id );
+		if ( ! $post_id || ! function_exists( 'wp_schedule_single_event' ) ) {
+			return;
+		}
+		$args = array( $post_id );
+		if ( function_exists( 'wp_next_scheduled' ) && wp_next_scheduled( 'xxxv_deferred_exact_media_sync', $args ) ) {
+			return;
+		}
+		wp_schedule_single_event( time() + 5, 'xxxv_deferred_exact_media_sync', $args );
+		self::log( 'info', 'Deferred exact-render media sync scheduled.', array( 'post_id' => $post_id ) );
+	}
+
+	public static function deferred_exact_media_sync( $post_id ) {
+		$post_id = absint( $post_id );
+		if ( ! $post_id ) {
+			return;
+		}
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( 90 );
+		}
+
+		$saved = get_post_meta( $post_id, '_elementor_data', true );
+		$data  = is_string( $saved ) ? json_decode( $saved, true ) : null;
+		if ( ! is_array( $data ) && is_string( $saved ) ) {
+			$data = json_decode( wp_unslash( $saved ), true );
+		}
+		if ( ! is_array( $data ) || empty( $data ) ) {
+			return;
+		}
+
+		$report = array(
+			'imported' => 0,
+			'reused'   => 0,
+			'failed'   => 0,
+			'urls'     => array(),
+		);
+		self::map_exact_html_media_references( $data, $report );
+
+		$json = wp_json_encode( $data );
+		if ( false !== $json ) {
+			update_post_meta( $post_id, '_elementor_data', wp_slash( $json ) );
+			self::refresh_elementor_files( $post_id );
+			self::regenerate_page_css( $post_id );
+			self::clear_runtime_caches( $post_id );
+		}
+
+		self::log( 'info', 'Deferred exact-render media sync finished.', array( 'post_id' => $post_id, 'report' => $report ) );
+	}
+
 	/**
 	 * Keep template CSS safe for a frontend <style> tag while preserving valid CSS.
 	 *
