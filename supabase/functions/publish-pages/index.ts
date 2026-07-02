@@ -379,12 +379,13 @@ function stripHeadTagsForCms(content: string): string {
   return cleaned;
 }
 
-function shouldUseExactElementorRender(content: string): boolean {
-  if (!content || typeof content !== "string") return false;
-  // Any real template markup can lose fidelity when converted into Elementor
-  // controls. For WordPress Elementor publishes, preserve the rendered DOM/CSS
-  // inside Elementor unless this is truly plain text.
-  return /<(section|main|header|footer|div|article|nav|style|img|h[1-6]|p|a|ul|ol|li)\b/i.test(content);
+function shouldUseExactElementorRender(_content: string): boolean {
+  // Native Elementor widget publishing is the default and required output:
+  // pages must be built as native Elementor containers + widgets that are fully
+  // editable in Elementor (free), NOT wrapped in a single HTML widget. The old
+  // "exact render" path produced an HTML-widget page that looked like raw HTML
+  // and was not editable, so it is disabled.
+  return false;
 }
 
 /**
