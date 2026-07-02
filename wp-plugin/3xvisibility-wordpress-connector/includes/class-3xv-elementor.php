@@ -54,8 +54,15 @@ class XXXV_Elementor {
 		$slug           = isset( $body['slug'] ) ? sanitize_title( $body['slug'] ) : sanitize_title( $title );
 		$status         = ( isset( $body['status'] ) && 'draft' === $body['status'] ) ? 'draft' : 'publish';
 		$post_id        = isset( $body['post_id'] ) ? absint( $body['post_id'] ) : 0;
-		$elementor_data = isset( $body['elementor_data'] ) ? $body['elementor_data'] : array();
-		$elementor_css  = isset( $body['elementor_css'] ) ? self::sanitize_template_css( (string) $body['elementor_css'] ) : '';
+		$elementor_data = self::decode_payload_field( $body, 'elementor_data', array() );
+		if ( is_wp_error( $elementor_data ) ) {
+			return $elementor_data;
+		}
+		$raw_elementor_css = self::decode_payload_field( $body, 'elementor_css', '' );
+		if ( is_wp_error( $raw_elementor_css ) ) {
+			return $raw_elementor_css;
+		}
+		$elementor_css  = self::sanitize_template_css( (string) $raw_elementor_css );
 		$exact_render   = ! empty( $body['exact_render'] );
 		// WordPress Elementor pages are always published as Elementor Full Width.
 		// Do not let requests switch to theme default/canvas/HTML layouts.
@@ -88,9 +95,11 @@ class XXXV_Elementor {
 		if ( '' !== $elementor_css ) {
 			$elementor_css = self::map_css_media_references( $elementor_css, $media_report );
 		}
-		if ( $exact_render ) {
-			self::map_exact_html_media_references( $elementor_data, $media_report );
-		}
+		// Exact-render pages can contain many large inline/background image URLs in a
+		// single HTML widget. Importing every one inside the publish REST request is
+		// what pushes shared LiteSpeed hosts into 503/timeouts. Native Elementor media
+		// controls are still synced synchronously; exact HTML assets are synced in a
+		// deferred cron task immediately after the page is saved.
 		if ( is_array( $media_report ) && ! empty( $media_report['failed'] ) ) {
 			// Non-fatal: keep original URLs for any images that could not be
 			// imported (e.g. hotlink-protected CDN assets) and continue so the
@@ -183,6 +192,9 @@ class XXXV_Elementor {
 				throw new Exception( 'Failed to encode Elementor JSON.' );
 			}
 			update_post_meta( $post_id, '_elementor_data', wp_slash( $json ) );
+			if ( $exact_render ) {
+				self::schedule_deferred_exact_media_sync( $post_id );
+			}
 
 			// ---- (5) Generate per-page CSS ------------------------------------
 			self::refresh_elementor_files( $post_id );
@@ -273,6 +285,36 @@ class XXXV_Elementor {
 				array( 'status' => 500 )
 			);
 		}
+	}
+
+	/**
+	 * Decode normal JSON fields, or gzip+base64 fields sent by the SaaS for very
+	 * large exact-render Elementor payloads. Compression keeps LiteSpeed/shared
+	 * hosts from rejecting /wp-json requests before this plugin can handle them.
+	 */
+	private static function decode_payload_field( $body, $field, $default ) {
+		if ( isset( $body[ $field ] ) ) {
+			return $body[ $field ];
+		}
+		$gzip_field = $field . '_gzip';
+		if ( empty( $body[ $gzip_field ] ) || ! is_string( $body[ $gzip_field ] ) ) {
+			return $default;
+		}
+		$binary = base64_decode( $body[ $gzip_field ], true );
+		if ( false === $binary ) {
+			return new WP_Error( 'xxxv_bad_compressed_payload', 'Compressed Elementor payload is not valid base64.', array( 'status' => 400 ) );
+		}
+		if ( function_exists( 'gzdecode' ) ) {
+			$decoded = @gzdecode( $binary );
+		} elseif ( function_exists( 'zlib_decode' ) ) {
+			$decoded = @zlib_decode( $binary );
+		} else {
+			return new WP_Error( 'xxxv_no_zlib', 'This WordPress server cannot decode compressed Elementor payloads because PHP zlib is unavailable.', array( 'status' => 500 ) );
+		}
+		if ( false === $decoded ) {
+			return new WP_Error( 'xxxv_bad_compressed_payload', 'Compressed Elementor payload could not be decoded.', array( 'status' => 400 ) );
+		}
+		return $decoded;
 	}
 
 	/**
@@ -638,6 +680,56 @@ class XXXV_Elementor {
 			}
 		}
 		unset( $element );
+	}
+
+	private static function schedule_deferred_exact_media_sync( $post_id ) {
+		$post_id = absint( $post_id );
+		if ( ! $post_id || ! function_exists( 'wp_schedule_single_event' ) ) {
+			return;
+		}
+		$args = array( $post_id );
+		if ( function_exists( 'wp_next_scheduled' ) && wp_next_scheduled( 'xxxv_deferred_exact_media_sync', $args ) ) {
+			return;
+		}
+		wp_schedule_single_event( time() + 5, 'xxxv_deferred_exact_media_sync', $args );
+		self::log( 'info', 'Deferred exact-render media sync scheduled.', array( 'post_id' => $post_id ) );
+	}
+
+	public static function deferred_exact_media_sync( $post_id ) {
+		$post_id = absint( $post_id );
+		if ( ! $post_id ) {
+			return;
+		}
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( 90 );
+		}
+
+		$saved = get_post_meta( $post_id, '_elementor_data', true );
+		$data  = is_string( $saved ) ? json_decode( $saved, true ) : null;
+		if ( ! is_array( $data ) && is_string( $saved ) ) {
+			$data = json_decode( wp_unslash( $saved ), true );
+		}
+		if ( ! is_array( $data ) || empty( $data ) ) {
+			return;
+		}
+
+		$report = array(
+			'imported' => 0,
+			'reused'   => 0,
+			'failed'   => 0,
+			'urls'     => array(),
+		);
+		self::map_exact_html_media_references( $data, $report );
+
+		$json = wp_json_encode( $data );
+		if ( false !== $json ) {
+			update_post_meta( $post_id, '_elementor_data', wp_slash( $json ) );
+			self::refresh_elementor_files( $post_id );
+			self::regenerate_page_css( $post_id );
+			self::clear_runtime_caches( $post_id );
+		}
+
+		self::log( 'info', 'Deferred exact-render media sync finished.', array( 'post_id' => $post_id, 'report' => $report ) );
 	}
 
 	/**

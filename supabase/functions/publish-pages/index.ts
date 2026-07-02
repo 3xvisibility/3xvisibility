@@ -806,12 +806,12 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // tree, ship it directly so the WordPress page is fully editable in
           // Elementor — no raw HTML fallback.
           let dpElementorData = useExactDirectElementor
-            ? buildExactElementorData(cleanedContent, typeof dp.elementor_css === "string" ? dp.elementor_css : undefined)
+            ? buildExactElementorData(cleanedContent)
             : (typeof dp.elementor_data === "string" ? dp.elementor_data : undefined);
-          let dpElementorCss = typeof dp.elementor_css === "string" ? dp.elementor_css : undefined;
-          if (useExactDirectElementor) {
-            dpElementorCss = [dpElementorCss, extractTemplateCss(cleanedContent)].filter(Boolean).join("\n") || undefined;
-          }
+          // Exact render embeds the template CSS inside the Elementor HTML widget.
+          // Do not also send `elementor_css`, otherwise large styled templates are
+          // duplicated in the REST payload and LiteSpeed hosts can return 503.
+          let dpElementorCss = useExactDirectElementor ? undefined : (typeof dp.elementor_css === "string" ? dp.elementor_css : undefined);
           if (
             website.type === "wordpress" && pubType === "page" && !preserveDesign &&
             !useExactDirectElementor && dpElementorData && dp.content && !dpElementorData.includes("xxxv-s-")
@@ -1250,7 +1250,10 @@ async function handlePublishPages(req: Request): Promise<Response> {
         ) {
           if (shouldUseExactElementorRender(cleanedContent)) {
             payload.elementor_data = buildExactElementorData(cleanedContent);
-            payload.elementor_css = extractTemplateCss(cleanedContent);
+            // Exact render already carries its <style> blocks inside the HTML
+            // widget. Avoid duplicating CSS in post meta to keep the wp-json
+            // publish request small enough for LiteSpeed/shared hosts.
+            payload.elementor_css = undefined;
             payload.elementor_mode = "exact";
             elementorSource = "exact";
             elementorSimilarity = 100;

@@ -3,7 +3,7 @@
  * Plugin Name:       3xVisibility WordPress Connector
  * Plugin URI:        https://3xvisibility.com
  * Description:        Secure companion plugin that bridges your 3xVisibility account and WordPress — publishing native Elementor (Free) & Gutenberg pages, uploading media, regenerating Elementor CSS, clearing caches, and detecting builders/themes/global styles so programmatic pages behave exactly like pages built manually inside WordPress.
- * Version:           1.3.6
+ * Version:           1.3.7
  * Author:            3xVisibility
  * Author URI:        https://3xvisibility.com
  * License:           GPL-2.0+
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'XXXV_CONNECTOR_VERSION', '1.3.6' );
+define( 'XXXV_CONNECTOR_VERSION', '1.3.7' );
 define( 'XXXV_CONNECTOR_FILE', __FILE__ );
 define( 'XXXV_CONNECTOR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'XXXV_CONNECTOR_NS', 'pgp/v1' );
@@ -61,5 +61,6 @@ function xxxv_connector_boot() {
 	// beats any head style Elementor or the active theme injected, so the published
 	// page renders 1:1 with the template even when caching plugins reorder head CSS.
 	add_action( 'wp_footer', array( 'XXXV_Elementor', 'print_template_css' ), PHP_INT_MAX );
+	add_action( 'xxxv_deferred_exact_media_sync', array( 'XXXV_Elementor', 'deferred_exact_media_sync' ), 10, 1 );
 }
 add_action( 'plugins_loaded', 'xxxv_connector_boot' );
