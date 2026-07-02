@@ -358,7 +358,13 @@ export class WordPressConnector implements CmsConnector {
 
     // Publish format: "gutenberg" emits native block-editor content (no Elementor
     // meta / canvas), otherwise the default Elementor flow runs.
-    const format = payload.wordpress_fallback_html ? "html" : (payload.publish_format || "elementor");
+    let format = payload.wordpress_fallback_html ? "html" : (payload.publish_format || "elementor");
+    if (format === "elementor" && !payload.product_data && payload.elementor_data && payload.content) {
+      // The standard REST connector cannot reliably save Elementor through the
+      // document lifecycle. Without the companion plugin, publish stable rendered
+      // HTML/CSS instead of fragile Elementor meta writes.
+      format = "html";
+    }
 
     // WordPress Template Compatibility Engine: build a native, editable Elementor
     // page from the HTML template (pages only, not Shopify-style products).
@@ -467,7 +473,10 @@ export class WordPressConnector implements CmsConnector {
 
     // Rebuild the native Elementor layout when the body content is being updated
     // (skipped in design-preservation mode and for products).
-    const format = payload.wordpress_fallback_html ? "html" : (payload.publish_format || "elementor");
+    let format = payload.wordpress_fallback_html ? "html" : (payload.publish_format || "elementor");
+    if (format === "elementor" && !payload.product_data && payload.elementor_data && payload.content) {
+      format = "html";
+    }
     let elementorApplied = false;
     if (!preserveDesign && !payload.product_data && format === "html" && typeof payload.content === "string") {
       body.content = sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content, "page", await this.themeAssets())) || "<p></p>";
