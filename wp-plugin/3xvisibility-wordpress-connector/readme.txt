@@ -37,7 +37,7 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 == Changelog ==
 
 = 1.3.7 =
-* Fixed LiteSpeed/shared-host 503 publish failures by reducing exact-render REST payload size and deferring exact HTML media syncing until after the Elementor page is saved.
+* Fixed LiteSpeed/shared-host 503 publish failures by compressing large Elementor REST payloads, reducing exact-render CSS duplication, and deferring exact HTML media syncing until after the Elementor page is saved.
 * Added safer user-facing error messages for WordPress HTML/503/504 responses.
 
 = 1.3.6 =
