@@ -151,7 +151,7 @@ export class PgpConnector implements CmsConnector {
     const requestBody = body && typeof body === "object"
       ? { ...(body as Record<string, unknown>), connector_key: this.apiKey }
       : body;
-    let res: Response;
+    let res: Response | null = null;
     let lastText = "";
     const maxAttempts = retryTransient ? 2 : 1;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -168,7 +168,7 @@ export class PgpConnector implements CmsConnector {
       if (!retryTransient || !transient || attempt >= maxAttempts) break;
       await sleep(1_500 * attempt);
     }
-    if (!res.ok) {
+    if (!res || !res.ok) {
       if (res.status === 401 || res.status === 403 || res.status === 404) {
         throw this.connectorSetupError(path, res.status, lastText);
       }
