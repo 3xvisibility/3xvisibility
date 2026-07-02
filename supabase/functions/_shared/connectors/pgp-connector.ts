@@ -115,6 +115,20 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = CONN
   }
 }
 
+async function gzipBase64(input: string): Promise<string | null> {
+  if (!input || typeof CompressionStream === "undefined") return null;
+  const stream = new Blob([new TextEncoder().encode(input)])
+    .stream()
+    .pipeThrough(new CompressionStream("gzip"));
+  const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
 export class PgpConnector implements CmsConnector {
   readonly type = "wordpress";
   private baseUrl: string;
@@ -270,21 +284,42 @@ export class PgpConnector implements CmsConnector {
       return { external_id: String(res.post_id), url: res.url };
     }
 
-    // Elementor: send the stored master JSON verbatim. The connector plugin owns
-    // Media Library imports + attachment-id mapping inside the Elementor model.
+    // Elementor: send the stored master JSON. Exact-render pages can contain a
+    // full HTML/CSS document, so compress large payload fields before sending to
+    // WordPress; shared LiteSpeed hosts often reject oversized wp-json bodies as
+    // 503 before PHP/plugin code can run.
     const elementorData = payload.elementor_data || "";
     const elementorCss = payload.elementor_css || "";
-    const res = await this.call<PublishResponse>("/publish/elementor", "POST", {
+    const exactRender = payload.elementor_mode === "exact";
+    const body: Record<string, unknown> = {
       title,
       slug,
       status,
       post_id: postId,
-      elementor_data: elementorData,
-      elementor_css: elementorCss,
-      exact_render: payload.elementor_mode === "exact",
+      exact_render: exactRender,
       page_template: payload.page_template || "elementor_header_footer",
       meta,
-    }, CONNECTOR_PUBLISH_TIMEOUT_MS, Boolean(postId));
+    };
+    const compressedData = typeof elementorData === "string" && (exactRender || elementorData.length > 150_000)
+      ? await gzipBase64(elementorData).catch(() => null)
+      : null;
+    if (compressedData && compressedData.length < elementorData.length) {
+      body.elementor_data_gzip = compressedData;
+      body.elementor_data_encoding = "gzip+base64";
+    } else {
+      body.elementor_data = elementorData;
+    }
+    const compressedCss = typeof elementorCss === "string" && elementorCss.length > 100_000
+      ? await gzipBase64(elementorCss).catch(() => null)
+      : null;
+    if (compressedCss && compressedCss.length < elementorCss.length) {
+      body.elementor_css_gzip = compressedCss;
+      body.elementor_css_encoding = "gzip+base64";
+    } else {
+      body.elementor_css = elementorCss;
+    }
+
+    const res = await this.call<PublishResponse>("/publish/elementor", "POST", body, CONNECTOR_PUBLISH_TIMEOUT_MS, Boolean(postId));
     if (res.elementor_data_valid === false) {
       throw new Error("3xVisibility Connector publish failed: WordPress saved the page, but _elementor_data did not load back correctly.");
     }
