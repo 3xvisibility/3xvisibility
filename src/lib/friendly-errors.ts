@@ -15,6 +15,19 @@ export function friendlyError(message: string): string {
     return "You've made too many requests. Please wait a moment and try again.";
   }
 
+  // WordPress connector / host overload. Some hosts return a full LiteSpeed or
+  // Cloudflare HTML error page; never surface that raw markup in the UI.
+  if (
+    lower.includes("wordpress connector") &&
+    (msg.includes("503") || msg.includes("504") || lower.includes("service unavailable") || lower.includes("gateway timeout") || lower.includes("litespeed"))
+  ) {
+    return "Your WordPress server temporarily stopped the publish request. The app will now send smaller Elementor payloads; retry publishing once. If it still fails, ask your host to raise PHP memory/max execution time and allow long wp-json requests.";
+  }
+
+  if (msg.includes("413") || lower.includes("payload too large") || lower.includes("request entity too large")) {
+    return "The WordPress server rejected the publish payload as too large. Update the connector plugin and retry; exact-render CSS is now sent only once to reduce request size.";
+  }
+
   // Placeholder URL detection
   if (msg.includes("is a placeholder") || msg.includes("example.com") || msg.includes("example.org") || msg.includes("example.net")) {
     return "This website still has a placeholder URL (example.com). Please go to Settings → Websites and update it to your real domain before continuing.";
@@ -91,6 +104,11 @@ export function friendlyError(message: string): string {
   // Network
   if (lower.includes("network error") || lower.includes("networkerror")) {
     return "Network error. Please check your internet connection and try again.";
+  }
+
+  // Generic raw HTML response cleanup.
+  if (/<html[\s>]|<!doctype html|<body[\s>]|<style[\s>]/i.test(msg)) {
+    return "The server returned an HTML error page instead of JSON. Please retry; if it keeps happening, the WordPress host or security layer is blocking the request.";
   }
 
   return msg || "Something went wrong. Please try again.";
