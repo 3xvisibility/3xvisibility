@@ -897,21 +897,20 @@ async function handlePublishPages(req: Request): Promise<Response> {
 
           // Independent post-publish verification: re-open the page in Elementor
           // to confirm it is truly made of editable native widgets.
-          step("Verifying editor readiness", "running", "Re-opening page in Elementor editor…");
           const verified = await verifyEditorReadiness(connector, result.external_id);
           const readiness = verified ?? result.editor_readiness ?? null;
           if (readiness) {
             const ok = readiness.status === "passed";
             const widgets = typeof readiness.editable_widgets === "number" ? ` (${readiness.editable_widgets} editable widgets)` : "";
-            finishRunning(
+            step(
+              "Verifying editor readiness",
               ok ? "ok" : "warn",
               ok
                 ? `Opens in "Edit with Elementor"${widgets}`
                 : (readiness.reason || "Editor verification incomplete"),
             );
-          } else {
-            finishRunning("ok", "Not an Elementor site — skipped");
           }
+
 
           // Save to generated_pages so it appears in the Generated Pages view
           try {
