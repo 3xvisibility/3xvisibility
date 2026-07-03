@@ -682,13 +682,24 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
       out.push(button(node));
     } else if (CONTAINER_TAGS.has(node.tag)) {
       flush();
+      // Hoist full-bleed hero background images + overlays onto the container
+      // itself (native Elementor hero pattern) instead of emitting stacked,
+      // absolutely-positioned image widgets that collapse the layout.
+      const layers = extractBackgroundLayers(node);
+      const contentNodes = layers.skip.size
+        ? node.children.filter((c) => !layers.skip.has(c))
+        : node.children;
       // Track this container's own text color so descendant text/heading widgets
       // inherit it (CSS cascade parity) when they declare no color of their own.
       const ownColor = CURRENT_RESOLVER ? CURRENT_RESOLVER.resolve(node as NodeLike).color : undefined;
       if (ownColor) CURRENT_COLOR_STACK.push(ownColor);
-      const inner = convertChildren(node.children);
+      const inner = convertChildren(contentNodes);
       if (ownColor) CURRENT_COLOR_STACK.pop();
-      if (inner.length > 0) out.push(container(inner, node));
+      if (inner.length > 0 || layers.bgImage || layers.overlay) {
+        const c = container(inner, node);
+        applyBackgroundLayers(c.settings, layers);
+        out.push(c);
+      }
     } else if (TEXT_TAGS.has(node.tag) && !["span", "strong", "em", "small", "label"].includes(node.tag)) {
       flush();
       out.push(textEditor(serialize(node), node));
