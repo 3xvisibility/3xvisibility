@@ -184,7 +184,110 @@ export function EditorReadinessBadge({ value }: { value: unknown }) {
             </TooltipContent>
           </Tooltip>
         )}
+
+        {r.sections && r.sections.length > 0 && (
+          <SectionParityHeatmap sections={r.sections} />
+        )}
       </span>
     </TooltipProvider>
   );
 }
+
+/** Cell background tone for a section score in the heatmap. */
+function heatCell(score: number): string {
+  if (score >= 85) return "bg-emerald-500/80 text-white border-emerald-600/40";
+  if (score >= 60) return "bg-amber-500/80 text-white border-amber-600/40";
+  if (score >= 30) return "bg-orange-500/80 text-white border-orange-600/40";
+  return "bg-destructive/80 text-white border-destructive/40";
+}
+
+/**
+ * Post-publish section-level parity heatmap. Renders one colored cell per page
+ * section (hero first) and, on click, lists the exact widgets in that section
+ * whose design did NOT convert to native Elementor styles.
+ */
+function SectionParityHeatmap({ sections }: { sections: SectionParity[] }) {
+  const mismatchCount = sections.filter((s) => s.parity_score < 85).length;
+  const allGood = mismatchCount === 0;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Badge
+          variant="outline"
+          className={
+            allGood
+              ? "text-[10px] inline-flex items-center gap-1 cursor-pointer bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+              : "text-[10px] inline-flex items-center gap-1 cursor-pointer bg-amber-500/10 text-amber-600 border-amber-500/20"
+          }
+        >
+          <Grid2x2 className="h-2.5 w-2.5" />
+          {allGood ? "All sections match" : `${mismatchCount} section${mismatchCount === 1 ? "" : "s"} to review`}
+        </Badge>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-3 space-y-3" align="start">
+        <div>
+          <p className="text-xs font-semibold flex items-center gap-1.5">
+            <Grid2x2 className="h-3.5 w-3.5" /> Section parity heatmap
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Each cell is a page section. Red/orange = design that didn't fully convert to native
+            widgets. Click a section to see which widgets to check.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5">
+          {sections.map((s) => (
+            <Tooltip key={s.index}>
+              <TooltipTrigger asChild>
+                <div
+                  className={`min-w-[2.75rem] flex-1 rounded-md border px-1.5 py-1 text-center ${heatCell(s.parity_score)}`}
+                >
+                  <div className="text-[9px] font-medium leading-tight truncate">
+                    {s.is_hero ? "Hero" : `S${s.index + 1}`}
+                  </div>
+                  <div className="text-[11px] font-bold leading-tight">{s.parity_score}%</div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs space-y-1">
+                <p className="text-xs font-medium">{s.label}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {s.styled_nodes}/{s.total_nodes} widgets styled · {s.background_layers} bg ·{" "}
+                  {s.overlay_layers} overlay
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+
+        <div className="space-y-2 max-h-56 overflow-y-auto">
+          {sections
+            .filter((s) => s.parity_score < 85 && s.weak_widgets.length > 0)
+            .map((s) => (
+              <div key={s.index} className="rounded-md border bg-muted/40 p-2">
+                <p className="text-[11px] font-semibold flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3 text-amber-500" />
+                  {s.label} — {s.weak_widgets.length} widget
+                  {s.weak_widgets.length === 1 ? "" : "s"} not matching
+                </p>
+                <ul className="mt-1 space-y-0.5">
+                  {s.weak_widgets.map((w, i) => (
+                    <li key={i} className="text-[10px] text-muted-foreground flex gap-1">
+                      <span className="font-mono text-foreground/70">{w.type}</span>
+                      {w.text && <span className="truncate">— {w.text}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          {mismatchCount === 0 && (
+            <p className="text-[11px] text-emerald-600 flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" /> Every section converted to native widgets.
+            </p>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
