@@ -950,7 +950,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // Independent post-publish verification: re-open the page in Elementor
           // to confirm it is truly made of editable native widgets.
           const verified = await verifyEditorReadiness(connector, result.external_id);
-          const readiness = verified ?? result.editor_readiness ?? null;
+          const readiness = withParityStats(verified ?? result.editor_readiness ?? null, (payload as { elementor_data?: string }).elementor_data);
           if (readiness) {
             const ok = readiness.status === "passed";
             const widgets = typeof readiness.editable_widgets === "number" ? ` (${readiness.editable_widgets} editable widgets)` : "";
