@@ -36,6 +36,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.3.9 =
+* Template-library-first publishing: every published page is now first saved as a native Elementor "Saved Template" and then re-imported into the page through Elementor's own import pipeline (element IDs regenerated, per-widget on_import handlers run). This makes every element a fully-native, editable widget so the published design matches the source 1:1. Falls back to direct publishing automatically if the library import is unavailable.
+
 = 1.3.8 =
 * Reliable one-click & automatic self-updates: no more manual download & re-import. Adds "Check for updates" link, keeps plugin active after update, and enables background auto-updates.
 
