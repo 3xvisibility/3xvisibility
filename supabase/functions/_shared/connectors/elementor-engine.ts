@@ -1052,7 +1052,7 @@ const STYLE_SETTING_KEYS = [
   "_transform_opacity", "_blend_mode", "_transform_rotate", "_transform_rotateZ_effect",
   "_transform_scale", "_transform_scale_effect", "_transform_translate",
   "_transform_translateX_effect", "_transform_translateY_effect", "_transform_skew",
-  "__xxxv_background", "__xxxv_box_shadow", "__xxxv_border",
+  "__xxxv_background", "__xxxv_box_shadow", "__xxxv_border", "__xxxv_grid_template_columns",
   "__xxxv_transform", "__xxxv_mix_blend_mode", "__xxxv_background_blend_mode",
 ];
 
