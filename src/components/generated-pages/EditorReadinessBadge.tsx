@@ -1,6 +1,19 @@
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { CheckCircle2, ShieldAlert, Layers, Gauge } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CheckCircle2, ShieldAlert, Layers, Gauge, Grid2x2, AlertTriangle } from "lucide-react";
+
+export interface SectionParity {
+  index: number;
+  label: string;
+  is_hero: boolean;
+  total_nodes: number;
+  styled_nodes: number;
+  parity_score: number;
+  background_layers: number;
+  overlay_layers: number;
+  weak_widgets: { type: string; text: string }[];
+}
 
 export interface EditorReadiness {
   status?: "passed" | "failed" | "unknown" | string;
@@ -12,6 +25,37 @@ export interface EditorReadiness {
   background_layers?: number | null;
   overlay_layers?: number | null;
   parity_score?: number | null;
+  sections?: SectionParity[] | null;
+}
+
+function parseSections(value: unknown): SectionParity[] | null {
+  if (!Array.isArray(value)) return null;
+  const out: SectionParity[] = [];
+  for (const raw of value) {
+    if (!raw || typeof raw !== "object") continue;
+    const s = raw as Record<string, unknown>;
+    const num = (x: unknown, d = 0) => (typeof x === "number" ? x : d);
+    const weak = Array.isArray(s.weak_widgets)
+      ? (s.weak_widgets as unknown[])
+          .filter((w): w is Record<string, unknown> => !!w && typeof w === "object")
+          .map((w) => ({
+            type: typeof w.type === "string" ? w.type : "widget",
+            text: typeof w.text === "string" ? w.text : "",
+          }))
+      : [];
+    out.push({
+      index: num(s.index),
+      label: typeof s.label === "string" ? s.label : `Section ${num(s.index) + 1}`,
+      is_hero: s.is_hero === true,
+      total_nodes: num(s.total_nodes),
+      styled_nodes: num(s.styled_nodes),
+      parity_score: num(s.parity_score),
+      background_layers: num(s.background_layers),
+      overlay_layers: num(s.overlay_layers),
+      weak_widgets: weak,
+    });
+  }
+  return out.length ? out : null;
 }
 
 /** Safely coerce the jsonb column into a typed EditorReadiness object. */
@@ -30,6 +74,7 @@ export function parseEditorReadiness(value: unknown): EditorReadiness | null {
     background_layers: num(v.background_layers),
     overlay_layers: num(v.overlay_layers),
     parity_score: num(v.parity_score),
+    sections: parseSections(v.sections),
   };
 }
 
