@@ -505,8 +505,10 @@ export function styleContainer(settings: Record<string, unknown>, p: StyleProps,
   if (p.backgroundImage) {
     settings.background_background = "classic";
     settings.background_image = { url: p.backgroundImage, id: "" };
-    settings.background_size = "cover";
-    settings.background_position = "center center";
+    settings.background_size = normalizeBgSize(p.backgroundSize);
+    settings.background_position = normalizeBgPosition(p.backgroundPosition);
+    if (p.backgroundRepeat) settings.background_repeat = p.backgroundRepeat;
+    if (p.backgroundBlendMode) settings.__xxxv_background_blend_mode = p.backgroundBlendMode;
   }
   const pad = sidesToElementorSafe(p.padding);
   if (pad) settings.padding = pad;
