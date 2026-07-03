@@ -792,21 +792,38 @@ class XXXV_Elementor {
 		if ( ! is_array( $value ) ) {
 			return self::css_value( $value );
 		}
-		$unit = isset( $value['unit'] ) ? $value['unit'] : 'px';
-		// Coerce missing/empty sides to a valid "0" so we never emit garbage like
-		// "0px px 0px px" (an empty side + unit) which invalidates the whole rule.
+		// Sanitise the unit: only allow real CSS length/percent units, else px.
+		$unit = isset( $value['unit'] ) ? strtolower( trim( (string) $value['unit'] ) ) : 'px';
+		$allowed_units = array( 'px', 'em', 'rem', '%', 'vw', 'vh', 'vmin', 'vmax', 'ch' );
+		if ( ! in_array( $unit, $allowed_units, true ) ) {
+			$unit = 'px';
+		}
+		// Strict coercion: pull the numeric part out of each side (handles values
+		// that already carry a unit like "10px", stray text, or empties) so we
+		// never emit garbage like "0px px 0px px" that invalidates the whole rule.
 		$norm = function ( $v ) {
 			$v = trim( (string) $v );
-			return ( '' === $v ) ? '0' : $v;
+			if ( '' === $v ) {
+				return '0';
+			}
+			if ( preg_match( '/-?\d*\.?\d+/', $v, $m ) ) {
+				$num = $m[0];
+				// Guard against malformed floats like "." or trailing dot.
+				return is_numeric( $num ) ? rtrim( rtrim( $num, '0' ), '.' ) ?: '0' : '0';
+			}
+			return '0';
 		};
+		$has_side = isset( $value['top'] ) || isset( $value['right'] ) || isset( $value['bottom'] ) || isset( $value['left'] );
 		$top = $norm( isset( $value['top'] ) ? $value['top'] : '' );
 		$right = $norm( isset( $value['right'] ) ? $value['right'] : ( isset( $value['top'] ) ? $value['top'] : '' ) );
 		$bottom = $norm( isset( $value['bottom'] ) ? $value['bottom'] : ( isset( $value['top'] ) ? $value['top'] : '' ) );
 		$left = $norm( isset( $value['left'] ) ? $value['left'] : ( isset( $value['right'] ) ? $value['right'] : '' ) );
-		if ( '0' === $top && '0' === $right && '0' === $bottom && '0' === $left
-			&& ! isset( $value['top'] ) && ! isset( $value['right'] ) && ! isset( $value['bottom'] ) && ! isset( $value['left'] ) ) {
+		// Nothing meaningful was provided — emit nothing rather than a zero box.
+		if ( ! $has_side ) {
 			return '';
 		}
+		// A zero-side stays valid only when it carries a unit ("0" is unitless-ok,
+		// but keep the unit for consistency with Elementor output).
 		return self::css_value( $top . $unit . ' ' . $right . $unit . ' ' . $bottom . $unit . ' ' . $left . $unit );
 	}
 
