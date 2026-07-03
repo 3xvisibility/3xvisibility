@@ -186,6 +186,18 @@ class XXXV_Elementor {
 				}
 			}
 
+			// ---- Template-library-first pipeline ------------------------------
+			// Save the JSON as a native Elementor Library template, then re-import
+			// it through Elementor's own import routine so every element is a
+			// fully-native, editable widget before we apply it to the page.
+			if ( $save_as_template ) {
+				$imported = self::save_and_import_via_library( $elementor_data, $title, $post_id );
+				if ( is_array( $imported ) && ! empty( $imported ) ) {
+					$elementor_data = $imported;
+					self::normalize_top_level_containers( $elementor_data );
+				}
+			}
+
 			// ---- Save through Elementor's own document API so internal element cache,
 			// controls, breakpoints, responsive data and editor state match a manual
 			// Elementor save. This is REQUIRED and fatal on failure.
