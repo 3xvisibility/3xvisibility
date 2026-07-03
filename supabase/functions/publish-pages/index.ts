@@ -1544,7 +1544,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         // to confirm it is truly made of editable native widgets, not raw HTML.
         step("Verifying editor readiness", "running", "Re-opening page in Elementor editor…");
         const verified = await verifyEditorReadiness(connector, result.external_id);
-        const readiness = withParityStats(verified ?? result.editor_readiness ?? null, (payload as { elementor_data?: string }).elementor_data);
+        let readiness = withParityStats(verified ?? result.editor_readiness ?? null, (payload as { elementor_data?: string }).elementor_data);
         if (readiness) {
           const ok = readiness.status === "passed";
           const widgets = typeof readiness.editable_widgets === "number" ? ` (${readiness.editable_widgets} editable widgets)` : "";
@@ -1557,6 +1557,18 @@ async function handlePublishPages(req: Request): Promise<Response> {
         } else {
           finishRunning("ok", "Not an Elementor site — skipped");
         }
+
+        // Automatic native re-import retry: if the page did not pass editor
+        // readiness, rebuild the failed widgets and republish through the native
+        // template-library pipeline only (no direct-publish fallback).
+        if (!isReadinessHealthy(readiness)) {
+          const retry = await retryNativeReimport(connector, result.external_id, payload, readiness, step);
+          if (retry) {
+            readiness = retry.readiness;
+            finishRunning(isReadinessHealthy(readiness) ? "ok" : "warn");
+          }
+        }
+
 
         step("Saving record", "running");
         await supabase.from("generated_pages").update({
