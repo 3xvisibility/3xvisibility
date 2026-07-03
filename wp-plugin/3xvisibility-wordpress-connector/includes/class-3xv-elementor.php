@@ -1162,6 +1162,72 @@ class XXXV_Elementor {
 	}
 
 	/**
+	 * Save the incoming Elementor JSON as a native Elementor Library template and
+	 * re-import it through Elementor's own template pipeline.
+	 *
+	 * This mirrors exactly what happens when a user saves a design as a template
+	 * and then inserts it into a page from the Elementor library: element IDs are
+	 * regenerated and each widget runs its own `on_import` handler, so the result
+	 * is a set of fully-native, editable widgets rather than a raw meta blob.
+	 *
+	 * The saved template stays available under Templates -> Saved Templates. Any
+	 * failure is non-fatal: we simply return the original data so publishing still
+	 * succeeds with the direct-injection path.
+	 *
+	 * @param array  $data    Decoded Elementor elements array.
+	 * @param string $title   Page title (used to name the saved template).
+	 * @param int    $post_id Target page id (for logging / reference meta).
+	 * @return array Processed elements array (or the original on any failure).
+	 */
+	private static function save_and_import_via_library( $data, $title, $post_id ) {
+		try {
+			if ( ! class_exists( '\Elementor\Plugin' ) || ! \Elementor\Plugin::$instance ) {
+				return $data;
+			}
+			$manager = \Elementor\Plugin::$instance->templates_manager;
+			if ( ! $manager ) {
+				return $data;
+			}
+			$source = $manager->get_source( 'local' );
+			if ( ! $source || ! method_exists( $source, 'save_item' ) ) {
+				return $data;
+			}
+
+			// 1) Persist the JSON as a reusable Elementor Library template (page type).
+			$template_id = $source->save_item(
+				array(
+					'content'       => $data,
+					'title'         => $title . ' (3xVisibility)',
+					'type'          => 'page',
+					'page_settings' => array(),
+				)
+			);
+			if ( is_wp_error( $template_id ) || ! $template_id ) {
+				self::log( 'warn', 'Could not save Elementor library template; using direct data.', array( 'post_id' => $post_id ) );
+				return $data;
+			}
+			update_post_meta( $post_id, '_xxxv_source_template_id', (int) $template_id );
+
+			// 2) Re-read the template back through Elementor's export/import pipeline.
+			//    Source_Local::get_data() runs replace_elements_ids() + each widget's
+			//    on_import handler, returning fully-native, editable element data.
+			if ( ! method_exists( $source, 'get_data' ) ) {
+				return $data;
+			}
+			$processed = $source->get_data( array( 'template_id' => (int) $template_id ) );
+			if ( is_array( $processed ) && isset( $processed['content'] ) && is_array( $processed['content'] ) && ! empty( $processed['content'] ) ) {
+				self::log( 'info', 'Imported page from saved Elementor library template.', array( 'post_id' => $post_id, 'template_id' => (int) $template_id ) );
+				return $processed['content'];
+			}
+			return $data;
+		} catch ( \Throwable $e ) {
+			self::log( 'warn', 'Template-library import fell back to direct data: ' . $e->getMessage(), array( 'post_id' => $post_id ) );
+			return $data;
+		}
+	}
+
+
+	/**
 	 * Regenerate the CSS for a single Elementor page.
 	 */
 	public static function regenerate_page_css( $post_id ) {
