@@ -1018,7 +1018,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // Independent post-publish verification: re-open the page in Elementor
           // to confirm it is truly made of editable native widgets.
           const verified = await verifyEditorReadiness(connector, result.external_id);
-          const readiness = withParityStats(verified ?? result.editor_readiness ?? null, (payload as { elementor_data?: string }).elementor_data);
+          let readiness = withParityStats(verified ?? result.editor_readiness ?? null, (payload as { elementor_data?: string }).elementor_data);
           if (readiness) {
             const ok = readiness.status === "passed";
             const widgets = typeof readiness.editable_widgets === "number" ? ` (${readiness.editable_widgets} editable widgets)` : "";
@@ -1030,6 +1030,13 @@ async function handlePublishPages(req: Request): Promise<Response> {
                 : (readiness.reason || "Editor verification incomplete"),
             );
           }
+
+          // Automatic native re-import retry (no direct-publish fallback).
+          if (!isReadinessHealthy(readiness)) {
+            const retry = await retryNativeReimport(connector, result.external_id, payload, readiness, step);
+            if (retry) readiness = retry.readiness;
+          }
+
 
 
           // Save to generated_pages so it appears in the Generated Pages view
