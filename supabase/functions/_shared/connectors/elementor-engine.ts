@@ -847,6 +847,86 @@ export function htmlToElementor(html: string, siteContext?: SiteContext): Elemen
 }
 
 /**
+ * Recursively walk an Elementor element tree and report any "html" widgets.
+ * A published WordPress page must be made of native, editable Elementor
+ * widgets — never a raw HTML block. This is the detection half of the
+ * native-only guarantee enforced at publish time.
+ */
+export function findHtmlWidgets(tree: ElementorElement[]): ElementorElement[] {
+  const found: ElementorElement[] = [];
+  const walk = (els: ElementorElement[] | undefined) => {
+    if (!Array.isArray(els)) return;
+    for (const el of els) {
+      if (el?.elType === "widget" && el?.widgetType === "html") found.push(el);
+      if (Array.isArray(el?.elements)) walk(el.elements);
+    }
+  };
+  walk(tree);
+  return found;
+}
+
+/** True when the given `_elementor_data` JSON string contains any HTML widget. */
+export function elementorDataHasHtmlWidget(dataStr: string | undefined | null): boolean {
+  if (!dataStr) return false;
+  try {
+    const parsed = JSON.parse(dataStr);
+    return Array.isArray(parsed) && findHtmlWidgets(parsed).length > 0;
+  } catch {
+    // Fast path: raw substring check when JSON is malformed.
+    return /"widgetType"\s*:\s*"html"/.test(dataStr);
+  }
+}
+
+/**
+ * NATIVE-ONLY GUARANTEE. Given an `_elementor_data` JSON string, ensure it
+ * contains ZERO raw HTML widgets. If a stray HTML widget is detected the whole
+ * tree is rebuilt from its embedded markup into native Elementor containers +
+ * widgets so the published page is always editable in Elementor (free).
+ *
+ * Returns the guaranteed-native JSON string. `onRebuilt` fires when a rebuild
+ * was required (for timeline/logging). Throws if a native tree cannot be
+ * produced — publishing a non-native page is never allowed.
+ */
+export function enforceNativeElementorData(
+  dataStr: string,
+  siteContext?: SiteContext,
+  onRebuilt?: (count: number) => void,
+): string {
+  if (!dataStr) throw new Error("enforceNativeElementorData: empty elementor_data");
+  let parsed: ElementorElement[];
+  try {
+    parsed = JSON.parse(dataStr);
+  } catch {
+    parsed = [];
+  }
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error("enforceNativeElementorData: invalid elementor_data tree");
+  }
+  const htmlWidgets = findHtmlWidgets(parsed);
+  if (htmlWidgets.length === 0) return dataStr;
+
+  // Recover the embedded markup from every HTML widget and rebuild as native.
+  const embedded = htmlWidgets
+    .map((w) => (typeof w.settings?.html === "string" ? (w.settings.html as string) : ""))
+    .filter(Boolean)
+    .join("\n");
+  const rebuilt = htmlToElementor(embedded, siteContext);
+  if (!Array.isArray(rebuilt) || rebuilt.length === 0) {
+    throw new Error(
+      "enforceNativeElementorData: HTML widget detected and could not be converted to native Elementor widgets.",
+    );
+  }
+  const rebuiltStr = JSON.stringify(rebuilt);
+  if (elementorDataHasHtmlWidget(rebuiltStr)) {
+    throw new Error(
+      "enforceNativeElementorData: rebuilt tree still contains an HTML widget — refusing to publish.",
+    );
+  }
+  onRebuilt?.(htmlWidgets.length);
+  return rebuiltStr;
+}
+
+/**
  * Legacy helper retained for compatibility with old imports. It no longer builds
  * HTML widgets: WordPress publishing is native Elementor JSON only.
  */

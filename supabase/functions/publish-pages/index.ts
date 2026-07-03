@@ -3,7 +3,7 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
-import { buildExactElementorData, htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
+import { buildExactElementorData, htmlToElementor, enforceNativeElementorData, elementorDataHasHtmlWidget } from "../_shared/connectors/elementor-engine.ts";
 import { PgpConnector } from "../_shared/connectors/pgp-connector.ts";
 
 type EditorReadiness = NonNullable<import("../_shared/connectors/types.ts").ConnectorResult["editor_readiness"]>;
@@ -47,6 +47,16 @@ async function verifyEditorReadiness(
  */
 const ELEMENTOR_SIMILARITY_TARGET = 98;
 const MAX_REBUILD_ATTEMPTS = 4;
+
+/**
+ * NATIVE-ONLY GUARANTEE FLAG. When true (default, and non-overridable in
+ * normal operation) WordPress pages are ALWAYS published as native, editable
+ * Elementor containers + widgets — never wrapped in a single raw HTML widget.
+ * The "exact render" HTML-widget path is disabled and every outgoing
+ * `elementor_data` payload is passed through `enforceNativeElementorData`,
+ * which detects and rebuilds any stray HTML widget before the page is created.
+ */
+const FORCE_NATIVE_ELEMENTOR = true;
 
 /** A single step in the publish timeline returned to the client for tracking. */
 interface PublishStep {
@@ -880,12 +890,34 @@ async function handlePublishPages(req: Request): Promise<Response> {
                 "WordPress publishing is native Elementor only. Provide native Elementor JSON (elementor_data) or publish from a campaign with a stored Elementor JSON template.",
               );
             }
+            // NATIVE-ONLY GUARANTEE: never let a raw HTML widget reach WordPress.
+            if (FORCE_NATIVE_ELEMENTOR) {
+              try {
+                dpElementorData = enforceNativeElementorData(
+                  dpElementorData,
+                  undefined,
+                  (n) => step("Enforcing native widgets", "warn", `Rebuilt ${n} HTML widget(s) into native Elementor widgets`),
+                );
+              } catch (e) {
+                throw new Error(
+                  `WordPress publishing is native Elementor only and the page could not be made native: ${e instanceof Error ? e.message : String(e)}`,
+                );
+              }
+            }
             payload.elementor_data = dpElementorData;
             payload.elementor_css = dpElementorCss;
             payload.elementor_mode = "native";
             step("Routing native Elementor JSON", "ok", "Full-width containers + native widgets");
           }
 
+
+          // Final native-only assertion: never ship an HTML-widget page.
+          if (
+            FORCE_NATIVE_ELEMENTOR && (payload as { elementor_mode?: string }).elementor_mode &&
+            elementorDataHasHtmlWidget((payload as { elementor_data?: string }).elementor_data)
+          ) {
+            throw new Error("Publish blocked: outgoing Elementor payload still contains a raw HTML widget (native-only guarantee).");
+          }
 
           // If an external_id is provided, update the existing page; otherwise create new
           step(dp.external_id ? "Updating existing page" : "Creating page on site", "running");
@@ -1305,7 +1337,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           resolvedPublishType === "page" && !preserveDesign && publishFormat === "elementor" &&
           websiteType === "wordpress"
         ) {
-          if (shouldUseExactElementorRender(cleanedContent)) {
+          if (!FORCE_NATIVE_ELEMENTOR && shouldUseExactElementorRender(cleanedContent)) {
             payload.elementor_data = buildExactElementorData(cleanedContent);
             // Exact render already carries its <style> blocks inside the HTML
             // widget. Avoid duplicating CSS in post meta to keep the wp-json
@@ -1340,7 +1372,25 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // the catalog (placeholder-only content applied). The page is fully
           // editable inside Elementor as native Containers + widgets. Image URLs
           // and CSS assets are uploaded/mapped by the connector plugin.
-          payload.elementor_data = catalog.data;
+          let catalogData = catalog.data;
+          // NATIVE-ONLY GUARANTEE: reject/rebuild any stray HTML widget so the
+          // published page is always editable as native Elementor widgets.
+          if (FORCE_NATIVE_ELEMENTOR) {
+            try {
+              catalogData = enforceNativeElementorData(
+                catalogData,
+                undefined,
+                (n) => step("Enforcing native widgets", "warn", `Rebuilt ${n} HTML widget(s) into native Elementor widgets`),
+              );
+            } catch (e) {
+              const msg = `Publish blocked: stored template is not native Elementor and could not be converted: ${e instanceof Error ? e.message : String(e)}`;
+              console.error("[publish-pages]", msg, { pageId: page.id });
+              await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+              step("Native widget enforcement failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
+              continue;
+            }
+          }
+          payload.elementor_data = catalogData;
           payload.elementor_css = catalog.css;
           payload.elementor_mode = "native";
           elementorSource = "catalog";
@@ -1382,6 +1432,18 @@ async function handlePublishPages(req: Request): Promise<Response> {
           ...directShopifySuffixes,
         };
         applyShopifySuffix(payload, (page.websites as { type?: string })?.type, pageSuffixes, resolvedPublishType);
+
+        // Final native-only assertion: never ship an HTML-widget page.
+        if (
+          FORCE_NATIVE_ELEMENTOR && (payload as { elementor_mode?: string }).elementor_mode &&
+          elementorDataHasHtmlWidget((payload as { elementor_data?: string }).elementor_data)
+        ) {
+          const msg = "Publish blocked: outgoing Elementor payload still contains a raw HTML widget (native-only guarantee).";
+          console.error("[publish-pages]", msg, { pageId: page.id });
+          await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+          finishRunning("error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
+          continue;
+        }
 
         // If page was previously published (has external_id), update instead of creating
         step(page.external_id ? "Updating on store" : "Creating on store", "running");
