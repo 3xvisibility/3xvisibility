@@ -229,11 +229,28 @@ function declsToProps(d: Record<string, string>): StyleProps {
     if (urlM) p.backgroundImage = urlM[1].replace(/['"]/g, "").trim();
     const colM = bg.match(/#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)/);
     if (colM && !p.backgroundColor) p.backgroundColor = colM[0];
+    // background shorthand: pull out repeat + size/position when an image is present.
+    if (p.backgroundImage) {
+      const repM = bg.match(/\b(no-repeat|repeat-x|repeat-y|repeat|space|round)\b/i);
+      if (repM) p.backgroundRepeat = repM[1].toLowerCase();
+      const sizeM = bg.match(/\b(cover|contain)\b/i);
+      if (sizeM) p.backgroundSize = sizeM[1].toLowerCase();
+      // position after a `/` (e.g. `center / cover`) or common keywords.
+      const posM = bg.match(/\b(center|top|bottom|left|right)(?:\s+(center|top|bottom|left|right))?\b/i);
+      if (posM) p.backgroundPosition = posM[0].toLowerCase();
+    }
   }
   if (d["background-image"]) {
     const urlM = d["background-image"].match(/url\(([^)]+)\)/i);
     if (urlM) p.backgroundImage = urlM[1].replace(/['"]/g, "").trim();
   }
+  if (d["background-size"]) p.backgroundSize = d["background-size"].trim();
+  if (d["background-position"]) p.backgroundPosition = d["background-position"].trim();
+  if (d["background-repeat"]) p.backgroundRepeat = d["background-repeat"].trim();
+  if (d["background-blend-mode"]) p.backgroundBlendMode = d["background-blend-mode"].trim();
+  if (d["mix-blend-mode"]) p.mixBlendMode = d["mix-blend-mode"].trim();
+  if (d["transform"]) p.transform = d["transform"].trim();
+  if (d["transform-origin"]) p.transformOrigin = d["transform-origin"].trim();
   if (d["font-family"]) p.fontFamily = d["font-family"].split(",")[0].replace(/['"]/g, "").trim();
   if (d["font-size"]) p.fontSize = d["font-size"];
   if (d["font-weight"]) p.fontWeight = d["font-weight"];
