@@ -911,6 +911,14 @@ async function handlePublishPages(req: Request): Promise<Response> {
           }
 
 
+          // Final native-only assertion: never ship an HTML-widget page.
+          if (
+            FORCE_NATIVE_ELEMENTOR && (payload as { elementor_mode?: string }).elementor_mode &&
+            elementorDataHasHtmlWidget((payload as { elementor_data?: string }).elementor_data)
+          ) {
+            throw new Error("Publish blocked: outgoing Elementor payload still contains a raw HTML widget (native-only guarantee).");
+          }
+
           // If an external_id is provided, update the existing page; otherwise create new
           step(dp.external_id ? "Updating existing page" : "Creating page on site", "running");
           const result = dp.external_id
