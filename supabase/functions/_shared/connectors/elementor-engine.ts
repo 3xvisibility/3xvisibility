@@ -550,6 +550,102 @@ function container(children: ElementorElement[], node?: HtmlNode, topLevel = fal
   return { id: genId(), elType: "container", settings, elements: children };
 }
 
+/* --------------------- hero / background layers -------------------------- */
+
+interface BackgroundLayers {
+  bgImage?: string;
+  overlay?: string; // raw CSS color or gradient
+  skip: Set<HtmlNode>;
+}
+
+const COLOR_RE = /#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\)/g;
+
+/**
+ * Detect full-bleed background images and overlay layers among a container's
+ * direct children. Templates commonly build heroes as:
+ *   <section class="hero">           position:relative
+ *     <img class="hero-bg">          position:absolute; inset:0; object-fit:cover
+ *     <div class="hero-ov"></div>    position:absolute; inset:0; background:gradient
+ *     <div class="hero-in">...</div> the real content
+ * Native Elementor widgets do NOT honor absolute positioning, so an absolute
+ * cover <img> becomes a stacked image widget and the whole hero collapses. We
+ * instead hoist those layers onto the container's own background + overlay
+ * (exactly how Elementor models hero sections) and drop the source nodes.
+ */
+function extractBackgroundLayers(node: HtmlNode): BackgroundLayers {
+  const layers: BackgroundLayers = { skip: new Set() };
+  if (!CURRENT_RESOLVER) return layers;
+  const kids = node.children.filter((c) => c.tag);
+  // Only treat as a hero-style stack when the parent is a positioning context
+  // (relative/absolute) or explicitly named a hero — avoids hoisting normal
+  // in-flow images/backgrounds from ordinary sections.
+  const parentProps = CURRENT_RESOLVER.resolve(node as NodeLike);
+  const looksHero = parentProps.position === "relative" ||
+    parentProps.position === "absolute" ||
+    parentProps.overflow === "hidden" ||
+    hasClassToken(node, "hero") ||
+    /hero/.test(node.attrs.class || "");
+  if (!looksHero) return layers;
+
+  for (const child of kids) {
+    const p = CURRENT_RESOLVER.resolve(child as NodeLike);
+    const isAbsolute = p.position === "absolute";
+    // Full-bleed cover image -> container background image.
+    if (
+      child.tag === "img" &&
+      (isAbsolute || hasClass(child, "-bg", "hero-bg", "bg-image", "cover")) &&
+      (p.objectFit === "cover" || isAbsolute) &&
+      !layers.bgImage
+    ) {
+      const src = child.attrs.src || p.backgroundImage;
+      if (src) { layers.bgImage = src; layers.skip.add(child); continue; }
+    }
+    // Absolute, content-less layer with a background -> overlay.
+    if (
+      isAbsolute &&
+      !textContent(child).trim() &&
+      !findNode(child, (n) => n.tag === "img") &&
+      (p.background || p.backgroundColor || p.backgroundImage) &&
+      !layers.overlay
+    ) {
+      layers.overlay = p.background || p.backgroundColor;
+      if (p.backgroundImage && !layers.bgImage) layers.bgImage = p.backgroundImage;
+      layers.skip.add(child);
+    }
+  }
+  return layers;
+}
+
+/** Apply hoisted hero background + overlay onto an Elementor container. */
+function applyBackgroundLayers(settings: Record<string, unknown>, layers: BackgroundLayers): void {
+  if (layers.bgImage) {
+    settings.background_background = "classic";
+    settings.background_image = { url: layers.bgImage, id: "" };
+    settings.background_size = "cover";
+    settings.background_position = "center center";
+  }
+  if (layers.overlay) {
+    const ov = layers.overlay;
+    if (/gradient\s*\(/i.test(ov)) {
+      const colors = ov.match(COLOR_RE) || [];
+      const angleM = ov.match(/(-?\d+(?:\.\d+)?)deg/);
+      settings.background_overlay_background = "gradient";
+      if (colors[0]) settings.background_overlay_color = colors[0];
+      if (colors[colors.length - 1]) settings.background_overlay_color_b = colors[colors.length - 1];
+      settings.background_overlay_gradient_type = "linear";
+      settings.background_overlay_gradient_angle = { unit: "deg", size: angleM ? parseFloat(angleM[1]) : 135, sizes: [] };
+    } else {
+      settings.background_overlay_background = "classic";
+      settings.background_overlay_color = ov;
+    }
+    settings.background_overlay_opacity = { unit: "px", size: 1, sizes: [] };
+  }
+  // A hero with a background needs height to be visible.
+  if ((layers.bgImage || layers.overlay) && !settings.min_height) {
+    settings.min_height = { unit: "px", size: 560 };
+  }
+}
+
 /* --------------------------- tree conversion ----------------------------- */
 
 function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
@@ -586,13 +682,24 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
       out.push(button(node));
     } else if (CONTAINER_TAGS.has(node.tag)) {
       flush();
+      // Hoist full-bleed hero background images + overlays onto the container
+      // itself (native Elementor hero pattern) instead of emitting stacked,
+      // absolutely-positioned image widgets that collapse the layout.
+      const layers = extractBackgroundLayers(node);
+      const contentNodes = layers.skip.size
+        ? node.children.filter((c) => !layers.skip.has(c))
+        : node.children;
       // Track this container's own text color so descendant text/heading widgets
       // inherit it (CSS cascade parity) when they declare no color of their own.
       const ownColor = CURRENT_RESOLVER ? CURRENT_RESOLVER.resolve(node as NodeLike).color : undefined;
       if (ownColor) CURRENT_COLOR_STACK.push(ownColor);
-      const inner = convertChildren(node.children);
+      const inner = convertChildren(contentNodes);
       if (ownColor) CURRENT_COLOR_STACK.pop();
-      if (inner.length > 0) out.push(container(inner, node));
+      if (inner.length > 0 || layers.bgImage || layers.overlay) {
+        const c = container(inner, node);
+        applyBackgroundLayers(c.settings, layers);
+        out.push(c);
+      }
     } else if (TEXT_TAGS.has(node.tag) && !["span", "strong", "em", "small", "label"].includes(node.tag)) {
       flush();
       out.push(textEditor(serialize(node), node));
