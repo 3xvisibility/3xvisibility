@@ -52,6 +52,7 @@ function withParityStats(
     background_layers: stats.background_layers,
     overlay_layers: stats.overlay_layers,
     parity_score: stats.parity_score,
+    sections: sectionHeatmapFromData(elementorData),
   };
 }
 
