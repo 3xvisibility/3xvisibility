@@ -64,6 +64,13 @@ class XXXV_Elementor {
 		}
 		$elementor_css  = self::sanitize_template_css( (string) $raw_elementor_css );
 		$exact_render   = ! empty( $body['exact_render'] );
+		// When true (default), the incoming JSON is first stored as a native
+		// Elementor Library template (Templates -> Saved Templates) and then
+		// re-imported through Elementor's own template pipeline before it is
+		// applied to the page. This makes every element a fully-native, editable
+		// widget (IDs regenerated, per-widget on_import handlers run) instead of a
+		// raw meta injection, so the published page matches the design 1:1.
+		$save_as_template = ! isset( $body['save_as_template'] ) || ! empty( $body['save_as_template'] );
 		// WordPress Elementor pages are always published as Elementor Full Width.
 		// Do not let requests switch to theme default/canvas/HTML layouts.
 		$page_template  = 'elementor_header_footer';
