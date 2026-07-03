@@ -1364,7 +1364,25 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // the catalog (placeholder-only content applied). The page is fully
           // editable inside Elementor as native Containers + widgets. Image URLs
           // and CSS assets are uploaded/mapped by the connector plugin.
-          payload.elementor_data = catalog.data;
+          let catalogData = catalog.data;
+          // NATIVE-ONLY GUARANTEE: reject/rebuild any stray HTML widget so the
+          // published page is always editable as native Elementor widgets.
+          if (FORCE_NATIVE_ELEMENTOR) {
+            try {
+              catalogData = enforceNativeElementorData(
+                catalogData,
+                undefined,
+                (n) => step("Enforcing native widgets", "warn", `Rebuilt ${n} HTML widget(s) into native Elementor widgets`),
+              );
+            } catch (e) {
+              const msg = `Publish blocked: stored template is not native Elementor and could not be converted: ${e instanceof Error ? e.message : String(e)}`;
+              console.error("[publish-pages]", msg, { pageId: page.id });
+              await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+              step("Native widget enforcement failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
+              continue;
+            }
+          }
+          payload.elementor_data = catalogData;
           payload.elementor_css = catalog.css;
           payload.elementor_mode = "native";
           elementorSource = "catalog";
