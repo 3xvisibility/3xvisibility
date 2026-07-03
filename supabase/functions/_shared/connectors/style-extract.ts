@@ -249,6 +249,12 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["object-fit"]) p.objectFit = d["object-fit"];
   if (d["opacity"]) p.opacity = d["opacity"];
   if (d["position"]) p.position = d["position"];
+  if (d["z-index"]) p.zIndex = d["z-index"];
+  if (d["top"]) p.top = d["top"];
+  if (d["right"]) p.right = d["right"];
+  if (d["bottom"]) p.bottom = d["bottom"];
+  if (d["left"]) p.left = d["left"];
+  if (d["inset"]) p.inset = d["inset"];
 
   const box = (prefix: "padding" | "margin"): Partial<BoxSides> | undefined => {
     const sides: Partial<BoxSides> = {};
