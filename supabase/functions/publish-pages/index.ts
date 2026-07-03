@@ -35,6 +35,26 @@ async function verifyEditorReadiness(
   }
 }
 
+/**
+ * Enrich an editor-readiness result with background/overlay layer counts and a
+ * CSS-parity score derived from the outgoing Elementor payload. Non-mutating —
+ * returns a new object so the stats surface on the readiness badge.
+ */
+function withParityStats(
+  readiness: EditorReadiness | null,
+  elementorData: string | undefined | null,
+): EditorReadiness | null {
+  if (!readiness) return readiness;
+  const stats = parityStatsFromData(elementorData);
+  if (!stats) return readiness;
+  return {
+    ...readiness,
+    background_layers: stats.background_layers,
+    overlay_layers: stats.overlay_layers,
+    parity_score: stats.parity_score,
+  };
+}
+
 
 
 /**
