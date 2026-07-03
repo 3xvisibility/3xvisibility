@@ -56,6 +56,73 @@ function withParityStats(
   };
 }
 
+/** A publish is "editor-healthy" when it opened in Elementor with native widgets. */
+function isReadinessHealthy(readiness: EditorReadiness | null): boolean {
+  if (!readiness) return true; // non-Elementor site — nothing to retry
+  return readiness.status === "passed";
+}
+
+/**
+ * Automatic native re-import retry. When the first publish did NOT pass the
+ * editor-readiness check, rebuild any remaining non-native (HTML) widgets into
+ * native Elementor widgets and republish EXCLUSIVELY through the native
+ * template-library pipeline (`force_native` — no direct-publish REST fallback).
+ * Returns the retry's publish result + verified readiness, or null when a retry
+ * is not applicable (non-Elementor site, no post id, or already healthy).
+ */
+async function retryNativeReimport(
+  connector: unknown,
+  externalId: string | undefined,
+  payload: Partial<PagePayload>,
+  currentReadiness: EditorReadiness | null,
+  step: (label: string, status: string, detail?: string) => void,
+): Promise<{ readiness: EditorReadiness | null; elementorData: string | undefined } | null> {
+  if (!(connector instanceof PgpConnector)) return null;
+  if (!externalId) return null;
+  if (isReadinessHealthy(currentReadiness)) return null;
+  const originalData = payload.elementor_data;
+  if (!originalData || (payload.elementor_mode !== "native")) return null;
+
+  step("Retrying failed widgets (native re-import)", "running", currentReadiness?.reason || "Rebuilding non-native widgets…");
+
+  // Rebuild only the widgets that are still non-native (raw HTML widgets are the
+  // ones that fail readiness); already-native widgets are left untouched.
+  let repaired = originalData;
+  let rebuiltCount = 0;
+  try {
+    repaired = enforceNativeElementorData(originalData, undefined, (n) => { rebuiltCount = n; });
+  } catch (e) {
+    step("Native re-import failed", "warn", e instanceof Error ? e.message : String(e));
+    return null;
+  }
+
+  const retryPayload: Partial<PagePayload> = {
+    ...payload,
+    elementor_data: repaired,
+    elementor_mode: "native",
+    force_native: true,           // never fall back to direct REST publish
+    reimport_failed_widgets: true, // library re-import of the failed widgets
+  };
+
+  try {
+    const retryResult = await (connector as PgpConnector).updatePage(externalId, retryPayload);
+    const verified = await verifyEditorReadiness(connector, retryResult.external_id || externalId);
+    const readiness = withParityStats(verified ?? retryResult.editor_readiness ?? null, repaired);
+    const ok = isReadinessHealthy(readiness);
+    step(
+      "Native re-import complete",
+      ok ? "ok" : "warn",
+      ok
+        ? `Re-imported ${rebuiltCount || "failed"} widget(s) as native — page now passes editor readiness`
+        : (readiness?.reason || "Some widgets still not native after re-import"),
+    );
+    return { readiness, elementorData: repaired };
+  } catch (e) {
+    step("Native re-import failed", "warn", e instanceof Error ? e.message : String(e));
+    return null;
+  }
+}
+
 
 
 /**
