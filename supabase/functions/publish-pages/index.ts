@@ -4,6 +4,37 @@ import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
 import { buildExactElementorData, htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
+import { PgpConnector } from "../_shared/connectors/pgp-connector.ts";
+
+type EditorReadiness = NonNullable<import("../_shared/connectors/types.ts").ConnectorResult["editor_readiness"]>;
+
+/**
+ * Independent post-publish verification: after a page is published to WordPress,
+ * actually re-open it through the connector's `/validate-editor` endpoint to
+ * confirm it loads in "Edit with Elementor" mode with real editable native
+ * widgets (not a single HTML block). Returns a structured readiness result, or
+ * null when the site is not a WordPress/Elementor connector. Never throws — a
+ * verification hiccup must not fail an otherwise-successful publish.
+ */
+async function verifyEditorReadiness(
+  connector: unknown,
+  externalId?: string,
+): Promise<EditorReadiness | null> {
+  if (!externalId || !(connector instanceof PgpConnector)) return null;
+  try {
+    return await connector.recheckEditorReadiness(externalId);
+  } catch (err) {
+    return {
+      status: "unknown",
+      reason: err instanceof Error ? err.message : "Editor-readiness verification could not complete.",
+      attempts: null,
+      editable_widgets: null,
+      edit_mode: null,
+      checked_at: new Date().toISOString(),
+    };
+  }
+}
+
 
 
 /**
