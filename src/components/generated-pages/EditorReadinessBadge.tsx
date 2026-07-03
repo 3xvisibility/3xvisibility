@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { CheckCircle2, ShieldAlert } from "lucide-react";
+import { CheckCircle2, ShieldAlert, Layers, Gauge } from "lucide-react";
 
 export interface EditorReadiness {
   status?: "passed" | "failed" | "unknown" | string;
@@ -9,6 +9,9 @@ export interface EditorReadiness {
   editable_widgets?: number | null;
   edit_mode?: string | null;
   checked_at?: string | null;
+  background_layers?: number | null;
+  overlay_layers?: number | null;
+  parity_score?: number | null;
 }
 
 /** Safely coerce the jsonb column into a typed EditorReadiness object. */
@@ -16,13 +19,17 @@ export function parseEditorReadiness(value: unknown): EditorReadiness | null {
   if (!value || typeof value !== "object") return null;
   const v = value as Record<string, unknown>;
   if (!("status" in v) && !("checked_at" in v)) return null;
+  const num = (x: unknown) => (typeof x === "number" ? x : null);
   return {
     status: typeof v.status === "string" ? v.status : "unknown",
     reason: typeof v.reason === "string" ? v.reason : null,
-    attempts: typeof v.attempts === "number" ? v.attempts : null,
-    editable_widgets: typeof v.editable_widgets === "number" ? v.editable_widgets : null,
+    attempts: num(v.attempts),
+    editable_widgets: num(v.editable_widgets),
     edit_mode: typeof v.edit_mode === "string" ? v.edit_mode : null,
     checked_at: typeof v.checked_at === "string" ? v.checked_at : null,
+    background_layers: num(v.background_layers),
+    overlay_layers: num(v.overlay_layers),
+    parity_score: num(v.parity_score),
   };
 }
 
@@ -31,6 +38,13 @@ function formatTimestamp(iso?: string | null): string | null {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
   return d.toLocaleString();
+}
+
+/** Tailwind color classes for a 0-100 parity score. */
+function parityTone(score: number): string {
+  if (score >= 85) return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+  if (score >= 60) return "bg-amber-500/10 text-amber-600 border-amber-500/20";
+  return "bg-destructive/10 text-destructive border-destructive/20";
 }
 
 /**
