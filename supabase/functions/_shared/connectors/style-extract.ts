@@ -487,6 +487,7 @@ export function styleImage(settings: Record<string, unknown>, p: StyleProps): vo
   const br = pxSize(p.borderRadius);
   if (br) settings.image_border_radius = { unit: br.unit, top: String(br.size), right: String(br.size), bottom: String(br.size), left: String(br.size), isLinked: true };
   if (p.objectFit) settings.object_fit = p.objectFit;
+  applyOpacityBlendTransform(settings, p);
 }
 
 /** Bake container styles (background, padding, margin, alignment, width). */
