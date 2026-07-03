@@ -895,12 +895,22 @@ async function handlePublishPages(req: Request): Promise<Response> {
           steps[steps.length - 1].status = "ok";
           steps[steps.length - 1].detail = result.url || result.external_id;
 
-          if (result.editor_readiness) {
-            step(
-              "Verifying editor readiness",
-              result.editor_readiness.ready ? "ok" : "warn",
-              result.editor_readiness.ready ? "Page opens in Elementor editor" : "Editor verification incomplete",
+          // Independent post-publish verification: re-open the page in Elementor
+          // to confirm it is truly made of editable native widgets.
+          step("Verifying editor readiness", "running", "Re-opening page in Elementor editor…");
+          const verified = await verifyEditorReadiness(connector, result.external_id);
+          const readiness = verified ?? result.editor_readiness ?? null;
+          if (readiness) {
+            const ok = readiness.status === "passed";
+            const widgets = typeof readiness.editable_widgets === "number" ? ` (${readiness.editable_widgets} editable widgets)` : "";
+            finishRunning(
+              ok ? "ok" : "warn",
+              ok
+                ? `Opens in "Edit with Elementor"${widgets}`
+                : (readiness.reason || "Editor verification incomplete"),
             );
+          } else {
+            finishRunning("ok", "Not an Elementor site — skipped");
           }
 
           // Save to generated_pages so it appears in the Generated Pages view
@@ -919,9 +929,10 @@ async function handlePublishPages(req: Request): Promise<Response> {
               status: "published",
               external_id: result.external_id,
               external_url: result.url,
-              editor_readiness: result.editor_readiness ?? null,
+              editor_readiness: readiness,
               publish_steps: steps,
             });
+
             step("Saving to Generated Pages", "ok");
           } catch (insertErr) {
             console.error("Failed to save to generated_pages:", insertErr);
