@@ -30,6 +30,13 @@ export interface StyleProps {
   backgroundColor?: string;
   backgroundImage?: string;
   background?: string;
+  backgroundSize?: string;
+  backgroundPosition?: string;
+  backgroundRepeat?: string;
+  backgroundBlendMode?: string;
+  mixBlendMode?: string;
+  transform?: string;
+  transformOrigin?: string;
   fontFamily?: string;
   fontSize?: string;
   fontWeight?: string;
@@ -222,11 +229,28 @@ function declsToProps(d: Record<string, string>): StyleProps {
     if (urlM) p.backgroundImage = urlM[1].replace(/['"]/g, "").trim();
     const colM = bg.match(/#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)/);
     if (colM && !p.backgroundColor) p.backgroundColor = colM[0];
+    // background shorthand: pull out repeat + size/position when an image is present.
+    if (p.backgroundImage) {
+      const repM = bg.match(/\b(no-repeat|repeat-x|repeat-y|repeat|space|round)\b/i);
+      if (repM) p.backgroundRepeat = repM[1].toLowerCase();
+      const sizeM = bg.match(/\b(cover|contain)\b/i);
+      if (sizeM) p.backgroundSize = sizeM[1].toLowerCase();
+      // position after a `/` (e.g. `center / cover`) or common keywords.
+      const posM = bg.match(/\b(center|top|bottom|left|right)(?:\s+(center|top|bottom|left|right))?\b/i);
+      if (posM) p.backgroundPosition = posM[0].toLowerCase();
+    }
   }
   if (d["background-image"]) {
     const urlM = d["background-image"].match(/url\(([^)]+)\)/i);
     if (urlM) p.backgroundImage = urlM[1].replace(/['"]/g, "").trim();
   }
+  if (d["background-size"]) p.backgroundSize = d["background-size"].trim();
+  if (d["background-position"]) p.backgroundPosition = d["background-position"].trim();
+  if (d["background-repeat"]) p.backgroundRepeat = d["background-repeat"].trim();
+  if (d["background-blend-mode"]) p.backgroundBlendMode = d["background-blend-mode"].trim();
+  if (d["mix-blend-mode"]) p.mixBlendMode = d["mix-blend-mode"].trim();
+  if (d["transform"]) p.transform = d["transform"].trim();
+  if (d["transform-origin"]) p.transformOrigin = d["transform-origin"].trim();
   if (d["font-family"]) p.fontFamily = d["font-family"].split(",")[0].replace(/['"]/g, "").trim();
   if (d["font-size"]) p.fontSize = d["font-size"];
   if (d["font-weight"]) p.fontWeight = d["font-weight"];
@@ -463,6 +487,7 @@ export function styleImage(settings: Record<string, unknown>, p: StyleProps): vo
   const br = pxSize(p.borderRadius);
   if (br) settings.image_border_radius = { unit: br.unit, top: String(br.size), right: String(br.size), bottom: String(br.size), left: String(br.size), isLinked: true };
   if (p.objectFit) settings.object_fit = p.objectFit;
+  applyOpacityBlendTransform(settings, p);
 }
 
 /** Bake container styles (background, padding, margin, alignment, width). */
@@ -481,8 +506,10 @@ export function styleContainer(settings: Record<string, unknown>, p: StyleProps,
   if (p.backgroundImage) {
     settings.background_background = "classic";
     settings.background_image = { url: p.backgroundImage, id: "" };
-    settings.background_size = "cover";
-    settings.background_position = "center center";
+    settings.background_size = normalizeBgSize(p.backgroundSize);
+    settings.background_position = normalizeBgPosition(p.backgroundPosition);
+    if (p.backgroundRepeat) settings.background_repeat = p.backgroundRepeat;
+    if (p.backgroundBlendMode) settings.__xxxv_background_blend_mode = p.backgroundBlendMode;
   }
   const pad = sidesToElementorSafe(p.padding);
   if (pad) settings.padding = pad;
@@ -517,7 +544,59 @@ export function styleContainer(settings: Record<string, unknown>, p: StyleProps,
     settings.content_width = "boxed";
     settings.width = { unit: "px", size: mw.size };
   }
+  applyOpacityBlendTransform(settings, p);
   if (Object.keys(globals).length) settings.__globals__ = globals;
+}
+
+/** Normalize a CSS background-size into Elementor's accepted values. */
+function normalizeBgSize(v?: string): string {
+  const val = (v || "").trim().toLowerCase();
+  if (val === "cover" || val === "contain" || val === "auto") return val;
+  return val ? "custom" : "cover";
+}
+
+/** Normalize a CSS background-position into Elementor's keyword set (fallback custom). */
+function normalizeBgPosition(v?: string): string {
+  const val = (v || "").trim().toLowerCase();
+  const known = new Set([
+    "center center", "center left", "center right",
+    "top center", "top left", "top right",
+    "bottom center", "bottom left", "bottom right",
+  ]);
+  if (!val) return "center center";
+  if (known.has(val)) return val;
+  if (val === "center") return "center center";
+  if (val === "top") return "top center";
+  if (val === "bottom") return "bottom center";
+  if (val === "left") return "center left";
+  if (val === "right") return "center right";
+  return "custom";
+}
+
+/**
+ * Bake opacity, mix-blend-mode and CSS transforms. Elementor exposes opacity +
+ * transform natively; blend mode is preserved as a bridge key applied via CSS.
+ */
+function applyOpacityBlendTransform(settings: Record<string, unknown>, p: StyleProps): void {
+  if (p.opacity) {
+    const o = parseFloat(p.opacity);
+    if (Number.isFinite(o)) {
+      settings._element_custom_css_opacity = o;
+      settings.opacity = { unit: "px", size: o, sizes: [] };
+    }
+  }
+  if (p.mixBlendMode && p.mixBlendMode !== "normal") {
+    settings.mix_blend_mode = p.mixBlendMode;
+    settings.__xxxv_mix_blend_mode = p.mixBlendMode;
+  }
+  if (p.transform) {
+    settings.__xxxv_transform = p.transform;
+    const rot = p.transform.match(/rotate\(\s*(-?[\d.]+)deg\s*\)/i);
+    if (rot) settings.transform_rotateZ_effect = { unit: "px", size: parseFloat(rot[1]), sizes: [] };
+    const scaleM = p.transform.match(/scale\(\s*(-?[\d.]+)/i);
+    if (scaleM) settings.transform_scale_effect = { unit: "px", size: parseFloat(scaleM[1]), sizes: [] };
+    if (p.transformOrigin) settings.__xxxv_transform_origin = p.transformOrigin;
+  }
 }
 
 /* --------------------------- responsive baking --------------------------- */
