@@ -394,15 +394,24 @@ function gridColumnCount(v?: string): number {
 
 function sidesToElementor(sides?: Partial<BoxSides>): Record<string, unknown> | undefined {
   if (!sides) return undefined;
-  const num = (v?: string) => (v ? (v.match(/-?[\d.]+/)?.[0] ?? "") : "");
-  return {
-    unit: "px",
-    top: num(sides.top),
-    right: num(sides.right),
-    bottom: num(sides.bottom),
-    left: num(sides.left),
-    isLinked: false,
+  // Strict numeric extraction with safe "0" coercion so we never emit a box
+  // with an empty side (which serialises to invalid CSS like "0px px 0px px").
+  const num = (v?: string): string => {
+    if (v === undefined || v === null) return "0";
+    const m = String(v).match(/-?\d*\.?\d+/);
+    if (!m) return "0";
+    const n = parseFloat(m[0]);
+    return Number.isFinite(n) ? String(n) : "0";
   };
+  const top = num(sides.top);
+  const right = num(sides.right ?? sides.top);
+  const bottom = num(sides.bottom ?? sides.top);
+  const left = num(sides.left ?? sides.right);
+  // Nothing meaningful was set — omit the box entirely.
+  if (sides.top === undefined && sides.right === undefined && sides.bottom === undefined && sides.left === undefined) {
+    return undefined;
+  }
+  return { unit: "px", top, right, bottom, left, isLinked: false };
 }
 
 function hexEq(a: string, b: string): boolean {
