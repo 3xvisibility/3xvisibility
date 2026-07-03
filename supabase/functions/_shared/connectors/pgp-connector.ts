@@ -174,6 +174,8 @@ export class PgpConnector implements CmsConnector {
   }
 
   private shouldUseStandardFallback(info: ConnectorPingResponse | null | undefined, payload: Partial<PagePayload>): boolean {
+    // Native-retry pass: never drop to the direct-publish REST fallback.
+    if (payload.force_native) return false;
     if (!this.standardFallback || !payload.content) return false;
     if (!info) return true;
     if (info.capabilities?.standard_rest_fallback === true) return true;
