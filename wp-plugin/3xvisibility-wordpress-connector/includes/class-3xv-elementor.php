@@ -835,7 +835,18 @@ class XXXV_Elementor {
 			$decls = array();
 
 			if ( 'container' === ( isset( $element['elType'] ) ? $element['elType'] : '' ) ) {
-				$decls['display'] = ( isset( $settings['container_type'] ) && 'grid' === $settings['container_type'] ) ? 'grid' : 'flex';
+				$is_grid = ( isset( $settings['container_type'] ) && 'grid' === $settings['container_type'] );
+				$decls['display'] = $is_grid ? 'grid' : 'flex';
+				// Grid containers need explicit column tracks or they collapse to a
+				// single column (breaks two-column heroes). Prefer the exact tracks
+				// captured from the source, else fall back to N equal columns.
+				if ( $is_grid ) {
+					if ( ! empty( $settings['__xxxv_grid_template_columns'] ) ) {
+						$decls['grid-template-columns'] = $settings['__xxxv_grid_template_columns'];
+					} elseif ( isset( $settings['grid_columns_grid']['size'] ) && (int) $settings['grid_columns_grid']['size'] > 0 ) {
+						$decls['grid-template-columns'] = 'repeat(' . (int) $settings['grid_columns_grid']['size'] . ', 1fr)';
+					}
+				}
 				if ( isset( $settings['flex_direction'] ) ) $decls['flex-direction'] = $settings['flex_direction'];
 				if ( isset( $settings['flex_wrap'] ) ) $decls['flex-wrap'] = $settings['flex_wrap'];
 				if ( isset( $settings['flex_align_items'] ) ) $decls['align-items'] = $settings['flex_align_items'];
