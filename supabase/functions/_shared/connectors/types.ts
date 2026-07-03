@@ -122,6 +122,12 @@ export interface ConnectorResult {
     editable_widgets?: number | null;
     edit_mode?: string | null;
     checked_at: string;
+    /** Number of native background-image layers detected in the payload. */
+    background_layers?: number | null;
+    /** Number of native background overlay (color/gradient) layers detected. */
+    overlay_layers?: number | null;
+    /** 0-100 CSS-parity score: share of nodes with baked extracted styles. */
+    parity_score?: number | null;
   };
 }
 

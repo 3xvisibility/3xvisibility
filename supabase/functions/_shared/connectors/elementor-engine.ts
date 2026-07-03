@@ -1021,6 +1021,84 @@ export function findHtmlWidgets(tree: ElementorElement[]): ElementorElement[] {
   return found;
 }
 
+/** Aggregate CSS-parity + background/overlay stats for a converted Elementor tree. */
+export interface ElementorParityStats {
+  /** Containers/widgets carrying a native background image. */
+  background_layers: number;
+  /** Containers carrying a native background overlay (color/gradient). */
+  overlay_layers: number;
+  /** Containers carrying a gradient background. */
+  gradient_layers: number;
+  /** Total container + widget nodes in the tree. */
+  total_nodes: number;
+  /** Nodes that carry at least one baked style setting. */
+  styled_nodes: number;
+  /**
+   * 0-100 parity score: share of nodes that received baked CSS (typography,
+   * color, background, spacing, layout) from the extracted stylesheet. Higher =
+   * more of the template's design was reproduced natively.
+   */
+  parity_score: number;
+}
+
+const STYLE_SETTING_KEYS = [
+  "title_color", "text_color", "typography_typography", "typography_font_size",
+  "typography_font_family", "align", "background_background", "background_color",
+  "background_image", "background_overlay_background", "padding", "margin",
+  "min_height", "border_radius", "flex_direction", "flex_align_items",
+  "flex_justify_content", "gap", "grid_columns_grid", "content_width", "width",
+  "object_fit", "opacity", "mix_blend_mode", "background_size",
+  "background_position", "background_repeat",
+  "__xxxv_background", "__xxxv_box_shadow", "__xxxv_border",
+  "__xxxv_transform", "__xxxv_mix_blend_mode", "__xxxv_background_blend_mode",
+];
+
+function nodeHasBakedStyle(settings: Record<string, unknown> | undefined): boolean {
+  if (!settings) return false;
+  if (settings.__globals__ && Object.keys(settings.__globals__ as object).length) return true;
+  return STYLE_SETTING_KEYS.some((k) => settings[k] !== undefined && settings[k] !== null && settings[k] !== "");
+}
+
+export function computeElementorParityStats(tree: ElementorElement[]): ElementorParityStats {
+  let background_layers = 0;
+  let overlay_layers = 0;
+  let gradient_layers = 0;
+  let total_nodes = 0;
+  let styled_nodes = 0;
+
+  const walk = (els: ElementorElement[] | undefined) => {
+    if (!Array.isArray(els)) return;
+    for (const el of els) {
+      if (!el) continue;
+      total_nodes++;
+      const s = el.settings as Record<string, unknown> | undefined;
+      if (nodeHasBakedStyle(s)) styled_nodes++;
+      if (s) {
+        if (s.background_image && (s.background_image as { url?: string })?.url) background_layers++;
+        if (s.background_overlay_background) overlay_layers++;
+        if (s.background_background === "gradient" || s.__xxxv_background) gradient_layers++;
+      }
+      if (Array.isArray(el.elements)) walk(el.elements);
+    }
+  };
+  walk(tree);
+
+  const parity_score = total_nodes > 0 ? Math.round((styled_nodes / total_nodes) * 100) : 0;
+  return { background_layers, overlay_layers, gradient_layers, total_nodes, styled_nodes, parity_score };
+}
+
+/** Compute parity stats directly from an `_elementor_data` JSON string (safe). */
+export function parityStatsFromData(dataStr: string | undefined | null): ElementorParityStats | null {
+  if (!dataStr) return null;
+  try {
+    const parsed = JSON.parse(dataStr);
+    if (!Array.isArray(parsed)) return null;
+    return computeElementorParityStats(parsed);
+  } catch {
+    return null;
+  }
+}
+
 /** True when the given `_elementor_data` JSON string contains any HTML widget. */
 export function elementorDataHasHtmlWidget(dataStr: string | undefined | null): boolean {
   if (!dataStr) return false;
