@@ -4,6 +4,37 @@ import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
 import { buildExactElementorData, htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
+import { PgpConnector } from "../_shared/connectors/pgp-connector.ts";
+
+type EditorReadiness = NonNullable<import("../_shared/connectors/types.ts").ConnectorResult["editor_readiness"]>;
+
+/**
+ * Independent post-publish verification: after a page is published to WordPress,
+ * actually re-open it through the connector's `/validate-editor` endpoint to
+ * confirm it loads in "Edit with Elementor" mode with real editable native
+ * widgets (not a single HTML block). Returns a structured readiness result, or
+ * null when the site is not a WordPress/Elementor connector. Never throws — a
+ * verification hiccup must not fail an otherwise-successful publish.
+ */
+async function verifyEditorReadiness(
+  connector: unknown,
+  externalId?: string,
+): Promise<EditorReadiness | null> {
+  if (!externalId || !(connector instanceof PgpConnector)) return null;
+  try {
+    return await connector.recheckEditorReadiness(externalId);
+  } catch (err) {
+    return {
+      status: "unknown",
+      reason: err instanceof Error ? err.message : "Editor-readiness verification could not complete.",
+      attempts: null,
+      editable_widgets: null,
+      edit_mode: null,
+      checked_at: new Date().toISOString(),
+    };
+  }
+}
+
 
 
 /**
@@ -864,13 +895,22 @@ async function handlePublishPages(req: Request): Promise<Response> {
           steps[steps.length - 1].status = "ok";
           steps[steps.length - 1].detail = result.url || result.external_id;
 
-          if (result.editor_readiness) {
+          // Independent post-publish verification: re-open the page in Elementor
+          // to confirm it is truly made of editable native widgets.
+          const verified = await verifyEditorReadiness(connector, result.external_id);
+          const readiness = verified ?? result.editor_readiness ?? null;
+          if (readiness) {
+            const ok = readiness.status === "passed";
+            const widgets = typeof readiness.editable_widgets === "number" ? ` (${readiness.editable_widgets} editable widgets)` : "";
             step(
               "Verifying editor readiness",
-              result.editor_readiness.ready ? "ok" : "warn",
-              result.editor_readiness.ready ? "Page opens in Elementor editor" : "Editor verification incomplete",
+              ok ? "ok" : "warn",
+              ok
+                ? `Opens in "Edit with Elementor"${widgets}`
+                : (readiness.reason || "Editor verification incomplete"),
             );
           }
+
 
           // Save to generated_pages so it appears in the Generated Pages view
           try {
@@ -888,9 +928,10 @@ async function handlePublishPages(req: Request): Promise<Response> {
               status: "published",
               external_id: result.external_id,
               external_url: result.url,
-              editor_readiness: result.editor_readiness ?? null,
+              editor_readiness: readiness,
               publish_steps: steps,
             });
+
             step("Saving to Generated Pages", "ok");
           } catch (insertErr) {
             console.error("Failed to save to generated_pages:", insertErr);
@@ -1349,14 +1390,33 @@ async function handlePublishPages(req: Request): Promise<Response> {
           : await withTimeout(connector.createPage(payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${page.title}`);
         finishRunning("ok", result.url || result.external_id);
 
+        // Independent post-publish verification: re-open the page in Elementor
+        // to confirm it is truly made of editable native widgets, not raw HTML.
+        step("Verifying editor readiness", "running", "Re-opening page in Elementor editor…");
+        const verified = await verifyEditorReadiness(connector, result.external_id);
+        const readiness = verified ?? result.editor_readiness ?? null;
+        if (readiness) {
+          const ok = readiness.status === "passed";
+          const widgets = typeof readiness.editable_widgets === "number" ? ` (${readiness.editable_widgets} editable widgets)` : "";
+          finishRunning(
+            ok ? "ok" : "warn",
+            ok
+              ? `Opens in "Edit with Elementor"${widgets}`
+              : (readiness.reason || "Editor verification incomplete"),
+          );
+        } else {
+          finishRunning("ok", "Not an Elementor site — skipped");
+        }
+
         step("Saving record", "running");
         await supabase.from("generated_pages").update({
           status: "published",
           external_id: result.external_id,
           external_url: result.url,
           error_message: null,
-          editor_readiness: result.editor_readiness ?? null,
+          editor_readiness: readiness,
         }).eq("id", page.id);
+
         finishRunning("ok");
 
         step("Published", "ok", result.url);
