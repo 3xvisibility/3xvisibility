@@ -128,6 +128,18 @@ export interface ConnectorResult {
     overlay_layers?: number | null;
     /** 0-100 CSS-parity score: share of nodes with baked extracted styles. */
     parity_score?: number | null;
+    /** Per-section parity heatmap: which hero/sections/widgets did not match. */
+    sections?: {
+      index: number;
+      label: string;
+      is_hero: boolean;
+      total_nodes: number;
+      styled_nodes: number;
+      parity_score: number;
+      background_layers: number;
+      overlay_layers: number;
+      weak_widgets: { type: string; text: string }[];
+    }[] | null;
   };
 }
 
