@@ -890,6 +890,20 @@ async function handlePublishPages(req: Request): Promise<Response> {
                 "WordPress publishing is native Elementor only. Provide native Elementor JSON (elementor_data) or publish from a campaign with a stored Elementor JSON template.",
               );
             }
+            // NATIVE-ONLY GUARANTEE: never let a raw HTML widget reach WordPress.
+            if (FORCE_NATIVE_ELEMENTOR) {
+              try {
+                dpElementorData = enforceNativeElementorData(
+                  dpElementorData,
+                  undefined,
+                  (n) => step("Enforcing native widgets", "warn", `Rebuilt ${n} HTML widget(s) into native Elementor widgets`),
+                );
+              } catch (e) {
+                throw new Error(
+                  `WordPress publishing is native Elementor only and the page could not be made native: ${e instanceof Error ? e.message : String(e)}`,
+                );
+              }
+            }
             payload.elementor_data = dpElementorData;
             payload.elementor_css = dpElementorCss;
             payload.elementor_mode = "native";
