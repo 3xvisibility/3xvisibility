@@ -57,37 +57,89 @@ export function EditorReadinessBadge({ value }: { value: unknown }) {
 
   const passed = r.status === "passed";
   const ts = formatTimestamp(r.checked_at);
+  const hasParity = typeof r.parity_score === "number";
+  const bgLayers = typeof r.background_layers === "number" ? r.background_layers : null;
+  const ovLayers = typeof r.overlay_layers === "number" ? r.overlay_layers : null;
+  const totalLayers = (bgLayers ?? 0) + (ovLayers ?? 0);
 
   return (
     <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge
-            variant="outline"
-            className={
-              passed
-                ? "text-[10px] inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                : "text-[10px] inline-flex items-center gap-1 bg-destructive/10 text-destructive border-destructive/20"
-            }
-          >
-            {passed ? <CheckCircle2 className="h-2.5 w-2.5" /> : <ShieldAlert className="h-2.5 w-2.5" />}
-            {passed ? "Editor ready" : "Editor check failed"}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs space-y-1">
-          <p className="text-xs font-medium">
-            {passed ? "Opens in Edit with Elementor" : "Editor-readiness check failed"}
-          </p>
-          {!passed && r.reason && <p className="text-xs">{r.reason}</p>}
-          {typeof r.attempts === "number" && (
-            <p className="text-[11px] text-muted-foreground">Attempts: {r.attempts}</p>
-          )}
-          {typeof r.editable_widgets === "number" && (
-            <p className="text-[11px] text-muted-foreground">Editable widgets: {r.editable_widgets}</p>
-          )}
-          {ts && <p className="text-[11px] text-muted-foreground">Checked: {ts}</p>}
-        </TooltipContent>
-      </Tooltip>
+      <span className="inline-flex flex-wrap items-center gap-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge
+              variant="outline"
+              className={
+                passed
+                  ? "text-[10px] inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                  : "text-[10px] inline-flex items-center gap-1 bg-destructive/10 text-destructive border-destructive/20"
+              }
+            >
+              {passed ? <CheckCircle2 className="h-2.5 w-2.5" /> : <ShieldAlert className="h-2.5 w-2.5" />}
+              {passed ? "Editor ready" : "Editor check failed"}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs space-y-1">
+            <p className="text-xs font-medium">
+              {passed ? "Opens in Edit with Elementor" : "Editor-readiness check failed"}
+            </p>
+            {!passed && r.reason && <p className="text-xs">{r.reason}</p>}
+            {typeof r.attempts === "number" && (
+              <p className="text-[11px] text-muted-foreground">Attempts: {r.attempts}</p>
+            )}
+            {typeof r.editable_widgets === "number" && (
+              <p className="text-[11px] text-muted-foreground">Editable widgets: {r.editable_widgets}</p>
+            )}
+            {bgLayers !== null && (
+              <p className="text-[11px] text-muted-foreground">Background layers: {bgLayers}</p>
+            )}
+            {ovLayers !== null && (
+              <p className="text-[11px] text-muted-foreground">Overlay layers: {ovLayers}</p>
+            )}
+            {hasParity && (
+              <p className="text-[11px] text-muted-foreground">CSS parity score: {r.parity_score}%</p>
+            )}
+            {ts && <p className="text-[11px] text-muted-foreground">Checked: {ts}</p>}
+          </TooltipContent>
+        </Tooltip>
+
+        {(bgLayers !== null || ovLayers !== null) && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                variant="outline"
+                className="text-[10px] inline-flex items-center gap-1 bg-sky-500/10 text-sky-600 border-sky-500/20"
+              >
+                <Layers className="h-2.5 w-2.5" />
+                {totalLayers} layer{totalLayers === 1 ? "" : "s"}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs space-y-1">
+              <p className="text-xs font-medium">Detected background layers</p>
+              <p className="text-[11px] text-muted-foreground">Background images: {bgLayers ?? 0}</p>
+              <p className="text-[11px] text-muted-foreground">Overlays (color/gradient): {ovLayers ?? 0}</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        {hasParity && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant="outline" className={`text-[10px] inline-flex items-center gap-1 ${parityTone(r.parity_score as number)}`}>
+                <Gauge className="h-2.5 w-2.5" />
+                {r.parity_score}% parity
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs space-y-1">
+              <p className="text-xs font-medium">CSS parity score</p>
+              <p className="text-[11px] text-muted-foreground">
+                Share of native widgets that received baked styles extracted from the template's CSS
+                (typography, colors, backgrounds, spacing, layout).
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </span>
     </TooltipProvider>
   );
 }
