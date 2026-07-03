@@ -53,6 +53,7 @@ export interface StyleProps {
   border?: string;
   objectFit?: string;
   opacity?: string;
+  position?: string;
 }
 
 interface MediaCond {
