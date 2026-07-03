@@ -793,11 +793,18 @@ class XXXV_Elementor {
 			return self::css_value( $value );
 		}
 		$unit = isset( $value['unit'] ) ? $value['unit'] : 'px';
-		$top = isset( $value['top'] ) ? $value['top'] : '';
-		$right = isset( $value['right'] ) ? $value['right'] : $top;
-		$bottom = isset( $value['bottom'] ) ? $value['bottom'] : $top;
-		$left = isset( $value['left'] ) ? $value['left'] : $right;
-		if ( '' === (string) $top && '' === (string) $right && '' === (string) $bottom && '' === (string) $left ) {
+		// Coerce missing/empty sides to a valid "0" so we never emit garbage like
+		// "0px px 0px px" (an empty side + unit) which invalidates the whole rule.
+		$norm = function ( $v ) {
+			$v = trim( (string) $v );
+			return ( '' === $v ) ? '0' : $v;
+		};
+		$top = $norm( isset( $value['top'] ) ? $value['top'] : '' );
+		$right = $norm( isset( $value['right'] ) ? $value['right'] : ( isset( $value['top'] ) ? $value['top'] : '' ) );
+		$bottom = $norm( isset( $value['bottom'] ) ? $value['bottom'] : ( isset( $value['top'] ) ? $value['top'] : '' ) );
+		$left = $norm( isset( $value['left'] ) ? $value['left'] : ( isset( $value['right'] ) ? $value['right'] : '' ) );
+		if ( '0' === $top && '0' === $right && '0' === $bottom && '0' === $left
+			&& ! isset( $value['top'] ) && ! isset( $value['right'] ) && ! isset( $value['bottom'] ) && ! isset( $value['left'] ) ) {
 			return '';
 		}
 		return self::css_value( $top . $unit . ' ' . $right . $unit . ' ' . $bottom . $unit . ' ' . $left . $unit );
@@ -828,7 +835,18 @@ class XXXV_Elementor {
 			$decls = array();
 
 			if ( 'container' === ( isset( $element['elType'] ) ? $element['elType'] : '' ) ) {
-				$decls['display'] = ( isset( $settings['container_type'] ) && 'grid' === $settings['container_type'] ) ? 'grid' : 'flex';
+				$is_grid = ( isset( $settings['container_type'] ) && 'grid' === $settings['container_type'] );
+				$decls['display'] = $is_grid ? 'grid' : 'flex';
+				// Grid containers need explicit column tracks or they collapse to a
+				// single column (breaks two-column heroes). Prefer the exact tracks
+				// captured from the source, else fall back to N equal columns.
+				if ( $is_grid ) {
+					if ( ! empty( $settings['__xxxv_grid_template_columns'] ) ) {
+						$decls['grid-template-columns'] = $settings['__xxxv_grid_template_columns'];
+					} elseif ( isset( $settings['grid_columns_grid']['size'] ) && (int) $settings['grid_columns_grid']['size'] > 0 ) {
+						$decls['grid-template-columns'] = 'repeat(' . (int) $settings['grid_columns_grid']['size'] . ', 1fr)';
+					}
+				}
 				if ( isset( $settings['flex_direction'] ) ) $decls['flex-direction'] = $settings['flex_direction'];
 				if ( isset( $settings['flex_wrap'] ) ) $decls['flex-wrap'] = $settings['flex_wrap'];
 				if ( isset( $settings['flex_align_items'] ) ) $decls['align-items'] = $settings['flex_align_items'];

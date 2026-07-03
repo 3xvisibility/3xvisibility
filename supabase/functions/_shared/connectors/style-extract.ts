@@ -523,6 +523,11 @@ export function styleContainer(settings: Record<string, unknown>, p: StyleProps,
     if (cols > 0) {
       settings.grid_columns_grid = { unit: "fr", size: cols, sizes: [] };
     }
+    // Preserve the EXACT track sizing (e.g. "1.1fr 0.9fr") so two-column heroes
+    // keep their real proportions instead of collapsing to a single column.
+    if (p.gridTemplateColumns && p.gridTemplateColumns !== "none") {
+      settings.__xxxv_grid_template_columns = p.gridTemplateColumns;
+    }
   }
   if (p.alignItems) settings.flex_align_items = p.alignItems;
   if (p.justifyContent) settings.flex_justify_content = p.justifyContent;
