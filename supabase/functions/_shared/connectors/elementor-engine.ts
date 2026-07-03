@@ -1049,6 +1049,9 @@ const STYLE_SETTING_KEYS = [
   "flex_justify_content", "gap", "grid_columns_grid", "content_width", "width",
   "object_fit", "opacity", "mix_blend_mode", "background_size",
   "background_position", "background_repeat",
+  "_transform_opacity", "_blend_mode", "_transform_rotate", "_transform_rotateZ_effect",
+  "_transform_scale", "_transform_scale_effect", "_transform_translate",
+  "_transform_translateX_effect", "_transform_translateY_effect", "_transform_skew",
   "__xxxv_background", "__xxxv_box_shadow", "__xxxv_border",
   "__xxxv_transform", "__xxxv_mix_blend_mode", "__xxxv_background_blend_mode",
 ];
