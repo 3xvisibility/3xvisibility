@@ -28,6 +28,7 @@ import WebsitesPage from "./pages/WebsitesPage";
 import BillingPage from "./pages/BillingPage";
 import SettingsPage from "./pages/SettingsPage";
 import GeneratedPagesPage from "./pages/GeneratedPagesPage";
+import CssScanFixPage from "./pages/CssScanFixPage";
 import AdminPage from "./pages/AdminPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import TemplateMarketplacePage from "./pages/TemplateMarketplacePage";
