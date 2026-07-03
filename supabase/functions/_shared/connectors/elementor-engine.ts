@@ -555,30 +555,67 @@ function container(children: ElementorElement[], node?: HtmlNode, topLevel = fal
 interface BackgroundLayers {
   bgImage?: string;
   overlay?: string; // raw CSS color or gradient
+  overlayOpacity?: number; // 0..1 from the overlay layer's own opacity
   skip: Set<HtmlNode>;
 }
 
 const COLOR_RE = /#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\)/g;
 
+/** Is a positioned element stretched to cover its parent (inset:0 / all sides 0)? */
+function isFullBleed(p: StyleProps): boolean {
+  const zero = (v?: string) => v !== undefined && /^-?0(px|%|rem|em)?$/.test(v.trim());
+  if (p.inset !== undefined) {
+    const parts = p.inset.trim().split(/\s+/);
+    return parts.every((v) => /^-?0/.test(v));
+  }
+  const sides = [p.top, p.right, p.bottom, p.left];
+  const defined = sides.filter((v) => v !== undefined);
+  if (defined.length >= 2 && defined.every(zero)) return true;
+  return false;
+}
+
+/** Convert a CSS gradient direction ("to right", "to bottom", "45deg") to degrees. */
+function gradientAngle(grad: string): number {
+  const degM = grad.match(/(-?\d+(?:\.\d+)?)deg/);
+  if (degM) return parseFloat(degM[1]);
+  const dir = grad.match(/to\s+([a-z\s]+?)[,)]/i);
+  if (dir) {
+    const d = dir[1].trim().toLowerCase();
+    const map: Record<string, number> = {
+      "top": 0, "right": 90, "bottom": 180, "left": 270,
+      "top right": 45, "right top": 45,
+      "bottom right": 135, "right bottom": 135,
+      "bottom left": 225, "left bottom": 225,
+      "top left": 315, "left top": 315,
+    };
+    if (map[d] !== undefined) return map[d];
+  }
+  return 135;
+}
+
+function zIndexOf(p: StyleProps): number {
+  const z = parseInt(p.zIndex ?? "", 10);
+  return Number.isFinite(z) ? z : 0;
+}
+
 /**
  * Detect full-bleed background images and overlay layers among a container's
  * direct children. Templates commonly build heroes as:
  *   <section class="hero">           position:relative
- *     <img class="hero-bg">          position:absolute; inset:0; object-fit:cover
- *     <div class="hero-ov"></div>    position:absolute; inset:0; background:gradient
- *     <div class="hero-in">...</div> the real content
- * Native Elementor widgets do NOT honor absolute positioning, so an absolute
- * cover <img> becomes a stacked image widget and the whole hero collapses. We
- * instead hoist those layers onto the container's own background + overlay
- * (exactly how Elementor models hero sections) and drop the source nodes.
+ *     <img class="hero-bg">          position:absolute; inset:0; object-fit:cover; z-index:0
+ *     <div class="hero-ov"></div>    position:absolute; inset:0; background:gradient; z-index:1
+ *     <div class="hero-in">...</div> the real content; z-index:2
+ * Native Elementor widgets do NOT honor absolute positioning or z-index, so an
+ * absolute cover <img> becomes a stacked image widget and the whole hero
+ * collapses. We instead hoist those layers onto the container's own background +
+ * overlay (exactly how Elementor models hero sections), respecting z-index order
+ * (lowest = background image, higher content-less layer = overlay), and drop the
+ * source nodes.
  */
 function extractBackgroundLayers(node: HtmlNode): BackgroundLayers {
   const layers: BackgroundLayers = { skip: new Set() };
   if (!CURRENT_RESOLVER) return layers;
   const kids = node.children.filter((c) => c.tag);
-  // Only treat as a hero-style stack when the parent is a positioning context
-  // (relative/absolute) or explicitly named a hero — avoids hoisting normal
-  // in-flow images/backgrounds from ordinary sections.
   const parentProps = CURRENT_RESOLVER.resolve(node as NodeLike);
   const looksHero = parentProps.position === "relative" ||
     parentProps.position === "absolute" ||
@@ -587,14 +624,20 @@ function extractBackgroundLayers(node: HtmlNode): BackgroundLayers {
     /hero/.test(node.attrs.class || "");
   if (!looksHero) return layers;
 
-  for (const child of kids) {
-    const p = CURRENT_RESOLVER.resolve(child as NodeLike);
-    const isAbsolute = p.position === "absolute";
+  // Resolve every child once and order positioned layers back-to-front by
+  // z-index so the deepest layer becomes the background and shallower
+  // content-less layers become overlays.
+  const resolved = kids.map((child) => ({ child, p: CURRENT_RESOLVER!.resolve(child as NodeLike) }));
+  const positioned = resolved
+    .filter(({ p }) => p.position === "absolute" || p.position === "fixed")
+    .sort((a, b) => zIndexOf(a.p) - zIndexOf(b.p));
+
+  for (const { child, p } of positioned) {
+    const covers = isFullBleed(p) || p.objectFit === "cover";
     // Full-bleed cover image -> container background image.
     if (
       child.tag === "img" &&
-      (isAbsolute || hasClass(child, "-bg", "hero-bg", "bg-image", "cover")) &&
-      (p.objectFit === "cover" || isAbsolute) &&
+      (covers || hasClass(child, "-bg", "hero-bg", "bg-image", "cover")) &&
       !layers.bgImage
     ) {
       const src = child.attrs.src || p.backgroundImage;
@@ -602,14 +645,20 @@ function extractBackgroundLayers(node: HtmlNode): BackgroundLayers {
     }
     // Absolute, content-less layer with a background -> overlay.
     if (
-      isAbsolute &&
       !textContent(child).trim() &&
       !findNode(child, (n) => n.tag === "img") &&
       (p.background || p.backgroundColor || p.backgroundImage) &&
       !layers.overlay
     ) {
-      layers.overlay = p.background || p.backgroundColor;
-      if (p.backgroundImage && !layers.bgImage) layers.bgImage = p.backgroundImage;
+      if (p.backgroundImage && !layers.bgImage) {
+        // A content-less full-bleed div using background-image is the bg image.
+        layers.bgImage = p.backgroundImage;
+        if (p.background && /gradient\s*\(/i.test(p.background)) layers.overlay = p.background;
+      } else {
+        layers.overlay = p.background || p.backgroundColor;
+      }
+      const op = parseFloat(p.opacity ?? "");
+      if (Number.isFinite(op) && op >= 0 && op <= 1) layers.overlayOpacity = op;
       layers.skip.add(child);
     }
   }
@@ -628,17 +677,17 @@ function applyBackgroundLayers(settings: Record<string, unknown>, layers: Backgr
     const ov = layers.overlay;
     if (/gradient\s*\(/i.test(ov)) {
       const colors = ov.match(COLOR_RE) || [];
-      const angleM = ov.match(/(-?\d+(?:\.\d+)?)deg/);
       settings.background_overlay_background = "gradient";
       if (colors[0]) settings.background_overlay_color = colors[0];
       if (colors[colors.length - 1]) settings.background_overlay_color_b = colors[colors.length - 1];
       settings.background_overlay_gradient_type = "linear";
-      settings.background_overlay_gradient_angle = { unit: "deg", size: angleM ? parseFloat(angleM[1]) : 135, sizes: [] };
+      settings.background_overlay_gradient_angle = { unit: "deg", size: gradientAngle(ov), sizes: [] };
     } else {
       settings.background_overlay_background = "classic";
       settings.background_overlay_color = ov;
     }
-    settings.background_overlay_opacity = { unit: "px", size: 1, sizes: [] };
+    const opacity = layers.overlayOpacity ?? 1;
+    settings.background_overlay_opacity = { unit: "px", size: opacity, sizes: [] };
   }
   // A hero with a background needs height to be visible.
   if ((layers.bgImage || layers.overlay) && !settings.min_height) {
