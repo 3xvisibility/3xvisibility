@@ -574,30 +574,112 @@ function normalizeBgPosition(v?: string): string {
 }
 
 /**
- * Bake opacity, mix-blend-mode and CSS transforms. Elementor exposes opacity +
- * transform natively; blend mode is preserved as a bridge key applied via CSS.
+ * Remap CSS opacity, mix-blend-mode and transforms onto NATIVE, editable
+ * Elementor advanced controls (Advanced ▸ Transform / Opacity / Blend mode)
+ * rather than leaving them as raw CSS. Every value becomes a control the user
+ * can open and tweak in the editor. Bridge keys (`__xxxv_*`) are kept only as a
+ * fallback the plugin can apply if a given native control is unavailable.
  */
 function applyOpacityBlendTransform(settings: Record<string, unknown>, p: StyleProps): void {
+  // ---- Opacity → native Advanced ▸ Opacity slider (0–1) ----
   if (p.opacity) {
     const o = parseFloat(p.opacity);
-    if (Number.isFinite(o)) {
-      settings._element_custom_css_opacity = o;
-      settings.opacity = { unit: "px", size: o, sizes: [] };
+    if (Number.isFinite(o) && o >= 0 && o <= 1) {
+      const val = { unit: "px", size: o, sizes: [] };
+      settings._transform_opacity = val; // native transform opacity
+      settings.opacity = val;            // legacy/common opacity control
+      settings.__xxxv_opacity = o;       // bridge fallback
     }
   }
+
+  // ---- mix-blend-mode → native Advanced ▸ Blend Mode select ----
   if (p.mixBlendMode && p.mixBlendMode !== "normal") {
-    settings.mix_blend_mode = p.mixBlendMode;
-    settings.__xxxv_mix_blend_mode = p.mixBlendMode;
+    settings._blend_mode = p.mixBlendMode;     // native blend-mode control
+    settings.mix_blend_mode = p.mixBlendMode;  // alt key some builds use
+    settings.__xxxv_mix_blend_mode = p.mixBlendMode; // bridge fallback
   }
-  if (p.transform) {
-    settings.__xxxv_transform = p.transform;
-    const rot = p.transform.match(/rotate\(\s*(-?[\d.]+)deg\s*\)/i);
-    if (rot) settings.transform_rotateZ_effect = { unit: "px", size: parseFloat(rot[1]), sizes: [] };
-    const scaleM = p.transform.match(/scale\(\s*(-?[\d.]+)/i);
-    if (scaleM) settings.transform_scale_effect = { unit: "px", size: parseFloat(scaleM[1]), sizes: [] };
-    if (p.transformOrigin) settings.__xxxv_transform_origin = p.transformOrigin;
+
+  // ---- transform → native Advanced ▸ Transform controls (editable) ----
+  if (p.transform && p.transform !== "none") {
+    settings.__xxxv_transform = p.transform; // bridge fallback for exotic funcs
+
+    const t = p.transform;
+
+    // rotate(deg) / rotateZ(deg)
+    const rot = t.match(/rotate[zZ]?\(\s*(-?[\d.]+)deg\s*\)/i);
+    if (rot) {
+      settings._transform_rotate = "yes";
+      settings._transform_rotateZ_effect = { unit: "deg", size: parseFloat(rot[1]), sizes: [] };
+    }
+
+    // scale(n) or scaleX/scaleY(n)
+    const scaleUniform = t.match(/(?:^|\s)scale\(\s*(-?[\d.]+)\s*(?:,\s*(-?[\d.]+)\s*)?\)/i);
+    const scaleX = t.match(/scaleX\(\s*(-?[\d.]+)\s*\)/i);
+    const scaleY = t.match(/scaleY\(\s*(-?[\d.]+)\s*\)/i);
+    if (scaleUniform || scaleX || scaleY) {
+      settings._transform_scale = "yes";
+      if (scaleUniform) {
+        const sx = parseFloat(scaleUniform[1]);
+        const sy = scaleUniform[2] != null ? parseFloat(scaleUniform[2]) : sx;
+        settings._transform_scale_effect = { unit: "px", size: sx, sizes: [] };
+        settings._transform_scaleX_effect = { unit: "px", size: sx, sizes: [] };
+        settings._transform_scaleY_effect = { unit: "px", size: sy, sizes: [] };
+      }
+      if (scaleX) settings._transform_scaleX_effect = { unit: "px", size: parseFloat(scaleX[1]), sizes: [] };
+      if (scaleY) settings._transform_scaleY_effect = { unit: "px", size: parseFloat(scaleY[1]), sizes: [] };
+    }
+
+    // translate(x, y) / translateX / translateY (px or %)
+    const parseLen = (v: string) => {
+      const m = v.match(/(-?[\d.]+)\s*(px|%)?/i);
+      if (!m) return null;
+      return { unit: (m[2] || "px").toLowerCase(), size: parseFloat(m[1]), sizes: [] };
+    };
+    const translate = t.match(/(?:^|\s)translate\(\s*([^,)]+?)\s*(?:,\s*([^)]+?)\s*)?\)/i);
+    const translateX = t.match(/translateX\(\s*([^)]+?)\s*\)/i);
+    const translateY = t.match(/translateY\(\s*([^)]+?)\s*\)/i);
+    if (translate || translateX || translateY) {
+      settings._transform_translate = "yes";
+      if (translate) {
+        const tx = parseLen(translate[1]);
+        const ty = translate[2] != null ? parseLen(translate[2]) : { unit: "px", size: 0, sizes: [] };
+        if (tx) settings._transform_translateX_effect = tx;
+        if (ty) settings._transform_translateY_effect = ty;
+      }
+      if (translateX) { const v = parseLen(translateX[1]); if (v) settings._transform_translateX_effect = v; }
+      if (translateY) { const v = parseLen(translateY[1]); if (v) settings._transform_translateY_effect = v; }
+    }
+
+    // skew(x, y) / skewX / skewY (deg)
+    const skew = t.match(/(?:^|\s)skew\(\s*(-?[\d.]+)deg\s*(?:,\s*(-?[\d.]+)deg\s*)?\)/i);
+    const skewX = t.match(/skewX\(\s*(-?[\d.]+)deg\s*\)/i);
+    const skewY = t.match(/skewY\(\s*(-?[\d.]+)deg\s*\)/i);
+    if (skew || skewX || skewY) {
+      settings._transform_skew = "yes";
+      if (skew) {
+        settings._transform_skewX_effect = { unit: "deg", size: parseFloat(skew[1]), sizes: [] };
+        if (skew[2] != null) settings._transform_skewY_effect = { unit: "deg", size: parseFloat(skew[2]), sizes: [] };
+      }
+      if (skewX) settings._transform_skewX_effect = { unit: "deg", size: parseFloat(skewX[1]), sizes: [] };
+      if (skewY) settings._transform_skewY_effect = { unit: "deg", size: parseFloat(skewY[1]), sizes: [] };
+    }
+
+    // transform-origin → native origin controls
+    if (p.transformOrigin) {
+      const parts = p.transformOrigin.trim().split(/\s+/);
+      const mapAxis = (v: string) => {
+        const k = v.toLowerCase();
+        if (["left", "center", "right"].includes(k)) return k;
+        if (["top", "bottom"].includes(k)) return k;
+        return null;
+      };
+      if (parts[0]) { const x = mapAxis(parts[0]); if (x) settings._transform_origin_x = x; }
+      if (parts[1]) { const y = mapAxis(parts[1]); if (y) settings._transform_origin_y = y; }
+      settings.__xxxv_transform_origin = p.transformOrigin;
+    }
   }
 }
+
 
 /* --------------------------- responsive baking --------------------------- */
 
