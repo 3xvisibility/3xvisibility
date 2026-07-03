@@ -91,6 +91,7 @@ const toolsNav: NavItem[] = [
   
   { titleKey: "sidebar.contentCalendar", path: "content-calendar", icon: CalendarDays, requiredFeature: "internalLinks" },
   { titleKey: "sidebar.seoAudit", path: "seo-audit", icon: ClipboardCheck },
+  { titleKey: "sidebar.cssScanFix", path: "css-scan-fix", icon: ScanLine },
   { titleKey: "sidebar.indexing", path: "indexing", icon: SearchIcon, requiredFeature: "indexing" },
 ];
 
