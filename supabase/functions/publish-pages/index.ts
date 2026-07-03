@@ -1390,14 +1390,33 @@ async function handlePublishPages(req: Request): Promise<Response> {
           : await withTimeout(connector.createPage(payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${page.title}`);
         finishRunning("ok", result.url || result.external_id);
 
+        // Independent post-publish verification: re-open the page in Elementor
+        // to confirm it is truly made of editable native widgets, not raw HTML.
+        step("Verifying editor readiness", "running", "Re-opening page in Elementor editor…");
+        const verified = await verifyEditorReadiness(connector, result.external_id);
+        const readiness = verified ?? result.editor_readiness ?? null;
+        if (readiness) {
+          const ok = readiness.status === "passed";
+          const widgets = typeof readiness.editable_widgets === "number" ? ` (${readiness.editable_widgets} editable widgets)` : "";
+          finishRunning(
+            ok ? "ok" : "warn",
+            ok
+              ? `Opens in "Edit with Elementor"${widgets}`
+              : (readiness.reason || "Editor verification incomplete"),
+          );
+        } else {
+          finishRunning("ok", "Not an Elementor site — skipped");
+        }
+
         step("Saving record", "running");
         await supabase.from("generated_pages").update({
           status: "published",
           external_id: result.external_id,
           external_url: result.url,
           error_message: null,
-          editor_readiness: result.editor_readiness ?? null,
+          editor_readiness: readiness,
         }).eq("id", page.id);
+
         finishRunning("ok");
 
         step("Published", "ok", result.url);
