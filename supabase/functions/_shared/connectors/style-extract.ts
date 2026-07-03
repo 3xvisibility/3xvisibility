@@ -543,7 +543,59 @@ export function styleContainer(settings: Record<string, unknown>, p: StyleProps,
     settings.content_width = "boxed";
     settings.width = { unit: "px", size: mw.size };
   }
+  applyOpacityBlendTransform(settings, p);
   if (Object.keys(globals).length) settings.__globals__ = globals;
+}
+
+/** Normalize a CSS background-size into Elementor's accepted values. */
+function normalizeBgSize(v?: string): string {
+  const val = (v || "").trim().toLowerCase();
+  if (val === "cover" || val === "contain" || val === "auto") return val;
+  return val ? "custom" : "cover";
+}
+
+/** Normalize a CSS background-position into Elementor's keyword set (fallback custom). */
+function normalizeBgPosition(v?: string): string {
+  const val = (v || "").trim().toLowerCase();
+  const known = new Set([
+    "center center", "center left", "center right",
+    "top center", "top left", "top right",
+    "bottom center", "bottom left", "bottom right",
+  ]);
+  if (!val) return "center center";
+  if (known.has(val)) return val;
+  if (val === "center") return "center center";
+  if (val === "top") return "top center";
+  if (val === "bottom") return "bottom center";
+  if (val === "left") return "center left";
+  if (val === "right") return "center right";
+  return "custom";
+}
+
+/**
+ * Bake opacity, mix-blend-mode and CSS transforms. Elementor exposes opacity +
+ * transform natively; blend mode is preserved as a bridge key applied via CSS.
+ */
+function applyOpacityBlendTransform(settings: Record<string, unknown>, p: StyleProps): void {
+  if (p.opacity) {
+    const o = parseFloat(p.opacity);
+    if (Number.isFinite(o)) {
+      settings._element_custom_css_opacity = o;
+      settings.opacity = { unit: "px", size: o, sizes: [] };
+    }
+  }
+  if (p.mixBlendMode && p.mixBlendMode !== "normal") {
+    settings.mix_blend_mode = p.mixBlendMode;
+    settings.__xxxv_mix_blend_mode = p.mixBlendMode;
+  }
+  if (p.transform) {
+    settings.__xxxv_transform = p.transform;
+    const rot = p.transform.match(/rotate\(\s*(-?[\d.]+)deg\s*\)/i);
+    if (rot) settings.transform_rotateZ_effect = { unit: "px", size: parseFloat(rot[1]), sizes: [] };
+    const scaleM = p.transform.match(/scale\(\s*(-?[\d.]+)/i);
+    if (scaleM) settings.transform_scale_effect = { unit: "px", size: parseFloat(scaleM[1]), sizes: [] };
+    if (p.transformOrigin) settings.__xxxv_transform_origin = p.transformOrigin;
+  }
 }
 
 /* --------------------------- responsive baking --------------------------- */
