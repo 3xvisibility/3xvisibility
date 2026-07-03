@@ -283,7 +283,11 @@ function image(node: HtmlNode): ElementorElement {
     id: genId(),
     elType: "widget",
     widgetType: "image",
-    settings: bakedSettings(node, (s, p) => styleImage(s, p), {
+    settings: bakedSettings(node, (s, p) => styleImage(s, p, {
+      className: node.attrs.class || "",
+      widthAttr: node.attrs.width || "",
+      heightAttr: node.attrs.height || "",
+    }), {
       ...nativeIdentitySettings(node),
       image: { url: node.attrs.src || "", alt: node.attrs.alt || "" },
     }),

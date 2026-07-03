@@ -481,9 +481,43 @@ export function styleButton(settings: Record<string, unknown>, p: StyleProps, ct
 }
 
 /** Bake image styles (width / radius). */
-export function styleImage(settings: Record<string, unknown>, p: StyleProps): void {
-  const w = pxSize(p.width || p.maxWidth);
-  if (w) settings.width = w;
+export function styleImage(
+  settings: Record<string, unknown>,
+  p: StyleProps,
+  hint?: { className?: string; widthAttr?: string; heightAttr?: string },
+): void {
+  const cls = (hint?.className || "").toLowerCase();
+  const isSmallGraphic = /\b(logo|icon|avatar|badge|favicon|thumb|thumbnail|social|emoji|flag)\b/.test(cls);
+
+  // Resolve the intended width. Prefer explicit CSS width, then max-width, then
+  // the HTML width attribute as a last-resort source.
+  const raw = p.width || p.maxWidth || (hint?.widthAttr ? `${hint.widthAttr}px` : undefined);
+  const w = pxSize(raw);
+  if (w) {
+    if (w.unit === "%") {
+      // Percentage widths are inherently responsive — keep them as-is.
+      settings.width = { unit: "%", size: w.size };
+    } else if (w.unit === "px") {
+      // A small fixed px width from extraction is the common cause of hero
+      // images collapsing to a tiny box (e.g. 72px). Only honour a fixed px
+      // width for deliberate small graphics (logos/icons) or genuinely large
+      // values; otherwise let the image stay fluid at 100% so heroes fill
+      // their container after publish.
+      if (isSmallGraphic || w.size >= 240) {
+        settings.width = w;
+      } else {
+        settings.width = { unit: "%", size: 100 };
+      }
+    } else {
+      settings.width = w;
+    }
+  } else if (!isSmallGraphic) {
+    // No reliable width extracted — default content/hero images to fluid width
+    // so they never render at Elementor's tiny default thumbnail size.
+    settings.width = { unit: "%", size: 100 };
+  }
+  // Never distort aspect ratio: let height follow the image intrinsically.
+  settings.height = { unit: "px", size: "" };
   const br = pxSize(p.borderRadius);
   if (br) settings.image_border_radius = { unit: br.unit, top: String(br.size), right: String(br.size), bottom: String(br.size), left: String(br.size), isLinked: true };
   if (p.objectFit) settings.object_fit = p.objectFit;
