@@ -48,6 +48,16 @@ async function verifyEditorReadiness(
 const ELEMENTOR_SIMILARITY_TARGET = 98;
 const MAX_REBUILD_ATTEMPTS = 4;
 
+/**
+ * NATIVE-ONLY GUARANTEE FLAG. When true (default, and non-overridable in
+ * normal operation) WordPress pages are ALWAYS published as native, editable
+ * Elementor containers + widgets — never wrapped in a single raw HTML widget.
+ * The "exact render" HTML-widget path is disabled and every outgoing
+ * `elementor_data` payload is passed through `enforceNativeElementorData`,
+ * which detects and rebuilds any stray HTML widget before the page is created.
+ */
+const FORCE_NATIVE_ELEMENTOR = true;
+
 /** A single step in the publish timeline returned to the client for tracking. */
 interface PublishStep {
   label: string;
