@@ -793,11 +793,18 @@ class XXXV_Elementor {
 			return self::css_value( $value );
 		}
 		$unit = isset( $value['unit'] ) ? $value['unit'] : 'px';
-		$top = isset( $value['top'] ) ? $value['top'] : '';
-		$right = isset( $value['right'] ) ? $value['right'] : $top;
-		$bottom = isset( $value['bottom'] ) ? $value['bottom'] : $top;
-		$left = isset( $value['left'] ) ? $value['left'] : $right;
-		if ( '' === (string) $top && '' === (string) $right && '' === (string) $bottom && '' === (string) $left ) {
+		// Coerce missing/empty sides to a valid "0" so we never emit garbage like
+		// "0px px 0px px" (an empty side + unit) which invalidates the whole rule.
+		$norm = function ( $v ) {
+			$v = trim( (string) $v );
+			return ( '' === $v ) ? '0' : $v;
+		};
+		$top = $norm( isset( $value['top'] ) ? $value['top'] : '' );
+		$right = $norm( isset( $value['right'] ) ? $value['right'] : ( isset( $value['top'] ) ? $value['top'] : '' ) );
+		$bottom = $norm( isset( $value['bottom'] ) ? $value['bottom'] : ( isset( $value['top'] ) ? $value['top'] : '' ) );
+		$left = $norm( isset( $value['left'] ) ? $value['left'] : ( isset( $value['right'] ) ? $value['right'] : '' ) );
+		if ( '0' === $top && '0' === $right && '0' === $bottom && '0' === $left
+			&& ! isset( $value['top'] ) && ! isset( $value['right'] ) && ! isset( $value['bottom'] ) && ! isset( $value['left'] ) ) {
 			return '';
 		}
 		return self::css_value( $top . $unit . ' ' . $right . $unit . ' ' . $bottom . $unit . ' ' . $left . $unit );
