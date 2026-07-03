@@ -1090,6 +1090,116 @@ export function computeElementorParityStats(tree: ElementorElement[]): Elementor
   return { background_layers, overlay_layers, gradient_layers, total_nodes, styled_nodes, parity_score };
 }
 
+/** Per-section parity entry powering the post-publish heatmap. */
+export interface SectionParity {
+  /** Position of the section within the page (0-based). */
+  index: number;
+  /** Human label, e.g. "Hero", "Section 2". */
+  label: string;
+  /** True when this section looks like the hero (first, tall, has a background). */
+  is_hero: boolean;
+  total_nodes: number;
+  styled_nodes: number;
+  /** 0-100 share of nodes in this section that received baked styles. */
+  parity_score: number;
+  background_layers: number;
+  overlay_layers: number;
+  /** Widgets in this section that received NO baked style (the mismatches). */
+  weak_widgets: { type: string; text: string }[];
+}
+
+/** Short readable label for a node used in the heatmap widget list. */
+function nodeLabel(el: ElementorElement): string {
+  if (el.elType === "widget") return el.widgetType || "widget";
+  return "container";
+}
+
+/** First bit of visible text inside a node (for identifying which widget). */
+function nodePreviewText(el: ElementorElement): string {
+  const s = el.settings as Record<string, unknown> | undefined;
+  if (!s) return "";
+  const raw =
+    (typeof s.title === "string" && s.title) ||
+    (typeof s.editor === "string" && s.editor) ||
+    (typeof s.text === "string" && s.text) ||
+    (typeof s.title_text === "string" && s.title_text) ||
+    "";
+  return String(raw).replace(/<[^>]*>/g, "").trim().slice(0, 60);
+}
+
+/**
+ * Compute per-section parity so the UI can render a heatmap that points at the
+ * exact hero/section/widgets whose design did NOT convert to native styles.
+ */
+export function computeSectionParityHeatmap(tree: ElementorElement[]): SectionParity[] {
+  if (!Array.isArray(tree)) return [];
+  const sections: SectionParity[] = [];
+
+  tree.forEach((section, i) => {
+    if (!section) return;
+    let total_nodes = 0;
+    let styled_nodes = 0;
+    let background_layers = 0;
+    let overlay_layers = 0;
+    const weak_widgets: { type: string; text: string }[] = [];
+
+    const walk = (el: ElementorElement | undefined) => {
+      if (!el) return;
+      total_nodes++;
+      const s = el.settings as Record<string, unknown> | undefined;
+      const baked = nodeHasBakedStyle(s);
+      if (baked) styled_nodes++;
+      if (s) {
+        if (s.background_image && (s.background_image as { url?: string })?.url) background_layers++;
+        if (s.background_overlay_background) overlay_layers++;
+      }
+      // Only flag content-bearing widgets (not empty structural containers).
+      if (!baked && el.elType === "widget") {
+        if (weak_widgets.length < 12) {
+          weak_widgets.push({ type: nodeLabel(el), text: nodePreviewText(el) });
+        }
+      }
+      if (Array.isArray(el.elements)) el.elements.forEach(walk);
+    };
+    walk(section);
+
+    const parity_score = total_nodes > 0 ? Math.round((styled_nodes / total_nodes) * 100) : 0;
+    const s = section.settings as Record<string, unknown> | undefined;
+    const hasBg =
+      background_layers > 0 ||
+      (s?.background_background === "classic" && !!(s?.background_image as { url?: string })?.url) ||
+      s?.background_background === "gradient";
+    const is_hero = i === 0 && (hasBg || total_nodes >= 3);
+
+    sections.push({
+      index: i,
+      label: is_hero ? "Hero" : `Section ${i + 1}`,
+      is_hero,
+      total_nodes,
+      styled_nodes,
+      parity_score,
+      background_layers,
+      overlay_layers,
+      weak_widgets,
+    });
+  });
+
+  return sections;
+}
+
+/** Compute the section heatmap directly from an `_elementor_data` JSON string. */
+export function sectionHeatmapFromData(dataStr: string | undefined | null): SectionParity[] {
+  if (!dataStr) return [];
+  try {
+    const parsed = JSON.parse(dataStr);
+    if (!Array.isArray(parsed)) return [];
+    return computeSectionParityHeatmap(parsed);
+  } catch {
+    return [];
+  }
+}
+
+
 /** Compute parity stats directly from an `_elementor_data` JSON string (safe). */
 export function parityStatsFromData(dataStr: string | undefined | null): ElementorParityStats | null {
   if (!dataStr) return null;
