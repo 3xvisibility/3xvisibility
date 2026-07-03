@@ -33,7 +33,7 @@ const VALID_TOKEN =
 // A bare unit with no leading number, e.g. "px", "rem" — always invalid.
 const BARE_UNIT = /^(px|em|rem|%|vw|vh|vmin|vmax|ch|fr|pt)$/i;
 
-const BAD_TOKENS = /\b(NaN|undefined|null)\b/i;
+const BAD_TOKENS = /\b(NaN|undefined|null)/i;
 
 function extractStyleStrings(html: string): string[] {
   const out: string[] = [];
