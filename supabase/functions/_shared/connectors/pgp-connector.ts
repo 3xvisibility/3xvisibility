@@ -174,6 +174,8 @@ export class PgpConnector implements CmsConnector {
   }
 
   private shouldUseStandardFallback(info: ConnectorPingResponse | null | undefined, payload: Partial<PagePayload>): boolean {
+    // Native-retry pass: never drop to the direct-publish REST fallback.
+    if (payload.force_native) return false;
     if (!this.standardFallback || !payload.content) return false;
     if (!info) return true;
     if (info.capabilities?.standard_rest_fallback === true) return true;
@@ -356,6 +358,9 @@ export class PgpConnector implements CmsConnector {
       // the JSON as a native saved template, then re-imports it into the page so
       // every element becomes a fully-native, editable widget (1:1 design).
       save_as_template: true,
+      // Automatic native-retry: tell the plugin to re-import only the widgets
+      // that failed the prior editor-readiness check via the library pipeline.
+      reimport_failed_widgets: payload.reimport_failed_widgets === true,
       page_template: payload.page_template || "elementor_header_footer",
       meta,
     };

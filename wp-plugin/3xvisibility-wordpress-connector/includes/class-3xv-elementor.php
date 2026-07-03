@@ -71,6 +71,12 @@ class XXXV_Elementor {
 		// widget (IDs regenerated, per-widget on_import handlers run) instead of a
 		// raw meta injection, so the published page matches the design 1:1.
 		$save_as_template = ! isset( $body['save_as_template'] ) || ! empty( $body['save_as_template'] );
+		// Automatic native-retry pass: force the template-library re-import so the
+		// widgets that failed the previous editor-readiness check are rebuilt as
+		// fully-native, editable widgets.
+		if ( ! empty( $body['reimport_failed_widgets'] ) ) {
+			$save_as_template = true;
+		}
 		// WordPress Elementor pages are always published as Elementor Full Width.
 		// Do not let requests switch to theme default/canvas/HTML layouts.
 		$page_template  = 'elementor_header_footer';

@@ -52,6 +52,19 @@ export interface PagePayload {
    * standard WordPress REST API instead of attempting Elementor meta writes.
    */
   wordpress_fallback_html?: boolean;
+  /**
+   * When true, the connector MUST NOT drop to the standard WordPress REST
+   * "direct publish" fallback — it must publish through the native Elementor
+   * template-library pipeline (save-as-template → re-import) or fail loudly.
+   * Set on the automatic native-retry pass.
+   */
+  force_native?: boolean;
+  /**
+   * When true, this is an automatic retry that re-imports only the widgets that
+   * failed the previous editor-readiness check. The connector re-runs the native
+   * template-library import so the failed widgets become editable native widgets.
+   */
+  reimport_failed_widgets?: boolean;
   custom_fields?: Record<string, unknown>;
   taxonomies?: Record<string, string[]>;
   /**

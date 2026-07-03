@@ -56,6 +56,73 @@ function withParityStats(
   };
 }
 
+/** A publish is "editor-healthy" when it opened in Elementor with native widgets. */
+function isReadinessHealthy(readiness: EditorReadiness | null): boolean {
+  if (!readiness) return true; // non-Elementor site — nothing to retry
+  return readiness.status === "passed";
+}
+
+/**
+ * Automatic native re-import retry. When the first publish did NOT pass the
+ * editor-readiness check, rebuild any remaining non-native (HTML) widgets into
+ * native Elementor widgets and republish EXCLUSIVELY through the native
+ * template-library pipeline (`force_native` — no direct-publish REST fallback).
+ * Returns the retry's publish result + verified readiness, or null when a retry
+ * is not applicable (non-Elementor site, no post id, or already healthy).
+ */
+async function retryNativeReimport(
+  connector: unknown,
+  externalId: string | undefined,
+  payload: Partial<PagePayload>,
+  currentReadiness: EditorReadiness | null,
+  step: (label: string, status: string, detail?: string) => void,
+): Promise<{ readiness: EditorReadiness | null; elementorData: string | undefined } | null> {
+  if (!(connector instanceof PgpConnector)) return null;
+  if (!externalId) return null;
+  if (isReadinessHealthy(currentReadiness)) return null;
+  const originalData = payload.elementor_data;
+  if (!originalData || (payload.elementor_mode !== "native")) return null;
+
+  step("Retrying failed widgets (native re-import)", "running", currentReadiness?.reason || "Rebuilding non-native widgets…");
+
+  // Rebuild only the widgets that are still non-native (raw HTML widgets are the
+  // ones that fail readiness); already-native widgets are left untouched.
+  let repaired = originalData;
+  let rebuiltCount = 0;
+  try {
+    repaired = enforceNativeElementorData(originalData, undefined, (n) => { rebuiltCount = n; });
+  } catch (e) {
+    step("Native re-import failed", "warn", e instanceof Error ? e.message : String(e));
+    return null;
+  }
+
+  const retryPayload: Partial<PagePayload> = {
+    ...payload,
+    elementor_data: repaired,
+    elementor_mode: "native",
+    force_native: true,           // never fall back to direct REST publish
+    reimport_failed_widgets: true, // library re-import of the failed widgets
+  };
+
+  try {
+    const retryResult = await (connector as PgpConnector).updatePage(externalId, retryPayload);
+    const verified = await verifyEditorReadiness(connector, retryResult.external_id || externalId);
+    const readiness = withParityStats(verified ?? retryResult.editor_readiness ?? null, repaired);
+    const ok = isReadinessHealthy(readiness);
+    step(
+      "Native re-import complete",
+      ok ? "ok" : "warn",
+      ok
+        ? `Re-imported ${rebuiltCount || "failed"} widget(s) as native — page now passes editor readiness`
+        : (readiness?.reason || "Some widgets still not native after re-import"),
+    );
+    return { readiness, elementorData: repaired };
+  } catch (e) {
+    step("Native re-import failed", "warn", e instanceof Error ? e.message : String(e));
+    return null;
+  }
+}
+
 
 
 /**
@@ -951,7 +1018,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // Independent post-publish verification: re-open the page in Elementor
           // to confirm it is truly made of editable native widgets.
           const verified = await verifyEditorReadiness(connector, result.external_id);
-          const readiness = withParityStats(verified ?? result.editor_readiness ?? null, (payload as { elementor_data?: string }).elementor_data);
+          let readiness = withParityStats(verified ?? result.editor_readiness ?? null, (payload as { elementor_data?: string }).elementor_data);
           if (readiness) {
             const ok = readiness.status === "passed";
             const widgets = typeof readiness.editable_widgets === "number" ? ` (${readiness.editable_widgets} editable widgets)` : "";
@@ -963,6 +1030,13 @@ async function handlePublishPages(req: Request): Promise<Response> {
                 : (readiness.reason || "Editor verification incomplete"),
             );
           }
+
+          // Automatic native re-import retry (no direct-publish fallback).
+          if (!isReadinessHealthy(readiness)) {
+            const retry = await retryNativeReimport(connector, result.external_id, payload, readiness, step);
+            if (retry) readiness = retry.readiness;
+          }
+
 
 
           // Save to generated_pages so it appears in the Generated Pages view
@@ -1477,7 +1551,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         // to confirm it is truly made of editable native widgets, not raw HTML.
         step("Verifying editor readiness", "running", "Re-opening page in Elementor editor…");
         const verified = await verifyEditorReadiness(connector, result.external_id);
-        const readiness = withParityStats(verified ?? result.editor_readiness ?? null, (payload as { elementor_data?: string }).elementor_data);
+        let readiness = withParityStats(verified ?? result.editor_readiness ?? null, (payload as { elementor_data?: string }).elementor_data);
         if (readiness) {
           const ok = readiness.status === "passed";
           const widgets = typeof readiness.editable_widgets === "number" ? ` (${readiness.editable_widgets} editable widgets)` : "";
@@ -1490,6 +1564,18 @@ async function handlePublishPages(req: Request): Promise<Response> {
         } else {
           finishRunning("ok", "Not an Elementor site — skipped");
         }
+
+        // Automatic native re-import retry: if the page did not pass editor
+        // readiness, rebuild the failed widgets and republish through the native
+        // template-library pipeline only (no direct-publish fallback).
+        if (!isReadinessHealthy(readiness)) {
+          const retry = await retryNativeReimport(connector, result.external_id, payload, readiness, step);
+          if (retry) {
+            readiness = retry.readiness;
+            finishRunning(isReadinessHealthy(readiness) ? "ok" : "warn");
+          }
+        }
+
 
         step("Saving record", "running");
         await supabase.from("generated_pages").update({
