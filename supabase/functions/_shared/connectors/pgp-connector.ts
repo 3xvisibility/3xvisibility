@@ -352,6 +352,10 @@ export class PgpConnector implements CmsConnector {
       status,
       post_id: postId,
       exact_render: exactRender,
+      // Publish through the Elementor Library: the connector plugin first stores
+      // the JSON as a native saved template, then re-imports it into the page so
+      // every element becomes a fully-native, editable widget (1:1 design).
+      save_as_template: true,
       page_template: payload.page_template || "elementor_header_footer",
       meta,
     };
