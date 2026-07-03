@@ -242,6 +242,7 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["border"]) p.border = d["border"];
   if (d["object-fit"]) p.objectFit = d["object-fit"];
   if (d["opacity"]) p.opacity = d["opacity"];
+  if (d["position"]) p.position = d["position"];
 
   const box = (prefix: "padding" | "margin"): Partial<BoxSides> | undefined => {
     const sides: Partial<BoxSides> = {};
