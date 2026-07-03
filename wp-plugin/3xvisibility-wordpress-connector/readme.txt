@@ -36,6 +36,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.4.1 =
+* Hardened CSS box remapping (margin/padding/border-radius): strict numeric validation, unit whitelisting, and safe "0" coercion of empty/malformed sides, so invalid output like `margin:0px px 0px px` can never be generated again. Also improved image sizing so hero/content images no longer collapse to a tiny extracted width (e.g. 72px) and stay fluid.
+
 = 1.4.0 =
 * Fixed design-fidelity bugs in the on-page critical CSS compiler: grid containers now emit real `grid-template-columns` (exact source tracks, e.g. two-column heroes no longer collapse to a single column), and box values (margin/padding) with empty sides no longer produce invalid CSS like `0px px 0px px` that dropped the whole rule. Honors the automatic native re-import retry flag.
 
