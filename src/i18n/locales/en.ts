@@ -1829,6 +1829,7 @@ const en: Record<string, string> = {
   "sidebar.pgpTerms": "Terms",
   "sidebar.referral": "Referral",
   "sidebar.seoAudit": "SEO Audit",
+  "sidebar.cssScanFix": "CSS Scan & Fix",
   "sidebar.settings": "Settings",
   "sidebar.storeGenerator": "Store Generator",
   "sidebar.templateKit": "Template Kit",
