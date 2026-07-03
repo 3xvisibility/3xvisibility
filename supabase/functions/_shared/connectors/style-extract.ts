@@ -30,6 +30,13 @@ export interface StyleProps {
   backgroundColor?: string;
   backgroundImage?: string;
   background?: string;
+  backgroundSize?: string;
+  backgroundPosition?: string;
+  backgroundRepeat?: string;
+  backgroundBlendMode?: string;
+  mixBlendMode?: string;
+  transform?: string;
+  transformOrigin?: string;
   fontFamily?: string;
   fontSize?: string;
   fontWeight?: string;
