@@ -1425,6 +1425,18 @@ async function handlePublishPages(req: Request): Promise<Response> {
         };
         applyShopifySuffix(payload, (page.websites as { type?: string })?.type, pageSuffixes, resolvedPublishType);
 
+        // Final native-only assertion: never ship an HTML-widget page.
+        if (
+          FORCE_NATIVE_ELEMENTOR && (payload as { elementor_mode?: string }).elementor_mode &&
+          elementorDataHasHtmlWidget((payload as { elementor_data?: string }).elementor_data)
+        ) {
+          const msg = "Publish blocked: outgoing Elementor payload still contains a raw HTML widget (native-only guarantee).";
+          console.error("[publish-pages]", msg, { pageId: page.id });
+          await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+          finishRunning("error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
+          continue;
+        }
+
         // If page was previously published (has external_id), update instead of creating
         step(page.external_id ? "Updating on store" : "Creating on store", "running");
         const result = page.external_id
