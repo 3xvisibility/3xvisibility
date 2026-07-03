@@ -39,6 +39,7 @@ const CONNECTOR_TIMEOUT_MS = 25_000;
 const CONNECTOR_PUBLISH_TIMEOUT_MS = 120_000;
 const CONNECTOR_CSS_REFRESH_TIMEOUT_MS = 20_000;
 export const REQUIRED_3XV_CONNECTOR_VERSION = "1.3.7";
+export const TEMPLATE_LIBRARY_IMPORT_VERSION = "1.3.9";
 const COMPRESSED_PAYLOAD_CONNECTOR_VERSION = "1.3.7";
 
 function sleep(ms: number): Promise<void> {
@@ -351,6 +352,10 @@ export class PgpConnector implements CmsConnector {
       status,
       post_id: postId,
       exact_render: exactRender,
+      // Publish through the Elementor Library: the connector plugin first stores
+      // the JSON as a native saved template, then re-imports it into the page so
+      // every element becomes a fully-native, editable widget (1:1 design).
+      save_as_template: true,
       page_template: payload.page_template || "elementor_header_footer",
       meta,
     };

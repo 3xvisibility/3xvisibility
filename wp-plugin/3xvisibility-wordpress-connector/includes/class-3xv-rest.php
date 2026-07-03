@@ -198,6 +198,8 @@ class XXXV_REST {
 			'template_css_meta'         => true,
 			'template_css_enqueue'      => true,
 			'cache_clear'               => true,
+			'compressed_payloads'       => true,
+			'template_library_import'   => true,
 		);
 
 		return rest_ensure_response(
