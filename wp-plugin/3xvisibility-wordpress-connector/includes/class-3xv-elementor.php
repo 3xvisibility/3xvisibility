@@ -1512,6 +1512,121 @@ class XXXV_Elementor {
 	}
 
 	/**
+	 * True when a page was published/imported by this connector and therefore
+	 * carries our stored template/critical CSS. Only such pages are auto-healed.
+	 *
+	 * @param int $post_id Page ID.
+	 * @return bool
+	 */
+	private static function is_connector_page( $post_id ) {
+		if ( 'page' !== get_post_type( $post_id ) ) {
+			return false;
+		}
+		if ( get_post_meta( $post_id, '_xxxv_template_css', true ) ) {
+			return true;
+		}
+		if ( get_post_meta( $post_id, '_xxxv_critical_css', true ) ) {
+			return true;
+		}
+		return (bool) get_post_meta( $post_id, '_xxxv_source_template_id', true );
+	}
+
+	/**
+	 * ZERO-INTERVENTION CSS SELF-HEALING.
+	 *
+	 * Fires on every `save_post` (WP admin save, Elementor editor "Update",
+	 * quick edit, revision restore, etc.) for connector-imported pages. It
+	 * rebuilds Elementor's per-page CSS file, refreshes the connector critical
+	 * CSS from the current `_elementor_data`, regenerates the global kit CSS and
+	 * purges page/object/CDN caches — so the live page always keeps 100% of the
+	 * template layout without the user regenerating anything by hand.
+	 *
+	 * @param int     $post_id Saved post ID.
+	 * @param WP_Post $post    Post object.
+	 * @param bool    $update  Whether this is an existing post update.
+	 */
+	public static function auto_regenerate_on_save( $post_id, $post = null, $update = false ) {
+		// Guard against autosaves, revisions, and re-entrancy.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+		static $running = array();
+		if ( isset( $running[ $post_id ] ) ) {
+			return;
+		}
+		if ( ! did_action( 'elementor/loaded' ) ) {
+			return;
+		}
+		if ( ! self::is_connector_page( $post_id ) ) {
+			return;
+		}
+
+		$running[ $post_id ] = true;
+		try {
+			// Rebuild the connector critical CSS from the current Elementor data so
+			// it always mirrors the latest edit (background/flex/grid/spacing).
+			$saved = get_post_meta( $post_id, '_elementor_data', true );
+			$data  = is_string( $saved ) ? json_decode( $saved, true ) : null;
+			if ( ! is_array( $data ) && is_string( $saved ) ) {
+				$data = json_decode( wp_unslash( $saved ), true );
+			}
+			if ( is_array( $data ) && ! empty( $data ) ) {
+				$critical = self::compile_critical_css( $data, $post_id );
+				if ( is_string( $critical ) && '' !== trim( $critical ) ) {
+					update_post_meta( $post_id, '_xxxv_critical_css', $critical );
+				}
+			}
+
+			self::refresh_elementor_files( $post_id );
+			self::regenerate_page_css( $post_id );
+			self::regenerate_global_css();
+			self::refresh_assets();
+			self::clear_runtime_caches( $post_id );
+		} catch ( \Throwable $e ) {
+			self::log( 'warn', 'Auto CSS self-heal failed: ' . $e->getMessage(), array( 'post_id' => $post_id ) );
+		}
+		unset( $running[ $post_id ] );
+	}
+
+	/**
+	 * Auto cache purge whenever a connector page transitions to "publish".
+	 * Runs a full domain/site purge for supported cache plugins so no stale,
+	 * unstyled HTML survives the moment a page goes live.
+	 *
+	 * @param string  $new_status New post status.
+	 * @param string  $old_status Old post status.
+	 * @param WP_Post $post       Post object.
+	 */
+	public static function auto_clear_caches_on_publish( $new_status, $old_status, $post ) {
+		if ( ! $post || 'page' !== $post->post_type ) {
+			return;
+		}
+		if ( 'publish' !== $new_status ) {
+			return;
+		}
+		if ( ! self::is_connector_page( $post->ID ) ) {
+			return;
+		}
+		self::clear_runtime_caches( $post->ID );
+		// Site-wide purges are safe here (not inside the REST publish request).
+		if ( function_exists( 'rocket_clean_domain' ) ) {
+			rocket_clean_domain();
+		}
+		if ( function_exists( 'w3tc_flush_all' ) ) {
+			w3tc_flush_all();
+		}
+		if ( function_exists( 'wp_cache_clear_cache' ) ) {
+			wp_cache_clear_cache();
+		}
+		if ( class_exists( 'LiteSpeed\Purge' ) ) {
+			do_action( 'litespeed_purge_all' );
+		}
+	}
+
+	/**
 	 * REST: regenerate CSS for a given page, or rebuild all Elementor CSS.
 	 *
 	 * @param WP_REST_Request $request The request.
