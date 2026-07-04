@@ -924,6 +924,15 @@ export default function TemplateMarketplacePage() {
         </DialogContent>
       </Dialog>
 
+      {activePreview && (
+        <TemplateWordPressTestDialog
+          open={wpTestOpen}
+          onOpenChange={setWpTestOpen}
+          templateName={activePreview.name}
+          content={convertForPlatform(applyTemplateDefaults(activePreview.content, activePreview.defaultValues))}
+        />
+      )}
+
       {/* Share Dialog */}
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
         <DialogContent className="max-w-md">
