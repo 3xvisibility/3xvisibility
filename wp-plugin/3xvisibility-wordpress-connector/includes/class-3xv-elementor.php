@@ -1612,18 +1612,174 @@ class XXXV_Elementor {
 		}
 		self::clear_runtime_caches( $post->ID );
 		// Site-wide purges are safe here (not inside the REST publish request).
-		if ( function_exists( 'rocket_clean_domain' ) ) {
+		self::purge_all_caches( $post->ID );
+	}
+
+	/**
+	 * FULL-STACK cache purge. Clears every caching layer we can reach so a freshly
+	 * published/updated connector page never serves stale, unstyled HTML:
+	 * Elementor CSS, WP object cache, transients, options cache, page-cache
+	 * plugins (WP Rocket, W3TC, WP Super Cache, LiteSpeed, WP Fastest Cache,
+	 * Autoptimize, SG Optimizer, Comet, Cache Enabler), managed hosts (WP Engine,
+	 * Kinsta, SiteGround, Pantheon), and CDNs (Cloudflare, BunnyCDN via plugins).
+	 *
+	 * @param int $post_id Optional page ID for targeted Elementor CSS rebuild.
+	 */
+	public static function purge_all_caches( $post_id = 0 ) {
+		// --- Elementor CSS cache ------------------------------------------------
+		if ( $post_id > 0 ) {
+			self::refresh_elementor_files( $post_id );
+			self::regenerate_page_css( $post_id );
+		}
+		self::regenerate_global_css();
+
+		// --- WordPress object cache --------------------------------------------
+		if ( function_exists( 'wp_cache_flush' ) ) {
+			wp_cache_flush();
+		}
+
+		// --- WordPress transients + options cache ------------------------------
+		self::flush_connector_transients();
+		if ( function_exists( 'wp_cache_delete' ) ) {
+			wp_cache_delete( 'alloptions', 'options' );
+			wp_cache_delete( 'notoptions', 'options' );
+		}
+
+		// --- Page-cache plugins ------------------------------------------------
+		if ( function_exists( 'rocket_clean_domain' ) ) {          // WP Rocket
 			rocket_clean_domain();
 		}
-		if ( function_exists( 'w3tc_flush_all' ) ) {
+		if ( function_exists( 'w3tc_flush_all' ) ) {               // W3 Total Cache
 			w3tc_flush_all();
 		}
-		if ( function_exists( 'wp_cache_clear_cache' ) ) {
+		if ( function_exists( 'wp_cache_clear_cache' ) ) {         // WP Super Cache
 			wp_cache_clear_cache();
 		}
-		if ( class_exists( 'LiteSpeed\Purge' ) ) {
+		if ( class_exists( 'LiteSpeed\Purge' ) ) {                 // LiteSpeed Cache
 			do_action( 'litespeed_purge_all' );
 		}
+		if ( function_exists( 'wpfc_clear_all_cache' ) ) {         // WP Fastest Cache
+			wpfc_clear_all_cache( true );
+		}
+		if ( class_exists( 'autoptimizeCache' ) ) {                // Autoptimize
+			\autoptimizeCache::clearall();
+		}
+		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {    // SiteGround Optimizer
+			sg_cachepress_purge_cache();
+		}
+		if ( class_exists( 'comet_cache' ) ) {                     // Comet Cache
+			\comet_cache::clear();
+		}
+		if ( class_exists( 'Cache_Enabler' ) ) {                   // Cache Enabler
+			\Cache_Enabler::clear_total_cache();
+		}
+		if ( has_action( 'cachify_flush_cache' ) ) {               // Cachify
+			do_action( 'cachify_flush_cache' );
+		}
+		if ( has_action( 'swift_performance_after_clear_all_cache' ) || class_exists( 'Swift_Performance_Cache' ) && method_exists( 'Swift_Performance_Cache', 'clear_all_cache' ) ) {
+			\Swift_Performance_Cache::clear_all_cache();          // Swift Performance
+		}
+
+		// --- Managed hosting caches --------------------------------------------
+		if ( class_exists( 'WpeCommon' ) ) {                       // WP Engine
+			if ( method_exists( 'WpeCommon', 'purge_memcached' ) ) {
+				\WpeCommon::purge_memcached();
+			}
+			if ( method_exists( 'WpeCommon', 'clear_maxcdn_cache' ) ) {
+				\WpeCommon::clear_maxcdn_cache();
+			}
+			if ( method_exists( 'WpeCommon', 'purge_varnish_cache' ) ) {
+				\WpeCommon::purge_varnish_cache();
+			}
+		}
+		if ( class_exists( '\Kinsta\Cache' ) ) {                   // Kinsta
+			global $kinsta_cache;
+			if ( isset( $kinsta_cache ) && isset( $kinsta_cache->kinsta_cache_purge ) && method_exists( $kinsta_cache->kinsta_cache_purge, 'purge_complete_caches' ) ) {
+				$kinsta_cache->kinsta_cache_purge->purge_complete_caches();
+			}
+		}
+		if ( function_exists( 'sb_purge_all' ) ) {                 // Servebolt
+			sb_purge_all();
+		}
+		if ( defined( 'PANTHEON_CACHE_TRUE' ) && function_exists( 'pantheon_clear_edge_all' ) ) {
+			pantheon_clear_edge_all();                            // Pantheon Advanced Page Cache
+		}
+
+		// --- CDN caches --------------------------------------------------------
+		if ( has_action( 'cloudflare_purge_everything' ) ) {       // Cloudflare (official plugin)
+			do_action( 'cloudflare_purge_everything' );
+		}
+		if ( class_exists( '\CF\WordPress\Hooks' ) ) {
+			do_action( 'cloudflare_purge_everything' );
+		}
+		if ( function_exists( 'bunnycdn_purge_cache' ) ) {         // BunnyCDN
+			bunnycdn_purge_cache();
+		}
+
+		// Generic hook so any third-party cache plugin can react.
+		do_action( 'xxxv_purged_all_caches', $post_id );
+	}
+
+	/**
+	 * Delete connector-scoped transients (both site + network) so no stale
+	 * critical-CSS / readiness values survive a publish.
+	 */
+	private static function flush_connector_transients() {
+		global $wpdb;
+		if ( ! isset( $wpdb ) ) {
+			return;
+		}
+		$like = $wpdb->esc_like( '_transient_xxxv_' ) . '%';
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) );
+		$like_to = $wpdb->esc_like( '_transient_timeout_xxxv_' ) . '%';
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like_to ) );
+		if ( is_multisite() && isset( $wpdb->sitemeta ) ) {
+			$s_like = $wpdb->esc_like( '_site_transient_xxxv_' ) . '%';
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->sitemeta} WHERE meta_key LIKE %s", $s_like ) );
+		}
+	}
+
+	/**
+	 * Emit no-cache / cache-busting HTTP headers on connector pages so browsers,
+	 * proxies, and reverse caches always re-fetch the freshest styled markup.
+	 * Hooked to `send_headers`.
+	 */
+	public static function send_no_cache_headers() {
+		if ( is_admin() || headers_sent() ) {
+			return;
+		}
+		if ( ! is_singular( 'page' ) ) {
+			return;
+		}
+		$post_id = get_queried_object_id();
+		if ( ! $post_id || ! self::is_connector_page( $post_id ) ) {
+			return;
+		}
+		nocache_headers();
+		header( 'Cache-Control: no-cache, no-store, must-revalidate, max-age=0' );
+		header( 'Pragma: no-cache' );
+		header( 'Expires: -1' );
+		header( 'Surrogate-Control: no-store' );
+		// Dynamic validators so intermediaries treat every render as fresh.
+		$modified = get_post_modified_time( 'D, d M Y H:i:s', true, $post_id ) . ' GMT';
+		header( 'Last-Modified: ' . $modified );
+		header( 'ETag: "' . md5( (string) $post_id . '-' . get_post_modified_time( 'U', true, $post_id ) . '-' . wp_rand() ) . '"' );
+	}
+
+	/**
+	 * Append a version query string to the connector template CSS/JS so a publish
+	 * always cache-busts the asset URL. Hooked to `style_loader_src`.
+	 *
+	 * @param string $src    Stylesheet source URL.
+	 * @param string $handle Stylesheet handle.
+	 * @return string
+	 */
+	public static function version_bust_asset_src( $src, $handle = '' ) {
+		if ( empty( $src ) || false === strpos( (string) $handle, 'xxxv' ) ) {
+			return $src;
+		}
+		$ver = (string) time();
+		return add_query_arg( 'xxxv_v', $ver, $src );
 	}
 
 	/**
