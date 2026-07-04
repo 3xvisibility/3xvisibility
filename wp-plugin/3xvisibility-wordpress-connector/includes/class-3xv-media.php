@@ -204,6 +204,7 @@ class XXXV_Media {
 		}
 		file_put_contents( $tmp, wp_remote_retrieve_body( $response ) );
 
+		self::allow_extra_mimes();
 		$attachment_id = media_handle_sideload(
 			array(
 				'name'     => $filename,
@@ -211,6 +212,7 @@ class XXXV_Media {
 			),
 			0
 		);
+		self::restore_extra_mimes();
 		if ( is_wp_error( $attachment_id ) ) {
 			@unlink( $tmp );
 			return $attachment_id;
