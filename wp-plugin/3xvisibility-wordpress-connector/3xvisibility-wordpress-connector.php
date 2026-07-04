@@ -59,6 +59,11 @@ function xxxv_connector_boot() {
 	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'neutralize_theme_css' ), PHP_INT_MAX - 5 );
 	add_action( 'init', array( 'XXXV_Elementor', 'disable_global_styles' ) );
 	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'enqueue_template_css' ), PHP_INT_MAX );
+	// Auto-register the template's Google Fonts (correct weights/subsets +
+	// display=swap) with preconnect/preload hints on connector pages so imported
+	// typography renders exactly and fast.
+	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'enqueue_google_fonts' ), 8 );
+	add_action( 'wp_head', array( 'XXXV_Elementor', 'preconnect_google_fonts' ), 1 );
 	// Print inside <head> after every other style tag.
 	add_action( 'wp_head', array( 'XXXV_Elementor', 'print_template_css' ), PHP_INT_MAX );
 	// Last-resort guarantee: re-emit the template CSS just before </body>. At equal
