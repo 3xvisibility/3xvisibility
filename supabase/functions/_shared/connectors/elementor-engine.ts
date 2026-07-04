@@ -1405,6 +1405,9 @@ export function htmlToElementor(html: string, siteContext?: SiteContext): Elemen
   CURRENT_RESOLVER = new StyleResolver(html || "");
   CURRENT_CTX = siteContext;
   CURRENT_COLOR_STACK = [];
+  // Elementor Pro-only widgets (form/rating) only render on Pro sites; enable
+  // them automatically when the connected site reports Elementor Pro active.
+  PRO_WIDGETS = siteContext?.hasElementorPro === true;
   try {
     const tree = parseHtml(html || "");
     const converted = flattenSections(convertChildren(tree));
