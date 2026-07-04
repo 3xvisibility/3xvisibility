@@ -63,6 +63,15 @@ class XXXV_Elementor {
 			return $raw_elementor_css;
 		}
 		$elementor_css  = self::sanitize_template_css( (string) $raw_elementor_css );
+		// Absolute base URL of the source template, used to resolve relative /
+		// protocol-relative / localhost image URLs found inside the CSS.
+		$source_base_url = '';
+		foreach ( array( 'source_base_url', 'source_url', 'base_url', 'origin_url' ) as $bk ) {
+			if ( ! empty( $body[ $bk ] ) && is_string( $body[ $bk ] ) ) {
+				$source_base_url = esc_url_raw( $body[ $bk ] );
+				break;
+			}
+		}
 		$exact_render   = ! empty( $body['exact_render'] );
 		// When true (default), the incoming JSON is first stored as a native
 		// Elementor Library template (Templates -> Saved Templates) and then
@@ -106,7 +115,7 @@ class XXXV_Elementor {
 			return $media_report;
 		}
 		if ( '' !== $elementor_css ) {
-			$elementor_css = self::map_css_media_references( $elementor_css, $media_report );
+			$elementor_css = self::map_css_media_references( $elementor_css, $media_report, $source_base_url );
 		}
 		// Exact-render pages can contain many large inline/background image URLs in a
 		// single HTML widget. Importing every one inside the publish REST request is
@@ -626,6 +635,107 @@ class XXXV_Elementor {
 		return $report['urls'][ $url ];
 	}
 
+	/**
+	 * Localize every image referenced inside a CSS string into the WordPress Media
+	 * Library and rewrite the CSS to point at the uploaded copies. Covers all CSS
+	 * image-bearing properties via `url(...)`:
+	 *   background-image, list-style-image, border-image, cursor, content,
+	 *   and @font-face `src` (fonts uploaded as-is).
+	 *
+	 * URL normalization applied before download:
+	 *   - localhost / 127.0.0.1 hosts are treated as remote and re-hosted on WP
+	 *   - protocol-relative `//host/..` → `https://host/..`
+	 *   - `http://` upgraded to `https://`
+	 *   - site-relative `/path` and relative `path` resolved against $base_url
+	 * Special cases:
+	 *   - data:/base64 URIs → decoded to real files (SVG/WebP/AVIF/PNG preserved)
+	 *   - SVG images downloaded and uploaded, format preserved
+	 *   - @2x/@3x retina and responsive assets keep their original filenames
+	 * Image dimensions, quality, and EXIF data are preserved because the original
+	 * bytes are uploaded verbatim (no re-encode); WordPress then generates the
+	 * standard thumbnail sizes + srcset for raster images automatically.
+	 *
+	 * @param string $css      Raw CSS.
+	 * @param string $base_url Absolute base URL of the source template (for relatives).
+	 * @param array  $report   Media import report (passed by reference).
+	 * @return string Rewritten CSS.
+	 */
+	private static function process_css_media( $css, $base_url = '', &$report = null ) {
+		if ( ! is_string( $css ) || '' === trim( $css ) ) {
+			return $css;
+		}
+		if ( ! is_array( $report ) ) {
+			$report = array( 'imported' => 0, 'reused' => 0, 'failed' => 0, 'urls' => array() );
+		}
+
+		$site_url = home_url();
+		$pattern  = '#url\(\s*([\'"]?)([^\'")]+)\1\s*\)#i';
+
+		return preg_replace_callback(
+			$pattern,
+			function ( $matches ) use ( &$report, $base_url, $site_url ) {
+				$quote = $matches[1];
+				$raw   = trim( $matches[2] );
+
+				// Leave already-local (this site) and empty refs untouched.
+				if ( '' === $raw || 0 === strpos( $raw, '#' ) ) {
+					return $matches[0];
+				}
+
+				// ---- data:/base64 URIs -> real files --------------------------
+				if ( 0 === stripos( $raw, 'data:' ) ) {
+					$res = XXXV_Media::import_from_data_uri( $raw );
+					if ( is_wp_error( $res ) ) {
+						$report['failed']++;
+						return $matches[0];
+					}
+					if ( ! empty( $res['duplicate'] ) ) {
+						$report['reused']++;
+					} else {
+						$report['imported']++;
+					}
+					return 'url(' . $quote . $res['url'] . $quote . ')';
+				}
+
+				// ---- normalize the URL ----------------------------------------
+				$url = $raw;
+				if ( 0 === strpos( $url, '//' ) ) {
+					$url = 'https:' . $url;                         // protocol-relative
+				} elseif ( preg_match( '#^https?://#i', $url ) ) {
+					$url = preg_replace( '#^http://#i', 'https://', $url ); // force https
+				} elseif ( 0 === strpos( $url, '/' ) ) {
+					$url = ( $base_url ? untrailingslashit( $base_url ) : untrailingslashit( $site_url ) ) . $url; // site-relative
+				} elseif ( $base_url ) {
+					$url = untrailingslashit( $base_url ) . '/' . ltrim( $url, './' ); // relative
+				} else {
+					return $matches[0]; // can't resolve a bare relative path without a base
+				}
+
+				// Rewrite localhost/127.* to the source base so it downloads.
+				$host = wp_parse_url( $url, PHP_URL_HOST );
+				if ( $host && preg_match( '#^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$#i', $host ) && $base_url ) {
+					$path = wp_parse_url( $url, PHP_URL_PATH );
+					$url  = untrailingslashit( $base_url ) . ( $path ? $path : '' );
+				}
+
+				// Already hosted on this WordPress site -> keep as-is.
+				$site_host = wp_parse_url( $site_url, PHP_URL_HOST );
+				if ( $host && $site_host && strtolower( $host ) === strtolower( $site_host ) ) {
+					return 'url(' . $quote . $url . $quote . ')';
+				}
+
+				$mapped = self::import_media_url_for_report( $url, $report );
+				if ( empty( $mapped['failed'] ) && ! empty( $mapped['url'] ) ) {
+					return 'url(' . $quote . $mapped['url'] . $quote . ')';
+				}
+				return $matches[0]; // download failed: preserve original URL
+			},
+			$css
+		);
+	}
+
+
+
 	private static function walk_media_value( &$value, &$report ) {
 		if ( is_array( $value ) ) {
 			// Elementor image controls are arrays like { id, url, alt }. Preserve all
@@ -652,30 +762,20 @@ class XXXV_Elementor {
 		}
 	}
 
-	private static function map_css_media_references( $css, &$report ) {
+	private static function map_css_media_references( $css, &$report, $base_url = '' ) {
 		if ( ! isset( $report['urls'] ) || ! is_array( $report['urls'] ) ) {
 			$report['urls'] = array();
 		}
 
-		// CSS may contain background URLs that do not appear in widget controls. Import
-		// those as well, including extensionless AI image URLs such as Pollinations.
-		if ( preg_match_all( '#url\(\s*["\']?(https?://[^\s"\'\)]+)["\']?\s*\)#i', $css, $matches ) ) {
-			foreach ( array_unique( $matches[1] ) as $source ) {
-				if ( self::is_remote_image_url( $source ) ) {
-					self::import_media_url_for_report( $source, $report );
-				}
-			}
-		}
-		if ( empty( $report['urls'] ) || ! is_array( $report['urls'] ) ) {
-			return $css;
-		}
-		foreach ( $report['urls'] as $source => $mapped ) {
-			if ( empty( $mapped['failed'] ) && ! empty( $mapped['url'] ) ) {
-				$css = str_replace( $source, $mapped['url'], $css );
-			}
-		}
-		return $css;
+		// Comprehensive pass: downloads + rewrites every url(...) in the CSS across
+		// all image-bearing properties (background-image, list-style-image,
+		// border-image, cursor, content, @font-face src), converts data:/base64
+		// URIs to real files, normalizes localhost/relative/protocol-relative/http
+		// URLs, and preserves SVG/WebP/AVIF formats + original bytes (dimensions,
+		// quality, EXIF). WordPress then builds thumbnails + srcset for rasters.
+		return self::process_css_media( $css, $base_url, $report );
 	}
+
 
 	private static function map_exact_html_media_references( &$elements, &$report ) {
 		if ( ! is_array( $elements ) ) {

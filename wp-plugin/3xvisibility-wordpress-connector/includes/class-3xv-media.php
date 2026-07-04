@@ -18,6 +18,60 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class XXXV_Media {
 
+	/**
+	 * Temporarily whitelist SVG/WebP/AVIF (and common raster) mime types so
+	 * template images in these formats import successfully and keep their format.
+	 * Wrap upload/sideload calls with allow_extra_mimes()/restore_extra_mimes().
+	 */
+	private static $mime_filter_active = false;
+
+	public static function allow_extra_mimes() {
+		if ( self::$mime_filter_active ) {
+			return;
+		}
+		self::$mime_filter_active = true;
+		add_filter( 'upload_mimes', array( __CLASS__, 'filter_upload_mimes' ), 999 );
+		// Bypass real-content sniffing for SVG (text/xml) so it isn't rejected.
+		add_filter( 'wp_check_filetype_and_ext', array( __CLASS__, 'filter_check_filetype' ), 999, 4 );
+	}
+
+	public static function restore_extra_mimes() {
+		if ( ! self::$mime_filter_active ) {
+			return;
+		}
+		remove_filter( 'upload_mimes', array( __CLASS__, 'filter_upload_mimes' ), 999 );
+		remove_filter( 'wp_check_filetype_and_ext', array( __CLASS__, 'filter_check_filetype' ), 999 );
+		self::$mime_filter_active = false;
+	}
+
+	public static function filter_upload_mimes( $mimes ) {
+		$mimes['svg']  = 'image/svg+xml';
+		$mimes['svgz'] = 'image/svg+xml';
+		$mimes['webp'] = 'image/webp';
+		$mimes['avif'] = 'image/avif';
+		$mimes['ico']  = 'image/x-icon';
+		$mimes['bmp']  = 'image/bmp';
+		$mimes['tiff'] = 'image/tiff';
+		$mimes['tif']  = 'image/tiff';
+		return $mimes;
+	}
+
+	public static function filter_check_filetype( $data, $file, $filename, $mimes ) {
+		if ( preg_match( '/\.svgz?$/i', (string) $filename ) ) {
+			$data['ext']  = 'svg';
+			$data['type'] = 'image/svg+xml';
+		} elseif ( preg_match( '/\.webp$/i', (string) $filename ) ) {
+			$data['ext']  = 'webp';
+			$data['type'] = 'image/webp';
+		} elseif ( preg_match( '/\.avif$/i', (string) $filename ) ) {
+			$data['ext']  = 'avif';
+			$data['type'] = 'image/avif';
+		}
+		return $data;
+	}
+
+
+
 	public static function upload( WP_REST_Request $request ) {
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 90 );
@@ -150,6 +204,7 @@ class XXXV_Media {
 		}
 		file_put_contents( $tmp, wp_remote_retrieve_body( $response ) );
 
+		self::allow_extra_mimes();
 		$attachment_id = media_handle_sideload(
 			array(
 				'name'     => $filename,
@@ -157,6 +212,7 @@ class XXXV_Media {
 			),
 			0
 		);
+		self::restore_extra_mimes();
 		if ( is_wp_error( $attachment_id ) ) {
 			@unlink( $tmp );
 			return $attachment_id;
@@ -219,5 +275,91 @@ class XXXV_Media {
 			)
 		);
 		return $q->have_posts() ? (int) $q->posts[0] : 0;
+	}
+
+	/**
+	 * Import a data:/base64 image (data URI) into the Media Library as a real file
+	 * so it stops bloating CSS/HTML and gets a stable, cacheable WP URL.
+	 * SVG/WebP/AVIF/PNG/JPEG/GIF are all preserved in their original format.
+	 *
+	 * @param string $data_uri Full `data:<mime>;base64,....` (or URL-encoded) string.
+	 * @return array|WP_Error { id, url, duplicate }
+	 */
+	public static function import_from_data_uri( $data_uri ) {
+		if ( ! is_string( $data_uri ) || ! preg_match( '#^data:([^;,]+)?(;charset=[^;,]+)?(;base64)?,(.*)$#is', $data_uri, $m ) ) {
+			return new WP_Error( 'xxxv_bad_data_uri', 'Not a valid data URI.', array( 'status' => 400 ) );
+		}
+		$mime      = strtolower( trim( $m[1] ? $m[1] : 'image/png' ) );
+		$is_base64 = ! empty( $m[3] );
+		$payload   = $m[4];
+
+		$binary = $is_base64 ? base64_decode( $payload, true ) : rawurldecode( $payload );
+		if ( false === $binary || '' === $binary ) {
+			return new WP_Error( 'xxxv_bad_data_uri', 'Could not decode data URI payload.', array( 'status' => 400 ) );
+		}
+
+		// De-duplicate identical payloads by content hash.
+		$hash     = md5( $binary );
+		$existing = self::find_existing( 'data-uri:' . $hash );
+		if ( $existing ) {
+			return array(
+				'id'        => $existing,
+				'url'       => wp_get_attachment_url( $existing ),
+				'duplicate' => true,
+			);
+		}
+
+		$ext_map = array(
+			'image/svg+xml' => 'svg',
+			'image/svg'     => 'svg',
+			'image/png'     => 'png',
+			'image/jpeg'    => 'jpg',
+			'image/jpg'     => 'jpg',
+			'image/gif'     => 'gif',
+			'image/webp'    => 'webp',
+			'image/avif'    => 'avif',
+			'image/x-icon'  => 'ico',
+			'image/vnd.microsoft.icon' => 'ico',
+			'image/bmp'     => 'bmp',
+			'image/tiff'    => 'tiff',
+		);
+		$ext      = isset( $ext_map[ $mime ] ) ? $ext_map[ $mime ] : 'png';
+		$filename = 'xxxv-inline-' . substr( $hash, 0, 12 ) . '.' . $ext;
+
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+
+		self::allow_extra_mimes();
+		$upload = wp_upload_bits( $filename, null, $binary );
+		if ( ! empty( $upload['error'] ) ) {
+			self::restore_extra_mimes();
+			return new WP_Error( 'xxxv_upload_bits', $upload['error'], array( 'status' => 500 ) );
+		}
+
+		$filetype   = wp_check_filetype( $upload['file'], null );
+		self::restore_extra_mimes();
+		$attachment = array(
+			'post_mime_type' => $filetype['type'] ? $filetype['type'] : $mime,
+			'post_title'     => sanitize_file_name( $filename ),
+			'post_content'   => '',
+			'post_status'    => 'inherit',
+		);
+		$attachment_id = wp_insert_attachment( $attachment, $upload['file'] );
+		if ( is_wp_error( $attachment_id ) ) {
+			return $attachment_id;
+		}
+		// SVGs have no raster metadata; skip generate for them to avoid warnings.
+		if ( 'svg' !== $ext ) {
+			$meta = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
+			wp_update_attachment_metadata( $attachment_id, $meta );
+		}
+		update_post_meta( $attachment_id, '_xxxv_source_url', 'data-uri:' . $hash );
+
+		return array(
+			'id'        => (int) $attachment_id,
+			'url'       => wp_get_attachment_url( $attachment_id ),
+			'duplicate' => false,
+		);
 	}
 }

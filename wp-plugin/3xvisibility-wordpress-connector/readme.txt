@@ -4,7 +4,7 @@ Tags: elementor, gutenberg, rest-api, programmatic-seo, page-builder
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.4.4
+Stable tag: 1.4.5
 License: GPLv2 or later
 
 Secure companion plugin that lets the 3xVisibility publish native Elementor & Gutenberg pages, upload media, regenerate CSS, clear caches, and detect builders/themes.
@@ -35,6 +35,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 4. Open Settings → 3xVisibility WordPress Connector and copy the Site URL + API Key into your 3xVisibility account.
 
 == Changelog ==
+
+= 1.4.5 =
+* Full CSS image localization: every image referenced inside template CSS via url() — background-image, list-style-image, border-image, cursor, content, and @font-face src — is now downloaded into the WordPress Media Library and the CSS rewritten to the local URLs on publish. URLs are normalized first (localhost/127.* → source host, protocol-relative // → https, http → https, relative/site-relative paths resolved against the template base URL). data:/base64 URIs are decoded into real files, SVG/WebP/AVIF/ICO/BMP/TIFF formats are whitelisted and preserved, @2x/@3x retina filenames are kept, and original bytes are uploaded verbatim so dimensions, quality, and EXIF are preserved while WordPress auto-generates thumbnails + responsive srcset for rasters.
 
 = 1.4.4 =
 * Theme CSS isolation on connector pages: the active theme's stylesheets are now dequeued (generic slug handles + per-theme handles for Astra, GeneratePress, Kadence, Twenty Twenty-Five/Four/Three/Two, OceanWP, Blocksy, Neve, Divi, Flatsome, Avada, Storefront, Bricks; Hello Elementor kept as blank canvas), and WordPress block-library/global(theme.json)/duotone styles plus theme editor-styles & block-styles support are disabled on the frontend. The imported template CSS loads last (PHP_INT_MAX) so it always wins the cascade — theme colors, fonts, and custom CSS can no longer override the imported design.
