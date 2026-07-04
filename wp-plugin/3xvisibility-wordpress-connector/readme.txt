@@ -36,6 +36,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.4.2 =
+* Zero-intervention CSS self-healing: connector pages now automatically rebuild per-page + critical CSS, refresh Elementor assets, and purge caches on every save (WP admin, Elementor "Update", revision restore) and on publish, so live layouts never drift from the imported template. No manual "regenerate CSS" step needed.
+
 = 1.4.1 =
 * Hardened CSS box remapping (margin/padding/border-radius): strict numeric validation, unit whitelisting, and safe "0" coercion of empty/malformed sides, so invalid output like `margin:0px px 0px px` can never be generated again. Also improved image sizing so hero/content images no longer collapse to a tiny extracted width (e.g. 72px) and stay fluid.
 
