@@ -26,6 +26,7 @@ import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview"
 import { ImageVariablePanel } from "@/components/templates/ImageVariablePanel";
 import { ContentFieldsPanel } from "@/components/templates/ContentFieldsPanel";
 import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
+import { TemplateWordPressTestDialog } from "@/components/templates/TemplateWordPressTestDialog";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
