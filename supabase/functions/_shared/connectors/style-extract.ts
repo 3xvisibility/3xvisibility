@@ -448,12 +448,18 @@ function sidesToElementor(sides?: Partial<BoxSides>): Record<string, unknown> | 
   if (!sides) return undefined;
   // Strict numeric extraction with safe "0" coercion so we never emit a box
   // with an empty side (which serialises to invalid CSS like "0px px 0px px").
+  // The Elementor box control emits a single unit for all four sides, so we
+  // normalise every side to px — converting rem/em (×16) instead of dropping
+  // the unit (which turned `8rem` into a broken `8px`).
   const num = (v?: string): string => {
     if (v === undefined || v === null) return "0";
-    const m = String(v).match(/-?\d*\.?\d+/);
+    const m = String(v).match(/(-?\d*\.?\d+)\s*(px|rem|em|%|vw|vh)?/i);
     if (!m) return "0";
-    const n = parseFloat(m[0]);
-    return Number.isFinite(n) ? String(n) : "0";
+    let n = parseFloat(m[1]);
+    if (!Number.isFinite(n)) return "0";
+    const unit = (m[2] || "px").toLowerCase();
+    if (unit === "rem" || unit === "em") n = n * 16;
+    return String(Math.round(n * 100) / 100);
   };
   const top = num(sides.top);
   const right = num(sides.right ?? sides.top);
