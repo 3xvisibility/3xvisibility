@@ -299,8 +299,35 @@ function declsToProps(d: Record<string, string>): StyleProps {
 
 export class StyleResolver {
   private rules: Rule[];
+  private vars: Record<string, string>;
   constructor(html: string) {
     this.rules = parseStylesheet(html);
+    this.vars = this.collectVars();
+  }
+
+  /**
+   * Collect CSS custom property definitions (`--name: value`) from every rule
+   * (`:root`, `.pl`, etc.) into a flat map so `var(--x)` references can be
+   * resolved to literal values. Later declarations win. Values that themselves
+   * reference other variables are resolved in a second pass.
+   */
+  private collectVars(): Record<string, string> {
+    const vars: Record<string, string> = {};
+    for (const rule of this.rules) {
+      for (const [prop, value] of Object.entries(rule.decls)) {
+        if (prop.startsWith("--")) vars[prop.toLowerCase()] = value.trim();
+      }
+    }
+    // Resolve nested var() references between custom properties.
+    for (let pass = 0; pass < 5; pass++) {
+      let changed = false;
+      for (const key of Object.keys(vars)) {
+        const next = substituteVars(vars[key], vars);
+        if (next !== vars[key]) { vars[key] = next; changed = true; }
+      }
+      if (!changed) break;
+    }
+    return vars;
   }
 
   /**
@@ -329,6 +356,13 @@ export class StyleResolver {
 
     // Inline style="" wins over everything.
     if (node.attrs?.style) Object.assign(merged, parseDecls(node.attrs.style));
+    // Substitute CSS custom properties (`var(--x)`) with their literal values so
+    // backgrounds, colors and borders resolve even when the source wrapper that
+    // defined the variables is flattened away during conversion.
+    for (const key of Object.keys(merged)) {
+      if (key.startsWith("--")) continue;
+      if (merged[key].includes("var(")) merged[key] = substituteVars(merged[key], this.vars);
+    }
     return declsToProps(merged);
   }
 
