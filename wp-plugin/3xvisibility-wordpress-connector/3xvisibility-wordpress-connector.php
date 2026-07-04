@@ -3,7 +3,7 @@
  * Plugin Name:       3xVisibility WordPress Connector
  * Plugin URI:        https://3xvisibility.com
  * Description:        Secure companion plugin that bridges your 3xVisibility account and WordPress — publishing native Elementor (Free) & Gutenberg pages, uploading media, regenerating Elementor CSS, clearing caches, and detecting builders/themes/global styles so programmatic pages behave exactly like pages built manually inside WordPress.
- * Version:           1.4.3
+ * Version:           1.4.4
  * Author:            3xVisibility
  * Author URI:        https://3xvisibility.com
  * License:           GPL-2.0+
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'XXXV_CONNECTOR_VERSION', '1.4.3' );
+define( 'XXXV_CONNECTOR_VERSION', '1.4.4' );
 define( 'XXXV_CONNECTOR_FILE', __FILE__ );
 define( 'XXXV_CONNECTOR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'XXXV_CONNECTOR_NS', 'pgp/v1' );
@@ -53,6 +53,11 @@ function xxxv_connector_boot() {
 	// Enqueue as late as possible so our inline stylesheet is registered AFTER
 	// Elementor's per-post CSS in the queue and therefore wins equal-specificity
 	// cascade conflicts (e.g. template grid vs. Elementor container flex).
+	// Neutralize active theme + WP global/block/duotone styles on connector pages
+	// (runs before our template CSS enqueue) so imported design can't be overridden.
+	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'disable_global_styles' ), 9 );
+	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'neutralize_theme_css' ), PHP_INT_MAX - 5 );
+	add_action( 'init', array( 'XXXV_Elementor', 'disable_global_styles' ) );
 	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'enqueue_template_css' ), PHP_INT_MAX );
 	// Print inside <head> after every other style tag.
 	add_action( 'wp_head', array( 'XXXV_Elementor', 'print_template_css' ), PHP_INT_MAX );
