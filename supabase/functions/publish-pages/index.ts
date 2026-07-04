@@ -1438,7 +1438,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           websiteType === "wordpress"
         ) {
           if (!FORCE_NATIVE_ELEMENTOR && shouldUseExactElementorRender(cleanedContent)) {
-            payload.elementor_data = buildExactElementorData(cleanedContent);
+            payload.elementor_data = buildExactElementorData(page.content || cleanedContent);
             // Exact render already carries its <style> blocks inside the HTML
             // widget. Avoid duplicating CSS in post meta to keep the wp-json
             // publish request small enough for LiteSpeed/shared hosts.
