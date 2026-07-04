@@ -407,12 +407,16 @@ export class StyleResolver {
     for (const rule of this.rules) {
       if (!mediaActiveAt(rule.media, width)) continue;
       for (const sel of rule.selectors) {
+        // Base style only: interactive-state and pseudo-element rules are baked
+        // separately (see resolveHover) so they never pollute the resting state.
+        if (sel.state || sel.pseudoElement) continue;
         if (sel.tag && sel.tag !== tag) continue;
         if (sel.id && sel.id !== id) continue;
         if (sel.classes.length && !sel.classes.every((c) => classes.includes(c))) continue;
         matched.push({ spec: sel.specificity, order: rule.order, decls: rule.decls });
       }
     }
+
     matched.sort((a, b) => (a.spec - b.spec) || (a.order - b.order));
     const merged: Record<string, string> = {};
     for (const mm of matched) Object.assign(merged, mm.decls);
