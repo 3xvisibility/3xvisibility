@@ -15,6 +15,7 @@ class XXXV_Admin {
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_action( 'admin_post_xxxv_regenerate_key', array( $this, 'regenerate_key' ) );
+		add_action( 'admin_post_xxxv_save_css_settings', array( $this, 'save_css_settings' ) );
 	}
 
 	public function menu() {
