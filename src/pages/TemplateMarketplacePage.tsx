@@ -259,9 +259,12 @@ export default function TemplateMarketplacePage() {
     });
   }, [sharedTemplates, allRatings]);
 
-  // Merge built-in + community for "browse" tab
+  // Merge built-in + community for "browse" tab.
+  // NOTE: every template is universal — the top-level Elementor/Shopify switch
+  // decides how it is converted, so we no longer inject a separate duplicated
+  // "(Elementor)" copy of each template here.
   const allTemplates = useMemo(() => {
-    return [...importedTemplates, ...ELEMENTOR_TEMPLATES, ...COMMUNITY_TEMPLATES, ...communityTemplates];
+    return [...importedTemplates, ...COMMUNITY_TEMPLATES, ...communityTemplates];
   }, [importedTemplates, communityTemplates]);
 
   // Build the category pill list dynamically from whatever templates exist on
