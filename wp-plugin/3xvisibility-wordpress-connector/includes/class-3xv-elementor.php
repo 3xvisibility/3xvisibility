@@ -178,6 +178,22 @@ class XXXV_Elementor {
 				delete_post_meta( $post_id, '_xxxv_template_css' );
 			}
 
+			// Detect Google Fonts used anywhere in the template (CSS @import,
+			// <link> tags in the raw HTML, and font-family declarations) and store
+			// a normalized spec so the connector can register them on the frontend
+			// (WP head + Elementor) with correct weights, subsets, and display=swap.
+			$font_sources = $elementor_css;
+			$raw_html     = self::decode_payload_field( $body, 'elementor_html', '' );
+			if ( is_string( $raw_html ) && '' !== $raw_html ) {
+				$font_sources .= "\n" . $raw_html;
+			}
+			$google_fonts = self::detect_google_fonts( $font_sources );
+			if ( ! empty( $google_fonts ) ) {
+				update_post_meta( $post_id, '_xxxv_google_fonts', wp_json_encode( $google_fonts ) );
+			} else {
+				delete_post_meta( $post_id, '_xxxv_google_fonts' );
+			}
+
 			// Store a deterministic critical stylesheet compiled from the submitted
 			// Elementor JSON itself. This is a hard fallback for hosts where
 			// /uploads/elementor/css/post-{id}.css is deleted, blocked, or returns 404:
@@ -1259,6 +1275,293 @@ class XXXV_Elementor {
 		wp_enqueue_style( $handle );
 		wp_add_inline_style( $handle, $css );
 	}
+
+	/**
+	 * Curated list of Google Fonts families so `font-family` declarations that
+	 * don't have an accompanying @import/<link> can still be auto-registered.
+	 * (Names are matched case-insensitively.)
+	 *
+	 * @return string[]
+	 */
+	private static function known_google_fonts() {
+		return array(
+			'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Poppins', 'Inter', 'Raleway',
+			'Nunito', 'Nunito Sans', 'Merriweather', 'Playfair Display', 'Oswald',
+			'Source Sans Pro', 'Source Sans 3', 'Source Serif Pro', 'PT Sans', 'PT Serif',
+			'Ubuntu', 'Rubik', 'Work Sans', 'Mukta', 'Noto Sans', 'Noto Serif', 'Quicksand',
+			'Karla', 'Josefin Sans', 'Manrope', 'DM Sans', 'DM Serif Display', 'Barlow',
+			'Kanit', 'Heebo', 'Titillium Web', 'Fira Sans', 'Cabin', 'Bebas Neue',
+			'Dosis', 'Libre Franklin', 'Libre Baskerville', 'Archivo', 'Space Grotesk',
+			'Space Mono', 'Roboto Slab', 'Roboto Condensed', 'Roboto Mono', 'Lora',
+			'Mulish', 'Hind', 'Assistant', 'Anton', 'Teko', 'Exo 2', 'Prompt',
+			'Crimson Text', 'IBM Plex Sans', 'IBM Plex Serif', 'IBM Plex Mono',
+			'Comfortaa', 'Pacifico', 'Caveat', 'Dancing Script', 'Abril Fatface',
+			'Zilla Slab', 'Bitter', 'Overpass', 'Catamaran', 'Cairo', 'Tajawal',
+			'Figtree', 'Outfit', 'Sora', 'Plus Jakarta Sans', 'Lexend', 'Red Hat Display',
+			'Jost', 'Epilogue', 'Albert Sans', 'Onest', 'Schibsted Grotesk',
+		);
+	}
+
+	/**
+	 * Detect Google Fonts referenced anywhere in the template markup/CSS and return
+	 * a normalized spec: [ family => [ 'family' => str, 'weights' => int[],
+	 * 'subsets' => str[], 'display' => str ] ].
+	 *
+	 * Sources scanned:
+	 *   1. CSS `@import url('https://fonts.googleapis.com/css2?family=...')`
+	 *   2. HTML `<link href="https://fonts.googleapis.com/css2?family=...">`
+	 *   3. Bare `font-family: 'Name'` declarations matched against the known list
+	 *
+	 * @param string $content Combined CSS + HTML.
+	 * @return array
+	 */
+	private static function detect_google_fonts( $content ) {
+		if ( ! is_string( $content ) || '' === trim( $content ) ) {
+			return array();
+		}
+
+		$fonts = array();
+
+		$add_family = function ( $family, $weights = array(), $subsets = array(), $display = 'swap' ) use ( &$fonts ) {
+			$family = trim( (string) $family, " \t\n\r\0\x0B\"'" );
+			$family = str_replace( '+', ' ', $family );
+			if ( '' === $family ) {
+				return;
+			}
+			$key = strtolower( $family );
+			if ( ! isset( $fonts[ $key ] ) ) {
+				$fonts[ $key ] = array(
+					'family'  => $family,
+					'weights' => array(),
+					'subsets' => array(),
+					'display' => $display,
+				);
+			}
+			foreach ( (array) $weights as $w ) {
+				$w = (int) $w;
+				if ( $w >= 100 && $w <= 900 && ! in_array( $w, $fonts[ $key ]['weights'], true ) ) {
+					$fonts[ $key ]['weights'][] = $w;
+				}
+			}
+			foreach ( (array) $subsets as $s ) {
+				$s = strtolower( trim( (string) $s ) );
+				if ( '' !== $s && ! in_array( $s, $fonts[ $key ]['subsets'], true ) ) {
+					$fonts[ $key ]['subsets'][] = $s;
+				}
+			}
+			if ( $display ) {
+				$fonts[ $key ]['display'] = $display;
+			}
+		};
+
+		// Parse a Google Fonts stylesheet URL and register its families.
+		$parse_gf_url = function ( $url ) use ( $add_family ) {
+			$url   = html_entity_decode( $url, ENT_QUOTES );
+			$parts = wp_parse_url( $url );
+			if ( empty( $parts['query'] ) ) {
+				return;
+			}
+			// Query may contain repeated `family=` keys; split manually.
+			$display = 'swap';
+			$subsets = array();
+			$pairs   = explode( '&', $parts['query'] );
+			$families = array();
+			foreach ( $pairs as $pair ) {
+				$kv  = explode( '=', $pair, 2 );
+				$k   = urldecode( $kv[0] );
+				$v   = isset( $kv[1] ) ? urldecode( $kv[1] ) : '';
+				if ( 'family' === $k ) {
+					$families[] = $v;
+				} elseif ( 'display' === $k && '' !== $v ) {
+					$display = sanitize_key( $v );
+				} elseif ( 'subset' === $k && '' !== $v ) {
+					$subsets = array_merge( $subsets, explode( ',', $v ) );
+				}
+			}
+			foreach ( $families as $fam ) {
+				// Formats: "Roboto", "Roboto:wght@400;700",
+				// "Open Sans:ital,wght@0,400;0,700;1,400"
+				$name    = $fam;
+				$weights = array();
+				if ( false !== strpos( $fam, ':' ) ) {
+					list( $name, $axis ) = explode( ':', $fam, 2 );
+					if ( false !== strpos( $axis, '@' ) ) {
+						$tuples = substr( $axis, strpos( $axis, '@' ) + 1 );
+						foreach ( explode( ';', $tuples ) as $tuple ) {
+							$nums = explode( ',', $tuple );
+							$weights[] = (int) end( $nums ); // last value is the weight
+						}
+					}
+				}
+				$add_family( $name, $weights, $subsets, $display );
+			}
+		};
+
+		// 1 + 2: @import url(...) and <link href="..."> pointing at Google Fonts.
+		if ( preg_match_all( '#https?://fonts\.googleapis\.com/[^\s"\'\)>]+#i', $content, $m ) ) {
+			foreach ( array_unique( $m[0] ) as $url ) {
+				$parse_gf_url( rtrim( $url, '.,;' ) );
+			}
+		}
+
+		// 3: bare font-family declarations matched against the known families.
+		if ( preg_match_all( '#font-family\s*:\s*([^;{}]+)#i', $content, $m2 ) ) {
+			$known = self::known_google_fonts();
+			foreach ( $m2[1] as $decl ) {
+				foreach ( explode( ',', $decl ) as $candidate ) {
+					$name = trim( $candidate, " \t\n\r\0\x0B\"'" );
+					foreach ( $known as $gf ) {
+						if ( strcasecmp( $name, $gf ) === 0 && ! isset( $fonts[ strtolower( $gf ) ] ) ) {
+							$add_family( $gf, array( 400, 500, 600, 700 ), array( 'latin' ), 'swap' );
+						}
+					}
+				}
+			}
+		}
+
+		return array_values( $fonts );
+	}
+
+	/**
+	 * Build the Google Fonts CSS2 stylesheet URL for a stored font spec.
+	 *
+	 * @param array $fonts Normalized font spec from detect_google_fonts().
+	 * @return string Full https URL, or '' when there is nothing to load.
+	 */
+	private static function build_google_fonts_url( $fonts ) {
+		if ( empty( $fonts ) || ! is_array( $fonts ) ) {
+			return '';
+		}
+		$families = array();
+		$display  = 'swap';
+		$subsets  = array();
+		foreach ( $fonts as $font ) {
+			if ( empty( $font['family'] ) ) {
+				continue;
+			}
+			$name    = str_replace( ' ', '+', $font['family'] );
+			$weights = isset( $font['weights'] ) ? array_map( 'intval', (array) $font['weights'] ) : array();
+			$weights = array_values( array_unique( array_filter( $weights ) ) );
+			sort( $weights );
+			if ( empty( $weights ) ) {
+				$weights = array( 400, 700 );
+			}
+			$families[] = $name . ':wght@' . implode( ';', $weights );
+			if ( ! empty( $font['display'] ) ) {
+				$display = sanitize_key( $font['display'] );
+			}
+			if ( ! empty( $font['subsets'] ) ) {
+				$subsets = array_merge( $subsets, (array) $font['subsets'] );
+			}
+		}
+		if ( empty( $families ) ) {
+			return '';
+		}
+		$query = array();
+		foreach ( $families as $fam ) {
+			$query[] = 'family=' . $fam;
+		}
+		$subsets = array_values( array_unique( array_filter( array_map( 'sanitize_key', $subsets ) ) ) );
+		if ( ! empty( $subsets ) ) {
+			$query[] = 'subset=' . implode( ',', $subsets );
+		}
+		$query[] = 'display=' . ( $display ? $display : 'swap' );
+		return 'https://fonts.googleapis.com/css2?' . implode( '&', $query );
+	}
+
+	/**
+	 * Register + preload the template's Google Fonts on connector pages so the
+	 * imported typography renders exactly, with correct weights/subsets and
+	 * `display=swap`, plus preconnect hints for performance. Hooked to
+	 * wp_enqueue_scripts (early) and wp_head (preconnect/preload).
+	 */
+	public static function enqueue_google_fonts() {
+		if ( is_admin() || ! is_singular( 'page' ) ) {
+			return;
+		}
+		$post_id = get_queried_object_id();
+		if ( ! $post_id || ! self::is_connector_page( $post_id ) ) {
+			return;
+		}
+		$fonts = self::get_page_google_fonts( $post_id );
+		$url   = self::build_google_fonts_url( $fonts );
+		if ( '' === $url ) {
+			return;
+		}
+		wp_enqueue_style( 'xxxv-google-fonts-' . (int) $post_id, $url, array(), null );
+	}
+
+	/**
+	 * Emit preconnect + preload hints for the Google Fonts stylesheet in <head>.
+	 * Hooked to wp_head at priority 1 so it lands before the stylesheet.
+	 */
+	public static function preconnect_google_fonts() {
+		if ( is_admin() || ! is_singular( 'page' ) ) {
+			return;
+		}
+		$post_id = get_queried_object_id();
+		if ( ! $post_id || ! self::is_connector_page( $post_id ) ) {
+			return;
+		}
+		$fonts = self::get_page_google_fonts( $post_id );
+		$url   = self::build_google_fonts_url( $fonts );
+		if ( '' === $url ) {
+			return;
+		}
+		echo "\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />";
+		echo "\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />";
+		echo "\n<link rel=\"preload\" as=\"style\" href=\"" . esc_url( $url ) . "\" />\n";
+	}
+
+	/**
+	 * Read + decode the stored Google Fonts spec for a page.
+	 *
+	 * @param int $post_id Page ID.
+	 * @return array
+	 */
+	private static function get_page_google_fonts( $post_id ) {
+		$raw = get_post_meta( $post_id, '_xxxv_google_fonts', true );
+		if ( ! is_string( $raw ) || '' === $raw ) {
+			return array();
+		}
+		$data = json_decode( $raw, true );
+		return is_array( $data ) ? $data : array();
+	}
+
+	/**
+	 * Register the current connector page's detected Google Fonts with Elementor's
+	 * font manager so they resolve to the "googlefonts" group (correct enqueue in
+	 * both editor + frontend) and appear as known families in Elementor controls.
+	 * Hooked to `elementor/fonts/additional_fonts`.
+	 *
+	 * @param array $additional_fonts Existing additional fonts map.
+	 * @return array
+	 */
+	public static function register_elementor_fonts( $additional_fonts ) {
+		if ( ! is_array( $additional_fonts ) ) {
+			$additional_fonts = array();
+		}
+		$post_id = 0;
+		if ( function_exists( 'get_queried_object_id' ) ) {
+			$post_id = get_queried_object_id();
+		}
+		if ( ( ! $post_id ) && isset( $_GET['post'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only editor context.
+			$post_id = absint( $_GET['post'] );
+		}
+		if ( ! $post_id ) {
+			return $additional_fonts;
+		}
+		$fonts = self::get_page_google_fonts( $post_id );
+		foreach ( $fonts as $font ) {
+			if ( ! empty( $font['family'] ) ) {
+				$additional_fonts[ $font['family'] ] = 'googlefonts';
+			}
+		}
+		return $additional_fonts;
+	}
+
+
+
 
 	/**
 	 * Neutralize the active theme's CSS on connector-imported pages so it can never
