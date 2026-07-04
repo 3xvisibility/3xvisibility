@@ -14,7 +14,7 @@
  * a small, tolerant HTML tokenizer.
  */
 
-import { StyleResolver, styleButton, styleContainer, styleContainerResponsive, styleHeading, styleImage, styleText, styleTypographyResponsive, type NodeLike, type StyleProps } from "./style-extract.ts";
+import { StyleResolver, styleButton, styleContainer, styleContainerResponsive, styleHeading, styleImage, styleResponsiveVisibilityAndOrder, styleText, styleTypographyResponsive, type NodeLike, type StyleProps } from "./style-extract.ts";
 import type { SiteContext } from "./wp-site-context.ts";
 
 // Module-scoped style baking state. Set by `htmlToElementor` so the widget
@@ -57,6 +57,9 @@ function bakedSettings(
     styleTypographyResponsive(settings, props, devices.tablet as StyleProps, "_tablet");
     styleTypographyResponsive(settings, props, devices.mobile as StyleProps, "_mobile");
   }
+  // Responsive visibility (hide on desktop/tablet/mobile) + ordering apply to
+  // every element type, so bake them regardless of the widget kind.
+  styleResponsiveVisibilityAndOrder(settings, devices);
   return settings;
 }
 

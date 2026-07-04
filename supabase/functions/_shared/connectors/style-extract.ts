@@ -67,6 +67,7 @@ export interface StyleProps {
   bottom?: string;
   left?: string;
   inset?: string;
+  order?: string;
 }
 
 interface MediaCond {
@@ -297,6 +298,7 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["bottom"]) p.bottom = d["bottom"];
   if (d["left"]) p.left = d["left"];
   if (d["inset"]) p.inset = d["inset"];
+  if (d["order"]) p.order = d["order"];
 
   const box = (prefix: "padding" | "margin"): Partial<BoxSides> | undefined => {
     const sides: Partial<BoxSides> = {};
@@ -852,6 +854,53 @@ export function styleTypographyResponsive(
   }
   if (dev.textAlign && dev.textAlign !== base.textAlign) settings[`align${suffix}`] = dev.textAlign;
 }
+
+/**
+ * Bake responsive VISIBILITY (hide on desktop/tablet/mobile) and ORDERING onto an
+ * element's Elementor settings from the per-device resolved styles.
+ *
+ * Visibility: a `display:none` active at a device width maps to Elementor's
+ * `hide_desktop` / `hide_tablet` / `hide_mobile` = "hidden" responsive controls.
+ * Ordering: a CSS `order` value maps to Elementor's flex `_order` custom control
+ * (`_order` = "custom" + numeric `_order_custom{suffix}`), per device.
+ */
+export function styleResponsiveVisibilityAndOrder(
+  settings: Record<string, unknown>,
+  devices: { desktop: StyleProps; tablet: StyleProps; mobile: StyleProps },
+): void {
+  const map: Array<{ dev: StyleProps; hide: string; suffix: "" | "_tablet" | "_mobile" }> = [
+    { dev: devices.desktop, hide: "hide_desktop", suffix: "" },
+    { dev: devices.tablet, hide: "hide_tablet", suffix: "_tablet" },
+    { dev: devices.mobile, hide: "hide_mobile", suffix: "_mobile" },
+  ];
+
+  // --- Responsive visibility -------------------------------------------------
+  for (const { dev, hide } of map) {
+    if (dev.display === "none") settings[hide] = "hidden";
+  }
+
+  // --- Responsive ordering ---------------------------------------------------
+  const baseOrder = parseOrder(devices.desktop.order);
+  if (baseOrder !== null) {
+    settings["_order"] = "custom";
+    settings["_order_custom"] = { unit: "px", size: baseOrder, sizes: [] };
+  }
+  for (const { dev, suffix } of map) {
+    if (suffix === "") continue;
+    const o = parseOrder(dev.order);
+    if (o !== null && o !== baseOrder) {
+      settings["_order"] = "custom";
+      settings[`_order_custom${suffix}`] = { unit: "px", size: o, sizes: [] };
+    }
+  }
+}
+
+function parseOrder(value?: string): number | null {
+  if (!value) return null;
+  const n = parseInt(String(value).trim(), 10);
+  return Number.isFinite(n) ? n : null;
+}
+
 
 
 function sidesToElementorSafe(sides?: Partial<BoxSides>): Record<string, unknown> | undefined {
