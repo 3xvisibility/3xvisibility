@@ -59,6 +59,8 @@ function xxxv_connector_boot() {
 	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'neutralize_theme_css' ), PHP_INT_MAX - 5 );
 	add_action( 'init', array( 'XXXV_Elementor', 'disable_global_styles' ) );
 	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'enqueue_template_css' ), PHP_INT_MAX );
+	// Run absolutely last so theme styles are gone and Elementor/connector CSS wins.
+	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'prevent_theme_css_override' ), PHP_INT_MAX );
 	// Auto-register the template's Google Fonts (correct weights/subsets +
 	// display=swap) with preconnect/preload hints on connector pages so imported
 	// typography renders exactly and fast.
