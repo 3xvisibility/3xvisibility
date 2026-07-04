@@ -1068,10 +1068,20 @@ export function sanitizeElementorTree(tree: ElementorElement[]): ElementorElemen
   return tree.map(visit);
 }
 
-export function htmlToElementor(html: string): ElementorElement[] {
-  const tree = parseHtml(html || "");
-  const converted = convertChildren(tree);
-  return sanitizeElementorTree(flattenSections(converted));
+export interface HtmlToElementorOptions {
+  /** Enable Elementor Pro-only widgets (form, rating). Requires Pro on the target site. */
+  proWidgets?: boolean;
+}
+
+export function htmlToElementor(html: string, options?: HtmlToElementorOptions): ElementorElement[] {
+  PRO_WIDGETS = options?.proWidgets === true;
+  try {
+    const tree = parseHtml(html || "");
+    const converted = convertChildren(tree);
+    return sanitizeElementorTree(flattenSections(converted));
+  } finally {
+    PRO_WIDGETS = false;
+  }
 }
 
 /* --------------------- visual regression workflow ------------------------ */
