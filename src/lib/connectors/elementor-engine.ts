@@ -252,6 +252,64 @@ function detectSpacer(node: HtmlNode): ElementorElement | null {
   return null;
 }
 
+/** Pull a 0-100 percentage from aria/style/data/text on a progress element. */
+function readPercent(node: HtmlNode): number | null {
+  const aria = node.attrs["aria-valuenow"];
+  if (aria && Number.isFinite(parseFloat(aria))) return clampPercent(parseFloat(aria));
+  const data = node.attrs["data-percent"] || node.attrs["data-value"] || node.attrs["data-progress"];
+  if (data && Number.isFinite(parseFloat(data))) return clampPercent(parseFloat(data));
+  const style = (node.attrs.style || "").toLowerCase();
+  const width = style.match(/width\s*:\s*([\d.]+)\s*%/);
+  if (width) return clampPercent(parseFloat(width[1]));
+  const inner = findNode(node, (n) => {
+    const s = (n.attrs.style || "").toLowerCase();
+    return /width\s*:\s*[\d.]+\s*%/.test(s) || Boolean(n.attrs["aria-valuenow"]);
+  });
+  if (inner) {
+    const s = (inner.attrs.style || "").toLowerCase();
+    const w = s.match(/width\s*:\s*([\d.]+)\s*%/);
+    if (w) return clampPercent(parseFloat(w[1]));
+    const a = inner.attrs["aria-valuenow"];
+    if (a && Number.isFinite(parseFloat(a))) return clampPercent(parseFloat(a));
+  }
+  return null;
+}
+
+function clampPercent(value: number): number {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+/** A progress-bar element -> native Elementor Progress widget. */
+function progressBar(node: HtmlNode, percent: number): ElementorElement {
+  const title = textContent(node).replace(/\s*\d+\s*%\s*$/, "").trim();
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "progress",
+    settings: {
+      title: title || undefined,
+      percent: { unit: "%", size: percent, sizes: [] },
+      display_percentage: "show",
+      inner_text: `${percent}%`,
+    },
+    elements: [],
+  };
+}
+
+/** Detect a progress-bar structure and convert it to a native Progress widget. */
+function detectProgressBar(node: HtmlNode): ElementorElement | null {
+  const role = (node.attrs.role || "").toLowerCase();
+  const isProgress = node.tag === "progress"
+    || role === "progressbar"
+    || hasClass(node, "progress", "progress-bar", "skill-bar", "meter");
+  if (!isProgress) return null;
+  const percent = readPercent(node);
+  if (percent === null) return null;
+  return progressBar(node, percent);
+}
+
+
+
 
 /** Map an icon class to an Elementor selected_icon value. */
 function resolveIconValue(node: HtmlNode): { value: string; library: string } {
@@ -675,6 +733,9 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
     } else if (isButton(node)) {
       flush();
       out.push(button(node));
+    } else if (detectProgressBar(node)) {
+      flush();
+      out.push(detectProgressBar(node)!);
     } else if (detectSpacer(node)) {
       flush();
       out.push(detectSpacer(node)!);
