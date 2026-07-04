@@ -30,7 +30,7 @@ import { downloadStarterCsv } from "@/lib/csv-starter";
 import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, reskinContent, defaultSkinVariant, type MarketplaceTemplate, type TemplateFormat, type TemplatePlatform } from "@/lib/marketplace-templates";
-import { ELEMENTOR_TEMPLATES } from "@/lib/marketplace-elementor-templates";
+
 import { useTranslatedTemplate } from "@/hooks/use-translated-template";
 import { useTranslatedTemplateList } from "@/hooks/use-translated-template-list";
 import { Languages } from "lucide-react";
