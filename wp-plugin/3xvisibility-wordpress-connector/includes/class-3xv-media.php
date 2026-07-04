@@ -330,12 +330,15 @@ class XXXV_Media {
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 
+		self::allow_extra_mimes();
 		$upload = wp_upload_bits( $filename, null, $binary );
 		if ( ! empty( $upload['error'] ) ) {
+			self::restore_extra_mimes();
 			return new WP_Error( 'xxxv_upload_bits', $upload['error'], array( 'status' => 500 ) );
 		}
 
 		$filetype   = wp_check_filetype( $upload['file'], null );
+		self::restore_extra_mimes();
 		$attachment = array(
 			'post_mime_type' => $filetype['type'] ? $filetype['type'] : $mime,
 			'post_title'     => sanitize_file_name( $filename ),
