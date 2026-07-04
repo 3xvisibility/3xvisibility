@@ -518,6 +518,39 @@ export default function TemplateMarketplacePage() {
         </Button>
       </div>
 
+      {/* Step 1 — choose the target platform. Every template is available on both
+          Elementor (WordPress) and Shopify and is re-skinned to match. */}
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-2">
+          {t("marketplace.choosePlatform") || "Choose your platform"}
+        </p>
+        <div className="grid grid-cols-2 gap-3 max-w-md">
+          {([
+            { id: "elementor" as const, label: "Elementor", desc: "WordPress / Elementor pages", icon: FileText },
+            { id: "shopify" as const, label: "Shopify", desc: "Shopify storefront pages", icon: ShoppingBag },
+          ]).map((p) => {
+            const active = platformChoice === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPlatformChoice(p.id)}
+                className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${
+                  active ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                }`}
+              >
+                <p.icon className={`h-6 w-6 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                <div>
+                  <div className="text-sm font-semibold">{p.label}</div>
+                  <div className="text-[11px] text-muted-foreground">{p.desc}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+
       {/* Search and filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
