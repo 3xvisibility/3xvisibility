@@ -1908,6 +1908,45 @@ class XXXV_Elementor {
 
 
 	/**
+	 * Whether theme-CSS neutralization is enabled for this connector/site.
+	 * Defaults to enabled so existing installs keep current behavior.
+	 *
+	 * @return bool
+	 */
+	public static function is_neutralization_enabled() {
+		if ( ! defined( 'XXXV_CONNECTOR_OPT_NEUTRALIZE' ) ) {
+			return true;
+		}
+		$val = get_option( XXXV_CONNECTOR_OPT_NEUTRALIZE, '1' );
+		return '0' !== (string) $val;
+	}
+
+	/**
+	 * Style handles the user chose to exclude from neutralization (kept enqueued).
+	 * Stored as a newline/comma-separated list; returned as a lowercase array.
+	 *
+	 * @return array
+	 */
+	public static function neutralization_excludes() {
+		if ( ! defined( 'XXXV_CONNECTOR_OPT_NEUTRALIZE_EXCLUDES' ) ) {
+			return array();
+		}
+		$raw = (string) get_option( XXXV_CONNECTOR_OPT_NEUTRALIZE_EXCLUDES, '' );
+		if ( '' === trim( $raw ) ) {
+			return array();
+		}
+		$parts = preg_split( '/[\s,]+/', $raw );
+		$out   = array();
+		foreach ( (array) $parts as $p ) {
+			$p = strtolower( trim( (string) $p ) );
+			if ( '' !== $p ) {
+				$out[] = $p;
+			}
+		}
+		return array_values( array_unique( $out ) );
+	}
+
+	/**
 	 * Neutralize the active theme's CSS on connector-imported pages so it can never
 	 * override the imported template design. Runs late on wp_enqueue_scripts and
 	 * dequeues theme stylesheets (generic + per-theme handles), and on wp_head/init
@@ -1916,6 +1955,9 @@ class XXXV_Elementor {
 	 */
 	public static function neutralize_theme_css() {
 		if ( is_admin() || ! is_singular( 'page' ) ) {
+			return;
+		}
+		if ( ! self::is_neutralization_enabled() ) {
 			return;
 		}
 		$post_id = get_queried_object_id();
