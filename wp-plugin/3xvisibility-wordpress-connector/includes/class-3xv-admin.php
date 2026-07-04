@@ -107,6 +107,36 @@ class XXXV_Admin {
 				<?php wp_nonce_field( 'xxxv_regenerate_key' ); ?>
 				<?php submit_button( 'Regenerate API Key', 'secondary' ); ?>
 			</form>
+
+			<hr />
+
+			<h2>Theme CSS Neutralization</h2>
+			<p class="description" style="max-width:640px;">
+				On imported connector pages, the plugin dequeues the active theme's stylesheets and WordPress global/block styles so the imported template renders exactly as designed. Turn this off if you want the theme's CSS to remain, or keep specific stylesheets while neutralizing the rest.
+			</p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="xxxv_save_css_settings" />
+				<?php wp_nonce_field( 'xxxv_save_css_settings' ); ?>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row">Neutralize theme CSS</th>
+						<td>
+							<label>
+								<input type="checkbox" name="xxxv_neutralize" value="1" <?php checked( $neutralize ); ?> />
+								Dequeue theme &amp; WordPress global styles on connector pages (recommended)
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="xxxv_neutralize_excludes">Keep these stylesheets</label></th>
+						<td>
+							<textarea id="xxxv_neutralize_excludes" name="xxxv_neutralize_excludes" rows="4" style="width:420px;font-family:monospace;" placeholder="e.g. my-theme-style&#10;woocommerce-general"><?php echo esc_textarea( $excludes_value ); ?></textarea>
+							<p class="description">One WordPress style handle per line (or comma-separated). These are never dequeued even when neutralization is on.</p>
+						</td>
+					</tr>
+				</table>
+				<?php submit_button( 'Save CSS Settings' ); ?>
+			</form>
 		</div>
 		<?php
 	}
