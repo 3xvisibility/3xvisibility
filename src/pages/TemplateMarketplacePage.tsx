@@ -267,12 +267,8 @@ export default function TemplateMarketplacePage() {
   // Build the category pill list dynamically from whatever templates exist on
   // the active tab. "All" is always first; every category present in the data
   // gets a pill (with a count), so newly added niches appear automatically.
-  // WordPress is the default CMS, so any "generic" template is grouped under the
-  // WordPress platform pill — mirroring how Shopify templates are grouped.
-  const effectivePlatform = (tpl: MarketplaceTemplate) => {
-    const p = tpl.platform || platformFromCategory(tpl.category || "");
-    return p === "generic" ? "wordpress" : p;
-  };
+
+
 
   const displayCategories = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
