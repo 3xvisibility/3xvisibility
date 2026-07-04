@@ -309,7 +309,73 @@ function button(node: HtmlNode): ElementorElement {
   };
 }
 
+/* ------------------- primitive native widget builders -------------------- */
+
+/** `<hr>` -> native Elementor Divider widget. */
+function divider(node?: HtmlNode): ElementorElement {
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "divider",
+    settings: { ...nativeIdentitySettings(node) },
+    elements: [],
+  };
+}
+
+/** Map a Font Awesome / generic icon class to an Elementor selected_icon value. */
+function resolveIconValue(node: HtmlNode): { value: string; library: string } {
+  const cls = (node.attrs.class || "").toLowerCase();
+  // Preserve an explicit Font Awesome icon class ("fas fa-star", "fab fa-x").
+  const styleToken = cls.match(/\bfa[bsrl]?\b/)?.[0] || "fas";
+  const iconToken = cls.match(/\bfa-[a-z0-9-]+\b/)?.[0];
+  if (iconToken) {
+    const library = styleToken === "fab" ? "fa-brands" : styleToken === "far" ? "fa-regular" : "fa-solid";
+    return { value: `${styleToken} ${iconToken}`, library };
+  }
+  return { value: "fas fa-star", library: "fa-solid" };
+}
+
+/** Standalone `<i>` / `<svg>` icon -> native Elementor Icon widget. */
+function iconWidget(node: HtmlNode): ElementorElement {
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "icon",
+    settings: {
+      ...nativeIdentitySettings(node),
+      selected_icon: resolveIconValue(node),
+    },
+    elements: [],
+  };
+}
+
+/** Extract a YouTube/Vimeo id or a hosted file URL from an embed node. */
+function video(node: HtmlNode): ElementorElement {
+  const src = node.attrs.src || (findNode(node, (n) => n.tag === "source")?.attrs.src ?? "");
+  const settings: Record<string, unknown> = { ...nativeIdentitySettings(node) };
+  const yt = src.match(/(?:youtube\.com\/(?:embed\/|watch\?v=)|youtu\.be\/)([\w-]{6,})/i);
+  const vimeo = src.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+  if (yt) {
+    settings.video_type = "youtube";
+    settings.youtube_url = `https://www.youtube.com/watch?v=${yt[1]}`;
+  } else if (vimeo) {
+    settings.video_type = "vimeo";
+    settings.vimeo_url = `https://vimeo.com/${vimeo[1]}`;
+  } else {
+    settings.video_type = "hosted";
+    settings.hosted_url = { url: src };
+  }
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "video",
+    settings,
+    elements: [],
+  };
+}
+
 /* --------------------- advanced widget builders -------------------------- */
+
 
 function findNode(node: HtmlNode, pred: (n: HtmlNode) => boolean): HtmlNode | undefined {
   for (const child of node.children) {
