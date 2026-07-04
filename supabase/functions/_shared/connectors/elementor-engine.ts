@@ -60,6 +60,19 @@ function bakedSettings(
   // Responsive visibility (hide on desktop/tablet/mobile) + ordering apply to
   // every element type, so bake them regardless of the widget kind.
   styleResponsiveVisibilityAndOrder(settings, devices);
+
+  // Bake interactive :hover/:focus/:active styles onto native hover controls so
+  // the class selectors' pseudo-states apply to the intended widget.
+  const hover = CURRENT_RESOLVER.resolveHover(node as NodeLike);
+  if (hover) {
+    const kind: HoverKind =
+      apply === styleButton ? "button"
+        : apply === styleContainer ? "container"
+          : apply === styleHeading ? "heading"
+            : apply === styleImage ? "image"
+              : "text";
+    styleHover(settings, hover, kind);
+  }
   return settings;
 }
 
