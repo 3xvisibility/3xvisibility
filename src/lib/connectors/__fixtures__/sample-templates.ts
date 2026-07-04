@@ -289,7 +289,7 @@ export const sampleTemplates: SampleTemplate[] = [
     id: "rating-data-attr-pro",
     description: "Pro: a rating using data-rating maps to a native rating widget",
     pro: true,
-    html: `<div class="star-rating" data-rating="4.5"></div>`,
+    html: `<div class="star-rating" data-rating="4.5">Rated 4.5 out of 5</div>`,
     expectWidgets: ["rating"],
     forbidWidgets: ["html"],
   },
