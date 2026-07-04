@@ -37,6 +37,30 @@ class XXXV_Admin {
 		exit;
 	}
 
+	public function save_css_settings() {
+		if ( ! current_user_can( 'manage_options' ) || ! check_admin_referer( 'xxxv_save_css_settings' ) ) {
+			wp_die( 'Not allowed.' );
+		}
+		$enabled = isset( $_POST['xxxv_neutralize'] ) ? '1' : '0';
+		update_option( XXXV_CONNECTOR_OPT_NEUTRALIZE, $enabled );
+
+		$raw = isset( $_POST['xxxv_neutralize_excludes'] ) ? wp_unslash( $_POST['xxxv_neutralize_excludes'] ) : '';
+		// Sanitize to a clean newline-separated list of style handles.
+		$parts   = preg_split( '/[\s,]+/', (string) $raw );
+		$handles = array();
+		foreach ( (array) $parts as $p ) {
+			$p = sanitize_key( strtolower( trim( (string) $p ) ) );
+			if ( '' !== $p ) {
+				$handles[] = $p;
+			}
+		}
+		$handles = array_values( array_unique( $handles ) );
+		update_option( XXXV_CONNECTOR_OPT_NEUTRALIZE_EXCLUDES, implode( "\n", $handles ) );
+
+		wp_safe_redirect( admin_url( 'options-general.php?page=pgp-connector&css_saved=1' ) );
+		exit;
+	}
+
 	public function render() {
 		$key      = XXXV_Auth::get_key();
 		$rest_url = rest_url( XXXV_CONNECTOR_NS . '/' );
