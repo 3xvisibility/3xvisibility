@@ -18,6 +18,60 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class XXXV_Media {
 
+	/**
+	 * Temporarily whitelist SVG/WebP/AVIF (and common raster) mime types so
+	 * template images in these formats import successfully and keep their format.
+	 * Wrap upload/sideload calls with allow_extra_mimes()/restore_extra_mimes().
+	 */
+	private static $mime_filter_active = false;
+
+	public static function allow_extra_mimes() {
+		if ( self::$mime_filter_active ) {
+			return;
+		}
+		self::$mime_filter_active = true;
+		add_filter( 'upload_mimes', array( __CLASS__, 'filter_upload_mimes' ), 999 );
+		// Bypass real-content sniffing for SVG (text/xml) so it isn't rejected.
+		add_filter( 'wp_check_filetype_and_ext', array( __CLASS__, 'filter_check_filetype' ), 999, 4 );
+	}
+
+	public static function restore_extra_mimes() {
+		if ( ! self::$mime_filter_active ) {
+			return;
+		}
+		remove_filter( 'upload_mimes', array( __CLASS__, 'filter_upload_mimes' ), 999 );
+		remove_filter( 'wp_check_filetype_and_ext', array( __CLASS__, 'filter_check_filetype' ), 999 );
+		self::$mime_filter_active = false;
+	}
+
+	public static function filter_upload_mimes( $mimes ) {
+		$mimes['svg']  = 'image/svg+xml';
+		$mimes['svgz'] = 'image/svg+xml';
+		$mimes['webp'] = 'image/webp';
+		$mimes['avif'] = 'image/avif';
+		$mimes['ico']  = 'image/x-icon';
+		$mimes['bmp']  = 'image/bmp';
+		$mimes['tiff'] = 'image/tiff';
+		$mimes['tif']  = 'image/tiff';
+		return $mimes;
+	}
+
+	public static function filter_check_filetype( $data, $file, $filename, $mimes ) {
+		if ( preg_match( '/\.svgz?$/i', (string) $filename ) ) {
+			$data['ext']  = 'svg';
+			$data['type'] = 'image/svg+xml';
+		} elseif ( preg_match( '/\.webp$/i', (string) $filename ) ) {
+			$data['ext']  = 'webp';
+			$data['type'] = 'image/webp';
+		} elseif ( preg_match( '/\.avif$/i', (string) $filename ) ) {
+			$data['ext']  = 'avif';
+			$data['type'] = 'image/avif';
+		}
+		return $data;
+	}
+
+
+
 	public static function upload( WP_REST_Request $request ) {
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 90 );
