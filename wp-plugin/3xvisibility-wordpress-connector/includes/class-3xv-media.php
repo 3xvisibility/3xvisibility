@@ -53,6 +53,12 @@ class XXXV_Media {
 		$mimes['bmp']  = 'image/bmp';
 		$mimes['tiff'] = 'image/tiff';
 		$mimes['tif']  = 'image/tiff';
+		// Web fonts referenced from CSS @font-face src: url(...).
+		$mimes['woff']  = 'font/woff';
+		$mimes['woff2'] = 'font/woff2';
+		$mimes['ttf']   = 'font/ttf';
+		$mimes['otf']   = 'font/otf';
+		$mimes['eot']   = 'application/vnd.ms-fontobject';
 		return $mimes;
 	}
 
@@ -66,9 +72,25 @@ class XXXV_Media {
 		} elseif ( preg_match( '/\.avif$/i', (string) $filename ) ) {
 			$data['ext']  = 'avif';
 			$data['type'] = 'image/avif';
+		} elseif ( preg_match( '/\.woff2$/i', (string) $filename ) ) {
+			$data['ext']  = 'woff2';
+			$data['type'] = 'font/woff2';
+		} elseif ( preg_match( '/\.woff$/i', (string) $filename ) ) {
+			$data['ext']  = 'woff';
+			$data['type'] = 'font/woff';
+		} elseif ( preg_match( '/\.ttf$/i', (string) $filename ) ) {
+			$data['ext']  = 'ttf';
+			$data['type'] = 'font/ttf';
+		} elseif ( preg_match( '/\.otf$/i', (string) $filename ) ) {
+			$data['ext']  = 'otf';
+			$data['type'] = 'font/otf';
+		} elseif ( preg_match( '/\.eot$/i', (string) $filename ) ) {
+			$data['ext']  = 'eot';
+			$data['type'] = 'application/vnd.ms-fontobject';
 		}
 		return $data;
 	}
+
 
 
 
