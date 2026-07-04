@@ -1969,6 +1969,53 @@ class XXXV_Elementor {
 	}
 
 	/**
+	 * User-defined custom removal rules: extra stylesheet handles (or wildcard
+	 * patterns like "mytheme-*") that should always be dequeued on connector
+	 * pages, in addition to the built-in popular-theme handle list. Stored as a
+	 * newline/comma-separated list; returned as a lowercase array. Wildcards
+	 * ("*") are preserved so the caller can resolve them against the live queue.
+	 *
+	 * @return array
+	 */
+	public static function neutralization_custom_removals() {
+		if ( ! defined( 'XXXV_CONNECTOR_OPT_NEUTRALIZE_REMOVALS' ) ) {
+			return array();
+		}
+		$raw = (string) get_option( XXXV_CONNECTOR_OPT_NEUTRALIZE_REMOVALS, '' );
+		if ( '' === trim( $raw ) ) {
+			return array();
+		}
+		$parts = preg_split( '/[\s,]+/', $raw );
+		$out   = array();
+		foreach ( (array) $parts as $p ) {
+			// Allow alphanumerics, dash, underscore and the "*" wildcard only.
+			$p = strtolower( trim( (string) $p ) );
+			$p = preg_replace( '/[^a-z0-9_*-]/', '', $p );
+			if ( '' !== $p ) {
+				$out[] = $p;
+			}
+		}
+		return array_values( array_unique( $out ) );
+	}
+
+	/**
+	 * Match a registered style handle against a custom removal pattern that may
+	 * contain "*" wildcards (e.g. "mytheme-*", "*-google-fonts").
+	 *
+	 * @param string $handle  Registered style handle.
+	 * @param string $pattern Removal pattern.
+	 * @return bool
+	 */
+	public static function handle_matches_pattern( $handle, $pattern ) {
+		if ( false === strpos( $pattern, '*' ) ) {
+			return $handle === $pattern;
+		}
+		$regex = '/^' . str_replace( '\*', '.*', preg_quote( $pattern, '/' ) ) . '$/i';
+		return (bool) preg_match( $regex, $handle );
+	}
+
+
+	/**
 	 * Neutralize the active theme's CSS on connector-imported pages so it can never
 	 * override the imported template design. Runs late on wp_enqueue_scripts and
 	 * dequeues theme stylesheets (generic + per-theme handles), and on wp_head/init
@@ -2002,19 +2049,39 @@ class XXXV_Elementor {
 
 		// Known per-theme stylesheet handles to remove.
 		$theme_handles = array(
-			'astra-theme-css', 'astra-google-fonts',                 // Astra
-			'generatepress-style', 'generate-style-css',             // GeneratePress
-			'kadence-style', 'kadence-global',                       // Kadence
-			'twentytwentyfive-style', 'twentytwentyfour-style',      // TT5 / TT4
+			'astra-theme-css', 'astra-google-fonts', 'astra-addon-css',   // Astra
+			'generatepress-style', 'generate-style-css', 'gp-premium-css', // GeneratePress
+			'kadence-style', 'kadence-global', 'kadence-header',          // Kadence
+			'twentytwentyfive-style', 'twentytwentyfour-style',          // TT5 / TT4
 			'twentytwentythree-style', 'twentytwentytwo-style',
-			'oceanwp-style',                                         // OceanWP
-			'blocksy-styles', 'blocksy-style',                       // Blocksy
-			'neve-style',                                            // Neve
-			'divi-style', 'et-builder-googlefonts', 'et-core-unified', // Divi
-			'storefront-style', 'twentytwentyone-style',
-			'flatsome-style', 'flatsome-shop',                       // Flatsome
-			'avada-stylesheet', 'fusion-dynamic-css',                // Avada
-			'bricks-frontend',                                       // Bricks (as theme)
+			'twentytwentyone-style', 'twentytwenty-style', 'twentynineteen-style',
+			'twentyseventeen-style', 'twentysixteen-style',
+			'oceanwp-style', 'oceanwp-google-fonts',                     // OceanWP
+			'blocksy-styles', 'blocksy-style', 'ct-main-styles',         // Blocksy
+			'neve-style', 'neve-google-fonts',                          // Neve
+			'divi-style', 'et-builder-googlefonts', 'et-core-unified',   // Divi
+			'et-divi-open-sans', 'et-gb-module-styles',
+			'storefront-style', 'storefront-woocommerce-style',         // Storefront
+			'flatsome-style', 'flatsome-shop', 'flatsome-main',         // Flatsome
+			'avada-stylesheet', 'fusion-dynamic-css', 'avada-google-fonts', // Avada
+			'bricks-frontend',                                          // Bricks (as theme)
+			'hestia_style', 'hestia-style',                             // Hestia
+			'sydney-style', 'sydney-fonts',                            // Sydney
+			'customify-style',                                         // Customify
+			'colibri-css', 'colibri-frontend',                        // Colibri
+			'botiga-style', 'botiga-theme-style',                     // Botiga
+			'zakra-style', 'zakra-google-fonts',                      // Zakra
+			'phlox-style', 'auxin-front-main',                        // Phlox
+			'suki-theme', 'suki-google-fonts',                        // Suki
+			'page-builder-framework-style', 'wpbf-css',               // Page Builder Framework
+			'enfold-style', 'avia-base', 'avia-layout',               // Enfold
+			'betheme-style', 'mfn-base',                              // BeTheme
+			'thegem-style', 'thegem-reset',                          // TheGem
+			'salient-style', 'nectar-css',                          // Salient
+			'jupiterx-style', 'jupiter-style',                       // Jupiter / JupiterX
+			'woodmart-style', 'woodmart-base',                       // Woodmart
+			'porto-theme', 'porto-plugins',                          // Porto
+			'the7-main-css', 'the7-fonts',                          // The7
 		);
 
 		// Also derive handles from the active theme slug (covers custom themes).
@@ -2025,15 +2092,46 @@ class XXXV_Elementor {
 			$theme_handles[] = $slug . '-style';
 			$theme_handles[] = $slug . '-theme-css';
 			$theme_handles[] = $slug . '-css';
+			$theme_handles[] = $slug . '-google-fonts';
+			$theme_handles[] = $slug . '-fonts';
+			$theme_handles[] = $slug . '-main';
 		}
 
+		// User-defined custom removal rules (extra handles to always dequeue).
+		$theme_handles = array_merge( $theme_handles, self::neutralization_custom_removals() );
+
 		if ( $wp_styles instanceof \WP_Styles ) {
-			foreach ( $theme_handles as $handle ) {
-				if ( in_array( $handle, $keep, true ) ) {
+			$keep_lookup = array_flip( $keep );
+			$patterns    = array();
+			foreach ( array_unique( $theme_handles ) as $handle ) {
+				if ( '' === $handle ) {
+					continue;
+				}
+				if ( false !== strpos( $handle, '*' ) ) {
+					// Custom wildcard rule (e.g. "mytheme-*"): resolve later.
+					$patterns[] = $handle;
+					continue;
+				}
+				if ( isset( $keep_lookup[ $handle ] ) ) {
 					continue;
 				}
 				if ( isset( $wp_styles->registered[ $handle ] ) ) {
 					wp_dequeue_style( $handle );
+				}
+			}
+
+			// Apply wildcard removal patterns against every registered handle.
+			if ( $patterns ) {
+				foreach ( array_keys( (array) $wp_styles->registered ) as $handle ) {
+					if ( isset( $keep_lookup[ $handle ] ) ) {
+						continue;
+					}
+					foreach ( $patterns as $pattern ) {
+						if ( self::handle_matches_pattern( (string) $handle, $pattern ) ) {
+							wp_dequeue_style( $handle );
+							break;
+						}
+					}
 				}
 			}
 		}

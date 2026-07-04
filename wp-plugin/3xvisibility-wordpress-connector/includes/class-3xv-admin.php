@@ -57,6 +57,20 @@ class XXXV_Admin {
 		$handles = array_values( array_unique( $handles ) );
 		update_option( XXXV_CONNECTOR_OPT_NEUTRALIZE_EXCLUDES, implode( "\n", $handles ) );
 
+		// Custom removal rules: extra handles or wildcard patterns to force-remove.
+		$raw_rm  = isset( $_POST['xxxv_neutralize_removals'] ) ? wp_unslash( $_POST['xxxv_neutralize_removals'] ) : '';
+		$parts_rm = preg_split( '/[\s,]+/', (string) $raw_rm );
+		$removals = array();
+		foreach ( (array) $parts_rm as $p ) {
+			// Allow alphanumerics, dash, underscore and the "*" wildcard.
+			$p = preg_replace( '/[^a-z0-9_*-]/', '', strtolower( trim( (string) $p ) ) );
+			if ( '' !== $p ) {
+				$removals[] = $p;
+			}
+		}
+		$removals = array_values( array_unique( $removals ) );
+		update_option( XXXV_CONNECTOR_OPT_NEUTRALIZE_REMOVALS, implode( "\n", $removals ) );
+
 		wp_safe_redirect( admin_url( 'options-general.php?page=pgp-connector&css_saved=1' ) );
 		exit;
 	}
@@ -66,6 +80,7 @@ class XXXV_Admin {
 		$rest_url       = rest_url( XXXV_CONNECTOR_NS . '/' );
 		$neutralize     = XXXV_Elementor::is_neutralization_enabled();
 		$excludes_value = implode( "\n", XXXV_Elementor::neutralization_excludes() );
+		$removals_value = implode( "\n", XXXV_Elementor::neutralization_custom_removals() );
 		?>
 		<div class="wrap">
 			<h1>3xVisibility WordPress Connector</h1>
@@ -132,6 +147,13 @@ class XXXV_Admin {
 						<td>
 							<textarea id="xxxv_neutralize_excludes" name="xxxv_neutralize_excludes" rows="4" style="width:420px;font-family:monospace;" placeholder="e.g. my-theme-style&#10;woocommerce-general"><?php echo esc_textarea( $excludes_value ); ?></textarea>
 							<p class="description">One WordPress style handle per line (or comma-separated). These are never dequeued even when neutralization is on.</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="xxxv_neutralize_removals">Also remove these stylesheets</label></th>
+						<td>
+							<textarea id="xxxv_neutralize_removals" name="xxxv_neutralize_removals" rows="4" style="width:420px;font-family:monospace;" placeholder="e.g. my-plugin-css&#10;mytheme-*&#10;*-google-fonts"><?php echo esc_textarea( $removals_value ); ?></textarea>
+							<p class="description">Custom removal rules: extra style handles to always dequeue on connector pages, in addition to the built-in popular-theme list. One handle per line (or comma-separated). Wildcards with <code>*</code> are supported (e.g. <code>mytheme-*</code>, <code>*-google-fonts</code>). The "Keep" list above always wins over these rules.</p>
 						</td>
 					</tr>
 				</table>

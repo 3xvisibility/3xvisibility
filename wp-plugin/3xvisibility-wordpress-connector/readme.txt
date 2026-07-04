@@ -4,7 +4,7 @@ Tags: elementor, gutenberg, rest-api, programmatic-seo, page-builder
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.5.4
+Stable tag: 1.5.5
 License: GPLv2 or later
 
 Secure companion plugin that lets the 3xVisibility publish native Elementor & Gutenberg pages, upload media, regenerate CSS, clear caches, and detect builders/themes.
@@ -36,6 +36,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 4. Open Settings → 3xVisibility WordPress Connector and copy the Site URL + API Key into your 3xVisibility account.
 
 == Changelog ==
+
+= 1.5.5 =
+* Expanded popular-theme handle coverage + custom removal rules: the theme-CSS neutralizer now recognizes many more common theme stylesheet handles (Hestia, Sydney, Customify, Colibri, Botiga, Zakra, Phlox, Suki, Page Builder Framework, Enfold, BeTheme, TheGem, Salient, Jupiter/JupiterX, Woodmart, Porto, The7, additional bundled Twenty* themes, and extra Astra/GeneratePress/Kadence/OceanWP/Blocksy/Neve/Divi/Storefront/Flatsome/Avada handles), plus more slug-derived variants (-google-fonts, -fonts, -main). A new "Also remove these stylesheets" setting lets you add custom removal rules — extra handles to always dequeue on connector pages, with `*` wildcard support (e.g. `mytheme-*`, `*-google-fonts`). The "Keep these stylesheets" list always overrides removal rules.
 
 = 1.5.4 =
 * Post-publish render validator: new `POST /wp-json/pgp/v1/validate-render` endpoint (and `render_css_validation` capability) fetches the FINAL rendered page over a cache-busting request and confirms the imported template's key CSS rules actually win in the live DOM. A self-contained mini CSS cascade engine parses every <style> block and same-host stylesheet the page loads, classifies each rule as connector/Elementor/theme, matches selectors against the real parsed DOM (tag/id/class/attribute + descendant/child combinators; @media and sibling selectors are skipped to avoid false positives), and computes the winning declaration per element using true cascade order (importance > specificity > source order). It reports any key rule a theme stylesheet still overrides (with the offending selector, expected vs. actual value, and the reason) plus any key rule missing from the rendered page.
