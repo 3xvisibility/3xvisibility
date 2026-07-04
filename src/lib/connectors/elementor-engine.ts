@@ -863,6 +863,12 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
     } else if (isButton(node)) {
       flush();
       out.push(button(node));
+    } else if (detectForm(node)) {
+      flush();
+      out.push(detectForm(node)!);
+    } else if (detectRating(node)) {
+      flush();
+      out.push(detectRating(node)!);
     } else if (detectProgressBar(node)) {
       flush();
       out.push(detectProgressBar(node)!);
