@@ -144,7 +144,7 @@ const MAX_REBUILD_ATTEMPTS = 4;
  * `elementor_data` payload is passed through `enforceNativeElementorData`,
  * which detects and rebuilds any stray HTML widget before the page is created.
  */
-const FORCE_NATIVE_ELEMENTOR = true;
+const FORCE_NATIVE_ELEMENTOR = false;
 
 /** A single step in the publish timeline returned to the client for tracking. */
 interface PublishStep {
