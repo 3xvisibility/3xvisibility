@@ -1587,8 +1587,14 @@ class XXXV_Elementor {
 			return;
 		}
 
+		// Version the stylesheet with the per-page cache-buster so a forced
+		// refresh produces a fresh query string and defeats client/CDN caching.
+		$cache_version = get_post_meta( $post_id, '_xxxv_cache_version', true );
+		if ( ! $cache_version ) {
+			$cache_version = get_option( 'xxxv_global_cache_version', XXXV_CONNECTOR_VERSION );
+		}
 		$handle = 'xxxv-template-css-' . (int) $post_id;
-		wp_register_style( $handle, false, array(), XXXV_CONNECTOR_VERSION );
+		wp_register_style( $handle, false, array(), XXXV_CONNECTOR_VERSION . '-' . $cache_version );
 		wp_enqueue_style( $handle );
 		wp_add_inline_style( $handle, $css );
 	}
