@@ -114,9 +114,32 @@ interface ParsedSelector {
   tag?: string;
   classes: string[];
   id?: string;
+  /**
+   * Interactive STATE pseudo-class (hover/focus/active/…) this selector targets,
+   * if any. State rules are baked as Elementor hover controls, never merged into
+   * the element's base style.
+   */
+  state?: string;
+  /** True when the selector targets a pseudo-ELEMENT (::before, ::after, …). */
+  pseudoElement?: boolean;
   /** Higher = wins. (id*100 + class*10 + tag). */
   specificity: number;
 }
+
+/**
+ * Pseudo-classes that represent an interactive STATE. They must not pollute the
+ * element's base style (otherwise a button permanently renders in its hover
+ * colour); instead they are routed to Elementor's native hover controls.
+ */
+const STATE_PSEUDOS = new Set([
+  "hover",
+  "focus",
+  "active",
+  "focus-visible",
+  "focus-within",
+  "visited",
+]);
+
 
 /* ----------------------------- CSS parsing ------------------------------- */
 
@@ -135,8 +158,27 @@ function parseDecls(body: string): Record<string, string> {
 function parseSelector(sel: string): ParsedSelector | null {
   // Only the RIGHTMOST simple selector is used for matching (no combinators),
   // which is robust and good enough to bake per-element design.
-  const simple = sel.trim().split(/\s+/).pop() ?? "";
-  if (!simple || simple === "*") return null;
+  const simpleRaw = sel.trim().split(/\s+/).pop() ?? "";
+  if (!simpleRaw || simpleRaw === "*") return null;
+
+  // Detect a pseudo-ELEMENT (::before / legacy :before / ::placeholder …). These
+  // can't map onto a base widget control, so we tag them and exclude from base.
+  const pseudoElement = /::[\w-]+|:(?:before|after|first-line|first-letter|placeholder|selection|marker|backdrop)\b/i.test(simpleRaw);
+
+  // Detect an interactive STATE pseudo-class (the first one wins for routing).
+  let state: string | undefined;
+  const stateMatch = simpleRaw.match(/:([\w-]+)/g);
+  if (stateMatch) {
+    for (const raw of stateMatch) {
+      const name = raw.replace(/^:+/, "").replace(/\(.*$/, "").toLowerCase();
+      if (STATE_PSEUDOS.has(name)) { state = name; break; }
+    }
+  }
+
+  // Strip EVERY pseudo segment (`:x`, `::x`, functional `:not(.y)`) so the
+  // tag/class/id parse cleanly regardless of trailing pseudo syntax.
+  const simple = simpleRaw.replace(/::?[\w-]+(?:\([^)]*\))?/g, "");
+
   const classes = [...simple.matchAll(/\.([\w-]+)/g)].map((m) => m[1].toLowerCase());
   const idMatch = simple.match(/#([\w-]+)/);
   const tagMatch = simple.match(/^([a-zA-Z][\w-]*)/);
@@ -144,7 +186,8 @@ function parseSelector(sel: string): ParsedSelector | null {
   const tag = tagMatch ? tagMatch[1].toLowerCase() : undefined;
   if (!tag && !id && classes.length === 0) return null;
   const specificity = (id ? 100 : 0) + classes.length * 10 + (tag ? 1 : 0);
-  return { tag, classes, id, specificity };
+  return { tag, classes, id, state, pseudoElement, specificity };
+
 }
 
 /** Read a balanced `{...}` block starting at the `{` index. Returns inner text + index after closing `}`. */
@@ -364,12 +407,16 @@ export class StyleResolver {
     for (const rule of this.rules) {
       if (!mediaActiveAt(rule.media, width)) continue;
       for (const sel of rule.selectors) {
+        // Base style only: interactive-state and pseudo-element rules are baked
+        // separately (see resolveHover) so they never pollute the resting state.
+        if (sel.state || sel.pseudoElement) continue;
         if (sel.tag && sel.tag !== tag) continue;
         if (sel.id && sel.id !== id) continue;
         if (sel.classes.length && !sel.classes.every((c) => classes.includes(c))) continue;
         matched.push({ spec: sel.specificity, order: rule.order, decls: rule.decls });
       }
     }
+
     matched.sort((a, b) => (a.spec - b.spec) || (a.order - b.order));
     const merged: Record<string, string> = {};
     for (const mm of matched) Object.assign(merged, mm.decls);
@@ -394,7 +441,52 @@ export class StyleResolver {
       mobile: this.resolve(node, DEVICE_WIDTHS.mobile),
     };
   }
+
+  /**
+   * Resolve interactive-state (`:hover` / `:focus` / `:active`) styles for a node.
+   * Only rules whose rightmost simple selector carries a STATE pseudo-class AND
+   * matches this node's tag/class/id participate. Returns both the resolved
+   * StyleProps (for mapping onto native Elementor hover controls) and the raw
+   * winning declarations (so any unmapped property can still be emitted as a
+   * `selector:hover{…}` fallback). Returns `undefined` when the node has no
+   * interactive-state styling, so callers can cheaply skip it.
+   */
+  resolveHover(
+    node: NodeLike,
+    width: number = DEVICE_WIDTHS.desktop,
+  ): { props: StyleProps; decls: Record<string, string>; states: string[] } | undefined {
+    const tag = (node.tag || "").toLowerCase();
+    const classes = (node.attrs?.class || "").toLowerCase().split(/\s+/).filter(Boolean);
+    const id = (node.attrs?.id || "").toLowerCase();
+
+    const matched: { spec: number; order: number; decls: Record<string, string>; state: string }[] = [];
+    for (const rule of this.rules) {
+      if (!mediaActiveAt(rule.media, width)) continue;
+      for (const sel of rule.selectors) {
+        if (!sel.state || sel.pseudoElement) continue;
+        if (sel.tag && sel.tag !== tag) continue;
+        if (sel.id && sel.id !== id) continue;
+        if (sel.classes.length && !sel.classes.every((c) => classes.includes(c))) continue;
+        matched.push({ spec: sel.specificity, order: rule.order, decls: rule.decls, state: sel.state });
+      }
+    }
+    if (!matched.length) return undefined;
+
+    matched.sort((a, b) => (a.spec - b.spec) || (a.order - b.order));
+    const merged: Record<string, string> = {};
+    const states = new Set<string>();
+    for (const mm of matched) {
+      states.add(mm.state);
+      for (const [k, v] of Object.entries(mm.decls)) {
+        if (k.startsWith("--")) continue;
+        merged[k] = v.includes("var(") ? substituteVars(v, this.vars) : v;
+      }
+    }
+    if (!Object.keys(merged).length) return undefined;
+    return { props: declsToProps(merged), decls: merged, states: [...states] };
+  }
 }
+
 
 
 /* ------------------------- Elementor mapping ----------------------------- */
@@ -548,6 +640,55 @@ export function styleButton(settings: Record<string, unknown>, p: StyleProps, ct
   if (br) settings.border_radius = { unit: br.unit, top: String(br.size), right: String(br.size), bottom: String(br.size), left: String(br.size), isLinked: true };
   applyTypography(settings, {}, p, ctx, "typography");
 }
+
+export type HoverKind = "button" | "container" | "text" | "heading" | "image" | "link";
+
+/**
+ * Bake interactive-state (`:hover` / `:focus` / `:active`) styles onto native
+ * Elementor hover controls for the widget kind, and always attach a raw
+ * `__xxxv_hover` declaration bridge so the plugin can render a guaranteed
+ * `selector:hover{…}` block for any property not covered by a native control.
+ */
+export function styleHover(
+  settings: Record<string, unknown>,
+  hover: { props: StyleProps; decls: Record<string, string>; states: string[] },
+  kind: HoverKind,
+): void {
+  const p = hover.props;
+
+  if (kind === "button" || kind === "link") {
+    // Elementor Button widget hover tab.
+    if (p.color) settings.hover_color = p.color;
+    if (p.backgroundColor) settings.button_background_hover_color = p.backgroundColor;
+    if (p.border) settings.__xxxv_button_hover_border = p.border;
+    // Only add a motion preset when the template's hover actually transforms.
+    if (p.transform && p.transform !== "none" && !settings.hover_animation) {
+      settings.hover_animation = "grow";
+    }
+  } else {
+    // Containers / text / headings / images: background + text colour hover.
+    if (p.backgroundColor) {
+      settings.background_hover_background = "classic";
+      settings.background_hover_color = p.backgroundColor;
+    }
+    if (p.color) settings.__xxxv_hover_color = p.color;
+  }
+
+  const br = pxSize(p.borderRadius);
+  if (br) settings.__xxxv_hover_border_radius = `${br.size}${br.unit}`;
+  if (p.boxShadow) settings.__xxxv_hover_box_shadow = p.boxShadow;
+  if (p.transform && p.transform !== "none") settings.__xxxv_hover_transform = p.transform;
+
+  // Guaranteed fallback: the full winning hover declaration block. The connector
+  // plugin emits this as `selector:hover{…}` so EVERY hover property survives,
+  // including ones with no dedicated Elementor control.
+  const raw: Record<string, string> = {};
+  for (const [k, v] of Object.entries(hover.decls)) {
+    if (!k.startsWith("--")) raw[k] = v;
+  }
+  if (Object.keys(raw).length) settings.__xxxv_hover = raw;
+}
+
 
 /** Bake image styles (width / radius). */
 export function styleImage(

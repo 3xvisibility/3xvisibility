@@ -1349,6 +1349,27 @@ class XXXV_Elementor {
 			if ( $base && $decl_text ) {
 				$rules[] = $base . '{' . $decl_text . '}';
 			}
+			// Interactive :hover/:focus/:active styles baked from pseudo-state
+			// selectors. Emit them as a real `selector:hover` rule so the widget's
+			// hover state matches the source design 1:1.
+			if ( $base && ! empty( $settings['__xxxv_hover'] ) && is_array( $settings['__xxxv_hover'] ) ) {
+				$hover_decls = array();
+				foreach ( $settings['__xxxv_hover'] as $prop => $value ) {
+					$prop = strtolower( preg_replace( '/[^a-z-]/i', '', (string) $prop ) );
+					$val  = self::css_value( is_array( $value ) ? '' : (string) $value );
+					if ( '' !== $prop && '' !== $val ) {
+						$hover_decls[ $prop ] = $val;
+					}
+				}
+				if ( $hover_decls ) {
+					$hover_text = array();
+					foreach ( $hover_decls as $prop => $val ) {
+						$hover_text[] = $prop . ':' . $val . ' !important';
+					}
+					$rules[] = $base . ':hover,' . $base . ':focus{' . implode( ';', $hover_text ) . '}';
+				}
+			}
+
 			if ( ! empty( $element['elements'] ) ) {
 				self::collect_critical_css_rules( $element['elements'], $post_id, $rules );
 			}
