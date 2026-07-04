@@ -218,6 +218,24 @@ export function parseStylesheet(html: string): Rule[] {
 
 /* ----------------------------- resolution -------------------------------- */
 
+/**
+ * Replace `var(--name, fallback)` references in a CSS value with the resolved
+ * custom-property value (or the fallback when the variable is unknown). Runs a
+ * few passes so variables that reference other variables collapse fully.
+ */
+function substituteVars(value: string, vars: Record<string, string>): string {
+  let v = value;
+  for (let i = 0; i < 5 && v.includes("var("); i++) {
+    v = v.replace(/var\(\s*(--[a-z0-9-]+)\s*(?:,\s*([^()]*))?\)/gi, (whole, name, fallback) => {
+      const key = String(name).toLowerCase();
+      if (vars[key] !== undefined) return vars[key];
+      return fallback !== undefined ? String(fallback).trim() : whole;
+    });
+  }
+  return v;
+}
+
+
 function declsToProps(d: Record<string, string>): StyleProps {
   const p: StyleProps = {};
   if (d["color"]) p.color = d["color"];
