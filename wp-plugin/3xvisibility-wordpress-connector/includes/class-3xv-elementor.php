@@ -762,30 +762,20 @@ class XXXV_Elementor {
 		}
 	}
 
-	private static function map_css_media_references( $css, &$report ) {
+	private static function map_css_media_references( $css, &$report, $base_url = '' ) {
 		if ( ! isset( $report['urls'] ) || ! is_array( $report['urls'] ) ) {
 			$report['urls'] = array();
 		}
 
-		// CSS may contain background URLs that do not appear in widget controls. Import
-		// those as well, including extensionless AI image URLs such as Pollinations.
-		if ( preg_match_all( '#url\(\s*["\']?(https?://[^\s"\'\)]+)["\']?\s*\)#i', $css, $matches ) ) {
-			foreach ( array_unique( $matches[1] ) as $source ) {
-				if ( self::is_remote_image_url( $source ) ) {
-					self::import_media_url_for_report( $source, $report );
-				}
-			}
-		}
-		if ( empty( $report['urls'] ) || ! is_array( $report['urls'] ) ) {
-			return $css;
-		}
-		foreach ( $report['urls'] as $source => $mapped ) {
-			if ( empty( $mapped['failed'] ) && ! empty( $mapped['url'] ) ) {
-				$css = str_replace( $source, $mapped['url'], $css );
-			}
-		}
-		return $css;
+		// Comprehensive pass: downloads + rewrites every url(...) in the CSS across
+		// all image-bearing properties (background-image, list-style-image,
+		// border-image, cursor, content, @font-face src), converts data:/base64
+		// URIs to real files, normalizes localhost/relative/protocol-relative/http
+		// URLs, and preserves SVG/WebP/AVIF formats + original bytes (dimensions,
+		// quality, EXIF). WordPress then builds thumbnails + srcset for rasters.
+		return self::process_css_media( $css, $base_url, $report );
 	}
+
 
 	private static function map_exact_html_media_references( &$elements, &$report ) {
 		if ( ! is_array( $elements ) ) {
