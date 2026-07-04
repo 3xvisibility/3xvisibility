@@ -937,7 +937,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // tree, ship it directly so the WordPress page is fully editable in
           // Elementor — no raw HTML fallback.
           let dpElementorData = useExactDirectElementor
-            ? buildExactElementorData(cleanedContent)
+            ? buildExactElementorData(dp.content || cleanedContent)
             : (typeof dp.elementor_data === "string" ? dp.elementor_data : undefined);
           // Exact render embeds the template CSS inside the Elementor HTML widget.
           // Do not also send `elementor_css`, otherwise large styled templates are
