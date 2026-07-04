@@ -365,6 +365,8 @@ function detectSpacer(node: HtmlNode): ElementorElement | null {
   if (isSpacerClass) return spacer(50, node);
   return null;
 }
+
+/** Map a Font Awesome / generic icon class to an Elementor selected_icon value. */
 function resolveIconValue(node: HtmlNode): { value: string; library: string } {
   const cls = (node.attrs.class || "").toLowerCase();
   // Preserve an explicit Font Awesome icon class ("fas fa-star", "fab fa-x").
