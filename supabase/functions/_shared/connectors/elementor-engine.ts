@@ -1423,6 +1423,7 @@ export function htmlToElementor(html: string, siteContext?: SiteContext): Elemen
     CURRENT_RESOLVER = null;
     CURRENT_CTX = undefined;
     CURRENT_COLOR_STACK = [];
+    PRO_WIDGETS = false;
   }
 }
 
