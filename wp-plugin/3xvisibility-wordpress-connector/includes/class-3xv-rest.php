@@ -112,6 +112,16 @@ class XXXV_REST {
 
 		register_rest_route(
 			XXXV_CONNECTOR_NS,
+			'/validate-render',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( 'XXXV_Validator', 'validate_render' ),
+				'permission_callback' => $auth,
+			)
+		);
+
+		register_rest_route(
+			XXXV_CONNECTOR_NS,
 			'/clear-cache',
 			array(
 				'methods'             => 'POST',
@@ -195,6 +205,7 @@ class XXXV_REST {
 			'elementor_native_only'      => true,
 			'elementor_media_mapping'    => true,
 			'elementor_css_validation'   => true,
+			'render_css_validation'      => true,
 			'template_css_meta'         => true,
 			'template_css_enqueue'      => true,
 			'cache_clear'               => true,

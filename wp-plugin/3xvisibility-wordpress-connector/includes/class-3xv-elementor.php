@@ -1385,6 +1385,28 @@ class XXXV_Elementor {
 		return trim( implode( "\n", array_unique( array_filter( $rules ) ) ) );
 	}
 
+	/**
+	 * Public accessor for the runtime template/critical CSS of a connector page.
+	 * Used by the post-publish render validator to know the "key CSS rules" the
+	 * live page is expected to enforce.
+	 *
+	 * @param int $post_id Page ID.
+	 * @return string Combined template + critical CSS (may be empty).
+	 */
+	public static function public_runtime_template_css( $post_id ) {
+		return self::get_runtime_template_css( (int) $post_id );
+	}
+
+	/**
+	 * Public wrapper: is this page a connector-imported/managed page?
+	 *
+	 * @param int $post_id Page ID.
+	 * @return bool
+	 */
+	public static function public_is_connector_page( $post_id ) {
+		return self::is_connector_page( (int) $post_id );
+	}
+
 	private static function get_runtime_template_css( $post_id ) {
 		$chunks = array();
 		foreach ( array( '_xxxv_template_css', '_xxxv_critical_css' ) as $key ) {
