@@ -723,6 +723,9 @@ class XXXV_Elementor {
 			},
 			$css
 		);
+	}
+
+
 
 	private static function walk_media_value( &$value, &$report ) {
 		if ( is_array( $value ) ) {
