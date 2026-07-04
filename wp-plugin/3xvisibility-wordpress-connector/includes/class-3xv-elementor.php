@@ -2033,6 +2033,9 @@ class XXXV_Elementor {
 		if ( ! $post_id || ! self::is_connector_page( $post_id ) ) {
 			return;
 		}
+		if ( ! self::is_neutralization_enabled() ) {
+			return;
+		}
 
 		// Disable WP block styles, theme.json global styles, and duotone SVG filters.
 		remove_action( 'wp_enqueue_scripts', 'wp_enqueue_global_styles' );
