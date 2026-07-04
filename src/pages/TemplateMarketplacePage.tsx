@@ -94,6 +94,7 @@ export default function TemplateMarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
+  const [wpTestOpen, setWpTestOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareForm, setShareForm] = useState({ templateId: "", description: "", category: "general", authorName: "" });
   const [variablesOpen, setVariablesOpen] = useState(false);
