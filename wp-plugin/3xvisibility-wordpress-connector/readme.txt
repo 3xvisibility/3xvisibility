@@ -4,7 +4,7 @@ Tags: elementor, gutenberg, rest-api, programmatic-seo, page-builder
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.4.1
+Stable tag: 1.4.2
 License: GPLv2 or later
 
 Secure companion plugin that lets the 3xVisibility publish native Elementor & Gutenberg pages, upload media, regenerate CSS, clear caches, and detect builders/themes.
@@ -35,6 +35,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 4. Open Settings → 3xVisibility WordPress Connector and copy the Site URL + API Key into your 3xVisibility account.
 
 == Changelog ==
+
+= 1.4.2 =
+* Zero-intervention CSS self-healing: connector pages now automatically rebuild per-page + critical CSS, refresh Elementor assets, and purge caches on every save (WP admin, Elementor "Update", revision restore) and on publish, so live layouts never drift from the imported template. No manual "regenerate CSS" step needed.
 
 = 1.4.1 =
 * Hardened CSS box remapping (margin/padding/border-radius): strict numeric validation, unit whitelisting, and safe "0" coercion of empty/malformed sides, so invalid output like `margin:0px px 0px px` can never be generated again. Also improved image sizing so hero/content images no longer collapse to a tiny extracted width (e.g. 72px) and stay fluid.

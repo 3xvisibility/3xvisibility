@@ -3,7 +3,7 @@
  * Plugin Name:       3xVisibility WordPress Connector
  * Plugin URI:        https://3xvisibility.com
  * Description:        Secure companion plugin that bridges your 3xVisibility account and WordPress — publishing native Elementor (Free) & Gutenberg pages, uploading media, regenerating Elementor CSS, clearing caches, and detecting builders/themes/global styles so programmatic pages behave exactly like pages built manually inside WordPress.
- * Version:           1.4.1
+ * Version:           1.4.2
  * Author:            3xVisibility
  * Author URI:        https://3xvisibility.com
  * License:           GPL-2.0+
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'XXXV_CONNECTOR_VERSION', '1.4.1' );
+define( 'XXXV_CONNECTOR_VERSION', '1.4.2' );
 define( 'XXXV_CONNECTOR_FILE', __FILE__ );
 define( 'XXXV_CONNECTOR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'XXXV_CONNECTOR_NS', 'pgp/v1' );
@@ -62,5 +62,19 @@ function xxxv_connector_boot() {
 	// page renders 1:1 with the template even when caching plugins reorder head CSS.
 	add_action( 'wp_footer', array( 'XXXV_Elementor', 'print_template_css' ), PHP_INT_MAX );
 	add_action( 'xxxv_deferred_exact_media_sync', array( 'XXXV_Elementor', 'deferred_exact_media_sync' ), 10, 1 );
+
+	// ---- Zero-intervention CSS self-healing --------------------------------
+	// Rebuild per-page CSS + connector critical CSS and purge caches whenever a
+	// connector-imported page is saved (WP admin, Elementor "Update", revision
+	// restore, etc.) so the live layout never drifts from the template.
+	add_action( 'save_post_page', array( 'XXXV_Elementor', 'auto_regenerate_on_save' ), 20, 3 );
+	// Elementor saves documents through its own ajax pipeline; hook that too.
+	add_action( 'elementor/document/after_save', function ( $document ) {
+		if ( is_object( $document ) && method_exists( $document, 'get_main_id' ) ) {
+			XXXV_Elementor::auto_regenerate_on_save( (int) $document->get_main_id() );
+		}
+	}, 20, 1 );
+	// Full cache purge the moment a connector page goes live.
+	add_action( 'transition_post_status', array( 'XXXV_Elementor', 'auto_clear_caches_on_publish' ), 20, 3 );
 }
 add_action( 'plugins_loaded', 'xxxv_connector_boot' );
