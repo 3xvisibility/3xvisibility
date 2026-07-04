@@ -509,14 +509,15 @@ function stripHeadTagsForCms(content: string): string {
 }
 
 function shouldUseExactElementorRender(_content: string): boolean {
-  // 1:1 FIDELITY MODE: marketplace / AI templates carry rich CSS (grids,
-  // background images, border-radius, responsive breakpoints) that the lossy
-  // HTML->native-widget mapping cannot reproduce faithfully. To guarantee the
-  // published WordPress page matches the source template exactly (full-width,
-  // 1140px containers, responsive), we embed the original template HTML + CSS
-  // inside a full-width Elementor page. This renders verbatim in the browser.
-  return true;
+  // NATIVE EDITABLE MODE (user choice): convert template HTML into native,
+  // fully-editable Elementor containers + widgets (htmlToElementor + the
+  // CSS->Elementor style baker) instead of embedding raw HTML. The complete
+  // template CSS is still sent as `elementor_css` and printed on the live page
+  // by the connector, so anything the native controls cannot represent still
+  // renders correctly while every element stays editable in Elementor panels.
+  return false;
 }
+
 
 /**
  * Detect the WordPress site's most-common page template so new pages inherit the
