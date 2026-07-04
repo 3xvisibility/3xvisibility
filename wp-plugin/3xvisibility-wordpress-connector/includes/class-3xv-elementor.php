@@ -514,6 +514,217 @@ class XXXV_Elementor {
 	}
 
 	/**
+	 * Ensure Elementor data stores CSS properly.
+	 *
+	 * Walks the whole element tree and, for every element/widget:
+	 *   1. Preserves all CSS classes — merges any raw class strings found under
+	 *      css_classes / class / className / _css_classes into Elementor's native
+	 *      `_css_classes` advanced setting (de-duplicated).
+	 *   2. Preserves all inline CSS styles — promotes a raw `style`/`_inline_css`
+	 *      declaration string into Elementor's native custom CSS (`custom_css`)
+	 *      scoped to `selector{...}`, so nothing is dropped by the editor.
+	 *   3. Maps common declarations to real Elementor settings when they are not
+	 *      already set (color, background-color, text-align, font-size, padding,
+	 *      margin) so the design stays fully editable.
+	 *
+	 * @param array $data Elementor data (tree of elements). Passed by value; the
+	 *                    fixed structure is returned.
+	 * @return array Fixed Elementor data.
+	 */
+	public static function fix_elementor_data( $data ) {
+		if ( ! is_array( $data ) ) {
+			return $data;
+		}
+		self::fix_elementor_elements( $data );
+		return $data;
+	}
+
+	/**
+	 * Recursive worker for fix_elementor_data(). Mutates the tree in place.
+	 *
+	 * @param array $elements Elements list, by reference.
+	 */
+	private static function fix_elementor_elements( &$elements ) {
+		if ( ! is_array( $elements ) ) {
+			return;
+		}
+		foreach ( $elements as &$element ) {
+			if ( ! is_array( $element ) ) {
+				continue;
+			}
+			if ( ! isset( $element['settings'] ) || ! is_array( $element['settings'] ) ) {
+				$element['settings'] = array();
+			}
+			$settings = &$element['settings'];
+
+			// --- 1. Preserve all CSS classes -> _css_classes -------------------
+			$classes = array();
+			if ( isset( $settings['_css_classes'] ) && is_string( $settings['_css_classes'] ) ) {
+				$classes = array_merge( $classes, preg_split( '#\s+#', trim( $settings['_css_classes'] ) ) );
+			}
+			foreach ( array( 'css_classes', 'class', 'className', 'classes' ) as $ck ) {
+				if ( isset( $settings[ $ck ] ) ) {
+					$raw = is_array( $settings[ $ck ] ) ? implode( ' ', $settings[ $ck ] ) : (string) $settings[ $ck ];
+					$classes = array_merge( $classes, preg_split( '#\s+#', trim( $raw ) ) );
+					if ( '_css_classes' !== $ck ) {
+						unset( $settings[ $ck ] );
+					}
+				}
+			}
+			$classes = array_values( array_unique( array_filter( array_map( 'sanitize_html_class', $classes ) ) ) );
+			if ( $classes ) {
+				$settings['_css_classes'] = implode( ' ', $classes );
+			}
+
+			// --- 2. Preserve all inline CSS styles -> custom_css ---------------
+			$inline_style = '';
+			foreach ( array( 'style', '_inline_css', 'inline_style' ) as $sk ) {
+				if ( isset( $settings[ $sk ] ) && is_string( $settings[ $sk ] ) && '' !== trim( $settings[ $sk ] ) ) {
+					$inline_style .= ( '' !== $inline_style ? ';' : '' ) . trim( $settings[ $sk ], " \t\n\r\0\x0B;" );
+					unset( $settings[ $sk ] );
+				}
+			}
+			if ( '' !== $inline_style ) {
+				$decls = self::parse_inline_declarations( $inline_style );
+
+				// --- 3. Map common declarations to native settings ------------
+				self::map_declarations_to_settings( $decls, $settings );
+
+				// Keep the full declaration block as custom CSS so nothing is lost.
+				$existing_custom = isset( $settings['custom_css'] ) && is_string( $settings['custom_css'] ) ? $settings['custom_css'] : '';
+				$scoped          = 'selector{' . $inline_style . '}';
+				$settings['custom_css'] = trim( $existing_custom . "\n" . $scoped );
+			}
+			unset( $settings );
+
+			if ( ! empty( $element['elements'] ) && is_array( $element['elements'] ) ) {
+				self::fix_elementor_elements( $element['elements'] );
+			}
+		}
+		unset( $element );
+	}
+
+	/**
+	 * Parse an inline CSS declaration string into a prop => value map.
+	 *
+	 * @param string $style Inline CSS ("color:red;font-size:14px").
+	 * @return array
+	 */
+	private static function parse_inline_declarations( $style ) {
+		$out = array();
+		foreach ( explode( ';', (string) $style ) as $decl ) {
+			$decl = trim( $decl );
+			if ( '' === $decl || false === strpos( $decl, ':' ) ) {
+				continue;
+			}
+			list( $prop, $value ) = explode( ':', $decl, 2 );
+			$prop  = strtolower( trim( $prop ) );
+			$value = trim( str_replace( '!important', '', $value ) );
+			if ( '' !== $prop && '' !== $value ) {
+				$out[ $prop ] = $value;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Map a small set of common CSS declarations to native Elementor settings,
+	 * without overriding values the payload already set.
+	 *
+	 * @param array $decls    prop => value map.
+	 * @param array $settings Element settings, by reference.
+	 */
+	private static function map_declarations_to_settings( $decls, &$settings ) {
+		$to_size = function ( $v ) {
+			if ( preg_match( '/^(-?\d*\.?\d+)\s*(px|em|rem|%|vw|vh)?$/i', trim( $v ), $m ) ) {
+				return array( 'unit' => $m[2] ? strtolower( $m[2] ) : 'px', 'size' => (float) $m[1], 'sizes' => array() );
+			}
+			return null;
+		};
+		if ( isset( $decls['color'] ) && empty( $settings['title_color'] ) && empty( $settings['color'] ) ) {
+			$settings['title_color'] = self::css_value( $decls['color'] );
+			$settings['color']       = self::css_value( $decls['color'] );
+		}
+		if ( isset( $decls['background-color'] ) && empty( $settings['background_color'] ) ) {
+			$settings['background_background'] = 'classic';
+			$settings['background_color']      = self::css_value( $decls['background-color'] );
+		}
+		if ( isset( $decls['text-align'] ) && empty( $settings['align'] ) ) {
+			$align = strtolower( $decls['text-align'] );
+			if ( in_array( $align, array( 'left', 'center', 'right', 'justify' ), true ) ) {
+				$settings['align'] = $align;
+			}
+		}
+		if ( isset( $decls['font-size'] ) && empty( $settings['typography_font_size'] ) ) {
+			$size = $to_size( $decls['font-size'] );
+			if ( $size ) {
+				$settings['typography_typography'] = 'custom';
+				$settings['typography_font_size']  = $size;
+			}
+		}
+		foreach ( array( 'padding' => 'padding', 'margin' => 'margin' ) as $css_prop => $setting_key ) {
+			if ( isset( $decls[ $css_prop ] ) && empty( $settings[ $setting_key ] ) ) {
+				$box = self::css_shorthand_to_box( $decls[ $css_prop ] );
+				if ( $box ) {
+					$settings[ $setting_key ] = $box;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Convert a CSS box shorthand ("10px 20px") into an Elementor dimensions box.
+	 *
+	 * @param string $value CSS shorthand.
+	 * @return array|null
+	 */
+	private static function css_shorthand_to_box( $value ) {
+		$parts = preg_split( '#\s+#', trim( (string) $value ) );
+		if ( empty( $parts ) ) {
+			return null;
+		}
+		$unit = 'px';
+		$nums = array();
+		foreach ( $parts as $p ) {
+			if ( preg_match( '/^(-?\d*\.?\d+)\s*(px|em|rem|%|vw|vh)?$/i', $p, $m ) ) {
+				$nums[] = $m[1];
+				if ( $m[2] ) {
+					$unit = strtolower( $m[2] );
+				}
+			}
+		}
+		if ( empty( $nums ) ) {
+			return null;
+		}
+		switch ( count( $nums ) ) {
+			case 1:
+				$t = $r = $b = $l = $nums[0];
+				break;
+			case 2:
+				$t = $b = $nums[0];
+				$r = $l = $nums[1];
+				break;
+			case 3:
+				$t = $nums[0];
+				$r = $l = $nums[1];
+				$b = $nums[2];
+				break;
+			default:
+				list( $t, $r, $b, $l ) = $nums;
+		}
+		return array(
+			'unit'     => $unit,
+			'top'      => (string) $t,
+			'right'    => (string) $r,
+			'bottom'   => (string) $b,
+			'left'     => (string) $l,
+			'isLinked' => false,
+		);
+	}
+
+
+
+	/**
 	 * Validate one element recursively: native Elementor only, no HTML widgets, no
 	 * raw markup injection into text-editor settings.
 	 *
