@@ -115,7 +115,7 @@ class XXXV_Elementor {
 			return $media_report;
 		}
 		if ( '' !== $elementor_css ) {
-			$elementor_css = self::map_css_media_references( $elementor_css, $media_report );
+			$elementor_css = self::map_css_media_references( $elementor_css, $media_report, $source_base_url );
 		}
 		// Exact-render pages can contain many large inline/background image URLs in a
 		// single HTML widget. Importing every one inside the publish REST request is
