@@ -4,7 +4,7 @@ Tags: elementor, gutenberg, rest-api, programmatic-seo, page-builder
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.5.2
+Stable tag: 1.5.3
 License: GPLv2 or later
 
 Secure companion plugin that lets the 3xVisibility publish native Elementor & Gutenberg pages, upload media, regenerate CSS, clear caches, and detect builders/themes.
@@ -35,6 +35,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 4. Open Settings → 3xVisibility WordPress Connector and copy the Site URL + API Key into your 3xVisibility account.
 
 == Changelog ==
+
+= 1.5.3 =
+* Per-connector theme-CSS neutralization settings: Settings → 3xVisibility WordPress Connector now has a "Theme CSS Neutralization" section. Toggle whether the plugin dequeues the active theme + WordPress global/block styles on imported connector pages, and optionally list specific stylesheet handles to always keep even when neutralization is on. Defaults to enabled so existing sites keep the current 1:1 rendering behavior.
 
 = 1.5.2 =
 * Local asset URL rewriting for CSS fonts: the CSS url() localizer now uploads web fonts referenced from @font-face src: url(...) into the Media Library and rewrites the CSS to the uploaded copies, alongside the existing image handling. woff/woff2/ttf/otf/eot are whitelisted for upload and filetype detection, font data: URIs are decoded to real files, the downloader advertises font Accept types, and relative/site-relative/protocol-relative/localhost/http font URLs are normalized against the template base URL before import — so every url() path (images and fonts) resolves into a local WordPress upload during import.

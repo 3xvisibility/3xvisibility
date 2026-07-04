@@ -1908,6 +1908,45 @@ class XXXV_Elementor {
 
 
 	/**
+	 * Whether theme-CSS neutralization is enabled for this connector/site.
+	 * Defaults to enabled so existing installs keep current behavior.
+	 *
+	 * @return bool
+	 */
+	public static function is_neutralization_enabled() {
+		if ( ! defined( 'XXXV_CONNECTOR_OPT_NEUTRALIZE' ) ) {
+			return true;
+		}
+		$val = get_option( XXXV_CONNECTOR_OPT_NEUTRALIZE, '1' );
+		return '0' !== (string) $val;
+	}
+
+	/**
+	 * Style handles the user chose to exclude from neutralization (kept enqueued).
+	 * Stored as a newline/comma-separated list; returned as a lowercase array.
+	 *
+	 * @return array
+	 */
+	public static function neutralization_excludes() {
+		if ( ! defined( 'XXXV_CONNECTOR_OPT_NEUTRALIZE_EXCLUDES' ) ) {
+			return array();
+		}
+		$raw = (string) get_option( XXXV_CONNECTOR_OPT_NEUTRALIZE_EXCLUDES, '' );
+		if ( '' === trim( $raw ) ) {
+			return array();
+		}
+		$parts = preg_split( '/[\s,]+/', $raw );
+		$out   = array();
+		foreach ( (array) $parts as $p ) {
+			$p = strtolower( trim( (string) $p ) );
+			if ( '' !== $p ) {
+				$out[] = $p;
+			}
+		}
+		return array_values( array_unique( $out ) );
+	}
+
+	/**
 	 * Neutralize the active theme's CSS on connector-imported pages so it can never
 	 * override the imported template design. Runs late on wp_enqueue_scripts and
 	 * dequeues theme stylesheets (generic + per-theme handles), and on wp_head/init
@@ -1916,6 +1955,9 @@ class XXXV_Elementor {
 	 */
 	public static function neutralize_theme_css() {
 		if ( is_admin() || ! is_singular( 'page' ) ) {
+			return;
+		}
+		if ( ! self::is_neutralization_enabled() ) {
 			return;
 		}
 		$post_id = get_queried_object_id();
@@ -1929,8 +1971,12 @@ class XXXV_Elementor {
 		$stylesheet = $theme ? (string) $theme->get_stylesheet() : '';
 		$template   = $theme ? (string) $theme->get_template() : '';
 
-		// Hello Elementor is the recommended blank canvas — keep it.
-		$keep = array( 'hello-elementor', 'hello-elementor-theme-style', 'hello-elementor-child-style' );
+		// Hello Elementor is the recommended blank canvas — keep it. Plus any
+		// stylesheet handles the user explicitly excluded from neutralization.
+		$keep = array_merge(
+			array( 'hello-elementor', 'hello-elementor-theme-style', 'hello-elementor-child-style' ),
+			self::neutralization_excludes()
+		);
 
 		// Known per-theme stylesheet handles to remove.
 		$theme_handles = array(
@@ -1987,6 +2033,9 @@ class XXXV_Elementor {
 		if ( ! $post_id || ! self::is_connector_page( $post_id ) ) {
 			return;
 		}
+		if ( ! self::is_neutralization_enabled() ) {
+			return;
+		}
 
 		// Disable WP block styles, theme.json global styles, and duotone SVG filters.
 		remove_action( 'wp_enqueue_scripts', 'wp_enqueue_global_styles' );
@@ -2029,27 +2078,36 @@ class XXXV_Elementor {
 			return;
 		}
 
-		// --- 1. Dequeue all theme styles --------------------------------------
-		self::disable_global_styles();
-		self::neutralize_theme_css();
-
 		global $wp_styles;
+
+		// --- 1. Dequeue all theme styles (skipped when neutralization is off) --
+		if ( self::is_neutralization_enabled() ) {
+			self::disable_global_styles();
+			self::neutralize_theme_css();
+
+			if ( $wp_styles instanceof \WP_Styles ) {
+				$theme_root = '';
+				if ( function_exists( 'get_stylesheet_directory_uri' ) ) {
+					$theme_root = trailingslashit( get_template_directory_uri() );
+				}
+				$child_root = function_exists( 'get_stylesheet_directory_uri' ) ? trailingslashit( get_stylesheet_directory_uri() ) : '';
+				$keep       = array_merge(
+					array( 'hello-elementor', 'hello-elementor-theme-style', 'hello-elementor-child-style' ),
+					self::neutralization_excludes()
+				);
+				foreach ( (array) $wp_styles->queue as $handle ) {
+					if ( in_array( $handle, $keep, true ) || 0 === strpos( (string) $handle, 'elementor' ) || 0 === strpos( (string) $handle, 'xxxv-' ) ) {
+						continue;
+					}
+					$src = isset( $wp_styles->registered[ $handle ] ) ? (string) $wp_styles->registered[ $handle ]->src : '';
+					if ( '' !== $src && ( ( '' !== $theme_root && 0 === strpos( $src, $theme_root ) ) || ( '' !== $child_root && 0 === strpos( $src, $child_root ) ) ) ) {
+						wp_dequeue_style( $handle );
+					}
+				}
+			}
+		}
+
 		if ( $wp_styles instanceof \WP_Styles ) {
-			$theme_root = '';
-			if ( function_exists( 'get_stylesheet_directory_uri' ) ) {
-				$theme_root = trailingslashit( get_template_directory_uri() );
-			}
-			$child_root = function_exists( 'get_stylesheet_directory_uri' ) ? trailingslashit( get_stylesheet_directory_uri() ) : '';
-			$keep       = array( 'hello-elementor', 'hello-elementor-theme-style', 'hello-elementor-child-style' );
-			foreach ( (array) $wp_styles->queue as $handle ) {
-				if ( in_array( $handle, $keep, true ) || 0 === strpos( (string) $handle, 'elementor' ) || 0 === strpos( (string) $handle, 'xxxv-' ) ) {
-					continue;
-				}
-				$src = isset( $wp_styles->registered[ $handle ] ) ? (string) $wp_styles->registered[ $handle ]->src : '';
-				if ( '' !== $src && ( ( '' !== $theme_root && 0 === strpos( $src, $theme_root ) ) || ( '' !== $child_root && 0 === strpos( $src, $child_root ) ) ) ) {
-					wp_dequeue_style( $handle );
-				}
-			}
 
 			// --- 2. Force Elementor + connector CSS to load LAST --------------
 			$last_handles = array();
