@@ -884,6 +884,111 @@ class XXXV_Elementor {
 		return trim( $css );
 	}
 
+	/**
+	 * Extract and combine ALL CSS available for a page into a single stylesheet.
+	 *
+	 * Sources, in cascade order (later wins on equal specificity):
+	 *   1. <style> tags in the HTML.
+	 *   2. Same-origin/relative <link rel="stylesheet"> hrefs (resolved from the ZIP).
+	 *   3. Inline style="" attributes, promoted to scoped rules so they survive as CSS.
+	 *   4. Every *.css file bundled inside the template ZIP.
+	 *
+	 * @param string      $html_content Raw page HTML.
+	 * @param string|null $zip_path     Optional path to the template .zip on disk.
+	 * @return string Combined CSS.
+	 */
+	public static function extract_all_css_from_html( $html_content, $zip_path = null ) {
+		$html_content = (string) $html_content;
+		$parts        = array();
+		$seen_links   = array();
+
+		// --- 1. <style> ... </style> blocks -------------------------------------
+		if ( preg_match_all( '#<style\b[^>]*>([\s\S]*?)</style>#i', $html_content, $m ) ) {
+			foreach ( $m[1] as $block ) {
+				$block = trim( (string) $block );
+				if ( '' !== $block ) {
+					$parts[] = $block;
+				}
+			}
+		}
+
+		// --- Read the ZIP once so both <link> resolution and the bulk *.css
+		//     harvest can share the same open handle. --------------------------
+		$zip_css = array(); // normalized-name => css
+		if ( $zip_path && is_string( $zip_path ) && file_exists( $zip_path ) && class_exists( 'ZipArchive' ) ) {
+			$zip = new ZipArchive();
+			if ( true === $zip->open( $zip_path ) ) {
+				for ( $i = 0; $i < $zip->numFiles; $i++ ) {
+					$name = $zip->getNameIndex( $i );
+					if ( ! is_string( $name ) || ! preg_match( '#\.css$#i', $name ) ) {
+						continue;
+					}
+					$contents = $zip->getFromIndex( $i );
+					if ( is_string( $contents ) && '' !== trim( $contents ) ) {
+						$key             = strtolower( ltrim( str_replace( '\\', '/', $name ), './' ) );
+						$zip_css[ $key ] = $contents;
+					}
+				}
+				$zip->close();
+			}
+		}
+
+		// --- 2. <link rel="stylesheet" href="..."> -----------------------------
+		if ( preg_match_all( '#<link\b[^>]*>#i', $html_content, $lm ) ) {
+			foreach ( $lm[0] as $tag ) {
+				// Only stylesheet links (skip preconnect/preload/icon/etc.).
+				if ( preg_match( '#rel\s*=\s*["\']?[^"\'>]*\bstylesheet\b#i', $tag )
+					&& preg_match( '#href\s*=\s*["\']([^"\']+)["\']#i', $tag, $hm ) ) {
+					$href = trim( $hm[1] );
+					if ( '' === $href || isset( $seen_links[ $href ] ) ) {
+						continue;
+					}
+					$seen_links[ $href ] = true;
+					// Skip remote fonts / third-party CSS — those keep loading via <link>.
+					if ( preg_match( '#^https?://#i', $href ) || 0 === strpos( $href, '//' ) ) {
+						continue;
+					}
+					// Resolve local/relative hrefs against the ZIP contents.
+					$needle = strtolower( ltrim( str_replace( '\\', '/', $href ), './' ) );
+					foreach ( $zip_css as $key => $css ) {
+						if ( $key === $needle || substr( $key, -strlen( $needle ) - 1 ) === '/' . $needle ) {
+							$parts[] = $css;
+							unset( $zip_css[ $key ] ); // Avoid double-adding in step 4.
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		// --- 3. Inline style="" attributes -> scoped rules ---------------------
+		if ( preg_match_all( '#style\s*=\s*["\']([^"\']+)["\']#i', $html_content, $sm ) ) {
+			$inline = array();
+			$idx    = 0;
+			foreach ( $sm[1] as $decls ) {
+				$decls = trim( (string) $decls );
+				if ( '' === $decls ) {
+					continue;
+				}
+				$idx++;
+				$inline[] = '[data-xxxv-inline="' . $idx . '"]{' . rtrim( $decls, ';' ) . '}';
+			}
+			if ( $inline ) {
+				$parts[] = implode( "\n", $inline );
+			}
+		}
+
+		// --- 4. Any remaining *.css files inside the ZIP -----------------------
+		foreach ( $zip_css as $css ) {
+			$parts[] = $css;
+		}
+
+		// --- 5. Combine + sanitize --------------------------------------------
+		$combined = implode( "\n\n", array_filter( array_map( 'trim', $parts ) ) );
+		return self::sanitize_template_css( $combined );
+	}
+
+
 	private static function css_value( $value ) {
 		$value = trim( (string) $value );
 		if ( '' === $value || preg_match( '#[{}<>]#', $value ) ) {
