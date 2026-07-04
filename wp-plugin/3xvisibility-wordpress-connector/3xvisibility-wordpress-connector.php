@@ -32,6 +32,7 @@ require_once XXXV_CONNECTOR_DIR . 'includes/class-3xv-elementor.php';
 require_once XXXV_CONNECTOR_DIR . 'includes/class-3xv-gutenberg.php';
 require_once XXXV_CONNECTOR_DIR . 'includes/class-3xv-media.php';
 require_once XXXV_CONNECTOR_DIR . 'includes/class-3xv-detect.php';
+require_once XXXV_CONNECTOR_DIR . 'includes/class-3xv-validator.php';
 require_once XXXV_CONNECTOR_DIR . 'includes/class-3xv-site-actions.php';
 require_once XXXV_CONNECTOR_DIR . 'includes/class-3xv-updater.php';
 require_once XXXV_CONNECTOR_DIR . 'includes/class-3xv-admin.php';
