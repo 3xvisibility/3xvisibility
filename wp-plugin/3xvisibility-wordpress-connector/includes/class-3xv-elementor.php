@@ -2054,12 +2054,37 @@ class XXXV_Elementor {
 		$theme_handles = array_merge( $theme_handles, self::neutralization_custom_removals() );
 
 		if ( $wp_styles instanceof \WP_Styles ) {
-			foreach ( $theme_handles as $handle ) {
-				if ( in_array( $handle, $keep, true ) ) {
+			$keep_lookup = array_flip( $keep );
+			$patterns    = array();
+			foreach ( array_unique( $theme_handles ) as $handle ) {
+				if ( '' === $handle ) {
+					continue;
+				}
+				if ( false !== strpos( $handle, '*' ) ) {
+					// Custom wildcard rule (e.g. "mytheme-*"): resolve later.
+					$patterns[] = $handle;
+					continue;
+				}
+				if ( isset( $keep_lookup[ $handle ] ) ) {
 					continue;
 				}
 				if ( isset( $wp_styles->registered[ $handle ] ) ) {
 					wp_dequeue_style( $handle );
+				}
+			}
+
+			// Apply wildcard removal patterns against every registered handle.
+			if ( $patterns ) {
+				foreach ( array_keys( (array) $wp_styles->registered ) as $handle ) {
+					if ( isset( $keep_lookup[ $handle ] ) ) {
+						continue;
+					}
+					foreach ( $patterns as $pattern ) {
+						if ( self::handle_matches_pattern( (string) $handle, $pattern ) ) {
+							wp_dequeue_style( $handle );
+							break;
+						}
+					}
 				}
 			}
 		}
