@@ -641,6 +641,55 @@ export function styleButton(settings: Record<string, unknown>, p: StyleProps, ct
   applyTypography(settings, {}, p, ctx, "typography");
 }
 
+export type HoverKind = "button" | "container" | "text" | "heading" | "image" | "link";
+
+/**
+ * Bake interactive-state (`:hover` / `:focus` / `:active`) styles onto native
+ * Elementor hover controls for the widget kind, and always attach a raw
+ * `__xxxv_hover` declaration bridge so the plugin can render a guaranteed
+ * `selector:hover{…}` block for any property not covered by a native control.
+ */
+export function styleHover(
+  settings: Record<string, unknown>,
+  hover: { props: StyleProps; decls: Record<string, string>; states: string[] },
+  kind: HoverKind,
+): void {
+  const p = hover.props;
+
+  if (kind === "button" || kind === "link") {
+    // Elementor Button widget hover tab.
+    if (p.color) settings.hover_color = p.color;
+    if (p.backgroundColor) settings.button_background_hover_color = p.backgroundColor;
+    if (p.border) settings.__xxxv_button_hover_border = p.border;
+    // Only add a motion preset when the template's hover actually transforms.
+    if (p.transform && p.transform !== "none" && !settings.hover_animation) {
+      settings.hover_animation = "grow";
+    }
+  } else {
+    // Containers / text / headings / images: background + text colour hover.
+    if (p.backgroundColor) {
+      settings.background_hover_background = "classic";
+      settings.background_hover_color = p.backgroundColor;
+    }
+    if (p.color) settings.__xxxv_hover_color = p.color;
+  }
+
+  const br = pxSize(p.borderRadius);
+  if (br) settings.__xxxv_hover_border_radius = `${br.size}${br.unit}`;
+  if (p.boxShadow) settings.__xxxv_hover_box_shadow = p.boxShadow;
+  if (p.transform && p.transform !== "none") settings.__xxxv_hover_transform = p.transform;
+
+  // Guaranteed fallback: the full winning hover declaration block. The connector
+  // plugin emits this as `selector:hover{…}` so EVERY hover property survives,
+  // including ones with no dedicated Elementor control.
+  const raw: Record<string, string> = {};
+  for (const [k, v] of Object.entries(hover.decls)) {
+    if (!k.startsWith("--")) raw[k] = v;
+  }
+  if (Object.keys(raw).length) settings.__xxxv_hover = raw;
+}
+
+
 /** Bake image styles (width / radius). */
 export function styleImage(
   settings: Record<string, unknown>,
