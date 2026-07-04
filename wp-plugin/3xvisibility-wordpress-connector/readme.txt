@@ -37,6 +37,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.5.4 =
+* Post-publish render validator: new `POST /wp-json/pgp/v1/validate-render` endpoint (and `render_css_validation` capability) fetches the FINAL rendered page over a cache-busting request and confirms the imported template's key CSS rules actually win in the live DOM. A self-contained mini CSS cascade engine parses every <style> block and same-host stylesheet the page loads, classifies each rule as connector/Elementor/theme, matches selectors against the real parsed DOM (tag/id/class/attribute + descendant/child combinators; @media and sibling selectors are skipped to avoid false positives), and computes the winning declaration per element using true cascade order (importance > specificity > source order). It reports any key rule a theme stylesheet still overrides (with the offending selector, expected vs. actual value, and the reason) plus any key rule missing from the rendered page.
+
 = 1.5.3 =
 * Per-connector theme-CSS neutralization settings: Settings → 3xVisibility WordPress Connector now has a "Theme CSS Neutralization" section. Toggle whether the plugin dequeues the active theme + WordPress global/block styles on imported connector pages, and optionally list specific stylesheet handles to always keep even when neutralization is on. Defaults to enabled so existing sites keep the current 1:1 rendering behavior.
 
