@@ -2078,27 +2078,36 @@ class XXXV_Elementor {
 			return;
 		}
 
-		// --- 1. Dequeue all theme styles --------------------------------------
-		self::disable_global_styles();
-		self::neutralize_theme_css();
-
 		global $wp_styles;
+
+		// --- 1. Dequeue all theme styles (skipped when neutralization is off) --
+		if ( self::is_neutralization_enabled() ) {
+			self::disable_global_styles();
+			self::neutralize_theme_css();
+
+			if ( $wp_styles instanceof \WP_Styles ) {
+				$theme_root = '';
+				if ( function_exists( 'get_stylesheet_directory_uri' ) ) {
+					$theme_root = trailingslashit( get_template_directory_uri() );
+				}
+				$child_root = function_exists( 'get_stylesheet_directory_uri' ) ? trailingslashit( get_stylesheet_directory_uri() ) : '';
+				$keep       = array_merge(
+					array( 'hello-elementor', 'hello-elementor-theme-style', 'hello-elementor-child-style' ),
+					self::neutralization_excludes()
+				);
+				foreach ( (array) $wp_styles->queue as $handle ) {
+					if ( in_array( $handle, $keep, true ) || 0 === strpos( (string) $handle, 'elementor' ) || 0 === strpos( (string) $handle, 'xxxv-' ) ) {
+						continue;
+					}
+					$src = isset( $wp_styles->registered[ $handle ] ) ? (string) $wp_styles->registered[ $handle ]->src : '';
+					if ( '' !== $src && ( ( '' !== $theme_root && 0 === strpos( $src, $theme_root ) ) || ( '' !== $child_root && 0 === strpos( $src, $child_root ) ) ) ) {
+						wp_dequeue_style( $handle );
+					}
+				}
+			}
+		}
+
 		if ( $wp_styles instanceof \WP_Styles ) {
-			$theme_root = '';
-			if ( function_exists( 'get_stylesheet_directory_uri' ) ) {
-				$theme_root = trailingslashit( get_template_directory_uri() );
-			}
-			$child_root = function_exists( 'get_stylesheet_directory_uri' ) ? trailingslashit( get_stylesheet_directory_uri() ) : '';
-			$keep       = array( 'hello-elementor', 'hello-elementor-theme-style', 'hello-elementor-child-style' );
-			foreach ( (array) $wp_styles->queue as $handle ) {
-				if ( in_array( $handle, $keep, true ) || 0 === strpos( (string) $handle, 'elementor' ) || 0 === strpos( (string) $handle, 'xxxv-' ) ) {
-					continue;
-				}
-				$src = isset( $wp_styles->registered[ $handle ] ) ? (string) $wp_styles->registered[ $handle ]->src : '';
-				if ( '' !== $src && ( ( '' !== $theme_root && 0 === strpos( $src, $theme_root ) ) || ( '' !== $child_root && 0 === strpos( $src, $child_root ) ) ) ) {
-					wp_dequeue_style( $handle );
-				}
-			}
 
 			// --- 2. Force Elementor + connector CSS to load LAST --------------
 			$last_handles = array();
