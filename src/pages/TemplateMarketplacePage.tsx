@@ -926,14 +926,12 @@ export default function TemplateMarketplacePage() {
                 <div className="flex items-center justify-between gap-3 pt-2 border-t border-border mt-2">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-medium">Publish format</span>
-                    <FormatPills
-                      template={previewTemplate}
-                      value={resolveFormat(previewTemplate)}
-                      onChange={(f) => setFormat(previewTemplate.id, f)}
-                      size="md"
-                    />
+                    <Badge variant="secondary" className="w-fit">
+                      {resolveFormat(previewTemplate) === "shopify" ? "Shopify" : "Elementor"}
+                    </Badge>
                   </div>
                 </div>
+
 
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Close</Button>
