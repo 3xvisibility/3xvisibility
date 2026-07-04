@@ -356,8 +356,9 @@ class XXXV_Media {
 			'application/x-font-truetype'  => 'ttf',
 			'application/x-font-opentype'  => 'otf',
 			'application/vnd.ms-fontobject' => 'eot',
-
-		$ext      = isset( $ext_map[ $mime ] ) ? $ext_map[ $mime ] : 'png';
+		);
+		// Fonts are never rasterizable, so default unknown font mimes safely.
+		$ext      = isset( $ext_map[ $mime ] ) ? $ext_map[ $mime ] : ( 0 === strpos( $mime, 'font/' ) ? 'woff2' : 'png' );
 		$filename = 'xxxv-inline-' . substr( $hash, 0, 12 ) . '.' . $ext;
 
 		require_once ABSPATH . 'wp-admin/includes/file.php';
