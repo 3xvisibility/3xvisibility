@@ -1208,10 +1208,54 @@ function extractStylesheetImports(html: string): string {
   return imports.length ? `<style>\n${imports.join("\n")}\n</style>` : "";
 }
 
+/**
+ * Collect `@import` rules declared inside <style> blocks so they can be hoisted
+ * to a leading block (an out-of-order @import is silently ignored by browsers).
+ */
+function collectInlineImports(html: string, seen: Set<string>): string[] {
+  const imports: string[] = [];
+  const styleRe = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
+  let block: RegExpExecArray | null;
+  const importRe = /@import\s+(?:url\(\s*(?:"([^"]*)"|'([^']*)'|([^)'"]+))\s*\)|(?:"([^"]*)"|'([^']*)'))([^;]*);/gi;
+  while ((block = styleRe.exec(html)) !== null) {
+    const css = block[1] || "";
+    let im: RegExpExecArray | null;
+    while ((im = importRe.exec(css)) !== null) {
+      let url = (im[1] ?? im[2] ?? im[3] ?? im[4] ?? im[5] ?? "").trim();
+      const media = (im[6] || "").trim();
+      if (!url) continue;
+      if (url.startsWith("//")) url = "https:" + url;
+      const key = url + "|" + media;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      imports.push(`@import url("${url}")${media ? " " + media : ""};`);
+    }
+  }
+  return imports;
+}
+
+function stripImports(css: string): string {
+  return css.replace(/@import\s+[^;]+;/gi, "");
+}
+
 export function extractRenderableHtml(html: string): string {
   const input = html || "";
-  const fontImports = extractStylesheetImports(input);
-  const styles = [fontImports, ...(input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || [])].filter(Boolean).join("\n");
+  const seen = new Set<string>();
+  const linkImports = extractStylesheetImports(input);
+  const linkImportUrls = [...linkImports.matchAll(/@import url\("([^"]*)"\)/g)].map((mm) => mm[1]);
+  for (const u of linkImportUrls) seen.add(u + "|");
+  const inlineImports = collectInlineImports(input, seen);
+  const allImportRules = [
+    ...linkImportUrls.map((u) => `@import url("${u}");`),
+    ...inlineImports,
+  ];
+  const importBlock = allImportRules.length ? `<style data-xxxv-imports>\n${allImportRules.join("\n")}\n</style>` : "";
+  const styleBlocks = (input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || []).map((tag) => {
+    const mm = tag.match(/<style\b([^>]*)>([\s\S]*?)<\/style>/i);
+    if (!mm) return tag;
+    return `<style${mm[1] || ""}>${stripImports(mm[2] || "")}</style>`;
+  });
+  const styles = [importBlock, ...styleBlocks].filter(Boolean).join("\n");
   const bodyMatch = input.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i);
   let body = bodyMatch ? bodyMatch[1] : input;
   body = body

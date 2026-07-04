@@ -1740,6 +1740,40 @@ function extractStylesheetImports(html: string): string {
   return imports.length ? `<style>\n${imports.join("\n")}\n</style>` : "";
 }
 
+/**
+ * Collect every `@import` rule declared INSIDE a <style> block. Per the CSS
+ * spec, `@import` must precede all other rules in a stylesheet — if a template
+ * places `@import` after a normal rule (common in hand-authored/exported CSS),
+ * the browser silently drops the import and the fonts/CSS never load. We pull
+ * them out here so they can be re-emitted, in order, in a single leading block.
+ */
+function collectInlineImports(html: string, seen: Set<string>): string[] {
+  const imports: string[] = [];
+  const styleRe = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
+  let block: RegExpExecArray | null;
+  const importRe = /@import\s+(?:url\(\s*(?:"([^"]*)"|'([^']*)'|([^)'"]+))\s*\)|(?:"([^"]*)"|'([^']*)'))([^;]*);/gi;
+  while ((block = styleRe.exec(html)) !== null) {
+    const css = block[1] || "";
+    let im: RegExpExecArray | null;
+    while ((im = importRe.exec(css)) !== null) {
+      let url = (im[1] ?? im[2] ?? im[3] ?? im[4] ?? im[5] ?? "").trim();
+      const media = (im[6] || "").trim();
+      if (!url) continue;
+      if (url.startsWith("//")) url = "https:" + url;
+      const key = url + "|" + media;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      imports.push(`@import url("${url}")${media ? " " + media : ""};`);
+    }
+  }
+  return imports;
+}
+
+/** Strip `@import` statements from a CSS string (they get hoisted separately). */
+function stripImports(css: string): string {
+  return css.replace(/@import\s+[^;]+;/gi, "");
+}
+
 function scopeExactHtml(html: string): string {
   const body = (html || "").trim();
   if (!body) return "";
@@ -1763,19 +1797,34 @@ function prepareExactStyleTags(input: string): string[] {
     const m = tag.match(/<style\b([^>]*)>([\s\S]*?)<\/style>/i);
     if (!m) return tag;
     const attrs = m[1] || "";
-    const css = m[2] || "";
+    // Drop @import from the body of the block — it is hoisted to a leading block
+    // so it always precedes other rules (otherwise the browser ignores it).
+    const css = stripImports(m[2] || "");
     const scoped = scopeBodyCssSelectors(css);
-    return scoped && scoped !== css ? `<style${attrs}>${css}\n${scoped}</style>` : tag;
+    return scoped && scoped !== css ? `<style${attrs}>${css}\n${scoped}</style>` : `<style${attrs}>${css}</style>`;
   });
 }
 
 export function extractRenderableHtml(html: string): string {
   const input = html || "";
-  // Preserve external fonts/CSS as @import (the <link> tags get stripped below).
-  const fontImports = extractStylesheetImports(input);
-  // Collect every <style> block (keeps fonts, layout, bg images), duplicating
-  // standalone body/html selectors onto the exact-render wrapper.
-  const styles = [fontImports, ...prepareExactStyleTags(input)].filter(Boolean).join("\n");
+  // Hoist ALL imports (external <link> stylesheets + in-block @import) into a
+  // single leading <style> so web fonts / external CSS always load and stay
+  // spec-valid inside the embedded Elementor HTML widget (where <link> is
+  // stripped). Dedupe across both sources.
+  const seen = new Set<string>();
+  const linkImports = extractStylesheetImports(input);
+  const linkImportUrls = [...linkImports.matchAll(/@import url\("([^"]*)"\)/g)].map((mm) => mm[1]);
+  for (const u of linkImportUrls) seen.add(u + "|");
+  const inlineImports = collectInlineImports(input, seen);
+  const allImportRules = [
+    ...linkImportUrls.map((u) => `@import url("${u}");`),
+    ...inlineImports,
+  ];
+  const importBlock = allImportRules.length ? `<style data-xxxv-imports>\n${allImportRules.join("\n")}\n</style>` : "";
+  // Collect every <style> block (keeps fonts, layout, bg images, keyframes,
+  // media queries, variables), with in-block @import removed + body/html
+  // selectors duplicated onto the exact-render wrapper.
+  const styles = [importBlock, ...prepareExactStyleTags(input)].filter(Boolean).join("\n");
   // Prefer the <body> inner markup; fall back to the whole document.
   const bodyMatch = input.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i);
   let body = bodyMatch ? bodyMatch[1] : input;
