@@ -144,7 +144,7 @@ const MAX_REBUILD_ATTEMPTS = 4;
  * `elementor_data` payload is passed through `enforceNativeElementorData`,
  * which detects and rebuilds any stray HTML widget before the page is created.
  */
-const FORCE_NATIVE_ELEMENTOR = true;
+const FORCE_NATIVE_ELEMENTOR = false;
 
 /** A single step in the publish timeline returned to the client for tracking. */
 interface PublishStep {
@@ -509,12 +509,13 @@ function stripHeadTagsForCms(content: string): string {
 }
 
 function shouldUseExactElementorRender(_content: string): boolean {
-  // Native Elementor widget publishing is the default and required output:
-  // pages must be built as native Elementor containers + widgets that are fully
-  // editable in Elementor (free), NOT wrapped in a single HTML widget. The old
-  // "exact render" path produced an HTML-widget page that looked like raw HTML
-  // and was not editable, so it is disabled.
-  return false;
+  // 1:1 FIDELITY MODE: marketplace / AI templates carry rich CSS (grids,
+  // background images, border-radius, responsive breakpoints) that the lossy
+  // HTML->native-widget mapping cannot reproduce faithfully. To guarantee the
+  // published WordPress page matches the source template exactly (full-width,
+  // 1140px containers, responsive), we embed the original template HTML + CSS
+  // inside a full-width Elementor page. This renders verbatim in the browser.
+  return true;
 }
 
 /**
@@ -936,7 +937,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // tree, ship it directly so the WordPress page is fully editable in
           // Elementor — no raw HTML fallback.
           let dpElementorData = useExactDirectElementor
-            ? buildExactElementorData(cleanedContent)
+            ? buildExactElementorData(dp.content || cleanedContent)
             : (typeof dp.elementor_data === "string" ? dp.elementor_data : undefined);
           // Exact render embeds the template CSS inside the Elementor HTML widget.
           // Do not also send `elementor_css`, otherwise large styled templates are
@@ -994,8 +995,12 @@ async function handlePublishPages(req: Request): Promise<Response> {
             }
             payload.elementor_data = dpElementorData;
             payload.elementor_css = dpElementorCss;
-            payload.elementor_mode = "native";
-            step("Routing native Elementor JSON", "ok", "Full-width containers + native widgets");
+            payload.elementor_mode = useExactDirectElementor ? "exact" : "native";
+            step(
+              useExactDirectElementor ? "Routing exact Elementor render" : "Routing native Elementor JSON",
+              "ok",
+              useExactDirectElementor ? "Original template HTML/CSS preserved for 1:1 output" : "Full-width containers + native widgets",
+            );
           }
 
 
@@ -1433,7 +1438,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           websiteType === "wordpress"
         ) {
           if (!FORCE_NATIVE_ELEMENTOR && shouldUseExactElementorRender(cleanedContent)) {
-            payload.elementor_data = buildExactElementorData(cleanedContent);
+            payload.elementor_data = buildExactElementorData(page.content || cleanedContent);
             // Exact render already carries its <style> blocks inside the HTML
             // widget. Avoid duplicating CSS in post meta to keep the wp-json
             // publish request small enough for LiteSpeed/shared hosts.
