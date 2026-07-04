@@ -36,6 +36,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.4.4 =
+* Theme CSS isolation on connector pages: the active theme's stylesheets are now dequeued (generic slug handles + per-theme handles for Astra, GeneratePress, Kadence, Twenty Twenty-Five/Four/Three/Two, OceanWP, Blocksy, Neve, Divi, Flatsome, Avada, Storefront, Bricks; Hello Elementor kept as blank canvas), and WordPress block-library/global(theme.json)/duotone styles plus theme editor-styles & block-styles support are disabled on the frontend. The imported template CSS loads last (PHP_INT_MAX) so it always wins the cascade — theme colors, fonts, and custom CSS can no longer override the imported design.
+
 = 1.4.3 =
 * Full-stack automatic cache purge on publish: clears Elementor CSS, WP object cache, connector transients, options cache, and every supported page-cache plugin (WP Rocket, W3TC, WP Super Cache, LiteSpeed, WP Fastest Cache, Autoptimize, SG Optimizer, Comet, Cache Enabler, Cachify, Swift), managed hosts (WP Engine, Kinsta, Servebolt, Pantheon), and CDNs (Cloudflare, BunnyCDN). Added cache-busting: no-cache/Pragma/Expires/Surrogate-Control + dynamic ETag & Last-Modified headers on connector pages and versioned CSS/JS URLs so browsers/proxies always load the freshest styled markup.
 
