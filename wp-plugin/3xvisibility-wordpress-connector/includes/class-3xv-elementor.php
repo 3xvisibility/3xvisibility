@@ -1971,8 +1971,12 @@ class XXXV_Elementor {
 		$stylesheet = $theme ? (string) $theme->get_stylesheet() : '';
 		$template   = $theme ? (string) $theme->get_template() : '';
 
-		// Hello Elementor is the recommended blank canvas — keep it.
-		$keep = array( 'hello-elementor', 'hello-elementor-theme-style', 'hello-elementor-child-style' );
+		// Hello Elementor is the recommended blank canvas — keep it. Plus any
+		// stylesheet handles the user explicitly excluded from neutralization.
+		$keep = array_merge(
+			array( 'hello-elementor', 'hello-elementor-theme-style', 'hello-elementor-child-style' ),
+			self::neutralization_excludes()
+		);
 
 		// Known per-theme stylesheet handles to remove.
 		$theme_handles = array(
