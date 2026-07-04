@@ -231,6 +231,89 @@ function iconWidget(node: HtmlNode): ElementorElement {
   };
 }
 
+/* Known social networks: host fragments + Font Awesome brand icon token. */
+const SOCIAL_NETWORKS: Array<{ key: string; hosts: string[]; icon: string }> = [
+  { key: "facebook", hosts: ["facebook.com", "fb.com", "fb.me"], icon: "fa-facebook" },
+  { key: "twitter", hosts: ["twitter.com", "x.com"], icon: "fa-twitter" },
+  { key: "instagram", hosts: ["instagram.com"], icon: "fa-instagram" },
+  { key: "linkedin", hosts: ["linkedin.com"], icon: "fa-linkedin-in" },
+  { key: "youtube", hosts: ["youtube.com", "youtu.be"], icon: "fa-youtube" },
+  { key: "pinterest", hosts: ["pinterest."], icon: "fa-pinterest" },
+  { key: "tiktok", hosts: ["tiktok.com"], icon: "fa-tiktok" },
+  { key: "github", hosts: ["github.com"], icon: "fa-github" },
+  { key: "whatsapp", hosts: ["whatsapp.com", "wa.me"], icon: "fa-whatsapp" },
+  { key: "telegram", hosts: ["t.me", "telegram."], icon: "fa-telegram" },
+  { key: "dribbble", hosts: ["dribbble.com"], icon: "fa-dribbble" },
+  { key: "behance", hosts: ["behance.net"], icon: "fa-behance" },
+  { key: "reddit", hosts: ["reddit.com"], icon: "fa-reddit" },
+  { key: "snapchat", hosts: ["snapchat.com"], icon: "fa-snapchat" },
+  { key: "discord", hosts: ["discord.com", "discord.gg"], icon: "fa-discord" },
+  { key: "medium", hosts: ["medium.com"], icon: "fa-medium" },
+  { key: "vimeo", hosts: ["vimeo.com"], icon: "fa-vimeo-v" },
+];
+
+/** Identify the social network of a single anchor by URL host or its icon class. */
+function matchSocialNetwork(node: HtmlNode): { key: string; icon: string } | null {
+  const href = (node.attrs.href || "").toLowerCase();
+  for (const net of SOCIAL_NETWORKS) {
+    if (net.hosts.some((h) => href.includes(h))) return { key: net.key, icon: net.icon };
+  }
+  const iconNode = node.tag === "i" || node.tag === "svg" ? node : findNode(node, (n) => n.tag === "i" || n.tag === "svg");
+  const cls = ((iconNode?.attrs.class || "") + " " + (node.attrs.class || "")).toLowerCase();
+  for (const net of SOCIAL_NETWORKS) {
+    if (cls.includes(net.icon)) return { key: net.key, icon: net.icon };
+  }
+  return null;
+}
+
+/** Collect anchors that resolve to a known social network within a node. */
+function collectSocialLinks(node: HtmlNode): Array<{ url: string; key: string; icon: string }> {
+  const anchors: HtmlNode[] = [];
+  const walk = (n: HtmlNode) => {
+    for (const child of n.children) {
+      if (child.tag === "a") anchors.push(child);
+      else if (child.tag) walk(child);
+    }
+  };
+  walk(node);
+  const links: Array<{ url: string; key: string; icon: string }> = [];
+  const seen = new Set<string>();
+  for (const a of anchors) {
+    const match = matchSocialNetwork(a);
+    if (!match || seen.has(match.key)) continue;
+    seen.add(match.key);
+    links.push({ url: a.attrs.href || "#", key: match.key, icon: match.icon });
+  }
+  return links;
+}
+
+/** A container of social links -> native Elementor Social Icons widget. */
+function socialIcons(links: Array<{ url: string; key: string; icon: string }>): ElementorElement {
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "social-icons",
+    settings: {
+      social_icon_list: links.map((l) => ({
+        _id: genId().slice(0, 7),
+        social_icon: { value: `fab ${l.icon}`, library: "fa-brands" },
+        link: { url: l.url, is_external: "on", nofollow: "" },
+      })),
+    },
+    elements: [],
+  };
+}
+
+/** Detect a container whose meaningful content is a set of >=2 social links. */
+function detectSocialIcons(node: HtmlNode): ElementorElement | null {
+  if (!CONTAINER_TAGS.has(node.tag) && node.tag !== "ul" && node.tag !== "ol") return null;
+  const links = collectSocialLinks(node);
+  if (links.length < 2) return null;
+  // Guard: the container must be predominantly social links, not mixed content.
+  if (textContent(node).replace(/\s+/g, "").length > links.length * 24) return null;
+  return socialIcons(links);
+}
+
 /** `<iframe>` / `<video>` -> native Elementor Video widget. */
 function video(node: HtmlNode): ElementorElement {
   const src = node.attrs.src || (findNode(node, (n) => n.tag === "source")?.attrs.src ?? "");
@@ -549,11 +632,22 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
       out.push(button(node));
     } else if (CONTAINER_TAGS.has(node.tag)) {
       flush();
-      const inner = convertChildren(node.children);
-      if (inner.length > 0) out.push(container(inner, node));
+      const social = detectSocialIcons(node);
+      if (social) {
+        out.push(social);
+      } else {
+        const inner = convertChildren(node.children);
+        if (inner.length > 0) out.push(container(inner, node));
+      }
     } else if (TEXT_TAGS.has(node.tag) || node.tag === "a") {
-      // Inline/textual content -> accumulate as rich text editor block.
-      textBuffer += serialize(node);
+      const social = (node.tag === "ul" || node.tag === "ol") ? detectSocialIcons(node) : null;
+      if (social) {
+        flush();
+        out.push(social);
+      } else {
+        // Inline/textual content -> accumulate as rich text editor block.
+        textBuffer += serialize(node);
+      }
     } else {
       // Unknown element: recurse so we don't drop content.
       const inner = convertChildren(node.children);
