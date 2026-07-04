@@ -344,7 +344,19 @@ class XXXV_Media {
 			'image/vnd.microsoft.icon' => 'ico',
 			'image/bmp'     => 'bmp',
 			'image/tiff'    => 'tiff',
-		);
+			// Web fonts embedded as data URIs inside @font-face.
+			'font/woff'                    => 'woff',
+			'font/woff2'                   => 'woff2',
+			'font/ttf'                     => 'ttf',
+			'font/otf'                     => 'otf',
+			'application/font-woff'        => 'woff',
+			'application/font-woff2'       => 'woff2',
+			'application/x-font-woff'      => 'woff',
+			'application/x-font-ttf'       => 'ttf',
+			'application/x-font-truetype'  => 'ttf',
+			'application/x-font-opentype'  => 'otf',
+			'application/vnd.ms-fontobject' => 'eot',
+
 		$ext      = isset( $ext_map[ $mime ] ) ? $ext_map[ $mime ] : 'png';
 		$filename = 'xxxv-inline-' . substr( $hash, 0, 12 ) . '.' . $ext;
 
