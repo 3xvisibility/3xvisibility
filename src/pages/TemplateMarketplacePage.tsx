@@ -390,9 +390,12 @@ export default function TemplateMarketplacePage() {
       // Bake the template's default values (plus any user overrides) into the
       // imported HTML so the saved template shows real content instead of raw
       // {variable} placeholders.
-      const content = Object.keys(mergedDefaults).length > 0
+      const baked = Object.keys(mergedDefaults).length > 0
         ? applyTemplateDefaults(tpl.content, mergedDefaults)
         : tpl.content;
+      // Re-skin the HTML to match the chosen platform (Elementor/WordPress vs Shopify)
+      // so the imported template looks native to the target platform.
+      const content = convertForPlatform(baked);
       const { error } = await supabase.from("templates").insert({
         name: tpl.name,
         content,
