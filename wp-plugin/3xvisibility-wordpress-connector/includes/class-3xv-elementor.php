@@ -96,6 +96,7 @@ class XXXV_Elementor {
 			$elementor_data = is_array( $decoded ) ? $decoded : array();
 		}
 		self::normalize_top_level_containers( $elementor_data );
+		$elementor_data = self::fix_elementor_data( $elementor_data );
 		self::sanitize_elementor_text_fields( $elementor_data );
 
 		// ---- (1) Validate the incoming JSON model -----------------------------
