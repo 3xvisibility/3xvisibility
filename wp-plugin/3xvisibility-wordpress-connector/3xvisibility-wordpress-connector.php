@@ -53,6 +53,11 @@ function xxxv_connector_boot() {
 	// Enqueue as late as possible so our inline stylesheet is registered AFTER
 	// Elementor's per-post CSS in the queue and therefore wins equal-specificity
 	// cascade conflicts (e.g. template grid vs. Elementor container flex).
+	// Neutralize active theme + WP global/block/duotone styles on connector pages
+	// (runs before our template CSS enqueue) so imported design can't be overridden.
+	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'disable_global_styles' ), 9 );
+	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'neutralize_theme_css' ), PHP_INT_MAX - 5 );
+	add_action( 'init', array( 'XXXV_Elementor', 'disable_global_styles' ) );
 	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'enqueue_template_css' ), PHP_INT_MAX );
 	// Print inside <head> after every other style tag.
 	add_action( 'wp_head', array( 'XXXV_Elementor', 'print_template_css' ), PHP_INT_MAX );
