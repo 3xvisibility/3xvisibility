@@ -36,7 +36,11 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.4.9 =
+* One-call full cache refresh: new force_cache_refresh($post_id) clears every layer at once — Elementor per-page & global CSS, WordPress object/transient/options cache, all supported page-cache/hosting plugins, and CDN caches (Cloudflare, BunnyCDN) — then bumps a per-page cache-buster version so enqueued template CSS carries a fresh query string, and emits no-cache/Pragma/Expires/Surrogate-Control headers to refresh the browser layer. Returns a structured success report of the layers cleared.
+
 = 1.4.8 =
+
 * Reliable CSS storage in Elementor data: new fix_elementor_data() walks the full element tree on publish and preserves everything design-related — raw class strings (css_classes/class/className) are merged into Elementor's native _css_classes advanced setting (de-duplicated), and inline style="" declarations are promoted into per-element custom CSS (scoped selector{...}) so the editor never drops them. Common declarations (color, background-color, text-align, font-size, padding, margin) are also mapped to real Elementor settings when unset, keeping the imported design fully editable.
 
 = 1.4.7 =
