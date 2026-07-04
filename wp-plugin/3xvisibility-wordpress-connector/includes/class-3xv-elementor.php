@@ -1969,6 +1969,53 @@ class XXXV_Elementor {
 	}
 
 	/**
+	 * User-defined custom removal rules: extra stylesheet handles (or wildcard
+	 * patterns like "mytheme-*") that should always be dequeued on connector
+	 * pages, in addition to the built-in popular-theme handle list. Stored as a
+	 * newline/comma-separated list; returned as a lowercase array. Wildcards
+	 * ("*") are preserved so the caller can resolve them against the live queue.
+	 *
+	 * @return array
+	 */
+	public static function neutralization_custom_removals() {
+		if ( ! defined( 'XXXV_CONNECTOR_OPT_NEUTRALIZE_REMOVALS' ) ) {
+			return array();
+		}
+		$raw = (string) get_option( XXXV_CONNECTOR_OPT_NEUTRALIZE_REMOVALS, '' );
+		if ( '' === trim( $raw ) ) {
+			return array();
+		}
+		$parts = preg_split( '/[\s,]+/', $raw );
+		$out   = array();
+		foreach ( (array) $parts as $p ) {
+			// Allow alphanumerics, dash, underscore and the "*" wildcard only.
+			$p = strtolower( trim( (string) $p ) );
+			$p = preg_replace( '/[^a-z0-9_*-]/', '', $p );
+			if ( '' !== $p ) {
+				$out[] = $p;
+			}
+		}
+		return array_values( array_unique( $out ) );
+	}
+
+	/**
+	 * Match a registered style handle against a custom removal pattern that may
+	 * contain "*" wildcards (e.g. "mytheme-*", "*-google-fonts").
+	 *
+	 * @param string $handle  Registered style handle.
+	 * @param string $pattern Removal pattern.
+	 * @return bool
+	 */
+	public static function handle_matches_pattern( $handle, $pattern ) {
+		if ( false === strpos( $pattern, '*' ) ) {
+			return $handle === $pattern;
+		}
+		$regex = '/^' . str_replace( '\*', '.*', preg_quote( $pattern, '/' ) ) . '$/i';
+		return (bool) preg_match( $regex, $handle );
+	}
+
+
+	/**
 	 * Neutralize the active theme's CSS on connector-imported pages so it can never
 	 * override the imported template design. Runs late on wp_enqueue_scripts and
 	 * dequeues theme stylesheets (generic + per-theme handles), and on wp_head/init
