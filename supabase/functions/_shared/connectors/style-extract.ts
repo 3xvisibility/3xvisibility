@@ -441,7 +441,52 @@ export class StyleResolver {
       mobile: this.resolve(node, DEVICE_WIDTHS.mobile),
     };
   }
+
+  /**
+   * Resolve interactive-state (`:hover` / `:focus` / `:active`) styles for a node.
+   * Only rules whose rightmost simple selector carries a STATE pseudo-class AND
+   * matches this node's tag/class/id participate. Returns both the resolved
+   * StyleProps (for mapping onto native Elementor hover controls) and the raw
+   * winning declarations (so any unmapped property can still be emitted as a
+   * `selector:hover{…}` fallback). Returns `undefined` when the node has no
+   * interactive-state styling, so callers can cheaply skip it.
+   */
+  resolveHover(
+    node: NodeLike,
+    width: number = DEVICE_WIDTHS.desktop,
+  ): { props: StyleProps; decls: Record<string, string>; states: string[] } | undefined {
+    const tag = (node.tag || "").toLowerCase();
+    const classes = (node.attrs?.class || "").toLowerCase().split(/\s+/).filter(Boolean);
+    const id = (node.attrs?.id || "").toLowerCase();
+
+    const matched: { spec: number; order: number; decls: Record<string, string>; state: string }[] = [];
+    for (const rule of this.rules) {
+      if (!mediaActiveAt(rule.media, width)) continue;
+      for (const sel of rule.selectors) {
+        if (!sel.state || sel.pseudoElement) continue;
+        if (sel.tag && sel.tag !== tag) continue;
+        if (sel.id && sel.id !== id) continue;
+        if (sel.classes.length && !sel.classes.every((c) => classes.includes(c))) continue;
+        matched.push({ spec: sel.specificity, order: rule.order, decls: rule.decls, state: sel.state });
+      }
+    }
+    if (!matched.length) return undefined;
+
+    matched.sort((a, b) => (a.spec - b.spec) || (a.order - b.order));
+    const merged: Record<string, string> = {};
+    const states = new Set<string>();
+    for (const mm of matched) {
+      states.add(mm.state);
+      for (const [k, v] of Object.entries(mm.decls)) {
+        if (k.startsWith("--")) continue;
+        merged[k] = v.includes("var(") ? substituteVars(v, this.vars) : v;
+      }
+    }
+    if (!Object.keys(merged).length) return undefined;
+    return { props: declsToProps(merged), decls: merged, states: [...states] };
+  }
 }
+
 
 
 /* ------------------------- Elementor mapping ----------------------------- */
