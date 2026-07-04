@@ -220,4 +220,87 @@ class XXXV_Media {
 		);
 		return $q->have_posts() ? (int) $q->posts[0] : 0;
 	}
+
+	/**
+	 * Import a data:/base64 image (data URI) into the Media Library as a real file
+	 * so it stops bloating CSS/HTML and gets a stable, cacheable WP URL.
+	 * SVG/WebP/AVIF/PNG/JPEG/GIF are all preserved in their original format.
+	 *
+	 * @param string $data_uri Full `data:<mime>;base64,....` (or URL-encoded) string.
+	 * @return array|WP_Error { id, url, duplicate }
+	 */
+	public static function import_from_data_uri( $data_uri ) {
+		if ( ! is_string( $data_uri ) || ! preg_match( '#^data:([^;,]+)?(;charset=[^;,]+)?(;base64)?,(.*)$#is', $data_uri, $m ) ) {
+			return new WP_Error( 'xxxv_bad_data_uri', 'Not a valid data URI.', array( 'status' => 400 ) );
+		}
+		$mime      = strtolower( trim( $m[1] ? $m[1] : 'image/png' ) );
+		$is_base64 = ! empty( $m[3] );
+		$payload   = $m[4];
+
+		$binary = $is_base64 ? base64_decode( $payload, true ) : rawurldecode( $payload );
+		if ( false === $binary || '' === $binary ) {
+			return new WP_Error( 'xxxv_bad_data_uri', 'Could not decode data URI payload.', array( 'status' => 400 ) );
+		}
+
+		// De-duplicate identical payloads by content hash.
+		$hash     = md5( $binary );
+		$existing = self::find_existing( 'data-uri:' . $hash );
+		if ( $existing ) {
+			return array(
+				'id'        => $existing,
+				'url'       => wp_get_attachment_url( $existing ),
+				'duplicate' => true,
+			);
+		}
+
+		$ext_map = array(
+			'image/svg+xml' => 'svg',
+			'image/svg'     => 'svg',
+			'image/png'     => 'png',
+			'image/jpeg'    => 'jpg',
+			'image/jpg'     => 'jpg',
+			'image/gif'     => 'gif',
+			'image/webp'    => 'webp',
+			'image/avif'    => 'avif',
+			'image/x-icon'  => 'ico',
+			'image/vnd.microsoft.icon' => 'ico',
+			'image/bmp'     => 'bmp',
+			'image/tiff'    => 'tiff',
+		);
+		$ext      = isset( $ext_map[ $mime ] ) ? $ext_map[ $mime ] : 'png';
+		$filename = 'xxxv-inline-' . substr( $hash, 0, 12 ) . '.' . $ext;
+
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+
+		$upload = wp_upload_bits( $filename, null, $binary );
+		if ( ! empty( $upload['error'] ) ) {
+			return new WP_Error( 'xxxv_upload_bits', $upload['error'], array( 'status' => 500 ) );
+		}
+
+		$filetype   = wp_check_filetype( $upload['file'], null );
+		$attachment = array(
+			'post_mime_type' => $filetype['type'] ? $filetype['type'] : $mime,
+			'post_title'     => sanitize_file_name( $filename ),
+			'post_content'   => '',
+			'post_status'    => 'inherit',
+		);
+		$attachment_id = wp_insert_attachment( $attachment, $upload['file'] );
+		if ( is_wp_error( $attachment_id ) ) {
+			return $attachment_id;
+		}
+		// SVGs have no raster metadata; skip generate for them to avoid warnings.
+		if ( 'svg' !== $ext ) {
+			$meta = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
+			wp_update_attachment_metadata( $attachment_id, $meta );
+		}
+		update_post_meta( $attachment_id, '_xxxv_source_url', 'data-uri:' . $hash );
+
+		return array(
+			'id'        => (int) $attachment_id,
+			'url'       => wp_get_attachment_url( $attachment_id ),
+			'duplicate' => false,
+		);
+	}
 }
