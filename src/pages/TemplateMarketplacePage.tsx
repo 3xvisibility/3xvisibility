@@ -138,11 +138,15 @@ export default function TemplateMarketplacePage() {
   const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
   const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const [contentOverrides, setContentOverrides] = useState<Record<string, string>>({});
-  const [formatByTemplate, setFormatByTemplate] = useState<Record<string, TemplateFormat>>({});
-  const resolveFormat = (tpl: MarketplaceTemplate): TemplateFormat =>
-    formatByTemplate[tpl.id] ?? defaultFormat(tpl);
-  const setFormat = (id: string, fmt: TemplateFormat) =>
-    setFormatByTemplate((prev) => ({ ...prev, [id]: fmt }));
+  // Top-level platform split: users first choose Elementor (WordPress) or Shopify,
+  // then browse that platform's templates by category. Every template is offered
+  // for both platforms and is re-skinned to match the chosen platform's look.
+  const [platformChoice, setPlatformChoice] = useState<"elementor" | "shopify">("elementor");
+  const skinPlatform: TemplatePlatform = platformChoice === "shopify" ? "shopify" : "wordpress";
+  const convertForPlatform = (content: string) =>
+    reskinContent(content, skinPlatform, defaultSkinVariant(skinPlatform));
+  const resolveFormat = (_tpl: MarketplaceTemplate): TemplateFormat =>
+    platformChoice === "shopify" ? "shopify" : "elementor";
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
