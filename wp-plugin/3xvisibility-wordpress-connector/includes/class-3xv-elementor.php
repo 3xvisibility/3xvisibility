@@ -1457,17 +1457,16 @@ class XXXV_Elementor {
 		if ( empty( $families ) ) {
 			return '';
 		}
-		$url = 'https://fonts.googleapis.com/css2';
+		$query = array();
 		foreach ( $families as $fam ) {
-			$url .= '?' === substr( $url, -1 ) ? '' : ( false === strpos( $url, '?' ) ? '?' : '&' );
-			$url .= 'family=' . $fam;
+			$query[] = 'family=' . $fam;
 		}
 		$subsets = array_values( array_unique( array_filter( array_map( 'sanitize_key', $subsets ) ) ) );
 		if ( ! empty( $subsets ) ) {
-			$url .= '&subset=' . implode( ',', $subsets );
+			$query[] = 'subset=' . implode( ',', $subsets );
 		}
-		$url .= '&display=' . ( $display ? $display : 'swap' );
-		return $url;
+		$query[] = 'display=' . ( $display ? $display : 'swap' );
+		return 'https://fonts.googleapis.com/css2?' . implode( '&', $query );
 	}
 
 	/**
