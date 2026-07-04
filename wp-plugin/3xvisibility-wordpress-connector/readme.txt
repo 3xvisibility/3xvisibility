@@ -36,6 +36,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.4.6 =
+* Automatic Google Fonts detection & registration: on publish the connector scans the template's CSS @import rules, HTML <link> tags, and font-family declarations (matched against a curated Google Fonts list) and stores a normalized spec per page. On connector pages it then loads the fonts via the Google Fonts CSS2 API with the correct weights, subsets (latin, latin-ext, cyrillic, etc.), and font-display: swap, adds preconnect (fonts.googleapis.com + fonts.gstatic.com) and preload hints for performance, keeps system-font fallbacks, handles multiple families, and registers the families with Elementor's font manager so they resolve correctly in both the editor and frontend.
+
 = 1.4.5 =
 * Full CSS image localization: every image referenced inside template CSS via url() — background-image, list-style-image, border-image, cursor, content, and @font-face src — is now downloaded into the WordPress Media Library and the CSS rewritten to the local URLs on publish. URLs are normalized first (localhost/127.* → source host, protocol-relative // → https, http → https, relative/site-relative paths resolved against the template base URL). data:/base64 URIs are decoded into real files, SVG/WebP/AVIF/ICO/BMP/TIFF formats are whitelisted and preserved, @2x/@3x retina filenames are kept, and original bytes are uploaded verbatim so dimensions, quality, and EXIF are preserved while WordPress auto-generates thumbnails + responsive srcset for rasters.
 
