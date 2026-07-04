@@ -345,11 +345,10 @@ export default function TemplateMarketplacePage() {
   const filteredTemplates = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
     return source.filter((tpl) => {
-      const platform = effectivePlatform(tpl);
-      const matchesCategory =
-        selectedCategory === "all" ||
-        tpl.category === selectedCategory ||
-        ((selectedCategory === "wordpress" || selectedCategory === "shopify") && platform === selectedCategory);
+      const cat = tpl.category && tpl.category !== "wordpress" && tpl.category !== "shopify"
+        ? tpl.category
+        : "general";
+      const matchesCategory = selectedCategory === "all" || cat === selectedCategory;
       const matchesSearch =
         !searchQuery ||
         (tpl.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -361,7 +360,7 @@ export default function TemplateMarketplacePage() {
   // Reset to first page whenever filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, activeTab]);
+  }, [searchQuery, selectedCategory, activeTab, platformChoice]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTemplates.length / PER_PAGE));
   const paginatedTemplates = useMemo(
