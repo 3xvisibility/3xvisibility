@@ -900,6 +900,11 @@ export default function TemplateMarketplacePage() {
 
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Close</Button>
+                  {platformChoice === "elementor" && (
+                    <Button variant="secondary" onClick={() => setWpTestOpen(true)}>
+                      <ShieldCheck className="mr-2 h-4 w-4" /> Test on WordPress
+                    </Button>
+                  )}
                   <Button
                     onClick={() => importMutation.mutate(activePreview)}
                     disabled={importMutation.isPending || previewTranslating}
