@@ -640,8 +640,14 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
         if (inner.length > 0) out.push(container(inner, node));
       }
     } else if (TEXT_TAGS.has(node.tag) || node.tag === "a") {
-      // Inline/textual content -> accumulate as rich text editor block.
-      textBuffer += serialize(node);
+      const social = (node.tag === "ul" || node.tag === "ol") ? detectSocialIcons(node) : null;
+      if (social) {
+        flush();
+        out.push(social);
+      } else {
+        // Inline/textual content -> accumulate as rich text editor block.
+        textBuffer += serialize(node);
+      }
     } else {
       // Unknown element: recurse so we don't drop content.
       const inner = convertChildren(node.children);
