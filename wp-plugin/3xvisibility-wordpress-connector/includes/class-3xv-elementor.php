@@ -2002,19 +2002,39 @@ class XXXV_Elementor {
 
 		// Known per-theme stylesheet handles to remove.
 		$theme_handles = array(
-			'astra-theme-css', 'astra-google-fonts',                 // Astra
-			'generatepress-style', 'generate-style-css',             // GeneratePress
-			'kadence-style', 'kadence-global',                       // Kadence
-			'twentytwentyfive-style', 'twentytwentyfour-style',      // TT5 / TT4
+			'astra-theme-css', 'astra-google-fonts', 'astra-addon-css',   // Astra
+			'generatepress-style', 'generate-style-css', 'gp-premium-css', // GeneratePress
+			'kadence-style', 'kadence-global', 'kadence-header',          // Kadence
+			'twentytwentyfive-style', 'twentytwentyfour-style',          // TT5 / TT4
 			'twentytwentythree-style', 'twentytwentytwo-style',
-			'oceanwp-style',                                         // OceanWP
-			'blocksy-styles', 'blocksy-style',                       // Blocksy
-			'neve-style',                                            // Neve
-			'divi-style', 'et-builder-googlefonts', 'et-core-unified', // Divi
-			'storefront-style', 'twentytwentyone-style',
-			'flatsome-style', 'flatsome-shop',                       // Flatsome
-			'avada-stylesheet', 'fusion-dynamic-css',                // Avada
-			'bricks-frontend',                                       // Bricks (as theme)
+			'twentytwentyone-style', 'twentytwenty-style', 'twentynineteen-style',
+			'twentyseventeen-style', 'twentysixteen-style',
+			'oceanwp-style', 'oceanwp-google-fonts',                     // OceanWP
+			'blocksy-styles', 'blocksy-style', 'ct-main-styles',         // Blocksy
+			'neve-style', 'neve-google-fonts',                          // Neve
+			'divi-style', 'et-builder-googlefonts', 'et-core-unified',   // Divi
+			'et-divi-open-sans', 'et-gb-module-styles',
+			'storefront-style', 'storefront-woocommerce-style',         // Storefront
+			'flatsome-style', 'flatsome-shop', 'flatsome-main',         // Flatsome
+			'avada-stylesheet', 'fusion-dynamic-css', 'avada-google-fonts', // Avada
+			'bricks-frontend',                                          // Bricks (as theme)
+			'hestia_style', 'hestia-style',                             // Hestia
+			'sydney-style', 'sydney-fonts',                            // Sydney
+			'customify-style',                                         // Customify
+			'colibri-css', 'colibri-frontend',                        // Colibri
+			'botiga-style', 'botiga-theme-style',                     // Botiga
+			'zakra-style', 'zakra-google-fonts',                      // Zakra
+			'phlox-style', 'auxin-front-main',                        // Phlox
+			'suki-theme', 'suki-google-fonts',                        // Suki
+			'page-builder-framework-style', 'wpbf-css',               // Page Builder Framework
+			'enfold-style', 'avia-base', 'avia-layout',               // Enfold
+			'betheme-style', 'mfn-base',                              // BeTheme
+			'thegem-style', 'thegem-reset',                          // TheGem
+			'salient-style', 'nectar-css',                          // Salient
+			'jupiterx-style', 'jupiter-style',                       // Jupiter / JupiterX
+			'woodmart-style', 'woodmart-base',                       // Woodmart
+			'porto-theme', 'porto-plugins',                          // Porto
+			'the7-main-css', 'the7-fonts',                          // The7
 		);
 
 		// Also derive handles from the active theme slug (covers custom themes).
@@ -2025,7 +2045,13 @@ class XXXV_Elementor {
 			$theme_handles[] = $slug . '-style';
 			$theme_handles[] = $slug . '-theme-css';
 			$theme_handles[] = $slug . '-css';
+			$theme_handles[] = $slug . '-google-fonts';
+			$theme_handles[] = $slug . '-fonts';
+			$theme_handles[] = $slug . '-main';
 		}
+
+		// User-defined custom removal rules (extra handles to always dequeue).
+		$theme_handles = array_merge( $theme_handles, self::neutralization_custom_removals() );
 
 		if ( $wp_styles instanceof \WP_Styles ) {
 			foreach ( $theme_handles as $handle ) {
