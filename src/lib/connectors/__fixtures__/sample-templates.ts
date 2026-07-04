@@ -153,4 +153,183 @@ export const sampleTemplates: SampleTemplate[] = [
       </div>`,
     expectWidgets: ["rating"],
   },
+  {
+    id: "icon-list-features",
+    description: "a bulleted feature list maps to a native icon-list widget",
+    html: `
+      <ul class="feature-list">
+        <li>Unlimited pages</li>
+        <li>Priority support</li>
+        <li>Custom domains</li>
+      </ul>`,
+    expectWidgets: ["icon-list"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "icon-list-from-divs",
+    description: "a row of icon+text divs (no <ul>) still maps to a native icon-list",
+    html: `
+      <div class="benefits">
+        <div class="benefit"><i class="fas fa-check"></i><span>Fast setup</span></div>
+        <div class="benefit"><i class="fas fa-check"></i><span>Secure hosting</span></div>
+        <div class="benefit"><i class="fas fa-check"></i><span>24/7 uptime</span></div>
+      </div>`,
+    expectWidgets: ["icon-list"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "counter-stat",
+    description: "a numeric stat block maps to a native counter widget",
+    html: `
+      <div class="counter">
+        <span class="number">2500</span>
+        <div class="title">Happy customers</div>
+      </div>`,
+    expectWidgets: ["counter"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "accordion-faq",
+    description: "an FAQ accordion maps to a native accordion widget",
+    html: `
+      <div class="accordion faq">
+        <div class="accordion-item">
+          <h3 class="title">What is your refund policy?</h3>
+          <div class="content"><p>30-day money back guarantee.</p></div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="title">Do you offer support?</h3>
+          <div class="content"><p>Yes, around the clock.</p></div>
+        </div>
+      </div>`,
+    expectWidgets: ["accordion"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "tabs-panels",
+    description: "a tabbed section maps to a native tabs widget",
+    html: `
+      <div class="tabs">
+        <div class="tab-title">Overview</div>
+        <div class="tab-title">Pricing</div>
+        <div class="tab-pane"><p>Everything you need to get started.</p></div>
+        <div class="tab-pane"><p>Simple, transparent pricing.</p></div>
+      </div>`,
+    expectWidgets: ["tabs"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "standalone-icon",
+    description: "a lone decorative icon maps to a native icon widget",
+    html: `<div class="icon-wrap"><i class="fas fa-rocket"></i></div>`,
+    expectWidgets: ["icon"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "progress-inline-width",
+    description: "a progress bar using inline width style maps to a native progress widget",
+    html: `
+      <div class="skill-bar">
+        <span>JavaScript</span>
+        <div class="progress"><div class="bar" style="width: 85%"></div></div>
+      </div>`,
+    expectWidgets: ["progress"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "progress-data-attr",
+    description: "a progress bar using data-percent maps to a native progress widget",
+    html: `
+      <div class="meter" data-percent="42">
+        <span>Storage used</span>
+      </div>`,
+    expectWidgets: ["progress"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "spacer-empty-div",
+    description: "an empty div with only height styling maps to a native spacer widget",
+    html: `
+      <section>
+        <h2>Section title</h2>
+        <div style="height:120px"></div>
+        <p>Following content.</p>
+      </section>`,
+    expectWidgets: ["spacer"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "form-all-field-types-pro",
+    description: "Pro: a form with text/email/tel/select/textarea maps to a native form widget",
+    pro: true,
+    html: `
+      <form name="lead">
+        <input type="text" name="fullname" placeholder="Full name" required />
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="tel" name="phone" placeholder="Phone" />
+        <select name="topic">
+          <option>Sales</option>
+          <option>Support</option>
+        </select>
+        <textarea name="details" placeholder="Details"></textarea>
+        <button type="submit">Request a demo</button>
+      </form>`,
+    expectWidgets: ["form"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "rating-aria-pro",
+    description: "Pro: a rating using aria-valuenow maps to a native rating widget",
+    pro: true,
+    html: `<div class="rating" role="img" aria-valuenow="3" aria-valuemax="5">3 stars</div>`,
+    expectWidgets: ["rating"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "rating-data-attr-pro",
+    description: "Pro: a rating using data-rating maps to a native rating widget",
+    pro: true,
+    html: `<div class="star-rating" data-rating="4.5">Rated 4.5 out of 5</div>`,
+    expectWidgets: ["rating"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "edge-mixed-section",
+    description: "edge case: a mixed section stays native for every part (no HTML fallback)",
+    html: `
+      <section class="content">
+        <h2>Why choose us</h2>
+        <p>We help teams ship faster.</p>
+        <hr/>
+        <ul class="points">
+          <li>Reliable</li>
+          <li>Affordable</li>
+        </ul>
+        <a class="btn" href="/pricing">See pricing</a>
+      </section>`,
+    expectWidgets: ["heading", "divider", "icon-list", "button"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "edge-card-grid",
+    description: "edge case: a grid of feature cards maps each card to its own native widget",
+    html: `
+      <div class="grid">
+        <div class="feature-box"><i class="fas fa-bolt"></i><h3>Fast</h3><p>Speedy delivery.</p></div>
+        <div class="feature-box"><i class="fas fa-lock"></i><h3>Secure</h3><p>Encrypted by default.</p></div>
+        <div class="feature-box"><i class="fas fa-cog"></i><h3>Flexible</h3><p>Fully configurable.</p></div>
+      </div>`,
+    expectWidgets: ["icon-box"],
+    forbidWidgets: ["html"],
+  },
+  {
+    id: "edge-empty-wrappers",
+    description: "edge case: deeply nested empty wrappers around one heading still yield a native heading",
+    html: `
+      <div><div><div class="inner">
+        <h2>Deeply nested title</h2>
+      </div></div></div>`,
+    expectWidgets: ["heading"],
+    forbidWidgets: ["html"],
+  },
 ];
