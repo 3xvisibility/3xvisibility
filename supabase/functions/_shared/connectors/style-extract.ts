@@ -218,6 +218,24 @@ export function parseStylesheet(html: string): Rule[] {
 
 /* ----------------------------- resolution -------------------------------- */
 
+/**
+ * Replace `var(--name, fallback)` references in a CSS value with the resolved
+ * custom-property value (or the fallback when the variable is unknown). Runs a
+ * few passes so variables that reference other variables collapse fully.
+ */
+function substituteVars(value: string, vars: Record<string, string>): string {
+  let v = value;
+  for (let i = 0; i < 5 && v.includes("var("); i++) {
+    v = v.replace(/var\(\s*(--[a-z0-9-]+)\s*(?:,\s*([^()]*))?\)/gi, (whole, name, fallback) => {
+      const key = String(name).toLowerCase();
+      if (vars[key] !== undefined) return vars[key];
+      return fallback !== undefined ? String(fallback).trim() : whole;
+    });
+  }
+  return v;
+}
+
+
 function declsToProps(d: Record<string, string>): StyleProps {
   const p: StyleProps = {};
   if (d["color"]) p.color = d["color"];
@@ -299,8 +317,35 @@ function declsToProps(d: Record<string, string>): StyleProps {
 
 export class StyleResolver {
   private rules: Rule[];
+  private vars: Record<string, string>;
   constructor(html: string) {
     this.rules = parseStylesheet(html);
+    this.vars = this.collectVars();
+  }
+
+  /**
+   * Collect CSS custom property definitions (`--name: value`) from every rule
+   * (`:root`, `.pl`, etc.) into a flat map so `var(--x)` references can be
+   * resolved to literal values. Later declarations win. Values that themselves
+   * reference other variables are resolved in a second pass.
+   */
+  private collectVars(): Record<string, string> {
+    const vars: Record<string, string> = {};
+    for (const rule of this.rules) {
+      for (const [prop, value] of Object.entries(rule.decls)) {
+        if (prop.startsWith("--")) vars[prop.toLowerCase()] = value.trim();
+      }
+    }
+    // Resolve nested var() references between custom properties.
+    for (let pass = 0; pass < 5; pass++) {
+      let changed = false;
+      for (const key of Object.keys(vars)) {
+        const next = substituteVars(vars[key], vars);
+        if (next !== vars[key]) { vars[key] = next; changed = true; }
+      }
+      if (!changed) break;
+    }
+    return vars;
   }
 
   /**
@@ -329,6 +374,13 @@ export class StyleResolver {
 
     // Inline style="" wins over everything.
     if (node.attrs?.style) Object.assign(merged, parseDecls(node.attrs.style));
+    // Substitute CSS custom properties (`var(--x)`) with their literal values so
+    // backgrounds, colors and borders resolve even when the source wrapper that
+    // defined the variables is flattened away during conversion.
+    for (const key of Object.keys(merged)) {
+      if (key.startsWith("--")) continue;
+      if (merged[key].includes("var(")) merged[key] = substituteVars(merged[key], this.vars);
+    }
     return declsToProps(merged);
   }
 
@@ -396,12 +448,18 @@ function sidesToElementor(sides?: Partial<BoxSides>): Record<string, unknown> | 
   if (!sides) return undefined;
   // Strict numeric extraction with safe "0" coercion so we never emit a box
   // with an empty side (which serialises to invalid CSS like "0px px 0px px").
+  // The Elementor box control emits a single unit for all four sides, so we
+  // normalise every side to px — converting rem/em (×16) instead of dropping
+  // the unit (which turned `8rem` into a broken `8px`).
   const num = (v?: string): string => {
     if (v === undefined || v === null) return "0";
-    const m = String(v).match(/-?\d*\.?\d+/);
+    const m = String(v).match(/(-?\d*\.?\d+)\s*(px|rem|em|%|vw|vh)?/i);
     if (!m) return "0";
-    const n = parseFloat(m[0]);
-    return Number.isFinite(n) ? String(n) : "0";
+    let n = parseFloat(m[1]);
+    if (!Number.isFinite(n)) return "0";
+    const unit = (m[2] || "px").toLowerCase();
+    if (unit === "rem" || unit === "em") n = n * 16;
+    return String(Math.round(n * 100) / 100);
   };
   const top = num(sides.top);
   const right = num(sides.right ?? sides.top);
