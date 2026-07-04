@@ -424,6 +424,139 @@ function detectProgressBar(node: HtmlNode): ElementorElement | null {
 }
 
 
+/**
+ * When enabled, `<form>` and star-rating markup convert to native Elementor Pro
+ * widgets ("form"/"rating"). Off by default so non-Pro sites keep the safe
+ * container/heading fallback. Toggled per-run by htmlToElementor(options).
+ */
+let PRO_WIDGETS = false;
+
+/** Map an HTML input type to an Elementor Pro form field type. */
+function mapFormFieldType(node: HtmlNode): string {
+  if (node.tag === "textarea") return "textarea";
+  if (node.tag === "select") return "select";
+  const t = (node.attrs.type || "text").toLowerCase();
+  const allowed = ["text", "email", "tel", "textarea", "url", "password", "number", "date", "time", "checkbox", "radio", "acceptance", "hidden"];
+  if (t === "submit" || t === "button" || t === "reset") return "";
+  return allowed.includes(t) ? t : "text";
+}
+
+/** Collect form fields (input/textarea/select) inside a `<form>`. */
+function collectFormFields(node: HtmlNode): Array<Record<string, unknown>> {
+  const fields: Array<Record<string, unknown>> = [];
+  const walk = (n: HtmlNode) => {
+    for (const child of n.children) {
+      if (child.tag === "input" || child.tag === "textarea" || child.tag === "select") {
+        const fieldType = mapFormFieldType(child);
+        if (fieldType) {
+          const label = child.attrs["aria-label"] || child.attrs.placeholder || child.attrs.name || "";
+          const field: Record<string, unknown> = {
+            _id: genId().slice(0, 7),
+            field_type: fieldType,
+            field_label: label,
+            placeholder: child.attrs.placeholder || "",
+            required: child.attrs.required !== undefined ? "true" : "",
+          };
+          if (fieldType === "select") {
+            const opts = child.children
+              .filter((o) => o.tag === "option")
+              .map((o) => textContent(o))
+              .filter(Boolean);
+            if (opts.length) field.field_options = opts.join("\n");
+          }
+          fields.push(field);
+        }
+      }
+      if (child.tag) walk(child);
+    }
+  };
+  walk(node);
+  return fields;
+}
+
+/** `<form>` -> native Elementor Pro Form widget. */
+function formWidget(node: HtmlNode): ElementorElement | null {
+  const fields = collectFormFields(node);
+  if (fields.length === 0) return null;
+  const submit = findNode(node, (n) => (n.tag === "button" && (n.attrs.type || "submit") !== "button")
+    || (n.tag === "input" && (n.attrs.type || "").toLowerCase() === "submit"));
+  const buttonText = submit ? (textContent(submit) || submit.attrs.value || "Send") : "Send";
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "form",
+    settings: {
+      ...nativeIdentitySettings(node),
+      form_name: node.attrs.name || "Form",
+      form_fields: fields,
+      button_text: buttonText,
+    },
+    elements: [],
+  };
+}
+
+/** Count filled stars in a rating widget and its scale. */
+function readRating(node: HtmlNode): { rating: number; scale: number } | null {
+  const aria = node.attrs["aria-valuenow"] || node.attrs["data-rating"] || node.attrs["data-value"];
+  const maxAttr = node.attrs["aria-valuemax"] || node.attrs["data-max"];
+  if (aria && Number.isFinite(parseFloat(aria))) {
+    const scale = maxAttr && Number.isFinite(parseFloat(maxAttr)) ? Math.round(parseFloat(maxAttr)) : 5;
+    return { rating: Math.min(parseFloat(aria), scale), scale };
+  }
+  const icons: HtmlNode[] = [];
+  const walk = (n: HtmlNode) => {
+    for (const child of n.children) {
+      if ((child.tag === "i" || child.tag === "svg" || child.tag === "span") && hasClass(child, "star", "fa-star", "rating")) {
+        icons.push(child);
+      }
+      if (child.tag) walk(child);
+    }
+  };
+  walk(node);
+  if (icons.length === 0) return null;
+  const filled = icons.filter((i) => {
+    const cls = (i.attrs.class || "").toLowerCase();
+    const style = (i.attrs.style || "").toLowerCase();
+    const isEmpty = cls.includes("far") || cls.includes("empty") || cls.includes("-o") || cls.includes("outline");
+    return !isEmpty && !style.includes("opacity:0");
+  }).length;
+  const scale = icons.length || 5;
+  return { rating: Math.max(0, Math.min(filled, scale)), scale };
+}
+
+/** Star-rating markup -> native Elementor Pro Rating widget. */
+function ratingWidget(node: HtmlNode): ElementorElement | null {
+  const info = readRating(node);
+  if (!info) return null;
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "rating",
+    settings: {
+      ...nativeIdentitySettings(node),
+      rating_scale: info.scale,
+      rating: info.rating,
+    },
+    elements: [],
+  };
+}
+
+/** Detect star-rating structures (class-based, aria, or data attributes). */
+function detectRating(node: HtmlNode): ElementorElement | null {
+  if (!PRO_WIDGETS) return null;
+  const role = (node.attrs.role || "").toLowerCase();
+  const looksLikeRating = role === "img" && /\d\s*(out of|\/)\s*\d/.test(node.attrs["aria-label"] || "")
+    || hasClass(node, "rating", "star-rating", "stars", "rate");
+  if (!looksLikeRating) return null;
+  return ratingWidget(node);
+}
+
+/** Detect a `<form>` and convert it to a native Elementor Pro Form widget. */
+function detectForm(node: HtmlNode): ElementorElement | null {
+  if (!PRO_WIDGETS || node.tag !== "form") return null;
+  return formWidget(node);
+}
+
 /** Map a Font Awesome / generic icon class to an Elementor selected_icon value. */
 function resolveIconValue(node: HtmlNode): { value: string; library: string } {
   const cls = (node.attrs.class || "").toLowerCase();
@@ -994,6 +1127,12 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
     } else if (isButton(node)) {
       flush();
       out.push(button(node));
+    } else if (detectForm(node)) {
+      flush();
+      out.push(detectForm(node)!);
+    } else if (detectRating(node)) {
+      flush();
+      out.push(detectRating(node)!);
     } else if (detectProgressBar(node)) {
       flush();
       out.push(detectProgressBar(node)!);
@@ -1266,6 +1405,9 @@ export function htmlToElementor(html: string, siteContext?: SiteContext): Elemen
   CURRENT_RESOLVER = new StyleResolver(html || "");
   CURRENT_CTX = siteContext;
   CURRENT_COLOR_STACK = [];
+  // Elementor Pro-only widgets (form/rating) only render on Pro sites; enable
+  // them automatically when the connected site reports Elementor Pro active.
+  PRO_WIDGETS = siteContext?.hasElementorPro === true;
   try {
     const tree = parseHtml(html || "");
     const converted = flattenSections(convertChildren(tree));
@@ -1281,6 +1423,7 @@ export function htmlToElementor(html: string, siteContext?: SiteContext): Elemen
     CURRENT_RESOLVER = null;
     CURRENT_CTX = undefined;
     CURRENT_COLOR_STACK = [];
+    PRO_WIDGETS = false;
   }
 }
 
