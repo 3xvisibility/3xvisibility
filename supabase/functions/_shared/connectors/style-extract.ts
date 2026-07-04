@@ -158,8 +158,27 @@ function parseDecls(body: string): Record<string, string> {
 function parseSelector(sel: string): ParsedSelector | null {
   // Only the RIGHTMOST simple selector is used for matching (no combinators),
   // which is robust and good enough to bake per-element design.
-  const simple = sel.trim().split(/\s+/).pop() ?? "";
-  if (!simple || simple === "*") return null;
+  const simpleRaw = sel.trim().split(/\s+/).pop() ?? "";
+  if (!simpleRaw || simpleRaw === "*") return null;
+
+  // Detect a pseudo-ELEMENT (::before / legacy :before / ::placeholder …). These
+  // can't map onto a base widget control, so we tag them and exclude from base.
+  const pseudoElement = /::[\w-]+|:(?:before|after|first-line|first-letter|placeholder|selection|marker|backdrop)\b/i.test(simpleRaw);
+
+  // Detect an interactive STATE pseudo-class (the first one wins for routing).
+  let state: string | undefined;
+  const stateMatch = simpleRaw.match(/:([\w-]+)/g);
+  if (stateMatch) {
+    for (const raw of stateMatch) {
+      const name = raw.replace(/^:+/, "").replace(/\(.*$/, "").toLowerCase();
+      if (STATE_PSEUDOS.has(name)) { state = name; break; }
+    }
+  }
+
+  // Strip EVERY pseudo segment (`:x`, `::x`, functional `:not(.y)`) so the
+  // tag/class/id parse cleanly regardless of trailing pseudo syntax.
+  const simple = simpleRaw.replace(/::?[\w-]+(?:\([^)]*\))?/g, "");
+
   const classes = [...simple.matchAll(/\.([\w-]+)/g)].map((m) => m[1].toLowerCase());
   const idMatch = simple.match(/#([\w-]+)/);
   const tagMatch = simple.match(/^([a-zA-Z][\w-]*)/);
@@ -167,7 +186,8 @@ function parseSelector(sel: string): ParsedSelector | null {
   const tag = tagMatch ? tagMatch[1].toLowerCase() : undefined;
   if (!tag && !id && classes.length === 0) return null;
   const specificity = (id ? 100 : 0) + classes.length * 10 + (tag ? 1 : 0);
-  return { tag, classes, id, specificity };
+  return { tag, classes, id, state, pseudoElement, specificity };
+
 }
 
 /** Read a balanced `{...}` block starting at the `{` index. Returns inner text + index after closing `}`. */
