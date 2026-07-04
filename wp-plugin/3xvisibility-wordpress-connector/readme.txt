@@ -36,6 +36,9 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.4.3 =
+* Full-stack automatic cache purge on publish: clears Elementor CSS, WP object cache, connector transients, options cache, and every supported page-cache plugin (WP Rocket, W3TC, WP Super Cache, LiteSpeed, WP Fastest Cache, Autoptimize, SG Optimizer, Comet, Cache Enabler, Cachify, Swift), managed hosts (WP Engine, Kinsta, Servebolt, Pantheon), and CDNs (Cloudflare, BunnyCDN). Added cache-busting: no-cache/Pragma/Expires/Surrogate-Control + dynamic ETag & Last-Modified headers on connector pages and versioned CSS/JS URLs so browsers/proxies always load the freshest styled markup.
+
 = 1.4.2 =
 * Zero-intervention CSS self-healing: connector pages now automatically rebuild per-page + critical CSS, refresh Elementor assets, and purge caches on every save (WP admin, Elementor "Update", revision restore) and on publish, so live layouts never drift from the imported template. No manual "regenerate CSS" step needed.
 
