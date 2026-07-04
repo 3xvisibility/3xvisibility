@@ -76,5 +76,10 @@ function xxxv_connector_boot() {
 	}, 20, 1 );
 	// Full cache purge the moment a connector page goes live.
 	add_action( 'transition_post_status', array( 'XXXV_Elementor', 'auto_clear_caches_on_publish' ), 20, 3 );
+	// Cache-busting: no-cache headers on connector pages + versioned asset URLs so
+	// browsers/proxies/CDNs always re-fetch the freshest styled markup after a publish.
+	add_action( 'send_headers', array( 'XXXV_Elementor', 'send_no_cache_headers' ) );
+	add_filter( 'style_loader_src', array( 'XXXV_Elementor', 'version_bust_asset_src' ), 20, 2 );
+	add_filter( 'script_loader_src', array( 'XXXV_Elementor', 'version_bust_asset_src' ), 20, 2 );
 }
 add_action( 'plugins_loaded', 'xxxv_connector_boot' );
