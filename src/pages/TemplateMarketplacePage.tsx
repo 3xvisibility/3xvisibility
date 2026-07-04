@@ -29,7 +29,7 @@ import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
-import { COMMUNITY_TEMPLATES, applyTemplateDefaults, platformFromCategory, availableFormats, defaultFormat, TEMPLATE_FORMAT_LABELS, type MarketplaceTemplate, type TemplateFormat } from "@/lib/marketplace-templates";
+import { COMMUNITY_TEMPLATES, applyTemplateDefaults, reskinContent, defaultSkinVariant, type MarketplaceTemplate, type TemplateFormat, type TemplatePlatform } from "@/lib/marketplace-templates";
 import { ELEMENTOR_TEMPLATES } from "@/lib/marketplace-elementor-templates";
 import { useTranslatedTemplate } from "@/hooks/use-translated-template";
 import { useTranslatedTemplateList } from "@/hooks/use-translated-template-list";
@@ -84,44 +84,8 @@ function localizedCategoryLabel(id: string, language: Language): string {
   return CATEGORY_LABEL_I18N[id]?.[language] ?? categoryMeta(id).label;
 }
 
-// 3-way format selector (Elementor / Gutenberg / Shopify) shown on each template
-// card and in the preview dialog. Gutenberg is flagged Beta.
-function FormatPills({
-  template,
-  value,
-  onChange,
-  size = "sm",
-}: {
-  template: MarketplaceTemplate;
-  value: TemplateFormat;
-  onChange: (fmt: TemplateFormat) => void;
-  size?: "sm" | "md";
-}) {
-  return (
-    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-      {availableFormats(template).map((fmt) => (
-        <button
-          key={fmt}
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onChange(fmt);
-          }}
-          className={`rounded-full border transition-colors ${
-            size === "md" ? "px-3 py-1 text-xs" : "px-2 py-0.5 text-[10px]"
-          } ${
-            value === fmt
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-muted/40 text-muted-foreground border-border hover:bg-muted"
-          }`}
-        >
-          {TEMPLATE_FORMAT_LABELS[fmt]}
-          {fmt === "gutenberg" && <span className="ml-1 opacity-70">βeta</span>}
-        </button>
-      ))}
-    </div>
-  );
-}
+
+
 
 export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -138,11 +102,15 @@ export default function TemplateMarketplacePage() {
   const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
   const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const [contentOverrides, setContentOverrides] = useState<Record<string, string>>({});
-  const [formatByTemplate, setFormatByTemplate] = useState<Record<string, TemplateFormat>>({});
-  const resolveFormat = (tpl: MarketplaceTemplate): TemplateFormat =>
-    formatByTemplate[tpl.id] ?? defaultFormat(tpl);
-  const setFormat = (id: string, fmt: TemplateFormat) =>
-    setFormatByTemplate((prev) => ({ ...prev, [id]: fmt }));
+  // Top-level platform split: users first choose Elementor (WordPress) or Shopify,
+  // then browse that platform's templates by category. Every template is offered
+  // for both platforms and is re-skinned to match the chosen platform's look.
+  const [platformChoice, setPlatformChoice] = useState<"elementor" | "shopify">("elementor");
+  const skinPlatform: TemplatePlatform = platformChoice === "shopify" ? "shopify" : "wordpress";
+  const convertForPlatform = (content: string) =>
+    reskinContent(content, skinPlatform, defaultSkinVariant(skinPlatform));
+  const resolveFormat = (_tpl: MarketplaceTemplate): TemplateFormat =>
+    platformChoice === "shopify" ? "shopify" : "elementor";
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
@@ -299,37 +267,26 @@ export default function TemplateMarketplacePage() {
   // Build the category pill list dynamically from whatever templates exist on
   // the active tab. "All" is always first; every category present in the data
   // gets a pill (with a count), so newly added niches appear automatically.
-  // WordPress is the default CMS, so any "generic" template is grouped under the
-  // WordPress platform pill — mirroring how Shopify templates are grouped.
-  const effectivePlatform = (tpl: MarketplaceTemplate) => {
-    const p = tpl.platform || platformFromCategory(tpl.category || "");
-    return p === "generic" ? "wordpress" : p;
-  };
+
+
 
   const displayCategories = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
     const counts = new Map<string, number>();
-    // Platform pills (like Shopify) so WordPress templates are grouped together.
-    const platformCounts = new Map<string, number>();
     for (const tpl of source) {
-      if (tpl.category) counts.set(tpl.category, (counts.get(tpl.category) || 0) + 1);
-      const platform = effectivePlatform(tpl);
-      if (platform === "wordpress" || platform === "shopify") {
-        platformCounts.set(platform, (platformCounts.get(platform) || 0) + 1);
-      }
+      // Group the literal platform categories under their real content type so
+      // the pills only describe the niche/category, not the platform (the
+      // platform is now chosen with the top-level Elementor/Shopify switch).
+      const cat = tpl.category && tpl.category !== "wordpress" && tpl.category !== "shopify"
+        ? tpl.category
+        : "general";
+      counts.set(cat, (counts.get(cat) || 0) + 1);
     }
-    // Don't double-list a platform that is already a literal category id.
-    const ids = Array.from(counts.keys())
-      .filter((id) => id !== "wordpress" && id !== "shopify")
-      .sort((a, b) =>
-        localizedCategoryLabel(a, language).localeCompare(localizedCategoryLabel(b, language))
-      );
-    const platformPills = (["wordpress", "shopify"] as const)
-      .filter((p) => (platformCounts.get(p) || 0) > 0)
-      .map((p) => ({ id: p, ...categoryMeta(p), label: localizedCategoryLabel(p, language), count: platformCounts.get(p) || 0 }));
+    const ids = Array.from(counts.keys()).sort((a, b) =>
+      localizedCategoryLabel(a, language).localeCompare(localizedCategoryLabel(b, language))
+    );
     return [
       { id: "all", ...categoryMeta("all"), label: localizedCategoryLabel("all", language), count: source.length },
-      ...platformPills,
       ...ids.map((id) => ({ id, ...categoryMeta(id), label: localizedCategoryLabel(id, language), count: counts.get(id) || 0 })),
     ];
   }, [activeTab, allTemplates, communityTemplates, language]);
@@ -348,11 +305,10 @@ export default function TemplateMarketplacePage() {
   const filteredTemplates = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
     return source.filter((tpl) => {
-      const platform = effectivePlatform(tpl);
-      const matchesCategory =
-        selectedCategory === "all" ||
-        tpl.category === selectedCategory ||
-        ((selectedCategory === "wordpress" || selectedCategory === "shopify") && platform === selectedCategory);
+      const cat = tpl.category && tpl.category !== "wordpress" && tpl.category !== "shopify"
+        ? tpl.category
+        : "general";
+      const matchesCategory = selectedCategory === "all" || cat === selectedCategory;
       const matchesSearch =
         !searchQuery ||
         (tpl.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -364,7 +320,7 @@ export default function TemplateMarketplacePage() {
   // Reset to first page whenever filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, activeTab]);
+  }, [searchQuery, selectedCategory, activeTab, platformChoice]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTemplates.length / PER_PAGE));
   const paginatedTemplates = useMemo(
@@ -394,9 +350,12 @@ export default function TemplateMarketplacePage() {
       // Bake the template's default values (plus any user overrides) into the
       // imported HTML so the saved template shows real content instead of raw
       // {variable} placeholders.
-      const content = Object.keys(mergedDefaults).length > 0
+      const baked = Object.keys(mergedDefaults).length > 0
         ? applyTemplateDefaults(tpl.content, mergedDefaults)
         : tpl.content;
+      // Re-skin the HTML to match the chosen platform (Elementor/WordPress vs Shopify)
+      // so the imported template looks native to the target platform.
+      const content = convertForPlatform(baked);
       const { error } = await supabase.from("templates").insert({
         name: tpl.name,
         content,
@@ -522,6 +481,39 @@ export default function TemplateMarketplacePage() {
         </Button>
       </div>
 
+      {/* Step 1 — choose the target platform. Every template is available on both
+          Elementor (WordPress) and Shopify and is re-skinned to match. */}
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-2">
+          {t("marketplace.choosePlatform") || "Choose your platform"}
+        </p>
+        <div className="grid grid-cols-2 gap-3 max-w-md">
+          {([
+            { id: "elementor" as const, label: "Elementor", desc: "WordPress / Elementor pages", icon: FileText },
+            { id: "shopify" as const, label: "Shopify", desc: "Shopify storefront pages", icon: ShoppingBag },
+          ]).map((p) => {
+            const active = platformChoice === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPlatformChoice(p.id)}
+                className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${
+                  active ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                }`}
+              >
+                <p.icon className={`h-6 w-6 shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                <div>
+                  <div className="text-sm font-semibold">{p.label}</div>
+                  <div className="text-[11px] text-muted-foreground">{p.desc}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+
       {/* Search and filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -589,13 +581,17 @@ export default function TemplateMarketplacePage() {
               <div className="border border-border rounded-md overflow-hidden bg-muted/30 h-32">
                 <div
                   className="transform scale-[0.25] origin-top-left w-[400%] h-[400%] pointer-events-none"
-                  dangerouslySetInnerHTML={{ __html: applyTemplateDefaults(tpl.content, tpl.defaultValues) }}
+                  dangerouslySetInnerHTML={{ __html: convertForPlatform(applyTemplateDefaults(tpl.content, tpl.defaultValues)) }}
                 />
               </div>
 
-              <div className="mt-3 pt-3 border-t border-border">
-                <FormatPills template={tpl} value={resolveFormat(tpl)} onChange={(f) => setFormat(tpl.id, f)} />
+              <div className="mt-3 pt-3 border-t border-border flex items-center gap-1.5">
+                <Badge variant="secondary" className="text-[10px]">
+                  {resolveFormat(tpl) === "shopify" ? "Shopify" : "Elementor"}
+                </Badge>
+                <span className="text-[10px] text-muted-foreground">ready</span>
               </div>
+
 
               <div className="flex items-center justify-between mt-3">
                 <span className="text-xs text-muted-foreground">
@@ -633,13 +629,8 @@ export default function TemplateMarketplacePage() {
         {filteredTemplates.length === 0 && (
           <div className="col-span-full text-center py-16 text-muted-foreground">
             <Store className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">
-              {selectedCategory === "wordpress"
-                ? "No WordPress templates available yet"
-                : selectedCategory === "shopify"
-                ? "No Shopify templates available yet"
-                : "No templates found"}
-            </p>
+            <p className="font-medium">No templates found</p>
+
             <p className="text-sm mt-1">Try a different search or category.</p>
           </div>
         )}
@@ -746,7 +737,7 @@ export default function TemplateMarketplacePage() {
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="preview" className="mt-3">
-                    <TemplatePreview html={applyTemplateDefaults(activePreview.content, activePreview.defaultValues)} />
+                    <TemplatePreview html={convertForPlatform(applyTemplateDefaults(activePreview.content, activePreview.defaultValues))} />
                   </TabsContent>
                   <TabsContent value="customize" className="mt-3 space-y-3">
                     <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
@@ -835,8 +826,9 @@ export default function TemplateMarketplacePage() {
                   </TabsContent>
                   <TabsContent value="code" className="mt-3">
                     <pre className="p-4 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed max-h-64 overflow-y-auto">
-                      {activePreview.content}
+                      {convertForPlatform(activePreview.content)}
                     </pre>
+
                   </TabsContent>
                 </Tabs>
 
@@ -893,14 +885,12 @@ export default function TemplateMarketplacePage() {
                 <div className="flex items-center justify-between gap-3 pt-2 border-t border-border mt-2">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-medium">Publish format</span>
-                    <FormatPills
-                      template={previewTemplate}
-                      value={resolveFormat(previewTemplate)}
-                      onChange={(f) => setFormat(previewTemplate.id, f)}
-                      size="md"
-                    />
+                    <Badge variant="secondary" className="w-fit">
+                      {resolveFormat(previewTemplate) === "shopify" ? "Shopify" : "Elementor"}
+                    </Badge>
                   </div>
                 </div>
+
 
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Close</Button>
