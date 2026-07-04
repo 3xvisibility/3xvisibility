@@ -1161,6 +1161,107 @@ class XXXV_Elementor {
 	}
 
 	/**
+	 * Neutralize the active theme's CSS on connector-imported pages so it can never
+	 * override the imported template design. Runs late on wp_enqueue_scripts and
+	 * dequeues theme stylesheets (generic + per-theme handles), and on wp_head/init
+	 * strips WordPress block/global/duotone styles and theme editor styles. The
+	 * connector template CSS (enqueued at PHP_INT_MAX) therefore always wins.
+	 */
+	public static function neutralize_theme_css() {
+		if ( is_admin() || ! is_singular( 'page' ) ) {
+			return;
+		}
+		$post_id = get_queried_object_id();
+		if ( ! $post_id || ! self::is_connector_page( $post_id ) ) {
+			return;
+		}
+
+		global $wp_styles;
+
+		$theme      = function_exists( 'wp_get_theme' ) ? wp_get_theme() : null;
+		$stylesheet = $theme ? (string) $theme->get_stylesheet() : '';
+		$template   = $theme ? (string) $theme->get_template() : '';
+
+		// Hello Elementor is the recommended blank canvas — keep it.
+		$keep = array( 'hello-elementor', 'hello-elementor-theme-style', 'hello-elementor-child-style' );
+
+		// Known per-theme stylesheet handles to remove.
+		$theme_handles = array(
+			'astra-theme-css', 'astra-google-fonts',                 // Astra
+			'generatepress-style', 'generate-style-css',             // GeneratePress
+			'kadence-style', 'kadence-global',                       // Kadence
+			'twentytwentyfive-style', 'twentytwentyfour-style',      // TT5 / TT4
+			'twentytwentythree-style', 'twentytwentytwo-style',
+			'oceanwp-style',                                         // OceanWP
+			'blocksy-styles', 'blocksy-style',                       // Blocksy
+			'neve-style',                                            // Neve
+			'divi-style', 'et-builder-googlefonts', 'et-core-unified', // Divi
+			'storefront-style', 'twentytwentyone-style',
+			'flatsome-style', 'flatsome-shop',                       // Flatsome
+			'avada-stylesheet', 'fusion-dynamic-css',                // Avada
+			'bricks-frontend',                                       // Bricks (as theme)
+		);
+
+		// Also derive handles from the active theme slug (covers custom themes).
+		foreach ( array( $stylesheet, $template ) as $slug ) {
+			if ( '' === $slug ) {
+				continue;
+			}
+			$theme_handles[] = $slug . '-style';
+			$theme_handles[] = $slug . '-theme-css';
+			$theme_handles[] = $slug . '-css';
+		}
+
+		if ( $wp_styles instanceof \WP_Styles ) {
+			foreach ( $theme_handles as $handle ) {
+				if ( in_array( $handle, $keep, true ) ) {
+					continue;
+				}
+				if ( isset( $wp_styles->registered[ $handle ] ) ) {
+					wp_dequeue_style( $handle );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Remove WordPress block library / global styles / duotone / classic theme
+	 * styles + theme editor styles on connector pages. Hooked to wp_enqueue_scripts
+	 * (late) and init so both enqueue and print paths are covered.
+	 */
+	public static function disable_global_styles() {
+		if ( is_admin() ) {
+			return;
+		}
+		if ( function_exists( 'is_singular' ) && ! is_singular( 'page' ) ) {
+			return;
+		}
+		$post_id = function_exists( 'get_queried_object_id' ) ? get_queried_object_id() : 0;
+		if ( ! $post_id || ! self::is_connector_page( $post_id ) ) {
+			return;
+		}
+
+		// Disable WP block styles, theme.json global styles, and duotone SVG filters.
+		remove_action( 'wp_enqueue_scripts', 'wp_enqueue_global_styles' );
+		remove_action( 'wp_footer', 'wp_enqueue_global_styles', 1 );
+		remove_action( 'wp_body_open', 'wp_global_styles_render_svg_filters' );
+		remove_action( 'in_admin_header', 'wp_global_styles_render_svg_filters' );
+		remove_filter( 'render_block', 'wp_render_duotone_support' );
+
+		// Dequeue core block CSS.
+		wp_dequeue_style( 'wp-block-library' );
+		wp_dequeue_style( 'wp-block-library-theme' );
+		wp_dequeue_style( 'global-styles' );
+		wp_dequeue_style( 'classic-theme-styles' );
+		wp_dequeue_style( 'wc-blocks-style' );
+
+		// Strip theme add_editor_style / block styles opt-ins on the frontend.
+		remove_theme_support( 'editor-styles' );
+		remove_theme_support( 'wp-block-styles' );
+	}
+
+
+	/**
 	 * Save through Elementor's Document API so the editor sees a clean document.
 	 *
 	 * @param int   $post_id Page ID.
