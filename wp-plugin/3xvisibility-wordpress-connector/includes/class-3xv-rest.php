@@ -205,6 +205,7 @@ class XXXV_REST {
 			'elementor_native_only'      => true,
 			'elementor_media_mapping'    => true,
 			'elementor_css_validation'   => true,
+			'render_css_validation'      => true,
 			'template_css_meta'         => true,
 			'template_css_enqueue'      => true,
 			'cache_clear'               => true,
