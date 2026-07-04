@@ -63,6 +63,15 @@ class XXXV_Elementor {
 			return $raw_elementor_css;
 		}
 		$elementor_css  = self::sanitize_template_css( (string) $raw_elementor_css );
+		// Absolute base URL of the source template, used to resolve relative /
+		// protocol-relative / localhost image URLs found inside the CSS.
+		$source_base_url = '';
+		foreach ( array( 'source_base_url', 'source_url', 'base_url', 'origin_url' ) as $bk ) {
+			if ( ! empty( $body[ $bk ] ) && is_string( $body[ $bk ] ) ) {
+				$source_base_url = esc_url_raw( $body[ $bk ] );
+				break;
+			}
+		}
 		$exact_render   = ! empty( $body['exact_render'] );
 		// When true (default), the incoming JSON is first stored as a native
 		// Elementor Library template (Templates -> Saved Templates) and then
