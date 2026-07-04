@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Store, Search, Download, Upload, Eye, Code, Star, Users, FileText,
   Tag, Globe, ShoppingBag, MapPin, Megaphone, Briefcase, GraduationCap,
-  Heart, Loader2, Share2, MessageSquare, SlidersHorizontal, ChevronDown,
+  Heart, Loader2, Share2, MessageSquare, SlidersHorizontal, ChevronDown, ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -26,6 +26,7 @@ import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview"
 import { ImageVariablePanel } from "@/components/templates/ImageVariablePanel";
 import { ContentFieldsPanel } from "@/components/templates/ContentFieldsPanel";
 import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
+import { TemplateWordPressTestDialog } from "@/components/templates/TemplateWordPressTestDialog";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
@@ -94,6 +95,7 @@ export default function TemplateMarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
+  const [wpTestOpen, setWpTestOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareForm, setShareForm] = useState({ templateId: "", description: "", category: "general", authorName: "" });
   const [variablesOpen, setVariablesOpen] = useState(false);
@@ -900,6 +902,11 @@ export default function TemplateMarketplacePage() {
 
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Close</Button>
+                  {platformChoice === "elementor" && (
+                    <Button variant="secondary" onClick={() => setWpTestOpen(true)}>
+                      <ShieldCheck className="mr-2 h-4 w-4" /> Test on WordPress
+                    </Button>
+                  )}
                   <Button
                     onClick={() => importMutation.mutate(activePreview)}
                     disabled={importMutation.isPending || previewTranslating}
@@ -916,6 +923,15 @@ export default function TemplateMarketplacePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {activePreview && (
+        <TemplateWordPressTestDialog
+          open={wpTestOpen}
+          onOpenChange={setWpTestOpen}
+          templateName={activePreview.name}
+          content={convertForPlatform(applyTemplateDefaults(activePreview.content, activePreview.defaultValues))}
+        />
+      )}
 
       {/* Share Dialog */}
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
