@@ -632,8 +632,13 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
       out.push(button(node));
     } else if (CONTAINER_TAGS.has(node.tag)) {
       flush();
-      const inner = convertChildren(node.children);
-      if (inner.length > 0) out.push(container(inner, node));
+      const social = detectSocialIcons(node);
+      if (social) {
+        out.push(social);
+      } else {
+        const inner = convertChildren(node.children);
+        if (inner.length > 0) out.push(container(inner, node));
+      }
     } else if (TEXT_TAGS.has(node.tag) || node.tag === "a") {
       // Inline/textual content -> accumulate as rich text editor block.
       textBuffer += serialize(node);
