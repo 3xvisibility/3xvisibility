@@ -618,13 +618,17 @@ export default function TemplateMarketplacePage() {
               <div className="border border-border rounded-md overflow-hidden bg-muted/30 h-32">
                 <div
                   className="transform scale-[0.25] origin-top-left w-[400%] h-[400%] pointer-events-none"
-                  dangerouslySetInnerHTML={{ __html: applyTemplateDefaults(tpl.content, tpl.defaultValues) }}
+                  dangerouslySetInnerHTML={{ __html: convertForPlatform(applyTemplateDefaults(tpl.content, tpl.defaultValues)) }}
                 />
               </div>
 
-              <div className="mt-3 pt-3 border-t border-border">
-                <FormatPills template={tpl} value={resolveFormat(tpl)} onChange={(f) => setFormat(tpl.id, f)} />
+              <div className="mt-3 pt-3 border-t border-border flex items-center gap-1.5">
+                <Badge variant="secondary" className="text-[10px]">
+                  {resolveFormat(tpl) === "shopify" ? "Shopify" : "Elementor"}
+                </Badge>
+                <span className="text-[10px] text-muted-foreground">ready</span>
               </div>
+
 
               <div className="flex items-center justify-between mt-3">
                 <span className="text-xs text-muted-foreground">
