@@ -114,9 +114,32 @@ interface ParsedSelector {
   tag?: string;
   classes: string[];
   id?: string;
+  /**
+   * Interactive STATE pseudo-class (hover/focus/active/…) this selector targets,
+   * if any. State rules are baked as Elementor hover controls, never merged into
+   * the element's base style.
+   */
+  state?: string;
+  /** True when the selector targets a pseudo-ELEMENT (::before, ::after, …). */
+  pseudoElement?: boolean;
   /** Higher = wins. (id*100 + class*10 + tag). */
   specificity: number;
 }
+
+/**
+ * Pseudo-classes that represent an interactive STATE. They must not pollute the
+ * element's base style (otherwise a button permanently renders in its hover
+ * colour); instead they are routed to Elementor's native hover controls.
+ */
+const STATE_PSEUDOS = new Set([
+  "hover",
+  "focus",
+  "active",
+  "focus-visible",
+  "focus-within",
+  "visited",
+]);
+
 
 /* ----------------------------- CSS parsing ------------------------------- */
 
