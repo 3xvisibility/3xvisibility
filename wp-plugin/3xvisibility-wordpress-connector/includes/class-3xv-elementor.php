@@ -2542,6 +2542,67 @@ class XXXV_Elementor {
 	}
 
 	/**
+	 * Force refresh ALL caches for a page and report the outcome.
+	 *
+	 * Single public entry point that clears every layer: Elementor CSS (per-page
+	 * + global rebuild), WordPress object/transient/options cache, all supported
+	 * page-cache & hosting plugins, and CDN caches (Cloudflare, BunnyCDN). It also
+	 * bumps a per-page cache-buster version so freshly enqueued CSS/JS carry a new
+	 * query string, and sends no-cache HTTP headers when called mid-request so the
+	 * client/browser layer refreshes too.
+	 *
+	 * @param int $post_id Page ID to refresh (0 = site-wide only).
+	 * @return array { success:bool, post_id:int, cache_version:string, layers:string[] }
+	 */
+	public static function force_cache_refresh( $post_id ) {
+		$post_id = absint( $post_id );
+		$layers  = array();
+
+		// --- Elementor CSS (per-page + global) ---------------------------------
+		if ( $post_id > 0 ) {
+			self::refresh_elementor_files( $post_id );
+			self::regenerate_page_css( $post_id );
+			self::clear_runtime_caches( $post_id );
+			$layers[] = 'elementor_css';
+		}
+
+		// --- WordPress + plugin + hosting + CDN caches -------------------------
+		self::purge_all_caches( $post_id );
+		$layers[] = 'wordpress';
+		$layers[] = 'plugins';
+		$layers[] = 'cdn';
+
+		// --- Cache-busting version bump ---------------------------------------
+		$cache_version = (string) time();
+		if ( $post_id > 0 ) {
+			update_post_meta( $post_id, '_xxxv_cache_version', $cache_version );
+		}
+		update_option( 'xxxv_global_cache_version', $cache_version, false );
+		$layers[] = 'cache_busting';
+
+		// --- Browser cache: emit no-cache headers if still mid-request --------
+		if ( ! headers_sent() ) {
+			nocache_headers();
+			header( 'Cache-Control: no-cache, no-store, must-revalidate, max-age=0' );
+			header( 'Pragma: no-cache' );
+			header( 'Expires: -1' );
+			header( 'Surrogate-Control: no-store' );
+			$layers[] = 'browser';
+		}
+
+		self::log( 'info', 'Forced full cache refresh.', array( 'post_id' => $post_id, 'cache_version' => $cache_version ) );
+
+		return array(
+			'success'       => true,
+			'post_id'       => $post_id,
+			'cache_version' => $cache_version,
+			'layers'        => $layers,
+		);
+	}
+
+
+
+	/**
 	 * Delete connector-scoped transients (both site + network) so no stale
 	 * critical-CSS / readiness values survive a publish.
 	 */
