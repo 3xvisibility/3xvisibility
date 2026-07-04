@@ -67,6 +67,7 @@ export interface StyleProps {
   bottom?: string;
   left?: string;
   inset?: string;
+  order?: string;
 }
 
 interface MediaCond {
