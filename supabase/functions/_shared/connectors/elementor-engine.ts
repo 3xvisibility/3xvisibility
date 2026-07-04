@@ -895,6 +895,11 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
     } else if (CONTAINER_TAGS.has(node.tag)) {
 
       flush();
+      const social = detectSocialIcons(node);
+      if (social) {
+        out.push(social);
+        continue;
+      }
       // Hoist full-bleed hero background images + overlays onto the container
       // itself (native Elementor hero pattern) instead of emitting stacked,
       // absolutely-positioned image widgets that collapse the layout.
