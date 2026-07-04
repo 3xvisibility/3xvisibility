@@ -208,6 +208,51 @@ function divider(): ElementorElement {
   return { id: genId(), elType: "widget", widgetType: "divider", settings: {}, elements: [] };
 }
 
+/** Read a pixel length (e.g. "40px", "3rem") from an inline style declaration. */
+function readPxLength(style: string, prop: string): number | null {
+  const m = style.match(new RegExp(`${prop}\\s*:\\s*([\\d.]+)\\s*(px|rem|em)?`, "i"));
+  if (!m) return null;
+  const value = parseFloat(m[1]);
+  if (!Number.isFinite(value)) return null;
+  const unit = (m[2] || "px").toLowerCase();
+  return unit === "px" ? value : Math.round(value * 16);
+}
+
+/** An empty spacing element -> native Elementor Spacer widget. */
+function spacer(size: number): ElementorElement {
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "spacer",
+    settings: { space: { unit: "px", size, sizes: [] } },
+    elements: [],
+  };
+}
+
+/**
+ * Detect an element whose only purpose is vertical spacing: no text, no media,
+ * and either a spacer-style class or an explicit height/margin/padding.
+ */
+function detectSpacer(node: HtmlNode): ElementorElement | null {
+  if (node.tag !== "div" && node.tag !== "span" && node.tag !== "p") return null;
+  if (textContent(node)) return null;
+  if (findNode(node, (n) => ["img", "svg", "i", "a", "video", "iframe", "hr", "input", "button"].includes(n.tag))) {
+    return null;
+  }
+  const style = (node.attrs.style || "").toLowerCase();
+  const isSpacerClass = hasClass(node, "spacer", "spacing", "space", "gap", "vspace", "height");
+  const height = readPxLength(style, "height")
+    ?? readPxLength(style, "min-height")
+    ?? readPxLength(style, "margin-top")
+    ?? readPxLength(style, "margin-bottom")
+    ?? readPxLength(style, "padding-top")
+    ?? readPxLength(style, "padding-bottom");
+  if (height && height > 0) return spacer(Math.round(height));
+  if (isSpacerClass) return spacer(50);
+  return null;
+}
+
+
 /** Map an icon class to an Elementor selected_icon value. */
 function resolveIconValue(node: HtmlNode): { value: string; library: string } {
   const cls = (node.attrs.class || "").toLowerCase();
@@ -630,6 +675,9 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
     } else if (isButton(node)) {
       flush();
       out.push(button(node));
+    } else if (detectSpacer(node)) {
+      flush();
+      out.push(detectSpacer(node)!);
     } else if (CONTAINER_TAGS.has(node.tag)) {
       flush();
       const social = detectSocialIcons(node);
