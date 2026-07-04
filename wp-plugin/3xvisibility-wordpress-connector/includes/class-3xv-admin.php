@@ -149,6 +149,13 @@ class XXXV_Admin {
 							<p class="description">One WordPress style handle per line (or comma-separated). These are never dequeued even when neutralization is on.</p>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><label for="xxxv_neutralize_removals">Also remove these stylesheets</label></th>
+						<td>
+							<textarea id="xxxv_neutralize_removals" name="xxxv_neutralize_removals" rows="4" style="width:420px;font-family:monospace;" placeholder="e.g. my-plugin-css&#10;mytheme-*&#10;*-google-fonts"><?php echo esc_textarea( $removals_value ); ?></textarea>
+							<p class="description">Custom removal rules: extra style handles to always dequeue on connector pages, in addition to the built-in popular-theme list. One handle per line (or comma-separated). Wildcards with <code>*</code> are supported (e.g. <code>mytheme-*</code>, <code>*-google-fonts</code>). The "Keep" list above always wins over these rules.</p>
+						</td>
+					</tr>
 				</table>
 				<?php submit_button( 'Save CSS Settings' ); ?>
 			</form>
