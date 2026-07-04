@@ -4,7 +4,7 @@ Tags: elementor, gutenberg, rest-api, programmatic-seo, page-builder
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.4.6
+Stable tag: 1.4.7
 License: GPLv2 or later
 
 Secure companion plugin that lets the 3xVisibility publish native Elementor & Gutenberg pages, upload media, regenerate CSS, clear caches, and detect builders/themes.
@@ -36,7 +36,11 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.4.7 =
+* Complete CSS extraction: new extract_all_css_from_html() helper gathers and combines every stylesheet source for a page into one sanitized stylesheet — inline <style> blocks, local/relative <link rel="stylesheet"> hrefs resolved from the template ZIP, inline style="" attributes promoted to scoped rules, and every remaining *.css file bundled inside the ZIP — in proper cascade order with de-duplication so no design CSS is lost on import.
+
 = 1.4.6 =
+
 * Automatic Google Fonts detection & registration: on publish the connector scans the template's CSS @import rules, HTML <link> tags, and font-family declarations (matched against a curated Google Fonts list) and stores a normalized spec per page. On connector pages it then loads the fonts via the Google Fonts CSS2 API with the correct weights, subsets (latin, latin-ext, cyrillic, etc.), and font-display: swap, adds preconnect (fonts.googleapis.com + fonts.gstatic.com) and preload hints for performance, keeps system-font fallbacks, handles multiple families, and registers the families with Elementor's font manager so they resolve correctly in both the editor and frontend.
 
 = 1.4.5 =
