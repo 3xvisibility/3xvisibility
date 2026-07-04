@@ -322,7 +322,49 @@ function divider(node?: HtmlNode): ElementorElement {
   };
 }
 
-/** Map a Font Awesome / generic icon class to an Elementor selected_icon value. */
+/** Read a pixel length (e.g. "40px", "3rem") from an inline style declaration. */
+function readPxLength(style: string, prop: string): number | null {
+  const m = style.match(new RegExp(`${prop}\\s*:\\s*([\\d.]+)\\s*(px|rem|em)?`, "i"));
+  if (!m) return null;
+  const value = parseFloat(m[1]);
+  if (!Number.isFinite(value)) return null;
+  const unit = (m[2] || "px").toLowerCase();
+  return unit === "px" ? value : Math.round(value * 16);
+}
+
+/** An empty spacing element -> native Elementor Spacer widget. */
+function spacer(size: number, node?: HtmlNode): ElementorElement {
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "spacer",
+    settings: { ...nativeIdentitySettings(node), space: { unit: "px", size, sizes: [] } },
+    elements: [],
+  };
+}
+
+/**
+ * Detect an element whose only purpose is vertical spacing: no text, no media,
+ * and either a spacer-style class or an explicit height/margin/padding.
+ */
+function detectSpacer(node: HtmlNode): ElementorElement | null {
+  if (node.tag !== "div" && node.tag !== "span" && node.tag !== "p") return null;
+  if (textContent(node)) return null;
+  if (findNode(node, (n) => ["img", "svg", "i", "a", "video", "iframe", "hr", "input", "button"].includes(n.tag))) {
+    return null;
+  }
+  const style = (node.attrs.style || "").toLowerCase();
+  const isSpacerClass = hasClass(node, "spacer", "spacing", "space", "gap", "vspace", "height");
+  const height = readPxLength(style, "height")
+    ?? readPxLength(style, "min-height")
+    ?? readPxLength(style, "margin-top")
+    ?? readPxLength(style, "margin-bottom")
+    ?? readPxLength(style, "padding-top")
+    ?? readPxLength(style, "padding-bottom");
+  if (height && height > 0) return spacer(Math.round(height), node);
+  if (isSpacerClass) return spacer(50, node);
+  return null;
+}
 function resolveIconValue(node: HtmlNode): { value: string; library: string } {
   const cls = (node.attrs.class || "").toLowerCase();
   // Preserve an explicit Font Awesome icon class ("fas fa-star", "fab fa-x").
