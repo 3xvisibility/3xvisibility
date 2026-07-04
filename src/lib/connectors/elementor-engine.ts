@@ -712,6 +712,8 @@ function tabs(node: HtmlNode): ElementorElement {
  * native Elementor widget (or null to fall back to generic conversion).
  */
 function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
+  const social = detectSocialIcons(node);
+  if (social) return social;
   if (node.tag === "ul" || node.tag === "ol") return iconList(node);
   if (hasClass(node, "accordion", "faq")) return accordion(node);
   if (hasClass(node, "tabs", "tab-wrapper", "tabbed")) return tabs(node);
