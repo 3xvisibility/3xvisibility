@@ -920,7 +920,12 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
       }
     } else if (TEXT_TAGS.has(node.tag) && !["span", "strong", "em", "small", "label"].includes(node.tag)) {
       flush();
-      out.push(textEditor(serialize(node), node));
+      const social = (node.tag === "ul" || node.tag === "ol") ? detectSocialIcons(node) : null;
+      if (social) {
+        out.push(social);
+      } else {
+        out.push(textEditor(serialize(node), node));
+      }
     } else if (TEXT_TAGS.has(node.tag) || node.tag === "a") {
       // Inline/textual content -> accumulate as rich text editor block.
       textBuffer += serialize(node);
