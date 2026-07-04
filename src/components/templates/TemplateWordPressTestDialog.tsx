@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
-import { getFriendlyError } from "@/lib/edge-function-error";
+import { extractEdgeError } from "@/lib/edge-function-error";
 import {
   CheckCircle2,
   XCircle,
