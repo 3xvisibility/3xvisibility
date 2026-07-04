@@ -123,7 +123,7 @@ export function TemplateWordPressTestDialog({ open, onOpenChange, templateName, 
       toast({ title: "Test publish complete", description: "Check the verification result below." });
     } catch (err) {
       setVerdict((v) => v ?? "fail");
-      toast({ title: "Test failed", description: getFriendlyError(err), variant: "destructive" });
+      toast({ title: "Test failed", description: await extractEdgeError(err), variant: "destructive" });
     } finally {
       setRunning(false);
     }
