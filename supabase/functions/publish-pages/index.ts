@@ -995,8 +995,12 @@ async function handlePublishPages(req: Request): Promise<Response> {
             }
             payload.elementor_data = dpElementorData;
             payload.elementor_css = dpElementorCss;
-            payload.elementor_mode = "native";
-            step("Routing native Elementor JSON", "ok", "Full-width containers + native widgets");
+            payload.elementor_mode = useExactDirectElementor ? "exact" : "native";
+            step(
+              useExactDirectElementor ? "Routing exact Elementor render" : "Routing native Elementor JSON",
+              "ok",
+              useExactDirectElementor ? "Original template HTML/CSS preserved for 1:1 output" : "Full-width containers + native widgets",
+            );
           }
 
 
