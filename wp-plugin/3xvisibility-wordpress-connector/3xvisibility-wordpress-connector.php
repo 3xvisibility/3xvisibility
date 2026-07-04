@@ -24,6 +24,7 @@ define( 'XXXV_CONNECTOR_OPT_KEY', 'pgp_connector_api_key' );
 // Theme-CSS neutralization behavior (per connector / per site).
 define( 'XXXV_CONNECTOR_OPT_NEUTRALIZE', 'xxxv_neutralize_theme_css' );        // '1' | '0'
 define( 'XXXV_CONNECTOR_OPT_NEUTRALIZE_EXCLUDES', 'xxxv_neutralize_excludes' ); // newline-separated style handles to keep
+define( 'XXXV_CONNECTOR_OPT_NEUTRALIZE_REMOVALS', 'xxxv_neutralize_removals' ); // newline-separated handles/patterns to force-remove
 define( 'XXXV_CONNECTOR_UPDATE_URL', 'https://3xvisibility.com/wp-plugin/3xvisibility-wordpress-connector-update.json' );
 
 require_once XXXV_CONNECTOR_DIR . 'includes/class-3xv-auth.php';
