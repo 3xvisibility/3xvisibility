@@ -178,6 +178,22 @@ class XXXV_Elementor {
 				delete_post_meta( $post_id, '_xxxv_template_css' );
 			}
 
+			// Detect Google Fonts used anywhere in the template (CSS @import,
+			// <link> tags in the raw HTML, and font-family declarations) and store
+			// a normalized spec so the connector can register them on the frontend
+			// (WP head + Elementor) with correct weights, subsets, and display=swap.
+			$font_sources = $elementor_css;
+			$raw_html     = self::decode_payload_field( $body, 'elementor_html', '' );
+			if ( is_string( $raw_html ) && '' !== $raw_html ) {
+				$font_sources .= "\n" . $raw_html;
+			}
+			$google_fonts = self::detect_google_fonts( $font_sources );
+			if ( ! empty( $google_fonts ) ) {
+				update_post_meta( $post_id, '_xxxv_google_fonts', wp_json_encode( $google_fonts ) );
+			} else {
+				delete_post_meta( $post_id, '_xxxv_google_fonts' );
+			}
+
 			// Store a deterministic critical stylesheet compiled from the submitted
 			// Elementor JSON itself. This is a hard fallback for hosts where
 			// /uploads/elementor/css/post-{id}.css is deleted, blocked, or returns 404:
