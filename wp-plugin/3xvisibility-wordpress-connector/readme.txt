@@ -4,7 +4,7 @@ Tags: elementor, gutenberg, rest-api, programmatic-seo, page-builder
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GPLv2 or later
 
 Secure companion plugin that lets the 3xVisibility publish native Elementor & Gutenberg pages, upload media, regenerate CSS, clear caches, and detect builders/themes.
@@ -36,7 +36,11 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.5.2 =
+* Local asset URL rewriting for CSS fonts: the CSS url() localizer now uploads web fonts referenced from @font-face src: url(...) into the Media Library and rewrites the CSS to the uploaded copies, alongside the existing image handling. woff/woff2/ttf/otf/eot are whitelisted for upload and filetype detection, font data: URIs are decoded to real files, the downloader advertises font Accept types, and relative/site-relative/protocol-relative/localhost/http font URLs are normalized against the template base URL before import — so every url() path (images and fonts) resolves into a local WordPress upload during import.
+
 = 1.5.1 =
+
 * Accurate class-to-widget mapping with pseudo-state support: the style engine now parses pseudo segments in class selectors — interactive states (:hover/:focus/:active/:focus-visible/:focus-within/:visited) and pseudo-elements (::before/::after/…) are stripped from base matching so they no longer pollute the resting style (buttons no longer render permanently in their hover colour). Hover/focus/active declarations are resolved separately and baked onto native Elementor hover controls (button text/background hover colour, hover animation) plus a raw hover bridge, which the connector renders as a real selector:hover,selector:focus rule so every pseudo-state property matches the source design 1:1.
 
 = 1.5.0 =

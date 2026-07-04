@@ -53,6 +53,12 @@ class XXXV_Media {
 		$mimes['bmp']  = 'image/bmp';
 		$mimes['tiff'] = 'image/tiff';
 		$mimes['tif']  = 'image/tiff';
+		// Web fonts referenced from CSS @font-face src: url(...).
+		$mimes['woff']  = 'font/woff';
+		$mimes['woff2'] = 'font/woff2';
+		$mimes['ttf']   = 'font/ttf';
+		$mimes['otf']   = 'font/otf';
+		$mimes['eot']   = 'application/vnd.ms-fontobject';
 		return $mimes;
 	}
 
@@ -66,9 +72,25 @@ class XXXV_Media {
 		} elseif ( preg_match( '/\.avif$/i', (string) $filename ) ) {
 			$data['ext']  = 'avif';
 			$data['type'] = 'image/avif';
+		} elseif ( preg_match( '/\.woff2$/i', (string) $filename ) ) {
+			$data['ext']  = 'woff2';
+			$data['type'] = 'font/woff2';
+		} elseif ( preg_match( '/\.woff$/i', (string) $filename ) ) {
+			$data['ext']  = 'woff';
+			$data['type'] = 'font/woff';
+		} elseif ( preg_match( '/\.ttf$/i', (string) $filename ) ) {
+			$data['ext']  = 'ttf';
+			$data['type'] = 'font/ttf';
+		} elseif ( preg_match( '/\.otf$/i', (string) $filename ) ) {
+			$data['ext']  = 'otf';
+			$data['type'] = 'font/otf';
+		} elseif ( preg_match( '/\.eot$/i', (string) $filename ) ) {
+			$data['ext']  = 'eot';
+			$data['type'] = 'application/vnd.ms-fontobject';
 		}
 		return $data;
 	}
+
 
 
 
@@ -249,7 +271,7 @@ class XXXV_Media {
 			'sslverify'   => true,
 			'headers'     => array(
 				'User-Agent'      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-				'Accept'          => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+				'Accept'          => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,font/woff2,font/woff,font/ttf,font/otf,application/font-woff,application/font-woff2,application/x-font-ttf,application/vnd.ms-fontobject,*/*;q=0.8',
 				'Accept-Language' => 'en-US,en;q=0.9',
 				'Referer'         => $referer,
 			),
@@ -322,8 +344,21 @@ class XXXV_Media {
 			'image/vnd.microsoft.icon' => 'ico',
 			'image/bmp'     => 'bmp',
 			'image/tiff'    => 'tiff',
+			// Web fonts embedded as data URIs inside @font-face.
+			'font/woff'                    => 'woff',
+			'font/woff2'                   => 'woff2',
+			'font/ttf'                     => 'ttf',
+			'font/otf'                     => 'otf',
+			'application/font-woff'        => 'woff',
+			'application/font-woff2'       => 'woff2',
+			'application/x-font-woff'      => 'woff',
+			'application/x-font-ttf'       => 'ttf',
+			'application/x-font-truetype'  => 'ttf',
+			'application/x-font-opentype'  => 'otf',
+			'application/vnd.ms-fontobject' => 'eot',
 		);
-		$ext      = isset( $ext_map[ $mime ] ) ? $ext_map[ $mime ] : 'png';
+		// Fonts are never rasterizable, so default unknown font mimes safely.
+		$ext      = isset( $ext_map[ $mime ] ) ? $ext_map[ $mime ] : ( 0 === strpos( $mime, 'font/' ) ? 'woff2' : 'png' );
 		$filename = 'xxxv-inline-' . substr( $hash, 0, 12 ) . '.' . $ext;
 
 		require_once ABSPATH . 'wp-admin/includes/file.php';
