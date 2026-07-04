@@ -14,7 +14,7 @@
  * a small, tolerant HTML tokenizer.
  */
 
-import { StyleResolver, styleButton, styleContainer, styleContainerResponsive, styleHeading, styleImage, styleText, styleTypographyResponsive, type NodeLike, type StyleProps } from "./style-extract.ts";
+import { StyleResolver, styleButton, styleContainer, styleContainerResponsive, styleHeading, styleImage, styleResponsiveVisibilityAndOrder, styleText, styleTypographyResponsive, type NodeLike, type StyleProps } from "./style-extract.ts";
 import type { SiteContext } from "./wp-site-context.ts";
 
 // Module-scoped style baking state. Set by `htmlToElementor` so the widget
