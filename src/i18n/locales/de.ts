@@ -1804,6 +1804,7 @@ const de: Record<string, string> = {
   "showcase.importTitle": "Intelligente CSV-Verarbeitung",
   "showcase.live": "Live",
   "sidebar.abTesting": "A/B-Tests",
+  "sidebar.cssScanFix": "CSS-Scan & Fix",
   "sidebar.account": "Konto",
   "sidebar.admin": "Admin",
   "sidebar.affiliate": "Affiliate",
