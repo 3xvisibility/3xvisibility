@@ -298,6 +298,7 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["bottom"]) p.bottom = d["bottom"];
   if (d["left"]) p.left = d["left"];
   if (d["inset"]) p.inset = d["inset"];
+  if (d["order"]) p.order = d["order"];
 
   const box = (prefix: "padding" | "margin"): Partial<BoxSides> | undefined => {
     const sides: Partial<BoxSides> = {};
