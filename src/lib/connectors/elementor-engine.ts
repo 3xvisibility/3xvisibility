@@ -675,6 +675,9 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
     } else if (isButton(node)) {
       flush();
       out.push(button(node));
+    } else if (detectSpacer(node)) {
+      flush();
+      out.push(detectSpacer(node)!);
     } else if (CONTAINER_TAGS.has(node.tag)) {
       flush();
       const social = detectSocialIcons(node);
