@@ -21,6 +21,7 @@ Endpoints:
 * POST `/wp-json/pgp/v1/publish/elementor` — native Elementor page
 * POST `/wp-json/pgp/v1/publish/gutenberg` — native Gutenberg page
 * POST `/wp-json/pgp/v1/regenerate-css` — rebuild Elementor CSS
+* POST `/wp-json/pgp/v1/validate-render` — post-publish render validation (key CSS rules vs. live DOM + theme conflicts)
 * POST `/wp-json/pgp/v1/clear-cache` — clear common caches
 
 All endpoints require the `X-PGP-Key` header. The key is generated on activation and shown under Settings → 3xVisibility WordPress Connector.
