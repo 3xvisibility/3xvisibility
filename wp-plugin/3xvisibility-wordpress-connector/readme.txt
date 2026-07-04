@@ -36,7 +36,11 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.4.8 =
+* Reliable CSS storage in Elementor data: new fix_elementor_data() walks the full element tree on publish and preserves everything design-related — raw class strings (css_classes/class/className) are merged into Elementor's native _css_classes advanced setting (de-duplicated), and inline style="" declarations are promoted into per-element custom CSS (scoped selector{...}) so the editor never drops them. Common declarations (color, background-color, text-align, font-size, padding, margin) are also mapped to real Elementor settings when unset, keeping the imported design fully editable.
+
 = 1.4.7 =
+
 * Complete CSS extraction: new extract_all_css_from_html() helper gathers and combines every stylesheet source for a page into one sanitized stylesheet — inline <style> blocks, local/relative <link rel="stylesheet"> hrefs resolved from the template ZIP, inline style="" attributes promoted to scoped rules, and every remaining *.css file bundled inside the ZIP — in proper cascade order with de-duplication so no design CSS is lost on import.
 
 = 1.4.6 =
