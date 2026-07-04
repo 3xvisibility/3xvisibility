@@ -509,12 +509,13 @@ function stripHeadTagsForCms(content: string): string {
 }
 
 function shouldUseExactElementorRender(_content: string): boolean {
-  // Native Elementor widget publishing is the default and required output:
-  // pages must be built as native Elementor containers + widgets that are fully
-  // editable in Elementor (free), NOT wrapped in a single HTML widget. The old
-  // "exact render" path produced an HTML-widget page that looked like raw HTML
-  // and was not editable, so it is disabled.
-  return false;
+  // 1:1 FIDELITY MODE: marketplace / AI templates carry rich CSS (grids,
+  // background images, border-radius, responsive breakpoints) that the lossy
+  // HTML->native-widget mapping cannot reproduce faithfully. To guarantee the
+  // published WordPress page matches the source template exactly (full-width,
+  // 1140px containers, responsive), we embed the original template HTML + CSS
+  // inside a full-width Elementor page. This renders verbatim in the browser.
+  return true;
 }
 
 /**
