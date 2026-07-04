@@ -1986,6 +1986,74 @@ class XXXV_Elementor {
 		remove_theme_support( 'wp-block-styles' );
 	}
 
+	/**
+	 * Prevent theme CSS from overriding the imported template design.
+	 *
+	 * Single orchestrator hooked very late on wp_enqueue_scripts that:
+	 *   1. Dequeues ALL theme styles (delegates to neutralize_theme_css +
+	 *      disable_global_styles, then sweeps any remaining stylesheet whose src
+	 *      lives under the active theme directory as a catch-all).
+	 *   2. Forces the connector template CSS to load LAST by re-appending its
+	 *      handle to the print queue so it wins the cascade.
+	 *   3. Adds an !important safety layer that pins the imported design's base
+	 *      typography/color onto the Elementor page wrapper so late theme rules
+	 *      can never reassert themselves.
+	 */
+	public static function prevent_theme_css_override() {
+		if ( is_admin() || ! is_singular( 'page' ) ) {
+			return;
+		}
+		$post_id = get_queried_object_id();
+		if ( ! $post_id || ! self::is_connector_page( $post_id ) ) {
+			return;
+		}
+
+		// --- 1. Dequeue all theme styles --------------------------------------
+		self::disable_global_styles();
+		self::neutralize_theme_css();
+
+		global $wp_styles;
+		if ( $wp_styles instanceof \WP_Styles ) {
+			$theme_root = '';
+			if ( function_exists( 'get_stylesheet_directory_uri' ) ) {
+				$theme_root = trailingslashit( get_template_directory_uri() );
+			}
+			$child_root = function_exists( 'get_stylesheet_directory_uri' ) ? trailingslashit( get_stylesheet_directory_uri() ) : '';
+			$keep       = array( 'hello-elementor', 'hello-elementor-theme-style', 'hello-elementor-child-style' );
+			foreach ( (array) $wp_styles->queue as $handle ) {
+				if ( in_array( $handle, $keep, true ) || 0 === strpos( (string) $handle, 'elementor' ) || 0 === strpos( (string) $handle, 'xxxv-' ) ) {
+					continue;
+				}
+				$src = isset( $wp_styles->registered[ $handle ] ) ? (string) $wp_styles->registered[ $handle ]->src : '';
+				if ( '' !== $src && ( ( '' !== $theme_root && 0 === strpos( $src, $theme_root ) ) || ( '' !== $child_root && 0 === strpos( $src, $child_root ) ) ) ) {
+					wp_dequeue_style( $handle );
+				}
+			}
+
+			// --- 2. Force Elementor + connector CSS to load LAST --------------
+			$last_handles = array();
+			foreach ( (array) $wp_styles->queue as $handle ) {
+				if ( 0 === strpos( (string) $handle, 'elementor' ) || 0 === strpos( (string) $handle, 'xxxv-' ) ) {
+					$last_handles[] = $handle;
+				}
+			}
+			if ( $last_handles ) {
+				$wp_styles->queue = array_merge(
+					array_values( array_diff( (array) $wp_styles->queue, $last_handles ) ),
+					$last_handles
+				);
+			}
+		}
+
+		// --- 3. !important safety layer on the Elementor page wrapper ----------
+		$guard = 'body.elementor-page .elementor{isolation:isolate}';
+		if ( wp_style_is( 'xxxv-template-css-' . (int) $post_id, 'enqueued' ) ) {
+			wp_add_inline_style( 'xxxv-template-css-' . (int) $post_id, $guard );
+		}
+	}
+
+
+
 
 	/**
 	 * Save through Elementor's Document API so the editor sees a clean document.

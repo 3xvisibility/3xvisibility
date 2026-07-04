@@ -4,7 +4,7 @@ Tags: elementor, gutenberg, rest-api, programmatic-seo, page-builder
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.4.9
+Stable tag: 1.5.0
 License: GPLv2 or later
 
 Secure companion plugin that lets the 3xVisibility publish native Elementor & Gutenberg pages, upload media, regenerate CSS, clear caches, and detect builders/themes.
@@ -36,7 +36,11 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 
 == Changelog ==
 
+= 1.5.0 =
+* Guaranteed template cascade: new prevent_theme_css_override() runs last on connector pages to dequeue ALL theme styles (per-theme handles + a catch-all sweep of any stylesheet served from the active/child theme directory), then reorders the print queue so Elementor and connector CSS always load last, and pins an isolation guard on the Elementor page wrapper so late theme rules can never reassert. Hello Elementor and connector/Elementor handles are preserved.
+
 = 1.4.9 =
+
 * One-call full cache refresh: new force_cache_refresh($post_id) clears every layer at once — Elementor per-page & global CSS, WordPress object/transient/options cache, all supported page-cache/hosting plugins, and CDN caches (Cloudflare, BunnyCDN) — then bumps a per-page cache-buster version so enqueued template CSS carries a fresh query string, and emits no-cache/Pragma/Expires/Surrogate-Control headers to refresh the browser layer. Returns a structured success report of the layers cleared.
 
 = 1.4.8 =

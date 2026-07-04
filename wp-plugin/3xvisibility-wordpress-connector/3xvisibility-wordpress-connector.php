@@ -3,7 +3,7 @@
  * Plugin Name:       3xVisibility WordPress Connector
  * Plugin URI:        https://3xvisibility.com
  * Description:        Secure companion plugin that bridges your 3xVisibility account and WordPress — publishing native Elementor (Free) & Gutenberg pages, uploading media, regenerating Elementor CSS, clearing caches, and detecting builders/themes/global styles so programmatic pages behave exactly like pages built manually inside WordPress.
- * Version:           1.4.9
+ * Version:           1.5.0
  * Author:            3xVisibility
  * Author URI:        https://3xvisibility.com
  * License:           GPL-2.0+
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'XXXV_CONNECTOR_VERSION', '1.4.9' );
+define( 'XXXV_CONNECTOR_VERSION', '1.5.0' );
 define( 'XXXV_CONNECTOR_FILE', __FILE__ );
 define( 'XXXV_CONNECTOR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'XXXV_CONNECTOR_NS', 'pgp/v1' );
@@ -59,6 +59,8 @@ function xxxv_connector_boot() {
 	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'neutralize_theme_css' ), PHP_INT_MAX - 5 );
 	add_action( 'init', array( 'XXXV_Elementor', 'disable_global_styles' ) );
 	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'enqueue_template_css' ), PHP_INT_MAX );
+	// Run absolutely last so theme styles are gone and Elementor/connector CSS wins.
+	add_action( 'wp_enqueue_scripts', array( 'XXXV_Elementor', 'prevent_theme_css_override' ), PHP_INT_MAX );
 	// Auto-register the template's Google Fonts (correct weights/subsets +
 	// display=swap) with preconnect/preload hints on connector pages so imported
 	// typography renders exactly and fast.
