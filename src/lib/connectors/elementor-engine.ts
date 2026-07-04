@@ -313,6 +313,8 @@ function detectSocialIcons(node: HtmlNode): ElementorElement | null {
   if (textContent(node).replace(/\s+/g, "").length > links.length * 24) return null;
   return socialIcons(links);
 }
+
+/** `<iframe>` / `<video>` -> native Elementor Video widget. */
 function video(node: HtmlNode): ElementorElement {
   const src = node.attrs.src || (findNode(node, (n) => n.tag === "source")?.attrs.src ?? "");
   const settings: Record<string, unknown> = {};
