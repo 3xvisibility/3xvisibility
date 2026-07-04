@@ -796,10 +796,20 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
     } else if (node.tag === "img") {
       flush();
       out.push(image(node));
+    } else if (node.tag === "hr") {
+      flush();
+      out.push(divider(node));
+    } else if (node.tag === "iframe" || node.tag === "video") {
+      flush();
+      out.push(video(node));
+    } else if ((node.tag === "i" || node.tag === "svg") && !textContent(node)) {
+      flush();
+      out.push(iconWidget(node));
     } else if (isButton(node)) {
       flush();
       out.push(button(node));
     } else if (CONTAINER_TAGS.has(node.tag)) {
+
       flush();
       // Hoist full-bleed hero background images + overlays onto the container
       // itself (native Elementor hero pattern) instead of emitting stacked,
