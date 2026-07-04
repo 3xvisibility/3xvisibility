@@ -62,8 +62,10 @@ class XXXV_Admin {
 	}
 
 	public function render() {
-		$key      = XXXV_Auth::get_key();
-		$rest_url = rest_url( XXXV_CONNECTOR_NS . '/' );
+		$key            = XXXV_Auth::get_key();
+		$rest_url       = rest_url( XXXV_CONNECTOR_NS . '/' );
+		$neutralize     = XXXV_Elementor::is_neutralization_enabled();
+		$excludes_value = implode( "\n", XXXV_Elementor::neutralization_excludes() );
 		?>
 		<div class="wrap">
 			<h1>3xVisibility WordPress Connector</h1>
@@ -71,6 +73,9 @@ class XXXV_Admin {
 
 			<?php if ( isset( $_GET['regenerated'] ) ) : ?>
 				<div class="notice notice-success is-dismissible"><p>A new API key was generated. Update it in your 3xVisibility account.</p></div>
+			<?php endif; ?>
+			<?php if ( isset( $_GET['css_saved'] ) ) : ?>
+				<div class="notice notice-success is-dismissible"><p>Theme-CSS settings saved.</p></div>
 			<?php endif; ?>
 
 			<table class="form-table" role="presentation">
