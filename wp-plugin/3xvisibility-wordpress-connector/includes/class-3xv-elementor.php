@@ -1528,6 +1528,40 @@ class XXXV_Elementor {
 		return is_array( $data ) ? $data : array();
 	}
 
+	/**
+	 * Register the current connector page's detected Google Fonts with Elementor's
+	 * font manager so they resolve to the "googlefonts" group (correct enqueue in
+	 * both editor + frontend) and appear as known families in Elementor controls.
+	 * Hooked to `elementor/fonts/additional_fonts`.
+	 *
+	 * @param array $additional_fonts Existing additional fonts map.
+	 * @return array
+	 */
+	public static function register_elementor_fonts( $additional_fonts ) {
+		if ( ! is_array( $additional_fonts ) ) {
+			$additional_fonts = array();
+		}
+		$post_id = 0;
+		if ( function_exists( 'get_queried_object_id' ) ) {
+			$post_id = get_queried_object_id();
+		}
+		if ( ( ! $post_id ) && isset( $_GET['post'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only editor context.
+			$post_id = absint( $_GET['post'] );
+		}
+		if ( ! $post_id ) {
+			return $additional_fonts;
+		}
+		$fonts = self::get_page_google_fonts( $post_id );
+		foreach ( $fonts as $font ) {
+			if ( ! empty( $font['family'] ) ) {
+				$additional_fonts[ $font['family'] ] = 'googlefonts';
+			}
+		}
+		return $additional_fonts;
+	}
+
+
+
 
 	/**
 	 * Neutralize the active theme's CSS on connector-imported pages so it can never
