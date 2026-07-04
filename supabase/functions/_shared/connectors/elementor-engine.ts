@@ -57,6 +57,9 @@ function bakedSettings(
     styleTypographyResponsive(settings, props, devices.tablet as StyleProps, "_tablet");
     styleTypographyResponsive(settings, props, devices.mobile as StyleProps, "_mobile");
   }
+  // Responsive visibility (hide on desktop/tablet/mobile) + ordering apply to
+  // every element type, so bake them regardless of the widget kind.
+  styleResponsiveVisibilityAndOrder(settings, devices);
   return settings;
 }
 
