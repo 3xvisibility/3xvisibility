@@ -3,7 +3,7 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
-import { buildExactElementorData, htmlToElementor, enforceNativeElementorData, elementorDataHasHtmlWidget, parityStatsFromData, sectionHeatmapFromData } from "../_shared/connectors/elementor-engine.ts";
+import { buildExactElementorData, htmlToElementor, enforceNativeElementorData, enforceBoxedContentWidth, elementorDataHasHtmlWidget, parityStatsFromData, sectionHeatmapFromData } from "../_shared/connectors/elementor-engine.ts";
 import { PgpConnector } from "../_shared/connectors/pgp-connector.ts";
 
 type EditorReadiness = NonNullable<import("../_shared/connectors/types.ts").ConnectorResult["editor_readiness"]>;
