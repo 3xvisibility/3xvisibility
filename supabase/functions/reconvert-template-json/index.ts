@@ -11,7 +11,7 @@
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
+import { htmlToElementor, enforceBoxedContentWidth } from "../_shared/connectors/elementor-engine.ts";
 import {
   extractEditableFields,
   defaultContentFor,
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     // Load the page and confirm the caller owns it (or is a platform admin).
     const { data: page } = await supabase
       .from("generated_pages")
-      .select("id, user_id, campaign_id")
+      .select("id, user_id, campaign_id, workspace_id")
       .eq("id", pageId)
       .maybeSingle();
     if (!page) return json({ error: "Page not found" }, 404);
@@ -111,9 +111,34 @@ Deno.serve(async (req) => {
 
     // Reconvert with the current converter.
     const cleanContent = stripAiImagePlaceholders(tplRow.content);
-    const tree = htmlToElementor(cleanContent);
+    let tree = htmlToElementor(cleanContent);
     if (!Array.isArray(tree) || tree.length === 0) {
       return json({ error: "Reconversion produced no Elementor elements." }, 422);
+    }
+
+    // Enforce the workspace's Elementor-style fixed content width (boxed
+    // container) so the persisted JSON already carries centered, boxed content
+    // inside full-width sections — matching what publish-pages applies.
+    let containerWidth = 0;
+    if (page.workspace_id) {
+      const { data: ws } = await supabase
+        .from("workspaces")
+        .select("elementor_container_width")
+        .eq("id", page.workspace_id)
+        .maybeSingle();
+      const raw = (ws as { elementor_container_width?: number } | null)?.elementor_container_width;
+      if (typeof raw === "number" && raw > 0) {
+        containerWidth = Math.min(Math.max(Math.round(raw), 320), 1920);
+      }
+    }
+    if (containerWidth > 0) {
+      try {
+        const boxed = enforceBoxedContentWidth(JSON.stringify(tree), containerWidth);
+        const parsed = JSON.parse(boxed);
+        if (Array.isArray(parsed) && parsed.length > 0) tree = parsed;
+      } catch {
+        // keep the unboxed tree if enforcement fails
+      }
     }
 
     const fields = extractEditableFields(tree);
@@ -160,6 +185,7 @@ Deno.serve(async (req) => {
       widgets,
       fields: fields.length,
       sections: tree.length,
+      container_width: containerWidth,
     });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
