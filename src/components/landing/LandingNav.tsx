@@ -85,7 +85,7 @@ export function LandingNav() {
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="lg:hidden border-t border-[hsl(96,90%,45%,0.1)] overflow-hidden bg-[hsl(220,60%,4%)]/95 backdrop-blur-2xl">
               <div className="px-4 py-4 space-y-1">
                 {navLinks.map((l) => (
-                  <a key={l.href} href={l.href} className="block text-sm text-[hsl(220,10%,78%)] hover:text-foreground py-2.5 px-3 rounded-lg hover:bg-[hsl(96,90%,45%,0.08)] transition-all" onClick={() => setMobileOpen(false)}>{l.label}</a>
+                  <a key={l.href} href={l.href} className="block text-sm text-[hsl(220,10%,78%)] hover:text-foreground py-2.5 px-3 rounded-lg hover:bg-[hsl(96,90%,45%,0.08)] transition-all" onClick={(e) => handleNavClick(e, l.href)}>{l.label}</a>
                 ))}
                 <div className="pt-3 flex flex-col gap-2 border-t border-[hsl(96,90%,45%,0.1)] mt-3">
                   <LanguageSwitcher variant="outline" size="sm" className="justify-start gap-2 rounded-lg h-10 border-[hsl(96,90%,45%,0.15)]" />
