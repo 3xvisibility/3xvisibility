@@ -1029,6 +1029,22 @@ async function handlePublishPages(req: Request): Promise<Response> {
           }
 
 
+          // Enforce the workspace's fixed Elementor container width on native
+          // direct-publish payloads (skip exact-render HTML-widget pages).
+          if (
+            (payload as { elementor_mode?: string }).elementor_mode === "native" &&
+            typeof (payload as { elementor_data?: string }).elementor_data === "string"
+          ) {
+            const boxWidth = await resolveContainerWidth(workspaceId);
+            if (boxWidth > 0) {
+              payload.elementor_data = enforceBoxedContentWidth(
+                (payload as { elementor_data?: string }).elementor_data as string,
+                boxWidth,
+              );
+              step("Enforcing container width", "ok", `Boxed content width set to ${boxWidth}px`);
+            }
+          }
+
           // Final native-only assertion: never ship an HTML-widget page.
           if (
             FORCE_NATIVE_ELEMENTOR && (payload as { elementor_mode?: string }).elementor_mode &&
