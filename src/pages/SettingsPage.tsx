@@ -142,6 +142,9 @@ export default function SettingsPage() {
       {/* Supported languages */}
       <LocaleSettingsCard />
 
+      {/* Elementor layout / container width */}
+      <ElementorLayoutSettingsCard />
+
       {/* Profile */}
       <Card className="shadow-surface">
         <CardHeader>
