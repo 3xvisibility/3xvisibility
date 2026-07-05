@@ -61,7 +61,7 @@ export function LandingNav() {
 
           <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((l) => (
-              <a key={l.href} href={l.href} className="text-sm text-[hsl(220,10%,78%)] hover:text-foreground px-4 py-2 rounded-lg transition-colors duration-200 font-medium">{l.label}</a>
+              <a key={l.href} href={l.href} onClick={(e) => handleNavClick(e, l.href)} className="text-sm text-[hsl(220,10%,78%)] hover:text-foreground px-4 py-2 rounded-lg transition-colors duration-200 font-medium">{l.label}</a>
             ))}
           </nav>
 
