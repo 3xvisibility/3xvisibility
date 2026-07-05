@@ -47,6 +47,26 @@ export function LandingNav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // On load: if the URL has a hash, smooth-scroll to that section once it mounts.
+  useEffect(() => {
+    if (location.pathname !== "/" || !location.hash) return;
+    const id = location.hash.replace("#", "");
+    let attempts = 0;
+    const tryScroll = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        setActiveId(id);
+      } else if (attempts < 20) {
+        attempts += 1;
+        setTimeout(tryScroll, 100);
+      }
+    };
+    // Defer so sections have a chance to render after reload.
+    setTimeout(tryScroll, 100);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Scroll-spy: highlight the nav link for the section currently in view.
   useEffect(() => {
     if (location.pathname !== "/") {
