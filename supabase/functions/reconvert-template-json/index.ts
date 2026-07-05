@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     // Load the page and confirm the caller owns it (or is a platform admin).
     const { data: page } = await supabase
       .from("generated_pages")
-      .select("id, user_id, campaign_id")
+      .select("id, user_id, campaign_id, workspace_id")
       .eq("id", pageId)
       .maybeSingle();
     if (!page) return json({ error: "Page not found" }, 404);
