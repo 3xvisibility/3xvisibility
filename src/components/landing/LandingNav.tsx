@@ -44,6 +44,8 @@ export function LandingNav() {
 
   const scrollToId = (id: string) => {
     scrollToElement(document.getElementById(id));
+    // Sync the active state immediately so the nav highlight matches the click.
+    setActiveId(id);
     // Keep the hash in the URL so a reload restores the same section.
     if (window.history.replaceState) {
       window.history.replaceState(null, "", `#${id}`);
