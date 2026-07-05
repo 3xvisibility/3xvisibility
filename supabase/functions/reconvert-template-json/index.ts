@@ -185,6 +185,7 @@ Deno.serve(async (req) => {
       widgets,
       fields: fields.length,
       sections: tree.length,
+      container_width: containerWidth,
     });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
