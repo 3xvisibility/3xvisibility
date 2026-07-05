@@ -46,6 +46,7 @@ export interface StyleProps {
   padding?: Partial<BoxSides>;
   margin?: Partial<BoxSides>;
   width?: string;
+  height?: string;
   maxWidth?: string;
   borderRadius?: string;
   display?: string;
