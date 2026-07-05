@@ -90,7 +90,10 @@ interface HtmlNode {
   attrs: Record<string, string>;
   children: HtmlNode[];
   text?: string;
+  /** Parent link so the style resolver can honour descendant selectors. */
+  parent?: HtmlNode | null;
 }
+
 
 const VOID_TAGS = new Set([
   "area", "base", "br", "col", "embed", "hr", "img", "input",
@@ -139,8 +142,10 @@ function parseHtml(html: string): HtmlNode[] {
   const pushText = (text: string) => {
     const cleaned = text.replace(/\s+/g, " ");
     if (!cleaned.trim()) return;
-    stack[stack.length - 1].children.push({ tag: "", attrs: {}, children: [], text });
+    const parent = stack[stack.length - 1];
+    parent.children.push({ tag: "", attrs: {}, children: [], text, parent });
   };
+
 
   while ((m = tagRe.exec(html)) !== null) {
     if (m.index > last) pushText(html.slice(last, m.index));
@@ -173,10 +178,12 @@ function parseHtml(html: string): HtmlNode[] {
         }
       }
     } else {
-      const node: HtmlNode = { tag, attrs: parseAttrs(m[2] || ""), children: [] };
-      stack[stack.length - 1].children.push(node);
+      const parent = stack[stack.length - 1];
+      const node: HtmlNode = { tag, attrs: parseAttrs(m[2] || ""), children: [], parent };
+      parent.children.push(node);
       if (!selfClose) stack.push(node);
     }
+
   }
   if (last < html.length) pushText(html.slice(last));
   return root.children;

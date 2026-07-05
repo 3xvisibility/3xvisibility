@@ -16,7 +16,10 @@ import type { SiteContext } from "./wp-site-context.ts";
 export interface NodeLike {
   tag: string;
   attrs: Record<string, string>;
+  /** Optional parent link so descendant selectors can match ancestors. */
+  parent?: NodeLike | null;
 }
+
 
 export interface BoxSides {
   top: string;
@@ -46,6 +49,7 @@ export interface StyleProps {
   padding?: Partial<BoxSides>;
   margin?: Partial<BoxSides>;
   width?: string;
+  height?: string;
   maxWidth?: string;
   borderRadius?: string;
   display?: string;
@@ -110,10 +114,25 @@ function parseMediaCond(prelude: string): MediaCond {
   };
 }
 
+interface SimpleSel {
+  tag?: string;
+  classes: string[];
+  id?: string;
+}
+
 interface ParsedSelector {
   tag?: string;
   classes: string[];
   id?: string;
+  /**
+   * Ancestor compounds to the LEFT of the rightmost simple selector, in
+   * document (outermost-last) order as written. Each must match some ancestor
+   * of the node for the rule to apply. This makes descendant selectors like
+   * `.pl-rate .avs img` only target their real subtree instead of every `img`,
+   * which is the difference between a faithful clone and cross-section style
+   * bleed. All combinators (` `, `>`, `+`, `~`) are treated as descendant here.
+   */
+  ancestors?: SimpleSel[];
   /**
    * Interactive STATE pseudo-class (hover/focus/active/…) this selector targets,
    * if any. State rules are baked as Elementor hover controls, never merged into
@@ -122,9 +141,10 @@ interface ParsedSelector {
   state?: string;
   /** True when the selector targets a pseudo-ELEMENT (::before, ::after, …). */
   pseudoElement?: boolean;
-  /** Higher = wins. (id*100 + class*10 + tag). */
+  /** Higher = wins. (id*100 + class*10 + tag), summed across all compounds. */
   specificity: number;
 }
+
 
 /**
  * Pseudo-classes that represent an interactive STATE. They must not pollute the
@@ -155,10 +175,58 @@ function parseDecls(body: string): Record<string, string> {
   return out;
 }
 
+/** Parse one compound (no combinators) into tag/classes/id. */
+function parseCompound(raw: string): SimpleSel | null {
+  const simple = raw.replace(/::?[\w-]+(?:\([^)]*\))?/g, "");
+  const classes = [...simple.matchAll(/\.([\w-]+)/g)].map((m) => m[1].toLowerCase());
+  const idMatch = simple.match(/#([\w-]+)/);
+  const tagMatch = simple.match(/^([a-zA-Z][\w-]*)/);
+  const id = idMatch ? idMatch[1].toLowerCase() : undefined;
+  const tag = tagMatch ? tagMatch[1].toLowerCase() : undefined;
+  if (!tag && !id && classes.length === 0) return null;
+  return { tag, classes, id };
+}
+
+/** Does a single compound match one ancestor descriptor? */
+function simpleMatches(s: SimpleSel, a: { tag: string; classes: string[]; id: string }): boolean {
+  if (s.tag && s.tag !== a.tag) return false;
+  if (s.id && s.id !== a.id) return false;
+  if (s.classes.length && !s.classes.every((c) => a.classes.includes(c))) return false;
+  return true;
+}
+
+/**
+ * Verify a selector's ancestor compounds (written outer→inner) each match some
+ * ancestor of the node, in order. `ancestry` is innermost-first. All combinators
+ * are treated as descendant, which is a safe superset of `>`/`+`/`~`.
+ */
+function ancestorsMatch(
+  anc: SimpleSel[],
+  ancestry: { tag: string; classes: string[]; id: string }[],
+): boolean {
+  const need = [...anc].reverse(); // innermost requirement first
+  let ai = 0;
+  for (const req of need) {
+    let found = false;
+    while (ai < ancestry.length) {
+      const cur = ancestry[ai];
+      ai++;
+      if (simpleMatches(req, cur)) { found = true; break; }
+    }
+    if (!found) return false;
+  }
+  return true;
+}
+
+function compoundSpecificity(s: SimpleSel): number {
+  return (s.id ? 100 : 0) + s.classes.length * 10 + (s.tag ? 1 : 0);
+}
+
 function parseSelector(sel: string): ParsedSelector | null {
-  // Only the RIGHTMOST simple selector is used for matching (no combinators),
-  // which is robust and good enough to bake per-element design.
-  const simpleRaw = sel.trim().split(/\s+/).pop() ?? "";
+  // Split into compounds, dropping combinator tokens (` `, `>`, `+`, `~`). The
+  // rightmost compound is the match target; the rest are ancestor requirements.
+  const tokens = sel.trim().split(/\s+/).filter((t) => t && !/^[>+~]$/.test(t));
+  const simpleRaw = tokens.length ? tokens[tokens.length - 1] : "";
   if (!simpleRaw || simpleRaw === "*") return null;
 
   // Detect a pseudo-ELEMENT (::before / legacy :before / ::placeholder …). These
@@ -175,18 +243,31 @@ function parseSelector(sel: string): ParsedSelector | null {
     }
   }
 
-  // Strip EVERY pseudo segment (`:x`, `::x`, functional `:not(.y)`) so the
-  // tag/class/id parse cleanly regardless of trailing pseudo syntax.
-  const simple = simpleRaw.replace(/::?[\w-]+(?:\([^)]*\))?/g, "");
+  const target = parseCompound(simpleRaw);
+  if (!target) return null;
 
-  const classes = [...simple.matchAll(/\.([\w-]+)/g)].map((m) => m[1].toLowerCase());
-  const idMatch = simple.match(/#([\w-]+)/);
-  const tagMatch = simple.match(/^([a-zA-Z][\w-]*)/);
-  const id = idMatch ? idMatch[1].toLowerCase() : undefined;
-  const tag = tagMatch ? tagMatch[1].toLowerCase() : undefined;
-  if (!tag && !id && classes.length === 0) return null;
-  const specificity = (id ? 100 : 0) + classes.length * 10 + (tag ? 1 : 0);
-  return { tag, classes, id, state, pseudoElement, specificity };
+  // Ancestor compounds (everything left of the target), skipping ones that only
+  // carry `*` or fail to parse.
+  const ancestors: SimpleSel[] = [];
+  for (let k = 0; k < tokens.length - 1; k++) {
+    if (tokens[k] === "*") continue;
+    const c = parseCompound(tokens[k]);
+    if (c) ancestors.push(c);
+  }
+
+  let specificity = compoundSpecificity(target);
+  for (const a of ancestors) specificity += compoundSpecificity(a);
+
+  return {
+    tag: target.tag,
+    classes: target.classes,
+    id: target.id,
+    ancestors: ancestors.length ? ancestors : undefined,
+    state,
+    pseudoElement,
+    specificity,
+  };
+
 
 }
 
@@ -320,6 +401,7 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["letter-spacing"]) p.letterSpacing = d["letter-spacing"];
   if (d["text-align"]) p.textAlign = d["text-align"];
   if (d["width"]) p.width = d["width"];
+  if (d["height"]) p.height = d["height"];
   if (d["max-width"]) p.maxWidth = d["max-width"];
   if (d["border-radius"]) p.borderRadius = d["border-radius"];
   if (d["display"]) p.display = d["display"];
@@ -403,6 +485,16 @@ export class StyleResolver {
     const classes = (node.attrs?.class || "").toLowerCase().split(/\s+/).filter(Boolean);
     const id = (node.attrs?.id || "").toLowerCase();
 
+    // Snapshot the ancestor chain once (outermost last) for descendant matching.
+    const ancestry: { tag: string; classes: string[]; id: string }[] = [];
+    for (let p = node.parent; p; p = p.parent) {
+      ancestry.push({
+        tag: (p.tag || "").toLowerCase(),
+        classes: (p.attrs?.class || "").toLowerCase().split(/\s+/).filter(Boolean),
+        id: (p.attrs?.id || "").toLowerCase(),
+      });
+    }
+
     const matched: { spec: number; order: number; decls: Record<string, string> }[] = [];
     for (const rule of this.rules) {
       if (!mediaActiveAt(rule.media, width)) continue;
@@ -413,9 +505,11 @@ export class StyleResolver {
         if (sel.tag && sel.tag !== tag) continue;
         if (sel.id && sel.id !== id) continue;
         if (sel.classes.length && !sel.classes.every((c) => classes.includes(c))) continue;
+        if (sel.ancestors && !ancestorsMatch(sel.ancestors, ancestry)) continue;
         matched.push({ spec: sel.specificity, order: rule.order, decls: rule.decls });
       }
     }
+
 
     matched.sort((a, b) => (a.spec - b.spec) || (a.order - b.order));
     const merged: Record<string, string> = {};
@@ -699,8 +793,12 @@ export function styleImage(
   const cls = (hint?.className || "").toLowerCase();
   const isSmallGraphic = /\b(logo|icon|avatar|badge|favicon|thumb|thumbnail|social|emoji|flag)\b/.test(cls);
 
-  // Resolve the intended width. Prefer explicit CSS width, then max-width, then
-  // the HTML width attribute as a last-resort source.
+  // Distinguish a *deliberate* CSS width (author intent) from fallback sources.
+  // An explicit `width` declaration is honoured at any size, because that is the
+  // size the template author chose (e.g. 42px rating avatars). Only widths that
+  // come from `max-width` or the HTML width attribute get the "ignore tiny px"
+  // guard, which exists to stop hero images collapsing to a stray thumbnail size.
+  const explicitW = pxSize(p.width);
   const raw = p.width || p.maxWidth || (hint?.widthAttr ? `${hint.widthAttr}px` : undefined);
   const w = pxSize(raw);
   if (w) {
@@ -708,14 +806,13 @@ export function styleImage(
       // Percentage widths are inherently responsive — keep them as-is.
       settings.width = { unit: "%", size: w.size };
     } else if (w.unit === "px") {
-      // A small fixed px width from extraction is the common cause of hero
-      // images collapsing to a tiny box (e.g. 72px). Only honour a fixed px
-      // width for deliberate small graphics (logos/icons) or genuinely large
-      // values; otherwise let the image stay fluid at 100% so heroes fill
-      // their container after publish.
-      if (isSmallGraphic || w.size >= 240) {
+      if (explicitW || isSmallGraphic || w.size >= 240) {
+        // Honour an explicit CSS px width verbatim (author intent), and keep the
+        // existing guard for deliberate small graphics or genuinely large images.
         settings.width = w;
       } else {
+        // A stray small px width from max-width / attr only — stay fluid so
+        // heroes fill their container after publish.
         settings.width = { unit: "%", size: 100 };
       }
     } else {
@@ -726,10 +823,18 @@ export function styleImage(
     // so they never render at Elementor's tiny default thumbnail size.
     settings.width = { unit: "%", size: 100 };
   }
-  // Never distort aspect ratio: let height follow the image intrinsically.
-  settings.height = { unit: "px", size: "" };
+  // Preserve an explicit fixed px height when the image is cropped/contained
+  // (object-fit) — this keeps square avatars square and circular crops circular.
+  // Otherwise let height follow the image intrinsically (no distortion).
+  const explicitH = pxSize(p.height);
+  if (explicitH && explicitH.unit === "px" && explicitW && (p.objectFit === "cover" || p.objectFit === "contain")) {
+    settings.height = { unit: "px", size: explicitH.size };
+  } else {
+    settings.height = { unit: "px", size: "" };
+  }
   const br = pxSize(p.borderRadius);
   if (br) settings.image_border_radius = { unit: br.unit, top: String(br.size), right: String(br.size), bottom: String(br.size), left: String(br.size), isLinked: true };
+  else if (/(^|\s)50%|9999px/.test(p.borderRadius || "")) settings.image_border_radius = { unit: "%", top: "50", right: "50", bottom: "50", left: "50", isLinked: true };
   if (p.objectFit) settings.object_fit = p.objectFit;
   applyOpacityBlendTransform(settings, p);
 }
