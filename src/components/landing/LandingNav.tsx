@@ -71,6 +71,22 @@ export function LandingNav() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Browser back/forward: scroll to the section for the current URL hash.
+  useEffect(() => {
+    const onPopState = () => {
+      if (window.location.pathname !== "/") return;
+      const hash = window.location.hash.replace("#", "");
+      if (!hash) return;
+      const el = document.getElementById(hash);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        setActiveId(hash);
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
   // Scroll-spy: highlight the nav link for the section currently in view.
   useEffect(() => {
     if (location.pathname !== "/") {
