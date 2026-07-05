@@ -525,6 +525,27 @@ export default function GeneratedPagesPage() {
     onError: (err: Error) => toast({ title: "Re-check failed", description: err.message, variant: "destructive" }),
   });
 
+  const reconvertMutation = useMutation({
+    mutationFn: async (pageId: string) => {
+      const { data, error } = await supabase.functions.invoke("reconvert-template-json", {
+        body: { page_id: pageId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(typeof data.error === "string" ? data.error : "Reconvert failed");
+      return data as { widgets?: number; fields?: number; sections?: number };
+    },
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      toast({
+        title: "Template reconverted",
+        description: `Stored JSON rebuilt: ${res?.widgets ?? 0} widgets · ${res?.fields ?? 0} fields. Re-publish to apply.`,
+      });
+    },
+    onError: (err: Error) => toast({ title: "Reconvert failed", description: err.message, variant: "destructive" }),
+  });
+
+
+
 
 
   const inlineSeoSaveMutation = useMutation({
