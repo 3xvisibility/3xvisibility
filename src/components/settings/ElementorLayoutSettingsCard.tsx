@@ -157,11 +157,18 @@ export default function ElementorLayoutSettingsCard() {
                 <Label>Custom width (px)</Label>
                 <Input
                   type="number"
-                  min={320}
-                  max={1920}
+                  min={MIN_WIDTH}
+                  max={MAX_WIDTH}
                   value={customWidth}
+                  aria-invalid={!!customError}
                   onChange={(e) => setCustomWidth(e.target.value)}
+                  className={customError ? "border-destructive focus-visible:ring-destructive" : undefined}
                 />
+                {customError ? (
+                  <p className="text-xs text-destructive">{customError}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Allowed range: {MIN_WIDTH}–{MAX_WIDTH}px.</p>
+                )}
               </div>
             )}
           </div>
