@@ -861,12 +861,29 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   const social = detectSocialIcons(node);
   if (social) return social;
   if (node.tag === "ul" || node.tag === "ol") return iconList(node);
-  if (hasClass(node, "accordion", "faq")) return accordion(node);
+
+  // Multi-item sections/grids must stay containers so each child maps to its
+  // OWN native widget. Without this guard a whole grid of cards (menu, stats,
+  // testimonials, CTA columns) collapses into a single image-box/counter and
+  // the layout is destroyed. Detect "this node holds several content groups".
+  const headingCount = findAll(node, (n) => HEADINGS.has(n.tag)).length;
+  const imgCount = findAll(node, (n) => n.tag === "img").length;
+  const statChildren = node.children.filter(
+    (c) => c.tag && (hasClassToken(c, "stat", "counter") || /\d/.test(textContent(c))),
+  ).length;
+  const bigHeading = findAll(node, (n) => n.tag === "h1" || n.tag === "h2").length > 0;
+  const isMultiGroup =
+    node.tag === "section" || bigHeading || headingCount >= 2 || imgCount >= 2 || statChildren >= 2;
+
+  if (hasClass(node, "accordion", "faq")) {
+    const acc = accordion(node);
+    if ((acc.settings.tabs as unknown[])?.length) return acc;
+  }
   if (hasClass(node, "tabs", "tab-wrapper", "tabbed")) return tabs(node);
-  if (hasClass(node, "counter", "stat", "stats", "countup")) return counter(node);
-  if (hasClass(node, "testimonial", "review", "quote-card")) return testimonial(node);
-  if (hasClass(node, "image-box", "img-box")) return imageBox(node);
-  if (hasClass(node, "icon-box", "feature-box", "feature-card", "service-box")) return iconBox(node);
+  if (!isMultiGroup && hasClass(node, "counter", "stat", "stats", "countup")) return counter(node);
+  if (!isMultiGroup && hasClass(node, "testimonial", "review", "quote-card")) return testimonial(node);
+  if (!isMultiGroup && hasClass(node, "image-box", "img-box")) return imageBox(node);
+  if (!isMultiGroup && hasClass(node, "icon-box", "feature-box", "feature-card", "service-box")) return iconBox(node);
 
   // Composition probes so we can classify a block by its own contents.
   const directImg = findNode(node, (n) => n.tag === "img");
@@ -907,7 +924,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
 
   // Structural single-card fallbacks: map recognizable compositions to native
   // widgets instead of yet another nested container.
-  if (hasClass(node, "card", "box", "tile", "feature", "service", "item") || (hasText && (directImg || iconNode))) {
+  if (!isMultiGroup && (hasClass(node, "card", "box", "tile", "feature", "service", "item") || (hasText && (directImg || iconNode)))) {
     // image + title/text -> image-box (unless it's a CTA card with a button).
     if (directImg && hasText && !hasLink) return imageBox(node);
     // icon + title/text -> icon-box.
