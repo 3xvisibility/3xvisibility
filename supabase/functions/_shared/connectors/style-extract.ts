@@ -16,7 +16,10 @@ import type { SiteContext } from "./wp-site-context.ts";
 export interface NodeLike {
   tag: string;
   attrs: Record<string, string>;
+  /** Optional parent link so descendant selectors can match ancestors. */
+  parent?: NodeLike | null;
 }
+
 
 export interface BoxSides {
   top: string;
