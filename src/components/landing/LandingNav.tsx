@@ -7,6 +7,19 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import logo3x from "@/assets/logo-3x.png";
 
+// Height of the fixed navbar (h-16 = 64px) plus a little breathing room,
+// used to offset section scrolls so they don't sit under the header.
+const NAV_OFFSET = 80;
+
+/** Smooth-scroll so the element's top sits just below the fixed navbar. */
+function scrollToElement(el: HTMLElement | null) {
+  if (!el) return;
+  const top = el.getBoundingClientRect().top + window.scrollY - NAV_OFFSET;
+  window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
+}
+
+
+
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -30,7 +43,7 @@ export function LandingNav() {
   ];
 
   const scrollToId = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToElement(document.getElementById(id));
     // Keep the hash in the URL so a reload restores the same section.
     if (window.history.replaceState) {
       window.history.replaceState(null, "", `#${id}`);
@@ -82,7 +95,7 @@ export function LandingNav() {
     const tryScroll = () => {
       const el = document.getElementById(id);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        scrollToElement(el);
         setActiveId(id);
       } else if (attempts < 20) {
         attempts += 1;
@@ -113,7 +126,7 @@ export function LandingNav() {
       }
       const el = document.getElementById(hash);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        scrollToElement(el);
         setActiveId(hash);
       } else {
         // Fallback: unknown section — clear the hash and scroll to top.
