@@ -11,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const PRESETS = ["1140", "1200", "custom"] as const;
+const MIN_WIDTH = 320;
+const MAX_WIDTH = 1920;
+const DEFAULT_WIDTH = "1140";
 
 /**
  * Lets a workspace enforce an Elementor-style fixed content width (e.g. 1140 /
