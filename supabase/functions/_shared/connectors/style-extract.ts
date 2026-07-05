@@ -172,10 +172,27 @@ function parseDecls(body: string): Record<string, string> {
   return out;
 }
 
+/** Parse one compound (no combinators) into tag/classes/id. */
+function parseCompound(raw: string): SimpleSel | null {
+  const simple = raw.replace(/::?[\w-]+(?:\([^)]*\))?/g, "");
+  const classes = [...simple.matchAll(/\.([\w-]+)/g)].map((m) => m[1].toLowerCase());
+  const idMatch = simple.match(/#([\w-]+)/);
+  const tagMatch = simple.match(/^([a-zA-Z][\w-]*)/);
+  const id = idMatch ? idMatch[1].toLowerCase() : undefined;
+  const tag = tagMatch ? tagMatch[1].toLowerCase() : undefined;
+  if (!tag && !id && classes.length === 0) return null;
+  return { tag, classes, id };
+}
+
+function compoundSpecificity(s: SimpleSel): number {
+  return (s.id ? 100 : 0) + s.classes.length * 10 + (s.tag ? 1 : 0);
+}
+
 function parseSelector(sel: string): ParsedSelector | null {
-  // Only the RIGHTMOST simple selector is used for matching (no combinators),
-  // which is robust and good enough to bake per-element design.
-  const simpleRaw = sel.trim().split(/\s+/).pop() ?? "";
+  // Split into compounds, dropping combinator tokens (` `, `>`, `+`, `~`). The
+  // rightmost compound is the match target; the rest are ancestor requirements.
+  const tokens = sel.trim().split(/\s+/).filter((t) => t && !/^[>+~]$/.test(t));
+  const simpleRaw = tokens.length ? tokens[tokens.length - 1] : "";
   if (!simpleRaw || simpleRaw === "*") return null;
 
   // Detect a pseudo-ELEMENT (::before / legacy :before / ::placeholder …). These
@@ -192,18 +209,31 @@ function parseSelector(sel: string): ParsedSelector | null {
     }
   }
 
-  // Strip EVERY pseudo segment (`:x`, `::x`, functional `:not(.y)`) so the
-  // tag/class/id parse cleanly regardless of trailing pseudo syntax.
-  const simple = simpleRaw.replace(/::?[\w-]+(?:\([^)]*\))?/g, "");
+  const target = parseCompound(simpleRaw);
+  if (!target) return null;
 
-  const classes = [...simple.matchAll(/\.([\w-]+)/g)].map((m) => m[1].toLowerCase());
-  const idMatch = simple.match(/#([\w-]+)/);
-  const tagMatch = simple.match(/^([a-zA-Z][\w-]*)/);
-  const id = idMatch ? idMatch[1].toLowerCase() : undefined;
-  const tag = tagMatch ? tagMatch[1].toLowerCase() : undefined;
-  if (!tag && !id && classes.length === 0) return null;
-  const specificity = (id ? 100 : 0) + classes.length * 10 + (tag ? 1 : 0);
-  return { tag, classes, id, state, pseudoElement, specificity };
+  // Ancestor compounds (everything left of the target), skipping ones that only
+  // carry `*` or fail to parse.
+  const ancestors: SimpleSel[] = [];
+  for (let k = 0; k < tokens.length - 1; k++) {
+    if (tokens[k] === "*") continue;
+    const c = parseCompound(tokens[k]);
+    if (c) ancestors.push(c);
+  }
+
+  let specificity = compoundSpecificity(target);
+  for (const a of ancestors) specificity += compoundSpecificity(a);
+
+  return {
+    tag: target.tag,
+    classes: target.classes,
+    id: target.id,
+    ancestors: ancestors.length ? ancestors : undefined,
+    state,
+    pseudoElement,
+    specificity,
+  };
+
 
 }
 
