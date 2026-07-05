@@ -1800,27 +1800,38 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
   const width = `${size}px`;
   const boxedDim = { unit: "px", size, sizes: [] };
 
-  const wrapped = tree.map((section) => {
-    if (!section || section.elType !== "container") return section;
-    const kids = Array.isArray(section.elements) ? section.elements : [];
-    if (kids.length === 0) return section;
+  const isBoxed = (el: ElementorElement): boolean =>
+    el?.elType === "container" &&
+    (el.settings as Record<string, unknown>)?.content_width === "boxed" &&
+    (el.settings as Record<string, unknown>)?.width !== undefined &&
+    (el.settings as Record<string, unknown>)?.width !== "";
 
-    // Idempotent path: already wrapped by us — just refresh the width.
-    if (
-      kids.length === 1 &&
-      kids[0].elType === "container" &&
-      (kids[0].settings as Record<string, unknown>)?._xxxvBoxed === true
-    ) {
-      const inner = kids[0];
-      return {
-        ...section,
-        settings: { ...section.settings, content_width: "full", width: "100%", flex_align_items: "center" },
-        elements: [
-          { ...inner, settings: { ...inner.settings, content_width: "boxed", width, boxed_width: boxedDim } },
-        ],
-      };
+  const rescale = (el: ElementorElement) => {
+    el.settings = { ...el.settings, content_width: "boxed", width, boxed_width: boxedDim };
+  };
+
+  // Box a leaf SECTION band: keep the band itself full width (backgrounds stay
+  // edge-to-edge) and constrain its content to the target width.
+  const boxSection = (section: ElementorElement) => {
+    const kids = Array.isArray(section.elements) ? section.elements : [];
+    section.settings = { ...section.settings, content_width: "full", width: "100%" };
+    if (kids.length === 0) return;
+
+    // The template's own centered wrapper(s) (e.g. `.wrap{max-width:1180px}`) are
+    // already boxed — just retune them to the requested width.
+    const boxedKids = kids.filter(isBoxed);
+    if (boxedKids.length) {
+      boxedKids.forEach(rescale);
+      return;
     }
 
+    // Idempotent: a wrapper we added on a previous run — refresh its width.
+    if (kids.length === 1 && (kids[0].settings as Record<string, unknown>)?._xxxvBoxed === true) {
+      rescale(kids[0]);
+      return;
+    }
+
+    // Otherwise wrap the section's content in a fresh centered boxed container.
     const inner: ElementorElement = {
       id: genId(),
       elType: "container",
@@ -1833,16 +1844,28 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
       },
       elements: kids,
     };
+    section.elements = [inner];
+  };
 
-    return {
-      ...section,
-      settings: { ...section.settings, content_width: "full", width: "100%", flex_align_items: "center" },
-      elements: [inner],
-    };
-  });
+  // Walk the tree. A container holding 2+ child containers is a page/section
+  // WRAPPER: keep it full width and recurse into each child so real section
+  // bands are the ones boxed. A container holding content (widgets or a single
+  // inner wrapper) is a SECTION band and gets its content boxed.
+  const process = (el: ElementorElement) => {
+    if (!el || el.elType !== "container") return;
+    const childContainers = (el.elements || []).filter((c) => c?.elType === "container");
+    if (childContainers.length >= 2) {
+      el.settings = { ...el.settings, content_width: "full", width: "100%" };
+      for (const c of el.elements) process(c);
+    } else {
+      boxSection(el);
+    }
+  };
 
-  return JSON.stringify(wrapped);
+  for (const top of tree) process(top);
+  return JSON.stringify(tree);
 }
+
 
 /**
  * Legacy helper retained for compatibility with old imports. It no longer builds
