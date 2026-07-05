@@ -544,6 +544,21 @@ export default function GeneratedPagesPage() {
     onError: (err: Error) => toast({ title: "Reconvert failed", description: err.message, variant: "destructive" }),
   });
 
+  // One-click: reconvert stored JSON, then immediately republish the page live.
+  const handleRepairAndRepublish = async (pageId: string) => {
+    try {
+      const res = await reconvertMutation.mutateAsync(pageId);
+      toast({
+        title: "Template reconverted",
+        description: `Rebuilt ${res?.widgets ?? 0} widgets · ${res?.fields ?? 0} fields. Republishing…`,
+      });
+      handlePublish([pageId], "publish");
+    } catch {
+      // reconvertMutation.onError already surfaced the failure toast.
+    }
+  };
+
+
 
 
 
