@@ -10,11 +10,12 @@ import logo3x from "@/assets/logo-3x.png";
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeId, setActiveId] = useState<string>(() =>
-    typeof window !== "undefined" && window.location.pathname === "/"
-      ? window.location.hash.replace("#", "")
-      : "",
-  );
+  // Default active section when there's no URL hash on the home page.
+  const DEFAULT_ACTIVE_ID = "features";
+  const [activeId, setActiveId] = useState<string>(() => {
+    if (typeof window === "undefined" || window.location.pathname !== "/") return "";
+    return window.location.hash.replace("#", "") || DEFAULT_ACTIVE_ID;
+  });
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
@@ -91,7 +92,7 @@ export function LandingNav() {
         // clear the hash and scroll back to the top.
         window.history.replaceState(null, "", window.location.pathname);
         window.scrollTo({ top: 0, behavior: "smooth" });
-        setActiveId("");
+        setActiveId(DEFAULT_ACTIVE_ID);
       }
     };
     // Defer so sections have a chance to render after reload.
@@ -107,7 +108,7 @@ export function LandingNav() {
       if (!hash) {
         // No hash (e.g. navigated back to the base URL) — return to top.
         window.scrollTo({ top: 0, behavior: "smooth" });
-        setActiveId("");
+        setActiveId(DEFAULT_ACTIVE_ID);
         return;
       }
       const el = document.getElementById(hash);
@@ -118,7 +119,7 @@ export function LandingNav() {
         // Fallback: unknown section — clear the hash and scroll to top.
         window.history.replaceState(null, "", window.location.pathname);
         window.scrollTo({ top: 0, behavior: "smooth" });
-        setActiveId("");
+        setActiveId(DEFAULT_ACTIVE_ID);
       }
     };
     window.addEventListener("popstate", onPopState);
