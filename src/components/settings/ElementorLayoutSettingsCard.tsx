@@ -230,9 +230,14 @@ export default function ElementorLayoutSettingsCard() {
           );
         })()}
 
-        <Button onClick={save} disabled={saving || loading}>
-          {saving ? "Saving…" : "Save layout setting"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={save} disabled={saving || loading || !!customError}>
+            {saving ? "Saving…" : "Save layout setting"}
+          </Button>
+          <Button variant="outline" onClick={resetToDefault} disabled={saving || loading}>
+            Reset to default
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
