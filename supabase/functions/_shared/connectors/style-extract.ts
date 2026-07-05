@@ -111,10 +111,25 @@ function parseMediaCond(prelude: string): MediaCond {
   };
 }
 
+interface SimpleSel {
+  tag?: string;
+  classes: string[];
+  id?: string;
+}
+
 interface ParsedSelector {
   tag?: string;
   classes: string[];
   id?: string;
+  /**
+   * Ancestor compounds to the LEFT of the rightmost simple selector, in
+   * document (outermost-last) order as written. Each must match some ancestor
+   * of the node for the rule to apply. This makes descendant selectors like
+   * `.pl-rate .avs img` only target their real subtree instead of every `img`,
+   * which is the difference between a faithful clone and cross-section style
+   * bleed. All combinators (` `, `>`, `+`, `~`) are treated as descendant here.
+   */
+  ancestors?: SimpleSel[];
   /**
    * Interactive STATE pseudo-class (hover/focus/active/…) this selector targets,
    * if any. State rules are baked as Elementor hover controls, never merged into
@@ -123,9 +138,10 @@ interface ParsedSelector {
   state?: string;
   /** True when the selector targets a pseudo-ELEMENT (::before, ::after, …). */
   pseudoElement?: boolean;
-  /** Higher = wins. (id*100 + class*10 + tag). */
+  /** Higher = wins. (id*100 + class*10 + tag), summed across all compounds. */
   specificity: number;
 }
+
 
 /**
  * Pseudo-classes that represent an interactive STATE. They must not pollute the
