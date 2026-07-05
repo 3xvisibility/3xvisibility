@@ -95,7 +95,7 @@ export function LandingNav() {
     const tryScroll = () => {
       const el = document.getElementById(id);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        scrollToElement(el);
         setActiveId(id);
       } else if (attempts < 20) {
         attempts += 1;
@@ -126,7 +126,7 @@ export function LandingNav() {
       }
       const el = document.getElementById(hash);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        scrollToElement(el);
         setActiveId(hash);
       } else {
         // Fallback: unknown section — clear the hash and scroll to top.
