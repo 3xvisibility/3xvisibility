@@ -14,7 +14,7 @@ import {
   Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save,
   Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight,
   RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3,
-  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Send as SendIcon
+  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Wrench, Send as SendIcon
 } from "lucide-react";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
