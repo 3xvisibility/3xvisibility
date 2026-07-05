@@ -178,10 +178,12 @@ function parseHtml(html: string): HtmlNode[] {
         }
       }
     } else {
-      const node: HtmlNode = { tag, attrs: parseAttrs(m[2] || ""), children: [] };
-      stack[stack.length - 1].children.push(node);
+      const parent = stack[stack.length - 1];
+      const node: HtmlNode = { tag, attrs: parseAttrs(m[2] || ""), children: [], parent };
+      parent.children.push(node);
       if (!selfClose) stack.push(node);
     }
+
   }
   if (last < html.length) pushText(html.slice(last));
   return root.children;
