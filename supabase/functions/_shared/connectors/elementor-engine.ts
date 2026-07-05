@@ -142,8 +142,10 @@ function parseHtml(html: string): HtmlNode[] {
   const pushText = (text: string) => {
     const cleaned = text.replace(/\s+/g, " ");
     if (!cleaned.trim()) return;
-    stack[stack.length - 1].children.push({ tag: "", attrs: {}, children: [], text });
+    const parent = stack[stack.length - 1];
+    parent.children.push({ tag: "", attrs: {}, children: [], text, parent });
   };
+
 
   while ((m = tagRe.exec(html)) !== null) {
     if (m.index > last) pushText(html.slice(last, m.index));
