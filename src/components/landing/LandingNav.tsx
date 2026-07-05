@@ -26,6 +26,10 @@ export function LandingNav() {
 
   const scrollToId = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Keep the hash in the URL so a reload restores the same section.
+    if (window.history.replaceState) {
+      window.history.replaceState(null, "", `#${id}`);
+    }
   };
 
   const handleNavClick = (e: React.MouseEvent, href: string) => {
