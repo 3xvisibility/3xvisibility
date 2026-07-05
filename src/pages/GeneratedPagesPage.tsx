@@ -544,6 +544,21 @@ export default function GeneratedPagesPage() {
     onError: (err: Error) => toast({ title: "Reconvert failed", description: err.message, variant: "destructive" }),
   });
 
+  // One-click: reconvert stored JSON, then immediately republish the page live.
+  const handleRepairAndRepublish = async (pageId: string) => {
+    try {
+      const res = await reconvertMutation.mutateAsync(pageId);
+      toast({
+        title: "Template reconverted",
+        description: `Rebuilt ${res?.widgets ?? 0} widgets · ${res?.fields ?? 0} fields. Republishing…`,
+      });
+      handlePublish([pageId], "publish");
+    } catch {
+      // reconvertMutation.onError already surfaced the failure toast.
+    }
+  };
+
+
 
 
 
@@ -970,6 +985,7 @@ export default function GeneratedPagesPage() {
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                       {page.campaign_id && <DropdownMenuItem onClick={() => reconvertMutation.mutate(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair / Reconvert</DropdownMenuItem>}
+                      {page.campaign_id && <DropdownMenuItem onClick={() => handleRepairAndRepublish(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair &amp; Republish</DropdownMenuItem>}
                       {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
                         <DropdownMenuItem
@@ -1080,6 +1096,7 @@ export default function GeneratedPagesPage() {
                               {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                               {page.campaign_id && <DropdownMenuItem onClick={() => reconvertMutation.mutate(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair / Reconvert</DropdownMenuItem>}
+                              {page.campaign_id && <DropdownMenuItem onClick={() => handleRepairAndRepublish(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair &amp; Republish</DropdownMenuItem>}
                               {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
                               {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
                                 <DropdownMenuItem
