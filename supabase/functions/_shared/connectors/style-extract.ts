@@ -454,6 +454,16 @@ export class StyleResolver {
     const classes = (node.attrs?.class || "").toLowerCase().split(/\s+/).filter(Boolean);
     const id = (node.attrs?.id || "").toLowerCase();
 
+    // Snapshot the ancestor chain once (outermost last) for descendant matching.
+    const ancestry: { tag: string; classes: string[]; id: string }[] = [];
+    for (let p = node.parent; p; p = p.parent) {
+      ancestry.push({
+        tag: (p.tag || "").toLowerCase(),
+        classes: (p.attrs?.class || "").toLowerCase().split(/\s+/).filter(Boolean),
+        id: (p.attrs?.id || "").toLowerCase(),
+      });
+    }
+
     const matched: { spec: number; order: number; decls: Record<string, string> }[] = [];
     for (const rule of this.rules) {
       if (!mediaActiveAt(rule.media, width)) continue;
@@ -464,9 +474,11 @@ export class StyleResolver {
         if (sel.tag && sel.tag !== tag) continue;
         if (sel.id && sel.id !== id) continue;
         if (sel.classes.length && !sel.classes.every((c) => classes.includes(c))) continue;
+        if (sel.ancestors && !ancestorsMatch(sel.ancestors, ancestry)) continue;
         matched.push({ spec: sel.specificity, order: rule.order, decls: rule.decls });
       }
     }
+
 
     matched.sort((a, b) => (a.spec - b.spec) || (a.order - b.order));
     const merged: Record<string, string> = {};
