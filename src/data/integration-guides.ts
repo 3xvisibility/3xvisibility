@@ -28,7 +28,7 @@ export interface GuideContent {
   ctaSecondary: string;
 }
 
-type LocalizedGuide = Record<Language, GuideContent>;
+type LocalizedGuide = Partial<Record<Language, GuideContent>> & { en: GuideContent };
 
 export const wordpressGuide: LocalizedGuide = {
   en: {

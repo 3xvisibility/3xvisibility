@@ -1807,10 +1807,12 @@
   "sidebar.admin": "Admin",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "KI-Scanner",
+  "sidebar.aiSiteBuilder": "KI-Website-Builder",
   "sidebar.analytics": "Analytik",
   "sidebar.billing": "Abrechnung",
   "sidebar.campaigns": "Kampagnen",
   "sidebar.contentCalendar": "Inhaltskalender",
+  "sidebar.cssScanFix": "CSS Scan & Fix",
   "sidebar.dashboard": "Dashboard",
   "sidebar.dataCsv": "Daten / CSV",
   "sidebar.discovery": "Entdeckung",
@@ -2212,6 +2214,5 @@
   "workspaceSettings.workspaceDetailsDesc": "Aktualisieren Sie den Namen Ihres Arbeitsbereichs. Nur Arbeitsbereichs-Inhaber können den Namen ändern.",
   "workspaceSettings.workspaceName": "Workspace-Name",
   "workspaceSettings.workspaceRenamed": "Arbeitsbereich umbenannt",
-  "workspaceSettings.workspaceRenamedDesc": "Der Name des Arbeitsbereichs wurde aktualisiert.",
-  "sidebar.aiSiteBuilder": "KI-Website-Builder"
+  "workspaceSettings.workspaceRenamedDesc": "Der Name des Arbeitsbereichs wurde aktualisiert."
 }

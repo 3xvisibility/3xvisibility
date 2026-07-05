@@ -7,7 +7,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import type { Language } from "@/i18n/translations";
 import NotFound from "@/pages/NotFound";
 
-const UI: Record<Language, { back: string; keepReading: string }> = {
+const UI: Partial<Record<Language, { back: string; keepReading: string }>> = {
   en: { back: "Back to blog", keepReading: "Keep reading" },
   fr: { back: "Retour au blog", keepReading: "Continuer la lecture" },
   de: { back: "Zurück zum Blog", keepReading: "Weiterlesen" },

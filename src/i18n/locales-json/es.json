@@ -1807,10 +1807,12 @@
   "sidebar.admin": "administrador",
   "sidebar.affiliate": "Afiliado",
   "sidebar.aiScanner": "AI Escáner",
+  "sidebar.aiSiteBuilder": "Creador de sitios IA",
   "sidebar.analytics": "Analítica",
   "sidebar.billing": "Facturación",
   "sidebar.campaigns": "Campañas",
   "sidebar.contentCalendar": "Calendario de contenido",
+  "sidebar.cssScanFix": "CSS Scan & Fix",
   "sidebar.dashboard": "Panel de control",
   "sidebar.dataCsv": "Datos / CSV",
   "sidebar.discovery": "Descubrimiento",
@@ -2212,6 +2214,5 @@
   "workspaceSettings.workspaceDetailsDesc": "Actualice el nombre de su espacio de trabajo. Sólo los propietarios del espacio de trabajo pueden cambiar el nombre.",
   "workspaceSettings.workspaceName": "Nombre del espacio de trabajo",
   "workspaceSettings.workspaceRenamed": "Espacio de trabajo renombrado",
-  "workspaceSettings.workspaceRenamedDesc": "El nombre del espacio de trabajo se ha actualizado.",
-  "sidebar.aiSiteBuilder": "Creador de sitios IA"
+  "workspaceSettings.workspaceRenamedDesc": "El nombre del espacio de trabajo se ha actualizado."
 }
