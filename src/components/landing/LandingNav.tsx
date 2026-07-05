@@ -92,7 +92,7 @@ export function LandingNav() {
         // clear the hash and scroll back to the top.
         window.history.replaceState(null, "", window.location.pathname);
         window.scrollTo({ top: 0, behavior: "smooth" });
-        setActiveId("");
+        setActiveId(DEFAULT_ACTIVE_ID);
       }
     };
     // Defer so sections have a chance to render after reload.
@@ -108,7 +108,7 @@ export function LandingNav() {
       if (!hash) {
         // No hash (e.g. navigated back to the base URL) — return to top.
         window.scrollTo({ top: 0, behavior: "smooth" });
-        setActiveId("");
+        setActiveId(DEFAULT_ACTIVE_ID);
         return;
       }
       const el = document.getElementById(hash);
@@ -119,7 +119,7 @@ export function LandingNav() {
         // Fallback: unknown section — clear the hash and scroll to top.
         window.history.replaceState(null, "", window.location.pathname);
         window.scrollTo({ top: 0, behavior: "smooth" });
-        setActiveId("");
+        setActiveId(DEFAULT_ACTIVE_ID);
       }
     };
     window.addEventListener("popstate", onPopState);
