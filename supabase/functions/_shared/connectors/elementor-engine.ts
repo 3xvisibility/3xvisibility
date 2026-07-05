@@ -1266,6 +1266,36 @@ function hasVisualStyling(el: ElementorElement): boolean {
   return VISUAL_STYLE_KEYS.some((key) => key in s && s[key] !== undefined && s[key] !== "");
 }
 
+// WordPress editor / theme layout wrapper classes. A container whose ONLY
+// styling is one or more of these classes carries no real design of its own —
+// it is the constrained `.entry-content` shell the CMS wraps around the real
+// design. Keeping it as an Elementor container re-applies the theme's
+// `is-layout-constrained` max-width, which stops section backgrounds from going
+// edge-to-edge. Such shells are collapsed so the real design root becomes the
+// top-level (full-width) section.
+const TRANSPARENT_WRAPPER_CLASSES = new Set([
+  "entry-content", "wp-block-post-content", "is-layout-constrained", "is-layout-flow",
+  "is-layout-flex", "is-layout-grid", "wp-themed-content", "pgp-skin-wordpress",
+  "alignfull", "alignwide", "wp-site-blocks", "site-content", "content-area",
+  "wp-block-post", "wp-block-group", "entry-content-wrap",
+]);
+
+function isTransparentWrapper(el: ElementorElement): boolean {
+  if (el.elType !== "container") return false;
+  const s = el.settings || {};
+  // Any real visual property (background, padding, boxed width, shadow, …)
+  // disqualifies it — those must be preserved.
+  if (s.content_width === "boxed" && s.width !== undefined && s.width !== "") return false;
+  const hasReal = VISUAL_STYLE_KEYS.some(
+    (key) => key !== "_css_classes" && key in s && s[key] !== undefined && s[key] !== "",
+  );
+  if (hasReal) return false;
+  const cls = String((s as Record<string, unknown>)._css_classes || "").trim();
+  if (!cls) return true; // no styling and no identity classes → transparent
+  return cls.toLowerCase().split(/\s+/).filter(Boolean)
+    .every((t) => TRANSPARENT_WRAPPER_CLASSES.has(t) || /^xxxv-s-/.test(t));
+}
+
 function isPlainWrapper(el: ElementorElement): boolean {
   if (el.elType !== "container") return false;
   // Never unwrap a container that carries visual styling or identity. AI Site
