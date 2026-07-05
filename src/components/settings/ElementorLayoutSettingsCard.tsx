@@ -142,6 +142,62 @@ export default function ElementorLayoutSettingsCard() {
           </div>
         )}
 
+        {/* Live preview */}
+        {(() => {
+          const targetWidth = preset === "custom" ? Number(customWidth) : Number(preset);
+          const safeWidth = Number.isFinite(targetWidth) && targetWidth > 0
+            ? Math.min(Math.max(Math.round(targetWidth), 320), 1920)
+            : 1140;
+          const CANVAS = 1440; // simulated viewport width
+          const applied = enabled && previewEnforced;
+          const boxedPct = Math.min((safeWidth / CANVAS) * 100, 100);
+          return (
+            <div className="space-y-2 rounded-lg border p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <Label>Preview with enforcement</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {applied
+                      ? `Content boxed at ~${safeWidth}px, sections full-width.`
+                      : "Content spans full width (no boxed container)."}
+                  </p>
+                </div>
+                <Switch
+                  checked={previewEnforced}
+                  disabled={!enabled}
+                  onCheckedChange={setPreviewEnforced}
+                />
+              </div>
+
+              <div className="overflow-hidden rounded-md border bg-muted/30">
+                {/* Section 1 (full-width background) */}
+                <div className="w-full bg-primary/10 py-3">
+                  <div
+                    className="mx-auto rounded bg-primary/40 px-2 py-2 text-center text-[10px] font-medium text-primary-foreground transition-all duration-300"
+                    style={{ width: applied ? `${boxedPct}%` : "100%" }}
+                  >
+                    Hero content
+                  </div>
+                </div>
+                {/* Section 2 (full-width background, alt color) */}
+                <div className="w-full bg-secondary/40 py-3">
+                  <div
+                    className="mx-auto flex gap-2 transition-all duration-300"
+                    style={{ width: applied ? `${boxedPct}%` : "100%" }}
+                  >
+                    <div className="h-8 flex-1 rounded bg-foreground/15" />
+                    <div className="h-8 flex-1 rounded bg-foreground/15" />
+                    <div className="h-8 flex-1 rounded bg-foreground/15" />
+                  </div>
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Simulated {CANVAS}px viewport. Section backgrounds always stay edge-to-edge.
+              </p>
+            </div>
+          );
+        })()}
+
         <Button onClick={save} disabled={saving || loading}>
           {saving ? "Saving…" : "Save layout setting"}
         </Button>
