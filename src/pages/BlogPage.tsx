@@ -6,7 +6,7 @@ import { getLocalizedPosts } from "@/data/blog";
 import { useLanguage } from "@/i18n/LanguageContext";
 import type { Language } from "@/i18n/translations";
 
-const UI: Record<Language, { title: string; subtitle: string; readMore: string; more: string }> = {
+const UI: Partial<Record<Language, { title: string; subtitle: string; readMore: string; more: string }>> = {
   en: {
     title: "Blog",
     subtitle: "Product updates, SEO playbooks and engineering notes from the 3XVISIBILITY team.",
