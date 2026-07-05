@@ -90,7 +90,10 @@ interface HtmlNode {
   attrs: Record<string, string>;
   children: HtmlNode[];
   text?: string;
+  /** Parent link so the style resolver can honour descendant selectors. */
+  parent?: HtmlNode | null;
 }
+
 
 const VOID_TAGS = new Set([
   "area", "base", "br", "col", "embed", "hr", "img", "input",
