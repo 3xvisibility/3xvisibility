@@ -10,11 +10,12 @@ import logo3x from "@/assets/logo-3x.png";
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeId, setActiveId] = useState<string>(() =>
-    typeof window !== "undefined" && window.location.pathname === "/"
-      ? window.location.hash.replace("#", "")
-      : "",
-  );
+  // Default active section when there's no URL hash on the home page.
+  const DEFAULT_ACTIVE_ID = "features";
+  const [activeId, setActiveId] = useState<string>(() => {
+    if (typeof window === "undefined" || window.location.pathname !== "/") return "";
+    return window.location.hash.replace("#", "") || DEFAULT_ACTIVE_ID;
+  });
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
