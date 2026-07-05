@@ -1329,7 +1329,7 @@ function unwrapRedundant(elements: ElementorElement[]): ElementorElement[] {
     // wrapper chains (grid > grid > grid > content) in one pass.
     while (
       el.elType === "container" &&
-      !hasVisualStyling(el) &&
+      (!hasVisualStyling(el) || isTransparentWrapper(el)) &&
       el.elements.length === 1 &&
       el.elements[0].elType === "container"
     ) {
