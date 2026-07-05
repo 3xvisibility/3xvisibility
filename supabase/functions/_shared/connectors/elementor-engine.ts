@@ -871,8 +871,9 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   const statChildren = node.children.filter(
     (c) => c.tag && (hasClassToken(c, "stat", "counter") || /\d/.test(textContent(c))),
   ).length;
+  const bigHeading = findAll(node, (n) => n.tag === "h1" || n.tag === "h2").length > 0;
   const isMultiGroup =
-    node.tag === "section" || headingCount >= 2 || imgCount >= 2 || statChildren >= 2;
+    node.tag === "section" || bigHeading || headingCount >= 2 || imgCount >= 2 || statChildren >= 2;
 
   if (hasClass(node, "accordion", "faq")) {
     const acc = accordion(node);
