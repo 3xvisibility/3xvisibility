@@ -10,7 +10,11 @@ import logo3x from "@/assets/logo-3x.png";
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeId, setActiveId] = useState<string>("");
+  const [activeId, setActiveId] = useState<string>(() =>
+    typeof window !== "undefined" && window.location.pathname === "/"
+      ? window.location.hash.replace("#", "")
+      : "",
+  );
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
