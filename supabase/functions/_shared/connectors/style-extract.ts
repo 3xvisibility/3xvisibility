@@ -187,6 +187,37 @@ function parseCompound(raw: string): SimpleSel | null {
   return { tag, classes, id };
 }
 
+/** Does a single compound match one ancestor descriptor? */
+function simpleMatches(s: SimpleSel, a: { tag: string; classes: string[]; id: string }): boolean {
+  if (s.tag && s.tag !== a.tag) return false;
+  if (s.id && s.id !== a.id) return false;
+  if (s.classes.length && !s.classes.every((c) => a.classes.includes(c))) return false;
+  return true;
+}
+
+/**
+ * Verify a selector's ancestor compounds (written outer→inner) each match some
+ * ancestor of the node, in order. `ancestry` is innermost-first. All combinators
+ * are treated as descendant, which is a safe superset of `>`/`+`/`~`.
+ */
+function ancestorsMatch(
+  anc: SimpleSel[],
+  ancestry: { tag: string; classes: string[]; id: string }[],
+): boolean {
+  const need = [...anc].reverse(); // innermost requirement first
+  let ai = 0;
+  for (const req of need) {
+    let found = false;
+    while (ai < ancestry.length) {
+      const cur = ancestry[ai];
+      ai++;
+      if (simpleMatches(req, cur)) { found = true; break; }
+    }
+    if (!found) return false;
+  }
+  return true;
+}
+
 function compoundSpecificity(s: SimpleSel): number {
   return (s.id ? 100 : 0) + s.classes.length * 10 + (s.tag ? 1 : 0);
 }
