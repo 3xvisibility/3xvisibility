@@ -87,9 +87,24 @@ export function LandingNav() {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((l) => (
-              <a key={l.href} href={l.href} onClick={(e) => handleNavClick(e, l.href)} className="text-sm text-[hsl(220,10%,78%)] hover:text-foreground px-4 py-2 rounded-lg transition-colors duration-200 font-medium">{l.label}</a>
-            ))}
+            {navLinks.map((l) => {
+              const isActive = activeId === l.href.replace("#", "");
+              return (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  onClick={(e) => handleNavClick(e, l.href)}
+                  aria-current={isActive ? "true" : undefined}
+                  className={`text-sm px-4 py-2 rounded-lg transition-colors duration-200 font-medium ${
+                    isActive
+                      ? "text-primary bg-[hsl(96,90%,45%,0.1)]"
+                      : "text-[hsl(220,10%,78%)] hover:text-foreground"
+                  }`}
+                >
+                  {l.label}
+                </a>
+              );
+            })}
           </nav>
 
           <div className="hidden lg:flex items-center gap-2">
