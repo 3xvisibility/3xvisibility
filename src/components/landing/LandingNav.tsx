@@ -64,6 +64,12 @@ export function LandingNav() {
       } else if (attempts < 20) {
         attempts += 1;
         setTimeout(tryScroll, 100);
+      } else {
+        // Fallback: hash points to a section that doesn't exist —
+        // clear the hash and scroll back to the top.
+        window.history.replaceState(null, "", window.location.pathname);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setActiveId("");
       }
     };
     // Defer so sections have a chance to render after reload.
@@ -76,11 +82,21 @@ export function LandingNav() {
     const onPopState = () => {
       if (window.location.pathname !== "/") return;
       const hash = window.location.hash.replace("#", "");
-      if (!hash) return;
+      if (!hash) {
+        // No hash (e.g. navigated back to the base URL) — return to top.
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setActiveId("");
+        return;
+      }
       const el = document.getElementById(hash);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
         setActiveId(hash);
+      } else {
+        // Fallback: unknown section — clear the hash and scroll to top.
+        window.history.replaceState(null, "", window.location.pathname);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setActiveId("");
       }
     };
     window.addEventListener("popstate", onPopState);
