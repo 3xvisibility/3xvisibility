@@ -66,14 +66,35 @@ export default function ElementorLayoutSettingsCard() {
     if (!enabled) return 0;
     const raw = preset === "custom" ? Number(customWidth) : Number(preset);
     if (!Number.isFinite(raw) || raw <= 0) return 0;
-    return Math.min(Math.max(Math.round(raw), 320), 1920);
+    return Math.min(Math.max(Math.round(raw), MIN_WIDTH), MAX_WIDTH);
+  };
+
+  // Inline validation for the custom width field.
+  const customError = ((): string | null => {
+    if (!enabled || preset !== "custom") return null;
+    const trimmed = customWidth.trim();
+    if (trimmed === "") return "Enter a width.";
+    const raw = Number(trimmed);
+    if (!Number.isFinite(raw)) return "Must be a number.";
+    if (raw < MIN_WIDTH) return `Minimum is ${MIN_WIDTH}px.`;
+    if (raw > MAX_WIDTH) return `Maximum is ${MAX_WIDTH}px.`;
+    return null;
+  })();
+
+  const resetToDefault = () => {
+    setPreset("1140");
+    setCustomWidth(DEFAULT_WIDTH);
   };
 
   const save = async () => {
     if (!currentWorkspace?.id) return;
+    if (customError) {
+      toast({ title: "Invalid width", description: customError, variant: "destructive" });
+      return;
+    }
     const width = resolveWidth();
     if (enabled && width <= 0) {
-      toast({ title: "Invalid width", description: "Enter a width between 320 and 1920px.", variant: "destructive" });
+      toast({ title: "Invalid width", description: `Enter a width between ${MIN_WIDTH} and ${MAX_WIDTH}px.`, variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -92,6 +113,7 @@ export default function ElementorLayoutSettingsCard() {
       description: width > 0 ? `Pages will use a ${width}px content container.` : "Fixed container width disabled.",
     });
   };
+
 
   return (
     <Card className="shadow-surface">
