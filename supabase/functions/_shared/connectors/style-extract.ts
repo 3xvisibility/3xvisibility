@@ -320,6 +320,7 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["letter-spacing"]) p.letterSpacing = d["letter-spacing"];
   if (d["text-align"]) p.textAlign = d["text-align"];
   if (d["width"]) p.width = d["width"];
+  if (d["height"]) p.height = d["height"];
   if (d["max-width"]) p.maxWidth = d["max-width"];
   if (d["border-radius"]) p.borderRadius = d["border-radius"];
   if (d["display"]) p.display = d["display"];
