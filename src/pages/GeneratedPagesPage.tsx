@@ -14,7 +14,7 @@ import {
   Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save,
   Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight,
   RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3,
-  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Send as SendIcon
+  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Wrench, Send as SendIcon
 } from "lucide-react";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
@@ -525,6 +525,27 @@ export default function GeneratedPagesPage() {
     onError: (err: Error) => toast({ title: "Re-check failed", description: err.message, variant: "destructive" }),
   });
 
+  const reconvertMutation = useMutation({
+    mutationFn: async (pageId: string) => {
+      const { data, error } = await supabase.functions.invoke("reconvert-template-json", {
+        body: { page_id: pageId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(typeof data.error === "string" ? data.error : "Reconvert failed");
+      return data as { widgets?: number; fields?: number; sections?: number };
+    },
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      toast({
+        title: "Template reconverted",
+        description: `Stored JSON rebuilt: ${res?.widgets ?? 0} widgets · ${res?.fields ?? 0} fields. Re-publish to apply.`,
+      });
+    },
+    onError: (err: Error) => toast({ title: "Reconvert failed", description: err.message, variant: "destructive" }),
+  });
+
+
+
 
 
   const inlineSeoSaveMutation = useMutation({
@@ -948,6 +969,7 @@ export default function GeneratedPagesPage() {
                       {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
+                      {page.campaign_id && <DropdownMenuItem onClick={() => reconvertMutation.mutate(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair / Reconvert</DropdownMenuItem>}
                       {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
                         <DropdownMenuItem
@@ -1057,6 +1079,7 @@ export default function GeneratedPagesPage() {
                               {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
                               {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
+                              {page.campaign_id && <DropdownMenuItem onClick={() => reconvertMutation.mutate(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair / Reconvert</DropdownMenuItem>}
                               {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
                               {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
                                 <DropdownMenuItem
