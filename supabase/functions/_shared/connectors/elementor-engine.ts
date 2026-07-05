@@ -923,7 +923,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
 
   // Structural single-card fallbacks: map recognizable compositions to native
   // widgets instead of yet another nested container.
-  if (hasClass(node, "card", "box", "tile", "feature", "service", "item") || (hasText && (directImg || iconNode))) {
+  if (!isMultiGroup && (hasClass(node, "card", "box", "tile", "feature", "service", "item") || (hasText && (directImg || iconNode)))) {
     // image + title/text -> image-box (unless it's a CTA card with a button).
     if (directImg && hasText && !hasLink) return imageBox(node);
     // icon + title/text -> icon-box.
