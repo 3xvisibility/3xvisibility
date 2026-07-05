@@ -27,6 +27,7 @@ export default function ElementorLayoutSettingsCard() {
   const [customWidth, setCustomWidth] = useState("1140");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [previewEnforced, setPreviewEnforced] = useState(true);
 
   useEffect(() => {
     let active = true;
