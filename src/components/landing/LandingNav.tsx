@@ -164,12 +164,22 @@ export function LandingNav() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible[0]) setActiveId(visible[0].target.id);
+        // Prefer intersecting sections; among them pick the one closest to the
+        // top activation band so short sections still register reliably.
+        const intersecting = entries.filter((e) => e.isIntersecting);
+        if (intersecting.length > 0) {
+          const top = intersecting.sort(
+            (a, b) => a.boundingClientRect.top - b.boundingClientRect.top,
+          )[0];
+          setActiveId(top.target.id);
+        }
       },
-      { rootMargin: "-45% 0px -45% 0px", threshold: [0, 0.25, 0.5, 1] },
+      {
+        // Activation band sits just below the fixed navbar and spans the
+        // upper-middle of the viewport for stable, early section detection.
+        rootMargin: `-${NAV_OFFSET}px 0px -60% 0px`,
+        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
+      },
     );
     sections.forEach((s) => observer.observe(s));
     return () => observer.disconnect();
