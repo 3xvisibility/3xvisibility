@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,6 +11,8 @@ export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const navLinks = [
     { label: t("nav.features"), href: "#features" },
@@ -20,6 +22,23 @@ export function LandingNav() {
     { label: t("nav.affiliate"), href: "#affiliate" },
     { label: t("nav.faq"), href: "#faq" },
   ];
+
+  const scrollToId = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleNavClick = (e: React.MouseEvent, href: string) => {
+    e.preventDefault();
+    setMobileOpen(false);
+    const id = href.replace("#", "");
+    if (location.pathname === "/") {
+      scrollToId(id);
+    } else {
+      // Navigate home first, then scroll once the sections have mounted.
+      navigate("/");
+      setTimeout(() => scrollToId(id), 300);
+    }
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -42,7 +61,7 @@ export function LandingNav() {
 
           <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((l) => (
-              <a key={l.href} href={l.href} className="text-sm text-[hsl(220,10%,78%)] hover:text-foreground px-4 py-2 rounded-lg transition-colors duration-200 font-medium">{l.label}</a>
+              <a key={l.href} href={l.href} onClick={(e) => handleNavClick(e, l.href)} className="text-sm text-[hsl(220,10%,78%)] hover:text-foreground px-4 py-2 rounded-lg transition-colors duration-200 font-medium">{l.label}</a>
             ))}
           </nav>
 
@@ -66,7 +85,7 @@ export function LandingNav() {
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="lg:hidden border-t border-[hsl(96,90%,45%,0.1)] overflow-hidden bg-[hsl(220,60%,4%)]/95 backdrop-blur-2xl">
               <div className="px-4 py-4 space-y-1">
                 {navLinks.map((l) => (
-                  <a key={l.href} href={l.href} className="block text-sm text-[hsl(220,10%,78%)] hover:text-foreground py-2.5 px-3 rounded-lg hover:bg-[hsl(96,90%,45%,0.08)] transition-all" onClick={() => setMobileOpen(false)}>{l.label}</a>
+                  <a key={l.href} href={l.href} className="block text-sm text-[hsl(220,10%,78%)] hover:text-foreground py-2.5 px-3 rounded-lg hover:bg-[hsl(96,90%,45%,0.08)] transition-all" onClick={(e) => handleNavClick(e, l.href)}>{l.label}</a>
                 ))}
                 <div className="pt-3 flex flex-col gap-2 border-t border-[hsl(96,90%,45%,0.1)] mt-3">
                   <LanguageSwitcher variant="outline" size="sm" className="justify-start gap-2 rounded-lg h-10 border-[hsl(96,90%,45%,0.15)]" />
