@@ -2887,6 +2887,7 @@ export type Database = {
         Row: {
           branding: Json | null
           created_at: string
+          elementor_container_width: number
           id: string
           locale: string
           name: string
@@ -2900,6 +2901,7 @@ export type Database = {
         Insert: {
           branding?: Json | null
           created_at?: string
+          elementor_container_width?: number
           id?: string
           locale?: string
           name: string
@@ -2913,6 +2915,7 @@ export type Database = {
         Update: {
           branding?: Json | null
           created_at?: string
+          elementor_container_width?: number
           id?: string
           locale?: string
           name?: string
