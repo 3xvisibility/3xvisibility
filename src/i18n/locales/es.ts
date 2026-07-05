@@ -1813,6 +1813,7 @@ const es: Record<string, string> = {
   "sidebar.billing": "Facturación",
   "sidebar.campaigns": "Campañas",
   "sidebar.contentCalendar": "Calendario de contenido",
+  "sidebar.cssScanFix": "CSS Scan & Fix",
   "sidebar.dashboard": "Panel de control",
   "sidebar.dataCsv": "Datos / CSV",
   "sidebar.discovery": "Descubrimiento",
