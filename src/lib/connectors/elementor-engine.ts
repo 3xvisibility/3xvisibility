@@ -317,6 +317,81 @@ function detectProgressBar(node: HtmlNode): ElementorElement | null {
  */
 let PRO_WIDGETS = false;
 
+/**
+ * Map of `className -> concatenated CSS declarations` parsed from the
+ * template's <style> blocks. Class-scoped layout rules (e.g.
+ * `.hero{display:grid;grid-template-columns:1fr 1fr}`) live in stylesheets,
+ * not inline styles — without resolving them every container collapses to the
+ * default flex-column and the published layout stacks/half-widths. Populated
+ * per-run by htmlToElementor() and cleared afterwards.
+ */
+let CSS_CLASS_STYLES: Map<string, string> = new Map();
+
+/** Layout-relevant declarations we care about when resolving class styles. */
+const LAYOUT_DECL_RE =
+  /(display|grid-template-columns|flex-direction|flex-wrap|grid-auto-flow)\s*:\s*[^;]+/gi;
+
+/**
+ * Parse the template's <style> blocks into a `className -> declarations` map.
+ * @media blocks are stripped first so responsive overrides never mask the base
+ * desktop layout. Only layout declarations are retained.
+ */
+function parseStylesheetLayout(html: string): Map<string, string> {
+  const map = new Map<string, string>();
+  const styleBlocks = html.match(/<style\b[^>]*>([\s\S]*?)<\/style>/gi) || [];
+  let css = styleBlocks
+    .map((b) => b.replace(/<style\b[^>]*>/i, "").replace(/<\/style>/i, ""))
+    .join("\n");
+  // Drop @media / @supports blocks (with their nested braces) — desktop base only.
+  css = css.replace(/@(?:media|supports)[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/gi, "");
+  const ruleRe = /([^{}]+)\{([^{}]*)\}/g;
+  let m: RegExpExecArray | null;
+  while ((m = ruleRe.exec(css)) !== null) {
+    const selectors = m[1];
+    const body = (m[2] || "").toLowerCase();
+    const decls = (body.match(LAYOUT_DECL_RE) || []).join(";");
+    if (!decls) continue;
+    // Attribute the declarations to the LAST class token in each selector
+    // (the element the rule targets, e.g. `.wrap .hero` -> `hero`).
+    for (const sel of selectors.split(",")) {
+      const classes = sel.trim().match(/\.[a-z0-9_-]+/gi);
+      if (!classes || !classes.length) continue;
+      const key = classes[classes.length - 1].slice(1).toLowerCase();
+      const prev = map.get(key);
+      map.set(key, prev ? `${prev};${decls}` : decls);
+    }
+  }
+  return map;
+}
+
+/**
+ * Combine a node's inline style with any layout declarations from its classes
+ * (inline wins). Returns a lowercased declaration string suitable for the
+ * regex probes in container().
+ */
+function resolveNodeStyle(node?: HtmlNode): string {
+  if (!node) return "";
+  const inline = (node.attrs.style || "").toLowerCase();
+  if (!CSS_CLASS_STYLES.size) return inline;
+  const classes = (node.attrs.class || "").toLowerCase().split(/\s+/).filter(Boolean);
+  const parts: string[] = [];
+  for (const c of classes) {
+    const decl = CSS_CLASS_STYLES.get(c);
+    if (decl) parts.push(decl);
+  }
+  // Inline last so it overrides class rules in the combined string.
+  if (inline) parts.push(inline);
+  return parts.join(";");
+}
+
+/** Count grid columns from a `grid-template-columns` value, handling repeat(). */
+function countGridColumns(value: string): number {
+  const v = value.trim();
+  const repeat = v.match(/repeat\(\s*(\d+)\s*,/i);
+  if (repeat) return parseInt(repeat[1], 10) || 1;
+  return v.split(/\s+/).filter(Boolean).length || 1;
+}
+
 /** Map an HTML input type to an Elementor Pro form field type. */
 function mapFormFieldType(node: HtmlNode): string {
   if (node.tag === "textarea") return "textarea";
@@ -816,7 +891,7 @@ function container(children: ElementorElement[], node?: HtmlNode): ElementorElem
     content_width: "boxed",
     flex_direction: "column",
   };
-  const style = (node?.attrs.style || "").toLowerCase();
+  const style = resolveNodeStyle(node);
   const displayGrid = /display\s*:\s*grid/.test(style);
   const displayFlex = /display\s*:\s*flex/.test(style);
   const flexRow = displayFlex && !/flex-direction\s*:\s*column/.test(style);
@@ -826,7 +901,7 @@ function container(children: ElementorElement[], node?: HtmlNode): ElementorElem
     // Native Elementor Grid Container (responsive, mobile-optimized).
     settings.container_type = "grid";
     const colsMatch = style.match(/grid-template-columns\s*:\s*([^;]+)/);
-    const colCount = colsMatch ? colsMatch[1].trim().split(/\s+/).filter(Boolean).length : 3;
+    const colCount = colsMatch ? countGridColumns(colsMatch[1]) : 3;
     settings.grid_columns = { unit: "fr", size: colCount || 3, sizes: [] };
     settings.grid_columns_tablet = { unit: "fr", size: 2, sizes: [] };
     settings.grid_columns_mobile = { unit: "fr", size: 1, sizes: [] };
@@ -1093,12 +1168,14 @@ export interface HtmlToElementorOptions {
 
 export function htmlToElementor(html: string, options?: HtmlToElementorOptions): ElementorElement[] {
   PRO_WIDGETS = options?.proWidgets === true;
+  CSS_CLASS_STYLES = parseStylesheetLayout(html || "");
   try {
     const tree = parseHtml(html || "");
     const converted = convertChildren(tree);
     return sanitizeElementorTree(flattenSections(converted));
   } finally {
     PRO_WIDGETS = false;
+    CSS_CLASS_STYLES = new Map();
   }
 }
 
