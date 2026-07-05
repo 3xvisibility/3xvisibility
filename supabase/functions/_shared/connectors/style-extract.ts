@@ -699,8 +699,12 @@ export function styleImage(
   const cls = (hint?.className || "").toLowerCase();
   const isSmallGraphic = /\b(logo|icon|avatar|badge|favicon|thumb|thumbnail|social|emoji|flag)\b/.test(cls);
 
-  // Resolve the intended width. Prefer explicit CSS width, then max-width, then
-  // the HTML width attribute as a last-resort source.
+  // Distinguish a *deliberate* CSS width (author intent) from fallback sources.
+  // An explicit `width` declaration is honoured at any size, because that is the
+  // size the template author chose (e.g. 42px rating avatars). Only widths that
+  // come from `max-width` or the HTML width attribute get the "ignore tiny px"
+  // guard, which exists to stop hero images collapsing to a stray thumbnail size.
+  const explicitW = pxSize(p.width);
   const raw = p.width || p.maxWidth || (hint?.widthAttr ? `${hint.widthAttr}px` : undefined);
   const w = pxSize(raw);
   if (w) {
@@ -708,14 +712,13 @@ export function styleImage(
       // Percentage widths are inherently responsive — keep them as-is.
       settings.width = { unit: "%", size: w.size };
     } else if (w.unit === "px") {
-      // A small fixed px width from extraction is the common cause of hero
-      // images collapsing to a tiny box (e.g. 72px). Only honour a fixed px
-      // width for deliberate small graphics (logos/icons) or genuinely large
-      // values; otherwise let the image stay fluid at 100% so heroes fill
-      // their container after publish.
-      if (isSmallGraphic || w.size >= 240) {
+      if (explicitW || isSmallGraphic || w.size >= 240) {
+        // Honour an explicit CSS px width verbatim (author intent), and keep the
+        // existing guard for deliberate small graphics or genuinely large images.
         settings.width = w;
       } else {
+        // A stray small px width from max-width / attr only — stay fluid so
+        // heroes fill their container after publish.
         settings.width = { unit: "%", size: 100 };
       }
     } else {
@@ -726,10 +729,18 @@ export function styleImage(
     // so they never render at Elementor's tiny default thumbnail size.
     settings.width = { unit: "%", size: 100 };
   }
-  // Never distort aspect ratio: let height follow the image intrinsically.
-  settings.height = { unit: "px", size: "" };
+  // Preserve an explicit fixed px height when the image is cropped/contained
+  // (object-fit) — this keeps square avatars square and circular crops circular.
+  // Otherwise let height follow the image intrinsically (no distortion).
+  const explicitH = pxSize(p.height);
+  if (explicitH && explicitH.unit === "px" && explicitW && (p.objectFit === "cover" || p.objectFit === "contain")) {
+    settings.height = { unit: "px", size: explicitH.size };
+  } else {
+    settings.height = { unit: "px", size: "" };
+  }
   const br = pxSize(p.borderRadius);
   if (br) settings.image_border_radius = { unit: br.unit, top: String(br.size), right: String(br.size), bottom: String(br.size), left: String(br.size), isLinked: true };
+  else if (/(^|\s)50%|9999px/.test(p.borderRadius || "")) settings.image_border_radius = { unit: "%", top: "50", right: "50", bottom: "50", left: "50", isLinked: true };
   if (p.objectFit) settings.object_fit = p.objectFit;
   applyOpacityBlendTransform(settings, p);
 }
