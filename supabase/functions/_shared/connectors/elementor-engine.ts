@@ -1250,6 +1250,12 @@ const VISUAL_STYLE_KEYS = [
 function hasVisualStyling(el: ElementorElement): boolean {
   if (el.elType !== "container") return false;
   const s = el.settings || {};
+  // A boxed content width (with an explicit width) is a real design constraint —
+  // it centers the section content at a fixed max-width (e.g. the template's
+  // `.wrap{max-width:1140px;margin:0 auto}`). Collapsing such a wrapper away
+  // dropped the constraint and let content span edge-to-edge on the published
+  // page, so treat it as visual styling that must be preserved.
+  if (s.content_width === "boxed" && s.width !== undefined && s.width !== "") return true;
   return VISUAL_STYLE_KEYS.some((key) => key in s && s[key] !== undefined && s[key] !== "");
 }
 
