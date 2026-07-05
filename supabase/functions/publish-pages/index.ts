@@ -1558,6 +1558,22 @@ async function handlePublishPages(req: Request): Promise<Response> {
         };
         applyShopifySuffix(payload, (page.websites as { type?: string })?.type, pageSuffixes, resolvedPublishType);
 
+        // Enforce the workspace's fixed Elementor container width (if configured)
+        // on native Elementor payloads so section content sits in a centered box.
+        if (
+          (payload as { elementor_mode?: string }).elementor_mode === "native" &&
+          typeof (payload as { elementor_data?: string }).elementor_data === "string"
+        ) {
+          const boxWidth = await resolveContainerWidth(page.workspace_id || body.workspace_id);
+          if (boxWidth > 0) {
+            payload.elementor_data = enforceBoxedContentWidth(
+              (payload as { elementor_data?: string }).elementor_data as string,
+              boxWidth,
+            );
+            step("Enforcing container width", "ok", `Boxed content width set to ${boxWidth}px`);
+          }
+        }
+
         // Final native-only assertion: never ship an HTML-widget page.
         if (
           FORCE_NATIVE_ELEMENTOR && (payload as { elementor_mode?: string }).elementor_mode &&
