@@ -803,7 +803,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
 
   // Structural single-card fallbacks: map recognizable compositions to native
   // widgets instead of yet another nested container.
-  if (hasClass(node, "card", "box", "tile", "feature", "service", "item") || (hasText && (directImg || iconNode))) {
+  if (!isMultiGroup && (hasClass(node, "card", "box", "tile", "feature", "service", "item") || (hasText && (directImg || iconNode)))) {
     if (directImg && hasText && !hasLink) return imageBox(node);
     if (iconNode && !directImg && hasText) return iconBox(node);
   }
