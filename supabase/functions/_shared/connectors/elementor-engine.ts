@@ -1266,6 +1266,36 @@ function hasVisualStyling(el: ElementorElement): boolean {
   return VISUAL_STYLE_KEYS.some((key) => key in s && s[key] !== undefined && s[key] !== "");
 }
 
+// WordPress editor / theme layout wrapper classes. A container whose ONLY
+// styling is one or more of these classes carries no real design of its own —
+// it is the constrained `.entry-content` shell the CMS wraps around the real
+// design. Keeping it as an Elementor container re-applies the theme's
+// `is-layout-constrained` max-width, which stops section backgrounds from going
+// edge-to-edge. Such shells are collapsed so the real design root becomes the
+// top-level (full-width) section.
+const TRANSPARENT_WRAPPER_CLASSES = new Set([
+  "entry-content", "wp-block-post-content", "is-layout-constrained", "is-layout-flow",
+  "is-layout-flex", "is-layout-grid", "wp-themed-content", "pgp-skin-wordpress",
+  "alignfull", "alignwide", "wp-site-blocks", "site-content", "content-area",
+  "wp-block-post", "wp-block-group", "entry-content-wrap",
+]);
+
+function isTransparentWrapper(el: ElementorElement): boolean {
+  if (el.elType !== "container") return false;
+  const s = el.settings || {};
+  // Any real visual property (background, padding, boxed width, shadow, …)
+  // disqualifies it — those must be preserved.
+  if (s.content_width === "boxed" && s.width !== undefined && s.width !== "") return false;
+  const hasReal = VISUAL_STYLE_KEYS.some(
+    (key) => key !== "_css_classes" && key in s && s[key] !== undefined && s[key] !== "",
+  );
+  if (hasReal) return false;
+  const cls = String((s as Record<string, unknown>)._css_classes || "").trim();
+  if (!cls) return true; // no styling and no identity classes → transparent
+  return cls.toLowerCase().split(/\s+/).filter(Boolean)
+    .every((t) => TRANSPARENT_WRAPPER_CLASSES.has(t) || /^xxxv-s-/.test(t));
+}
+
 function isPlainWrapper(el: ElementorElement): boolean {
   if (el.elType !== "container") return false;
   // Never unwrap a container that carries visual styling or identity. AI Site
@@ -1299,7 +1329,7 @@ function unwrapRedundant(elements: ElementorElement[]): ElementorElement[] {
     // wrapper chains (grid > grid > grid > content) in one pass.
     while (
       el.elType === "container" &&
-      !hasVisualStyling(el) &&
+      (!hasVisualStyling(el) || isTransparentWrapper(el)) &&
       el.elements.length === 1 &&
       el.elements[0].elType === "container"
     ) {
@@ -1770,27 +1800,38 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
   const width = `${size}px`;
   const boxedDim = { unit: "px", size, sizes: [] };
 
-  const wrapped = tree.map((section) => {
-    if (!section || section.elType !== "container") return section;
-    const kids = Array.isArray(section.elements) ? section.elements : [];
-    if (kids.length === 0) return section;
+  const isBoxed = (el: ElementorElement): boolean =>
+    el?.elType === "container" &&
+    (el.settings as Record<string, unknown>)?.content_width === "boxed" &&
+    (el.settings as Record<string, unknown>)?.width !== undefined &&
+    (el.settings as Record<string, unknown>)?.width !== "";
 
-    // Idempotent path: already wrapped by us — just refresh the width.
-    if (
-      kids.length === 1 &&
-      kids[0].elType === "container" &&
-      (kids[0].settings as Record<string, unknown>)?._xxxvBoxed === true
-    ) {
-      const inner = kids[0];
-      return {
-        ...section,
-        settings: { ...section.settings, content_width: "full", width: "100%", flex_align_items: "center" },
-        elements: [
-          { ...inner, settings: { ...inner.settings, content_width: "boxed", width, boxed_width: boxedDim } },
-        ],
-      };
+  const rescale = (el: ElementorElement) => {
+    el.settings = { ...el.settings, content_width: "boxed", width, boxed_width: boxedDim };
+  };
+
+  // Box a leaf SECTION band: keep the band itself full width (backgrounds stay
+  // edge-to-edge) and constrain its content to the target width.
+  const boxSection = (section: ElementorElement) => {
+    const kids = Array.isArray(section.elements) ? section.elements : [];
+    section.settings = { ...section.settings, content_width: "full", width: "100%" };
+    if (kids.length === 0) return;
+
+    // The template's own centered wrapper(s) (e.g. `.wrap{max-width:1180px}`) are
+    // already boxed — just retune them to the requested width.
+    const boxedKids = kids.filter(isBoxed);
+    if (boxedKids.length) {
+      boxedKids.forEach(rescale);
+      return;
     }
 
+    // Idempotent: a wrapper we added on a previous run — refresh its width.
+    if (kids.length === 1 && (kids[0].settings as Record<string, unknown>)?._xxxvBoxed === true) {
+      rescale(kids[0]);
+      return;
+    }
+
+    // Otherwise wrap the section's content in a fresh centered boxed container.
     const inner: ElementorElement = {
       id: genId(),
       elType: "container",
@@ -1803,16 +1844,28 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
       },
       elements: kids,
     };
+    section.elements = [inner];
+  };
 
-    return {
-      ...section,
-      settings: { ...section.settings, content_width: "full", width: "100%", flex_align_items: "center" },
-      elements: [inner],
-    };
-  });
+  // Walk the tree. A container holding 2+ child containers is a page/section
+  // WRAPPER: keep it full width and recurse into each child so real section
+  // bands are the ones boxed. A container holding content (widgets or a single
+  // inner wrapper) is a SECTION band and gets its content boxed.
+  const process = (el: ElementorElement) => {
+    if (!el || el.elType !== "container") return;
+    const childContainers = (el.elements || []).filter((c) => c?.elType === "container");
+    if (childContainers.length >= 2) {
+      el.settings = { ...el.settings, content_width: "full", width: "100%" };
+      for (const c of el.elements) process(c);
+    } else {
+      boxSection(el);
+    }
+  };
 
-  return JSON.stringify(wrapped);
+  for (const top of tree) process(top);
+  return JSON.stringify(tree);
 }
+
 
 /**
  * Legacy helper retained for compatibility with old imports. It no longer builds
