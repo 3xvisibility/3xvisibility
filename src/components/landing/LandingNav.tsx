@@ -34,14 +34,32 @@ export function LandingNav() {
 
   const handleNavClick = (e: React.MouseEvent, href: string) => {
     e.preventDefault();
-    setMobileOpen(false);
     const id = href.replace("#", "");
+    // Close the mobile menu only after the smooth scroll has finished.
+    const closeMenuAfterScroll = () => {
+      let idleTimer: ReturnType<typeof setTimeout>;
+      const finish = () => {
+        window.removeEventListener("scroll", onScroll);
+        setMobileOpen(false);
+      };
+      const onScroll = () => {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(finish, 120);
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      // Fallback in case no scroll fires (already at target).
+      idleTimer = setTimeout(finish, 700);
+    };
     if (location.pathname === "/") {
       scrollToId(id);
+      closeMenuAfterScroll();
     } else {
       // Navigate home first, then scroll once the sections have mounted.
       navigate("/");
-      setTimeout(() => scrollToId(id), 300);
+      setTimeout(() => {
+        scrollToId(id);
+        closeMenuAfterScroll();
+      }, 300);
     }
   };
 
