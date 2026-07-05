@@ -789,6 +789,30 @@ async function handlePublishPages(req: Request): Promise<Response> {
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
 
+    // Per-workspace Elementor "fixed container width" preference. When set (>0),
+    // every native Elementor page published for that workspace gets its section
+    // content wrapped in a centered boxed container of this pixel width, so the
+    // published layout matches Elementor's boxed content and stops drifting.
+    const containerWidthCache = new Map<string, number>();
+    const resolveContainerWidth = async (workspaceId: string | null | undefined): Promise<number> => {
+      if (!workspaceId) return 0;
+      if (containerWidthCache.has(workspaceId)) return containerWidthCache.get(workspaceId)!;
+      let width = 0;
+      try {
+        const { data } = await supabase
+          .from("workspaces")
+          .select("elementor_container_width")
+          .eq("id", workspaceId)
+          .maybeSingle();
+        const raw = (data as { elementor_container_width?: number } | null)?.elementor_container_width;
+        width = typeof raw === "number" && raw > 0 ? raw : 0;
+      } catch (_e) {
+        width = 0;
+      }
+      containerWidthCache.set(workspaceId, width);
+      return width;
+    };
+
     // Admin override: allow platform admins to (re)publish pages owned by other users.
     let isAdmin = false;
     if (body.as_admin) {
