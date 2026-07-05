@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,6 +11,8 @@ export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const navLinks = [
     { label: t("nav.features"), href: "#features" },
@@ -20,6 +22,23 @@ export function LandingNav() {
     { label: t("nav.affiliate"), href: "#affiliate" },
     { label: t("nav.faq"), href: "#faq" },
   ];
+
+  const scrollToId = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleNavClick = (e: React.MouseEvent, href: string) => {
+    e.preventDefault();
+    setMobileOpen(false);
+    const id = href.replace("#", "");
+    if (location.pathname === "/") {
+      scrollToId(id);
+    } else {
+      // Navigate home first, then scroll once the sections have mounted.
+      navigate("/");
+      setTimeout(() => scrollToId(id), 300);
+    }
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
