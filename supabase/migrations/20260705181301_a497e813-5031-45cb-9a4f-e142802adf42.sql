@@ -1,0 +1,1 @@
+UPDATE public.workspaces SET elementor_container_width = 1140 WHERE id = 'd3e1153b-5798-4937-8354-2440bfc67bcf';
