@@ -3,7 +3,7 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
-import { buildExactElementorData, htmlToElementor, enforceNativeElementorData, elementorDataHasHtmlWidget, parityStatsFromData, sectionHeatmapFromData } from "../_shared/connectors/elementor-engine.ts";
+import { buildExactElementorData, htmlToElementor, enforceNativeElementorData, enforceBoxedContentWidth, elementorDataHasHtmlWidget, parityStatsFromData, sectionHeatmapFromData } from "../_shared/connectors/elementor-engine.ts";
 import { PgpConnector } from "../_shared/connectors/pgp-connector.ts";
 
 type EditorReadiness = NonNullable<import("../_shared/connectors/types.ts").ConnectorResult["editor_readiness"]>;
@@ -789,6 +789,30 @@ async function handlePublishPages(req: Request): Promise<Response> {
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
 
+    // Per-workspace Elementor "fixed container width" preference. When set (>0),
+    // every native Elementor page published for that workspace gets its section
+    // content wrapped in a centered boxed container of this pixel width, so the
+    // published layout matches Elementor's boxed content and stops drifting.
+    const containerWidthCache = new Map<string, number>();
+    const resolveContainerWidth = async (workspaceId: string | null | undefined): Promise<number> => {
+      if (!workspaceId) return 0;
+      if (containerWidthCache.has(workspaceId)) return containerWidthCache.get(workspaceId)!;
+      let width = 0;
+      try {
+        const { data } = await supabase
+          .from("workspaces")
+          .select("elementor_container_width")
+          .eq("id", workspaceId)
+          .maybeSingle();
+        const raw = (data as { elementor_container_width?: number } | null)?.elementor_container_width;
+        width = typeof raw === "number" && raw > 0 ? raw : 0;
+      } catch (_e) {
+        width = 0;
+      }
+      containerWidthCache.set(workspaceId, width);
+      return width;
+    };
+
     // Admin override: allow platform admins to (re)publish pages owned by other users.
     let isAdmin = false;
     if (body.as_admin) {
@@ -1004,6 +1028,22 @@ async function handlePublishPages(req: Request): Promise<Response> {
             );
           }
 
+
+          // Enforce the workspace's fixed Elementor container width on native
+          // direct-publish payloads (skip exact-render HTML-widget pages).
+          if (
+            (payload as { elementor_mode?: string }).elementor_mode === "native" &&
+            typeof (payload as { elementor_data?: string }).elementor_data === "string"
+          ) {
+            const boxWidth = await resolveContainerWidth(workspaceId);
+            if (boxWidth > 0) {
+              payload.elementor_data = enforceBoxedContentWidth(
+                (payload as { elementor_data?: string }).elementor_data as string,
+                boxWidth,
+              );
+              step("Enforcing container width", "ok", `Boxed content width set to ${boxWidth}px`);
+            }
+          }
 
           // Final native-only assertion: never ship an HTML-widget page.
           if (
@@ -1533,6 +1573,22 @@ async function handlePublishPages(req: Request): Promise<Response> {
           ...directShopifySuffixes,
         };
         applyShopifySuffix(payload, (page.websites as { type?: string })?.type, pageSuffixes, resolvedPublishType);
+
+        // Enforce the workspace's fixed Elementor container width (if configured)
+        // on native Elementor payloads so section content sits in a centered box.
+        if (
+          (payload as { elementor_mode?: string }).elementor_mode === "native" &&
+          typeof (payload as { elementor_data?: string }).elementor_data === "string"
+        ) {
+          const boxWidth = await resolveContainerWidth(page.workspace_id || body.workspace_id);
+          if (boxWidth > 0) {
+            payload.elementor_data = enforceBoxedContentWidth(
+              (payload as { elementor_data?: string }).elementor_data as string,
+              boxWidth,
+            );
+            step("Enforcing container width", "ok", `Boxed content width set to ${boxWidth}px`);
+          }
+        }
 
         // Final native-only assertion: never ship an HTML-widget page.
         if (

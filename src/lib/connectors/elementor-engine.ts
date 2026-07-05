@@ -1540,3 +1540,67 @@ export function buildElementorDebugReport(
   };
 }
 
+/**
+ * Enforce an Elementor-style fixed content width on a native `_elementor_data`
+ * tree. Each top-level section stays full-width (backgrounds edge-to-edge) while
+ * its content is wrapped in a centered "boxed" inner container of the given pixel
+ * width — exactly how Elementor's boxed containers behave. Idempotent and a no-op
+ * when `widthPx <= 0`. Kept in sync with the edge-function engine copy.
+ */
+export function enforceBoxedContentWidth(dataStr: string, widthPx: number): string {
+  if (!dataStr || !Number.isFinite(widthPx) || widthPx <= 0) return dataStr;
+  let tree: ElementorElement[];
+  try {
+    tree = JSON.parse(dataStr);
+  } catch {
+    return dataStr;
+  }
+  if (!Array.isArray(tree) || tree.length === 0) return dataStr;
+
+  const size = Math.round(widthPx);
+  const width = `${size}px`;
+  const boxedDim = { unit: "px", size, sizes: [] };
+
+  const wrapped = tree.map((section) => {
+    if (!section || section.elType !== "container") return section;
+    const kids = Array.isArray(section.elements) ? section.elements : [];
+    if (kids.length === 0) return section;
+
+    if (
+      kids.length === 1 &&
+      kids[0].elType === "container" &&
+      (kids[0].settings as Record<string, unknown>)?._xxxvBoxed === true
+    ) {
+      const inner = kids[0];
+      return {
+        ...section,
+        settings: { ...section.settings, content_width: "full", width: "100%", flex_align_items: "center" },
+        elements: [
+          { ...inner, settings: { ...inner.settings, content_width: "boxed", width, boxed_width: boxedDim } },
+        ],
+      };
+    }
+
+    const inner: ElementorElement = {
+      id: genId(),
+      elType: "container",
+      settings: {
+        content_width: "boxed",
+        width,
+        boxed_width: boxedDim,
+        flex_direction: (section.settings as Record<string, unknown>)?.flex_direction ?? "column",
+        _xxxvBoxed: true,
+      },
+      elements: kids,
+    };
+
+    return {
+      ...section,
+      settings: { ...section.settings, content_width: "full", width: "100%", flex_align_items: "center" },
+      elements: [inner],
+    };
+  });
+
+  return JSON.stringify(wrapped);
+}
+
