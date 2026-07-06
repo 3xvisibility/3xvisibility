@@ -2454,6 +2454,110 @@ export type Database = {
         }
         Relationships: []
       }
+      template_backfill_items: {
+        Row: {
+          attempts: number
+          created_at: string
+          error: string | null
+          fields: number | null
+          id: string
+          run_id: string
+          status: string
+          template_id: string | null
+          template_name: string | null
+          updated_at: string
+          widgets: number | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          fields?: number | null
+          id?: string
+          run_id: string
+          status?: string
+          template_id?: string | null
+          template_name?: string | null
+          updated_at?: string
+          widgets?: number | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          fields?: number | null
+          id?: string
+          run_id?: string
+          status?: string
+          template_id?: string | null
+          template_name?: string | null
+          updated_at?: string
+          widgets?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_backfill_items_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "template_backfill_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_backfill_runs: {
+        Row: {
+          converted: number
+          created_at: string
+          error: string | null
+          failed: number
+          finished_at: string | null
+          force: boolean
+          id: string
+          processed: number
+          skipped: number
+          started_at: string
+          started_by: string | null
+          status: string
+          total_templates: number
+          trigger_source: string
+          updated_at: string
+        }
+        Insert: {
+          converted?: number
+          created_at?: string
+          error?: string | null
+          failed?: number
+          finished_at?: string | null
+          force?: boolean
+          id?: string
+          processed?: number
+          skipped?: number
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          total_templates?: number
+          trigger_source?: string
+          updated_at?: string
+        }
+        Update: {
+          converted?: number
+          created_at?: string
+          error?: string | null
+          failed?: number
+          finished_at?: string | null
+          force?: boolean
+          id?: string
+          processed?: number
+          skipped?: number
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          total_templates?: number
+          trigger_source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       template_ratings: {
         Row: {
           created_at: string

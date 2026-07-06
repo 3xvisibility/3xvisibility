@@ -14,6 +14,7 @@ import {
   KeyRound,
   Settings,
   Store,
+  RefreshCw,
   ArrowLeft,
   LogOut,
 } from "lucide-react";
@@ -57,6 +58,7 @@ const aiNav: AdminNavItem[] = [
 
 const systemNav: AdminNavItem[] = [
   { label: "Marketplace", section: "marketplace", icon: Store },
+  { label: "Template Sync", section: "template-sync", icon: RefreshCw },
   { label: "Connections", section: "connections", icon: Plug },
   { label: "Settings", section: "settings", icon: Settings },
 ];

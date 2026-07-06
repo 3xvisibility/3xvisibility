@@ -1,0 +1,262 @@
+// Automatic widget-engine sync.
+//
+// Converts EVERY template's HTML into fresh native Elementor JSON with the
+// current engine and persists it to BOTH templates.elementor_data and the
+// elementor_templates catalog — so any widget/layout fix propagates to all
+// marketplace templates and connected pages without a manual per-template
+// Republish.
+//
+// Records progress + per-template status into template_backfill_runs /
+// template_backfill_items, retries failed conversions, and raises an admin
+// notification with a clear reason when conversions fail.
+//
+// Callable:
+//   - manually from the admin panel (supabase.functions.invoke)
+//   - on a schedule via pg_cron (trigger_source = "scheduled")
+
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { htmlToElementor } from "../_shared/connectors/elementor-engine.ts";
+import {
+  extractEditableFields,
+  defaultContentFor,
+  limitsFor,
+} from "../_shared/connectors/elementor-fields.ts";
+import { buildTemplatePackage } from "../_shared/connectors/elementor-package.ts";
+import { buildShopifySectionKit } from "../_shared/connectors/shopify-section-kit.ts";
+
+const MAX_ATTEMPTS = 3;
+
+function countWidgets(tree: any[]): number {
+  let n = 0;
+  const walk = (el: any) => {
+    if (el.elType === "widget") n++;
+    for (const c of el.elements ?? []) walk(c);
+  };
+  for (const el of tree) walk(el);
+  return n;
+}
+
+function stripAiImagePlaceholders(html: string): string {
+  const TOKEN = /\{\{\s*AI_IMAGE[\s\S]*?\}\}/gi;
+  return html
+    .replace(/<img\b[^>]*\{\{\s*AI_IMAGE[\s\S]*?\}\}[^>]*>/gi, "")
+    .replace(/background(-image)?\s*:\s*url\(\s*['"]?\{\{\s*AI_IMAGE[\s\S]*?\}\}['"]?\s*\)\s*;?/gi, "")
+    .replace(TOKEN, "");
+}
+
+/** Convert + persist a single template. Throws on failure so the caller can retry. */
+async function convertTemplate(supabase: any, t: any): Promise<{ widgets: number; fields: number; skipped: boolean }> {
+  if (!t.content || typeof t.content !== "string" || !t.content.trim()) {
+    throw new Error("no_html_content");
+  }
+
+  const cleanContent = stripAiImagePlaceholders(t.content);
+  const tree = htmlToElementor(cleanContent);
+  if (!tree.length) throw new Error("empty_conversion");
+
+  const fields = extractEditableFields(tree);
+  const defaults = defaultContentFor(fields);
+  const limits = limitsFor(fields);
+  const pkg = buildTemplatePackage(tree, fields);
+  const sectionSlug = `lov-${String(t.source_marketplace_id || t.id).replace(/[^a-z0-9]+/gi, "").slice(0, 18)}`;
+  const shopifyKit = buildShopifySectionKit(cleanContent, fields, {
+    sectionId: sectionSlug,
+    name: t.name,
+  });
+
+  const { error: upErr } = await supabase
+    .from("templates")
+    .update({ elementor_data: tree })
+    .eq("id", t.id);
+  if (upErr) throw new Error(`templates.update: ${upErr.message}`);
+
+  const sourceId = t.source_marketplace_id || t.id;
+  const { error: catErr } = await supabase
+    .from("elementor_templates")
+    .upsert(
+      {
+        source_template_id: sourceId,
+        category: t.schema_type || "General",
+        name: t.name,
+        elementor_json: tree,
+        template_structure: { widgetCount: countWidgets(tree), sectionCount: tree.length },
+        editable_fields: fields,
+        default_content: defaults,
+        default_limits: limits,
+        placeholders: pkg.placeholders,
+        image_map: pkg.imageMap,
+        responsive_rules: pkg.responsiveRules,
+        shopify_section_json: {
+          sectionId: shopifyKit.sectionId,
+          sectionLiquid: shopifyKit.sectionLiquid,
+          template: shopifyKit.template,
+          placeholders: shopifyKit.placeholders,
+          image_map: shopifyKit.imageMap,
+          mappedFields: shopifyKit.mappedFields,
+        },
+        status: "active",
+        version: 1,
+      },
+      { onConflict: "source_template_id" },
+    );
+  if (catErr) throw new Error(`catalog.upsert: ${catErr.message}`);
+
+  return { widgets: countWidgets(tree), fields: fields.length, skipped: false };
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+
+  let runId: string | null = null;
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const force = body?.force === true;
+    const triggerSource = typeof body?.trigger_source === "string" ? body.trigger_source : "manual";
+
+    // Resolve the calling admin (best-effort, for started_by / notifications).
+    let startedBy: string | null = null;
+    try {
+      const authHeader = req.headers.get("Authorization");
+      if (authHeader) {
+        const token = authHeader.replace("Bearer ", "");
+        const { data } = await supabase.auth.getUser(token);
+        startedBy = data?.user?.id ?? null;
+      }
+    } catch { /* ignore */ }
+
+    const { data: templates, error } = await supabase
+      .from("templates")
+      .select("id, name, content, schema_type, source_marketplace_id, elementor_data, user_id")
+      .order("id", { ascending: true });
+    if (error) throw new Error(error.message);
+
+    const all = (templates ?? []) as any[];
+
+    // Create run header.
+    const { data: run, error: runErr } = await supabase
+      .from("template_backfill_runs")
+      .insert({
+        status: "running",
+        trigger_source: triggerSource,
+        force,
+        total_templates: all.length,
+        started_by: startedBy,
+      })
+      .select("id")
+      .single();
+    if (runErr) throw new Error(`run.insert: ${runErr.message}`);
+    runId = run.id;
+
+    let converted = 0, skipped = 0, failed = 0, processed = 0;
+    const failedDetails: Array<{ name: string; error: string }> = [];
+
+    for (const t of all) {
+      processed++;
+      const hasExisting = Array.isArray(t.elementor_data)
+        ? t.elementor_data.length > 0
+        : !!t.elementor_data;
+
+      if (hasExisting && !force) {
+        skipped++;
+        await supabase.from("template_backfill_items").insert({
+          run_id: runId, template_id: t.id, template_name: t.name, status: "skipped", attempts: 0,
+        });
+        continue;
+      }
+
+      // Retry loop.
+      let attempt = 0;
+      let lastError = "";
+      let ok = false;
+      let widgets = 0, fields = 0;
+      while (attempt < MAX_ATTEMPTS && !ok) {
+        attempt++;
+        try {
+          const res = await convertTemplate(supabase, t);
+          widgets = res.widgets;
+          fields = res.fields;
+          ok = true;
+        } catch (e) {
+          lastError = e instanceof Error ? e.message : String(e);
+          // Non-retryable conditions: bail immediately.
+          if (lastError === "no_html_content" || lastError === "empty_conversion") break;
+        }
+      }
+
+      if (ok) {
+        converted++;
+        await supabase.from("template_backfill_items").insert({
+          run_id: runId, template_id: t.id, template_name: t.name,
+          status: "success", attempts: attempt, widgets, fields,
+        });
+      } else {
+        failed++;
+        failedDetails.push({ name: t.name || t.id, error: lastError });
+        await supabase.from("template_backfill_items").insert({
+          run_id: runId, template_id: t.id, template_name: t.name,
+          status: "failed", attempts: attempt, error: lastError,
+        });
+      }
+
+      // Keep run progress live for the admin panel.
+      if (processed % 5 === 0 || processed === all.length) {
+        await supabase.from("template_backfill_runs")
+          .update({ processed, converted, skipped, failed })
+          .eq("id", runId);
+      }
+    }
+
+    await supabase.from("template_backfill_runs")
+      .update({
+        status: "completed",
+        processed, converted, skipped, failed,
+        finished_at: new Date().toISOString(),
+      })
+      .eq("id", runId);
+
+    // Alert admins when conversions failed, with a clear reason.
+    if (failed > 0) {
+      const reason = failedDetails
+        .slice(0, 5)
+        .map((f) => `"${f.name}": ${f.error}`)
+        .join("; ");
+      const message = `Template engine sync finished with ${failed} failed conversion(s) out of ${all.length}. Reasons — ${reason}${failedDetails.length > 5 ? " …and more." : "."}`;
+
+      // Notify every admin.
+      const { data: admins } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin");
+      const rows = (admins ?? []).map((a: any) => ({
+        user_id: a.user_id,
+        title: "Template sync: conversions failed",
+        message,
+        type: "error",
+      }));
+      if (rows.length) await supabase.from("notifications").insert(rows);
+    }
+
+    return new Response(
+      JSON.stringify({ run_id: runId, total: all.length, converted, skipped, failed, failedDetails }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (runId) {
+      await supabase.from("template_backfill_runs")
+        .update({ status: "failed", error: msg, finished_at: new Date().toISOString() })
+        .eq("id", runId);
+    }
+    return new Response(JSON.stringify({ error: msg, run_id: runId }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
