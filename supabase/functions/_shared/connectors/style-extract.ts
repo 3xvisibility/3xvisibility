@@ -863,11 +863,8 @@ export function styleImageBox(
       settings.background_background = "classic";
       settings.background_color = boxProps.backgroundColor;
     }
-    const pad = boxProps.padding;
-    if (pad) {
-      const p = sidesToBox(pad);
-      if (p) settings._padding = p;
-    }
+    const pad = sidesToElementorSafe(boxProps.padding);
+    if (pad) settings._padding = pad;
     const bxr = pxSize(boxProps.borderRadius);
     if (bxr) {
       settings._border_radius = {
