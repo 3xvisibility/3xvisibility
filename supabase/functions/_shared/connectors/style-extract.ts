@@ -417,6 +417,7 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["box-shadow"]) p.boxShadow = d["box-shadow"];
   if (d["border"]) p.border = d["border"];
   if (d["object-fit"]) p.objectFit = d["object-fit"];
+  if (d["object-position"]) p.objectPosition = d["object-position"].trim();
   if (d["opacity"]) p.opacity = d["opacity"];
   if (d["fill"]) p.fill = d["fill"].trim();
   if (d["position"]) p.position = d["position"];
