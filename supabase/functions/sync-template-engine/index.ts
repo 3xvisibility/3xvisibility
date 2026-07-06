@@ -105,6 +105,44 @@ async function convertTemplate(supabase: any, t: any): Promise<{ widgets: number
   return { widgets: countWidgets(tree), fields: fields.length, skipped: false };
 }
 
+/**
+ * Record the connected pages linked to a template (via its campaigns) so admins
+ * can see which published/draft pages are affected by this template's re-sync.
+ */
+async function recordConnectedPages(supabase: any, runId: string, t: any): Promise<number> {
+  try {
+    const { data: campaigns } = await supabase
+      .from("campaigns")
+      .select("id")
+      .eq("template_id", t.id);
+    const campaignIds = (campaigns ?? []).map((c: any) => c.id);
+    if (!campaignIds.length) return 0;
+
+    const { data: pages } = await supabase
+      .from("generated_pages")
+      .select("id, title, slug, status")
+      .in("campaign_id", campaignIds);
+
+    const rows = (pages ?? []).map((p: any) => ({
+      run_id: runId,
+      template_id: t.id,
+      template_name: t.name,
+      page_id: p.id,
+      page_title: p.title,
+      page_slug: p.slug,
+      page_status: p.status,
+      // Published pages hold a snapshot and need a republish; drafts pick up the
+      // new engine on next generation. Either way the page is "updated" to point
+      // at the freshly-converted template.
+      status: "updated",
+    }));
+    if (rows.length) await supabase.from("template_backfill_page_items").insert(rows);
+    return rows.length;
+  } catch {
+    return 0;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -118,7 +156,12 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const force = body?.force === true;
-    const triggerSource = typeof body?.trigger_source === "string" ? body.trigger_source : "manual";
+    // When retry_run_id is provided, only reprocess the templates that FAILED in
+    // that run — successful/skipped ones are left untouched.
+    const retryRunId = typeof body?.retry_run_id === "string" ? body.retry_run_id : null;
+    const triggerSource = retryRunId
+      ? "retry"
+      : (typeof body?.trigger_source === "string" ? body.trigger_source : "manual");
 
     // Resolve the calling admin (best-effort, for started_by / notifications).
     let startedBy: string | null = null;
@@ -131,13 +174,34 @@ Deno.serve(async (req) => {
       }
     } catch { /* ignore */ }
 
-    const { data: templates, error } = await supabase
-      .from("templates")
-      .select("id, name, content, schema_type, source_marketplace_id, elementor_data, user_id")
-      .order("id", { ascending: true });
-    if (error) throw new Error(error.message);
+    let all: any[] = [];
 
-    const all = (templates ?? []) as any[];
+    if (retryRunId) {
+      // Only the templates that failed in the referenced run.
+      const { data: failedRows, error: failErr } = await supabase
+        .from("template_backfill_items")
+        .select("template_id")
+        .eq("run_id", retryRunId)
+        .eq("status", "failed");
+      if (failErr) throw new Error(failErr.message);
+      const ids = Array.from(new Set((failedRows ?? []).map((r: any) => r.template_id).filter(Boolean)));
+      if (ids.length) {
+        const { data: templates, error } = await supabase
+          .from("templates")
+          .select("id, name, content, schema_type, source_marketplace_id, elementor_data, user_id")
+          .in("id", ids)
+          .order("id", { ascending: true });
+        if (error) throw new Error(error.message);
+        all = (templates ?? []) as any[];
+      }
+    } else {
+      const { data: templates, error } = await supabase
+        .from("templates")
+        .select("id, name, content, schema_type, source_marketplace_id, elementor_data, user_id")
+        .order("id", { ascending: true });
+      if (error) throw new Error(error.message);
+      all = (templates ?? []) as any[];
+    }
 
     // Create run header.
     const { data: run, error: runErr } = await supabase
@@ -145,9 +209,10 @@ Deno.serve(async (req) => {
       .insert({
         status: "running",
         trigger_source: triggerSource,
-        force,
+        force: retryRunId ? true : force,
         total_templates: all.length,
         started_by: startedBy,
+        retry_of_run_id: retryRunId,
       })
       .select("id")
       .single();
@@ -157,13 +222,14 @@ Deno.serve(async (req) => {
     let converted = 0, skipped = 0, failed = 0, processed = 0;
     const failedDetails: Array<{ name: string; error: string }> = [];
 
+    const effectiveForce = force || !!retryRunId;
     for (const t of all) {
       processed++;
       const hasExisting = Array.isArray(t.elementor_data)
         ? t.elementor_data.length > 0
         : !!t.elementor_data;
 
-      if (hasExisting && !force) {
+      if (hasExisting && !effectiveForce) {
         skipped++;
         await supabase.from("template_backfill_items").insert({
           run_id: runId, template_id: t.id, template_name: t.name, status: "skipped", attempts: 0,
@@ -196,6 +262,8 @@ Deno.serve(async (req) => {
           run_id: runId, template_id: t.id, template_name: t.name,
           status: "success", attempts: attempt, widgets, fields,
         });
+        // Record which connected pages point at this freshly-converted template.
+        await recordConnectedPages(supabase, runId, t);
       } else {
         failed++;
         failedDetails.push({ name: t.name || t.id, error: lastError });

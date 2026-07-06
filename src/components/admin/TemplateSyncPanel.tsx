@@ -36,6 +36,15 @@ interface Item {
   error: string | null;
 }
 
+interface PageItem {
+  id: string;
+  template_name: string | null;
+  page_title: string | null;
+  page_slug: string | null;
+  page_status: string | null;
+  status: string;
+}
+
 export function TemplateSyncPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -73,6 +82,21 @@ export function TemplateSyncPanel() {
     refetchInterval: latestRun?.status === "running" ? 2000 : false,
   });
 
+  const { data: pageItems = [], isLoading: pagesLoading } = useQuery({
+    queryKey: ["template-backfill-page-items", latestRun?.id],
+    enabled: !!latestRun?.id,
+    queryFn: async (): Promise<PageItem[]> => {
+      const { data, error } = await supabase
+        .from("template_backfill_page_items")
+        .select("id, template_name, page_title, page_slug, page_status, status")
+        .eq("run_id", latestRun!.id)
+        .order("template_name", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as PageItem[];
+    },
+    refetchInterval: latestRun?.status === "running" ? 2000 : false,
+  });
+
   const runSync = async (force: boolean) => {
     setRunning(true);
     try {
@@ -90,6 +114,27 @@ export function TemplateSyncPanel() {
       setRunning(false);
     }
   };
+
+  const retryFailed = async () => {
+    if (!latestRun) return;
+    setRunning(true);
+    try {
+      const { error } = await supabase.functions.invoke("sync-template-engine", {
+        body: { retry_run_id: latestRun.id },
+      });
+      if (error) throw error;
+      toast({ title: "Retrying failed templates", description: "Only the failed templates from the last run are being reprocessed." });
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-latest-run"] });
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-items"] });
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-page-items"] });
+    } catch (err) {
+      const msg = await extractEdgeError(err, "Failed to retry");
+      toast({ title: "Retry failed", description: msg, variant: "destructive" });
+    } finally {
+      setRunning(false);
+    }
+  };
+
 
   const failedItems = items.filter((i) => i.status === "failed");
   const otherItems = items.filter((i) => i.status !== "failed");
@@ -118,6 +163,11 @@ export function TemplateSyncPanel() {
             </CardDescription>
           </div>
           <div className="flex gap-2 shrink-0">
+            {failedItems.length > 0 && (
+              <Button variant="outline" onClick={retryFailed} disabled={running || latestRun?.status === "running"} className="gap-2 border-destructive/40 text-destructive hover:text-destructive">
+                <AlertCircle className="h-4 w-4" /> Retry {failedItems.length} failed
+              </Button>
+            )}
             <Button variant="outline" onClick={() => runSync(false)} disabled={running || latestRun?.status === "running"} className="gap-2">
               <Play className="h-4 w-4" /> Sync new
             </Button>
@@ -201,6 +251,48 @@ export function TemplateSyncPanel() {
                         </div>
                       </div>
                       {statusBadge(item.status)}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {latestRun && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Connected pages updated</CardTitle>
+            <CardDescription>
+              Pages linked to each re-synced template that now point at the refreshed engine.
+              Published pages should be republished to render the update.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            {pagesLoading ? (
+              <Skeleton className="h-40 mx-6 rounded-lg" />
+            ) : pageItems.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8 text-sm">No connected pages recorded for this run.</p>
+            ) : (
+              <ScrollArea className="h-[360px]">
+                <div className="divide-y divide-border">
+                  {pageItems.map((p) => (
+                    <div key={p.id} className="flex items-start gap-3 px-6 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{p.page_title || p.page_slug || "(untitled page)"}</p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span className="text-xs text-muted-foreground truncate">
+                            via {p.template_name || "template"}
+                          </span>
+                          {p.page_status && (
+                            <Badge variant="outline" className="text-[10px] capitalize">{p.page_status}</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <Badge className="bg-primary/15 text-primary border-primary/30 gap-1">
+                        <CheckCircle2 className="h-3 w-3" />Updated
+                      </Badge>
                     </div>
                   ))}
                 </div>

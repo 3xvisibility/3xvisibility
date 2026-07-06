@@ -2504,6 +2504,56 @@ export type Database = {
           },
         ]
       }
+      template_backfill_page_items: {
+        Row: {
+          created_at: string
+          id: string
+          page_id: string | null
+          page_slug: string | null
+          page_status: string | null
+          page_title: string | null
+          run_id: string
+          status: string
+          template_id: string | null
+          template_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          page_id?: string | null
+          page_slug?: string | null
+          page_status?: string | null
+          page_title?: string | null
+          run_id: string
+          status?: string
+          template_id?: string | null
+          template_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          page_id?: string | null
+          page_slug?: string | null
+          page_status?: string | null
+          page_title?: string | null
+          run_id?: string
+          status?: string
+          template_id?: string | null
+          template_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_backfill_page_items_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "template_backfill_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       template_backfill_runs: {
         Row: {
           converted: number
@@ -2514,6 +2564,7 @@ export type Database = {
           force: boolean
           id: string
           processed: number
+          retry_of_run_id: string | null
           skipped: number
           started_at: string
           started_by: string | null
@@ -2531,6 +2582,7 @@ export type Database = {
           force?: boolean
           id?: string
           processed?: number
+          retry_of_run_id?: string | null
           skipped?: number
           started_at?: string
           started_by?: string | null
@@ -2548,6 +2600,7 @@ export type Database = {
           force?: boolean
           id?: string
           processed?: number
+          retry_of_run_id?: string | null
           skipped?: number
           started_at?: string
           started_by?: string | null
@@ -2556,7 +2609,15 @@ export type Database = {
           trigger_source?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "template_backfill_runs_retry_of_run_id_fkey"
+            columns: ["retry_of_run_id"]
+            isOneToOne: false
+            referencedRelation: "template_backfill_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       template_ratings: {
         Row: {
