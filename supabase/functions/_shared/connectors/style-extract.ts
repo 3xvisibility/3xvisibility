@@ -64,6 +64,7 @@ export interface StyleProps {
   border?: string;
   objectFit?: string;
   opacity?: string;
+  fill?: string;
   position?: string;
   zIndex?: string;
   top?: string;
