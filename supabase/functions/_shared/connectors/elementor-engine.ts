@@ -1165,8 +1165,9 @@ function iconBox(node: HtmlNode): ElementorElement {
     // icon; falls back to a keyword-inferred free icon, then a star.
     selected_icon: iconNode ? resolveIconValue(iconNode) : resolveIconValue(node),
     // Sensible free-icon defaults so the widget renders cleanly out of the box.
+    // `position` (icon placement) is refined from the source layout in styleIconBox.
     view: "default",
-    icon_align: "top",
+    position: "top",
   };
   // Bake the source colors/typography/size so the icon-box matches the design
   // instead of falling back to the Elementor kit defaults.
