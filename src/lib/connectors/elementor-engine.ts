@@ -901,6 +901,16 @@ function counter(node: HtmlNode): ElementorElement {
   const numNode = findNode(node, (n) => /\d/.test(textContent(n)) && n.children.every((c) => !c.tag));
   const raw = textContent(numNode || node);
   const ending = parseInt(raw.replace(/[^\d]/g, ""), 10) || 0;
+  // Preserve any non-numeric prefix/suffix (e.g. "15+", "%", "k").
+  const cleaned = raw.trim();
+  const numMatch = cleaned.match(/[\d.,]+/);
+  let prefix = "";
+  let suffix = "";
+  if (numMatch) {
+    const idx = cleaned.indexOf(numMatch[0]);
+    prefix = cleaned.slice(0, idx).trim();
+    suffix = cleaned.slice(idx + numMatch[0].length).trim();
+  }
   const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "label"));
   return {
     id: genId(),
@@ -909,6 +919,8 @@ function counter(node: HtmlNode): ElementorElement {
     settings: {
       starting_number: 0,
       ending_number: ending,
+      prefix,
+      suffix,
       title: titleNode ? textContent(titleNode) : "",
     },
     elements: [],
