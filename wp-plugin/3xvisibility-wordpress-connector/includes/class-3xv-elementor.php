@@ -1352,6 +1352,27 @@ class XXXV_Elementor {
 						$img_text = self::css_decls( $img_decls );
 						if ( $img_text ) $rules[] = $base . ' .elementor-image-box-img img{' . $img_text . '}';
 					}
+				} elseif ( 'counter' === $widget ) {
+					// Number colour/typography on the number wrapper.
+					$num_decls = array();
+					if ( isset( $settings['number_color'] ) ) $num_decls['color'] = $settings['number_color'];
+					if ( isset( $settings['typography_number_font_family'] ) ) $num_decls['font-family'] = $settings['typography_number_font_family'];
+					if ( isset( $settings['typography_number_font_size'] ) ) $num_decls['font-size'] = self::css_size( $settings['typography_number_font_size'] );
+					if ( isset( $settings['typography_number_font_weight'] ) ) $num_decls['font-weight'] = $settings['typography_number_font_weight'];
+					$num_text = self::css_decls( $num_decls );
+					if ( $num_text ) $rules[] = $base . ' .elementor-counter-number-wrapper{' . $num_text . '}';
+					// Title colour/typography + spacing.
+					$title_decls = array();
+					if ( isset( $settings['title_color'] ) ) $title_decls['color'] = $settings['title_color'];
+					if ( isset( $settings['typography_title_font_family'] ) ) $title_decls['font-family'] = $settings['typography_title_font_family'];
+					if ( isset( $settings['typography_title_font_size'] ) ) $title_decls['font-size'] = self::css_size( $settings['typography_title_font_size'] );
+					if ( isset( $settings['__xxxv_counter_title_space'] ) ) $title_decls['margin-top'] = self::css_value( (string) $settings['__xxxv_counter_title_space'] );
+					$title_text = self::css_decls( $title_decls );
+					if ( $title_text ) $rules[] = $base . ' .elementor-counter-title{' . $title_text . '}';
+					// Alignment across the whole counter card.
+					if ( isset( $settings['__xxxv_counter_align'] ) ) {
+						$rules[] = $base . ' .elementor-counter{text-align:' . self::css_value( (string) $settings['__xxxv_counter_align'] ) . '}';
+					}
 				} else {
 					if ( isset( $settings['text_color'] ) ) $decls['color'] = $settings['text_color'];
 				}
