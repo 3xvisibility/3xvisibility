@@ -1373,6 +1373,13 @@ class XXXV_Elementor {
 					if ( isset( $settings['__xxxv_counter_align'] ) ) {
 						$rules[] = $base . ' .elementor-counter{text-align:' . self::css_value( (string) $settings['__xxxv_counter_align'] ) . '}';
 					}
+					// Count-up animation: duration is native (Elementor's `duration`
+					// setting is honoured out of the box). Easing has no native
+					// counter control, so record id → easing so a tiny frontend
+					// script can drive the count-up with the source easing curve.
+					if ( $id && ! empty( $settings['__xxxv_counter_easing'] ) ) {
+						self::$counter_easings[ (string) $id ] = (string) $settings['__xxxv_counter_easing'];
+					}
 				} else {
 					if ( isset( $settings['text_color'] ) ) $decls['color'] = $settings['text_color'];
 				}
