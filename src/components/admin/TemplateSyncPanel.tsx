@@ -36,6 +36,15 @@ interface Item {
   error: string | null;
 }
 
+interface PageItem {
+  id: string;
+  template_name: string | null;
+  page_title: string | null;
+  page_slug: string | null;
+  page_status: string | null;
+  status: string;
+}
+
 export function TemplateSyncPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
