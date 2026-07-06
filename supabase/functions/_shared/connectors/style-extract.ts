@@ -1492,3 +1492,14 @@ function parseOrder(value?: string): number | null {
 function sidesToElementorSafe(sides?: Partial<BoxSides>): Record<string, unknown> | undefined {
   return sidesToElementor(sides);
 }
+
+/** Build a CSS `padding`/`margin` shorthand string from box sides. */
+function sidesToCss(sides?: Partial<BoxSides>): string | undefined {
+  if (!sides) return undefined;
+  const t = sides.top ?? "0";
+  const r = sides.right ?? "0";
+  const b = sides.bottom ?? "0";
+  const l = sides.left ?? "0";
+  const val = `${t} ${r} ${b} ${l}`.trim();
+  return val && val !== "0 0 0 0" ? val : undefined;
+}
