@@ -52,6 +52,24 @@ function hasIconWidgets(tree: any[]): boolean {
   return found;
 }
 
+/** True if a tree contains any widget whose widgetType is in `types`. */
+function treeHasWidgetTypes(tree: any[], types: string[]): boolean {
+  if (!Array.isArray(tree) || !types.length) return false;
+  const set = new Set(types);
+  let found = false;
+  const walk = (el: any) => {
+    if (found) return;
+    if (el && el.elType === "widget" && set.has(el.widgetType)) {
+      found = true;
+      return;
+    }
+    for (const c of el?.elements ?? []) walk(c);
+  };
+  for (const el of tree) walk(el);
+  return found;
+}
+
+
 function stripAiImagePlaceholders(html: string): string {
   const TOKEN = /\{\{\s*AI_IMAGE[\s\S]*?\}\}/gi;
   return html
