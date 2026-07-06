@@ -774,7 +774,7 @@ export function styleIconBox(
   const globals: Record<string, string> = (settings.__globals__ as Record<string, string>) ?? {};
   if (iconProps) {
     // Icon color comes from `color` or `fill` on the <i>/<svg>.
-    const iconColor = iconProps.color || (iconProps as { fill?: string }).fill;
+    const iconColor = iconProps.color || iconProps.fill;
     const iconColorGlobal = globalColorId(iconColor, ctx);
     if (iconColorGlobal) globals["primary_color"] = `globals/colors?id=${iconColorGlobal}`;
     else if (iconColor) settings.primary_color = iconColor;
