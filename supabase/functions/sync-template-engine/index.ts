@@ -222,13 +222,14 @@ Deno.serve(async (req) => {
     let converted = 0, skipped = 0, failed = 0, processed = 0;
     const failedDetails: Array<{ name: string; error: string }> = [];
 
+    const effectiveForce = force || !!retryRunId;
     for (const t of all) {
       processed++;
       const hasExisting = Array.isArray(t.elementor_data)
         ? t.elementor_data.length > 0
         : !!t.elementor_data;
 
-      if (hasExisting && !force) {
+      if (hasExisting && !effectiveForce) {
         skipped++;
         await supabase.from("template_backfill_items").insert({
           run_id: runId, template_id: t.id, template_name: t.name, status: "skipped", attempts: 0,
