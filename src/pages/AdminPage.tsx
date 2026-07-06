@@ -992,6 +992,10 @@ export default function AdminPage() {
           <SystemSettingsPanel />
         </TabsContent>
 
+        <TabsContent value="template-sync" className="space-y-4">
+          <TemplateSyncPanel />
+        </TabsContent>
+
         {/* Activity feed tab */}
         <TabsContent value="activity" className="space-y-4">
           {isLoading ? (
