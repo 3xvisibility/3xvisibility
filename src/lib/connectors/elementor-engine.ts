@@ -924,20 +924,41 @@ function iconList(node: HtmlNode): ElementorElement {
 }
 
 function counter(node: HtmlNode): ElementorElement {
-  const numNode = findNode(node, (n) => /\d/.test(textContent(n)) && n.children.every((c) => !c.tag));
+  // Prefer a leaf node that holds a real number or a number-like placeholder
+  // ({stat_1_num}) so template variables survive conversion untouched.
+  const numNode =
+    findNode(node, (n) => looksLikeStatValue(textContent(n)) && n.children.every((c) => !c.tag)) ||
+    findNode(node, (n) => /\d/.test(textContent(n)) && n.children.every((c) => !c.tag));
   const raw = textContent(numNode || node);
-  const ending = parseInt(raw.replace(/[^\d]/g, ""), 10) || 0;
-  // Preserve any non-numeric prefix/suffix (e.g. "15+", "%", "k").
   const cleaned = raw.trim();
-  const numMatch = cleaned.match(/[\d.,]+/);
+  const hasPlaceholder = /\{\{?[^{}]*\}?\}|%[a-z0-9_]+%|\[[a-z0-9_]+\]/i.test(cleaned);
+  const numMatch = hasRealDigit(cleaned) ? stripPlaceholders(cleaned).match(/[\d.,]+/) : null;
+  // ending_number: use the real number when present; otherwise keep the raw
+  // placeholder so it is resolved at generation time.
+  const ending = numMatch ? parseInt(numMatch[0].replace(/[^\d]/g, ""), 10) || 0 : (hasPlaceholder ? cleaned : 0);
+  // Preserve any non-numeric prefix/suffix (e.g. "15+", "%", "k").
   let prefix = "";
   let suffix = "";
   if (numMatch) {
     const idx = cleaned.indexOf(numMatch[0]);
-    prefix = cleaned.slice(0, idx).trim();
-    suffix = cleaned.slice(idx + numMatch[0].length).trim();
+    if (idx >= 0) {
+      prefix = cleaned.slice(0, idx).trim();
+      suffix = cleaned.slice(idx + numMatch[0].length).trim();
+    }
   }
-  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "label"));
+  // Title/label: an explicit heading/.title/.label, or the non-number sibling
+  // text of a "<b>42</b><span>Members</span>" style stat card.
+  let titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "label", "desc", "text"));
+  if (!titleNode) {
+    titleNode = findNode(
+      node,
+      (n) =>
+        n !== numNode &&
+        n.children.every((c) => !c.tag) &&
+        !!textContent(n).trim() &&
+        !looksLikeStatValue(textContent(n)),
+    );
+  }
   const settings: Record<string, unknown> = {
     starting_number: 0,
     ending_number: ending,
