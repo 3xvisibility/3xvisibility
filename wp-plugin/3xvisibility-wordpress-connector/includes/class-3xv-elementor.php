@@ -1362,6 +1362,63 @@ class XXXV_Elementor {
 						$img_text = self::css_decls( $img_decls );
 						if ( $img_text ) $rules[] = $base . ' .elementor-image-box-img img{' . $img_text . '}';
 					}
+				} elseif ( 'icon-box' === $widget ) {
+					// Icon glyph: colour + size on the icon element.
+					$icon_decls = array();
+					if ( isset( $settings['primary_color'] ) ) { $icon_decls['color'] = $settings['primary_color']; $icon_decls['fill'] = $settings['primary_color']; }
+					if ( isset( $settings['__xxxv_icon_size'] ) ) $icon_decls['font-size'] = self::css_value( (string) $settings['__xxxv_icon_size'] );
+					$icon_text = self::css_decls( $icon_decls );
+					if ( $icon_text ) $rules[] = $base . ' .elementor-icon-box-icon .elementor-icon{' . $icon_text . '}';
+					if ( isset( $settings['__xxxv_icon_size'] ) ) {
+						$rules[] = $base . ' .elementor-icon-box-icon .elementor-icon svg{width:' . self::css_value( (string) $settings['__xxxv_icon_size'] ) . ';height:' . self::css_value( (string) $settings['__xxxv_icon_size'] ) . '}';
+					}
+					// Icon chip: background / border / radius / padding (framed & stacked views).
+					$chip_decls = array();
+					if ( isset( $settings['__xxxv_icon_bg'] ) ) $chip_decls['background-color'] = $settings['__xxxv_icon_bg'];
+					if ( isset( $settings['__xxxv_icon_border'] ) ) $chip_decls['border'] = self::css_value( (string) $settings['__xxxv_icon_border'] );
+					if ( isset( $settings['__xxxv_icon_radius'] ) ) $chip_decls['border-radius'] = self::css_value( (string) $settings['__xxxv_icon_radius'] );
+					if ( isset( $settings['__xxxv_icon_padding'] ) ) $chip_decls['padding'] = self::css_value( (string) $settings['__xxxv_icon_padding'] );
+					$chip_text = self::css_decls( $chip_decls );
+					if ( $chip_text ) $rules[] = $base . ' .elementor-icon-box-icon .elementor-icon{' . $chip_text . '}';
+					// Title colour + typography.
+					$title_decls = array();
+					if ( isset( $settings['title_color'] ) ) $title_decls['color'] = $settings['title_color'];
+					if ( isset( $settings['typography_title_font_family'] ) ) $title_decls['font-family'] = $settings['typography_title_font_family'];
+					if ( isset( $settings['typography_title_font_size'] ) ) $title_decls['font-size'] = self::css_size( $settings['typography_title_font_size'] );
+					if ( isset( $settings['typography_title_font_weight'] ) ) $title_decls['font-weight'] = $settings['typography_title_font_weight'];
+					if ( isset( $settings['typography_title_line_height'] ) ) $title_decls['line-height'] = self::css_size( $settings['typography_title_line_height'] );
+					if ( isset( $settings['typography_title_letter_spacing'] ) ) $title_decls['letter-spacing'] = self::css_size( $settings['typography_title_letter_spacing'] );
+					$title_text = self::css_decls( $title_decls );
+					if ( $title_text ) $rules[] = $base . ' .elementor-icon-box-title{' . $title_text . '}';
+					// Description colour + typography.
+					$desc_decls = array();
+					if ( isset( $settings['description_color'] ) ) $desc_decls['color'] = $settings['description_color'];
+					if ( isset( $settings['typography_description_font_family'] ) ) $desc_decls['font-family'] = $settings['typography_description_font_family'];
+					if ( isset( $settings['typography_description_font_size'] ) ) $desc_decls['font-size'] = self::css_size( $settings['typography_description_font_size'] );
+					if ( isset( $settings['typography_description_font_weight'] ) ) $desc_decls['font-weight'] = $settings['typography_description_font_weight'];
+					if ( isset( $settings['typography_description_line_height'] ) ) $desc_decls['line-height'] = self::css_size( $settings['typography_description_line_height'] );
+					$desc_text = self::css_decls( $desc_decls );
+					if ( $desc_text ) $rules[] = $base . ' .elementor-icon-box-description{' . $desc_text . '}';
+					// Icon position: top => column, left => row, right => row-reverse.
+					if ( isset( $settings['__xxxv_icon_position'] ) ) {
+						$pos = (string) $settings['__xxxv_icon_position'];
+						$dir = 'column';
+						$ai  = 'center';
+						if ( 'left' === $pos ) { $dir = 'row'; $ai = 'flex-start'; }
+						elseif ( 'right' === $pos ) { $dir = 'row-reverse'; $ai = 'flex-start'; }
+						$rules[] = $base . ' .elementor-icon-box-wrapper{display:flex;flex-direction:' . $dir . ';align-items:' . $ai . '}';
+					}
+					// Spacing between the icon and the content.
+					if ( isset( $settings['__xxxv_icon_space'] ) ) {
+						$sp  = self::css_value( (string) $settings['__xxxv_icon_space'] );
+						$pos = isset( $settings['__xxxv_icon_position'] ) ? (string) $settings['__xxxv_icon_position'] : 'top';
+						$edge = ( 'left' === $pos ) ? 'margin-right' : ( ( 'right' === $pos ) ? 'margin-left' : 'margin-bottom' );
+						$rules[] = $base . ' .elementor-icon-box-icon{' . $edge . ':' . $sp . '}';
+					}
+					// Overall alignment of the box.
+					if ( isset( $settings['__xxxv_iconbox_align'] ) ) {
+						$rules[] = $base . ' .elementor-icon-box-wrapper{text-align:' . self::css_value( (string) $settings['__xxxv_iconbox_align'] ) . '}';
+					}
 				} elseif ( 'counter' === $widget ) {
 					// Number colour/typography on the number wrapper.
 					$num_decls = array();

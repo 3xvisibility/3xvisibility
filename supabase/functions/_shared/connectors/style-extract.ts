@@ -863,8 +863,19 @@ export function styleIconBox(
   titleProps: StyleProps | undefined,
   descProps: StyleProps | undefined,
   ctx?: SiteContext,
+  boxProps?: StyleProps,
 ): void {
   const globals: Record<string, string> = (settings.__globals__ as Record<string, string>) ?? {};
+
+  const toAlign = (v?: string): string | undefined => {
+    if (!v) return undefined;
+    const a = v.trim().toLowerCase();
+    if (a === "left" || a === "start" || a === "flex-start") return "left";
+    if (a === "right" || a === "end" || a === "flex-end") return "right";
+    if (a === "center" || a === "justify" || a === "space-between" || a === "space-around") return "center";
+    return undefined;
+  };
+
   if (iconProps) {
     // Icon color comes from `color` or `fill` on the <i>/<svg>.
     const iconColor = iconProps.color || iconProps.fill;
@@ -875,8 +886,32 @@ export function styleIconBox(
     const size = pxSize(iconProps.fontSize) || pxSize(iconProps.width) || pxSize(iconProps.height);
     if (size && size.unit === "px" && size.size > 0) {
       settings.icon_size = { unit: "px", size: size.size, sizes: [] };
+      settings.__xxxv_icon_size = `${size.size}px`;
     }
-    if (iconProps.backgroundColor) settings.icon_secondary_color = iconProps.backgroundColor;
+    // Icon background => stacked "chip" view; border => framed view. Elementor
+    // honours these natively, and the bridge keys guarantee identical published CSS.
+    if (iconProps.backgroundColor) {
+      settings.icon_secondary_color = iconProps.backgroundColor;
+      settings.view = "stacked";
+      settings.__xxxv_icon_bg = iconProps.backgroundColor;
+    } else if (iconProps.border) {
+      settings.view = "framed";
+      settings.__xxxv_icon_border = iconProps.border;
+    }
+    // Icon chip shape: rounded corners / circle from border-radius.
+    const iconCorner = cornerRadius(iconProps.borderRadius);
+    if (iconCorner) {
+      settings.icon_border_radius = iconCorner;
+      const br = (iconProps.borderRadius || "").trim().toLowerCase();
+      settings.shape = (br === "50%" || br.startsWith("999") || br === "9999px") ? "circle" : "square";
+      settings.__xxxv_icon_radius = iconProps.borderRadius;
+    }
+    // Icon chip padding (space between glyph and its background/border).
+    const ipad = sidesToElementorSafe(iconProps.padding);
+    if (ipad) {
+      settings.icon_padding = ipad;
+      if (iconProps.padding) settings.__xxxv_icon_padding = sidesToCss(iconProps.padding);
+    }
   }
   if (titleProps) {
     const titleColorGlobal = globalColorId(titleProps.color, ctx);
@@ -884,6 +919,9 @@ export function styleIconBox(
     else if (titleProps.color) settings.title_color = titleProps.color;
     applyTypography(settings, globals, titleProps, ctx, "title_typography");
     if (titleProps.textAlign) settings.text_align = titleProps.textAlign;
+    // Spacing under the title before the description.
+    const tGap = pxSize(typeof titleProps.margin?.bottom === "string" ? titleProps.margin?.bottom : undefined);
+    if (tGap && tGap.size >= 0) settings.title_bottom_space = { unit: tGap.unit, size: tGap.size, sizes: [] };
   }
   if (descProps) {
     const descColorGlobal = globalColorId(descProps.color, ctx);
@@ -891,6 +929,35 @@ export function styleIconBox(
     else if (descProps.color) settings.description_color = descProps.color;
     applyTypography(settings, globals, descProps, ctx, "description_typography");
   }
+
+  // Box layout => icon position (top/left/right) + spacing + alignment. Elementor's
+  // icon-box `position` control is native; bridge keys keep the published page
+  // pixel-identical even when the theme/kit tries to override the wrapper flex.
+  if (boxProps) {
+    const disp = (boxProps.display || "").toLowerCase();
+    const dir = (boxProps.flexDirection || "").toLowerCase();
+    let pos = "top";
+    if (disp.includes("flex") && dir.startsWith("row")) {
+      pos = dir.includes("reverse") ? "right" : "left";
+    } else if (disp.includes("flex") && (dir === "" || dir.startsWith("column"))) {
+      pos = "top";
+    }
+    settings.position = pos;
+    settings.__xxxv_icon_position = pos;
+    // Spacing between icon and content (flex gap).
+    const gap = pxSize(boxProps.gap);
+    if (gap && gap.size >= 0) {
+      settings.icon_space = { unit: gap.unit, size: gap.size, sizes: [] };
+      settings.__xxxv_icon_space = `${gap.size}${gap.unit}`;
+    }
+    // Overall box text alignment.
+    const bAlign = toAlign(boxProps.textAlign) || toAlign(boxProps.alignItems) || toAlign(boxProps.justifyContent);
+    if (bAlign) {
+      settings.text_align = bAlign;
+      settings.__xxxv_iconbox_align = bAlign;
+    }
+  }
+
   if (Object.keys(globals).length) settings.__globals__ = globals;
 }
 
@@ -1424,4 +1491,15 @@ function parseOrder(value?: string): number | null {
 
 function sidesToElementorSafe(sides?: Partial<BoxSides>): Record<string, unknown> | undefined {
   return sidesToElementor(sides);
+}
+
+/** Build a CSS `padding`/`margin` shorthand string from box sides. */
+function sidesToCss(sides?: Partial<BoxSides>): string | undefined {
+  if (!sides) return undefined;
+  const t = sides.top ?? "0";
+  const r = sides.right ?? "0";
+  const b = sides.bottom ?? "0";
+  const l = sides.left ?? "0";
+  const val = `${t} ${r} ${b} ${l}`.trim();
+  return val && val !== "0 0 0 0" ? val : undefined;
 }

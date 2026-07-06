@@ -1165,8 +1165,9 @@ function iconBox(node: HtmlNode): ElementorElement {
     // icon; falls back to a keyword-inferred free icon, then a star.
     selected_icon: iconNode ? resolveIconValue(iconNode) : resolveIconValue(node),
     // Sensible free-icon defaults so the widget renders cleanly out of the box.
+    // `position` (icon placement) is refined from the source layout in styleIconBox.
     view: "default",
-    icon_align: "top",
+    position: "top",
   };
   // Bake the source colors/typography/size so the icon-box matches the design
   // instead of falling back to the Elementor kit defaults.
@@ -1174,7 +1175,8 @@ function iconBox(node: HtmlNode): ElementorElement {
     const iconProps = iconNode ? CURRENT_RESOLVER.resolve(iconNode as NodeLike) : undefined;
     const titleProps = titleNode ? CURRENT_RESOLVER.resolve(titleNode as NodeLike) : undefined;
     const descProps = descNode ? CURRENT_RESOLVER.resolve(descNode as NodeLike) : undefined;
-    styleIconBox(settings, iconProps, titleProps, descProps, CURRENT_CTX);
+    const boxProps = CURRENT_RESOLVER.resolve(node as NodeLike);
+    styleIconBox(settings, iconProps, titleProps, descProps, CURRENT_CTX, boxProps);
   }
   return {
     id: genId(),

@@ -1021,6 +1021,12 @@ function iconBox(node: HtmlNode): ElementorElement {
     node,
     (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
   );
+  // Icon position from the source box layout so the preview matches the design.
+  const style = resolveNodeStyle(node);
+  const isFlex = /display\s*:\s*flex/.test(style);
+  const isRow = isFlex && /flex-direction\s*:\s*row/.test(style);
+  const isRowReverse = /flex-direction\s*:\s*row-reverse/.test(style);
+  const position = isRowReverse ? "right" : isRow ? "left" : "top";
   return {
     id: genId(),
     elType: "widget",
@@ -1030,7 +1036,7 @@ function iconBox(node: HtmlNode): ElementorElement {
       description_text: descNode ? textContent(descNode) : "",
       selected_icon: iconNode ? resolveIconValue(iconNode) : resolveIconValue(node),
       view: "default",
-      icon_align: "top",
+      position,
     },
     elements: [],
   };
