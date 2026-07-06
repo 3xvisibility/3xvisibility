@@ -258,13 +258,14 @@ Deno.serve(async (req) => {
       let attempt = 0;
       let lastError = "";
       let ok = false;
-      let widgets = 0, fields = 0;
+      let widgets = 0, fields = 0, hasIcons = false;
       while (attempt < MAX_ATTEMPTS && !ok) {
         attempt++;
         try {
           const res = await convertTemplate(supabase, t);
           widgets = res.widgets;
           fields = res.fields;
+          hasIcons = res.hasIcons;
           ok = true;
         } catch (e) {
           lastError = e instanceof Error ? e.message : String(e);
@@ -280,7 +281,7 @@ Deno.serve(async (req) => {
           status: "success", attempts: attempt, widgets, fields,
         });
         // Record which connected pages point at this freshly-converted template.
-        await recordConnectedPages(supabase, runId, t);
+        await recordConnectedPages(supabase, runId, t, hasIcons);
       } else {
         failed++;
         failedDetails.push({ name: t.name || t.id, error: lastError });
