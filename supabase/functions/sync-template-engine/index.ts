@@ -37,6 +37,21 @@ function countWidgets(tree: any[]): number {
   return n;
 }
 
+/** True if the converted tree contains any icon-box / icon-list widget. */
+function hasIconWidgets(tree: any[]): boolean {
+  let found = false;
+  const walk = (el: any) => {
+    if (found) return;
+    if (el.elType === "widget" && (el.widgetType === "icon-box" || el.widgetType === "icon-list")) {
+      found = true;
+      return;
+    }
+    for (const c of el.elements ?? []) walk(c);
+  };
+  for (const el of tree) walk(el);
+  return found;
+}
+
 function stripAiImagePlaceholders(html: string): string {
   const TOKEN = /\{\{\s*AI_IMAGE[\s\S]*?\}\}/gi;
   return html
