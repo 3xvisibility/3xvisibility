@@ -1350,15 +1350,20 @@ class XXXV_Elementor {
 					if ( isset( $settings['__xxxv_box_border'] ) ) {
 						$rules[] = $base . ' .elementor-widget-container{border:' . self::css_value( (string) $settings['__xxxv_box_border'] ) . '}';
 					}
+					// Box shadow wraps the whole widget container (theme-proof).
+					if ( isset( $settings['__xxxv_box_shadow'] ) ) {
+						$rules[] = $base . ' .elementor-widget-container{box-shadow:' . self::css_value( (string) $settings['__xxxv_box_shadow'] ) . '}';
+					}
 					// Independent description alignment (title uses native text_align).
 					if ( isset( $settings['__xxxv_description_align'] ) ) {
 						$rules[] = $base . ' .elementor-image-box-description{text-align:' . self::css_value( (string) $settings['__xxxv_description_align'] ) . '}';
 					}
-					// Image fit/position on the box image element.
-					if ( isset( $settings['object_fit'] ) || isset( $settings['object_position'] ) ) {
+					// Image fit/position/radius on the box image element (theme-proof).
+					if ( isset( $settings['object_fit'] ) || isset( $settings['object_position'] ) || isset( $settings['image_border_radius'] ) ) {
 						$img_decls = array();
 						if ( isset( $settings['object_fit'] ) ) $img_decls['object-fit'] = $settings['object_fit'];
 						if ( isset( $settings['object_position'] ) ) $img_decls['object-position'] = $settings['object_position'];
+						if ( isset( $settings['image_border_radius'] ) ) $img_decls['border-radius'] = self::css_box( $settings['image_border_radius'] );
 						$img_text = self::css_decls( $img_decls );
 						if ( $img_text ) $rules[] = $base . ' .elementor-image-box-img img{' . $img_text . '}';
 					}
