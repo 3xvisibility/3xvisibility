@@ -156,7 +156,12 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const force = body?.force === true;
-    const triggerSource = typeof body?.trigger_source === "string" ? body.trigger_source : "manual";
+    // When retry_run_id is provided, only reprocess the templates that FAILED in
+    // that run — successful/skipped ones are left untouched.
+    const retryRunId = typeof body?.retry_run_id === "string" ? body.retry_run_id : null;
+    const triggerSource = retryRunId
+      ? "retry"
+      : (typeof body?.trigger_source === "string" ? body.trigger_source : "manual");
 
     // Resolve the calling admin (best-effort, for started_by / notifications).
     let startedBy: string | null = null;
@@ -169,13 +174,34 @@ Deno.serve(async (req) => {
       }
     } catch { /* ignore */ }
 
-    const { data: templates, error } = await supabase
-      .from("templates")
-      .select("id, name, content, schema_type, source_marketplace_id, elementor_data, user_id")
-      .order("id", { ascending: true });
-    if (error) throw new Error(error.message);
+    let all: any[] = [];
 
-    const all = (templates ?? []) as any[];
+    if (retryRunId) {
+      // Only the templates that failed in the referenced run.
+      const { data: failedRows, error: failErr } = await supabase
+        .from("template_backfill_items")
+        .select("template_id")
+        .eq("run_id", retryRunId)
+        .eq("status", "failed");
+      if (failErr) throw new Error(failErr.message);
+      const ids = Array.from(new Set((failedRows ?? []).map((r: any) => r.template_id).filter(Boolean)));
+      if (ids.length) {
+        const { data: templates, error } = await supabase
+          .from("templates")
+          .select("id, name, content, schema_type, source_marketplace_id, elementor_data, user_id")
+          .in("id", ids)
+          .order("id", { ascending: true });
+        if (error) throw new Error(error.message);
+        all = (templates ?? []) as any[];
+      }
+    } else {
+      const { data: templates, error } = await supabase
+        .from("templates")
+        .select("id, name, content, schema_type, source_marketplace_id, elementor_data, user_id")
+        .order("id", { ascending: true });
+      if (error) throw new Error(error.message);
+      all = (templates ?? []) as any[];
+    }
 
     // Create run header.
     const { data: run, error: runErr } = await supabase
@@ -183,9 +209,10 @@ Deno.serve(async (req) => {
       .insert({
         status: "running",
         trigger_source: triggerSource,
-        force,
+        force: retryRunId ? true : force,
         total_templates: all.length,
         started_by: startedBy,
+        retry_of_run_id: retryRunId,
       })
       .select("id")
       .single();
