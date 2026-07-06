@@ -118,7 +118,7 @@ async function convertTemplate(supabase: any, t: any): Promise<{ widgets: number
     );
   if (catErr) throw new Error(`catalog.upsert: ${catErr.message}`);
 
-  return { widgets: countWidgets(tree), fields: fields.length, skipped: false };
+  return { widgets: countWidgets(tree), fields: fields.length, skipped: false, hasIcons: hasIconWidgets(tree) };
 }
 
 /**
