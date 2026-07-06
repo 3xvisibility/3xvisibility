@@ -800,7 +800,8 @@ export function styleCounter(
     else if (titleProps.color) settings.title_color = titleProps.color;
     applyTypography(settings, globals, titleProps, ctx, "typography_title");
     // Space between the number and the title (from title's top margin).
-    const titleGap = pxSize(titleProps.marginTop);
+    const topMargin = titleProps.margin?.top;
+    const titleGap = pxSize(typeof topMargin === "string" ? topMargin : undefined);
     if (titleGap && titleGap.size >= 0) {
       settings.__xxxv_counter_title_space = `${titleGap.size}${titleGap.unit}`;
     }
