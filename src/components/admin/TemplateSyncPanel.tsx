@@ -38,6 +38,7 @@ interface Item {
 
 interface PageItem {
   id: string;
+  page_id: string | null;
   template_name: string | null;
   page_title: string | null;
   page_slug: string | null;
