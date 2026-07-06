@@ -365,14 +365,25 @@ export function TemplateSyncPanel() {
                 Republish published pages to render the update — in one click below.
               </CardDescription>
             </div>
-            <Button
-              onClick={republishAll}
-              disabled={republishingAll || publishablePageIds.length === 0}
-              className="gap-2 shrink-0"
-            >
-              {republishingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
-              Republish all published ({publishablePageIds.length})
-            </Button>
+            <div className="flex flex-col gap-2 shrink-0">
+              <Button
+                onClick={republishAll}
+                disabled={republishingAll || republishingIcons || publishablePageIds.length === 0}
+                className="gap-2 w-full"
+              >
+                {republishingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
+                Republish all published ({publishablePageIds.length})
+              </Button>
+              <Button
+                variant="outline"
+                onClick={republishIconPages}
+                disabled={republishingAll || republishingIcons || iconPageIds.length === 0}
+                className="gap-2 w-full"
+              >
+                {republishingIcons ? <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />}
+                Republish icon-box/list pages ({iconPageIds.length})
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="px-0">
             {pagesLoading ? (
