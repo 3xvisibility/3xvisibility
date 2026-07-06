@@ -1010,7 +1010,7 @@ function counter(node: HtmlNode): ElementorElement {
     }
     const titleProps = titleNode ? CURRENT_RESOLVER.resolve(titleNode as NodeLike) : undefined;
     const boxProps = CURRENT_RESOLVER.resolve(node as NodeLike);
-    styleCounter(settings, numberProps, titleProps, CURRENT_CTX, boxProps);
+    styleCounter(settings, numberProps, titleProps, CURRENT_CTX, boxProps, extractCounterAnim(node, boxProps));
   }
   return {
     id: genId(),
