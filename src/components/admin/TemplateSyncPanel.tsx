@@ -137,6 +137,72 @@ export function TemplateSyncPanel() {
   };
 
 
+  // ─── One-click republish of pages affected by this sync run ───────────────
+  // Published pages hold a snapshot of the OLD engine output, so they must be
+  // republished to render the refreshed widgets. Drafts pick up the new engine
+  // on their next generation, so only "published" pages are targeted here.
+  const [republishingAll, setRepublishingAll] = useState(false);
+  const [republishingIds, setRepublishingIds] = useState<Record<string, boolean>>({});
+
+  const publishablePages = pageItems.filter(
+    (p) => !!p.page_id && (p.page_status || "").toLowerCase() === "published",
+  );
+  const publishablePageIds = Array.from(
+    new Set(publishablePages.map((p) => p.page_id!).filter(Boolean)),
+  );
+
+  const republishPages = async (ids: string[]) => {
+    if (!ids.length) return;
+    const { data, error } = await supabase.functions.invoke("publish-pages", {
+      body: {
+        page_ids: ids,
+        publish_type: "page",
+        as_admin: true,
+        elementor_mode: "native",
+        overwrite_design: true,
+      },
+    });
+    if (error) throw error;
+    if ((data as { error?: string })?.error) throw new Error((data as { error?: string }).error);
+    return data as { published?: number; failed?: number };
+  };
+
+  const republishAll = async () => {
+    if (!publishablePageIds.length) return;
+    setRepublishingAll(true);
+    try {
+      const data = await republishPages(publishablePageIds);
+      toast({
+        title: "Republish started",
+        description: `${data?.published ?? 0} republished, ${data?.failed ?? 0} failed.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-page-items"] });
+    } catch (err) {
+      const msg = await extractEdgeError(err, "Failed to republish pages");
+      toast({ title: "Republish failed", description: msg, variant: "destructive" });
+    } finally {
+      setRepublishingAll(false);
+    }
+  };
+
+  const republishOne = async (pageId: string) => {
+    setRepublishingIds((m) => ({ ...m, [pageId]: true }));
+    try {
+      const data = await republishPages([pageId]);
+      toast({
+        title: data?.published ? "Page republished" : "Republish finished",
+        description: data?.failed ? "Republish failed for this page." : "The page now renders the refreshed engine.",
+        variant: data?.failed ? "destructive" : undefined,
+      });
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-page-items"] });
+    } catch (err) {
+      const msg = await extractEdgeError(err, "Failed to republish page");
+      toast({ title: "Republish failed", description: msg, variant: "destructive" });
+    } finally {
+      setRepublishingIds((m) => ({ ...m, [pageId]: false }));
+    }
+  };
+
   const failedItems = items.filter((i) => i.status === "failed");
   const otherItems = items.filter((i) => i.status !== "failed");
   const progressPct = latestRun && latestRun.total_templates > 0
