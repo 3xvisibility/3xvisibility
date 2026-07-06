@@ -80,6 +80,9 @@ function xxxv_connector_boot() {
 	// beats any head style Elementor or the active theme injected, so the published
 	// page renders 1:1 with the template even when caching plugins reorder head CSS.
 	add_action( 'wp_footer', array( 'XXXV_Elementor', 'print_template_css' ), PHP_INT_MAX );
+	// Drive the counter count-up with the source easing curve (Elementor has a
+	// native duration control but no easing control).
+	add_action( 'wp_footer', array( 'XXXV_Elementor', 'print_counter_easing_script' ), PHP_INT_MAX );
 	add_action( 'xxxv_deferred_exact_media_sync', array( 'XXXV_Elementor', 'deferred_exact_media_sync' ), 10, 1 );
 
 	// ---- Zero-intervention CSS self-healing --------------------------------
