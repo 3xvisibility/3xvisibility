@@ -1369,13 +1369,24 @@ class XXXV_Elementor {
 					if ( isset( $settings['typography_number_font_family'] ) ) $num_decls['font-family'] = $settings['typography_number_font_family'];
 					if ( isset( $settings['typography_number_font_size'] ) ) $num_decls['font-size'] = self::css_size( $settings['typography_number_font_size'] );
 					if ( isset( $settings['typography_number_font_weight'] ) ) $num_decls['font-weight'] = $settings['typography_number_font_weight'];
+					if ( isset( $settings['typography_number_line_height'] ) ) $num_decls['line-height'] = self::css_size( $settings['typography_number_line_height'] );
+					if ( isset( $settings['typography_number_letter_spacing'] ) ) $num_decls['letter-spacing'] = self::css_size( $settings['typography_number_letter_spacing'] );
 					$num_text = self::css_decls( $num_decls );
 					if ( $num_text ) $rules[] = $base . ' .elementor-counter-number-wrapper{' . $num_text . '}';
+					// Prefix/suffix spacing around the number.
+					if ( isset( $settings['__xxxv_counter_affix_space'] ) ) {
+						$affix = self::css_value( (string) $settings['__xxxv_counter_affix_space'] );
+						$rules[] = $base . ' .elementor-counter-number-prefix{margin-right:' . $affix . '}';
+						$rules[] = $base . ' .elementor-counter-number-suffix{margin-left:' . $affix . '}';
+					}
 					// Title colour/typography + spacing.
 					$title_decls = array();
 					if ( isset( $settings['title_color'] ) ) $title_decls['color'] = $settings['title_color'];
 					if ( isset( $settings['typography_title_font_family'] ) ) $title_decls['font-family'] = $settings['typography_title_font_family'];
 					if ( isset( $settings['typography_title_font_size'] ) ) $title_decls['font-size'] = self::css_size( $settings['typography_title_font_size'] );
+					if ( isset( $settings['typography_title_font_weight'] ) ) $title_decls['font-weight'] = $settings['typography_title_font_weight'];
+					if ( isset( $settings['typography_title_line_height'] ) ) $title_decls['line-height'] = self::css_size( $settings['typography_title_line_height'] );
+					if ( isset( $settings['typography_title_letter_spacing'] ) ) $title_decls['letter-spacing'] = self::css_size( $settings['typography_title_letter_spacing'] );
 					if ( isset( $settings['__xxxv_counter_title_space'] ) ) $title_decls['margin-top'] = self::css_value( (string) $settings['__xxxv_counter_title_space'] );
 					$title_text = self::css_decls( $title_decls );
 					if ( $title_text ) $rules[] = $base . ' .elementor-counter-title{' . $title_text . '}';
