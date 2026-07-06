@@ -912,11 +912,14 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
         !findNode(c, (n) => HEADINGS.has(n.tag)),
     );
     if (iconTextItems.length >= Math.ceil(itemChildren.length * 0.6)) {
-      const items = iconTextItems.map((c) => ({
-        _id: genId(),
-        text: textContent(c),
-        selected_icon: { value: "fas fa-check", library: "fa-solid" },
-      }));
+      const items = iconTextItems.map((c) => {
+        const iconNode = findNode(c, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa"));
+        return {
+          _id: genId(),
+          text: textContent(c),
+          selected_icon: iconNode ? resolveIconValue(iconNode) : { value: "fas fa-check", library: "fa-solid" },
+        };
+      });
       return {
         id: genId(),
         elType: "widget",
