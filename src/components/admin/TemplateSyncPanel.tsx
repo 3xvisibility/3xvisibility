@@ -99,14 +99,19 @@ export function TemplateSyncPanel() {
     refetchInterval: latestRun?.status === "running" ? 2000 : false,
   });
 
-  const runSync = async (force: boolean) => {
+  const runSync = async (force: boolean, widgetTypes?: string[]) => {
     setRunning(true);
     try {
       const { error } = await supabase.functions.invoke("sync-template-engine", {
-        body: { force, trigger_source: "manual" },
+        body: { force, trigger_source: "manual", ...(widgetTypes?.length ? { widget_types: widgetTypes } : {}) },
       });
       if (error) throw error;
-      toast({ title: "Sync started", description: "Converting templates with the latest widget engine." });
+      toast({
+        title: "Sync started",
+        description: widgetTypes?.length
+          ? `Re-syncing templates that contain: ${widgetTypes.join(", ")}.`
+          : "Converting templates with the latest widget engine.",
+      });
       queryClient.invalidateQueries({ queryKey: ["template-backfill-latest-run"] });
       queryClient.invalidateQueries({ queryKey: ["template-backfill-items"] });
     } catch (err) {
