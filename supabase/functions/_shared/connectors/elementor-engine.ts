@@ -1174,7 +1174,8 @@ function iconBox(node: HtmlNode): ElementorElement {
     const iconProps = iconNode ? CURRENT_RESOLVER.resolve(iconNode as NodeLike) : undefined;
     const titleProps = titleNode ? CURRENT_RESOLVER.resolve(titleNode as NodeLike) : undefined;
     const descProps = descNode ? CURRENT_RESOLVER.resolve(descNode as NodeLike) : undefined;
-    styleIconBox(settings, iconProps, titleProps, descProps, CURRENT_CTX);
+    const boxProps = CURRENT_RESOLVER.resolve(node as NodeLike);
+    styleIconBox(settings, iconProps, titleProps, descProps, CURRENT_CTX, boxProps);
   }
   return {
     id: genId(),
