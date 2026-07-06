@@ -196,6 +196,31 @@ function textContent(node: HtmlNode): string {
   return node.children.map(textContent).join(" ").replace(/\s+/g, " ").trim();
 }
 
+/** Strip template placeholders like {var}, {{var}}, %var%, [var] so their
+ *  internal characters (e.g. the "1" in {stat_1_num}) don't get mistaken for
+ *  real content such as a counter number. */
+function stripPlaceholders(text: string): string {
+  return (text || "")
+    .replace(/\{\{[\s\S]*?\}\}/g, " ")
+    .replace(/\{[^{}]*\}/g, " ")
+    .replace(/%[a-z0-9_]+%/gi, " ")
+    .replace(/\[[a-z0-9_]+\]/gi, " ");
+}
+
+/** True when the text contains a REAL digit (ignoring digits inside template
+ *  variable placeholders like {stat_1_num}). */
+function hasRealDigit(text: string): boolean {
+  return /\d/.test(stripPlaceholders(text));
+}
+
+/** True when the text is (or contains) a value that looks like a stat number,
+ *  including placeholder-driven numbers such as {stat_1_num}, {count} etc. */
+function looksLikeStatValue(text: string): boolean {
+  const t = (text || "").trim();
+  if (hasRealDigit(t)) return true;
+  return /\{\{?\s*[^{}]*(num|count|total|value|amount|number|percent|qty|rate)[^{}]*\}?\}/i.test(t);
+}
+
 function innerHtml(node: HtmlNode): string {
   return node.children.map(serialize).join("");
 }
