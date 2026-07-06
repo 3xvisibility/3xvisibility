@@ -1063,7 +1063,6 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
     (c) => c.tag && (hasClass(c, "stat", "counter") || /\d/.test(textContent(c))),
   ).length;
   const isMultiGroup =
-  if(process.env.DBG) console.error("DSW", JSON.stringify(node.tag), JSON.stringify(node.attrs.class), "multi="+isMultiGroup, "stat="+statChildren, "hc="+hasClass(node,"stat"));
     node.tag === "section" || bigHeading || headingCountTop >= 2 || imgCountTop >= 2 || statChildren >= 2;
 
   if (hasClass(node, "accordion", "faq")) {
@@ -1071,7 +1070,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
     if ((acc.settings.tabs as unknown[])?.length) return acc;
   }
   if (hasClass(node, "tabs", "tab-wrapper", "tabbed")) return tabs(node);
-  if (!isMultiGroup && hasClass(node, "counter", "stat", "stats", "countup")) { if(process.env.DBG) console.error("COUNTER-HIT", JSON.stringify(node.attrs.class), "multi", isMultiGroup); return counter(node); }
+  if (!isMultiGroup && hasClass(node, "counter", "stat", "stats", "countup")) return counter(node);
   if (!isMultiGroup && hasClass(node, "testimonial", "review", "quote-card")) return testimonial(node);
   if (!isMultiGroup && hasClass(node, "image-box", "img-box")) return imageBox(node);
   if (!isMultiGroup && hasClass(node, "icon-box", "feature-box", "feature-card", "service-box")) return iconBox(node);
