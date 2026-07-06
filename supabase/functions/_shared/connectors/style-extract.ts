@@ -775,8 +775,19 @@ export function styleCounter(
   numberProps: StyleProps | undefined,
   titleProps: StyleProps | undefined,
   ctx?: SiteContext,
+  boxProps?: StyleProps,
 ): void {
   const globals: Record<string, string> = (settings.__globals__ as Record<string, string>) ?? {};
+
+  const toAlign = (v?: string): string | undefined => {
+    if (!v) return undefined;
+    const a = v.trim().toLowerCase();
+    if (a === "left" || a === "start" || a === "flex-start") return "left";
+    if (a === "right" || a === "end" || a === "flex-end") return "right";
+    if (a === "center" || a === "justify") return "center";
+    return undefined;
+  };
+
   if (numberProps) {
     const numColorGlobal = globalColorId(numberProps.color, ctx);
     if (numColorGlobal) globals["number_color"] = `globals/colors?id=${numColorGlobal}`;
@@ -788,7 +799,30 @@ export function styleCounter(
     if (titleColorGlobal) globals["title_color"] = `globals/colors?id=${titleColorGlobal}`;
     else if (titleProps.color) settings.title_color = titleProps.color;
     applyTypography(settings, globals, titleProps, ctx, "typography_title");
+    // Space between the number and the title (from title's top margin).
+    const titleGap = pxSize(titleProps.marginTop);
+    if (titleGap && titleGap.size >= 0) {
+      settings.__xxxv_counter_title_space = `${titleGap.size}${titleGap.unit}`;
+    }
   }
+
+  // Box-level styling so the counter card mirrors the source: alignment,
+  // background, padding and rounded corners. Elementor's counter has no native
+  // align control, so alignment is emitted via a bridge key + our plugin CSS.
+  if (boxProps) {
+    const bAlign = toAlign(boxProps.textAlign) || toAlign(boxProps.justifyContent);
+    if (bAlign) settings.__xxxv_counter_align = bAlign;
+    if (boxProps.backgroundColor) {
+      settings.__xxxv_background = boxProps.backgroundColor;
+      settings.background_background = "classic";
+      settings.background_color = boxProps.backgroundColor;
+    }
+    const pad = sidesToElementorSafe(boxProps.padding);
+    if (pad) settings._padding = pad;
+    const boxCorner = cornerRadius(boxProps.borderRadius);
+    if (boxCorner) settings._border_radius = boxCorner;
+  }
+
   if (Object.keys(globals).length) settings.__globals__ = globals;
 }
 
