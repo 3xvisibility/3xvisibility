@@ -887,17 +887,37 @@ function testimonial(node: HtmlNode): ElementorElement {
 }
 
 function iconBox(node: HtmlNode): ElementorElement {
-  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title"));
-  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description"));
+  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "heading", "name"));
+  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description", "subtitle"));
+  // Locate the actual icon node so we can preserve its real glyph + color.
+  const iconNode = findNode(
+    node,
+    (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
+  );
+  const settings: Record<string, unknown> = {
+    ...nativeIdentitySettings(node),
+    title_text: titleNode ? textContent(titleNode) : "",
+    description_text: descNode ? textContent(descNode) : "",
+    // Resolve the real source icon into an Elementor free (Font Awesome/eicon)
+    // icon; falls back to a keyword-inferred free icon, then a star.
+    selected_icon: iconNode ? resolveIconValue(iconNode) : resolveIconValue(node),
+    // Sensible free-icon defaults so the widget renders cleanly out of the box.
+    view: "default",
+    icon_align: "top",
+  };
+  // Bake the source colors/typography/size so the icon-box matches the design
+  // instead of falling back to the Elementor kit defaults.
+  if (CURRENT_RESOLVER) {
+    const iconProps = iconNode ? CURRENT_RESOLVER.resolve(iconNode as NodeLike) : undefined;
+    const titleProps = titleNode ? CURRENT_RESOLVER.resolve(titleNode as NodeLike) : undefined;
+    const descProps = descNode ? CURRENT_RESOLVER.resolve(descNode as NodeLike) : undefined;
+    styleIconBox(settings, iconProps, titleProps, descProps, CURRENT_CTX);
+  }
   return {
     id: genId(),
     elType: "widget",
     widgetType: "icon-box",
-    settings: {
-      title_text: titleNode ? textContent(titleNode) : "",
-      description_text: descNode ? textContent(descNode) : "",
-      selected_icon: { value: "fas fa-star", library: "fa-solid" },
-    },
+    settings,
     elements: [],
   };
 }
