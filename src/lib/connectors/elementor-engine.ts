@@ -785,8 +785,12 @@ function testimonial(node: HtmlNode): ElementorElement {
 }
 
 function iconBox(node: HtmlNode): ElementorElement {
-  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title"));
-  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description"));
+  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "heading", "name"));
+  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description", "subtitle"));
+  const iconNode = findNode(
+    node,
+    (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
+  );
   return {
     id: genId(),
     elType: "widget",
@@ -794,7 +798,9 @@ function iconBox(node: HtmlNode): ElementorElement {
     settings: {
       title_text: titleNode ? textContent(titleNode) : "",
       description_text: descNode ? textContent(descNode) : "",
-      selected_icon: { value: "fas fa-star", library: "fa-solid" },
+      selected_icon: iconNode ? resolveIconValue(iconNode) : resolveIconValue(node),
+      view: "default",
+      icon_align: "top",
     },
     elements: [],
   };
