@@ -770,13 +770,23 @@ export function styleText(settings: Record<string, unknown>, p: StyleProps, ctx?
  * `title_color` / `typography_title` controls. Without this the counter falls
  * back to the Elementor kit defaults (usually a large light-blue number).
  */
-export function styleCounter(
-  settings: Record<string, unknown>,
-  numberProps: StyleProps | undefined,
-  titleProps: StyleProps | undefined,
-  ctx?: SiteContext,
-  boxProps?: StyleProps,
-): void {
+ export function styleCounter(
+   settings: Record<string, unknown>,
+   numberProps: StyleProps | undefined,
+   titleProps: StyleProps | undefined,
+   ctx?: SiteContext,
+   boxProps?: StyleProps,
+   anim?: { duration?: number; easing?: string },
+ ): void {
+   // Count-up animation: Elementor's counter has a native `duration` control (ms).
+   // Easing is not a native counter control, so it is emitted via a bridge key that
+   // our plugin turns into the count-up easing on the frontend.
+   if (anim) {
+     if (typeof anim.duration === "number" && anim.duration > 0) {
+       settings.duration = Math.round(anim.duration);
+     }
+     if (anim.easing) settings.__xxxv_counter_easing = anim.easing;
+   }
   const globals: Record<string, string> = (settings.__globals__ as Record<string, string>) ?? {};
 
   const toAlign = (v?: string): string | undefined => {
