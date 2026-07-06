@@ -430,6 +430,8 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["left"]) p.left = d["left"];
   if (d["inset"]) p.inset = d["inset"];
   if (d["order"]) p.order = d["order"];
+  if (d["transition-duration"]) p.transitionDuration = d["transition-duration"].trim();
+  if (d["transition-timing-function"]) p.transitionTimingFunction = d["transition-timing-function"].trim();
 
   const box = (prefix: "padding" | "margin"): Partial<BoxSides> | undefined => {
     const sides: Partial<BoxSides> = {};
