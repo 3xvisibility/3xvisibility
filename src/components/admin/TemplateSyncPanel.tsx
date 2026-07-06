@@ -193,6 +193,26 @@ export function TemplateSyncPanel() {
     }
   };
 
+  const republishIconPages = async () => {
+    if (!iconPageIds.length) return;
+    setRepublishingIcons(true);
+    try {
+      const data = await republishPages(iconPageIds);
+      toast({
+        title: "Icon-box/list pages republishing",
+        description: `${data?.published ?? 0} republished, ${data?.failed ?? 0} failed.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-page-items"] });
+    } catch (err) {
+      const msg = await extractEdgeError(err, "Failed to republish icon pages");
+      toast({ title: "Republish failed", description: msg, variant: "destructive" });
+    } finally {
+      setRepublishingIcons(false);
+    }
+  };
+
+
+
   const republishOne = async (pageId: string) => {
     setRepublishingIds((m) => ({ ...m, [pageId]: true }));
     try {
