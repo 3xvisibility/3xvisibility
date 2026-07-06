@@ -14,6 +14,7 @@ import {
   KeyRound,
   Settings,
   Store,
+  RefreshCw,
   ArrowLeft,
   LogOut,
 } from "lucide-react";
