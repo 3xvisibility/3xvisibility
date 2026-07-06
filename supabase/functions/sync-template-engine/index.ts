@@ -194,9 +194,15 @@ Deno.serve(async (req) => {
     // When retry_run_id is provided, only reprocess the templates that FAILED in
     // that run — successful/skipped ones are left untouched.
     const retryRunId = typeof body?.retry_run_id === "string" ? body.retry_run_id : null;
+    // Optional widget-scoped sync: only re-convert templates that already contain
+    // one of these widget types (e.g. ["counter"], ["icon-box"], ["image-box"]).
+    const widgetTypes: string[] = Array.isArray(body?.widget_types)
+      ? body.widget_types.filter((w: unknown) => typeof w === "string" && w.trim()).map((w: string) => w.trim())
+      : [];
     const triggerSource = retryRunId
       ? "retry"
       : (typeof body?.trigger_source === "string" ? body.trigger_source : "manual");
+
 
     // Resolve the calling admin (best-effort, for started_by / notifications).
     let startedBy: string | null = null;
