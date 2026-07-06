@@ -912,17 +912,38 @@ function counter(node: HtmlNode): ElementorElement {
     suffix = cleaned.slice(idx + numMatch[0].length).trim();
   }
   const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "label"));
+  const settings: Record<string, unknown> = {
+    starting_number: 0,
+    ending_number: ending,
+    prefix,
+    suffix,
+    title: titleNode ? textContent(titleNode) : "",
+  };
+  // Count-up animation: map duration (ms) to Elementor's native `duration` and
+  // easing to a bridge key so both marketplace preview and published pages match.
+  const durAttr =
+    node.attrs["data-duration"] ||
+    node.attrs["data-count-duration"] ||
+    node.attrs["data-speed"] ||
+    node.attrs["data-aos-duration"];
+  if (durAttr) {
+    const m = durAttr.trim().toLowerCase().match(/([\d.]+)\s*(ms|s)?/);
+    if (m) {
+      const n = parseFloat(m[1]);
+      if (isFinite(n) && n > 0) {
+        settings.duration = Math.round(m[2] === "s" || (!m[2] && n <= 60) ? n * 1000 : n);
+      }
+    }
+  }
+  const easeAttr = node.attrs["data-easing"] || node.attrs["data-ease"] || node.attrs["data-aos-easing"];
+  if (easeAttr && easeAttr.trim() && easeAttr.trim().toLowerCase() !== "none") {
+    settings.__xxxv_counter_easing = easeAttr.trim().toLowerCase();
+  }
   return {
     id: genId(),
     elType: "widget",
     widgetType: "counter",
-    settings: {
-      starting_number: 0,
-      ending_number: ending,
-      prefix,
-      suffix,
-      title: titleNode ? textContent(titleNode) : "",
-    },
+    settings,
     elements: [],
   };
 }
