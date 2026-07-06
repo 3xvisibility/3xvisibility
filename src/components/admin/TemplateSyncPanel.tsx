@@ -329,12 +329,22 @@ export function TemplateSyncPanel() {
 
       {latestRun && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Connected pages updated</CardTitle>
-            <CardDescription>
-              Pages linked to each re-synced template that now point at the refreshed engine.
-              Published pages should be republished to render the update.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div>
+              <CardTitle className="text-base">Connected pages updated</CardTitle>
+              <CardDescription>
+                Pages linked to each re-synced template that now point at the refreshed engine.
+                Republish published pages to render the update — in one click below.
+              </CardDescription>
+            </div>
+            <Button
+              onClick={republishAll}
+              disabled={republishingAll || publishablePageIds.length === 0}
+              className="gap-2 shrink-0"
+            >
+              {republishingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
+              Republish all published ({publishablePageIds.length})
+            </Button>
           </CardHeader>
           <CardContent className="px-0">
             {pagesLoading ? (
@@ -344,24 +354,40 @@ export function TemplateSyncPanel() {
             ) : (
               <ScrollArea className="h-[360px]">
                 <div className="divide-y divide-border">
-                  {pageItems.map((p) => (
-                    <div key={p.id} className="flex items-start gap-3 px-6 py-2.5">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{p.page_title || p.page_slug || "(untitled page)"}</p>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          <span className="text-xs text-muted-foreground truncate">
-                            via {p.template_name || "template"}
-                          </span>
-                          {p.page_status && (
-                            <Badge variant="outline" className="text-[10px] capitalize">{p.page_status}</Badge>
-                          )}
+                  {pageItems.map((p) => {
+                    const canRepublish = !!p.page_id && (p.page_status || "").toLowerCase() === "published";
+                    return (
+                      <div key={p.id} className="flex items-center gap-3 px-6 py-2.5">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{p.page_title || p.page_slug || "(untitled page)"}</p>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <span className="text-xs text-muted-foreground truncate">
+                              via {p.template_name || "template"}
+                            </span>
+                            {p.page_status && (
+                              <Badge variant="outline" className="text-[10px] capitalize">{p.page_status}</Badge>
+                            )}
+                          </div>
                         </div>
+                        {canRepublish ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => republishOne(p.page_id!)}
+                            disabled={!!republishingIds[p.page_id!] || republishingAll}
+                            className="gap-1.5 shrink-0"
+                          >
+                            {republishingIds[p.page_id!] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Rocket className="h-3.5 w-3.5" />}
+                            Republish
+                          </Button>
+                        ) : (
+                          <Badge className="bg-primary/15 text-primary border-primary/30 gap-1">
+                            <CheckCircle2 className="h-3 w-3" />Updated
+                          </Badge>
+                        )}
                       </div>
-                      <Badge className="bg-primary/15 text-primary border-primary/30 gap-1">
-                        <CheckCircle2 className="h-3 w-3" />Updated
-                      </Badge>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </ScrollArea>
             )}
