@@ -14,7 +14,7 @@
  * a small, tolerant HTML tokenizer.
  */
 
-import { StyleResolver, styleButton, styleContainer, styleContainerResponsive, styleCounter, styleHeading, styleHover, styleImage, styleResponsiveVisibilityAndOrder, styleText, styleTypographyResponsive, type HoverKind, type NodeLike, type StyleProps } from "./style-extract.ts";
+import { StyleResolver, styleButton, styleContainer, styleContainerResponsive, styleCounter, styleHeading, styleHover, styleIconBox, styleImage, styleResponsiveVisibilityAndOrder, styleText, styleTypographyResponsive, type HoverKind, type NodeLike, type StyleProps } from "./style-extract.ts";
 import type { SiteContext } from "./wp-site-context.ts";
 
 // Module-scoped style baking state. Set by `htmlToElementor` so the widget
@@ -580,6 +580,64 @@ function detectForm(node: HtmlNode): ElementorElement | null {
   return formWidget(node);
 }
 
+/**
+ * Keyword → Elementor free (Font Awesome Solid) icon map. Used when the source
+ * markup carries a themed/custom icon class (or an <svg>) that has no direct
+ * `fa-*` token, so the converted icon-box still shows a meaningful free icon
+ * instead of the generic star fallback.
+ */
+const ICON_KEYWORD_MAP: Array<{ re: RegExp; icon: string }> = [
+  { re: /\b(rocket|launch|boost|startup)\b/, icon: "fa-rocket" },
+  { re: /\b(shield|secure|security|protect|guard|safe)\b/, icon: "fa-shield-halved" },
+  { re: /\b(check|tick|done|complete|success|verified)\b/, icon: "fa-circle-check" },
+  { re: /\b(chart|graph|analytic|report|stat|growth|trend)\b/, icon: "fa-chart-line" },
+  { re: /\b(bulb|idea|lightbulb|innovat|creative)\b/, icon: "fa-lightbulb" },
+  { re: /\b(gear|cog|setting|config|tool|wrench)\b/, icon: "fa-gear" },
+  { re: /\b(clock|time|fast|speed|quick|deliver)\b/, icon: "fa-clock" },
+  { re: /\b(phone|call|contact|support|headset)\b/, icon: "fa-phone" },
+  { re: /\b(mail|email|envelope|message|newsletter)\b/, icon: "fa-envelope" },
+  { re: /\b(user|person|people|team|customer|account)\b/, icon: "fa-user" },
+  { re: /\b(users|group|community|audience)\b/, icon: "fa-users" },
+  { re: /\b(heart|love|like|favorite|care)\b/, icon: "fa-heart" },
+  { re: /\b(star|rating|quality|premium|best)\b/, icon: "fa-star" },
+  { re: /\b(globe|world|global|web|internet|language)\b/, icon: "fa-globe" },
+  { re: /\b(cart|shop|store|buy|ecommerce|commerce|bag)\b/, icon: "fa-cart-shopping" },
+  { re: /\b(dollar|price|money|payment|cost|billing|finance)\b/, icon: "fa-dollar-sign" },
+  { re: /\b(lock|privacy|password|encrypt)\b/, icon: "fa-lock" },
+  { re: /\b(cloud|hosting|server|storage|backup)\b/, icon: "fa-cloud" },
+  { re: /\b(mobile|app|phone-app|responsive|device)\b/, icon: "fa-mobile-screen" },
+  { re: /\b(code|develop|program|api|integration)\b/, icon: "fa-code" },
+  { re: /\b(paint|design|brush|palette|ui|ux)\b/, icon: "fa-paintbrush" },
+  { re: /\b(search|seo|find|magnif)\b/, icon: "fa-magnifying-glass" },
+  { re: /\b(location|map|pin|address|place)\b/, icon: "fa-location-dot" },
+  { re: /\b(calendar|schedule|event|booking|date)\b/, icon: "fa-calendar" },
+  { re: /\b(gift|reward|bonus|offer)\b/, icon: "fa-gift" },
+  { re: /\b(award|trophy|win|achievement|medal)\b/, icon: "fa-trophy" },
+  { re: /\b(thumbs|thumb-up|approve)\b/, icon: "fa-thumbs-up" },
+  { re: /\b(handshake|deal|partner|agreement)\b/, icon: "fa-handshake" },
+  { re: /\b(fire|hot|trending|popular)\b/, icon: "fa-fire" },
+  { re: /\b(bolt|flash|power|energy|electric)\b/, icon: "fa-bolt" },
+  { re: /\b(book|learn|read|course|guide|doc)\b/, icon: "fa-book" },
+  { re: /\b(play|video|media|watch)\b/, icon: "fa-play" },
+  { re: /\b(camera|photo|image|gallery)\b/, icon: "fa-camera" },
+  { re: /\b(comment|chat|talk|discuss|feedback)\b/, icon: "fa-comment" },
+  { re: /\b(truck|ship|delivery|logistic)\b/, icon: "fa-truck" },
+  { re: /\b(headphone|music|audio|sound)\b/, icon: "fa-headphones" },
+  { re: /\b(home|house|property|estate)\b/, icon: "fa-house" },
+  { re: /\b(target|goal|aim|mission|focus)\b/, icon: "fa-bullseye" },
+  { re: /\b(infinity|unlimited)\b/, icon: "fa-infinity" },
+  { re: /\b(sync|refresh|update|reload)\b/, icon: "fa-arrows-rotate" },
+];
+
+/** Map a keyword string (class names / svg id) to a free FA solid icon token. */
+function keywordIconToken(text: string): string | null {
+  const t = text.toLowerCase();
+  for (const { re, icon } of ICON_KEYWORD_MAP) {
+    if (re.test(t)) return icon;
+  }
+  return null;
+}
+
 /** Map a Font Awesome / generic icon class to an Elementor selected_icon value. */
 function resolveIconValue(node: HtmlNode): { value: string; library: string } {
   const cls = (node.attrs.class || "").toLowerCase();
@@ -590,6 +648,19 @@ function resolveIconValue(node: HtmlNode): { value: string; library: string } {
     const library = styleToken === "fab" ? "fa-brands" : styleToken === "far" ? "fa-regular" : "fa-solid";
     return { value: `${styleToken} ${iconToken}`, library };
   }
+  // Elementor "eicon-*" native icon → keep as-is (Elementor free icon set).
+  const eicon = cls.match(/\beicon-[a-z0-9-]+\b/)?.[0];
+  if (eicon) return { value: eicon, library: "elementor-icons" };
+  // No explicit token: infer a free FA icon from class names / svg attributes.
+  const hint = [
+    node.attrs.class || "",
+    node.attrs["data-icon"] || "",
+    node.attrs["aria-label"] || "",
+    node.attrs.id || "",
+    node.attrs.href || "",
+  ].join(" ");
+  const guessed = keywordIconToken(hint);
+  if (guessed) return { value: `fas ${guessed}`, library: "fa-solid" };
   return { value: "fas fa-star", library: "fa-solid" };
 }
 
@@ -740,11 +811,14 @@ function findAll(node: HtmlNode, pred: (n: HtmlNode) => boolean): HtmlNode[] {
 function iconList(node: HtmlNode): ElementorElement {
   const items = node.children
     .filter((c) => c.tag === "li")
-    .map((li) => ({
-      _id: genId(),
-      text: textContent(li),
-      selected_icon: { value: "fas fa-check", library: "fa-solid" },
-    }));
+    .map((li) => {
+      const iconNode = findNode(li, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa"));
+      return {
+        _id: genId(),
+        text: textContent(li),
+        selected_icon: iconNode ? resolveIconValue(iconNode) : { value: "fas fa-check", library: "fa-solid" },
+      };
+    });
   return {
     id: genId(),
     elType: "widget",
@@ -816,17 +890,37 @@ function testimonial(node: HtmlNode): ElementorElement {
 }
 
 function iconBox(node: HtmlNode): ElementorElement {
-  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title"));
-  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description"));
+  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "heading", "name"));
+  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description", "subtitle"));
+  // Locate the actual icon node so we can preserve its real glyph + color.
+  const iconNode = findNode(
+    node,
+    (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
+  );
+  const settings: Record<string, unknown> = {
+    ...nativeIdentitySettings(node),
+    title_text: titleNode ? textContent(titleNode) : "",
+    description_text: descNode ? textContent(descNode) : "",
+    // Resolve the real source icon into an Elementor free (Font Awesome/eicon)
+    // icon; falls back to a keyword-inferred free icon, then a star.
+    selected_icon: iconNode ? resolveIconValue(iconNode) : resolveIconValue(node),
+    // Sensible free-icon defaults so the widget renders cleanly out of the box.
+    view: "default",
+    icon_align: "top",
+  };
+  // Bake the source colors/typography/size so the icon-box matches the design
+  // instead of falling back to the Elementor kit defaults.
+  if (CURRENT_RESOLVER) {
+    const iconProps = iconNode ? CURRENT_RESOLVER.resolve(iconNode as NodeLike) : undefined;
+    const titleProps = titleNode ? CURRENT_RESOLVER.resolve(titleNode as NodeLike) : undefined;
+    const descProps = descNode ? CURRENT_RESOLVER.resolve(descNode as NodeLike) : undefined;
+    styleIconBox(settings, iconProps, titleProps, descProps, CURRENT_CTX);
+  }
   return {
     id: genId(),
     elType: "widget",
     widgetType: "icon-box",
-    settings: {
-      title_text: titleNode ? textContent(titleNode) : "",
-      description_text: descNode ? textContent(descNode) : "",
-      selected_icon: { value: "fas fa-star", library: "fa-solid" },
-    },
+    settings,
     elements: [],
   };
 }
@@ -938,11 +1032,14 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
         !findNode(c, (n) => HEADINGS.has(n.tag)),
     );
     if (iconTextItems.length >= Math.ceil(itemChildren.length * 0.6)) {
-      const items = iconTextItems.map((c) => ({
-        _id: genId(),
-        text: textContent(c),
-        selected_icon: { value: "fas fa-check", library: "fa-solid" },
-      }));
+      const items = iconTextItems.map((c) => {
+        const iconNode = findNode(c, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa"));
+        return {
+          _id: genId(),
+          text: textContent(c),
+          selected_icon: iconNode ? resolveIconValue(iconNode) : { value: "fas fa-check", library: "fa-solid" },
+        };
+      });
       return {
         id: genId(),
         elType: "widget",
