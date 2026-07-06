@@ -259,6 +259,48 @@ export function TemplateSyncPanel() {
           </CardContent>
         </Card>
       )}
+
+      {latestRun && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Connected pages updated</CardTitle>
+            <CardDescription>
+              Pages linked to each re-synced template that now point at the refreshed engine.
+              Published pages should be republished to render the update.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            {pagesLoading ? (
+              <Skeleton className="h-40 mx-6 rounded-lg" />
+            ) : pageItems.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8 text-sm">No connected pages recorded for this run.</p>
+            ) : (
+              <ScrollArea className="h-[360px]">
+                <div className="divide-y divide-border">
+                  {pageItems.map((p) => (
+                    <div key={p.id} className="flex items-start gap-3 px-6 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{p.page_title || p.page_slug || "(untitled page)"}</p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span className="text-xs text-muted-foreground truncate">
+                            via {p.template_name || "template"}
+                          </span>
+                          {p.page_status && (
+                            <Badge variant="outline" className="text-[10px] capitalize">{p.page_status}</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <Badge className="bg-primary/15 text-primary border-primary/30 gap-1">
+                        <CheckCircle2 className="h-3 w-3" />Updated
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
