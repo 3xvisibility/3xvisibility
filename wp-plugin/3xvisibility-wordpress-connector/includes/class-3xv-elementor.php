@@ -1669,6 +1669,89 @@ class XXXV_Elementor {
 	}
 
 	/**
+	 * Recursively collect Elementor element id => count-up easing curve from a
+	 * saved element tree, reading the `__xxxv_counter_easing` bridge key baked in
+	 * by the mapping engine.
+	 *
+	 * @param array $elements Element tree.
+	 * @param array $map      Accumulator (by reference).
+	 */
+	private static function collect_counter_easings( $elements, &$map ) {
+		if ( ! is_array( $elements ) ) {
+			return;
+		}
+		foreach ( $elements as $element ) {
+			if ( ! is_array( $element ) ) {
+				continue;
+			}
+			$settings = isset( $element['settings'] ) && is_array( $element['settings'] ) ? $element['settings'] : array();
+			$id       = isset( $element['id'] ) ? (string) $element['id'] : '';
+			if ( '' !== $id && ! empty( $settings['__xxxv_counter_easing'] ) ) {
+				$map[ $id ] = (string) $settings['__xxxv_counter_easing'];
+			}
+			if ( ! empty( $element['elements'] ) ) {
+				self::collect_counter_easings( $element['elements'], $map );
+			}
+		}
+	}
+
+	/**
+	 * Print a tiny, dependency-free frontend script that re-runs Elementor's
+	 * counter count-up with the source easing curve. Elementor's counter has a
+	 * native `duration` control (already honoured), but no easing control — this
+	 * bridges CSS timing functions (ease/ease-in/ease-out/ease-in-out/linear or
+	 * cubic-bezier(...)) onto the animation so published pages match the template.
+	 */
+	public static function print_counter_easing_script() {
+		if ( ! is_singular( 'page' ) ) {
+			return;
+		}
+		$post_id = get_queried_object_id();
+		if ( ! $post_id || ! self::is_connector_page( $post_id ) ) {
+			return;
+		}
+		$saved = get_post_meta( $post_id, '_elementor_data', true );
+		$data  = is_string( $saved ) ? json_decode( $saved, true ) : null;
+		if ( ! is_array( $data ) && is_string( $saved ) ) {
+			$data = json_decode( wp_unslash( $saved ), true );
+		}
+		if ( ! is_array( $data ) ) {
+			return;
+		}
+		$map = array();
+		self::collect_counter_easings( $data, $map );
+		if ( empty( $map ) ) {
+			return;
+		}
+		$json = wp_json_encode( $map );
+		?>
+<script id="xxxv-counter-easing-<?php echo esc_attr( (string) $post_id ); ?>">
+(function(){
+	var EASE = <?php echo $json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-encoded id=>easing map. ?>;
+	function bezier(a){var m=/cubic-bezier\(([^)]+)\)/.exec(a);if(!m)return null;var p=m[1].split(',').map(parseFloat);if(p.length!==4||p.some(isNaN))return null;var x1=p[0],y1=p[1],x2=p[2],y2=p[3];function cx(t){return((1-3*x2+3*x1)*t+(3*x2-6*x1))*t*t+3*x1*t;}function cy(t){return((1-3*y2+3*y1)*t+(3*y2-6*y1))*t*t+3*y1*t;}return function(x){var t=x;for(var i=0;i<6;i++){var e=cx(t)-x;var d=(3*(1-3*x2+3*x1)*t*t+2*(3*x2-6*x1)*t+3*x1);if(Math.abs(d)<1e-6)break;t-=e/d;}return cy(t);};}
+	function fn(name){name=(name||'').trim().toLowerCase();
+		if(name==='linear')return function(t){return t;};
+		if(name==='ease-in')return function(t){return t*t*t;};
+		if(name==='ease-out')return function(t){return 1-Math.pow(1-t,3);};
+		if(name==='ease-in-out')return function(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;};
+		if(name==='ease')return bezier('cubic-bezier(0.25,0.1,0.25,1)');
+		if(name.indexOf('cubic-bezier')===0)return bezier(name)||function(t){return t;};
+		return function(t){return t;};}
+	function run(el,ease){var num=el.querySelector('.elementor-counter-number');if(!num||num.dataset.xxxvEased)return;num.dataset.xxxvEased='1';
+		var to=parseFloat(num.getAttribute('data-to-value'))||0;var from=parseFloat(num.getAttribute('data-from-value'))||0;var dur=parseFloat(num.getAttribute('data-duration'))||2000;var delim=num.getAttribute('data-delimiter')||',';
+		var start=null;function fmt(v){var s=Math.round(v).toString();return delim?s.replace(/\B(?=(\d{3})+(?!\d))/g,delim):s;}
+		function step(ts){if(start===null)start=ts;var p=Math.min((ts-start)/dur,1);num.textContent=fmt(from+(to-from)*ease(p));if(p<1)requestAnimationFrame(step);}
+		requestAnimationFrame(step);}
+	function init(){Object.keys(EASE).forEach(function(id){var el=document.querySelector('.elementor-element-'+id+' .elementor-counter');if(el)run(el,fn(EASE[id]));});}
+	function boot(){ if(window.IntersectionObserver){var seen=new WeakSet();var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&!seen.has(e.target)){seen.add(e.target);var id=(e.target.className.match(/elementor-element-([a-z0-9]+)/)||[])[1];if(id&&EASE[id]){var c=e.target.querySelector('.elementor-counter');if(c)run(c,fn(EASE[id]));}io.unobserve(e.target);}});},{threshold:0.3});Object.keys(EASE).forEach(function(id){var el=document.querySelector('.elementor-element-'+id);if(el)io.observe(el);});}else{init();}}
+	if(document.readyState!=='loading')boot();else document.addEventListener('DOMContentLoaded',boot);
+})();
+</script>
+		<?php
+	}
+
+
+	/**
 	 * Enqueue stored template CSS as real frontend CSS. Some optimization/cache
 	 * plugins move or strip late wp_head style tags, while wp_add_inline_style()
 	 * is handled as an enqueued stylesheet dependency. We keep print_template_css()
