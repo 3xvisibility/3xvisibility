@@ -268,7 +268,7 @@ Deno.serve(async (req) => {
     let converted = 0, skipped = 0, failed = 0, processed = 0;
     const failedDetails: Array<{ name: string; error: string }> = [];
 
-    const effectiveForce = force || !!retryRunId;
+    const effectiveForce = force || !!retryRunId || widgetTypes.length > 0;
     for (const t of all) {
       processed++;
       const hasExisting = Array.isArray(t.elementor_data)
