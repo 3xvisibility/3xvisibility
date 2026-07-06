@@ -53,6 +53,9 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const force = body?.force === true;
+    // Batch controls so large catalogs don't exceed the worker compute limit.
+    const limit = Math.min(Math.max(Number(body?.limit) || 10, 1), 50);
+    const offset = Math.max(Number(body?.offset) || 0, 0);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -61,7 +64,9 @@ Deno.serve(async (req) => {
 
     const { data: templates, error } = await supabase
       .from("templates")
-      .select("id, name, content, schema_type, source_marketplace_id, elementor_data");
+      .select("id, name, content, schema_type, source_marketplace_id, elementor_data")
+      .order("id", { ascending: true })
+      .range(offset, offset + limit - 1);
     if (error) throw new Error(error.message);
 
     const results: Array<{
