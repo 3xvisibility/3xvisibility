@@ -14,7 +14,7 @@
  * a small, tolerant HTML tokenizer.
  */
 
-import { StyleResolver, styleButton, styleContainer, styleContainerResponsive, styleHeading, styleHover, styleImage, styleResponsiveVisibilityAndOrder, styleText, styleTypographyResponsive, type HoverKind, type NodeLike, type StyleProps } from "./style-extract.ts";
+import { StyleResolver, styleButton, styleContainer, styleContainerResponsive, styleCounter, styleHeading, styleHover, styleImage, styleResponsiveVisibilityAndOrder, styleText, styleTypographyResponsive, type HoverKind, type NodeLike, type StyleProps } from "./style-extract.ts";
 import type { SiteContext } from "./wp-site-context.ts";
 
 // Module-scoped style baking state. Set by `htmlToElementor` so the widget
@@ -758,16 +758,40 @@ function counter(node: HtmlNode): ElementorElement {
   const numNode = findNode(node, (n) => /\d/.test(textContent(n)) && n.children.every((c) => !c.tag));
   const raw = textContent(numNode || node);
   const ending = parseInt(raw.replace(/[^\d]/g, ""), 10) || 0;
+  // Preserve any non-numeric suffix/prefix (e.g. "+", "%", "k") so "15+" stays "15+".
+  const cleaned = raw.trim();
+  const numMatch = cleaned.match(/[\d.,]+/);
+  let prefix = "";
+  let suffix = "";
+  if (numMatch) {
+    const idx = cleaned.indexOf(numMatch[0]);
+    prefix = cleaned.slice(0, idx).trim();
+    suffix = cleaned.slice(idx + numMatch[0].length).trim();
+  }
   const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "label"));
+  const settings: Record<string, unknown> = {
+    starting_number: 0,
+    ending_number: ending,
+    prefix,
+    suffix,
+    title: titleNode ? textContent(titleNode) : "",
+  };
+  // Carry over the source colors/typography so the counter matches the design
+  // instead of inheriting the Elementor kit's default large light-blue number.
+  if (CURRENT_RESOLVER) {
+    const numberProps = CURRENT_RESOLVER.resolve((numNode || node) as NodeLike);
+    if (!numberProps.color) {
+      const inh = inheritedColor();
+      if (inh) numberProps.color = inh;
+    }
+    const titleProps = titleNode ? CURRENT_RESOLVER.resolve(titleNode as NodeLike) : undefined;
+    styleCounter(settings, numberProps, titleProps, CURRENT_CTX);
+  }
   return {
     id: genId(),
     elType: "widget",
     widgetType: "counter",
-    settings: {
-      starting_number: 0,
-      ending_number: ending,
-      title: titleNode ? textContent(titleNode) : "",
-    },
+    settings,
     elements: [],
   };
 }
