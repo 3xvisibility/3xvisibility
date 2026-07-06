@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
     const failed = results.filter((r) => !r.ok).length;
 
     return new Response(
-      JSON.stringify({ total: results.length, converted, skipped, failed, results }),
+      JSON.stringify({ offset, limit, batch: results.length, total: results.length, converted, skipped, failed, nextOffset: offset + results.length, done: results.length < limit, results }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
