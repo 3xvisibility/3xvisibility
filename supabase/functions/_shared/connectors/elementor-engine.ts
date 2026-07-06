@@ -978,6 +978,69 @@ function iconList(node: HtmlNode): ElementorElement {
   };
 }
 
+/**
+ * Extract count-up animation properties (duration in ms + easing) from a
+ * counter source node. Looks at common data-* attributes used by count-up
+ * libraries (data-duration, data-count-duration, data-speed, data-aos-duration,
+ * data-ease/data-easing) on the node or any descendant, then falls back to the
+ * source CSS `transition-duration` / `transition-timing-function` on the box.
+ */
+function extractCounterAnim(
+  node: HtmlNode,
+  boxProps?: StyleProps,
+): { duration?: number; easing?: string } | undefined {
+  const anim: { duration?: number; easing?: string } = {};
+
+  const parseDuration = (v?: string): number | undefined => {
+    if (!v) return undefined;
+    const s = v.trim().toLowerCase();
+    const m = s.match(/([\d.]+)\s*(ms|s)?/);
+    if (!m) return undefined;
+    const n = parseFloat(m[1]);
+    if (!isFinite(n) || n <= 0) return undefined;
+    // Seconds when explicitly "s", or a small unit-less/CSS value (<= 60 => seconds).
+    if (m[2] === "s") return Math.round(n * 1000);
+    if (!m[2] && n <= 60) return Math.round(n * 1000);
+    return Math.round(n);
+  };
+
+  const normEasing = (v?: string): string | undefined => {
+    if (!v) return undefined;
+    const e = v.trim().toLowerCase();
+    if (!e || e === "none" || e === "initial") return undefined;
+    return e;
+  };
+
+  // Walk node + descendants collecting the first matching attributes.
+  const visit = (n: HtmlNode) => {
+    if (anim.duration === undefined) {
+      anim.duration =
+        parseDuration(n.attrs["data-duration"]) ??
+        parseDuration(n.attrs["data-count-duration"]) ??
+        parseDuration(n.attrs["data-speed"]) ??
+        parseDuration(n.attrs["data-aos-duration"]) ??
+        parseDuration(n.attrs["data-counter-duration"]);
+    }
+    if (anim.easing === undefined) {
+      anim.easing =
+        normEasing(n.attrs["data-easing"]) ??
+        normEasing(n.attrs["data-ease"]) ??
+        normEasing(n.attrs["data-aos-easing"]);
+    }
+    for (const c of n.children) if (c.tag) visit(c);
+  };
+  visit(node);
+
+  if (anim.duration === undefined && boxProps) {
+    anim.duration = parseDuration(boxProps.transitionDuration);
+  }
+  if (anim.easing === undefined && boxProps) {
+    anim.easing = normEasing(boxProps.transitionTimingFunction);
+  }
+
+  return anim.duration !== undefined || anim.easing !== undefined ? anim : undefined;
+}
+
 function counter(node: HtmlNode): ElementorElement {
   const numNode = findNode(node, (n) => /\d/.test(textContent(n)) && n.children.every((c) => !c.tag));
   const raw = textContent(numNode || node);
