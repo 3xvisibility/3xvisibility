@@ -163,6 +163,11 @@ export function TemplateSyncPanel() {
             </CardDescription>
           </div>
           <div className="flex gap-2 shrink-0">
+            {failedItems.length > 0 && (
+              <Button variant="outline" onClick={retryFailed} disabled={running || latestRun?.status === "running"} className="gap-2 border-destructive/40 text-destructive hover:text-destructive">
+                <AlertCircle className="h-4 w-4" /> Retry {failedItems.length} failed
+              </Button>
+            )}
             <Button variant="outline" onClick={() => runSync(false)} disabled={running || latestRun?.status === "running"} className="gap-2">
               <Play className="h-4 w-4" /> Sync new
             </Button>
