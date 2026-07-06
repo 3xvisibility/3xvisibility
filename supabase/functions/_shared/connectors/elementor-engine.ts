@@ -811,11 +811,14 @@ function findAll(node: HtmlNode, pred: (n: HtmlNode) => boolean): HtmlNode[] {
 function iconList(node: HtmlNode): ElementorElement {
   const items = node.children
     .filter((c) => c.tag === "li")
-    .map((li) => ({
-      _id: genId(),
-      text: textContent(li),
-      selected_icon: { value: "fas fa-check", library: "fa-solid" },
-    }));
+    .map((li) => {
+      const iconNode = findNode(li, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa"));
+      return {
+        _id: genId(),
+        text: textContent(li),
+        selected_icon: iconNode ? resolveIconValue(iconNode) : { value: "fas fa-check", library: "fa-solid" },
+      };
+    });
   return {
     id: genId(),
     elType: "widget",
