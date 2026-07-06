@@ -753,6 +753,52 @@ export function styleCounter(
   if (Object.keys(globals).length) settings.__globals__ = globals;
 }
 
+/**
+ * Bake icon-box widget styles. The icon, title and description can each carry
+ * their own color/typography in the source. Elementor's icon-box controls are:
+ *   - `primary_color` / `icon_size` for the icon glyph
+ *   - `title_color` / `title_typography_typography` for the title
+ *   - `description_color` / `description_typography_typography` for the text
+ * Also maps the icon vertical position (top/left/right) and text alignment so
+ * the converted widget mirrors the source layout instead of the kit default.
+ */
+export function styleIconBox(
+  settings: Record<string, unknown>,
+  iconProps: StyleProps | undefined,
+  titleProps: StyleProps | undefined,
+  descProps: StyleProps | undefined,
+  ctx?: SiteContext,
+): void {
+  const globals: Record<string, string> = (settings.__globals__ as Record<string, string>) ?? {};
+  if (iconProps) {
+    // Icon color comes from `color` or `fill` on the <i>/<svg>.
+    const iconColor = iconProps.color || (iconProps as { fill?: string }).fill;
+    const iconColorGlobal = globalColorId(iconColor, ctx);
+    if (iconColorGlobal) globals["primary_color"] = `globals/colors?id=${iconColorGlobal}`;
+    else if (iconColor) settings.primary_color = iconColor;
+    // Icon size from font-size (icon fonts) or width/height (svg).
+    const size = pxSize(iconProps.fontSize) || pxSize(iconProps.width) || pxSize(iconProps.height);
+    if (size && size.unit === "px" && size.size > 0) {
+      settings.icon_size = { unit: "px", size: size.size, sizes: [] };
+    }
+    if (iconProps.backgroundColor) settings.icon_secondary_color = iconProps.backgroundColor;
+  }
+  if (titleProps) {
+    const titleColorGlobal = globalColorId(titleProps.color, ctx);
+    if (titleColorGlobal) globals["title_color"] = `globals/colors?id=${titleColorGlobal}`;
+    else if (titleProps.color) settings.title_color = titleProps.color;
+    applyTypography(settings, globals, titleProps, ctx, "title_typography");
+    if (titleProps.textAlign) settings.text_align = titleProps.textAlign;
+  }
+  if (descProps) {
+    const descColorGlobal = globalColorId(descProps.color, ctx);
+    if (descColorGlobal) globals["description_color"] = `globals/colors?id=${descColorGlobal}`;
+    else if (descProps.color) settings.description_color = descProps.color;
+    applyTypography(settings, globals, descProps, ctx, "description_typography");
+  }
+  if (Object.keys(globals).length) settings.__globals__ = globals;
+}
+
 /** Bake button styles. */
 export function styleButton(settings: Record<string, unknown>, p: StyleProps, ctx?: SiteContext): void {
   if (p.color) settings.button_text_color = p.color;
