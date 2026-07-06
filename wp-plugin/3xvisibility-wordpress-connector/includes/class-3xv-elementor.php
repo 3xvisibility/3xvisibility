@@ -1334,9 +1334,28 @@ class XXXV_Elementor {
 					if ( isset( $settings['width'] ) ) $decls['width'] = self::css_size( $settings['width'] );
 					if ( isset( $settings['image_border_radius'] ) ) $decls['border-radius'] = self::css_box( $settings['image_border_radius'] );
 					if ( isset( $settings['object_fit'] ) ) $decls['object-fit'] = $settings['object_fit'];
+					if ( isset( $settings['object_position'] ) ) $decls['object-position'] = $settings['object_position'];
+				} elseif ( 'image-box' === $widget ) {
+					// The box border wraps the whole widget container.
+					if ( isset( $settings['__xxxv_box_border'] ) ) {
+						$rules[] = $base . ' .elementor-widget-container{border:' . self::css_value( (string) $settings['__xxxv_box_border'] ) . '}';
+					}
+					// Independent description alignment (title uses native text_align).
+					if ( isset( $settings['__xxxv_description_align'] ) ) {
+						$rules[] = $base . ' .elementor-image-box-description{text-align:' . self::css_value( (string) $settings['__xxxv_description_align'] ) . '}';
+					}
+					// Image fit/position on the box image element.
+					if ( isset( $settings['object_fit'] ) || isset( $settings['object_position'] ) ) {
+						$img_decls = array();
+						if ( isset( $settings['object_fit'] ) ) $img_decls['object-fit'] = $settings['object_fit'];
+						if ( isset( $settings['object_position'] ) ) $img_decls['object-position'] = $settings['object_position'];
+						$img_text = self::css_decls( $img_decls );
+						if ( $img_text ) $rules[] = $base . ' .elementor-image-box-img img{' . $img_text . '}';
+					}
 				} else {
 					if ( isset( $settings['text_color'] ) ) $decls['color'] = $settings['text_color'];
 				}
+
 				if ( isset( $settings['typography_font_family'] ) ) $decls['font-family'] = $settings['typography_font_family'];
 				if ( isset( $settings['typography_font_size'] ) ) $decls['font-size'] = self::css_size( $settings['typography_font_size'] );
 				if ( isset( $settings['typography_font_weight'] ) ) $decls['font-weight'] = $settings['typography_font_weight'];

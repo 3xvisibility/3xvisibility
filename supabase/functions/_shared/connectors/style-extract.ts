@@ -63,6 +63,7 @@ export interface StyleProps {
   boxShadow?: string;
   border?: string;
   objectFit?: string;
+  objectPosition?: string;
   opacity?: string;
   fill?: string;
   position?: string;
@@ -416,6 +417,7 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["box-shadow"]) p.boxShadow = d["box-shadow"];
   if (d["border"]) p.border = d["border"];
   if (d["object-fit"]) p.objectFit = d["object-fit"];
+  if (d["object-position"]) p.objectPosition = d["object-position"].trim();
   if (d["opacity"]) p.opacity = d["opacity"];
   if (d["fill"]) p.fill = d["fill"].trim();
   if (d["position"]) p.position = d["position"];
@@ -662,6 +664,41 @@ function sidesToElementor(sides?: Partial<BoxSides>): Record<string, unknown> | 
   return { unit: "px", top, right, bottom, left, isLinked: false };
 }
 
+/**
+ * Parse a CSS `border-radius` shorthand into an Elementor per-corner box.
+ * Supports 1–4 value shorthands (`8px`, `8px 16px`, `8px 16px 4px 12px`) and
+ * the `50%` / `9999px` pill/circle idioms. Returns undefined when nothing
+ * meaningful is present so callers can fall back to their own defaults.
+ * Elementor corner order is top / right / bottom / left = TL / TR / BR / BL.
+ */
+function cornerRadius(v?: string): Record<string, unknown> | undefined {
+  if (!v) return undefined;
+  const val = v.trim().toLowerCase();
+  if (!val || val === "0" || val === "none" || val === "initial" || val === "inherit") return undefined;
+  // Circle / pill idioms — emit a linked 50% (Elementor clamps to a pill).
+  if (/(^|\s)(50%|9999px|999px|100vmax)/.test(val)) {
+    return { unit: "%", top: "50", right: "50", bottom: "50", left: "50", isLinked: true };
+  }
+  // Ignore elliptical radii (the part after "/") — take the first value set.
+  const primary = val.split("/")[0].trim();
+  const parts = primary.split(/\s+/).map((t) => pxSize(t)).filter(Boolean) as { unit: string; size: number }[];
+  if (!parts.length) return undefined;
+  // CSS corner order: TL, TR, BR, BL with the usual 1–4 value expansion.
+  const [tl, tr = tl, br = tl, bl = tr] = parts;
+  const unit = tl.unit || "px";
+  const isLinked = parts.every((p) => p.size === tl.size);
+  return {
+    unit,
+    top: String(tl.size),
+    right: String(tr.size),
+    bottom: String(br.size),
+    left: String(bl.size),
+    isLinked,
+  };
+}
+
+
+
 function hexEq(a: string, b: string): boolean {
   return a.replace(/\s/g, "").toLowerCase() === b.replace(/\s/g, "").toLowerCase();
 }
@@ -816,23 +853,30 @@ export function styleImageBox(
 ): void {
   const globals: Record<string, string> = (settings.__globals__ as Record<string, string>) ?? {};
 
+  // Normalise a CSS text-align keyword to an Elementor alignment token.
+  const toAlign = (v?: string): string | undefined => {
+    if (!v) return undefined;
+    const a = v.trim().toLowerCase();
+    if (a === "left" || a === "start") return "left";
+    if (a === "right" || a === "end") return "right";
+    if (a === "center" || a === "justify") return a === "justify" ? "justify" : "center";
+    return undefined;
+  };
+
   if (imgProps) {
     // Width: prefer an explicit CSS width, then max-width.
     const w = pxSize(imgProps.width) || pxSize(imgProps.maxWidth);
     if (w && w.size > 0) {
       settings.image_size = { unit: w.unit, size: w.size, sizes: [] };
     }
-    // Rounded / circular images.
-    const br = pxSize(imgProps.borderRadius);
-    if (br) {
-      settings.image_border_radius = {
-        unit: br.unit, top: String(br.size), right: String(br.size),
-        bottom: String(br.size), left: String(br.size), isLinked: true,
-      };
-    } else if (/(^|\s)50%|9999px/.test(imgProps.borderRadius || "")) {
-      settings.image_border_radius = { unit: "%", top: "50", right: "50", bottom: "50", left: "50", isLinked: true };
+    // Per-corner rounded / circular images (handles 1–4 value shorthands + pills).
+    const imgCorner = cornerRadius(imgProps.borderRadius);
+    if (imgCorner) settings.image_border_radius = imgCorner;
+    if (imgProps.objectFit) {
+      settings.object_fit = imgProps.objectFit;
+      // Elementor only honours object-position when a fit is set.
+      if (imgProps.objectPosition) settings.object_position = imgProps.objectPosition;
     }
-    if (imgProps.objectFit) settings.object_fit = imgProps.objectFit;
   }
 
   if (titleProps) {
@@ -840,7 +884,13 @@ export function styleImageBox(
     if (titleColorGlobal) globals["title_color"] = `globals/colors?id=${titleColorGlobal}`;
     else if (titleProps.color) settings.title_color = titleProps.color;
     applyTypography(settings, globals, titleProps, ctx, "title_typography");
-    if (titleProps.textAlign) settings.text_align = titleProps.textAlign;
+    const tAlign = toAlign(titleProps.textAlign);
+    if (tAlign) settings.text_align = tAlign;
+    // Spacing under the title before the description (margin-bottom).
+    const titleGap = pxSize(titleProps.margin?.bottom);
+    if (titleGap && titleGap.size > 0) {
+      settings.title_bottom_space = { unit: titleGap.unit, size: titleGap.size, sizes: [] };
+    }
   }
 
   if (descProps) {
@@ -848,6 +898,9 @@ export function styleImageBox(
     if (descColorGlobal) globals["description_color"] = `globals/colors?id=${descColorGlobal}`;
     else if (descProps.color) settings.description_color = descProps.color;
     applyTypography(settings, globals, descProps, ctx, "description_typography");
+    // Independent description alignment when it differs from the title.
+    const dAlign = toAlign(descProps.textAlign);
+    if (dAlign && dAlign !== settings.text_align) settings.__xxxv_description_align = dAlign;
   }
 
   if (boxProps) {
@@ -857,7 +910,19 @@ export function styleImageBox(
       settings.image_space = { unit: gap.unit, size: gap.size, sizes: [] };
     }
     // Overall text alignment when the box centres its content.
-    if (!settings.text_align && boxProps.textAlign) settings.text_align = boxProps.textAlign;
+    if (!settings.text_align) {
+      const bAlign = toAlign(boxProps.textAlign);
+      if (bAlign) settings.text_align = bAlign;
+    }
+    // Side-by-side layout: a flex row means the image sits left/right of text.
+    if (boxProps.display === "flex" && (boxProps.flexDirection === "row" || boxProps.flexDirection === "row-reverse")) {
+      settings.position = boxProps.flexDirection === "row-reverse" ? "right" : "left";
+      // Vertical alignment of the image against the text column.
+      const ai = (boxProps.alignItems || "").toLowerCase();
+      if (ai === "center") settings.image_vertical_alignment = "middle";
+      else if (ai === "flex-end" || ai === "end") settings.image_vertical_alignment = "bottom";
+      else if (ai === "flex-start" || ai === "start") settings.image_vertical_alignment = "top";
+    }
     // Box background + padding so cards keep their surface styling.
     if (boxProps.backgroundColor) {
       settings.background_background = "classic";
@@ -865,18 +930,16 @@ export function styleImageBox(
     }
     const pad = sidesToElementorSafe(boxProps.padding);
     if (pad) settings._padding = pad;
-    const bxr = pxSize(boxProps.borderRadius);
-    if (bxr) {
-      settings._border_radius = {
-        unit: bxr.unit, top: String(bxr.size), right: String(bxr.size),
-        bottom: String(bxr.size), left: String(bxr.size), isLinked: true,
-      };
-    }
+    // Per-corner box border radius (falls back to per-corner shorthand parsing).
+    const boxCorner = cornerRadius(boxProps.borderRadius);
+    if (boxCorner) settings._border_radius = boxCorner;
+    if (boxProps.border) settings.__xxxv_box_border = boxProps.border;
     if (boxProps.boxShadow) settings.__xxxv_box_shadow = boxProps.boxShadow;
   }
 
   if (Object.keys(globals).length) settings.__globals__ = globals;
 }
+
 
 /** Bake button styles. */
 export function styleButton(settings: Record<string, unknown>, p: StyleProps, ctx?: SiteContext): void {
