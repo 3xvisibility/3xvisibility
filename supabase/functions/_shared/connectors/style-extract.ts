@@ -664,6 +664,41 @@ function sidesToElementor(sides?: Partial<BoxSides>): Record<string, unknown> | 
   return { unit: "px", top, right, bottom, left, isLinked: false };
 }
 
+/**
+ * Parse a CSS `border-radius` shorthand into an Elementor per-corner box.
+ * Supports 1–4 value shorthands (`8px`, `8px 16px`, `8px 16px 4px 12px`) and
+ * the `50%` / `9999px` pill/circle idioms. Returns undefined when nothing
+ * meaningful is present so callers can fall back to their own defaults.
+ * Elementor corner order is top / right / bottom / left = TL / TR / BR / BL.
+ */
+function cornerRadius(v?: string): Record<string, unknown> | undefined {
+  if (!v) return undefined;
+  const val = v.trim().toLowerCase();
+  if (!val || val === "0" || val === "none" || val === "initial" || val === "inherit") return undefined;
+  // Circle / pill idioms — emit a linked 50% (Elementor clamps to a pill).
+  if (/(^|\s)(50%|9999px|999px|100vmax)/.test(val)) {
+    return { unit: "%", top: "50", right: "50", bottom: "50", left: "50", isLinked: true };
+  }
+  // Ignore elliptical radii (the part after "/") — take the first value set.
+  const primary = val.split("/")[0].trim();
+  const parts = primary.split(/\s+/).map((t) => pxSize(t)).filter(Boolean) as { unit: string; size: number }[];
+  if (!parts.length) return undefined;
+  // CSS corner order: TL, TR, BR, BL with the usual 1–4 value expansion.
+  const [tl, tr = tl, br = tl, bl = tr] = parts;
+  const unit = tl.unit || "px";
+  const isLinked = parts.every((p) => p.size === tl.size);
+  return {
+    unit,
+    top: String(tl.size),
+    right: String(tr.size),
+    bottom: String(br.size),
+    left: String(bl.size),
+    isLinked,
+  };
+}
+
+
+
 function hexEq(a: string, b: string): boolean {
   return a.replace(/\s/g, "").toLowerCase() === b.replace(/\s/g, "").toLowerCase();
 }
