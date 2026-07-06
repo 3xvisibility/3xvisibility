@@ -1268,7 +1268,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   const headingCount = findAll(node, (n) => HEADINGS.has(n.tag)).length;
   const imgCount = findAll(node, (n) => n.tag === "img").length;
   const statChildren = node.children.filter(
-    (c) => c.tag && (hasClassToken(c, "stat", "counter") || /\d/.test(textContent(c))),
+    (c) => c.tag && (hasClassToken(c, "stat", "counter") || hasRealDigit(textContent(c))),
   ).length;
   const bigHeading = findAll(node, (n) => n.tag === "h1" || n.tag === "h2").length > 0;
   const isMultiGroup =
