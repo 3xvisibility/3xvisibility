@@ -406,6 +406,11 @@ export function TemplateSyncPanel() {
                             {p.page_status && (
                               <Badge variant="outline" className="text-[10px] capitalize">{p.page_status}</Badge>
                             )}
+                            {p.has_icon_widgets && (
+                              <Badge variant="outline" className="text-[10px] gap-1 border-primary/40 text-primary">
+                                <Star className="h-2.5 w-2.5" />icon-box/list
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         {canRepublish ? (
@@ -413,7 +418,7 @@ export function TemplateSyncPanel() {
                             size="sm"
                             variant="outline"
                             onClick={() => republishOne(p.page_id!)}
-                            disabled={!!republishingIds[p.page_id!] || republishingAll}
+                            disabled={!!republishingIds[p.page_id!] || republishingAll || republishingIcons}
                             className="gap-1.5 shrink-0"
                           >
                             {republishingIds[p.page_id!] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Rocket className="h-3.5 w-3.5" />}
