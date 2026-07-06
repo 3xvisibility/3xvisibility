@@ -63,6 +63,7 @@ export interface StyleProps {
   boxShadow?: string;
   border?: string;
   objectFit?: string;
+  objectPosition?: string;
   opacity?: string;
   fill?: string;
   position?: string;
