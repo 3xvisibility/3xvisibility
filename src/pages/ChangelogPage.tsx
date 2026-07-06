@@ -3,6 +3,15 @@ import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
 
 const releases = [
   {
+    version: "v3.5",
+    date: "July 2026",
+    items: [
+      "Template engine sync: per-template and per-page status view showing exactly which connected pages were updated",
+      "Retry only the failed templates from the last sync without reprocessing successful ones",
+      "Full 4-language auto-translation across all marketing and changelog pages",
+    ],
+  },
+  {
     version: "v3.4",
     date: "May 2026",
     items: [
