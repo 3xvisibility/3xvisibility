@@ -196,6 +196,31 @@ function textContent(node: HtmlNode): string {
   return node.children.map(textContent).join(" ").replace(/\s+/g, " ").trim();
 }
 
+/** Strip template placeholders like {var}, {{var}}, %var%, [var] so their
+ *  internal characters (e.g. the "1" in {stat_1_num}) don't get mistaken for
+ *  real content such as a counter number. */
+function stripPlaceholders(text: string): string {
+  return (text || "")
+    .replace(/\{\{[\s\S]*?\}\}/g, " ")
+    .replace(/\{[^{}]*\}/g, " ")
+    .replace(/%[a-z0-9_]+%/gi, " ")
+    .replace(/\[[a-z0-9_]+\]/gi, " ");
+}
+
+/** True when the text contains a REAL digit (ignoring digits inside template
+ *  variable placeholders like {stat_1_num}). */
+function hasRealDigit(text: string): boolean {
+  return /\d/.test(stripPlaceholders(text));
+}
+
+/** True when the text is (or contains) a value that looks like a stat number,
+ *  including placeholder-driven numbers such as {stat_1_num}, {count} etc. */
+function looksLikeStatValue(text: string): boolean {
+  const t = (text || "").trim();
+  if (hasRealDigit(t)) return true;
+  return /\{\{?\s*[^{}]*(num|count|total|value|amount|number|percent|qty|rate)[^{}]*\}?\}/i.test(t);
+}
+
 function innerHtml(node: HtmlNode): string {
   return node.children.map(serialize).join("");
 }
@@ -1042,20 +1067,41 @@ function extractCounterAnim(
 }
 
 function counter(node: HtmlNode): ElementorElement {
-  const numNode = findNode(node, (n) => /\d/.test(textContent(n)) && n.children.every((c) => !c.tag));
+  // Prefer a leaf node that holds a real number or a number-like placeholder
+  // ({stat_1_num}) so template variables survive conversion untouched.
+  const numNode =
+    findNode(node, (n) => looksLikeStatValue(textContent(n)) && n.children.every((c) => !c.tag)) ||
+    findNode(node, (n) => /\d/.test(textContent(n)) && n.children.every((c) => !c.tag));
   const raw = textContent(numNode || node);
-  const ending = parseInt(raw.replace(/[^\d]/g, ""), 10) || 0;
-  // Preserve any non-numeric suffix/prefix (e.g. "+", "%", "k") so "15+" stays "15+".
   const cleaned = raw.trim();
-  const numMatch = cleaned.match(/[\d.,]+/);
+  const hasPlaceholder = /\{\{?[^{}]*\}?\}|%[a-z0-9_]+%|\[[a-z0-9_]+\]/i.test(cleaned);
+  const numMatch = hasRealDigit(cleaned) ? stripPlaceholders(cleaned).match(/[\d.,]+/) : null;
+  // ending_number: use the real number when present; otherwise keep the raw
+  // placeholder so it is resolved at generation time.
+  const ending = numMatch ? parseInt(numMatch[0].replace(/[^\d]/g, ""), 10) || 0 : (hasPlaceholder ? cleaned : 0);
+  // Preserve any non-numeric suffix/prefix (e.g. "+", "%", "k") so "15+" stays "15+".
   let prefix = "";
   let suffix = "";
   if (numMatch) {
     const idx = cleaned.indexOf(numMatch[0]);
-    prefix = cleaned.slice(0, idx).trim();
-    suffix = cleaned.slice(idx + numMatch[0].length).trim();
+    if (idx >= 0) {
+      prefix = cleaned.slice(0, idx).trim();
+      suffix = cleaned.slice(idx + numMatch[0].length).trim();
+    }
   }
-  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "label"));
+  // Title/label: an explicit heading/.title/.label, or the non-number sibling
+  // text of a "<b>42</b><span>Members</span>" style stat card.
+  let titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "label", "desc", "text"));
+  if (!titleNode) {
+    titleNode = findNode(
+      node,
+      (n) =>
+        n !== numNode &&
+        n.children.every((c) => !c.tag) &&
+        !!textContent(n).trim() &&
+        !looksLikeStatValue(textContent(n)),
+    );
+  }
   const settings: Record<string, unknown> = {
     starting_number: 0,
     ending_number: ending,
@@ -1222,7 +1268,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   const headingCount = findAll(node, (n) => HEADINGS.has(n.tag)).length;
   const imgCount = findAll(node, (n) => n.tag === "img").length;
   const statChildren = node.children.filter(
-    (c) => c.tag && (hasClassToken(c, "stat", "counter") || /\d/.test(textContent(c))),
+    (c) => c.tag && (hasClassToken(c, "stat", "counter") || hasRealDigit(textContent(c))),
   ).length;
   const bigHeading = findAll(node, (n) => n.tag === "h1" || n.tag === "h2").length > 0;
   const isMultiGroup =
