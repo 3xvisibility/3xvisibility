@@ -44,6 +44,7 @@ interface PageItem {
   page_slug: string | null;
   page_status: string | null;
   status: string;
+  has_icon_widgets: boolean | null;
 }
 
 export function TemplateSyncPanel() {
