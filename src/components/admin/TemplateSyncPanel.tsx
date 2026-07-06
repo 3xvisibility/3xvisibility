@@ -99,14 +99,19 @@ export function TemplateSyncPanel() {
     refetchInterval: latestRun?.status === "running" ? 2000 : false,
   });
 
-  const runSync = async (force: boolean) => {
+  const runSync = async (force: boolean, widgetTypes?: string[]) => {
     setRunning(true);
     try {
       const { error } = await supabase.functions.invoke("sync-template-engine", {
-        body: { force, trigger_source: "manual" },
+        body: { force, trigger_source: "manual", ...(widgetTypes?.length ? { widget_types: widgetTypes } : {}) },
       });
       if (error) throw error;
-      toast({ title: "Sync started", description: "Converting templates with the latest widget engine." });
+      toast({
+        title: "Sync started",
+        description: widgetTypes?.length
+          ? `Re-syncing templates that contain: ${widgetTypes.join(", ")}.`
+          : "Converting templates with the latest widget engine.",
+      });
       queryClient.invalidateQueries({ queryKey: ["template-backfill-latest-run"] });
       queryClient.invalidateQueries({ queryKey: ["template-backfill-items"] });
     } catch (err) {
@@ -257,18 +262,32 @@ export function TemplateSyncPanel() {
               automatically and admins are notified with the reason.
             </CardDescription>
           </div>
-          <div className="flex gap-2 shrink-0">
-            {failedItems.length > 0 && (
-              <Button variant="outline" onClick={retryFailed} disabled={running || latestRun?.status === "running"} className="gap-2 border-destructive/40 text-destructive hover:text-destructive">
-                <AlertCircle className="h-4 w-4" /> Retry {failedItems.length} failed
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            <div className="flex gap-2">
+              {failedItems.length > 0 && (
+                <Button variant="outline" onClick={retryFailed} disabled={running || latestRun?.status === "running"} className="gap-2 border-destructive/40 text-destructive hover:text-destructive">
+                  <AlertCircle className="h-4 w-4" /> Retry {failedItems.length} failed
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => runSync(false)} disabled={running || latestRun?.status === "running"} className="gap-2">
+                <Play className="h-4 w-4" /> Sync new
               </Button>
-            )}
-            <Button variant="outline" onClick={() => runSync(false)} disabled={running || latestRun?.status === "running"} className="gap-2">
-              <Play className="h-4 w-4" /> Sync new
-            </Button>
-            <Button onClick={() => runSync(true)} disabled={running || latestRun?.status === "running"} className="gap-2">
-              <RefreshCw className="h-4 w-4" /> Force re-sync all
-            </Button>
+              <Button onClick={() => runSync(true)} disabled={running || latestRun?.status === "running"} className="gap-2">
+                <RefreshCw className="h-4 w-4" /> Force re-sync all
+              </Button>
+            </div>
+            <div className="flex gap-2 flex-wrap justify-end">
+              <span className="text-[11px] text-muted-foreground self-center mr-1">By widget:</span>
+              <Button size="sm" variant="secondary" onClick={() => runSync(true, ["counter"])} disabled={running || latestRun?.status === "running"} className="gap-1.5">
+                <RefreshCw className="h-3.5 w-3.5" /> Counter
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => runSync(true, ["icon-box"])} disabled={running || latestRun?.status === "running"} className="gap-1.5">
+                <RefreshCw className="h-3.5 w-3.5" /> Icon Box
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => runSync(true, ["image-box"])} disabled={running || latestRun?.status === "running"} className="gap-1.5">
+                <RefreshCw className="h-3.5 w-3.5" /> Image Box
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

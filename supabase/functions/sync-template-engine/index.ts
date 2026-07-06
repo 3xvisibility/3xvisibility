@@ -52,6 +52,24 @@ function hasIconWidgets(tree: any[]): boolean {
   return found;
 }
 
+/** True if a tree contains any widget whose widgetType is in `types`. */
+function treeHasWidgetTypes(tree: any[], types: string[]): boolean {
+  if (!Array.isArray(tree) || !types.length) return false;
+  const set = new Set(types);
+  let found = false;
+  const walk = (el: any) => {
+    if (found) return;
+    if (el && el.elType === "widget" && set.has(el.widgetType)) {
+      found = true;
+      return;
+    }
+    for (const c of el?.elements ?? []) walk(c);
+  };
+  for (const el of tree) walk(el);
+  return found;
+}
+
+
 function stripAiImagePlaceholders(html: string): string {
   const TOKEN = /\{\{\s*AI_IMAGE[\s\S]*?\}\}/gi;
   return html
@@ -176,9 +194,15 @@ Deno.serve(async (req) => {
     // When retry_run_id is provided, only reprocess the templates that FAILED in
     // that run — successful/skipped ones are left untouched.
     const retryRunId = typeof body?.retry_run_id === "string" ? body.retry_run_id : null;
+    // Optional widget-scoped sync: only re-convert templates that already contain
+    // one of these widget types (e.g. ["counter"], ["icon-box"], ["image-box"]).
+    const widgetTypes: string[] = Array.isArray(body?.widget_types)
+      ? body.widget_types.filter((w: unknown) => typeof w === "string" && w.trim()).map((w: string) => w.trim())
+      : [];
     const triggerSource = retryRunId
       ? "retry"
       : (typeof body?.trigger_source === "string" ? body.trigger_source : "manual");
+
 
     // Resolve the calling admin (best-effort, for started_by / notifications).
     let startedBy: string | null = null;
@@ -218,6 +242,11 @@ Deno.serve(async (req) => {
         .order("id", { ascending: true });
       if (error) throw new Error(error.message);
       all = (templates ?? []) as any[];
+      // Widget-scoped sync: keep only templates whose current Elementor output
+      // contains one of the requested widget types.
+      if (widgetTypes.length) {
+        all = all.filter((t) => treeHasWidgetTypes(t.elementor_data as any[], widgetTypes));
+      }
     }
 
     // Create run header.
@@ -225,7 +254,7 @@ Deno.serve(async (req) => {
       .from("template_backfill_runs")
       .insert({
         status: "running",
-        trigger_source: triggerSource,
+        trigger_source: widgetTypes.length ? `${triggerSource}:${widgetTypes.join("+")}` : triggerSource,
         force: retryRunId ? true : force,
         total_templates: all.length,
         started_by: startedBy,
@@ -239,7 +268,7 @@ Deno.serve(async (req) => {
     let converted = 0, skipped = 0, failed = 0, processed = 0;
     const failedDetails: Array<{ name: string; error: string }> = [];
 
-    const effectiveForce = force || !!retryRunId;
+    const effectiveForce = force || !!retryRunId || widgetTypes.length > 0;
     for (const t of all) {
       processed++;
       const hasExisting = Array.isArray(t.elementor_data)
