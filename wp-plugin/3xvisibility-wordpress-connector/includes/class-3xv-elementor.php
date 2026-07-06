@@ -1350,6 +1350,10 @@ class XXXV_Elementor {
 					if ( isset( $settings['__xxxv_box_border'] ) ) {
 						$rules[] = $base . ' .elementor-widget-container{border:' . self::css_value( (string) $settings['__xxxv_box_border'] ) . '}';
 					}
+					// Box shadow wraps the whole widget container (theme-proof).
+					if ( isset( $settings['__xxxv_box_shadow'] ) ) {
+						$rules[] = $base . ' .elementor-widget-container{box-shadow:' . self::css_value( (string) $settings['__xxxv_box_shadow'] ) . '}';
+					}
 					// Independent description alignment (title uses native text_align).
 					if ( isset( $settings['__xxxv_description_align'] ) ) {
 						$rules[] = $base . ' .elementor-image-box-description{text-align:' . self::css_value( (string) $settings['__xxxv_description_align'] ) . '}';
