@@ -1063,6 +1063,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
     (c) => c.tag && (hasClass(c, "stat", "counter") || /\d/.test(textContent(c))),
   ).length;
   const isMultiGroup =
+  if(process.env.DBG) console.error("DSW", JSON.stringify(node.tag), JSON.stringify(node.attrs.class), "multi="+isMultiGroup, "stat="+statChildren, "hc="+hasClass(node,"stat"));
     node.tag === "section" || bigHeading || headingCountTop >= 2 || imgCountTop >= 2 || statChildren >= 2;
 
   if (hasClass(node, "accordion", "faq")) {
