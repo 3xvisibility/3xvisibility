@@ -242,6 +242,11 @@ Deno.serve(async (req) => {
         .order("id", { ascending: true });
       if (error) throw new Error(error.message);
       all = (templates ?? []) as any[];
+      // Widget-scoped sync: keep only templates whose current Elementor output
+      // contains one of the requested widget types.
+      if (widgetTypes.length) {
+        all = all.filter((t) => treeHasWidgetTypes(t.elementor_data as any[], widgetTypes));
+      }
     }
 
     // Create run header.
@@ -249,7 +254,7 @@ Deno.serve(async (req) => {
       .from("template_backfill_runs")
       .insert({
         status: "running",
-        trigger_source: triggerSource,
+        trigger_source: widgetTypes.length ? `${triggerSource}:${widgetTypes.join("+")}` : triggerSource,
         force: retryRunId ? true : force,
         total_templates: all.length,
         started_by: startedBy,
