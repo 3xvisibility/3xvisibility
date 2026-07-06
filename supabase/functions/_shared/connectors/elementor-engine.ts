@@ -14,7 +14,7 @@
  * a small, tolerant HTML tokenizer.
  */
 
-import { StyleResolver, styleButton, styleContainer, styleContainerResponsive, styleCounter, styleHeading, styleHover, styleIconBox, styleImage, styleResponsiveVisibilityAndOrder, styleText, styleTypographyResponsive, type HoverKind, type NodeLike, type StyleProps } from "./style-extract.ts";
+import { StyleResolver, styleButton, styleContainer, styleContainerResponsive, styleCounter, styleHeading, styleHover, styleIconBox, styleImage, styleImageBox, styleResponsiveVisibilityAndOrder, styleText, styleTypographyResponsive, type HoverKind, type NodeLike, type StyleProps } from "./style-extract.ts";
 import type { SiteContext } from "./wp-site-context.ts";
 
 // Module-scoped style baking state. Set by `htmlToElementor` so the widget
@@ -1077,17 +1077,31 @@ function iconBox(node: HtmlNode): ElementorElement {
 
 function imageBox(node: HtmlNode): ElementorElement {
   const img = findNode(node, (n) => n.tag === "img");
-  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title"));
-  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description"));
+  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "heading", "name"));
+  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description", "subtitle"));
+  const settings: Record<string, unknown> = {
+    ...nativeIdentitySettings(node),
+    image: img ? { url: img.attrs.src || "", alt: img.attrs.alt || "", id: "" } : { url: "" },
+    title_text: titleNode ? textContent(titleNode) : "",
+    description_text: descNode ? textContent(descNode) : "",
+    // Clean free defaults so the widget renders correctly out of the box.
+    position: "top",
+    title_size: "h3",
+  };
+  // Bake source image size/radius, colours, typography, spacing and box surface
+  // so the image-box matches the design instead of the Elementor kit defaults.
+  if (CURRENT_RESOLVER) {
+    const imgProps = img ? CURRENT_RESOLVER.resolve(img as NodeLike) : undefined;
+    const titleProps = titleNode ? CURRENT_RESOLVER.resolve(titleNode as NodeLike) : undefined;
+    const descProps = descNode ? CURRENT_RESOLVER.resolve(descNode as NodeLike) : undefined;
+    const boxProps = CURRENT_RESOLVER.resolve(node as NodeLike);
+    styleImageBox(settings, imgProps, titleProps, descProps, boxProps, CURRENT_CTX);
+  }
   return {
     id: genId(),
     elType: "widget",
     widgetType: "image-box",
-    settings: {
-      image: img ? { url: img.attrs.src || "", alt: img.attrs.alt || "" } : { url: "" },
-      title_text: titleNode ? textContent(titleNode) : "",
-      description_text: descNode ? textContent(descNode) : "",
-    },
+    settings,
     elements: [],
   };
 }

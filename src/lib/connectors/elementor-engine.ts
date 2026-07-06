@@ -958,16 +958,18 @@ function iconBox(node: HtmlNode): ElementorElement {
 
 function imageBox(node: HtmlNode): ElementorElement {
   const img = findNode(node, (n) => n.tag === "img");
-  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title"));
-  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description"));
+  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "heading", "name"));
+  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description", "subtitle"));
   return {
     id: genId(),
     elType: "widget",
     widgetType: "image-box",
     settings: {
-      image: img ? { url: img.attrs.src || "", alt: img.attrs.alt || "" } : { url: "" },
+      image: img ? { url: img.attrs.src || "", alt: img.attrs.alt || "", id: "" } : { url: "" },
       title_text: titleNode ? textContent(titleNode) : "",
       description_text: descNode ? textContent(descNode) : "",
+      position: "top",
+      title_size: "h3",
     },
     elements: [],
   };

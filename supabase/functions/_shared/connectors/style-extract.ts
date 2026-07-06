@@ -801,6 +801,83 @@ export function styleIconBox(
   if (Object.keys(globals).length) settings.__globals__ = globals;
 }
 
+/**
+ * Bake Image Box styles so the widget matches the source design instead of the
+ * Elementor kit defaults: image size/radius, title & description colours and
+ * typography, spacing between image and content, alignment, and box padding.
+ */
+export function styleImageBox(
+  settings: Record<string, unknown>,
+  imgProps: StyleProps | undefined,
+  titleProps: StyleProps | undefined,
+  descProps: StyleProps | undefined,
+  boxProps: StyleProps | undefined,
+  ctx?: SiteContext,
+): void {
+  const globals: Record<string, string> = (settings.__globals__ as Record<string, string>) ?? {};
+
+  if (imgProps) {
+    // Width: prefer an explicit CSS width, then max-width.
+    const w = pxSize(imgProps.width) || pxSize(imgProps.maxWidth);
+    if (w && w.size > 0) {
+      settings.image_size = { unit: w.unit, size: w.size, sizes: [] };
+    }
+    // Rounded / circular images.
+    const br = pxSize(imgProps.borderRadius);
+    if (br) {
+      settings.image_border_radius = {
+        unit: br.unit, top: String(br.size), right: String(br.size),
+        bottom: String(br.size), left: String(br.size), isLinked: true,
+      };
+    } else if (/(^|\s)50%|9999px/.test(imgProps.borderRadius || "")) {
+      settings.image_border_radius = { unit: "%", top: "50", right: "50", bottom: "50", left: "50", isLinked: true };
+    }
+    if (imgProps.objectFit) settings.object_fit = imgProps.objectFit;
+  }
+
+  if (titleProps) {
+    const titleColorGlobal = globalColorId(titleProps.color, ctx);
+    if (titleColorGlobal) globals["title_color"] = `globals/colors?id=${titleColorGlobal}`;
+    else if (titleProps.color) settings.title_color = titleProps.color;
+    applyTypography(settings, globals, titleProps, ctx, "title_typography");
+    if (titleProps.textAlign) settings.text_align = titleProps.textAlign;
+  }
+
+  if (descProps) {
+    const descColorGlobal = globalColorId(descProps.color, ctx);
+    if (descColorGlobal) globals["description_color"] = `globals/colors?id=${descColorGlobal}`;
+    else if (descProps.color) settings.description_color = descProps.color;
+    applyTypography(settings, globals, descProps, ctx, "description_typography");
+  }
+
+  if (boxProps) {
+    // Spacing between the image and the text content.
+    const gap = pxSize(boxProps.gap);
+    if (gap && gap.size > 0) {
+      settings.image_space = { unit: gap.unit, size: gap.size, sizes: [] };
+    }
+    // Overall text alignment when the box centres its content.
+    if (!settings.text_align && boxProps.textAlign) settings.text_align = boxProps.textAlign;
+    // Box background + padding so cards keep their surface styling.
+    if (boxProps.backgroundColor) {
+      settings.background_background = "classic";
+      settings.background_color = boxProps.backgroundColor;
+    }
+    const pad = sidesToElementorSafe(boxProps.padding);
+    if (pad) settings._padding = pad;
+    const bxr = pxSize(boxProps.borderRadius);
+    if (bxr) {
+      settings._border_radius = {
+        unit: bxr.unit, top: String(bxr.size), right: String(bxr.size),
+        bottom: String(bxr.size), left: String(bxr.size), isLinked: true,
+      };
+    }
+    if (boxProps.boxShadow) settings.__xxxv_box_shadow = boxProps.boxShadow;
+  }
+
+  if (Object.keys(globals).length) settings.__globals__ = globals;
+}
+
 /** Bake button styles. */
 export function styleButton(settings: Record<string, unknown>, p: StyleProps, ctx?: SiteContext): void {
   if (p.color) settings.button_text_color = p.color;
