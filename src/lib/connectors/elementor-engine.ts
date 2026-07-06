@@ -148,7 +148,7 @@ function looksLikeStatValue(text: string): boolean {
   const t = (text || "").trim();
   if (hasRealDigit(t)) return true;
   // Placeholder whose name hints at a number (num, count, stat, total, value…).
-  return /\{\{?\s*[^{}]*(num|count|total|amount|number|percent|qty|rate)[^{}]*\}?\}/i.test(t);
+  return /\{\{?\s*[^{}]*(num|count|total|value|amount|number|percent|qty|rate)[^{}]*\}?\}/i.test(t);
 }
 
 function innerHtml(node: HtmlNode): string {
