@@ -152,6 +152,13 @@ export function TemplateSyncPanel() {
     new Set(publishablePages.map((p) => p.page_id!).filter(Boolean)),
   );
 
+  // Pages whose template contains icon-box / icon-list widgets — the ones
+  // affected by an icon-widget fix. Only published pages need a republish.
+  const [republishingIcons, setRepublishingIcons] = useState(false);
+  const iconPageIds = Array.from(
+    new Set(publishablePages.filter((p) => p.has_icon_widgets).map((p) => p.page_id!).filter(Boolean)),
+  );
+
   const republishPages = async (ids: string[]) => {
     if (!ids.length) return;
     const { data, error } = await supabase.functions.invoke("publish-pages", {
