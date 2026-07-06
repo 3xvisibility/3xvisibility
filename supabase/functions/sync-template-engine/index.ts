@@ -125,7 +125,7 @@ async function convertTemplate(supabase: any, t: any): Promise<{ widgets: number
  * Record the connected pages linked to a template (via its campaigns) so admins
  * can see which published/draft pages are affected by this template's re-sync.
  */
-async function recordConnectedPages(supabase: any, runId: string, t: any): Promise<number> {
+async function recordConnectedPages(supabase: any, runId: string, t: any, hasIcons: boolean): Promise<number> {
   try {
     const { data: campaigns } = await supabase
       .from("campaigns")
