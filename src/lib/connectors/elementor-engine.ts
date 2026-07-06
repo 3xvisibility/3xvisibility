@@ -1064,6 +1064,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   ).length;
   const isMultiGroup =
     node.tag === "section" || bigHeading || headingCountTop >= 2 || imgCountTop >= 2 || statChildren >= 2;
+  if(process.env.DBG) console.error("DSW", JSON.stringify(node.tag), JSON.stringify(node.attrs.class), "multi="+isMultiGroup, "stat="+statChildren);
 
   if (hasClass(node, "accordion", "faq")) {
     const acc = accordion(node);
