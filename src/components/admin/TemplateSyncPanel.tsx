@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, Play, AlertCircle, CheckCircle2, MinusCircle, Rocket, Loader2 } from "lucide-react";
+import { RefreshCw, Play, AlertCircle, CheckCircle2, MinusCircle, Rocket, Loader2, Star } from "lucide-react";
 
 interface Run {
   id: string;
@@ -44,6 +44,7 @@ interface PageItem {
   page_slug: string | null;
   page_status: string | null;
   status: string;
+  has_icon_widgets: boolean | null;
 }
 
 export function TemplateSyncPanel() {
@@ -89,7 +90,7 @@ export function TemplateSyncPanel() {
     queryFn: async (): Promise<PageItem[]> => {
       const { data, error } = await supabase
         .from("template_backfill_page_items")
-        .select("id, page_id, template_name, page_title, page_slug, page_status, status")
+        .select("id, page_id, template_name, page_title, page_slug, page_status, status, has_icon_widgets")
         .eq("run_id", latestRun!.id)
         .order("template_name", { ascending: true });
       if (error) throw error;
@@ -151,6 +152,13 @@ export function TemplateSyncPanel() {
     new Set(publishablePages.map((p) => p.page_id!).filter(Boolean)),
   );
 
+  // Pages whose template contains icon-box / icon-list widgets — the ones
+  // affected by an icon-widget fix. Only published pages need a republish.
+  const [republishingIcons, setRepublishingIcons] = useState(false);
+  const iconPageIds = Array.from(
+    new Set(publishablePages.filter((p) => p.has_icon_widgets).map((p) => p.page_id!).filter(Boolean)),
+  );
+
   const republishPages = async (ids: string[]) => {
     if (!ids.length) return;
     const { data, error } = await supabase.functions.invoke("publish-pages", {
@@ -184,6 +192,26 @@ export function TemplateSyncPanel() {
       setRepublishingAll(false);
     }
   };
+
+  const republishIconPages = async () => {
+    if (!iconPageIds.length) return;
+    setRepublishingIcons(true);
+    try {
+      const data = await republishPages(iconPageIds);
+      toast({
+        title: "Icon-box/list pages republishing",
+        description: `${data?.published ?? 0} republished, ${data?.failed ?? 0} failed.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-page-items"] });
+    } catch (err) {
+      const msg = await extractEdgeError(err, "Failed to republish icon pages");
+      toast({ title: "Republish failed", description: msg, variant: "destructive" });
+    } finally {
+      setRepublishingIcons(false);
+    }
+  };
+
+
 
   const republishOne = async (pageId: string) => {
     setRepublishingIds((m) => ({ ...m, [pageId]: true }));
@@ -337,14 +365,25 @@ export function TemplateSyncPanel() {
                 Republish published pages to render the update — in one click below.
               </CardDescription>
             </div>
-            <Button
-              onClick={republishAll}
-              disabled={republishingAll || publishablePageIds.length === 0}
-              className="gap-2 shrink-0"
-            >
-              {republishingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
-              Republish all published ({publishablePageIds.length})
-            </Button>
+            <div className="flex flex-col gap-2 shrink-0">
+              <Button
+                onClick={republishAll}
+                disabled={republishingAll || republishingIcons || publishablePageIds.length === 0}
+                className="gap-2 w-full"
+              >
+                {republishingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
+                Republish all published ({publishablePageIds.length})
+              </Button>
+              <Button
+                variant="outline"
+                onClick={republishIconPages}
+                disabled={republishingAll || republishingIcons || iconPageIds.length === 0}
+                className="gap-2 w-full"
+              >
+                {republishingIcons ? <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />}
+                Republish icon-box/list pages ({iconPageIds.length})
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="px-0">
             {pagesLoading ? (
@@ -367,6 +406,11 @@ export function TemplateSyncPanel() {
                             {p.page_status && (
                               <Badge variant="outline" className="text-[10px] capitalize">{p.page_status}</Badge>
                             )}
+                            {p.has_icon_widgets && (
+                              <Badge variant="outline" className="text-[10px] gap-1 border-primary/40 text-primary">
+                                <Star className="h-2.5 w-2.5" />icon-box/list
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         {canRepublish ? (
@@ -374,7 +418,7 @@ export function TemplateSyncPanel() {
                             size="sm"
                             variant="outline"
                             onClick={() => republishOne(p.page_id!)}
-                            disabled={!!republishingIds[p.page_id!] || republishingAll}
+                            disabled={!!republishingIds[p.page_id!] || republishingAll || republishingIcons}
                             className="gap-1.5 shrink-0"
                           >
                             {republishingIds[p.page_id!] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Rocket className="h-3.5 w-3.5" />}

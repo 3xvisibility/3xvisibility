@@ -37,6 +37,21 @@ function countWidgets(tree: any[]): number {
   return n;
 }
 
+/** True if the converted tree contains any icon-box / icon-list widget. */
+function hasIconWidgets(tree: any[]): boolean {
+  let found = false;
+  const walk = (el: any) => {
+    if (found) return;
+    if (el.elType === "widget" && (el.widgetType === "icon-box" || el.widgetType === "icon-list")) {
+      found = true;
+      return;
+    }
+    for (const c of el.elements ?? []) walk(c);
+  };
+  for (const el of tree) walk(el);
+  return found;
+}
+
 function stripAiImagePlaceholders(html: string): string {
   const TOKEN = /\{\{\s*AI_IMAGE[\s\S]*?\}\}/gi;
   return html
@@ -46,7 +61,8 @@ function stripAiImagePlaceholders(html: string): string {
 }
 
 /** Convert + persist a single template. Throws on failure so the caller can retry. */
-async function convertTemplate(supabase: any, t: any): Promise<{ widgets: number; fields: number; skipped: boolean }> {
+async function convertTemplate(supabase: any, t: any): Promise<{ widgets: number; fields: number; skipped: boolean; hasIcons: boolean }> {
+
   if (!t.content || typeof t.content !== "string" || !t.content.trim()) {
     throw new Error("no_html_content");
   }
@@ -102,14 +118,14 @@ async function convertTemplate(supabase: any, t: any): Promise<{ widgets: number
     );
   if (catErr) throw new Error(`catalog.upsert: ${catErr.message}`);
 
-  return { widgets: countWidgets(tree), fields: fields.length, skipped: false };
+  return { widgets: countWidgets(tree), fields: fields.length, skipped: false, hasIcons: hasIconWidgets(tree) };
 }
 
 /**
  * Record the connected pages linked to a template (via its campaigns) so admins
  * can see which published/draft pages are affected by this template's re-sync.
  */
-async function recordConnectedPages(supabase: any, runId: string, t: any): Promise<number> {
+async function recordConnectedPages(supabase: any, runId: string, t: any, hasIcons: boolean): Promise<number> {
   try {
     const { data: campaigns } = await supabase
       .from("campaigns")
@@ -135,6 +151,7 @@ async function recordConnectedPages(supabase: any, runId: string, t: any): Promi
       // new engine on next generation. Either way the page is "updated" to point
       // at the freshly-converted template.
       status: "updated",
+      has_icon_widgets: hasIcons,
     }));
     if (rows.length) await supabase.from("template_backfill_page_items").insert(rows);
     return rows.length;
@@ -241,13 +258,14 @@ Deno.serve(async (req) => {
       let attempt = 0;
       let lastError = "";
       let ok = false;
-      let widgets = 0, fields = 0;
+      let widgets = 0, fields = 0, hasIcons = false;
       while (attempt < MAX_ATTEMPTS && !ok) {
         attempt++;
         try {
           const res = await convertTemplate(supabase, t);
           widgets = res.widgets;
           fields = res.fields;
+          hasIcons = res.hasIcons;
           ok = true;
         } catch (e) {
           lastError = e instanceof Error ? e.message : String(e);
@@ -263,7 +281,7 @@ Deno.serve(async (req) => {
           status: "success", attempts: attempt, widgets, fields,
         });
         // Record which connected pages point at this freshly-converted template.
-        await recordConnectedPages(supabase, runId, t);
+        await recordConnectedPages(supabase, runId, t, hasIcons);
       } else {
         failed++;
         failedDetails.push({ name: t.name || t.id, error: lastError });

@@ -2507,6 +2507,7 @@ export type Database = {
       template_backfill_page_items: {
         Row: {
           created_at: string
+          has_icon_widgets: boolean
           id: string
           page_id: string | null
           page_slug: string | null
@@ -2520,6 +2521,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          has_icon_widgets?: boolean
           id?: string
           page_id?: string | null
           page_slug?: string | null
@@ -2533,6 +2535,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          has_icon_widgets?: boolean
           id?: string
           page_id?: string | null
           page_slug?: string | null
