@@ -61,7 +61,8 @@ function stripAiImagePlaceholders(html: string): string {
 }
 
 /** Convert + persist a single template. Throws on failure so the caller can retry. */
-async function convertTemplate(supabase: any, t: any): Promise<{ widgets: number; fields: number; skipped: boolean }> {
+async function convertTemplate(supabase: any, t: any): Promise<{ widgets: number; fields: number; skipped: boolean; hasIcons: boolean }> {
+
   if (!t.content || typeof t.content !== "string" || !t.content.trim()) {
     throw new Error("no_html_content");
   }
