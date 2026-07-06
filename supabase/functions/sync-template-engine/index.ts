@@ -151,6 +151,7 @@ async function recordConnectedPages(supabase: any, runId: string, t: any, hasIco
       // new engine on next generation. Either way the page is "updated" to point
       // at the freshly-converted template.
       status: "updated",
+      has_icon_widgets: hasIcons,
     }));
     if (rows.length) await supabase.from("template_backfill_page_items").insert(rows);
     return rows.length;
