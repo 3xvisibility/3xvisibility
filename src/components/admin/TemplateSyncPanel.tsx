@@ -89,7 +89,7 @@ export function TemplateSyncPanel() {
     queryFn: async (): Promise<PageItem[]> => {
       const { data, error } = await supabase
         .from("template_backfill_page_items")
-        .select("id, template_name, page_title, page_slug, page_status, status")
+        .select("id, page_id, template_name, page_title, page_slug, page_status, status")
         .eq("run_id", latestRun!.id)
         .order("template_name", { ascending: true });
       if (error) throw error;
