@@ -27,6 +27,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 class XXXV_Elementor {
 
 	/**
+	 * Map of Elementor element id => count-up easing curve, collected while
+	 * building critical CSS. Printed as a small frontend script that drives the
+	 * counter animation with the source easing (Elementor has no native easing).
+	 *
+	 * @var array<string,string>
+	 */
+	private static $counter_easings = array();
+
+
+	/**
 	 * Publish or update an Elementor page using the full editor save workflow.
 	 *
 	 * @param WP_REST_Request $request The request.
