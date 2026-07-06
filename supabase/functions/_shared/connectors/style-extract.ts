@@ -416,6 +416,7 @@ function declsToProps(d: Record<string, string>): StyleProps {
   if (d["border"]) p.border = d["border"];
   if (d["object-fit"]) p.objectFit = d["object-fit"];
   if (d["opacity"]) p.opacity = d["opacity"];
+  if (d["fill"]) p.fill = d["fill"].trim();
   if (d["position"]) p.position = d["position"];
   if (d["z-index"]) p.zIndex = d["z-index"];
   if (d["top"]) p.top = d["top"];
