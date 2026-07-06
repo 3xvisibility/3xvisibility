@@ -82,6 +82,21 @@ export function TemplateSyncPanel() {
     refetchInterval: latestRun?.status === "running" ? 2000 : false,
   });
 
+  const { data: pageItems = [], isLoading: pagesLoading } = useQuery({
+    queryKey: ["template-backfill-page-items", latestRun?.id],
+    enabled: !!latestRun?.id,
+    queryFn: async (): Promise<PageItem[]> => {
+      const { data, error } = await supabase
+        .from("template_backfill_page_items")
+        .select("id, template_name, page_title, page_slug, page_status, status")
+        .eq("run_id", latestRun!.id)
+        .order("template_name", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as PageItem[];
+    },
+    refetchInterval: latestRun?.status === "running" ? 2000 : false,
+  });
+
   const runSync = async (force: boolean) => {
     setRunning(true);
     try {
@@ -99,6 +114,27 @@ export function TemplateSyncPanel() {
       setRunning(false);
     }
   };
+
+  const retryFailed = async () => {
+    if (!latestRun) return;
+    setRunning(true);
+    try {
+      const { error } = await supabase.functions.invoke("sync-template-engine", {
+        body: { retry_run_id: latestRun.id },
+      });
+      if (error) throw error;
+      toast({ title: "Retrying failed templates", description: "Only the failed templates from the last run are being reprocessed." });
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-latest-run"] });
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-items"] });
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-page-items"] });
+    } catch (err) {
+      const msg = await extractEdgeError(err, "Failed to retry");
+      toast({ title: "Retry failed", description: msg, variant: "destructive" });
+    } finally {
+      setRunning(false);
+    }
+  };
+
 
   const failedItems = items.filter((i) => i.status === "failed");
   const otherItems = items.filter((i) => i.status !== "failed");
