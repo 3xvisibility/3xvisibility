@@ -807,6 +807,13 @@ export function styleText(settings: Record<string, unknown>, p: StyleProps, ctx?
     if (numColorGlobal) globals["number_color"] = `globals/colors?id=${numColorGlobal}`;
     else if (numberProps.color) settings.number_color = numberProps.color;
     applyTypography(settings, globals, numberProps, ctx, "typography_number");
+    // Gap between the prefix/number/suffix parts. Source often uses `gap` on the
+    // flex number wrapper; map it to a bridge key our plugin turns into horizontal
+    // margins on `.elementor-counter-number-prefix/-suffix`.
+    if (numberProps.gap) {
+      const g = pxSize(numberProps.gap);
+      if (g && g.size >= 0) settings.__xxxv_counter_affix_space = `${g.size}${g.unit}`;
+    }
   }
   if (titleProps) {
     const titleColorGlobal = globalColorId(titleProps.color, ctx);
