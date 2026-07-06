@@ -1009,7 +1009,8 @@ function counter(node: HtmlNode): ElementorElement {
       if (inh) numberProps.color = inh;
     }
     const titleProps = titleNode ? CURRENT_RESOLVER.resolve(titleNode as NodeLike) : undefined;
-    styleCounter(settings, numberProps, titleProps, CURRENT_CTX);
+    const boxProps = CURRENT_RESOLVER.resolve(node as NodeLike);
+    styleCounter(settings, numberProps, titleProps, CURRENT_CTX, boxProps);
   }
   return {
     id: genId(),
