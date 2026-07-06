@@ -105,6 +105,44 @@ async function convertTemplate(supabase: any, t: any): Promise<{ widgets: number
   return { widgets: countWidgets(tree), fields: fields.length, skipped: false };
 }
 
+/**
+ * Record the connected pages linked to a template (via its campaigns) so admins
+ * can see which published/draft pages are affected by this template's re-sync.
+ */
+async function recordConnectedPages(supabase: any, runId: string, t: any): Promise<number> {
+  try {
+    const { data: campaigns } = await supabase
+      .from("campaigns")
+      .select("id")
+      .eq("template_id", t.id);
+    const campaignIds = (campaigns ?? []).map((c: any) => c.id);
+    if (!campaignIds.length) return 0;
+
+    const { data: pages } = await supabase
+      .from("generated_pages")
+      .select("id, title, slug, status")
+      .in("campaign_id", campaignIds);
+
+    const rows = (pages ?? []).map((p: any) => ({
+      run_id: runId,
+      template_id: t.id,
+      template_name: t.name,
+      page_id: p.id,
+      page_title: p.title,
+      page_slug: p.slug,
+      page_status: p.status,
+      // Published pages hold a snapshot and need a republish; drafts pick up the
+      // new engine on next generation. Either way the page is "updated" to point
+      // at the freshly-converted template.
+      status: "updated",
+    }));
+    if (rows.length) await supabase.from("template_backfill_page_items").insert(rows);
+    return rows.length;
+  } catch {
+    return 0;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
