@@ -74,6 +74,8 @@ export interface StyleProps {
   left?: string;
   inset?: string;
   order?: string;
+  transitionDuration?: string;
+  transitionTimingFunction?: string;
 }
 
 interface MediaCond {
