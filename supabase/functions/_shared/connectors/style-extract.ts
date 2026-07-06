@@ -724,6 +724,35 @@ export function styleText(settings: Record<string, unknown>, p: StyleProps, ctx?
   if (Object.keys(globals).length) settings.__globals__ = globals;
 }
 
+/**
+ * Bake counter widget styles. The number and the title can carry different
+ * colors/typography in the source, so each is resolved independently and mapped
+ * onto Elementor's `number_color` / `typography_number` and
+ * `title_color` / `typography_title` controls. Without this the counter falls
+ * back to the Elementor kit defaults (usually a large light-blue number).
+ */
+export function styleCounter(
+  settings: Record<string, unknown>,
+  numberProps: StyleProps | undefined,
+  titleProps: StyleProps | undefined,
+  ctx?: SiteContext,
+): void {
+  const globals: Record<string, string> = (settings.__globals__ as Record<string, string>) ?? {};
+  if (numberProps) {
+    const numColorGlobal = globalColorId(numberProps.color, ctx);
+    if (numColorGlobal) globals["number_color"] = `globals/colors?id=${numColorGlobal}`;
+    else if (numberProps.color) settings.number_color = numberProps.color;
+    applyTypography(settings, globals, numberProps, ctx, "typography_number");
+  }
+  if (titleProps) {
+    const titleColorGlobal = globalColorId(titleProps.color, ctx);
+    if (titleColorGlobal) globals["title_color"] = `globals/colors?id=${titleColorGlobal}`;
+    else if (titleProps.color) settings.title_color = titleProps.color;
+    applyTypography(settings, globals, titleProps, ctx, "typography_title");
+  }
+  if (Object.keys(globals).length) settings.__globals__ = globals;
+}
+
 /** Bake button styles. */
 export function styleButton(settings: Record<string, unknown>, p: StyleProps, ctx?: SiteContext): void {
   if (p.color) settings.button_text_color = p.color;
