@@ -262,6 +262,8 @@ Deno.serve(async (req) => {
           run_id: runId, template_id: t.id, template_name: t.name,
           status: "success", attempts: attempt, widgets, fields,
         });
+        // Record which connected pages point at this freshly-converted template.
+        await recordConnectedPages(supabase, runId, t);
       } else {
         failed++;
         failedDetails.push({ name: t.name || t.id, error: lastError });
