@@ -1203,13 +1203,17 @@ function iconBox(node: HtmlNode): ElementorElement {
     node,
     (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
   );
+  // The human-readable title/description is the strongest hint for an SVG or
+  // unlabeled icon, so pass it as context to map to a matching free icon.
+  const iconContext = [titleNode ? textContent(titleNode) : "", descNode ? textContent(descNode) : ""].join(" ");
   const settings: Record<string, unknown> = {
     ...nativeIdentitySettings(node),
     title_text: titleNode ? textContent(titleNode) : "",
     description_text: descNode ? textContent(descNode) : "",
     // Resolve the real source icon into an Elementor free (Font Awesome/eicon)
     // icon; falls back to a keyword-inferred free icon, then a star.
-    selected_icon: iconNode ? resolveIconValue(iconNode) : resolveIconValue(node),
+    selected_icon: resolveIconValue(iconNode ?? node, iconContext),
+
     // Sensible free-icon defaults so the widget renders cleanly out of the box.
     // `position` (icon placement) is refined from the source layout in styleIconBox.
     view: "default",
