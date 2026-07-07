@@ -1934,24 +1934,45 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
   const width = `${size}px`;
   const boxedDim = { unit: "px", size, sizes: [] };
 
-  const wrapped = tree.map((section) => {
-    if (!section || section.elType !== "container") return section;
-    const kids = Array.isArray(section.elements) ? section.elements : [];
-    if (kids.length === 0) return section;
+  const isBoxed = (el: ElementorElement): boolean =>
+    el?.elType === "container" &&
+    (el.settings as Record<string, unknown>)?.content_width === "boxed" &&
+    (el.settings as Record<string, unknown>)?.width !== undefined &&
+    (el.settings as Record<string, unknown>)?.width !== "";
 
-    if (
-      kids.length === 1 &&
-      kids[0].elType === "container" &&
-      (kids[0].settings as Record<string, unknown>)?._xxxvBoxed === true
-    ) {
-      const inner = kids[0];
-      return {
-        ...section,
-        settings: { ...section.settings, content_width: "full", width: "100%", flex_align_items: "center" },
-        elements: [
-          { ...inner, settings: { ...inner.settings, content_width: "boxed", width, boxed_width: boxedDim } },
-        ],
-      };
+  // A container carries its own background band and must stay FULL width so the
+  // background bleeds edge-to-edge.
+  const hasBackground = (el: ElementorElement): boolean => {
+    const s = (el?.settings as Record<string, unknown>) || {};
+    return (
+      !!s.background_background ||
+      !!s.background_color ||
+      !!s.background_image ||
+      !!s.background_gradient_color ||
+      !!(s as Record<string, unknown>).__xxxv_background
+    );
+  };
+
+  const rescale = (el: ElementorElement) => {
+    el.settings = { ...el.settings, content_width: "boxed", width, boxed_width: boxedDim };
+  };
+
+  // Box a leaf SECTION band: keep the band full width (backgrounds stay
+  // edge-to-edge) and constrain its content to the target width.
+  const boxSection = (section: ElementorElement) => {
+    const kids = Array.isArray(section.elements) ? section.elements : [];
+    section.settings = { ...section.settings, content_width: "full", width: "100%", flex_align_items: "center" };
+    if (kids.length === 0) return;
+
+    const boxedKids = kids.filter(isBoxed);
+    if (boxedKids.length) {
+      boxedKids.forEach(rescale);
+      return;
+    }
+
+    if (kids.length === 1 && (kids[0].settings as Record<string, unknown>)?._xxxvBoxed === true) {
+      rescale(kids[0]);
+      return;
     }
 
     const inner: ElementorElement = {
@@ -1966,14 +1987,27 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
       },
       elements: kids,
     };
+    section.elements = [inner];
+  };
 
-    return {
-      ...section,
-      settings: { ...section.settings, content_width: "full", width: "100%", flex_align_items: "center" },
-      elements: [inner],
-    };
-  });
+  // Wrapper vs. section-band detection (see edge-function copy for rationale):
+  // a shell around a single full-width background section must recurse, not box.
+  const process = (el: ElementorElement) => {
+    if (!el || el.elType !== "container") return;
+    const kids = el.elements || [];
+    const childContainers = kids.filter((c) => c?.elType === "container");
+    const hasDirectWidget = kids.some((c) => c?.elType === "widget");
+    const wrapsBackgroundSection =
+      childContainers.length >= 1 && childContainers.some(hasBackground) && !hasDirectWidget;
+    if (childContainers.length >= 2 || wrapsBackgroundSection) {
+      el.settings = { ...el.settings, content_width: "full", width: "100%" };
+      for (const c of el.elements) process(c);
+    } else {
+      boxSection(el);
+    }
+  };
 
-  return JSON.stringify(wrapped);
+  for (const top of tree) process(top);
+  return JSON.stringify(tree);
 }
 

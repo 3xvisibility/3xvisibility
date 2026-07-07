@@ -2265,6 +2265,19 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
     (el.settings as Record<string, unknown>)?.width !== undefined &&
     (el.settings as Record<string, unknown>)?.width !== "";
 
+  // A container carries its own background band (color / image / gradient) and
+  // therefore must stay FULL width so the background bleeds edge-to-edge.
+  const hasBackground = (el: ElementorElement): boolean => {
+    const s = (el?.settings as Record<string, unknown>) || {};
+    return (
+      !!s.background_background ||
+      !!s.background_color ||
+      !!s.background_image ||
+      !!s.background_gradient_color ||
+      !!(s as Record<string, unknown>).__xxxv_background
+    );
+  };
+
   const rescale = (el: ElementorElement) => {
     el.settings = { ...el.settings, content_width: "boxed", width, boxed_width: boxedDim };
   };
@@ -2306,14 +2319,21 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
     section.elements = [inner];
   };
 
-  // Walk the tree. A container holding 2+ child containers is a page/section
-  // WRAPPER: keep it full width and recurse into each child so real section
-  // bands are the ones boxed. A container holding content (widgets or a single
-  // inner wrapper) is a SECTION band and gets its content boxed.
+  // Walk the tree. A container is a page/section WRAPPER (kept full width, then
+  // recursed into) when it either:
+  //   - holds 2+ child containers (a stack of section bands), OR
+  //   - holds background-carrying child container(s) and no direct widgets
+  //     (a shell around a single full-width background section).
+  // Otherwise it is a real SECTION band and its content is boxed. This prevents
+  // a full-width background section from being trapped inside a boxed wrapper.
   const process = (el: ElementorElement) => {
     if (!el || el.elType !== "container") return;
-    const childContainers = (el.elements || []).filter((c) => c?.elType === "container");
-    if (childContainers.length >= 2) {
+    const kids = el.elements || [];
+    const childContainers = kids.filter((c) => c?.elType === "container");
+    const hasDirectWidget = kids.some((c) => c?.elType === "widget");
+    const wrapsBackgroundSection =
+      childContainers.length >= 1 && childContainers.some(hasBackground) && !hasDirectWidget;
+    if (childContainers.length >= 2 || wrapsBackgroundSection) {
       el.settings = { ...el.settings, content_width: "full", width: "100%" };
       for (const c of el.elements) process(c);
     } else {
