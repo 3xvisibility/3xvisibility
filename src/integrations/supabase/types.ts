@@ -951,6 +951,7 @@ export type Database = {
           ad_group_id: string | null
           campaign_id: string | null
           canonical_url: string | null
+          container_width: number | null
           content: string
           created_at: string
           editor_readiness: Json | null
@@ -975,6 +976,7 @@ export type Database = {
           ad_group_id?: string | null
           campaign_id?: string | null
           canonical_url?: string | null
+          container_width?: number | null
           content: string
           created_at?: string
           editor_readiness?: Json | null
@@ -999,6 +1001,7 @@ export type Database = {
           ad_group_id?: string | null
           campaign_id?: string | null
           canonical_url?: string | null
+          container_width?: number | null
           content?: string
           created_at?: string
           editor_readiness?: Json | null
@@ -2731,6 +2734,7 @@ export type Database = {
       }
       templates: {
         Row: {
+          container_width: number | null
           content: string
           created_at: string
           elementor_data: Json | null
@@ -2752,6 +2756,7 @@ export type Database = {
           workspace_id: string | null
         }
         Insert: {
+          container_width?: number | null
           content: string
           created_at?: string
           elementor_data?: Json | null
@@ -2773,6 +2778,7 @@ export type Database = {
           workspace_id?: string | null
         }
         Update: {
+          container_width?: number | null
           content?: string
           created_at?: string
           elementor_data?: Json | null
