@@ -242,6 +242,25 @@ export function TemplateSyncPanel() {
     ? Math.round((latestRun.processed / latestRun.total_templates) * 100)
     : 0;
 
+  // ─── Widget-scoped run status ─────────────────────────────────────────────
+  // trigger_source is stored as "<source>:<widget>+<widget>" when a widget-scoped
+  // sync is launched, so we parse the widget scope off it for a clear indicator.
+  const WIDGET_LABELS: Record<string, string> = {
+    counter: "Counter",
+    "icon-box": "Icon Box",
+    "image-box": "Image Box",
+  };
+  const scopedWidgets = (latestRun?.trigger_source?.split(":")[1] || "")
+    .split("+")
+    .map((w) => w.trim())
+    .filter(Boolean);
+  const isRunning = latestRun?.status === "running";
+  const completedCount = latestRun?.processed ?? 0;
+  const queuedCount = latestRun ? Math.max(latestRun.total_templates - latestRun.processed, 0) : 0;
+  // A single template is processed at a time while the run is active.
+  const runningCount = isRunning ? Math.min(queuedCount, 1) : 0;
+
+
   const statusBadge = (status: string) => {
     if (status === "success") return <Badge className="bg-success/15 text-success border-success/30 gap-1"><CheckCircle2 className="h-3 w-3" />Success</Badge>;
     if (status === "failed") return <Badge variant="destructive" className="gap-1"><AlertCircle className="h-3 w-3" />Failed</Badge>;
