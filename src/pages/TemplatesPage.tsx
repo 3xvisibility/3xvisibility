@@ -18,7 +18,7 @@ import {
   Search as SearchIcon, Pencil, MoreVertical, LayoutGrid, List,
   ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet, Link2,
   ChevronLeft, ChevronRight, Loader2, MonitorSmartphone, ShoppingBag, Briefcase,
-  Wand2, Eye, AlertTriangle, Crown, Palette, History,
+  Wand2, Eye, AlertTriangle, Crown, Palette, History, Columns,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
@@ -126,7 +126,28 @@ export default function TemplatesPage() {
   const wsId = currentWorkspace?.id;
   const maxTemplates = features.templates;
 
-  // ──── Queries ────
+  // Bulk reconvert + rebox all templates so every section becomes a full-width
+  // main container with its content boxed to Elementor's default width (1140px).
+  const reboxMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("rebox-all-templates", {
+        body: { workspace_id: wsId },
+      });
+      if (error) throw error;
+      return data as { updated: number; total: number };
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Templates updated",
+        description: `Reboxed ${data.updated} of ${data.total} templates — full-width sections with 1140px boxed content.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+    },
+    onError: (e) => {
+      toast({ variant: "destructive", title: "Rebox failed", description: friendlyError(e instanceof Error ? e.message : String(e)) });
+    },
+  });
+
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["templates", wsId],
     enabled: !!wsId,
@@ -895,6 +916,20 @@ slug: ${fields.slug}`,
           <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()} disabled={limitReached}>
             <Upload className="mr-1.5 h-3.5 w-3.5" /> {t("templates.importJson")}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => reboxMutation.mutate()}
+            disabled={reboxMutation.isPending || templates.length === 0}
+          >
+            {reboxMutation.isPending ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Columns className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            Rebox all
+          </Button>
+
           <Button size="sm" onClick={() => setPickerOpen(true)} disabled={limitReached}>
             <Plus className="mr-1.5 h-3.5 w-3.5" /> {t("templates.createTemplate")}
           </Button>
