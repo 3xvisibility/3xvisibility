@@ -1601,7 +1601,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
 
           // CSS integrity check: warn loudly when a page would ship without any
           // template CSS so it can be diagnosed instead of silently unstyled.
-          if (catalog.cssLength === 0) {
+          if (catalog && catalog.cssLength === 0) {
             console.warn(
               "[publish-pages] CSS integrity warning: no template CSS found for page",
               { pageId: page.id, campaignId: page.campaign_id },
