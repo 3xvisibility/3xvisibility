@@ -9,11 +9,12 @@ import { LayoutTemplate } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { config } from "@/lib/config";
 
 const PRESETS = ["1140", "1200", "custom"] as const;
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 1920;
-const DEFAULT_WIDTH = "1140";
+const DEFAULT_WIDTH = String(config.layout.defaultContainerWidth);
 
 /**
  * Lets a workspace enforce an Elementor-style fixed content width (e.g. 1140 /
