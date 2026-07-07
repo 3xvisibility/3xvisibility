@@ -738,7 +738,27 @@ const ICON_KEYWORD_MAP: Array<{ re: RegExp; icon: string }> = [
   { re: /\b(arrow-trend|increase|growth-arrow|scale-up)\b/, icon: "fa-arrow-trend-up" },
   { re: /\b(expand|maximize|fullscreen|grow-arrows)\b/, icon: "fa-up-right-and-down-left-from-center" },
   { re: /\b(circle-nodes|cluster|mesh|distributed)\b/, icon: "fa-circle-nodes" },
+  // ── Home services / trades / plumbing / HVAC domain ─────────────────────
+  { re: /\b(leak|drip|leakage|leaking)\b/, icon: "fa-faucet-drip" },
+  { re: /\b(drain|drainage|unclog|clog|sewer)\b/, icon: "fa-sink" },
+  { re: /\b(pipe|piping|plumb|plumbing|plumber)\b/, icon: "fa-wrench" },
+  { re: /\b(faucet|tap|valve|fitting)\b/, icon: "fa-faucet" },
+  { re: /\b(bath|bathroom|bathtub|shower|toilet|washroom)\b/, icon: "fa-bath" },
+  { re: /\b(kitchen|sink|basin)\b/, icon: "fa-sink" },
+  { re: /\b(heater|boiler|furnace|heating|thermostat|geyser)\b/, icon: "fa-temperature-high" },
+  { re: /\b(cooling|hvac|ventilation|airflow|fan)\b/, icon: "fa-fan" },
+  { re: /\b(filter|filtration|purify|purification)\b/, icon: "fa-filter" },
+  { re: /\b(gas|flame|burner|combustion)\b/, icon: "fa-fire-flame-simple" },
+  { re: /\b(wiring|outlet|socket|electrician|electrical)\b/, icon: "fa-plug-circle-bolt" },
+  { re: /\b(renovation|remodel|paint-roller|refurbish)\b/, icon: "fa-paint-roller" },
+  { re: /\b(broom|janitor|sweep|housekeeping)\b/, icon: "fa-broom" },
+  { re: /\b(spray|pressure-wash|washing)\b/, icon: "fa-spray-can-sparkles" },
+  { re: /\b(snow|frost|freeze|winter)\b/, icon: "fa-snowflake" },
+  { re: /\b(temperature|thermometer|climate|degrees)\b/, icon: "fa-temperature-half" },
+  { re: /\b(toolbox|handyman|installation|install|repair-kit)\b/, icon: "fa-toolbox" },
+  { re: /\b(drop|droplet|water|hydration|liquid|moisture)\b/, icon: "fa-droplet" },
 ];
+
 
 /** Map a keyword string (class names / svg id) to a free FA solid icon token. */
 function keywordIconToken(text: string): string | null {
