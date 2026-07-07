@@ -1322,6 +1322,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           ? await createProductConnector(page.websites as WebsiteRecord)
           : await createConnector(page.websites as WebsiteRecord);
         finishRunning("ok");
+        await persistProgress();
         if ((page.websites as { type?: string })?.type === "wordpress" && resolvedPublishType === "page") {
           step("Verifying connector plugin", "running");
           await runWordPressConnectorPreflight(connector, "3xVisibility WordPress Connector");
