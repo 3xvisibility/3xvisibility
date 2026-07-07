@@ -793,11 +793,15 @@ async function handlePublishPages(req: Request): Promise<Response> {
     // every native Elementor page published for that workspace gets its section
     // content wrapped in a centered boxed container of this pixel width, so the
     // published layout matches Elementor's boxed content and stops drifting.
+    // Default boxed content width applied when nothing else is configured, so
+    // every native Elementor page ships with full-width section bands wrapping a
+    // centered 1140px boxed inner container (standard Elementor boxed layout).
+    const DEFAULT_BOX_WIDTH = 1140;
     const containerWidthCache = new Map<string, number>();
     const resolveContainerWidth = async (workspaceId: string | null | undefined): Promise<number> => {
-      if (!workspaceId) return 0;
+      if (!workspaceId) return DEFAULT_BOX_WIDTH;
       if (containerWidthCache.has(workspaceId)) return containerWidthCache.get(workspaceId)!;
-      let width = 0;
+      let width = DEFAULT_BOX_WIDTH;
       try {
         const { data } = await supabase
           .from("workspaces")
@@ -805,9 +809,9 @@ async function handlePublishPages(req: Request): Promise<Response> {
           .eq("id", workspaceId)
           .maybeSingle();
         const raw = (data as { elementor_container_width?: number } | null)?.elementor_container_width;
-        width = typeof raw === "number" && raw > 0 ? raw : 0;
+        width = typeof raw === "number" && raw > 0 ? raw : DEFAULT_BOX_WIDTH;
       } catch (_e) {
-        width = 0;
+        width = DEFAULT_BOX_WIDTH;
       }
       containerWidthCache.set(workspaceId, width);
       return width;
