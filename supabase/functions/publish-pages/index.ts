@@ -1491,15 +1491,50 @@ async function handlePublishPages(req: Request): Promise<Response> {
           } else {
           const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
           if (!catalog) {
-            const msg =
-              "Publish blocked: no stored Elementor template found for this campaign. " +
-              "Seed the template via seed-elementor-templates before publishing to WordPress.";
-            console.error("[publish-pages]", msg, { pageId: page.id });
-            await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
-            step("Validation failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
-            continue;
-          }
-          if (!catalog.ok) {
+            // Ad-hoc / direct pages have no campaign→template link, so there is
+            // no catalog to resolve. Convert the page's OWN stored HTML into
+            // native Elementor widgets so these pages can (re)publish instead of
+            // being blocked. Icon/widget mapping fixes apply here as well.
+            let directData: string | undefined;
+            if (page.content) {
+              try {
+                const converted = htmlToElementor(page.content);
+                if (Array.isArray(converted) && converted.length) directData = JSON.stringify(converted);
+              } catch (e) {
+                console.warn("[publish-pages] direct native Elementor conversion failed", e);
+              }
+            }
+            if (!directData) {
+              const msg =
+                "Publish blocked: no stored Elementor template found for this campaign and the page " +
+                "has no convertible HTML content.";
+              console.error("[publish-pages]", msg, { pageId: page.id });
+              await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+              step("Validation failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
+              continue;
+            }
+            if (FORCE_NATIVE_ELEMENTOR) {
+              try {
+                directData = enforceNativeElementorData(
+                  directData,
+                  undefined,
+                  (n) => step("Enforcing native widgets", "warn", `Rebuilt ${n} HTML widget(s) into native Elementor widgets`),
+                );
+              } catch (e) {
+                const msg = `Publish blocked: page could not be made native Elementor: ${e instanceof Error ? e.message : String(e)}`;
+                console.error("[publish-pages]", msg, { pageId: page.id });
+                await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+                step("Native widget enforcement failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
+                continue;
+              }
+            }
+            payload.elementor_data = directData;
+            payload.elementor_css = extractTemplateCss(page.content) || undefined;
+            payload.elementor_mode = "native";
+            elementorSource = "exact";
+            elementorSimilarity = 100;
+            step("Building native Elementor widgets", "ok", "Ad-hoc page HTML converted to native containers + widgets");
+          } else if (!catalog.ok) {
             const msg =
               `Publish blocked: visual similarity ${catalog.similarity}% is below the ` +
               `${ELEMENTOR_SIMILARITY_TARGET}% threshold after ${MAX_REBUILD_ATTEMPTS} rebuild attempts. ` +
@@ -1508,34 +1543,35 @@ async function handlePublishPages(req: Request): Promise<Response> {
             await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
             step("Visual similarity gate failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, elementor_similarity: catalog.similarity, steps });
             continue;
-          }
-          // Template-Kit architecture: ship the NATIVE Elementor JSON tree from
-          // the catalog (placeholder-only content applied). The page is fully
-          // editable inside Elementor as native Containers + widgets. Image URLs
-          // and CSS assets are uploaded/mapped by the connector plugin.
-          let catalogData = catalog.data;
-          // NATIVE-ONLY GUARANTEE: reject/rebuild any stray HTML widget so the
-          // published page is always editable as native Elementor widgets.
-          if (FORCE_NATIVE_ELEMENTOR) {
-            try {
-              catalogData = enforceNativeElementorData(
-                catalogData,
-                undefined,
-                (n) => step("Enforcing native widgets", "warn", `Rebuilt ${n} HTML widget(s) into native Elementor widgets`),
-              );
-            } catch (e) {
-              const msg = `Publish blocked: stored template is not native Elementor and could not be converted: ${e instanceof Error ? e.message : String(e)}`;
-              console.error("[publish-pages]", msg, { pageId: page.id });
-              await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
-              step("Native widget enforcement failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
-              continue;
+          } else {
+            // Template-Kit architecture: ship the NATIVE Elementor JSON tree from
+            // the catalog (placeholder-only content applied). The page is fully
+            // editable inside Elementor as native Containers + widgets. Image URLs
+            // and CSS assets are uploaded/mapped by the connector plugin.
+            let catalogData = catalog.data;
+            // NATIVE-ONLY GUARANTEE: reject/rebuild any stray HTML widget so the
+            // published page is always editable as native Elementor widgets.
+            if (FORCE_NATIVE_ELEMENTOR) {
+              try {
+                catalogData = enforceNativeElementorData(
+                  catalogData,
+                  undefined,
+                  (n) => step("Enforcing native widgets", "warn", `Rebuilt ${n} HTML widget(s) into native Elementor widgets`),
+                );
+              } catch (e) {
+                const msg = `Publish blocked: stored template is not native Elementor and could not be converted: ${e instanceof Error ? e.message : String(e)}`;
+                console.error("[publish-pages]", msg, { pageId: page.id });
+                await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+                step("Native widget enforcement failed", "error", msg.slice(0, 200)); results.push({ id: page.id, status: "failed", error: msg, steps });
+                continue;
+              }
             }
+            payload.elementor_data = catalogData;
+            payload.elementor_css = catalog.css;
+            payload.elementor_mode = "native";
+            elementorSource = "catalog";
+            elementorSimilarity = catalog.similarity;
           }
-          payload.elementor_data = catalogData;
-          payload.elementor_css = catalog.css;
-          payload.elementor_mode = "native";
-          elementorSource = "catalog";
-          elementorSimilarity = catalog.similarity;
 
           // CSS integrity check: warn loudly when a page would ship without any
           // template CSS so it can be diagnosed instead of silently unstyled.
