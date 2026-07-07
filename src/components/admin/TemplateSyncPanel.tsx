@@ -334,6 +334,48 @@ export function TemplateSyncPanel() {
                 </p>
               </div>
 
+              <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {scopedWidgets.length ? "Widget sync scope" : "Sync scope"}
+                  </span>
+                  {scopedWidgets.length ? (
+                    scopedWidgets.map((w) => (
+                      <Badge key={w} variant="outline" className="gap-1 border-primary/40 text-primary text-[10px]">
+                        {WIDGET_LABELS[w] || w}
+                      </Badge>
+                    ))
+                  ) : (
+                    <Badge variant="outline" className="text-[10px]">All widgets</Badge>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-md border bg-card p-2.5 text-center">
+                    <p className="text-xl font-bold text-muted-foreground">{queuedCount}</p>
+                    <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1">
+                      <MinusCircle className="h-3 w-3" />Queued
+                    </p>
+                  </div>
+                  <div className="rounded-md border bg-card p-2.5 text-center">
+                    <p className="text-xl font-bold text-primary flex items-center justify-center gap-1.5">
+                      {runningCount}
+                      {isRunning && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1">
+                      <Play className="h-3 w-3" />Running
+                    </p>
+                  </div>
+                  <div className="rounded-md border bg-card p-2.5 text-center">
+                    <p className="text-xl font-bold text-success">{completedCount}</p>
+                    <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />Completed
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+
+
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <StatBox label="Converted" value={latestRun.converted} className="text-success" />
                 <StatBox label="Skipped" value={latestRun.skipped} className="text-muted-foreground" />
