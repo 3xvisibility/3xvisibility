@@ -1281,6 +1281,20 @@ async function handlePublishPages(req: Request): Promise<Response> {
 
       // Per-page publish timeline so users can track exactly what happened.
       const steps: PublishStep[] = [];
+      // Direct (campaign-less) pages have no LiveGenerationProgress feed, so we
+      // stream their converting/publishing progress by persisting the running
+      // status + step timeline as each milestone completes. Realtime picks this
+      // up and the row shows a live "Publishing" badge + step-by-step status.
+      const isDirectPage = !page.campaign_id;
+      const persistProgress = async () => {
+        if (!isDirectPage) return;
+        try {
+          await supabase
+            .from("generated_pages")
+            .update({ status: "publishing", error_message: null, publish_steps: steps })
+            .eq("id", page.id);
+        } catch (_) { /* non-critical progress write */ }
+      };
       const step = (label: string, status: PublishStep["status"], detail?: string) => {
         steps.push({ label, status, detail, at: new Date().toISOString() });
       };
@@ -1290,6 +1304,16 @@ async function handlePublishPages(req: Request): Promise<Response> {
           if (detail !== undefined) steps[steps.length - 1].detail = detail;
         }
       };
+      // Mark direct pages as publishing up-front so the UI reflects the run
+      // immediately (before the first CMS round-trip completes).
+      if (isDirectPage) {
+        try {
+          await supabase
+            .from("generated_pages")
+            .update({ status: "publishing", error_message: null })
+            .eq("id", page.id);
+        } catch (_) { /* non-critical */ }
+      }
       try {
         const resolvedPublishType = inferPublishType(page, pubType);
         const platformLabel = (page.websites as { type?: string })?.type || "site";
@@ -1298,6 +1322,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           ? await createProductConnector(page.websites as WebsiteRecord)
           : await createConnector(page.websites as WebsiteRecord);
         finishRunning("ok");
+        await persistProgress();
         if ((page.websites as { type?: string })?.type === "wordpress" && resolvedPublishType === "page") {
           step("Verifying connector plugin", "running");
           await runWordPressConnectorPreflight(connector, "3xVisibility WordPress Connector");
@@ -1534,6 +1559,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
             elementorSource = "exact";
             elementorSimilarity = 100;
             step("Building native Elementor widgets", "ok", "Ad-hoc page HTML converted to native containers + widgets");
+            await persistProgress();
           } else if (!catalog.ok) {
             const msg =
               `Publish blocked: visual similarity ${catalog.similarity}% is below the ` +
@@ -1639,6 +1665,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         }
 
         // If page was previously published (has external_id), update instead of creating
+        await persistProgress();
         step(page.external_id ? "Updating on store" : "Creating on store", "running");
         const result = page.external_id
           ? await withTimeout(connector.updatePage(page.external_id, payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${page.title}`)
