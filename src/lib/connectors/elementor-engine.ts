@@ -948,11 +948,17 @@ function iconList(node: HtmlNode): ElementorElement {
     .filter((c) => c.tag === "li")
     .map((li) => {
       const iconNode = findNode(li, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa"));
+      const text = textContent(li);
       return {
         _id: genId(),
-        text: textContent(li),
-        selected_icon: iconNode ? resolveIconValue(iconNode) : { value: "fas fa-check", library: "fa-solid" },
+        text,
+        selected_icon: iconNode
+          ? resolveIconValue(iconNode, text)
+          : (keywordIconToken(text.toLowerCase())
+              ? { value: `fas ${keywordIconToken(text.toLowerCase())}`, library: "fa-solid" }
+              : { value: "fas fa-check", library: "fa-solid" }),
       };
+
     });
   return {
     id: genId(),
