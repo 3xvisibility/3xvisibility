@@ -769,8 +769,33 @@ function keywordIconToken(text: string): string | null {
   return null;
 }
 
-/** Map an icon class to an Elementor selected_icon value. */
-function resolveIconValue(node: HtmlNode): { value: string; library: string } {
+/**
+ * Gather icon hint text from a node AND its descendants — SVG icons (lucide /
+ * heroicons / feather) carry meaning in a `lucide-*` class, a `data-icon`/
+ * `data-lucide` attr, or a `<use xlink:href="#water">` ref, not an FA class.
+ */
+function collectIconHints(node: HtmlNode): string {
+  const parts: string[] = [];
+  const visit = (n: HtmlNode) => {
+    parts.push(
+      n.attrs.class || "",
+      n.attrs["data-icon"] || "",
+      n.attrs["data-lucide"] || "",
+      n.attrs["data-feather"] || "",
+      n.attrs["aria-label"] || "",
+      n.attrs.id || "",
+      n.attrs.href || "",
+      n.attrs["xlink:href"] || "",
+      n.attrs.name || "",
+    );
+    for (const c of n.children) visit(c);
+  };
+  visit(node);
+  return parts.join(" ");
+}
+
+/** Map an icon class (or SVG + `contextHint` label) to an Elementor free icon. */
+function resolveIconValue(node: HtmlNode, contextHint = ""): { value: string; library: string } {
   const cls = (node.attrs.class || "").toLowerCase();
   const styleToken = cls.match(/\bfa[bsrl]?\b/)?.[0] || "fas";
   const iconToken = cls.match(/\bfa-[a-z0-9-]+\b/)?.[0];
@@ -780,17 +805,12 @@ function resolveIconValue(node: HtmlNode): { value: string; library: string } {
   }
   const eicon = cls.match(/\beicon-[a-z0-9-]+\b/)?.[0];
   if (eicon) return { value: eicon, library: "elementor-icons" };
-  const hint = [
-    node.attrs.class || "",
-    node.attrs["data-icon"] || "",
-    node.attrs["aria-label"] || "",
-    node.attrs.id || "",
-    node.attrs.href || "",
-  ].join(" ");
-  const guessed = keywordIconToken(hint);
+  const guessed =
+    keywordIconToken(collectIconHints(node)) || keywordIconToken((contextHint || "").toLowerCase());
   if (guessed) return { value: `fas ${guessed}`, library: "fa-solid" };
   return { value: "fas fa-star", library: "fa-solid" };
 }
+
 
 /** Standalone `<i>` / `<svg>` icon -> native Elementor Icon widget. */
 function iconWidget(node: HtmlNode): ElementorElement {
