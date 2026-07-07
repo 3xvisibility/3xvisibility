@@ -47,6 +47,20 @@ export const config = {
     /** Override default provider from the client — rarely needed */
     provider: env("VITE_AI_PROVIDER", "lovable"),
   },
+
+  /** Layout defaults for published/boxed content */
+  layout: {
+    /**
+     * Default boxed content width (px) applied to new campaigns and publishes
+     * when no per-template / per-page / workspace override exists.
+     * Elementor's default is 1140. Configure via VITE_DEFAULT_CONTAINER_WIDTH.
+     */
+    defaultContainerWidth: (() => {
+      const raw = Number(env("VITE_DEFAULT_CONTAINER_WIDTH", "1140"));
+      if (!Number.isFinite(raw) || raw <= 0) return 1140;
+      return Math.min(Math.max(Math.round(raw), 320), 1920);
+    })(),
+  },
 } as const;
 
 // ── validation (runs once at import time) ────────────────────────────────────

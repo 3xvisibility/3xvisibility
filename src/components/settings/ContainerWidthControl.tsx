@@ -2,13 +2,16 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LayoutTemplate } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { config } from "@/lib/config";
 
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 1920;
+const DEFAULT_WIDTH = config.layout.defaultContainerWidth;
 
 type Mode = "inherit" | "disabled" | "custom";
 
@@ -20,6 +23,9 @@ type Mode = "inherit" | "disabled" | "custom";
  *   - null  → inherit (template inherits workspace; page inherits template)
  *   - 0     → boxing disabled (content spans full width)
  *   - >0    → box content at this pixel width while backgrounds stay full-width
+ *
+ * Includes a live "Content width" preview toggle so you can compare boxed vs
+ * full-width layout instantly before publishing.
  */
 export default function ContainerWidthControl({
   table,
@@ -34,9 +40,10 @@ export default function ContainerWidthControl({
 }) {
   const { toast } = useToast();
   const [mode, setMode] = useState<Mode>("inherit");
-  const [customWidth, setCustomWidth] = useState("1140");
+  const [customWidth, setCustomWidth] = useState(String(DEFAULT_WIDTH));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [previewBoxed, setPreviewBoxed] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -112,6 +119,22 @@ export default function ContainerWidthControl({
     });
   };
 
+  // Effective width for the live preview.
+  const previewWidth = (() => {
+    if (mode === "custom") {
+      const raw = Number(customWidth);
+      if (Number.isFinite(raw) && raw > 0) return Math.min(Math.max(Math.round(raw), MIN_WIDTH), MAX_WIDTH);
+      return DEFAULT_WIDTH;
+    }
+    // inherit uses the configured default; disabled has no box
+    return DEFAULT_WIDTH;
+  })();
+
+  const CANVAS = 1440; // simulated viewport
+  // "disabled" mode never boxes; otherwise the preview toggle drives it.
+  const boxedApplied = mode !== "disabled" && previewBoxed;
+  const boxedPct = Math.min((previewWidth / CANVAS) * 100, 100);
+
   return (
     <div className={className}>
       <div className="flex items-center gap-2 text-sm font-medium">
@@ -120,6 +143,7 @@ export default function ContainerWidthControl({
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
         Center the content in a fixed-width box while section backgrounds stay edge-to-edge.
+        Default is {DEFAULT_WIDTH}px.
       </p>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -151,10 +175,54 @@ export default function ContainerWidthControl({
             {customError ? (
               <p className="text-xs text-destructive">{customError}</p>
             ) : (
-              <p className="text-xs text-muted-foreground">e.g. 1140 (Elementor default). Range {MIN_WIDTH}–{MAX_WIDTH}px.</p>
+              <p className="text-xs text-muted-foreground">e.g. {DEFAULT_WIDTH} (Elementor default). Range {MIN_WIDTH}–{MAX_WIDTH}px.</p>
             )}
           </div>
         )}
+      </div>
+
+      {/* Live content-width preview */}
+      <div className="mt-3 space-y-2 rounded-lg border p-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <Label>Content width preview</Label>
+            <p className="text-xs text-muted-foreground">
+              {boxedApplied
+                ? `Boxed at ~${previewWidth}px, section backgrounds full-width.`
+                : "Content spans full width (no boxed container)."}
+            </p>
+          </div>
+          <Switch
+            checked={previewBoxed}
+            disabled={mode === "disabled"}
+            onCheckedChange={setPreviewBoxed}
+            aria-label="Toggle boxed content width preview"
+          />
+        </div>
+
+        <div className="overflow-hidden rounded-md border bg-muted/30">
+          <div className="w-full bg-primary/10 py-3">
+            <div
+              className="mx-auto rounded bg-primary/40 px-2 py-2 text-center text-[10px] font-medium text-primary-foreground transition-all duration-300"
+              style={{ width: boxedApplied ? `${boxedPct}%` : "100%" }}
+            >
+              Hero content
+            </div>
+          </div>
+          <div className="w-full bg-secondary/40 py-3">
+            <div
+              className="mx-auto flex gap-2 transition-all duration-300"
+              style={{ width: boxedApplied ? `${boxedPct}%` : "100%" }}
+            >
+              <div className="h-8 flex-1 rounded bg-foreground/15" />
+              <div className="h-8 flex-1 rounded bg-foreground/15" />
+              <div className="h-8 flex-1 rounded bg-foreground/15" />
+            </div>
+          </div>
+        </div>
+        <p className="text-[10px] text-muted-foreground">
+          Simulated {CANVAS}px viewport. Section backgrounds always stay edge-to-edge.
+        </p>
       </div>
 
       <div className="mt-3">
