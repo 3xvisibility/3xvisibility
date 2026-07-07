@@ -1606,7 +1606,17 @@ async function handlePublishPages(req: Request): Promise<Response> {
               "[publish-pages] CSS integrity warning: no template CSS found for page",
               { pageId: page.id, campaignId: page.campaign_id },
             );
+          } else if (!catalog) {
+            // Direct (campaign-less) pages have no template catalog, so the CSS
+            // integrity check can't run. Surface this per-page so users know it
+            // was intentionally skipped rather than silently unstyled.
+            step(
+              "CSS integrity check skipped",
+              "warn",
+              "No template catalog for this direct page — skipping template CSS verification. The page uses its own inline styles.",
+            );
           }
+
 
           }
         }
