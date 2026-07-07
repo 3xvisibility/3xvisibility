@@ -144,7 +144,7 @@ export default function TemplatesPage() {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
     },
     onError: (e) => {
-      toast({ variant: "destructive", title: "Rebox failed", description: friendlyError(e) });
+      toast({ variant: "destructive", title: "Rebox failed", description: friendlyError(e instanceof Error ? e.message : String(e)) });
     },
   });
 
