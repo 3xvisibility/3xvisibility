@@ -500,6 +500,7 @@ export default function GeneratedPagesPage() {
 
   const handleWebsiteSelected = (websiteId: string) => {
     const effType = resolvePublishTypeFor(pendingPublishIds);
+    markDirectPagesPublishing(pendingPublishIds);
     if (pendingPublishAction === "retry") retryFailedMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType });
     else if (pendingPublishAction === "bulk") bulkPublishMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType });
     else publishMutation.mutate({ pageIds: pendingPublishIds, type: effType, websiteId });
