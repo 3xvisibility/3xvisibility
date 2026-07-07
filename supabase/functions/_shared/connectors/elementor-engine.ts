@@ -2256,8 +2256,21 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
   if (!Array.isArray(tree) || tree.length === 0) return dataStr;
 
   const size = Math.round(widthPx);
-  const width = `${size}px`;
   const boxedDim = { unit: "px", size, sizes: [] };
+  // Centered inner box (matches Elementor's boxed container: fixed width + auto margins).
+  const marginAuto = { unit: "px", top: "0", right: "auto", bottom: "0", left: "auto", isLinked: false };
+  const zeroPad = { unit: "px", top: "0", right: "0", bottom: "0", left: "0", isLinked: false };
+  // Settings applied to the inner boxed container.
+  const boxedSettings = {
+    content_width: "boxed",
+    width: boxedDim,
+    width_tablet: boxedDim,
+    width_mobile: boxedDim,
+    boxed_width: boxedDim,
+    margin: marginAuto,
+  };
+  // Settings applied to full-width section bands / wrappers.
+  const fullSettings = { content_width: "full", width: "100%", padding: zeroPad };
 
   const isBoxed = (el: ElementorElement): boolean =>
     el?.elType === "container" &&
@@ -2279,14 +2292,14 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
   };
 
   const rescale = (el: ElementorElement) => {
-    el.settings = { ...el.settings, content_width: "boxed", width, boxed_width: boxedDim };
+    el.settings = { ...el.settings, ...boxedSettings };
   };
 
   // Box a leaf SECTION band: keep the band itself full width (backgrounds stay
   // edge-to-edge) and constrain its content to the target width.
   const boxSection = (section: ElementorElement) => {
     const kids = Array.isArray(section.elements) ? section.elements : [];
-    section.settings = { ...section.settings, content_width: "full", width: "100%" };
+    section.settings = { ...section.settings, ...fullSettings, flex_align_items: "center" };
     if (kids.length === 0) return;
 
     // The template's own centered wrapper(s) (e.g. `.wrap{max-width:1180px}`) are
@@ -2308,9 +2321,7 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
       id: genId(),
       elType: "container",
       settings: {
-        content_width: "boxed",
-        width,
-        boxed_width: boxedDim,
+        ...boxedSettings,
         flex_direction: (section.settings as Record<string, unknown>)?.flex_direction ?? "column",
         _xxxvBoxed: true,
       },
@@ -2334,7 +2345,7 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
     const wrapsBackgroundSection =
       childContainers.length >= 1 && childContainers.some(hasBackground) && !hasDirectWidget;
     if (childContainers.length >= 2 || wrapsBackgroundSection) {
-      el.settings = { ...el.settings, content_width: "full", width: "100%" };
+      el.settings = { ...el.settings, ...fullSettings };
       for (const c of el.elements) process(c);
     } else {
       boxSection(el);
