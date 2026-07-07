@@ -14,8 +14,9 @@ import {
   Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save,
   Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight,
   RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3,
-  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Wrench, Send as SendIcon
+  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Wrench, Send as SendIcon, LayoutTemplate
 } from "lucide-react";
+import ContainerWidthControl from "@/components/settings/ContainerWidthControl";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
 import { RepublishDiffDialog, type RepublishSnapshot } from "@/components/generated-pages/RepublishDiffDialog";
@@ -69,6 +70,7 @@ export default function GeneratedPagesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [previewPage, setPreviewPage] = useState<GeneratedPage | null>(null);
   const [seoEditPage, setSeoEditPage] = useState<GeneratedPage | null>(null);
+  const [widthPage, setWidthPage] = useState<GeneratedPage | null>(null);
   const [seoForm, setSeoForm] = useState({ seo_title: "", seo_description: "", seo_keywords: "" });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkSeoOpen, setBulkSeoOpen] = useState(false);
@@ -1021,6 +1023,7 @@ export default function GeneratedPagesPage() {
                       {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setWidthPage(page)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" />Content width</DropdownMenuItem>
                       {page.campaign_id && <DropdownMenuItem onClick={() => reconvertMutation.mutate(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair / Reconvert</DropdownMenuItem>}
                       {page.campaign_id && <DropdownMenuItem onClick={() => handleRepairAndRepublish(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair &amp; Republish</DropdownMenuItem>}
                       {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
@@ -1145,6 +1148,7 @@ export default function GeneratedPagesPage() {
                               {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
                               {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setWidthPage(page)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" />Content width</DropdownMenuItem>
                               {page.campaign_id && <DropdownMenuItem onClick={() => reconvertMutation.mutate(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair / Reconvert</DropdownMenuItem>}
                               {page.campaign_id && <DropdownMenuItem onClick={() => handleRepairAndRepublish(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair &amp; Republish</DropdownMenuItem>}
                               {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
@@ -1208,6 +1212,21 @@ export default function GeneratedPagesPage() {
       {/* ─── Dialogs ─────────────────────────────────────────── */}
 
       {/* Preview */}
+      <Dialog open={!!widthPage} onOpenChange={(open) => !open && setWidthPage(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Content width — {widthPage?.title}</DialogTitle>
+          </DialogHeader>
+          {widthPage && (
+            <ContainerWidthControl
+              table="generated_pages"
+              id={widthPage.id}
+              inheritLabel="Inherit template / workspace default"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!previewPage} onOpenChange={(open) => !open && setPreviewPage(null)}>
         <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col">
           <DialogHeader>

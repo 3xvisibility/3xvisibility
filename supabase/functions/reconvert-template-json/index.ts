@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     // Load the page and confirm the caller owns it (or is a platform admin).
     const { data: page } = await supabase
       .from("generated_pages")
-      .select("id, user_id, campaign_id, workspace_id")
+      .select("id, user_id, campaign_id, workspace_id, container_width")
       .eq("id", pageId)
       .maybeSingle();
     if (!page) return json({ error: "Page not found" }, 404);
@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
 
     const { data: tpl } = await supabase
       .from("templates")
-      .select("id, name, content, schema_type, source_marketplace_id")
+      .select("id, name, content, schema_type, source_marketplace_id, container_width")
       .eq("id", templateId)
       .maybeSingle();
     const tplRow = tpl as
@@ -119,8 +119,21 @@ Deno.serve(async (req) => {
     // Enforce the workspace's Elementor-style fixed content width (boxed
     // container) so the persisted JSON already carries centered, boxed content
     // inside full-width sections — matching what publish-pages applies.
+    // Priority: page override -> template override -> workspace default.
+    // A page/template value of 0 explicitly disables boxing (full width).
+    const clampW = (raw: unknown): number => {
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n <= 0) return 0;
+      return Math.min(Math.max(Math.round(n), 320), 1920);
+    };
     let containerWidth = 0;
-    if (page.workspace_id) {
+    const pageRaw = (page as { container_width?: number | null }).container_width;
+    const tplRaw = (tplRow as { container_width?: number | null }).container_width;
+    if (pageRaw !== null && pageRaw !== undefined) {
+      containerWidth = clampW(pageRaw);
+    } else if (tplRaw !== null && tplRaw !== undefined) {
+      containerWidth = clampW(tplRaw);
+    } else if (page.workspace_id) {
       const { data: ws } = await supabase
         .from("workspaces")
         .select("elementor_container_width")
@@ -128,7 +141,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
       const raw = (ws as { elementor_container_width?: number } | null)?.elementor_container_width;
       if (typeof raw === "number" && raw > 0) {
-        containerWidth = Math.min(Math.max(Math.round(raw), 320), 1920);
+        containerWidth = clampW(raw);
       }
     }
     if (containerWidth > 0) {

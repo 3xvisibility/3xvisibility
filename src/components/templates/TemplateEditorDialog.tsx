@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ContainerWidthControl from "@/components/settings/ContainerWidthControl";
 import {
   Code, Eye, Globe, Braces, X,
   Sparkles, Loader2, Trash2, Plus, FileText, Link, Image, MessageSquare, Tags, Settings2,
@@ -1038,6 +1039,12 @@ ${contentText}`
                   <p className="text-[11px] text-muted-foreground">JSON-LD structured data type for search engines.</p>
                 </div>
               </div>
+
+              {editingTemplate?.id && (
+                <div className="rounded-lg border p-4">
+                  <ContainerWidthControl table="templates" id={editingTemplate.id} />
+                </div>
+              )}
             </TabsContent>
           </div>
         </Tabs>
