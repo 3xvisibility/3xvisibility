@@ -491,6 +491,7 @@ export default function GeneratedPagesPage() {
       setPendingPublishAction(action);
       setShowWebsiteSelector(true);
     } else {
+      markDirectPagesPublishing(ids);
       if (action === "retry") retryFailedMutation.mutate({ ids, type: effType });
       else if (action === "bulk") bulkPublishMutation.mutate({ ids, type: effType });
       else publishMutation.mutate({ pageIds: ids, type: effType });
