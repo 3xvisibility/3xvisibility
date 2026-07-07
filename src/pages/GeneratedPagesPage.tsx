@@ -70,6 +70,7 @@ export default function GeneratedPagesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [previewPage, setPreviewPage] = useState<GeneratedPage | null>(null);
   const [seoEditPage, setSeoEditPage] = useState<GeneratedPage | null>(null);
+  const [widthPage, setWidthPage] = useState<GeneratedPage | null>(null);
   const [seoForm, setSeoForm] = useState({ seo_title: "", seo_description: "", seo_keywords: "" });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkSeoOpen, setBulkSeoOpen] = useState(false);
