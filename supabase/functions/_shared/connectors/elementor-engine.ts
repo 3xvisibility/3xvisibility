@@ -833,8 +833,39 @@ function keywordIconToken(text: string): string | null {
   return null;
 }
 
-/** Map a Font Awesome / generic icon class to an Elementor selected_icon value. */
-function resolveIconValue(node: HtmlNode): { value: string; library: string } {
+/**
+ * Gather icon hint text from a node AND its descendants — SVG icons (lucide /
+ * heroicons / feather) usually carry the meaning in a `lucide-*` class, a
+ * `data-icon`/`data-lucide` attr, or a `<use xlink:href="#water">` reference
+ * rather than a Font Awesome class on the wrapper.
+ */
+function collectIconHints(node: HtmlNode): string {
+  const parts: string[] = [];
+  const visit = (n: HtmlNode) => {
+    parts.push(
+      n.attrs.class || "",
+      n.attrs["data-icon"] || "",
+      n.attrs["data-lucide"] || "",
+      n.attrs["data-feather"] || "",
+      n.attrs["aria-label"] || "",
+      n.attrs.id || "",
+      n.attrs.href || "",
+      n.attrs["xlink:href"] || "",
+      n.attrs.name || "",
+    );
+    for (const c of n.children) visit(c);
+  };
+  visit(node);
+  return parts.join(" ");
+}
+
+/**
+ * Map a Font Awesome / generic icon class to an Elementor free-library
+ * `selected_icon` value. `contextHint` (e.g. the icon-box title) lets an SVG /
+ * unlabeled icon still resolve to a meaningful Font Awesome free icon so it
+ * renders perfectly on published Elementor pages.
+ */
+function resolveIconValue(node: HtmlNode, contextHint = ""): { value: string; library: string } {
   const cls = (node.attrs.class || "").toLowerCase();
   // Preserve an explicit Font Awesome icon class ("fas fa-star", "fab fa-x").
   const styleToken = cls.match(/\bfa[bsrl]?\b/)?.[0] || "fas";
@@ -846,18 +877,13 @@ function resolveIconValue(node: HtmlNode): { value: string; library: string } {
   // Elementor "eicon-*" native icon → keep as-is (Elementor free icon set).
   const eicon = cls.match(/\beicon-[a-z0-9-]+\b/)?.[0];
   if (eicon) return { value: eicon, library: "elementor-icons" };
-  // No explicit token: infer a free FA icon from class names / svg attributes.
-  const hint = [
-    node.attrs.class || "",
-    node.attrs["data-icon"] || "",
-    node.attrs["aria-label"] || "",
-    node.attrs.id || "",
-    node.attrs.href || "",
-  ].join(" ");
-  const guessed = keywordIconToken(hint);
+  // No explicit token: infer a free FA icon from icon markup, then the label.
+  const guessed =
+    keywordIconToken(collectIconHints(node)) || keywordIconToken((contextHint || "").toLowerCase());
   if (guessed) return { value: `fas ${guessed}`, library: "fa-solid" };
   return { value: "fas fa-star", library: "fa-solid" };
 }
+
 
 /** Standalone `<i>` / `<svg>` icon -> native Elementor Icon widget. */
 function iconWidget(node: HtmlNode): ElementorElement {
