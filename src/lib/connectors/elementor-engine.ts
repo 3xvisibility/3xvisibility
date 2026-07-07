@@ -1931,7 +1931,6 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
   if (!Array.isArray(tree) || tree.length === 0) return dataStr;
 
   const size = Math.round(widthPx);
-  const width = `${size}px`;
   const boxedDim = { unit: "px", size, sizes: [] };
   // Centered inner box (matches Elementor's boxed container: fixed width + auto margins).
   const marginAuto = { unit: "px", top: "0", right: "auto", bottom: "0", left: "auto", isLinked: false };
