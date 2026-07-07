@@ -1281,6 +1281,20 @@ async function handlePublishPages(req: Request): Promise<Response> {
 
       // Per-page publish timeline so users can track exactly what happened.
       const steps: PublishStep[] = [];
+      // Direct (campaign-less) pages have no LiveGenerationProgress feed, so we
+      // stream their converting/publishing progress by persisting the running
+      // status + step timeline as each milestone completes. Realtime picks this
+      // up and the row shows a live "Publishing" badge + step-by-step status.
+      const isDirectPage = !page.campaign_id;
+      const persistProgress = async () => {
+        if (!isDirectPage) return;
+        try {
+          await supabase
+            .from("generated_pages")
+            .update({ status: "publishing", error_message: null, publish_steps: steps })
+            .eq("id", page.id);
+        } catch (_) { /* non-critical progress write */ }
+      };
       const step = (label: string, status: PublishStep["status"], detail?: string) => {
         steps.push({ label, status, detail, at: new Date().toISOString() });
       };
@@ -1290,6 +1304,16 @@ async function handlePublishPages(req: Request): Promise<Response> {
           if (detail !== undefined) steps[steps.length - 1].detail = detail;
         }
       };
+      // Mark direct pages as publishing up-front so the UI reflects the run
+      // immediately (before the first CMS round-trip completes).
+      if (isDirectPage) {
+        try {
+          await supabase
+            .from("generated_pages")
+            .update({ status: "publishing", error_message: null })
+            .eq("id", page.id);
+        } catch (_) { /* non-critical */ }
+      }
       try {
         const resolvedPublishType = inferPublishType(page, pubType);
         const platformLabel = (page.websites as { type?: string })?.type || "site";
