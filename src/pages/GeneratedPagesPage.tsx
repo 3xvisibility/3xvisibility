@@ -456,6 +456,29 @@ export default function GeneratedPagesPage() {
     }
   };
 
+  // Direct (campaign-less) pages have no LiveGenerationProgress feed, so give
+  // instant feedback by optimistically flipping them to "publishing" the moment
+  // a (re)publish starts. The backend then streams real converting/publishing
+  // steps via realtime, and the "Publish status" dialog shows the full timeline.
+  const markDirectPagesPublishing = (ids: string[]) => {
+    const directIds = new Set(
+      ids.filter((id) => {
+        const p = pages.find((pg) => pg.id === id);
+        return p && !p.campaign_id;
+      }),
+    );
+    if (directIds.size === 0) return;
+    queryClient.setQueryData<GeneratedPage[] | undefined>(
+      ["generated-pages", wsId],
+      (old) =>
+        old?.map((p) =>
+          directIds.has(p.id)
+            ? { ...p, status: "publishing", error_message: null }
+            : p,
+        ),
+    );
+  };
+
   const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
     const pagesWithoutSite = ids.filter((pid) => {
       const p = pages.find((pg) => pg.id === pid);
