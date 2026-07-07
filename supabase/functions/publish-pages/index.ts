@@ -1699,7 +1699,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           (payload as { elementor_mode?: string }).elementor_mode === "native" &&
           typeof (payload as { elementor_data?: string }).elementor_data === "string"
         ) {
-          const boxWidth = await resolveContainerWidth(page.workspace_id || body.workspace_id);
+          const boxWidth = await resolvePageWidth(page as { container_width?: number | null; campaign_id?: string | null; workspace_id?: string | null }, page.workspace_id || body.workspace_id);
           if (boxWidth > 0) {
             payload.elementor_data = enforceBoxedContentWidth(
               (payload as { elementor_data?: string }).elementor_data as string,
