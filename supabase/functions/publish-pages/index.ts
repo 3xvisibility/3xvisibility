@@ -813,6 +813,49 @@ async function handlePublishPages(req: Request): Promise<Response> {
       return width;
     };
 
+    // Clamp a raw width preference to the supported range (or 0 = disabled).
+    const clampWidth = (raw: unknown): number => {
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n <= 0) return 0;
+      return Math.min(Math.max(Math.round(n), 320), 1920);
+    };
+
+    // Per-template boxed width override (NULL = inherit). Cached by template id.
+    const templateWidthCache = new Map<string, number | null>();
+    const resolveTemplateWidth = async (campaignId: string | null | undefined): Promise<number | null> => {
+      if (!campaignId) return null;
+      try {
+        const { data: campaign } = await supabase
+          .from("campaigns").select("template_id").eq("id", campaignId).maybeSingle();
+        const templateId = (campaign as { template_id?: string | null } | null)?.template_id;
+        if (!templateId) return null;
+        if (templateWidthCache.has(templateId)) return templateWidthCache.get(templateId)!;
+        const { data: tpl } = await supabase
+          .from("templates").select("container_width").eq("id", templateId).maybeSingle();
+        const raw = (tpl as { container_width?: number | null } | null)?.container_width;
+        const val = raw === null || raw === undefined ? null : clampWidth(raw);
+        templateWidthCache.set(templateId, val);
+        return val;
+      } catch (_e) {
+        return null;
+      }
+    };
+
+    // Resolve the effective boxed content width for a stored page using the
+    // override priority: page override -> template override -> workspace default.
+    // A value of 0 (page or template) explicitly disables boxing (full width).
+    const resolvePageWidth = async (
+      page: { container_width?: number | null; campaign_id?: string | null; workspace_id?: string | null },
+      workspaceId: string | null | undefined,
+    ): Promise<number> => {
+      if (page.container_width !== null && page.container_width !== undefined) {
+        return clampWidth(page.container_width);
+      }
+      const tplWidth = await resolveTemplateWidth(page.campaign_id);
+      if (tplWidth !== null) return tplWidth;
+      return await resolveContainerWidth(workspaceId ?? page.workspace_id);
+    };
+
     // Admin override: allow platform admins to (re)publish pages owned by other users.
     let isAdmin = false;
     if (body.as_admin) {
