@@ -1023,6 +1023,7 @@ export default function GeneratedPagesPage() {
                       {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setWidthPage(page)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" />Content width</DropdownMenuItem>
                       {page.campaign_id && <DropdownMenuItem onClick={() => reconvertMutation.mutate(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair / Reconvert</DropdownMenuItem>}
                       {page.campaign_id && <DropdownMenuItem onClick={() => handleRepairAndRepublish(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair &amp; Republish</DropdownMenuItem>}
                       {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
