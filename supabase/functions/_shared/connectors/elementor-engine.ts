@@ -2258,6 +2258,20 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
   const size = Math.round(widthPx);
   const width = `${size}px`;
   const boxedDim = { unit: "px", size, sizes: [] };
+  // Centered inner box (matches Elementor's boxed container: fixed width + auto margins).
+  const marginAuto = { unit: "px", top: "0", right: "auto", bottom: "0", left: "auto", isLinked: false };
+  const zeroPad = { unit: "px", top: "0", right: "0", bottom: "0", left: "0", isLinked: false };
+  // Settings applied to the inner boxed container.
+  const boxedSettings = {
+    content_width: "boxed",
+    width: boxedDim,
+    width_tablet: boxedDim,
+    width_mobile: boxedDim,
+    boxed_width: boxedDim,
+    margin: marginAuto,
+  };
+  // Settings applied to full-width section bands / wrappers.
+  const fullSettings = { content_width: "full", width: "100%", padding: zeroPad };
 
   const isBoxed = (el: ElementorElement): boolean =>
     el?.elType === "container" &&
