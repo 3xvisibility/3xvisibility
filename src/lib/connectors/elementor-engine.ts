@@ -738,7 +738,27 @@ const ICON_KEYWORD_MAP: Array<{ re: RegExp; icon: string }> = [
   { re: /\b(arrow-trend|increase|growth-arrow|scale-up)\b/, icon: "fa-arrow-trend-up" },
   { re: /\b(expand|maximize|fullscreen|grow-arrows)\b/, icon: "fa-up-right-and-down-left-from-center" },
   { re: /\b(circle-nodes|cluster|mesh|distributed)\b/, icon: "fa-circle-nodes" },
+  // ── Home services / trades / plumbing / HVAC domain ─────────────────────
+  { re: /\b(leak|drip|leakage|leaking)\b/, icon: "fa-faucet-drip" },
+  { re: /\b(drain|drainage|unclog|clog|sewer)\b/, icon: "fa-sink" },
+  { re: /\b(pipe|piping|plumb|plumbing|plumber)\b/, icon: "fa-wrench" },
+  { re: /\b(faucet|tap|valve|fitting)\b/, icon: "fa-faucet" },
+  { re: /\b(bath|bathroom|bathtub|shower|toilet|washroom)\b/, icon: "fa-bath" },
+  { re: /\b(kitchen|sink|basin)\b/, icon: "fa-sink" },
+  { re: /\b(heater|boiler|furnace|heating|thermostat|geyser)\b/, icon: "fa-temperature-high" },
+  { re: /\b(cooling|hvac|ventilation|airflow|fan)\b/, icon: "fa-fan" },
+  { re: /\b(filter|filtration|purify|purification)\b/, icon: "fa-filter" },
+  { re: /\b(gas|flame|burner|combustion)\b/, icon: "fa-fire-flame-simple" },
+  { re: /\b(wiring|outlet|socket|electrician|electrical)\b/, icon: "fa-plug-circle-bolt" },
+  { re: /\b(renovation|remodel|paint-roller|refurbish)\b/, icon: "fa-paint-roller" },
+  { re: /\b(broom|janitor|sweep|housekeeping)\b/, icon: "fa-broom" },
+  { re: /\b(spray|pressure-wash|washing)\b/, icon: "fa-spray-can-sparkles" },
+  { re: /\b(snow|frost|freeze|winter)\b/, icon: "fa-snowflake" },
+  { re: /\b(temperature|thermometer|climate|degrees)\b/, icon: "fa-temperature-half" },
+  { re: /\b(toolbox|handyman|installation|install|repair-kit)\b/, icon: "fa-toolbox" },
+  { re: /\b(drop|droplet|water|hydration|liquid|moisture)\b/, icon: "fa-droplet" },
 ];
+
 
 /** Map a keyword string (class names / svg id) to a free FA solid icon token. */
 function keywordIconToken(text: string): string | null {
@@ -749,8 +769,33 @@ function keywordIconToken(text: string): string | null {
   return null;
 }
 
-/** Map an icon class to an Elementor selected_icon value. */
-function resolveIconValue(node: HtmlNode): { value: string; library: string } {
+/**
+ * Gather icon hint text from a node AND its descendants — SVG icons (lucide /
+ * heroicons / feather) carry meaning in a `lucide-*` class, a `data-icon`/
+ * `data-lucide` attr, or a `<use xlink:href="#water">` ref, not an FA class.
+ */
+function collectIconHints(node: HtmlNode): string {
+  const parts: string[] = [];
+  const visit = (n: HtmlNode) => {
+    parts.push(
+      n.attrs.class || "",
+      n.attrs["data-icon"] || "",
+      n.attrs["data-lucide"] || "",
+      n.attrs["data-feather"] || "",
+      n.attrs["aria-label"] || "",
+      n.attrs.id || "",
+      n.attrs.href || "",
+      n.attrs["xlink:href"] || "",
+      n.attrs.name || "",
+    );
+    for (const c of n.children) visit(c);
+  };
+  visit(node);
+  return parts.join(" ");
+}
+
+/** Map an icon class (or SVG + `contextHint` label) to an Elementor free icon. */
+function resolveIconValue(node: HtmlNode, contextHint = ""): { value: string; library: string } {
   const cls = (node.attrs.class || "").toLowerCase();
   const styleToken = cls.match(/\bfa[bsrl]?\b/)?.[0] || "fas";
   const iconToken = cls.match(/\bfa-[a-z0-9-]+\b/)?.[0];
@@ -760,17 +805,12 @@ function resolveIconValue(node: HtmlNode): { value: string; library: string } {
   }
   const eicon = cls.match(/\beicon-[a-z0-9-]+\b/)?.[0];
   if (eicon) return { value: eicon, library: "elementor-icons" };
-  const hint = [
-    node.attrs.class || "",
-    node.attrs["data-icon"] || "",
-    node.attrs["aria-label"] || "",
-    node.attrs.id || "",
-    node.attrs.href || "",
-  ].join(" ");
-  const guessed = keywordIconToken(hint);
+  const guessed =
+    keywordIconToken(collectIconHints(node)) || keywordIconToken((contextHint || "").toLowerCase());
   if (guessed) return { value: `fas ${guessed}`, library: "fa-solid" };
   return { value: "fas fa-star", library: "fa-solid" };
 }
+
 
 /** Standalone `<i>` / `<svg>` icon -> native Elementor Icon widget. */
 function iconWidget(node: HtmlNode): ElementorElement {
@@ -908,11 +948,17 @@ function iconList(node: HtmlNode): ElementorElement {
     .filter((c) => c.tag === "li")
     .map((li) => {
       const iconNode = findNode(li, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa"));
+      const text = textContent(li);
       return {
         _id: genId(),
-        text: textContent(li),
-        selected_icon: iconNode ? resolveIconValue(iconNode) : { value: "fas fa-check", library: "fa-solid" },
+        text,
+        selected_icon: iconNode
+          ? resolveIconValue(iconNode, text)
+          : (keywordIconToken(text.toLowerCase())
+              ? { value: `fas ${keywordIconToken(text.toLowerCase())}`, library: "fa-solid" }
+              : { value: "fas fa-check", library: "fa-solid" }),
       };
+
     });
   return {
     id: genId(),
@@ -1034,7 +1080,10 @@ function iconBox(node: HtmlNode): ElementorElement {
     settings: {
       title_text: titleNode ? textContent(titleNode) : "",
       description_text: descNode ? textContent(descNode) : "",
-      selected_icon: iconNode ? resolveIconValue(iconNode) : resolveIconValue(node),
+      selected_icon: resolveIconValue(
+        iconNode ?? node,
+        [titleNode ? textContent(titleNode) : "", descNode ? textContent(descNode) : ""].join(" "),
+      ),
       view: "default",
       position,
     },
@@ -1152,11 +1201,17 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
     if (iconTextItems.length >= Math.ceil(itemChildren.length * 0.6)) {
       const items = iconTextItems.map((c) => {
         const iconNode = findNode(c, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa"));
+        const text = textContent(c);
         return {
           _id: genId(),
-          text: textContent(c),
-          selected_icon: iconNode ? resolveIconValue(iconNode) : { value: "fas fa-check", library: "fa-solid" },
+          text,
+          selected_icon: iconNode
+            ? resolveIconValue(iconNode, text)
+            : (keywordIconToken(text.toLowerCase())
+                ? { value: `fas ${keywordIconToken(text.toLowerCase())}`, library: "fa-solid" }
+                : { value: "fas fa-check", library: "fa-solid" }),
         };
+
       });
       return {
         id: genId(),

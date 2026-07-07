@@ -802,7 +802,27 @@ const ICON_KEYWORD_MAP: Array<{ re: RegExp; icon: string }> = [
   { re: /\b(arrow-trend|increase|growth-arrow|scale-up)\b/, icon: "fa-arrow-trend-up" },
   { re: /\b(expand|maximize|fullscreen|grow-arrows)\b/, icon: "fa-up-right-and-down-left-from-center" },
   { re: /\b(circle-nodes|cluster|mesh|distributed)\b/, icon: "fa-circle-nodes" },
+  // ── Home services / trades / plumbing / HVAC domain ─────────────────────
+  { re: /\b(leak|drip|leakage|leaking)\b/, icon: "fa-faucet-drip" },
+  { re: /\b(drain|drainage|unclog|clog|sewer)\b/, icon: "fa-sink" },
+  { re: /\b(pipe|piping|plumb|plumbing|plumber)\b/, icon: "fa-wrench" },
+  { re: /\b(faucet|tap|valve|fitting)\b/, icon: "fa-faucet" },
+  { re: /\b(bath|bathroom|bathtub|shower|toilet|washroom)\b/, icon: "fa-bath" },
+  { re: /\b(kitchen|sink|basin)\b/, icon: "fa-sink" },
+  { re: /\b(heater|boiler|furnace|heating|thermostat|geyser)\b/, icon: "fa-temperature-high" },
+  { re: /\b(cooling|hvac|ventilation|airflow|fan)\b/, icon: "fa-fan" },
+  { re: /\b(filter|filtration|purify|purification)\b/, icon: "fa-filter" },
+  { re: /\b(gas|flame|burner|combustion)\b/, icon: "fa-fire-flame-simple" },
+  { re: /\b(wiring|outlet|socket|electrician|electrical)\b/, icon: "fa-plug-circle-bolt" },
+  { re: /\b(renovation|remodel|paint-roller|refurbish)\b/, icon: "fa-paint-roller" },
+  { re: /\b(broom|janitor|sweep|housekeeping)\b/, icon: "fa-broom" },
+  { re: /\b(spray|pressure-wash|washing)\b/, icon: "fa-spray-can-sparkles" },
+  { re: /\b(snow|frost|freeze|winter)\b/, icon: "fa-snowflake" },
+  { re: /\b(temperature|thermometer|climate|degrees)\b/, icon: "fa-temperature-half" },
+  { re: /\b(toolbox|handyman|installation|install|repair-kit)\b/, icon: "fa-toolbox" },
+  { re: /\b(drop|droplet|water|hydration|liquid|moisture)\b/, icon: "fa-droplet" },
 ];
+
 
 /** Map a keyword string (class names / svg id) to a free FA solid icon token. */
 function keywordIconToken(text: string): string | null {
@@ -813,8 +833,39 @@ function keywordIconToken(text: string): string | null {
   return null;
 }
 
-/** Map a Font Awesome / generic icon class to an Elementor selected_icon value. */
-function resolveIconValue(node: HtmlNode): { value: string; library: string } {
+/**
+ * Gather icon hint text from a node AND its descendants — SVG icons (lucide /
+ * heroicons / feather) usually carry the meaning in a `lucide-*` class, a
+ * `data-icon`/`data-lucide` attr, or a `<use xlink:href="#water">` reference
+ * rather than a Font Awesome class on the wrapper.
+ */
+function collectIconHints(node: HtmlNode): string {
+  const parts: string[] = [];
+  const visit = (n: HtmlNode) => {
+    parts.push(
+      n.attrs.class || "",
+      n.attrs["data-icon"] || "",
+      n.attrs["data-lucide"] || "",
+      n.attrs["data-feather"] || "",
+      n.attrs["aria-label"] || "",
+      n.attrs.id || "",
+      n.attrs.href || "",
+      n.attrs["xlink:href"] || "",
+      n.attrs.name || "",
+    );
+    for (const c of n.children) visit(c);
+  };
+  visit(node);
+  return parts.join(" ");
+}
+
+/**
+ * Map a Font Awesome / generic icon class to an Elementor free-library
+ * `selected_icon` value. `contextHint` (e.g. the icon-box title) lets an SVG /
+ * unlabeled icon still resolve to a meaningful Font Awesome free icon so it
+ * renders perfectly on published Elementor pages.
+ */
+function resolveIconValue(node: HtmlNode, contextHint = ""): { value: string; library: string } {
   const cls = (node.attrs.class || "").toLowerCase();
   // Preserve an explicit Font Awesome icon class ("fas fa-star", "fab fa-x").
   const styleToken = cls.match(/\bfa[bsrl]?\b/)?.[0] || "fas";
@@ -826,18 +877,13 @@ function resolveIconValue(node: HtmlNode): { value: string; library: string } {
   // Elementor "eicon-*" native icon → keep as-is (Elementor free icon set).
   const eicon = cls.match(/\beicon-[a-z0-9-]+\b/)?.[0];
   if (eicon) return { value: eicon, library: "elementor-icons" };
-  // No explicit token: infer a free FA icon from class names / svg attributes.
-  const hint = [
-    node.attrs.class || "",
-    node.attrs["data-icon"] || "",
-    node.attrs["aria-label"] || "",
-    node.attrs.id || "",
-    node.attrs.href || "",
-  ].join(" ");
-  const guessed = keywordIconToken(hint);
+  // No explicit token: infer a free FA icon from icon markup, then the label.
+  const guessed =
+    keywordIconToken(collectIconHints(node)) || keywordIconToken((contextHint || "").toLowerCase());
   if (guessed) return { value: `fas ${guessed}`, library: "fa-solid" };
   return { value: "fas fa-star", library: "fa-solid" };
 }
+
 
 /** Standalone `<i>` / `<svg>` icon -> native Elementor Icon widget. */
 function iconWidget(node: HtmlNode): ElementorElement {
@@ -988,11 +1034,17 @@ function iconList(node: HtmlNode): ElementorElement {
     .filter((c) => c.tag === "li")
     .map((li) => {
       const iconNode = findNode(li, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa"));
+      const text = textContent(li);
       return {
         _id: genId(),
-        text: textContent(li),
-        selected_icon: iconNode ? resolveIconValue(iconNode) : { value: "fas fa-check", library: "fa-solid" },
+        text,
+        selected_icon: iconNode
+          ? resolveIconValue(iconNode, text)
+          : (keywordIconToken(text.toLowerCase())
+              ? { value: `fas ${keywordIconToken(text.toLowerCase())}`, library: "fa-solid" }
+              : { value: "fas fa-check", library: "fa-solid" }),
       };
+
     });
   return {
     id: genId(),
@@ -1157,13 +1209,17 @@ function iconBox(node: HtmlNode): ElementorElement {
     node,
     (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
   );
+  // The human-readable title/description is the strongest hint for an SVG or
+  // unlabeled icon, so pass it as context to map to a matching free icon.
+  const iconContext = [titleNode ? textContent(titleNode) : "", descNode ? textContent(descNode) : ""].join(" ");
   const settings: Record<string, unknown> = {
     ...nativeIdentitySettings(node),
     title_text: titleNode ? textContent(titleNode) : "",
     description_text: descNode ? textContent(descNode) : "",
     // Resolve the real source icon into an Elementor free (Font Awesome/eicon)
     // icon; falls back to a keyword-inferred free icon, then a star.
-    selected_icon: iconNode ? resolveIconValue(iconNode) : resolveIconValue(node),
+    selected_icon: resolveIconValue(iconNode ?? node, iconContext),
+
     // Sensible free-icon defaults so the widget renders cleanly out of the box.
     // `position` (icon placement) is refined from the source layout in styleIconBox.
     view: "default",
@@ -1310,11 +1366,17 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
     if (iconTextItems.length >= Math.ceil(itemChildren.length * 0.6)) {
       const items = iconTextItems.map((c) => {
         const iconNode = findNode(c, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa"));
+        const text = textContent(c);
         return {
           _id: genId(),
-          text: textContent(c),
-          selected_icon: iconNode ? resolveIconValue(iconNode) : { value: "fas fa-check", library: "fa-solid" },
+          text,
+          selected_icon: iconNode
+            ? resolveIconValue(iconNode, text)
+            : (keywordIconToken(text.toLowerCase())
+                ? { value: `fas ${keywordIconToken(text.toLowerCase())}`, library: "fa-solid" }
+                : { value: "fas fa-check", library: "fa-solid" }),
         };
+
       });
       return {
         id: genId(),
