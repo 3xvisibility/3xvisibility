@@ -1665,6 +1665,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         }
 
         // If page was previously published (has external_id), update instead of creating
+        await persistProgress();
         step(page.external_id ? "Updating on store" : "Creating on store", "running");
         const result = page.external_id
           ? await withTimeout(connector.updatePage(page.external_id, payload), PAGE_PUBLISH_TIMEOUT_MS, `Publishing ${page.title}`)
