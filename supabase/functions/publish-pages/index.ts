@@ -1078,7 +1078,11 @@ async function handlePublishPages(req: Request): Promise<Response> {
             (payload as { elementor_mode?: string }).elementor_mode === "native" &&
             typeof (payload as { elementor_data?: string }).elementor_data === "string"
           ) {
-            const boxWidth = await resolveContainerWidth(workspaceId);
+            // Direct pages: honor a per-request width override, else workspace default.
+            const dpRaw = (dp as { container_width?: number | null }).container_width;
+            const boxWidth = dpRaw !== null && dpRaw !== undefined
+              ? clampWidth(dpRaw)
+              : await resolveContainerWidth(workspaceId);
             if (boxWidth > 0) {
               payload.elementor_data = enforceBoxedContentWidth(
                 (payload as { elementor_data?: string }).elementor_data as string,
