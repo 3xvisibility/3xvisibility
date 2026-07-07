@@ -1038,6 +1038,12 @@ ${contentText}`
                   <p className="text-[11px] text-muted-foreground">JSON-LD structured data type for search engines.</p>
                 </div>
               </div>
+
+              {editingTemplate?.id && (
+                <div className="rounded-lg border p-4">
+                  <ContainerWidthControl table="templates" id={editingTemplate.id} />
+                </div>
+              )}
             </TabsContent>
           </div>
         </Tabs>
