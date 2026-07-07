@@ -1932,17 +1932,25 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
 
   const size = Math.round(widthPx);
   const boxedDim = { unit: "px", size, sizes: [] };
+  // On tablet/mobile the fixed px width would overflow the viewport, so the box
+  // becomes fluid (100% of the full-width band) and relies on padding for gutters.
+  const fluidDim = { unit: "%", size: 100, sizes: [] };
   // Centered inner box (matches Elementor's boxed container: fixed width + auto margins).
   const marginAuto = { unit: "px", top: "0", right: "auto", bottom: "0", left: "auto", isLinked: false };
   const zeroPad = { unit: "px", top: "0", right: "0", bottom: "0", left: "0", isLinked: false };
+  // Responsive gutters so fluid content never touches the screen edge.
+  const padTablet = { unit: "px", top: "0", right: "20", bottom: "0", left: "20", isLinked: false };
+  const padMobile = { unit: "px", top: "0", right: "16", bottom: "0", left: "16", isLinked: false };
   // Settings applied to the inner boxed container.
   const boxedSettings = {
     content_width: "boxed",
     width: boxedDim,
-    width_tablet: boxedDim,
-    width_mobile: boxedDim,
+    width_tablet: fluidDim,
+    width_mobile: fluidDim,
     boxed_width: boxedDim,
     margin: marginAuto,
+    padding_tablet: padTablet,
+    padding_mobile: padMobile,
   };
   // Settings applied to full-width section bands / wrappers.
   const fullSettings = { content_width: "full", width: "100%", padding: zeroPad };
