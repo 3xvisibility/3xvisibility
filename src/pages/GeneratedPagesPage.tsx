@@ -998,7 +998,19 @@ export default function GeneratedPagesPage() {
                     </div>
                     <ScoresBadgeGroup title={page.title} content={page.content} slug={page.slug} size="sm" />
                   </div>
+                  {page.status === "failed" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 shrink-0 border-destructive/30 text-destructive hover:bg-destructive/10"
+                      disabled={reconvertMutation.isPending}
+                      onClick={() => page.campaign_id ? handleRepairAndRepublish(page.id) : handlePublish([page.id], "retry")}
+                    >
+                      <RefreshCw className="h-3.5 w-3.5 mr-1.5" />Retry
+                    </Button>
+                  )}
                   <DropdownMenu>
+
                     <DropdownMenuTrigger asChild>
                       <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0"><MoreVertical className="h-4 w-4" /></Button>
                     </DropdownMenuTrigger>
