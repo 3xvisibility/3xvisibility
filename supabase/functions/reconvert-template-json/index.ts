@@ -126,7 +126,10 @@ Deno.serve(async (req) => {
       if (!Number.isFinite(n) || n <= 0) return 0;
       return Math.min(Math.max(Math.round(n), 320), 1920);
     };
-    let containerWidth = 0;
+    // Default boxed content width (standard Elementor boxed layout) applied when
+    // neither the page, template, nor workspace configures one.
+    const DEFAULT_BOX_WIDTH = 1140;
+    let containerWidth = DEFAULT_BOX_WIDTH;
     const pageRaw = (page as { container_width?: number | null }).container_width;
     const tplRaw = (tplRow as { container_width?: number | null }).container_width;
     if (pageRaw !== null && pageRaw !== undefined) {
