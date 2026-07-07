@@ -1080,7 +1080,10 @@ function iconBox(node: HtmlNode): ElementorElement {
     settings: {
       title_text: titleNode ? textContent(titleNode) : "",
       description_text: descNode ? textContent(descNode) : "",
-      selected_icon: iconNode ? resolveIconValue(iconNode) : resolveIconValue(node),
+      selected_icon: resolveIconValue(
+        iconNode ?? node,
+        [titleNode ? textContent(titleNode) : "", descNode ? textContent(descNode) : ""].join(" "),
+      ),
       view: "default",
       position,
     },
