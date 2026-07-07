@@ -1559,6 +1559,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
             elementorSource = "exact";
             elementorSimilarity = 100;
             step("Building native Elementor widgets", "ok", "Ad-hoc page HTML converted to native containers + widgets");
+            await persistProgress();
           } else if (!catalog.ok) {
             const msg =
               `Publish blocked: visual similarity ${catalog.similarity}% is below the ` +
