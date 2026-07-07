@@ -916,6 +916,20 @@ slug: ${fields.slug}`,
           <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()} disabled={limitReached}>
             <Upload className="mr-1.5 h-3.5 w-3.5" /> {t("templates.importJson")}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => reboxMutation.mutate()}
+            disabled={reboxMutation.isPending || templates.length === 0}
+          >
+            {reboxMutation.isPending ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Columns className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            Rebox all
+          </Button>
+
           <Button size="sm" onClick={() => setPickerOpen(true)} disabled={limitReached}>
             <Plus className="mr-1.5 h-3.5 w-3.5" /> {t("templates.createTemplate")}
           </Button>
