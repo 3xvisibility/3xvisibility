@@ -18,7 +18,7 @@ import {
   Search as SearchIcon, Pencil, MoreVertical, LayoutGrid, List,
   ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet, Link2,
   ChevronLeft, ChevronRight, Loader2, MonitorSmartphone, ShoppingBag, Briefcase,
-  Wand2, Eye, AlertTriangle, Crown, Palette, History, Columns, LayoutTemplate,
+  Wand2, Eye, AlertTriangle, Crown, Palette, History, Columns, LayoutTemplate, RefreshCw,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
@@ -202,6 +202,35 @@ export default function TemplatesPage() {
       toast({ variant: "destructive", title: "Republish failed", description: friendlyError(e instanceof Error ? e.message : String(e)) });
     },
   });
+
+  // Reconvert ONLY the FAQ / Testimonial widgets in the selected templates'
+  // existing Elementor data — every other widget and layout is kept as-is.
+  const sectionReconvertMutation = useMutation({
+    mutationFn: async (input: { ids: string[]; sections: string[] }) => {
+      const { data, error } = await supabase.functions.invoke("reconvert-sections", {
+        body: { template_ids: input.ids, sections: input.sections },
+      });
+      if (error) throw error;
+      return data as { updated: number; total: number; updatedIds?: string[] };
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Sections reconverted",
+        description: `Updated FAQ/Testimonial widgets on ${data.updated} of ${data.total} template(s). The rest of each design is unchanged.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      const ids = data.updatedIds ?? [];
+      if (ids.length > 0) {
+        setReboxedIds(ids);
+        setRepublishOpen(true);
+      }
+    },
+    onError: (e) => {
+      toast({ variant: "destructive", title: "Reconvert failed", description: friendlyError(e instanceof Error ? e.message : String(e)) });
+    },
+  });
+
+
 
 
   const { data: templates = [], isLoading } = useQuery({
@@ -1058,6 +1087,27 @@ slug: ${fields.slug}`,
           <Button variant="outline" size="sm" onClick={() => setBulkWidthOpen(true)}>
             <LayoutTemplate className="h-3.5 w-3.5 mr-1.5" /> Content width
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={sectionReconvertMutation.isPending}>
+                {sectionReconvertMutation.isPending
+                  ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                  : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
+                Reconvert sections
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-52">
+              <DropdownMenuItem onClick={() => sectionReconvertMutation.mutate({ ids: [...selectedIds], sections: ["faq", "testimonial"] })}>
+                FAQ + Testimonials
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => sectionReconvertMutation.mutate({ ids: [...selectedIds], sections: ["faq"] })}>
+                FAQ only
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => sectionReconvertMutation.mutate({ ids: [...selectedIds], sections: ["testimonial"] })}>
+                Testimonials only
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
             <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete
           </Button>
