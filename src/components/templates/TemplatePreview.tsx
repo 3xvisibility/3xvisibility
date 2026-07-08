@@ -178,10 +178,32 @@ ${embeddedStyles}
       setTimeout(resize, 3000);
     }
     resize();
-    const observer = new MutationObserver(resize);
+
+    // Install + run the grid debug overlay.
+    const runGridDebug = () => {
+      const win = iframe.contentWindow as (Window & { __lovGridDebug?: (on: boolean) => { grids: number; warnings: number } }) | null;
+      if (!win) return;
+      if (!win.__lovGridDebug) {
+        const s = doc.createElement("script");
+        s.textContent = GRID_DEBUG_SCRIPT;
+        doc.body?.appendChild(s);
+      }
+      const stats = win.__lovGridDebug?.(debugGrid);
+      if (stats) onGridStatsRef.current?.(stats);
+    };
+    runGridDebug();
+    const gridTimer = setTimeout(runGridDebug, 400);
+
+    const observer = new MutationObserver(() => {
+      resize();
+      if (debugGrid) runGridDebug();
+    });
     if (doc.body) observer.observe(doc.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, [html, getStyledHtml]);
+    return () => {
+      observer.disconnect();
+      clearTimeout(gridTimer);
+    };
+  }, [html, getStyledHtml, debugGrid]);
 
   if (!html) return null;
 
