@@ -148,8 +148,24 @@ Deno.serve(async (req) => {
       }
     }
     if (containerWidth > 0) {
+      const clampG = (raw: unknown): number | null => {
+        if (raw === null || raw === undefined) return null;
+        const n = Number(raw);
+        if (!Number.isFinite(n) || n < 0) return null;
+        return Math.min(Math.round(n), 200);
+      };
+      const p = page as Record<string, number | null | undefined>;
+      const t = tplRow as unknown as Record<string, number | null | undefined>;
+      const boxOpts = {
+        width: containerWidth,
+        widthTablet: p.container_width_tablet ?? t.container_width_tablet ?? null,
+        widthMobile: p.container_width_mobile ?? t.container_width_mobile ?? null,
+        gutterDesktop: clampG(p.gutter_desktop ?? t.gutter_desktop),
+        gutterTablet: clampG(p.gutter_tablet ?? t.gutter_tablet),
+        gutterMobile: clampG(p.gutter_mobile ?? t.gutter_mobile),
+      };
       try {
-        const boxed = enforceBoxedContentWidth(JSON.stringify(tree), containerWidth);
+        const boxed = enforceBoxedContentWidth(JSON.stringify(tree), boxOpts);
         const parsed = JSON.parse(boxed);
         if (Array.isArray(parsed) && parsed.length > 0) tree = parsed;
       } catch {
