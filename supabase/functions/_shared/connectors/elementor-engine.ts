@@ -1461,15 +1461,34 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   const isMultiGroup =
     node.tag === "section" || bigHeading || headingCount >= 2 || imgCount >= 2 || statChildren >= 2;
 
-  if (hasClass(node, "accordion", "faq")) {
+  // FAQ / accordion — detect by class OR by structure (a group of <details>
+  // disclosures, or several .faq-item / .accordion-item children) so every FAQ
+  // block becomes a native Elementor accordion regardless of the markup style.
+  const detailsCount = findAll(node, (n) => n.tag === "details").length;
+  const faqItemCount = findAll(node, (n) =>
+    hasClass(n, "accordion-item", "accordion__item", "faq-item", "faq__item", "faq-entry", "qa-item"),
+  ).length;
+  if (hasClass(node, "accordion", "faq") || detailsCount >= 2 || faqItemCount >= 2) {
     const acc = accordion(node);
     if ((acc.settings.tabs as unknown[])?.length) return acc;
   }
   if (hasClass(node, "tabs", "tab-wrapper", "tabbed")) return tabs(node);
+
+  // Testimonials — a slider/carousel becomes Elementor Pro's Testimonial
+  // Carousel; a static group becomes individual Testimonial widgets (handled
+  // below when each card is recursed as a single group).
+  const looksTestimonial = hasClass(node, "testimonial", "review", "quote");
+  const looksSlider = hasClass(node, "slider", "carousel", "swiper", "slick", "splide", "glide");
+  if (looksTestimonial && looksSlider) {
+    const carousel = testimonialCarousel(node);
+    if ((carousel.settings.slides as unknown[])?.length) return carousel;
+  }
+
   if (!isMultiGroup && hasClass(node, "counter", "stat", "stats", "countup")) return counter(node);
   if (!isMultiGroup && hasClass(node, "testimonial", "review", "quote-card")) return testimonial(node);
   if (!isMultiGroup && hasClass(node, "image-box", "img-box")) return imageBox(node);
   if (!isMultiGroup && hasClass(node, "icon-box", "feature-box", "feature-card", "service-box")) return iconBox(node);
+
 
   // Composition probes so we can classify a block by its own contents.
   const directImg = findNode(node, (n) => n.tag === "img");
