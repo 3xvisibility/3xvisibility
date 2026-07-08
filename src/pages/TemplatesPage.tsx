@@ -1087,6 +1087,27 @@ slug: ${fields.slug}`,
           <Button variant="outline" size="sm" onClick={() => setBulkWidthOpen(true)}>
             <LayoutTemplate className="h-3.5 w-3.5 mr-1.5" /> Content width
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={sectionReconvertMutation.isPending}>
+                {sectionReconvertMutation.isPending
+                  ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                  : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
+                Reconvert sections
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-52">
+              <DropdownMenuItem onClick={() => sectionReconvertMutation.mutate({ ids: [...selectedIds], sections: ["faq", "testimonial"] })}>
+                FAQ + Testimonials
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => sectionReconvertMutation.mutate({ ids: [...selectedIds], sections: ["faq"] })}>
+                FAQ only
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => sectionReconvertMutation.mutate({ ids: [...selectedIds], sections: ["testimonial"] })}>
+                Testimonials only
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
             <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete
           </Button>
