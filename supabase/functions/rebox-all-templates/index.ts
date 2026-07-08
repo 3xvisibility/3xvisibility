@@ -165,8 +165,21 @@ Deno.serve(async (req) => {
           containerWidth = await resolveWsWidth(tplRow.workspace_id);
         }
         if (containerWidth > 0) {
+          const clampG = (raw: unknown): number | null => {
+            if (raw === null || raw === undefined) return null;
+            const n = Number(raw);
+            if (!Number.isFinite(n) || n < 0) return null;
+            return Math.min(Math.round(n), 200);
+          };
           try {
-            const boxed = enforceBoxedContentWidth(JSON.stringify(tree), containerWidth);
+            const boxed = enforceBoxedContentWidth(JSON.stringify(tree), {
+              width: containerWidth,
+              widthTablet: tplRow.container_width_tablet ?? null,
+              widthMobile: tplRow.container_width_mobile ?? null,
+              gutterDesktop: clampG(tplRow.gutter_desktop),
+              gutterTablet: clampG(tplRow.gutter_tablet),
+              gutterMobile: clampG(tplRow.gutter_mobile),
+            });
             const parsed = JSON.parse(boxed);
             if (Array.isArray(parsed) && parsed.length > 0) tree = parsed;
           } catch {
