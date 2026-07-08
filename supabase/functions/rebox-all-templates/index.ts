@@ -115,6 +115,11 @@ Deno.serve(async (req) => {
       schema_type?: string | null;
       source_marketplace_id?: string | null;
       container_width?: number | null;
+      container_width_tablet?: number | null;
+      container_width_mobile?: number | null;
+      gutter_desktop?: number | null;
+      gutter_tablet?: number | null;
+      gutter_mobile?: number | null;
       workspace_id?: string | null;
       user_id?: string | null;
     }>;
