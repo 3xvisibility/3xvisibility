@@ -168,6 +168,17 @@ export function ElementorPublishPreviewDialog({
     return buildElementorDebugReport(page.content || "", mode);
   }, [page, mode]);
 
+  // Pre-publish grid validator: flag grid containers that would reserve empty
+  // rows (the blank-whitespace bug) before the page is published.
+  const gridWarnings = useMemo(() => {
+    if (!report?.elementorData) return [];
+    try {
+      return analyzeElementorGrids(JSON.parse(report.elementorData));
+    } catch {
+      return [];
+    }
+  }, [report?.elementorData]);
+
   // Reset gate state whenever the dialog target changes.
   useEffect(() => {
     setValidation(null);
