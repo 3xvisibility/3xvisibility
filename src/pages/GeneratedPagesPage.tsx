@@ -1226,6 +1226,7 @@ export default function GeneratedPagesPage() {
             <ContainerWidthControl
               table="generated_pages"
               id={widthPage.id}
+              campaignId={widthPage.campaign_id}
               inheritLabel="Inherit template / workspace default"
             />
           )}
