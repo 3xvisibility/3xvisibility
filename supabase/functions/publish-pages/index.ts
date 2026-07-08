@@ -1756,13 +1756,13 @@ async function handlePublishPages(req: Request): Promise<Response> {
           (payload as { elementor_mode?: string }).elementor_mode === "native" &&
           typeof (payload as { elementor_data?: string }).elementor_data === "string"
         ) {
-          const boxWidth = await resolvePageWidth(page as { container_width?: number | null; campaign_id?: string | null; workspace_id?: string | null }, page.workspace_id || body.workspace_id);
-          if (boxWidth > 0) {
+          const box = await resolvePageBox(page as BoxCols & { campaign_id?: string | null; workspace_id?: string | null }, page.workspace_id || body.workspace_id);
+          if (box.width > 0) {
             payload.elementor_data = enforceBoxedContentWidth(
               (payload as { elementor_data?: string }).elementor_data as string,
-              boxWidth,
+              box,
             );
-            step("Enforcing container width", "ok", `Boxed content width set to ${boxWidth}px`);
+            step("Enforcing container width", "ok", `Boxed content width set to ${box.width}px (responsive)`);
           }
         }
 
