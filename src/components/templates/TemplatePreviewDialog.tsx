@@ -1,12 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { filterDesignVars } from "@/lib/design-vars-filter";
-import { Eye, Code2, Sparkles, FileText, X, Layers } from "lucide-react";
+import { Eye, Code2, Sparkles, FileText, X, Layers, Grid3x3 } from "lucide-react";
 
 export interface PreviewableTemplate {
   name: string;
@@ -57,8 +58,11 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, primaryAct
       return typeof data === "string" ? data : null;
     }
   }, [template?.elementor_data]);
+  const [gridDebug, setGridDebug] = useState(false);
+  const [gridStats, setGridStats] = useState<{ grids: number; warnings: number }>({ grids: 0, warnings: 0 });
 
   if (!template) return null;
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -116,9 +120,29 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, primaryAct
 
 
           <TabsContent value="preview" className="flex-1 overflow-hidden m-0 p-0 data-[state=active]:flex data-[state=active]:flex-col">
+            <div className="flex items-center justify-between gap-3 px-4 py-2 border-b bg-muted/30 shrink-0">
+              <div className="flex items-center gap-2">
+                <Switch id="grid-debug" checked={gridDebug} onCheckedChange={setGridDebug} />
+                <label htmlFor="grid-debug" className="text-xs font-medium flex items-center gap-1.5 cursor-pointer">
+                  <Grid3x3 className="h-3.5 w-3.5" /> Grid debug overlay
+                </label>
+              </div>
+              {gridDebug && (
+                <div className="flex items-center gap-2 text-[11px]">
+                  <Badge variant="outline" className="font-mono">{gridStats.grids} grids</Badge>
+                  <Badge variant={gridStats.warnings > 0 ? "destructive" : "secondary"} className="font-mono">
+                    {gridStats.warnings} empty-row warning{gridStats.warnings === 1 ? "" : "s"}
+                  </Badge>
+                </div>
+              )}
+            </div>
             <ScrollArea className="flex-1">
               <div className="p-4">
-                <TemplatePreview html={template.content} />
+                <TemplatePreview
+                  html={template.content}
+                  debugGrid={gridDebug}
+                  onGridStats={setGridStats}
+                />
               </div>
             </ScrollArea>
           </TabsContent>

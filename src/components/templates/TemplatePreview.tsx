@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useRef } from "react";
+import { GRID_DEBUG_SCRIPT } from "@/lib/grid-validator";
 
 interface TemplatePreviewProps {
   html: string;
   className?: string;
+  /** When true, overlays a live CSS-grid inspector showing row count/height. */
+  debugGrid?: boolean;
+  /** Reports the live grid stats measured in the iframe. */
+  onGridStats?: (stats: { grids: number; warnings: number }) => void;
 }
 
 /**
@@ -12,8 +17,10 @@ interface TemplatePreviewProps {
  * Extracts embedded <!-- STYLES --> blocks and injects them into the iframe
  * head for high-fidelity rendering of imported site pages.
  */
-export function TemplatePreview({ html, className = "" }: TemplatePreviewProps) {
+export function TemplatePreview({ html, className = "", debugGrid = false, onGridStats }: TemplatePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const onGridStatsRef = useRef(onGridStats);
+  onGridStatsRef.current = onGridStats;
 
   const getStyledHtml = useCallback((raw: string) => {
     // Extract embedded styles block (from site imports)
@@ -171,10 +178,32 @@ ${embeddedStyles}
       setTimeout(resize, 3000);
     }
     resize();
-    const observer = new MutationObserver(resize);
+
+    // Install + run the grid debug overlay.
+    const runGridDebug = () => {
+      const win = iframe.contentWindow as (Window & { __lovGridDebug?: (on: boolean) => { grids: number; warnings: number } }) | null;
+      if (!win) return;
+      if (!win.__lovGridDebug) {
+        const s = doc.createElement("script");
+        s.textContent = GRID_DEBUG_SCRIPT;
+        doc.body?.appendChild(s);
+      }
+      const stats = win.__lovGridDebug?.(debugGrid);
+      if (stats) onGridStatsRef.current?.(stats);
+    };
+    runGridDebug();
+    const gridTimer = setTimeout(runGridDebug, 400);
+
+    const observer = new MutationObserver(() => {
+      resize();
+      if (debugGrid) runGridDebug();
+    });
     if (doc.body) observer.observe(doc.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, [html, getStyledHtml]);
+    return () => {
+      observer.disconnect();
+      clearTimeout(gridTimer);
+    };
+  }, [html, getStyledHtml, debugGrid]);
 
   if (!html) return null;
 
