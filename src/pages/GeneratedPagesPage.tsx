@@ -17,6 +17,7 @@ import {
   MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Wrench, Send as SendIcon, LayoutTemplate
 } from "lucide-react";
 import ContainerWidthControl from "@/components/settings/ContainerWidthControl";
+import BulkBoxSettingsDialog from "@/components/settings/BulkBoxSettingsDialog";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
 import { RepublishDiffDialog, type RepublishSnapshot } from "@/components/generated-pages/RepublishDiffDialog";
@@ -71,6 +72,7 @@ export default function GeneratedPagesPage() {
   const [previewPage, setPreviewPage] = useState<GeneratedPage | null>(null);
   const [seoEditPage, setSeoEditPage] = useState<GeneratedPage | null>(null);
   const [widthPage, setWidthPage] = useState<GeneratedPage | null>(null);
+  const [bulkWidthOpen, setBulkWidthOpen] = useState(false);
   const [seoForm, setSeoForm] = useState({ seo_title: "", seo_description: "", seo_keywords: "" });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkSeoOpen, setBulkSeoOpen] = useState(false);
@@ -941,6 +943,9 @@ export default function GeneratedPagesPage() {
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setTranslateOpen(true)}>
                 <Languages className="h-3 w-3 mr-1" />{t("generatedPages.translate")}
               </Button>
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setBulkWidthOpen(true)}>
+                <LayoutTemplate className="h-3 w-3 mr-1" />Content width
+              </Button>
               <Select onValueChange={(status) => bulkStatusMutation.mutate({ ids: [...selectedIds], status })}>
                 <SelectTrigger className="h-7 w-[100px] text-xs"><SelectValue placeholder={t("generatedPages.setStatus")} /></SelectTrigger>
                 <SelectContent>
@@ -1213,7 +1218,7 @@ export default function GeneratedPagesPage() {
 
       {/* Preview */}
       <Dialog open={!!widthPage} onOpenChange={(open) => !open && setWidthPage(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Content width — {widthPage?.title}</DialogTitle>
           </DialogHeader>
@@ -1221,6 +1226,7 @@ export default function GeneratedPagesPage() {
             <ContainerWidthControl
               table="generated_pages"
               id={widthPage.id}
+              campaignId={widthPage.campaign_id}
               inheritLabel="Inherit template / workspace default"
             />
           )}
@@ -1521,6 +1527,13 @@ export default function GeneratedPagesPage() {
         onOpenChange={(open) => { if (!open) setDiffState(null); }}
         before={diffState?.before}
         after={diffState?.after}
+      />
+
+      <BulkBoxSettingsDialog
+        open={bulkWidthOpen}
+        onOpenChange={setBulkWidthOpen}
+        table="generated_pages"
+        ids={[...selectedIds]}
       />
     </div>
   );

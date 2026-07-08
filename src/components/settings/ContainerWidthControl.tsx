@@ -2,16 +2,21 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LayoutTemplate, Monitor, Tablet, Smartphone } from "lucide-react";
+import { LayoutTemplate, Monitor, Tablet, Smartphone, Copy, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { config } from "@/lib/config";
+import BoxPreview from "@/components/settings/BoxPreview";
+import {
+  validateBoxSettings,
+  parseOptInt,
+  MIN_WIDTH,
+  MAX_WIDTH,
+  MAX_GUTTER,
+  type DeviceKey,
+} from "@/lib/box-settings-validation";
 
-const MIN_WIDTH = 320;
-const MAX_WIDTH = 1920;
-const MAX_GUTTER = 200;
 const DEFAULT_WIDTH = config.layout.defaultContainerWidth;
 const DEFAULT_GUTTER = { desktop: 0, tablet: 20, mobile: 16 };
 
@@ -30,23 +35,18 @@ type Row = {
  * Reusable boxed content-width override control. Persists the desktop
  * `container_width` plus responsive per-breakpoint content widths and side
  * gutters directly on a `templates` or `generated_pages` row.
- *
- * Semantics of the stored desktop value:
- *   - null  → inherit (template inherits workspace; page inherits template)
- *   - 0     → boxing disabled (content spans full width)
- *   - >0    → box content at this pixel width while backgrounds stay full-width
- *
- * Tablet / mobile widths are optional (blank = fluid 100%). Gutters are the
- * horizontal spacing inside the boxed content per breakpoint.
  */
 export default function ContainerWidthControl({
   table,
   id,
+  campaignId,
   inheritLabel = "Inherit workspace default",
   className,
 }: {
   table: "templates" | "generated_pages";
   id: string | null | undefined;
+  /** When provided (page context), enables "Copy from template". */
+  campaignId?: string | null;
   inheritLabel?: string;
   className?: string;
 }) {
@@ -60,8 +60,7 @@ export default function ContainerWidthControl({
   const [gutterMobile, setGutterMobile] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [previewBoxed, setPreviewBoxed] = useState(true);
-  const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [copying, setCopying] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -76,21 +75,7 @@ export default function ContainerWidthControl({
         .eq("id", id)
         .maybeSingle();
       if (!active) return;
-      const row = (data as Row | null) ?? {};
-      const w = row.container_width;
-      if (w === null || w === undefined) {
-        setMode("inherit");
-      } else if (w <= 0) {
-        setMode("disabled");
-      } else {
-        setMode("custom");
-        setCustomWidth(String(w));
-      }
-      setTabletWidth(row.container_width_tablet != null ? String(row.container_width_tablet) : "");
-      setMobileWidth(row.container_width_mobile != null ? String(row.container_width_mobile) : "");
-      setGutterDesktop(row.gutter_desktop != null ? String(row.gutter_desktop) : "");
-      setGutterTablet(row.gutter_tablet != null ? String(row.gutter_tablet) : "");
-      setGutterMobile(row.gutter_mobile != null ? String(row.gutter_mobile) : "");
+      applyRow((data as Row | null) ?? {});
       setLoading(false);
     })();
     return () => {
@@ -98,50 +83,88 @@ export default function ContainerWidthControl({
     };
   }, [table, id]);
 
-  const customError = ((): string | null => {
-    if (mode !== "custom") return null;
-    const trimmed = customWidth.trim();
-    if (trimmed === "") return "Enter a width.";
-    const raw = Number(trimmed);
-    if (!Number.isFinite(raw)) return "Must be a number.";
-    if (raw < MIN_WIDTH) return `Minimum is ${MIN_WIDTH}px.`;
-    if (raw > MAX_WIDTH) return `Maximum is ${MAX_WIDTH}px.`;
-    return null;
-  })();
-
-  const widthFieldError = (val: string): string | null => {
-    const trimmed = val.trim();
-    if (trimmed === "") return null;
-    const raw = Number(trimmed);
-    if (!Number.isFinite(raw)) return "Number.";
-    if (raw < MIN_WIDTH) return `Min ${MIN_WIDTH}.`;
-    if (raw > MAX_WIDTH) return `Max ${MAX_WIDTH}.`;
-    return null;
+  const applyRow = (row: Row) => {
+    const w = row.container_width;
+    if (w === null || w === undefined) {
+      setMode("inherit");
+    } else if (w <= 0) {
+      setMode("disabled");
+    } else {
+      setMode("custom");
+      setCustomWidth(String(w));
+    }
+    setTabletWidth(row.container_width_tablet != null ? String(row.container_width_tablet) : "");
+    setMobileWidth(row.container_width_mobile != null ? String(row.container_width_mobile) : "");
+    setGutterDesktop(row.gutter_desktop != null ? String(row.gutter_desktop) : "");
+    setGutterTablet(row.gutter_tablet != null ? String(row.gutter_tablet) : "");
+    setGutterMobile(row.gutter_mobile != null ? String(row.gutter_mobile) : "");
   };
 
-  const gutterFieldError = (val: string): string | null => {
-    const trimmed = val.trim();
-    if (trimmed === "") return null;
-    const raw = Number(trimmed);
-    if (!Number.isFinite(raw)) return "Number.";
-    if (raw < 0) return "≥ 0.";
-    if (raw > MAX_GUTTER) return `Max ${MAX_GUTTER}.`;
-    return null;
+  const copyFromTemplate = async () => {
+    if (!campaignId) return;
+    setCopying(true);
+    try {
+      const { data: camp } = await supabase
+        .from("campaigns")
+        .select("template_id")
+        .eq("id", campaignId)
+        .maybeSingle();
+      const tplId = (camp as { template_id?: string | null } | null)?.template_id;
+      if (!tplId) {
+        toast({ title: "No template found", description: "This page's campaign has no linked template.", variant: "destructive" });
+        return;
+      }
+      const { data: tpl } = await supabase
+        .from("templates")
+        .select("container_width, container_width_tablet, container_width_mobile, gutter_desktop, gutter_tablet, gutter_mobile")
+        .eq("id", tplId)
+        .maybeSingle();
+      if (!tpl) {
+        toast({ title: "Template not found", variant: "destructive" });
+        return;
+      }
+      applyRow(tpl as Row);
+      toast({ title: "Copied from template", description: "Review the values, then Save to apply to this page." });
+    } finally {
+      setCopying(false);
+    }
   };
 
-  const responsiveError =
-    widthFieldError(tabletWidth) ||
-    widthFieldError(mobileWidth) ||
-    gutterFieldError(gutterDesktop) ||
-    gutterFieldError(gutterTablet) ||
-    gutterFieldError(gutterMobile);
+  const boxingEnabled = mode !== "disabled";
 
-  const parseOptInt = (val: string): number | null => {
-    const t = val.trim();
-    if (t === "") return null;
-    const n = Number(t);
-    if (!Number.isFinite(n)) return null;
-    return Math.round(n);
+  // Effective values for validation + preview.
+  const effDesktopWidth: number | null = !boxingEnabled
+    ? null
+    : mode === "custom"
+    ? parseOptInt(customWidth)
+    : DEFAULT_WIDTH;
+  const effTabletWidth = parseOptInt(tabletWidth);
+  const effMobileWidth = parseOptInt(mobileWidth);
+  const effGutterDesktop = parseOptInt(gutterDesktop) ?? DEFAULT_GUTTER.desktop;
+  const effGutterTablet = parseOptInt(gutterTablet) ?? DEFAULT_GUTTER.tablet;
+  const effGutterMobile = parseOptInt(gutterMobile) ?? DEFAULT_GUTTER.mobile;
+
+  const { errors, warnings } = validateBoxSettings(
+    {
+      desktopWidth: effDesktopWidth,
+      tabletWidth: effTabletWidth,
+      mobileWidth: effMobileWidth,
+      gutterDesktop: effGutterDesktop,
+      gutterTablet: effGutterTablet,
+      gutterMobile: effGutterMobile,
+    },
+    boxingEnabled,
+  );
+
+  const previewWidths: Record<DeviceKey, number | null> = {
+    desktop: effDesktopWidth,
+    tablet: effTabletWidth,
+    mobile: effMobileWidth,
+  };
+  const previewGutters: Record<DeviceKey, number | null> = {
+    desktop: effGutterDesktop,
+    tablet: effGutterTablet,
+    mobile: effGutterMobile,
   };
 
   const resolveValue = (): number | null => {
@@ -154,15 +177,13 @@ export default function ContainerWidthControl({
 
   const save = async () => {
     if (!id) return;
-    if (customError || responsiveError) {
-      toast({ title: "Invalid value", description: customError || responsiveError || "", variant: "destructive" });
+    if (errors.length > 0) {
+      toast({ title: "Fix conflicting values", description: errors[0], variant: "destructive" });
       return;
     }
     setSaving(true);
-    const clampW = (n: number | null) =>
-      n == null ? null : Math.min(Math.max(n, MIN_WIDTH), MAX_WIDTH);
-    const clampG = (n: number | null) =>
-      n == null ? null : Math.min(Math.max(n, 0), MAX_GUTTER);
+    const clampW = (n: number | null) => (n == null ? null : Math.min(Math.max(n, MIN_WIDTH), MAX_WIDTH));
+    const clampG = (n: number | null) => (n == null ? null : Math.min(Math.max(n, 0), MAX_GUTTER));
     const { error } = await supabase
       .from(table)
       .update({
@@ -191,33 +212,18 @@ export default function ContainerWidthControl({
     });
   };
 
-  // Effective width for the live preview (per selected device).
-  const previewWidth = (() => {
-    if (previewDevice === "tablet") {
-      const t = parseOptInt(tabletWidth);
-      return t && t > 0 ? t : null; // null = fluid
-    }
-    if (previewDevice === "mobile") {
-      const m = parseOptInt(mobileWidth);
-      return m && m > 0 ? m : null; // null = fluid
-    }
-    if (mode === "custom") {
-      const raw = Number(customWidth);
-      if (Number.isFinite(raw) && raw > 0) return Math.min(Math.max(Math.round(raw), MIN_WIDTH), MAX_WIDTH);
-      return DEFAULT_WIDTH;
-    }
-    return DEFAULT_WIDTH;
-  })();
-
-  const CANVAS = previewDevice === "desktop" ? 1440 : previewDevice === "tablet" ? 834 : 390;
-  const boxedApplied = mode !== "disabled" && previewBoxed;
-  const boxedPct = previewWidth == null ? 100 : Math.min((previewWidth / CANVAS) * 100, 100);
-
   return (
     <div className={className}>
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <LayoutTemplate className="h-4 w-4" />
-        Boxed content width
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <LayoutTemplate className="h-4 w-4" />
+          Boxed content width
+        </div>
+        {campaignId && (
+          <Button type="button" size="sm" variant="outline" className="h-7 gap-1.5 px-2 text-xs" onClick={copyFromTemplate} disabled={copying || loading}>
+            <Copy className="h-3.5 w-3.5" /> {copying ? "Copying…" : "Copy from template"}
+          </Button>
+        )}
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
         Center the content in a fixed-width box while section backgrounds stay edge-to-edge.
@@ -246,15 +252,9 @@ export default function ContainerWidthControl({
               min={MIN_WIDTH}
               max={MAX_WIDTH}
               value={customWidth}
-              aria-invalid={!!customError}
               onChange={(e) => setCustomWidth(e.target.value)}
-              className={customError ? "border-destructive focus-visible:ring-destructive" : undefined}
             />
-            {customError ? (
-              <p className="text-xs text-destructive">{customError}</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">e.g. {DEFAULT_WIDTH} (Elementor default). Range {MIN_WIDTH}–{MAX_WIDTH}px.</p>
-            )}
+            <p className="text-xs text-muted-foreground">e.g. {DEFAULT_WIDTH} (Elementor default). Range {MIN_WIDTH}–{MAX_WIDTH}px.</p>
           </div>
         )}
       </div>
@@ -304,74 +304,32 @@ export default function ContainerWidthControl({
               </div>
             </div>
           </div>
-          {responsiveError && <p className="text-xs text-destructive">{responsiveError}</p>}
         </div>
       )}
 
-      {/* Live content-width preview */}
+      {/* Validation feedback */}
+      {errors.length > 0 && (
+        <div className="mt-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-xs text-destructive">
+          <div className="flex items-center gap-1.5 font-medium"><AlertTriangle className="h-3.5 w-3.5" /> Conflicting values</div>
+          <ul className="mt-1 list-disc space-y-0.5 pl-5">{errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
+        </div>
+      )}
+      {errors.length === 0 && warnings.length > 0 && (
+        <div className="mt-3 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs text-amber-600 dark:text-amber-400">
+          <div className="flex items-center gap-1.5 font-medium"><AlertTriangle className="h-3.5 w-3.5" /> Heads up</div>
+          <ul className="mt-1 list-disc space-y-0.5 pl-5">{warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+        </div>
+      )}
+
+      {/* Side-by-side live preview */}
       <div className="mt-3 space-y-2 rounded-lg border p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="space-y-0.5">
-            <Label>Content width preview</Label>
-            <p className="text-xs text-muted-foreground">
-              {boxedApplied
-                ? previewWidth == null
-                  ? "Fluid (100% of band) on this device."
-                  : `Boxed at ~${previewWidth}px on this device, backgrounds full-width.`
-                : "Content spans full width (no boxed container)."}
-            </p>
-          </div>
-          <Switch
-            checked={previewBoxed}
-            disabled={mode === "disabled"}
-            onCheckedChange={setPreviewBoxed}
-            aria-label="Toggle boxed content width preview"
-          />
-        </div>
-
-        <div className="flex gap-1">
-          {(["desktop", "tablet", "mobile"] as const).map((d) => (
-            <Button
-              key={d}
-              type="button"
-              size="sm"
-              variant={previewDevice === d ? "default" : "outline"}
-              onClick={() => setPreviewDevice(d)}
-              className="h-7 gap-1.5 px-2 text-xs capitalize"
-            >
-              {d === "desktop" ? <Monitor className="h-3.5 w-3.5" /> : d === "tablet" ? <Tablet className="h-3.5 w-3.5" /> : <Smartphone className="h-3.5 w-3.5" />}
-              {d}
-            </Button>
-          ))}
-        </div>
-
-        <div className="overflow-hidden rounded-md border bg-muted/30">
-          <div className="w-full bg-primary/10 py-3">
-            <div
-              className="mx-auto rounded bg-primary/40 px-2 py-2 text-center text-[10px] font-medium text-primary-foreground transition-all duration-300"
-              style={{ width: boxedApplied ? `${boxedPct}%` : "100%" }}
-            >
-              Hero content
-            </div>
-          </div>
-          <div className="w-full bg-secondary/40 py-3">
-            <div
-              className="mx-auto flex gap-2 transition-all duration-300"
-              style={{ width: boxedApplied ? `${boxedPct}%` : "100%" }}
-            >
-              <div className="h-8 flex-1 rounded bg-foreground/15" />
-              <div className="h-8 flex-1 rounded bg-foreground/15" />
-              <div className="h-8 flex-1 rounded bg-foreground/15" />
-            </div>
-          </div>
-        </div>
-        <p className="text-[10px] text-muted-foreground">
-          Simulated {CANVAS}px viewport. Section backgrounds always stay edge-to-edge.
-        </p>
+        <Label>Live preview — all devices</Label>
+        <BoxPreview boxingEnabled={boxingEnabled} widths={previewWidths} gutters={previewGutters} />
+        <p className="text-[10px] text-muted-foreground">Section backgrounds always stay edge-to-edge; only the content is boxed.</p>
       </div>
 
       <div className="mt-3">
-        <Button size="sm" onClick={save} disabled={saving || loading || !!customError || !!responsiveError || !id}>
+        <Button size="sm" onClick={save} disabled={saving || loading || errors.length > 0 || !id}>
           {saving ? "Saving…" : "Save content width"}
         </Button>
       </div>

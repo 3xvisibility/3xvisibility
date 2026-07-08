@@ -18,7 +18,7 @@ import {
   Search as SearchIcon, Pencil, MoreVertical, LayoutGrid, List,
   ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet, Link2,
   ChevronLeft, ChevronRight, Loader2, MonitorSmartphone, ShoppingBag, Briefcase,
-  Wand2, Eye, AlertTriangle, Crown, Palette, History, Columns,
+  Wand2, Eye, AlertTriangle, Crown, Palette, History, Columns, LayoutTemplate,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
@@ -45,6 +45,8 @@ import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 import { computeMarketplaceVersion } from "@/lib/marketplace-versioning";
 import { applyTemplateVariables, autoExtractTemplateVariables } from "@/lib/template-variable-extractor";
+import ContainerWidthControl from "@/components/settings/ContainerWidthControl";
+import BulkBoxSettingsDialog from "@/components/settings/BulkBoxSettingsDialog";
 import {
   type SectionVariants, DEFAULT_VARIANTS, summarizeVariants,
   HERO_VARIANTS, GRID_VARIANTS, CTA_VARIANTS, FAQ_VARIANTS,
@@ -73,6 +75,10 @@ export default function TemplatesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; linkedCampaigns: { id: string; name: string }[] } | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [widthTemplate, setWidthTemplate] = useState<Template | null>(null);
+  const [bulkWidthOpen, setBulkWidthOpen] = useState(false);
+  const [reboxedIds, setReboxedIds] = useState<string[]>([]);
+  const [republishOpen, setRepublishOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<Template | null>(null);
   const [duplicateTarget, setDuplicateTarget] = useState<Template | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -134,7 +140,7 @@ export default function TemplatesPage() {
         body: { workspace_id: wsId },
       });
       if (error) throw error;
-      return data as { updated: number; total: number };
+      return data as { updated: number; total: number; reboxedIds?: string[] };
     },
     onSuccess: (data) => {
       toast({
@@ -142,11 +148,61 @@ export default function TemplatesPage() {
         description: `Reboxed ${data.updated} of ${data.total} templates — full-width sections with 1140px boxed content.`,
       });
       queryClient.invalidateQueries({ queryKey: ["templates"] });
+      const ids = data.reboxedIds ?? [];
+      if (ids.length > 0) {
+        setReboxedIds(ids);
+        setRepublishOpen(true);
+      }
     },
     onError: (e) => {
       toast({ variant: "destructive", title: "Rebox failed", description: friendlyError(e instanceof Error ? e.message : String(e)) });
     },
   });
+
+  // Republish already-published pages whose campaigns use the just-reboxed
+  // templates, so live pages pick up the new boxed layout.
+  const republishMutation = useMutation({
+    mutationFn: async (templateIds: string[]) => {
+      if (templateIds.length === 0) return { pages: 0 };
+      const { data: camps, error: campErr } = await supabase
+        .from("campaigns")
+        .select("id")
+        .in("template_id", templateIds);
+      if (campErr) throw campErr;
+      const campaignIds = (camps ?? []).map((c: { id: string }) => c.id);
+      if (campaignIds.length === 0) return { pages: 0 };
+      const { data: pages, error: pageErr } = await supabase
+        .from("generated_pages")
+        .select("id")
+        .in("campaign_id", campaignIds)
+        .eq("status", "published");
+      if (pageErr) throw pageErr;
+      const pageIds = (pages ?? []).map((p: { id: string }) => p.id);
+      if (pageIds.length === 0) return { pages: 0 };
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: {
+          page_ids: pageIds,
+          elementor_mode: "native",
+          overwrite_design: true,
+        },
+      });
+      if (error) throw error;
+      return { pages: pageIds.length, data };
+    },
+    onSuccess: (res) => {
+      toast({
+        title: res.pages > 0 ? "Republishing started" : "Nothing to republish",
+        description: res.pages > 0
+          ? `Republishing ${res.pages} already-published page(s) with the updated layout.`
+          : "No published pages use the reboxed templates.",
+      });
+      setRepublishOpen(false);
+    },
+    onError: (e) => {
+      toast({ variant: "destructive", title: "Republish failed", description: friendlyError(e instanceof Error ? e.message : String(e)) });
+    },
+  });
+
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["templates", wsId],
@@ -999,6 +1055,9 @@ slug: ${fields.slug}`,
           <Button variant="outline" size="sm" onClick={() => { [...selectedIds].forEach(id => { const t = templates.find(t => t.id === id); if (t) exportTemplate(t); }); }}>
             <Download className="h-3.5 w-3.5 mr-1.5" /> Export
           </Button>
+          <Button variant="outline" size="sm" onClick={() => setBulkWidthOpen(true)}>
+            <LayoutTemplate className="h-3.5 w-3.5 mr-1.5" /> Content width
+          </Button>
           <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
             <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete
           </Button>
@@ -1060,6 +1119,7 @@ slug: ${fields.slug}`,
                       <DropdownMenuItem onClick={() => setCustomizeTemplate(tpl)}><Palette className="h-3.5 w-3.5 mr-2" /> Customize</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openRegenDialog(tpl)}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setWidthTemplate(tpl)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Content width</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setDuplicateTarget(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -1120,6 +1180,7 @@ slug: ${fields.slug}`,
                             <DropdownMenuItem onClick={() => setCustomizeTemplate(tpl)}><Palette className="h-3.5 w-3.5 mr-2" /> Customize</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRegenDialog(tpl)}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setWidthTemplate(tpl)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Content width</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setDuplicateTarget(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -1180,6 +1241,7 @@ slug: ${fields.slug}`,
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setCustomizeTemplate(tpl); }}><Palette className="h-3.5 w-3.5 mr-2" /> Customize</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl); }}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl, "variants-only"); }}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setWidthTemplate(tpl); }}><LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Content width</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setDuplicateTarget(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -1651,6 +1713,52 @@ slug: ${fields.slug}`,
         onOpenChange={setPickerOpen}
         onSelect={handlePickerSelect}
       />
+
+      {/* Per-template content width editor */}
+      <Dialog open={!!widthTemplate} onOpenChange={(open) => !open && setWidthTemplate(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Content width — {widthTemplate?.name}</DialogTitle>
+          </DialogHeader>
+          {widthTemplate && (
+            <ContainerWidthControl
+              table="templates"
+              id={widthTemplate.id}
+              inheritLabel="Inherit workspace default"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk content width */}
+      <BulkBoxSettingsDialog
+        open={bulkWidthOpen}
+        onOpenChange={setBulkWidthOpen}
+        table="templates"
+        ids={[...selectedIds]}
+      />
+
+      {/* Republish after rebox */}
+      <AlertDialog open={republishOpen} onOpenChange={setRepublishOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Republish updated templates?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {reboxedIds.length} template(s) were reboxed. Do you want to republish already-published
+              pages that use these templates so the live pages pick up the new boxed layout?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={republishMutation.isPending}>Not now</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); republishMutation.mutate(reboxedIds); }}
+              disabled={republishMutation.isPending}
+            >
+              {republishMutation.isPending ? "Republishing…" : "Republish pages"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
