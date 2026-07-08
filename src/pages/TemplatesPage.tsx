@@ -1713,6 +1713,52 @@ slug: ${fields.slug}`,
         onOpenChange={setPickerOpen}
         onSelect={handlePickerSelect}
       />
+
+      {/* Per-template content width editor */}
+      <Dialog open={!!widthTemplate} onOpenChange={(open) => !open && setWidthTemplate(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Content width — {widthTemplate?.name}</DialogTitle>
+          </DialogHeader>
+          {widthTemplate && (
+            <ContainerWidthControl
+              table="templates"
+              id={widthTemplate.id}
+              inheritLabel="Inherit workspace default"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk content width */}
+      <BulkBoxSettingsDialog
+        open={bulkWidthOpen}
+        onOpenChange={setBulkWidthOpen}
+        table="templates"
+        ids={[...selectedIds]}
+      />
+
+      {/* Republish after rebox */}
+      <AlertDialog open={republishOpen} onOpenChange={setRepublishOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Republish updated templates?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {reboxedIds.length} template(s) were reboxed. Do you want to republish already-published
+              pages that use these templates so the live pages pick up the new boxed layout?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={republishMutation.isPending}>Not now</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); republishMutation.mutate(reboxedIds); }}
+              disabled={republishMutation.isPending}
+            >
+              {republishMutation.isPending ? "Republishing…" : "Republish pages"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
