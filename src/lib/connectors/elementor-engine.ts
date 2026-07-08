@@ -1041,24 +1041,78 @@ function counter(node: HtmlNode): ElementorElement {
   };
 }
 
-function testimonial(node: HtmlNode): ElementorElement {
+function testimonialFields(node: HtmlNode): { content: string; name: string; job: string; image: string } {
   const img = findNode(node, (n) => n.tag === "img");
   const nameNode = findNode(node, (n) => hasClass(n, "name", "author") || HEADINGS.has(n.tag));
-  const jobNode = findNode(node, (n) => hasClass(n, "role", "job", "title", "position"));
-  const contentNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "content", "text", "quote"));
+  const jobNode = findNode(node, (n) => hasClass(n, "role", "job", "title", "position", "company"));
+  const contentNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "content", "text", "quote", "message"));
+  return {
+    content: contentNode ? textContent(contentNode) : textContent(node),
+    name: nameNode ? textContent(nameNode) : "",
+    job: jobNode ? textContent(jobNode) : "",
+    image: img ? (img.attrs.src || "") : "",
+  };
+}
+
+function testimonial(node: HtmlNode): ElementorElement {
+  const f = testimonialFields(node);
   return {
     id: genId(),
     elType: "widget",
     widgetType: "testimonial",
     settings: {
-      testimonial_content: contentNode ? textContent(contentNode) : textContent(node),
-      testimonial_name: nameNode ? textContent(nameNode) : "",
-      testimonial_job: jobNode ? textContent(jobNode) : "",
-      testimonial_image: img ? { url: img.attrs.src || "" } : { url: "" },
+      testimonial_content: f.content,
+      testimonial_name: f.name,
+      testimonial_job: f.job,
+      testimonial_image: { url: f.image },
     },
     elements: [],
   };
 }
+
+function findTestimonialCards(node: HtmlNode): HtmlNode[] {
+  let cards = findAll(node, (n) =>
+    hasClass(
+      n,
+      "testimonial-card", "testimonial__card", "testimonial-item", "testimonial__item",
+      "review-card", "review-item", "quote-card", "swiper-slide", "slick-slide",
+      "splide__slide", "carousel-item", "testimonial-slide",
+    ),
+  );
+  if (cards.length < 2) {
+    const bq = findAll(node, (n) => n.tag === "blockquote");
+    if (bq.length >= 2) cards = bq;
+  }
+  if (cards.length < 2) {
+    cards = node.children.filter((c) => c.tag && hasClass(c, "testimonial", "review", "quote"));
+  }
+  return cards;
+}
+
+function testimonialCarousel(node: HtmlNode): ElementorElement {
+  const cards = findTestimonialCards(node);
+  const slides = cards.map((card) => {
+    const f = testimonialFields(card);
+    return { _id: genId(), content: f.content, name: f.name, title: f.job, image: { url: f.image, id: "" } };
+  });
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "testimonial-carousel",
+    settings: {
+      slides,
+      skin: "default",
+      layout: "image_inline",
+      slides_to_show: Math.min(Math.max(slides.length, 1), 3),
+      slides_to_show_tablet: 2,
+      slides_to_show_mobile: 1,
+      navigation: "both",
+      pause_on_hover: "yes",
+    },
+    elements: [],
+  };
+}
+
 
 function iconBox(node: HtmlNode): ElementorElement {
   const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "heading", "name"));
@@ -1111,15 +1165,56 @@ function imageBox(node: HtmlNode): ElementorElement {
 }
 
 function accordion(node: HtmlNode): ElementorElement {
-  const items = findAll(node, (n) => hasClass(n, "accordion-item", "accordion__item", "faq-item")).map((item) => {
-    const head = findNode(item, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "header", "question"));
-    const bodyNode = findNode(item, (n) => hasClass(n, "content", "body", "answer", "panel"));
+  // 1) Native <details>/<summary> disclosure lists.
+  let items = findAll(node, (n) => n.tag === "details").map((det) => {
+    const summary = findNode(det, (n) => n.tag === "summary");
     return {
       _id: genId(),
-      tab_title: head ? textContent(head) : textContent(item).slice(0, 60),
-      tab_content: bodyNode ? innerHtml(bodyNode) : "",
+      tab_title: summary ? textContent(summary) : textContent(det).slice(0, 80),
+      tab_content: innerHtml(det).replace(/<summary[\s\S]*?<\/summary>/i, ""),
     };
   });
+
+  // 2) Class-based FAQ / accordion items (broad naming conventions).
+  if (!items.length) {
+    items = findAll(node, (n) =>
+      hasClass(
+        n,
+        "accordion-item", "accordion__item", "accordion-entry",
+        "faq-item", "faq__item", "faq-entry", "faq-row", "faq-question-wrap",
+        "qa-item", "qa-block", "question-item",
+      ),
+    ).map((item) => {
+      const head = findNode(item, (n) =>
+        HEADINGS.has(n.tag) ||
+        hasClass(n, "title", "header", "question", "faq-question", "accordion-header", "accordion-title", "toggle", "summary"),
+      );
+      const bodyNode = findNode(item, (n) =>
+        hasClass(n, "content", "body", "answer", "panel", "faq-answer", "accordion-content", "accordion-body", "collapse"),
+      );
+      return {
+        _id: genId(),
+        tab_title: head ? textContent(head) : textContent(item).slice(0, 80),
+        tab_content: bodyNode ? innerHtml(bodyNode) : "",
+      };
+    });
+  }
+
+  // 3) Last resort: heading + following paragraph pairs.
+  if (!items.length) {
+    const kids = node.children.filter((c) => c.tag);
+    for (let i = 0; i < kids.length; i++) {
+      if (HEADINGS.has(kids[i].tag) || hasClass(kids[i], "question", "faq-question")) {
+        const next = kids[i + 1];
+        items.push({
+          _id: genId(),
+          tab_title: textContent(kids[i]),
+          tab_content: next && !HEADINGS.has(next.tag) ? innerHtml(next) : "",
+        });
+      }
+    }
+  }
+
   return {
     id: genId(),
     elType: "widget",
@@ -1128,6 +1223,7 @@ function accordion(node: HtmlNode): ElementorElement {
     elements: [],
   };
 }
+
 
 function tabs(node: HtmlNode): ElementorElement {
   const panels = findAll(node, (n) => hasClass(n, "tab-pane", "tab-panel", "tabs__panel", "tab-content"));
@@ -1167,15 +1263,31 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   const isMultiGroup =
     node.tag === "section" || bigHeading || headingCountTop >= 2 || imgCountTop >= 2 || statChildren >= 2;
 
-  if (hasClass(node, "accordion", "faq")) {
+  // FAQ / accordion — detect by class OR structure (<details> groups or multiple
+  // .faq-item / .accordion-item children) so every FAQ becomes a native accordion.
+  const detailsCount = findAll(node, (n) => n.tag === "details").length;
+  const faqItemCount = findAll(node, (n) =>
+    hasClass(n, "accordion-item", "accordion__item", "faq-item", "faq__item", "faq-entry", "qa-item"),
+  ).length;
+  if (hasClass(node, "accordion", "faq") || detailsCount >= 2 || faqItemCount >= 2) {
     const acc = accordion(node);
     if ((acc.settings.tabs as unknown[])?.length) return acc;
   }
   if (hasClass(node, "tabs", "tab-wrapper", "tabbed")) return tabs(node);
+
+  // Testimonials slider/carousel -> Elementor Pro Testimonial Carousel.
+  const looksTestimonial = hasClass(node, "testimonial", "review", "quote");
+  const looksSlider = hasClass(node, "slider", "carousel", "swiper", "slick", "splide", "glide");
+  if (looksTestimonial && looksSlider) {
+    const carousel = testimonialCarousel(node);
+    if ((carousel.settings.slides as unknown[])?.length) return carousel;
+  }
+
   if (!isMultiGroup && hasClass(node, "counter", "stat", "stats", "countup")) return counter(node);
   if (!isMultiGroup && hasClass(node, "testimonial", "review", "quote-card")) return testimonial(node);
   if (!isMultiGroup && hasClass(node, "image-box", "img-box")) return imageBox(node);
   if (!isMultiGroup && hasClass(node, "icon-box", "feature-box", "feature-card", "service-box")) return iconBox(node);
+
 
   // Composition probes so we can classify a block by its own contents.
   const directImg = findNode(node, (n) => n.tag === "img");
