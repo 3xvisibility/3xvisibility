@@ -270,6 +270,31 @@ export function ElementorPublishPreviewDialog({
           onResult={(r) => { setValidation(r); setOverride(false); }}
         />
 
+        {/* Pre-publish grid validator */}
+        {gridWarnings.length > 0 && (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 space-y-1.5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="h-4 w-4" />
+              {gridWarnings.length} grid container{gridWarnings.length === 1 ? "" : "s"} may reserve empty rows
+            </div>
+            <p className="text-xs text-muted-foreground">
+              These grids can render blank whitespace. Re-run “Rebox / Reconvert templates” to apply the single-row grid fix before publishing.
+            </p>
+            <ul className="mt-1 space-y-1 max-h-28 overflow-auto">
+              {gridWarnings.slice(0, 8).map((w, i) => (
+                <li key={i} className="text-[11px] font-mono text-muted-foreground">
+                  <span className="text-amber-600 dark:text-amber-400">{w.detail}</span> · {w.path}
+                </li>
+              ))}
+              {gridWarnings.length > 8 && (
+                <li className="text-[11px] text-muted-foreground">…and {gridWarnings.length - 8} more.</li>
+              )}
+            </ul>
+          </div>
+        )}
+
+
+
         <Tabs defaultValue="preview" className="flex-1 min-h-0 flex flex-col">
 
           <TabsList className="self-start">
