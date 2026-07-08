@@ -1041,24 +1041,78 @@ function counter(node: HtmlNode): ElementorElement {
   };
 }
 
-function testimonial(node: HtmlNode): ElementorElement {
+function testimonialFields(node: HtmlNode): { content: string; name: string; job: string; image: string } {
   const img = findNode(node, (n) => n.tag === "img");
   const nameNode = findNode(node, (n) => hasClass(n, "name", "author") || HEADINGS.has(n.tag));
-  const jobNode = findNode(node, (n) => hasClass(n, "role", "job", "title", "position"));
-  const contentNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "content", "text", "quote"));
+  const jobNode = findNode(node, (n) => hasClass(n, "role", "job", "title", "position", "company"));
+  const contentNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "content", "text", "quote", "message"));
+  return {
+    content: contentNode ? textContent(contentNode) : textContent(node),
+    name: nameNode ? textContent(nameNode) : "",
+    job: jobNode ? textContent(jobNode) : "",
+    image: img ? (img.attrs.src || "") : "",
+  };
+}
+
+function testimonial(node: HtmlNode): ElementorElement {
+  const f = testimonialFields(node);
   return {
     id: genId(),
     elType: "widget",
     widgetType: "testimonial",
     settings: {
-      testimonial_content: contentNode ? textContent(contentNode) : textContent(node),
-      testimonial_name: nameNode ? textContent(nameNode) : "",
-      testimonial_job: jobNode ? textContent(jobNode) : "",
-      testimonial_image: img ? { url: img.attrs.src || "" } : { url: "" },
+      testimonial_content: f.content,
+      testimonial_name: f.name,
+      testimonial_job: f.job,
+      testimonial_image: { url: f.image },
     },
     elements: [],
   };
 }
+
+function findTestimonialCards(node: HtmlNode): HtmlNode[] {
+  let cards = findAll(node, (n) =>
+    hasClass(
+      n,
+      "testimonial-card", "testimonial__card", "testimonial-item", "testimonial__item",
+      "review-card", "review-item", "quote-card", "swiper-slide", "slick-slide",
+      "splide__slide", "carousel-item", "testimonial-slide",
+    ),
+  );
+  if (cards.length < 2) {
+    const bq = findAll(node, (n) => n.tag === "blockquote");
+    if (bq.length >= 2) cards = bq;
+  }
+  if (cards.length < 2) {
+    cards = node.children.filter((c) => c.tag && hasClass(c, "testimonial", "review", "quote"));
+  }
+  return cards;
+}
+
+function testimonialCarousel(node: HtmlNode): ElementorElement {
+  const cards = findTestimonialCards(node);
+  const slides = cards.map((card) => {
+    const f = testimonialFields(card);
+    return { _id: genId(), content: f.content, name: f.name, title: f.job, image: { url: f.image, id: "" } };
+  });
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "testimonial-carousel",
+    settings: {
+      slides,
+      skin: "default",
+      layout: "image_inline",
+      slides_to_show: Math.min(Math.max(slides.length, 1), 3),
+      slides_to_show_tablet: 2,
+      slides_to_show_mobile: 1,
+      navigation: "both",
+      pause_on_hover: "yes",
+    },
+    elements: [],
+  };
+}
+
 
 function iconBox(node: HtmlNode): ElementorElement {
   const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "heading", "name"));
