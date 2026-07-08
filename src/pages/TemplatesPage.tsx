@@ -203,6 +203,35 @@ export default function TemplatesPage() {
     },
   });
 
+  // Reconvert ONLY the FAQ / Testimonial widgets in the selected templates'
+  // existing Elementor data — every other widget and layout is kept as-is.
+  const sectionReconvertMutation = useMutation({
+    mutationFn: async (input: { ids: string[]; sections: string[] }) => {
+      const { data, error } = await supabase.functions.invoke("reconvert-sections", {
+        body: { template_ids: input.ids, sections: input.sections },
+      });
+      if (error) throw error;
+      return data as { updated: number; total: number; updatedIds?: string[] };
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Sections reconverted",
+        description: `Updated FAQ/Testimonial widgets on ${data.updated} of ${data.total} template(s). The rest of each design is unchanged.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      const ids = data.updatedIds ?? [];
+      if (ids.length > 0) {
+        setReboxedIds(ids);
+        setRepublishOpen(true);
+      }
+    },
+    onError: (e) => {
+      toast({ variant: "destructive", title: "Reconvert failed", description: friendlyError(e instanceof Error ? e.message : String(e)) });
+    },
+  });
+
+
+
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["templates", wsId],
