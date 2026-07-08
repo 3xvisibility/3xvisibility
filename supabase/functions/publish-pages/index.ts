@@ -1141,11 +1141,19 @@ async function handlePublishPages(req: Request): Promise<Response> {
               ? clampWidth(dpRaw)
               : await resolveContainerWidth(workspaceId);
             if (boxWidth > 0) {
+              const dpc = dp as BoxCols;
               payload.elementor_data = enforceBoxedContentWidth(
                 (payload as { elementor_data?: string }).elementor_data as string,
-                boxWidth,
+                {
+                  width: boxWidth,
+                  widthTablet: dpc.container_width_tablet ?? null,
+                  widthMobile: dpc.container_width_mobile ?? null,
+                  gutterDesktop: clampGutter(dpc.gutter_desktop),
+                  gutterTablet: clampGutter(dpc.gutter_tablet),
+                  gutterMobile: clampGutter(dpc.gutter_mobile),
+                },
               );
-              step("Enforcing container width", "ok", `Boxed content width set to ${boxWidth}px`);
+              step("Enforcing container width", "ok", `Boxed content width set to ${boxWidth}px (responsive)`);
             }
           }
 
