@@ -227,7 +227,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ ok: true, total: rows.length, updated, results });
+    const reboxedIds = results.filter((r: any) => r.ok).map((r: any) => r.id);
+    return json({ ok: true, total: rows.length, updated, reboxedIds, results });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
