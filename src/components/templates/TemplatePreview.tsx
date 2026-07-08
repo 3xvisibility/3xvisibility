@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useRef } from "react";
+import { GRID_DEBUG_SCRIPT } from "@/lib/grid-validator";
 
 interface TemplatePreviewProps {
   html: string;
   className?: string;
+  /** When true, overlays a live CSS-grid inspector showing row count/height. */
+  debugGrid?: boolean;
+  /** Reports the live grid stats measured in the iframe. */
+  onGridStats?: (stats: { grids: number; warnings: number }) => void;
 }
 
 /**
