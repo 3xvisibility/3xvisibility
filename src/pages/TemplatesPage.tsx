@@ -1736,6 +1736,10 @@ slug: ${fields.slug}`,
         onOpenChange={setBulkWidthOpen}
         table="templates"
         ids={[...selectedIds]}
+        onApplied={() => {
+          queryClient.invalidateQueries({ queryKey: ["templates"] });
+          setSelectedIds(new Set());
+        }}
       />
 
       {/* Republish after rebox */}
