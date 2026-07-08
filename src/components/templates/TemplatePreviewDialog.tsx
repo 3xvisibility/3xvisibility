@@ -1,12 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { filterDesignVars } from "@/lib/design-vars-filter";
-import { Eye, Code2, Sparkles, FileText, X, Layers } from "lucide-react";
+import { Eye, Code2, Sparkles, FileText, X, Layers, Grid3x3 } from "lucide-react";
 
 export interface PreviewableTemplate {
   name: string;
