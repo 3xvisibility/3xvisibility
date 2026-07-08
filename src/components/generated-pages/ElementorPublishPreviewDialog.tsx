@@ -13,6 +13,8 @@ import {
   type ElementorWidgetMode,
   type ElementorMapNode,
 } from "@/lib/connectors/elementor-engine";
+import { analyzeElementorGrids } from "@/lib/grid-validator";
+import { AlertTriangle } from "lucide-react";
 import {
   VisualValidationPanel,
   type ValidationSide,
