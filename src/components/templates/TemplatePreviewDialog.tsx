@@ -116,9 +116,29 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, primaryAct
 
 
           <TabsContent value="preview" className="flex-1 overflow-hidden m-0 p-0 data-[state=active]:flex data-[state=active]:flex-col">
+            <div className="flex items-center justify-between gap-3 px-4 py-2 border-b bg-muted/30 shrink-0">
+              <div className="flex items-center gap-2">
+                <Switch id="grid-debug" checked={gridDebug} onCheckedChange={setGridDebug} />
+                <label htmlFor="grid-debug" className="text-xs font-medium flex items-center gap-1.5 cursor-pointer">
+                  <Grid3x3 className="h-3.5 w-3.5" /> Grid debug overlay
+                </label>
+              </div>
+              {gridDebug && (
+                <div className="flex items-center gap-2 text-[11px]">
+                  <Badge variant="outline" className="font-mono">{gridStats.grids} grids</Badge>
+                  <Badge variant={gridStats.warnings > 0 ? "destructive" : "secondary"} className="font-mono">
+                    {gridStats.warnings} empty-row warning{gridStats.warnings === 1 ? "" : "s"}
+                  </Badge>
+                </div>
+              )}
+            </div>
             <ScrollArea className="flex-1">
               <div className="p-4">
-                <TemplatePreview html={template.content} />
+                <TemplatePreview
+                  html={template.content}
+                  debugGrid={gridDebug}
+                  onGridStats={setGridStats}
+                />
               </div>
             </ScrollArea>
           </TabsContent>
