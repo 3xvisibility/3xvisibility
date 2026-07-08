@@ -1331,8 +1331,17 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   const looksSlider = hasClass(node, "slider", "carousel", "swiper", "slick", "splide", "glide");
   if (looksTestimonial && looksSlider) {
     // Same rule: collapse only the slider list itself, not the whole section.
+    // Descend only when the nested wrapper still qualifies as a carousel on its
+    // own, so we never lose the carousel grouping.
     const slideWrapper = lowestCommonWrapper(node, isTestimonialSlideNode);
-    if (slideWrapper && slideWrapper !== node) return null;
+    if (
+      slideWrapper &&
+      slideWrapper !== node &&
+      hasClass(slideWrapper, "testimonial", "review", "quote") &&
+      hasClass(slideWrapper, "slider", "carousel", "swiper", "slick", "splide", "glide")
+    ) {
+      return null;
+    }
     const carousel = testimonialCarousel(node);
     if ((carousel.settings.slides as unknown[])?.length) return carousel;
   }
