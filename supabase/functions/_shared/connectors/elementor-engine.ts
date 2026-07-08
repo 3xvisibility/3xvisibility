@@ -1427,6 +1427,36 @@ function container(children: ElementorElement[], node?: HtmlNode, topLevel = fal
   const props = node && CURRENT_RESOLVER ? CURRENT_RESOLVER.resolve(node as NodeLike) : undefined;
   if (props) styleContainer(settings, props, CURRENT_CTX);
 
+  // Floating cards/badges: an absolutely (or fixed) positioned element that is
+  // NOT stretched full-bleed (e.g. a small stats card `position:absolute;
+  // right:1.5rem; bottom:2.5rem; max-width:360px`). Native Elementor containers
+  // ignore absolute positioning, and styleContainer marks such a node
+  // `content_width:"boxed"` — but a boxed container's BACKGROUND still spans the
+  // full row, so a compact blue badge balloons into a full-width band that
+  // overlaps the hero. Constrain the box element itself to its width (so the
+  // background wraps the content) and align it toward its anchored side.
+  if (
+    props &&
+    (props.position === "absolute" || props.position === "fixed") &&
+    !isFullBleed(props)
+  ) {
+    const w = settings.width as { unit?: string } | undefined;
+    if (settings.content_width === "boxed" && w && typeof w === "object" && w.unit === "px") {
+      // full + fixed px width => the whole container (background included) is boxed.
+      settings.content_width = "full";
+      const anchorRight = props.right !== undefined && props.left === undefined;
+      settings.margin = {
+        unit: "px",
+        top: "16",
+        right: anchorRight ? "0" : "auto",
+        bottom: "16",
+        left: "auto",
+        isLinked: false,
+      };
+    }
+  }
+
+
   // Only fall back to framework class hints (Bootstrap-style .row/.columns) when
   // the CSS declared no explicit flex/grid layout. This prevents forcing a
   // flex-row (or a spurious grid) onto containers that are really plain column
