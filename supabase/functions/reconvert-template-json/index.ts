@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     // Load the page and confirm the caller owns it (or is a platform admin).
     const { data: page } = await supabase
       .from("generated_pages")
-      .select("id, user_id, campaign_id, workspace_id, container_width")
+      .select("id, user_id, campaign_id, workspace_id, container_width, container_width_tablet, container_width_mobile, gutter_desktop, gutter_tablet, gutter_mobile")
       .eq("id", pageId)
       .maybeSingle();
     if (!page) return json({ error: "Page not found" }, 404);
@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
 
     const { data: tpl } = await supabase
       .from("templates")
-      .select("id, name, content, schema_type, source_marketplace_id, container_width")
+      .select("id, name, content, schema_type, source_marketplace_id, container_width, container_width_tablet, container_width_mobile, gutter_desktop, gutter_tablet, gutter_mobile")
       .eq("id", templateId)
       .maybeSingle();
     const tplRow = tpl as
