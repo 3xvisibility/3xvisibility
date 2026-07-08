@@ -140,7 +140,7 @@ export default function TemplatesPage() {
         body: { workspace_id: wsId },
       });
       if (error) throw error;
-      return data as { updated: number; total: number };
+      return data as { updated: number; total: number; reboxedIds?: string[] };
     },
     onSuccess: (data) => {
       toast({
@@ -148,11 +148,57 @@ export default function TemplatesPage() {
         description: `Reboxed ${data.updated} of ${data.total} templates — full-width sections with 1140px boxed content.`,
       });
       queryClient.invalidateQueries({ queryKey: ["templates"] });
+      const ids = data.reboxedIds ?? [];
+      if (ids.length > 0) {
+        setReboxedIds(ids);
+        setRepublishOpen(true);
+      }
     },
     onError: (e) => {
       toast({ variant: "destructive", title: "Rebox failed", description: friendlyError(e instanceof Error ? e.message : String(e)) });
     },
   });
+
+  // Republish already-published pages whose campaigns use the just-reboxed
+  // templates, so live pages pick up the new boxed layout.
+  const republishMutation = useMutation({
+    mutationFn: async (templateIds: string[]) => {
+      if (templateIds.length === 0) return { pages: 0 };
+      const { data: camps, error: campErr } = await supabase
+        .from("campaigns")
+        .select("id")
+        .in("template_id", templateIds);
+      if (campErr) throw campErr;
+      const campaignIds = (camps ?? []).map((c: { id: string }) => c.id);
+      if (campaignIds.length === 0) return { pages: 0 };
+      const { data: pages, error: pageErr } = await supabase
+        .from("generated_pages")
+        .select("id")
+        .in("campaign_id", campaignIds)
+        .eq("status", "published");
+      if (pageErr) throw pageErr;
+      const pageIds = (pages ?? []).map((p: { id: string }) => p.id);
+      if (pageIds.length === 0) return { pages: 0 };
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: { pageIds, action: "retry" },
+      });
+      if (error) throw error;
+      return { pages: pageIds.length, data };
+    },
+    onSuccess: (res) => {
+      toast({
+        title: res.pages > 0 ? "Republishing started" : "Nothing to republish",
+        description: res.pages > 0
+          ? `Republishing ${res.pages} already-published page(s) with the updated layout.`
+          : "No published pages use the reboxed templates.",
+      });
+      setRepublishOpen(false);
+    },
+    onError: (e) => {
+      toast({ variant: "destructive", title: "Republish failed", description: friendlyError(e instanceof Error ? e.message : String(e)) });
+    },
+  });
+
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["templates", wsId],
