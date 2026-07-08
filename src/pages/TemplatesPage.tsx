@@ -180,7 +180,11 @@ export default function TemplatesPage() {
       const pageIds = (pages ?? []).map((p: { id: string }) => p.id);
       if (pageIds.length === 0) return { pages: 0 };
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { pageIds, action: "retry" },
+        body: {
+          page_ids: pageIds,
+          elementor_mode: "native",
+          overwrite_design: true,
+        },
       });
       if (error) throw error;
       return { pages: pageIds.length, data };
