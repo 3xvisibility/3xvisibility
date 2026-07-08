@@ -1507,6 +1507,12 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
     hasClass(n, "accordion-item", "accordion__item", "faq-item", "faq__item", "faq-entry", "qa-item"),
   ).length;
   if (hasClass(node, "accordion", "faq") || detailsCount >= 2 || faqItemCount >= 2) {
+    // Only collapse the FAQ LIST into an accordion. When the Q&A items live in
+    // a dedicated wrapper nested inside a larger section, descend (return null)
+    // so the section keeps its heading, intro text and other design — only the
+    // list wrapper becomes the accordion during recursion.
+    const faqWrapper = lowestCommonWrapper(node, isFaqItemNode);
+    if (faqWrapper && faqWrapper !== node) return null;
     const acc = accordion(node);
     if ((acc.settings.tabs as unknown[])?.length) return acc;
   }
@@ -1518,6 +1524,18 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   const looksTestimonial = hasClass(node, "testimonial", "review", "quote");
   const looksSlider = hasClass(node, "slider", "carousel", "swiper", "slick", "splide", "glide");
   if (looksTestimonial && looksSlider) {
+    // Same rule: collapse only the slider list itself, not the whole section.
+    // Descend only when the nested wrapper still qualifies as a carousel on its
+    // own, so we never lose the carousel grouping.
+    const slideWrapper = lowestCommonWrapper(node, isTestimonialSlideNode);
+    if (
+      slideWrapper &&
+      slideWrapper !== node &&
+      hasClass(slideWrapper, "testimonial", "review", "quote") &&
+      hasClass(slideWrapper, "slider", "carousel", "swiper", "slick", "splide", "glide")
+    ) {
+      return null;
+    }
     const carousel = testimonialCarousel(node);
     if ((carousel.settings.slides as unknown[])?.length) return carousel;
   }
