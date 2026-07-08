@@ -1528,6 +1528,13 @@ export default function GeneratedPagesPage() {
         before={diffState?.before}
         after={diffState?.after}
       />
+
+      <BulkBoxSettingsDialog
+        open={bulkWidthOpen}
+        onOpenChange={setBulkWidthOpen}
+        table="generated_pages"
+        ids={[...selectedIds]}
+      />
     </div>
   );
 }
