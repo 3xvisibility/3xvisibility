@@ -1534,6 +1534,10 @@ export default function GeneratedPagesPage() {
         onOpenChange={setBulkWidthOpen}
         table="generated_pages"
         ids={[...selectedIds]}
+        onApplied={() => {
+          queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+          setSelectedIds(new Set());
+        }}
       />
     </div>
   );
