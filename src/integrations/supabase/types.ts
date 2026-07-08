@@ -952,12 +952,17 @@ export type Database = {
           campaign_id: string | null
           canonical_url: string | null
           container_width: number | null
+          container_width_mobile: number | null
+          container_width_tablet: number | null
           content: string
           created_at: string
           editor_readiness: Json | null
           error_message: string | null
           external_id: string | null
           external_url: string | null
+          gutter_desktop: number | null
+          gutter_mobile: number | null
+          gutter_tablet: number | null
           id: string
           publish_steps: Json | null
           seo_description: string | null
@@ -977,12 +982,17 @@ export type Database = {
           campaign_id?: string | null
           canonical_url?: string | null
           container_width?: number | null
+          container_width_mobile?: number | null
+          container_width_tablet?: number | null
           content: string
           created_at?: string
           editor_readiness?: Json | null
           error_message?: string | null
           external_id?: string | null
           external_url?: string | null
+          gutter_desktop?: number | null
+          gutter_mobile?: number | null
+          gutter_tablet?: number | null
           id?: string
           publish_steps?: Json | null
           seo_description?: string | null
@@ -1002,12 +1012,17 @@ export type Database = {
           campaign_id?: string | null
           canonical_url?: string | null
           container_width?: number | null
+          container_width_mobile?: number | null
+          container_width_tablet?: number | null
           content?: string
           created_at?: string
           editor_readiness?: Json | null
           error_message?: string | null
           external_id?: string | null
           external_url?: string | null
+          gutter_desktop?: number | null
+          gutter_mobile?: number | null
+          gutter_tablet?: number | null
           id?: string
           publish_steps?: Json | null
           seo_description?: string | null
@@ -2735,10 +2750,15 @@ export type Database = {
       templates: {
         Row: {
           container_width: number | null
+          container_width_mobile: number | null
+          container_width_tablet: number | null
           content: string
           created_at: string
           elementor_data: Json | null
           elementor_page_template: string | null
+          gutter_desktop: number | null
+          gutter_mobile: number | null
+          gutter_tablet: number | null
           id: string
           name: string
           schema_config: Json | null
@@ -2757,10 +2777,15 @@ export type Database = {
         }
         Insert: {
           container_width?: number | null
+          container_width_mobile?: number | null
+          container_width_tablet?: number | null
           content: string
           created_at?: string
           elementor_data?: Json | null
           elementor_page_template?: string | null
+          gutter_desktop?: number | null
+          gutter_mobile?: number | null
+          gutter_tablet?: number | null
           id?: string
           name: string
           schema_config?: Json | null
@@ -2779,10 +2804,15 @@ export type Database = {
         }
         Update: {
           container_width?: number | null
+          container_width_mobile?: number | null
+          container_width_tablet?: number | null
           content?: string
           created_at?: string
           elementor_data?: Json | null
           elementor_page_template?: string | null
+          gutter_desktop?: number | null
+          gutter_mobile?: number | null
+          gutter_tablet?: number | null
           id?: string
           name?: string
           schema_config?: Json | null
