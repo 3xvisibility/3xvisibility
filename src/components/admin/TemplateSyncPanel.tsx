@@ -334,6 +334,14 @@ export function TemplateSyncPanel() {
             </CardDescription>
           </div>
           <div className="flex flex-col items-end gap-2 shrink-0">
+            <Button
+              onClick={reboxAndRepublishAll}
+              disabled={reboxRepublishing || running || latestRun?.status === "running"}
+              className="gap-2 bg-gradient-to-r from-primary to-fuchsia-500 text-white"
+            >
+              {reboxRepublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
+              Rebox + republish all (grid fix)
+            </Button>
             <div className="flex gap-2">
               {failedItems.length > 0 && (
                 <Button variant="outline" onClick={retryFailed} disabled={running || latestRun?.status === "running"} className="gap-2 border-destructive/40 text-destructive hover:text-destructive">
