@@ -941,6 +941,9 @@ export default function GeneratedPagesPage() {
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setTranslateOpen(true)}>
                 <Languages className="h-3 w-3 mr-1" />{t("generatedPages.translate")}
               </Button>
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setBulkWidthOpen(true)}>
+                <LayoutTemplate className="h-3 w-3 mr-1" />Content width
+              </Button>
               <Select onValueChange={(status) => bulkStatusMutation.mutate({ ids: [...selectedIds], status })}>
                 <SelectTrigger className="h-7 w-[100px] text-xs"><SelectValue placeholder={t("generatedPages.setStatus")} /></SelectTrigger>
                 <SelectContent>
