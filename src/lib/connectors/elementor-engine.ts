@@ -1278,7 +1278,13 @@ function container(children: ElementorElement[], node?: HtmlNode): ElementorElem
     settings.grid_columns = { unit: "fr", size: colCount || 3, sizes: [] };
     settings.grid_columns_tablet = { unit: "fr", size: 2, sizes: [] };
     settings.grid_columns_mobile = { unit: "fr", size: 1, sizes: [] };
+    // Force a single explicit grid row (+ auto-flow) so Elementor doesn't reserve
+    // its default empty 2nd row, which was producing large blank white space.
+    // Overflowing items wrap into implicit rows sized to their content.
+    settings.grid_rows_grid = { unit: "fr", size: 1, sizes: [] };
+    settings.grid_auto_flow = "row";
     settings.grid_gaps = { column: "24", row: "24", unit: "px" };
+
   } else if (flexRow || (node && hasClass(node, "row", "columns", "flex", "d-flex"))) {
     settings.flex_direction = "row";
     settings.flex_wrap = "wrap";
