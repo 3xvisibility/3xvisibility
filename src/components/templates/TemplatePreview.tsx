@@ -17,8 +17,10 @@ interface TemplatePreviewProps {
  * Extracts embedded <!-- STYLES --> blocks and injects them into the iframe
  * head for high-fidelity rendering of imported site pages.
  */
-export function TemplatePreview({ html, className = "" }: TemplatePreviewProps) {
+export function TemplatePreview({ html, className = "", debugGrid = false, onGridStats }: TemplatePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const onGridStatsRef = useRef(onGridStats);
+  onGridStatsRef.current = onGridStats;
 
   const getStyledHtml = useCallback((raw: string) => {
     // Extract embedded styles block (from site imports)
