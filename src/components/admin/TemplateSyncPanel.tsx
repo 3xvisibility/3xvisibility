@@ -122,6 +122,58 @@ export function TemplateSyncPanel() {
     }
   };
 
+  // ─── One-click: rebox/reconvert ALL templates, then republish affected pages ─
+  const [reboxRepublishing, setReboxRepublishing] = useState(false);
+  const reboxAndRepublishAll = async () => {
+    setReboxRepublishing(true);
+    try {
+      toast({ title: "Reboxing all templates…", description: "Reconverting every template with the single-row grid fix." });
+      const { data: syncData, error: syncErr } = await supabase.functions.invoke("sync-template-engine", {
+        body: { force: true, trigger_source: "manual" },
+      });
+      if (syncErr) throw syncErr;
+      const runId = (syncData as { run_id?: string })?.run_id;
+
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-latest-run"] });
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-items"] });
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-page-items"] });
+
+      // Collect published pages recorded for this run and republish them.
+      let pageIds: string[] = [];
+      if (runId) {
+        const { data: pages } = await supabase
+          .from("template_backfill_page_items")
+          .select("page_id, page_status")
+          .eq("run_id", runId);
+        pageIds = Array.from(new Set(
+          (pages ?? [])
+            .filter((p: { page_status: string | null }) => (p.page_status || "").toLowerCase() === "published")
+            .map((p: { page_id: string | null }) => p.page_id)
+            .filter(Boolean) as string[],
+        ));
+      }
+
+      if (pageIds.length) {
+        const data = await republishPages(pageIds);
+        toast({
+          title: "Rebox + republish complete",
+          description: `${(syncData as { converted?: number })?.converted ?? 0} templates reboxed · ${data?.published ?? 0} pages republished, ${data?.failed ?? 0} failed.`,
+        });
+      } else {
+        toast({
+          title: "Templates reboxed",
+          description: `${(syncData as { converted?: number })?.converted ?? 0} templates reconverted. No published pages needed republishing.`,
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ["template-backfill-page-items"] });
+    } catch (err) {
+      const msg = await extractEdgeError(err, "Rebox + republish failed");
+      toast({ title: "Rebox + republish failed", description: msg, variant: "destructive" });
+    } finally {
+      setReboxRepublishing(false);
+    }
+  };
+
   const retryFailed = async () => {
     if (!latestRun) return;
     setRunning(true);
