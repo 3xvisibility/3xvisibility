@@ -58,8 +58,11 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, primaryAct
       return typeof data === "string" ? data : null;
     }
   }, [template?.elementor_data]);
+  const [gridDebug, setGridDebug] = useState(false);
+  const [gridStats, setGridStats] = useState<{ grids: number; warnings: number }>({ grids: 0, warnings: 0 });
 
   if (!template) return null;
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
