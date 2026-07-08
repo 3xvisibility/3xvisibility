@@ -1353,16 +1353,65 @@ function imageBox(node: HtmlNode): ElementorElement {
   };
 }
 
+/** Body HTML of a <details> element, excluding its <summary>. */
+function detailsBody(det: HtmlNode): string {
+  return det.children
+    .filter((c) => !(c.tag === "summary"))
+    .map((c) => (c.text !== undefined ? c.text : innerHtml({ ...c, children: [c] } as HtmlNode)))
+    .join("");
+}
+
 function accordion(node: HtmlNode): ElementorElement {
-  const items = findAll(node, (n) => hasClass(n, "accordion-item", "accordion__item", "faq-item")).map((item) => {
-    const head = findNode(item, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "header", "question"));
-    const bodyNode = findNode(item, (n) => hasClass(n, "content", "body", "answer", "panel"));
+  // 1) Native <details>/<summary> disclosure lists.
+  let items = findAll(node, (n) => n.tag === "details").map((det) => {
+    const summary = findNode(det, (n) => n.tag === "summary");
     return {
       _id: genId(),
-      tab_title: head ? textContent(head) : textContent(item).slice(0, 60),
-      tab_content: bodyNode ? innerHtml(bodyNode) : "",
+      tab_title: summary ? textContent(summary) : textContent(det).slice(0, 80),
+      tab_content: innerHtml(det).replace(/<summary[\s\S]*?<\/summary>/i, ""),
     };
   });
+
+  // 2) Class-based FAQ / accordion items (broad set of naming conventions).
+  if (!items.length) {
+    items = findAll(node, (n) =>
+      hasClass(
+        n,
+        "accordion-item", "accordion__item", "accordion-entry",
+        "faq-item", "faq__item", "faq-entry", "faq-row", "faq-question-wrap",
+        "qa-item", "qa-block", "question-item",
+      ),
+    ).map((item) => {
+      const head = findNode(item, (n) =>
+        HEADINGS.has(n.tag) ||
+        hasClass(n, "title", "header", "question", "faq-question", "accordion-header", "accordion-title", "toggle", "summary"),
+      );
+      const bodyNode = findNode(item, (n) =>
+        hasClass(n, "content", "body", "answer", "panel", "faq-answer", "accordion-content", "accordion-body", "collapse"),
+      );
+      return {
+        _id: genId(),
+        tab_title: head ? textContent(head) : textContent(item).slice(0, 80),
+        tab_content: bodyNode ? innerHtml(bodyNode) : "",
+      };
+    });
+  }
+
+  // 3) Last resort: alternating question/answer siblings (h3/h4 + following p).
+  if (!items.length) {
+    const kids = node.children.filter((c) => c.tag);
+    for (let i = 0; i < kids.length; i++) {
+      if (HEADINGS.has(kids[i].tag) || hasClass(kids[i], "question", "faq-question")) {
+        const next = kids[i + 1];
+        items.push({
+          _id: genId(),
+          tab_title: textContent(kids[i]),
+          tab_content: next && !HEADINGS.has(next.tag) ? innerHtml(next) : "",
+        });
+      }
+    }
+  }
+
   return {
     id: genId(),
     elType: "widget",
@@ -1371,6 +1420,7 @@ function accordion(node: HtmlNode): ElementorElement {
     elements: [],
   };
 }
+
 
 function tabs(node: HtmlNode): ElementorElement {
   const panels = findAll(node, (n) => hasClass(n, "tab-pane", "tab-panel", "tabs__panel", "tab-content"));
