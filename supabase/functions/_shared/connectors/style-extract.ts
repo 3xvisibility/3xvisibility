@@ -1212,12 +1212,21 @@ export function styleContainer(settings: Record<string, unknown>, p: StyleProps,
     if (cols > 0) {
       settings.grid_columns_grid = { unit: "fr", size: cols, sizes: [] };
     }
+    // Elementor grid containers default to grid_rows_grid = 2, which reserves an
+    // empty second row (grid-template-rows: repeat(2, 1fr)) and produces a large
+    // block of extra white space whenever the real content is a single row of
+    // cards. Force ONE explicit row + auto-flow so the grid is always exactly one
+    // row tall and any overflowing items wrap into implicit rows that grow to fit
+    // their content instead of being pre-allocated as blank space.
+    settings.grid_rows_grid = { unit: "fr", size: 1, sizes: [] };
+    settings.grid_auto_flow = "row";
     // Preserve the EXACT track sizing (e.g. "1.1fr 0.9fr") so two-column heroes
     // keep their real proportions instead of collapsing to a single column.
     if (p.gridTemplateColumns && p.gridTemplateColumns !== "none") {
       settings.__xxxv_grid_template_columns = p.gridTemplateColumns;
     }
   }
+
   if (p.alignItems) settings.flex_align_items = p.alignItems;
   if (p.justifyContent) settings.flex_justify_content = p.justifyContent;
   const gap = pxSize(p.gap);
