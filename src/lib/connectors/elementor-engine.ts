@@ -943,6 +943,51 @@ function findAll(node: HtmlNode, pred: (n: HtmlNode) => boolean): HtmlNode[] {
   return out;
 }
 
+/**
+ * Find the lowest node that still contains ALL descendants matching `isTarget`.
+ * Used so a FAQ/testimonial list wrapped inside a larger section collapses only
+ * the list itself into a widget, while the section keeps its heading and other
+ * content instead of being replaced entirely by the accordion/carousel.
+ * Returns null when fewer than 2 targets exist.
+ */
+function lowestCommonWrapper(node: HtmlNode, isTarget: (n: HtmlNode) => boolean): HtmlNode | null {
+  const total = findAll(node, isTarget).length;
+  if (total < 2) return null;
+  let cur = node;
+  for (;;) {
+    let next: HtmlNode | null = null;
+    for (const c of cur.children) {
+      if (!c.tag) continue;
+      const cnt = (isTarget(c) ? 1 : 0) + findAll(c, isTarget).length;
+      if (cnt === total) {
+        next = c;
+        break;
+      }
+    }
+    if (next && next !== cur) cur = next;
+    else break;
+  }
+  return cur;
+}
+
+const isFaqItemNode = (n: HtmlNode): boolean =>
+  n.tag === "details" ||
+  hasClass(
+    n,
+    "accordion-item", "accordion__item", "accordion-entry",
+    "faq-item", "faq__item", "faq-entry", "faq-row", "faq-question-wrap",
+    "qa-item", "qa-block", "question-item",
+  );
+
+const isTestimonialSlideNode = (n: HtmlNode): boolean =>
+  n.tag === "blockquote" ||
+  hasClass(
+    n,
+    "testimonial-card", "testimonial__card", "testimonial-item", "testimonial__item",
+    "review-card", "review-item", "quote-card", "swiper-slide", "slick-slide",
+    "splide__slide", "carousel-item", "testimonial-slide", "testimonial", "review", "quote",
+  );
+
 function iconList(node: HtmlNode): ElementorElement {
   const items = node.children
     .filter((c) => c.tag === "li")
