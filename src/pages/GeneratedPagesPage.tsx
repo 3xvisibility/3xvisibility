@@ -1218,7 +1218,7 @@ export default function GeneratedPagesPage() {
 
       {/* Preview */}
       <Dialog open={!!widthPage} onOpenChange={(open) => !open && setWidthPage(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Content width — {widthPage?.title}</DialogTitle>
           </DialogHeader>
