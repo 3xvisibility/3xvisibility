@@ -1055,6 +1055,9 @@ slug: ${fields.slug}`,
           <Button variant="outline" size="sm" onClick={() => { [...selectedIds].forEach(id => { const t = templates.find(t => t.id === id); if (t) exportTemplate(t); }); }}>
             <Download className="h-3.5 w-3.5 mr-1.5" /> Export
           </Button>
+          <Button variant="outline" size="sm" onClick={() => setBulkWidthOpen(true)}>
+            <LayoutTemplate className="h-3.5 w-3.5 mr-1.5" /> Content width
+          </Button>
           <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
             <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete
           </Button>
