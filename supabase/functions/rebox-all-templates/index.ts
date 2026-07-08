@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     // requested workspace when provided).
     let query = supabase
       .from("templates")
-      .select("id, name, content, schema_type, source_marketplace_id, container_width, workspace_id, user_id");
+      .select("id, name, content, schema_type, source_marketplace_id, container_width, container_width_tablet, container_width_mobile, gutter_desktop, gutter_tablet, gutter_mobile, workspace_id, user_id");
     if (workspaceId) {
       query = query.eq("workspace_id", workspaceId);
     } else {
@@ -115,6 +115,11 @@ Deno.serve(async (req) => {
       schema_type?: string | null;
       source_marketplace_id?: string | null;
       container_width?: number | null;
+      container_width_tablet?: number | null;
+      container_width_mobile?: number | null;
+      gutter_desktop?: number | null;
+      gutter_tablet?: number | null;
+      gutter_mobile?: number | null;
       workspace_id?: string | null;
       user_id?: string | null;
     }>;
@@ -160,8 +165,21 @@ Deno.serve(async (req) => {
           containerWidth = await resolveWsWidth(tplRow.workspace_id);
         }
         if (containerWidth > 0) {
+          const clampG = (raw: unknown): number | null => {
+            if (raw === null || raw === undefined) return null;
+            const n = Number(raw);
+            if (!Number.isFinite(n) || n < 0) return null;
+            return Math.min(Math.round(n), 200);
+          };
           try {
-            const boxed = enforceBoxedContentWidth(JSON.stringify(tree), containerWidth);
+            const boxed = enforceBoxedContentWidth(JSON.stringify(tree), {
+              width: containerWidth,
+              widthTablet: tplRow.container_width_tablet ?? null,
+              widthMobile: tplRow.container_width_mobile ?? null,
+              gutterDesktop: clampG(tplRow.gutter_desktop),
+              gutterTablet: clampG(tplRow.gutter_tablet),
+              gutterMobile: clampG(tplRow.gutter_mobile),
+            });
             const parsed = JSON.parse(boxed);
             if (Array.isArray(parsed) && parsed.length > 0) tree = parsed;
           } catch {

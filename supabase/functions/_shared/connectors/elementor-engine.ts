@@ -2245,8 +2245,26 @@ export function enforceNativeElementorData(
  * `widthPx <= 0` is a no-op (feature disabled). Accepts and returns the
  * serialized JSON string used as `payload.elementor_data`.
  */
-export function enforceBoxedContentWidth(dataStr: string, widthPx: number): string {
-  if (!dataStr || !Number.isFinite(widthPx) || widthPx <= 0) return dataStr;
+export type BoxContentOptions = {
+  /** Desktop boxed content width in px (required, > 0). */
+  width: number;
+  /** Tablet content width in px, or null/0 to stay fluid (100%). */
+  widthTablet?: number | null;
+  /** Mobile content width in px, or null/0 to stay fluid (100%). */
+  widthMobile?: number | null;
+  /** Horizontal gutter (px) inside the boxed container per breakpoint. */
+  gutterDesktop?: number | null;
+  gutterTablet?: number | null;
+  gutterMobile?: number | null;
+};
+
+export function enforceBoxedContentWidth(
+  dataStr: string,
+  widthOrOpts: number | BoxContentOptions,
+): string {
+  const opts: BoxContentOptions =
+    typeof widthOrOpts === "number" ? { width: widthOrOpts } : widthOrOpts;
+  if (!dataStr || !opts || !Number.isFinite(opts.width) || opts.width <= 0) return dataStr;
   let tree: ElementorElement[];
   try {
     tree = JSON.parse(dataStr);
@@ -2255,25 +2273,37 @@ export function enforceBoxedContentWidth(dataStr: string, widthPx: number): stri
   }
   if (!Array.isArray(tree) || tree.length === 0) return dataStr;
 
-  const size = Math.round(widthPx);
-  const boxedDim = { unit: "px", size, sizes: [] };
-  // On tablet/mobile the fixed px width would overflow the viewport, so the box
-  // becomes fluid (100% of the full-width band) and relies on padding for gutters.
+  const px = (n: number) => ({ unit: "px", size: Math.round(n), sizes: [] });
   const fluidDim = { unit: "%", size: 100, sizes: [] };
+  const gutter = (n: number) => ({
+    unit: "px",
+    top: "0",
+    right: String(Math.max(Math.round(n), 0)),
+    bottom: "0",
+    left: String(Math.max(Math.round(n), 0)),
+    isLinked: false,
+  });
+
+  const boxedDim = px(opts.width);
+  // Fixed px on desktop; per-breakpoint px if provided, else fluid (100%).
+  const tabletDim = opts.widthTablet && opts.widthTablet > 0 ? px(opts.widthTablet) : fluidDim;
+  const mobileDim = opts.widthMobile && opts.widthMobile > 0 ? px(opts.widthMobile) : fluidDim;
   // Centered inner box (matches Elementor's boxed container: fixed width + auto margins).
   const marginAuto = { unit: "px", top: "0", right: "auto", bottom: "0", left: "auto", isLinked: false };
   const zeroPad = { unit: "px", top: "0", right: "0", bottom: "0", left: "0", isLinked: false };
-  // Responsive gutters so fluid content never touches the screen edge.
-  const padTablet = { unit: "px", top: "0", right: "20", bottom: "0", left: "20", isLinked: false };
-  const padMobile = { unit: "px", top: "0", right: "16", bottom: "0", left: "16", isLinked: false };
+  // Editable responsive gutters so content never touches the screen edge.
+  const padDesktop = gutter(opts.gutterDesktop ?? 0);
+  const padTablet = gutter(opts.gutterTablet ?? 20);
+  const padMobile = gutter(opts.gutterMobile ?? 16);
   // Settings applied to the inner boxed container.
   const boxedSettings = {
     content_width: "boxed",
     width: boxedDim,
-    width_tablet: fluidDim,
-    width_mobile: fluidDim,
+    width_tablet: tabletDim,
+    width_mobile: mobileDim,
     boxed_width: boxedDim,
     margin: marginAuto,
+    padding: padDesktop,
     padding_tablet: padTablet,
     padding_mobile: padMobile,
   };

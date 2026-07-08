@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     // Load the page and confirm the caller owns it (or is a platform admin).
     const { data: page } = await supabase
       .from("generated_pages")
-      .select("id, user_id, campaign_id, workspace_id, container_width")
+      .select("id, user_id, campaign_id, workspace_id, container_width, container_width_tablet, container_width_mobile, gutter_desktop, gutter_tablet, gutter_mobile")
       .eq("id", pageId)
       .maybeSingle();
     if (!page) return json({ error: "Page not found" }, 404);
@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
 
     const { data: tpl } = await supabase
       .from("templates")
-      .select("id, name, content, schema_type, source_marketplace_id, container_width")
+      .select("id, name, content, schema_type, source_marketplace_id, container_width, container_width_tablet, container_width_mobile, gutter_desktop, gutter_tablet, gutter_mobile")
       .eq("id", templateId)
       .maybeSingle();
     const tplRow = tpl as
@@ -148,8 +148,24 @@ Deno.serve(async (req) => {
       }
     }
     if (containerWidth > 0) {
+      const clampG = (raw: unknown): number | null => {
+        if (raw === null || raw === undefined) return null;
+        const n = Number(raw);
+        if (!Number.isFinite(n) || n < 0) return null;
+        return Math.min(Math.round(n), 200);
+      };
+      const p = page as Record<string, number | null | undefined>;
+      const t = tplRow as unknown as Record<string, number | null | undefined>;
+      const boxOpts = {
+        width: containerWidth,
+        widthTablet: p.container_width_tablet ?? t.container_width_tablet ?? null,
+        widthMobile: p.container_width_mobile ?? t.container_width_mobile ?? null,
+        gutterDesktop: clampG(p.gutter_desktop ?? t.gutter_desktop),
+        gutterTablet: clampG(p.gutter_tablet ?? t.gutter_tablet),
+        gutterMobile: clampG(p.gutter_mobile ?? t.gutter_mobile),
+      };
       try {
-        const boxed = enforceBoxedContentWidth(JSON.stringify(tree), containerWidth);
+        const boxed = enforceBoxedContentWidth(JSON.stringify(tree), boxOpts);
         const parsed = JSON.parse(boxed);
         if (Array.isArray(parsed) && parsed.length > 0) tree = parsed;
       } catch {

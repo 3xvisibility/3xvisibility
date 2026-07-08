@@ -824,30 +824,60 @@ async function handlePublishPages(req: Request): Promise<Response> {
       return Math.min(Math.max(Math.round(n), 320), 1920);
     };
 
-    // Per-template boxed width override (NULL = inherit). Cached by template id.
-    const templateWidthCache = new Map<string, number | null>();
-    const resolveTemplateWidth = async (campaignId: string | null | undefined): Promise<number | null> => {
+    // Clamp a gutter (side padding) preference to a sane range.
+    const clampGutter = (raw: unknown): number | null => {
+      if (raw === null || raw === undefined) return null;
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n < 0) return null;
+      return Math.min(Math.round(n), 200);
+    };
+
+    type BoxCols = {
+      container_width?: number | null;
+      container_width_tablet?: number | null;
+      container_width_mobile?: number | null;
+      gutter_desktop?: number | null;
+      gutter_tablet?: number | null;
+      gutter_mobile?: number | null;
+    };
+    type BoxOpts = {
+      width: number;
+      widthTablet?: number | null;
+      widthMobile?: number | null;
+      gutterDesktop?: number | null;
+      gutterTablet?: number | null;
+      gutterMobile?: number | null;
+    };
+
+    // Per-template box override (NULL width = inherit). Cached by template id.
+    const templateBoxCache = new Map<string, BoxCols | null>();
+    const resolveTemplateBox = async (campaignId: string | null | undefined): Promise<BoxCols | null> => {
       if (!campaignId) return null;
       try {
         const { data: campaign } = await supabase
           .from("campaigns").select("template_id").eq("id", campaignId).maybeSingle();
         const templateId = (campaign as { template_id?: string | null } | null)?.template_id;
         if (!templateId) return null;
-        if (templateWidthCache.has(templateId)) return templateWidthCache.get(templateId)!;
+        if (templateBoxCache.has(templateId)) return templateBoxCache.get(templateId)!;
         const { data: tpl } = await supabase
-          .from("templates").select("container_width").eq("id", templateId).maybeSingle();
-        const raw = (tpl as { container_width?: number | null } | null)?.container_width;
-        const val = raw === null || raw === undefined ? null : clampWidth(raw);
-        templateWidthCache.set(templateId, val);
+          .from("templates")
+          .select("container_width, container_width_tablet, container_width_mobile, gutter_desktop, gutter_tablet, gutter_mobile")
+          .eq("id", templateId).maybeSingle();
+        const val = (tpl as BoxCols | null) ?? null;
+        templateBoxCache.set(templateId, val);
         return val;
       } catch (_e) {
         return null;
       }
     };
 
-    // Resolve the effective boxed content width for a stored page using the
-    // override priority: page override -> template override -> workspace default.
-    // A value of 0 (page or template) explicitly disables boxing (full width).
+    // Backward-compatible width-only resolver (page -> template -> workspace).
+    const resolveTemplateWidth = async (campaignId: string | null | undefined): Promise<number | null> => {
+      const tpl = await resolveTemplateBox(campaignId);
+      const raw = tpl?.container_width;
+      return raw === null || raw === undefined ? null : clampWidth(raw);
+    };
+
     const resolvePageWidth = async (
       page: { container_width?: number | null; campaign_id?: string | null; workspace_id?: string | null },
       workspaceId: string | null | undefined,
@@ -859,6 +889,29 @@ async function handlePublishPages(req: Request): Promise<Response> {
       if (tplWidth !== null) return tplWidth;
       return await resolveContainerWidth(workspaceId ?? page.workspace_id);
     };
+
+    // Resolve full responsive box options for a stored page. Each responsive
+    // field falls back page override -> template override -> engine default.
+    const resolvePageBox = async (
+      page: BoxCols & { campaign_id?: string | null; workspace_id?: string | null },
+      workspaceId: string | null | undefined,
+    ): Promise<BoxOpts> => {
+      const width = await resolvePageWidth(page, workspaceId);
+      const tpl = await resolveTemplateBox(page.campaign_id);
+      const pick = <K extends keyof BoxCols>(key: K): number | null =>
+        page[key] !== null && page[key] !== undefined
+          ? clampGutter(page[key])
+          : clampGutter(tpl?.[key]);
+      return {
+        width,
+        widthTablet: page.container_width_tablet ?? tpl?.container_width_tablet ?? null,
+        widthMobile: page.container_width_mobile ?? tpl?.container_width_mobile ?? null,
+        gutterDesktop: pick("gutter_desktop"),
+        gutterTablet: pick("gutter_tablet"),
+        gutterMobile: pick("gutter_mobile"),
+      };
+    };
+
 
     // Admin override: allow platform admins to (re)publish pages owned by other users.
     let isAdmin = false;
@@ -1088,11 +1141,19 @@ async function handlePublishPages(req: Request): Promise<Response> {
               ? clampWidth(dpRaw)
               : await resolveContainerWidth(workspaceId);
             if (boxWidth > 0) {
+              const dpc = dp as BoxCols;
               payload.elementor_data = enforceBoxedContentWidth(
                 (payload as { elementor_data?: string }).elementor_data as string,
-                boxWidth,
+                {
+                  width: boxWidth,
+                  widthTablet: dpc.container_width_tablet ?? null,
+                  widthMobile: dpc.container_width_mobile ?? null,
+                  gutterDesktop: clampGutter(dpc.gutter_desktop),
+                  gutterTablet: clampGutter(dpc.gutter_tablet),
+                  gutterMobile: clampGutter(dpc.gutter_mobile),
+                },
               );
-              step("Enforcing container width", "ok", `Boxed content width set to ${boxWidth}px`);
+              step("Enforcing container width", "ok", `Boxed content width set to ${boxWidth}px (responsive)`);
             }
           }
 
@@ -1703,13 +1764,13 @@ async function handlePublishPages(req: Request): Promise<Response> {
           (payload as { elementor_mode?: string }).elementor_mode === "native" &&
           typeof (payload as { elementor_data?: string }).elementor_data === "string"
         ) {
-          const boxWidth = await resolvePageWidth(page as { container_width?: number | null; campaign_id?: string | null; workspace_id?: string | null }, page.workspace_id || body.workspace_id);
-          if (boxWidth > 0) {
+          const box = await resolvePageBox(page as BoxCols & { campaign_id?: string | null; workspace_id?: string | null }, page.workspace_id || body.workspace_id);
+          if (box.width > 0) {
             payload.elementor_data = enforceBoxedContentWidth(
               (payload as { elementor_data?: string }).elementor_data as string,
-              boxWidth,
+              box,
             );
-            step("Enforcing container width", "ok", `Boxed content width set to ${boxWidth}px`);
+            step("Enforcing container width", "ok", `Boxed content width set to ${box.width}px (responsive)`);
           }
         }
 
