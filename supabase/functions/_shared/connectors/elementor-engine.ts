@@ -1353,15 +1353,8 @@ function imageBox(node: HtmlNode): ElementorElement {
   };
 }
 
-/** Body HTML of a <details> element, excluding its <summary>. */
-function detailsBody(det: HtmlNode): string {
-  return det.children
-    .filter((c) => !(c.tag === "summary"))
-    .map((c) => (c.text !== undefined ? c.text : innerHtml({ ...c, children: [c] } as HtmlNode)))
-    .join("");
-}
-
 function accordion(node: HtmlNode): ElementorElement {
+
   // 1) Native <details>/<summary> disclosure lists.
   let items = findAll(node, (n) => n.tag === "details").map((det) => {
     const summary = findNode(det, (n) => n.tag === "summary");
