@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     // requested workspace when provided).
     let query = supabase
       .from("templates")
-      .select("id, name, content, schema_type, source_marketplace_id, container_width, workspace_id, user_id");
+      .select("id, name, content, schema_type, source_marketplace_id, container_width, container_width_tablet, container_width_mobile, gutter_desktop, gutter_tablet, gutter_mobile, workspace_id, user_id");
     if (workspaceId) {
       query = query.eq("workspace_id", workspaceId);
     } else {
