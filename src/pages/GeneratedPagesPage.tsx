@@ -17,6 +17,7 @@ import {
   MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Wrench, Send as SendIcon, LayoutTemplate
 } from "lucide-react";
 import ContainerWidthControl from "@/components/settings/ContainerWidthControl";
+import BulkBoxSettingsDialog from "@/components/settings/BulkBoxSettingsDialog";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
 import { RepublishDiffDialog, type RepublishSnapshot } from "@/components/generated-pages/RepublishDiffDialog";
