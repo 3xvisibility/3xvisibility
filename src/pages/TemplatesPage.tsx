@@ -47,6 +47,7 @@ import { computeMarketplaceVersion } from "@/lib/marketplace-versioning";
 import { applyTemplateVariables, autoExtractTemplateVariables } from "@/lib/template-variable-extractor";
 import ContainerWidthControl from "@/components/settings/ContainerWidthControl";
 import BulkBoxSettingsDialog from "@/components/settings/BulkBoxSettingsDialog";
+import { SectionReconvertStatusPanel, type SectionReconvertRun } from "@/components/templates/SectionReconvertStatusPanel";
 import {
   type SectionVariants, DEFAULT_VARIANTS, summarizeVariants,
   HERO_VARIANTS, GRID_VARIANTS, CTA_VARIANTS, FAQ_VARIANTS,
@@ -79,6 +80,8 @@ export default function TemplatesPage() {
   const [bulkWidthOpen, setBulkWidthOpen] = useState(false);
   const [reboxedIds, setReboxedIds] = useState<string[]>([]);
   const [republishOpen, setRepublishOpen] = useState(false);
+  const [sectionRun, setSectionRun] = useState<SectionReconvertRun | null>(null);
+  const [sectionStatusOpen, setSectionStatusOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<Template | null>(null);
   const [duplicateTarget, setDuplicateTarget] = useState<Template | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -211,24 +214,27 @@ export default function TemplatesPage() {
         body: { template_ids: input.ids, sections: input.sections },
       });
       if (error) throw error;
-      return data as { updated: number; total: number; updatedIds?: string[] };
+      return { ...(data as { updated: number; total: number; updatedIds?: string[]; results?: SectionReconvertRun["results"] }), sections: input.sections };
     },
     onSuccess: (data) => {
-      toast({
-        title: "Sections reconverted",
-        description: `Updated FAQ/Testimonial widgets on ${data.updated} of ${data.total} template(s). The rest of each design is unchanged.`,
+      setSectionRun({
+        sections: data.sections,
+        total: data.total,
+        updated: data.updated,
+        results: data.results ?? [],
       });
+      setSectionStatusOpen(true);
       queryClient.invalidateQueries({ queryKey: ["templates"] });
       const ids = data.updatedIds ?? [];
       if (ids.length > 0) {
         setReboxedIds(ids);
-        setRepublishOpen(true);
       }
     },
     onError: (e) => {
       toast({ variant: "destructive", title: "Reconvert failed", description: friendlyError(e instanceof Error ? e.message : String(e)) });
     },
   });
+
 
 
 
@@ -1793,6 +1799,15 @@ slug: ${fields.slug}`,
       />
 
       {/* Republish after rebox */}
+      <SectionReconvertStatusPanel
+        open={sectionStatusOpen}
+        onOpenChange={(o) => {
+          setSectionStatusOpen(o);
+          if (!o && reboxedIds.length > 0) setRepublishOpen(true);
+        }}
+        run={sectionRun}
+      />
+
       <AlertDialog open={republishOpen} onOpenChange={setRepublishOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
