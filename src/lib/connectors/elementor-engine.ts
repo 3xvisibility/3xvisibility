@@ -760,6 +760,89 @@ const ICON_KEYWORD_MAP: Array<{ re: RegExp; icon: string }> = [
 ];
 
 
+/* Common emoji -> Font Awesome free icon token. Templates frequently use raw
+ * emoji as feature "icons"; Elementor cannot render those, so we convert every
+ * emoji into a native Icon widget glyph from the Font Awesome free library. */
+const EMOJI_ICON_MAP: Array<[string, string]> = [
+  ["💳", "fa-credit-card"], ["📊", "fa-chart-column"], ["📈", "fa-chart-line"],
+  ["📉", "fa-chart-line"], ["🔒", "fa-lock"], ["🔐", "fa-lock"], ["🔓", "fa-lock-open"],
+  ["🌍", "fa-globe"], ["🌎", "fa-globe"], ["🌏", "fa-globe"], ["🌐", "fa-globe"],
+  ["⚡", "fa-bolt"], ["🤝", "fa-handshake"], ["🚀", "fa-rocket"], ["✅", "fa-circle-check"],
+  ["✔️", "fa-check"], ["✔", "fa-check"], ["💡", "fa-lightbulb"], ["⚙️", "fa-gear"],
+  ["⚙", "fa-gear"], ["⏰", "fa-clock"], ["🕐", "fa-clock"], ["⏱️", "fa-stopwatch"],
+  ["⏳", "fa-hourglass-half"], ["📞", "fa-phone"], ["☎️", "fa-phone"], ["✉️", "fa-envelope"],
+  ["📧", "fa-envelope"], ["👤", "fa-user"], ["👥", "fa-users"], ["❤️", "fa-heart"],
+  ["❤", "fa-heart"], ["⭐", "fa-star"], ["⭐️", "fa-star"], ["🌟", "fa-star"],
+  ["🛒", "fa-cart-shopping"], ["🛍️", "fa-bag-shopping"], ["💰", "fa-sack-dollar"],
+  ["💵", "fa-money-bill"], ["💲", "fa-dollar-sign"], ["☁️", "fa-cloud"], ["📱", "fa-mobile-screen"],
+  ["💻", "fa-laptop"], ["🖥️", "fa-desktop"], ["👨‍💻", "fa-code"], ["🎨", "fa-paintbrush"],
+  ["🔍", "fa-magnifying-glass"], ["🔎", "fa-magnifying-glass"], ["📍", "fa-location-dot"],
+  ["🗺️", "fa-map-location-dot"], ["📅", "fa-calendar"], ["📆", "fa-calendar"], ["🎁", "fa-gift"],
+  ["🏆", "fa-trophy"], ["🥇", "fa-medal"], ["👍", "fa-thumbs-up"], ["👎", "fa-thumbs-down"],
+  ["🔥", "fa-fire"], ["📚", "fa-book"], ["📖", "fa-book-open"], ["▶️", "fa-play"],
+  ["📷", "fa-camera"], ["📸", "fa-camera"], ["💬", "fa-comment"], ["🗨️", "fa-comments"],
+  ["🚚", "fa-truck"], ["🎧", "fa-headphones"], ["🎙️", "fa-microphone"], ["🏠", "fa-house"],
+  ["🏡", "fa-house"], ["🎯", "fa-bullseye"], ["♾️", "fa-infinity"], ["🔄", "fa-arrows-rotate"],
+  ["🔔", "fa-bell"], ["🚩", "fa-flag"], ["🏁", "fa-flag-checkered"], ["🏷️", "fa-tag"],
+  ["🔑", "fa-key"], ["🛡️", "fa-shield-halved"], ["💎", "fa-gem"], ["👑", "fa-crown"],
+  ["📢", "fa-bullhorn"], ["📣", "fa-bullhorn"], ["📰", "fa-newspaper"], ["❓", "fa-circle-question"],
+  ["❔", "fa-circle-question"], ["ℹ️", "fa-circle-info"], ["⚠️", "fa-triangle-exclamation"],
+  ["🚫", "fa-ban"], ["👁️", "fa-eye"], ["💪", "fa-dumbbell"], ["🍽️", "fa-utensils"],
+  ["☕", "fa-mug-hot"], ["💼", "fa-briefcase"], ["🏢", "fa-building"], ["🎓", "fa-graduation-cap"],
+  ["🧠", "fa-brain"], ["🤖", "fa-robot"], ["🔧", "fa-wrench"], ["🔨", "fa-hammer"],
+  ["🛠️", "fa-screwdriver-wrench"], ["🧭", "fa-compass"], ["✈️", "fa-plane"], ["🚗", "fa-car"],
+  ["🚲", "fa-bicycle"], ["🌱", "fa-seedling"], ["🌿", "fa-leaf"], ["🌳", "fa-tree"],
+  ["☀️", "fa-sun"], ["🌙", "fa-moon"], ["💧", "fa-droplet"], ["♻️", "fa-recycle"],
+  ["📌", "fa-thumbtack"], ["🔖", "fa-bookmark"], ["🧲", "fa-magnet"], ["🧩", "fa-puzzle-piece"],
+  ["📁", "fa-folder"], ["📂", "fa-folder-open"], ["📄", "fa-file"], ["📃", "fa-file-lines"],
+  ["🔗", "fa-link"], ["⬇️", "fa-download"], ["⬆️", "fa-upload"], ["✏️", "fa-pen"],
+  ["📝", "fa-pen-to-square"], ["🗑️", "fa-trash"], ["📋", "fa-clipboard"], ["🎉", "fa-party-horn"],
+  ["🎊", "fa-party-horn"], ["🏥", "fa-hospital"], ["💊", "fa-pills"], ["🩺", "fa-stethoscope"],
+  ["🦷", "fa-tooth"], ["🧪", "fa-flask"], ["🔬", "fa-microscope"], ["🧬", "fa-dna"],
+  ["🛰️", "fa-satellite-dish"], ["🖨️", "fa-print"], ["💾", "fa-floppy-disk"], ["🔋", "fa-battery-full"],
+  ["🔌", "fa-plug"], ["📶", "fa-wifi"], ["🎮", "fa-gamepad"], ["🎲", "fa-dice"],
+  ["🏔️", "fa-mountain"], ["🗓️", "fa-calendar-days"], ["📦", "fa-box"], ["🧾", "fa-receipt"],
+  ["💯", "fa-percent"], ["⚖️", "fa-scale-balanced"], ["🏭", "fa-industry"], ["🖐️", "fa-hand"],
+  ["👋", "fa-hand"], ["🙌", "fa-hands-clapping"], ["🤲", "fa-hands-holding"], ["✨", "fa-wand-magic-sparkles"],
+  ["🌈", "fa-rainbow"], ["🎬", "fa-clapperboard"], ["🎵", "fa-music"], ["🎶", "fa-music"],
+];
+
+/** Extended pictographic emoji detector. */
+const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{2122}\u{2139}]/u;
+
+/** Return the first emoji found in a string, or "". */
+function firstEmoji(text: string): string {
+  for (const [emoji] of EMOJI_ICON_MAP) {
+    if (text.includes(emoji)) return emoji;
+  }
+  const m = text.match(EMOJI_RE);
+  return m ? m[0] : "";
+}
+
+/** True when a string is purely (or almost purely) emoji — no meaningful words. */
+function isEmojiOnly(text: string): boolean {
+  const stripped = text.replace(/[\s\u{FE0F}\u{200D}]/gu, "");
+  if (!stripped) return false;
+  return EMOJI_RE.test(stripped) && !/[a-z0-9\u0980-\u09FF]/i.test(stripped);
+}
+
+/** True when a node's own text content is just an emoji glyph. */
+function isEmojiNode(node: HtmlNode): boolean {
+  if (node.tag === "img" || node.tag === "svg") return false;
+  const t = textContent(node);
+  return t.length > 0 && t.length <= 8 && isEmojiOnly(t);
+}
+
+/** Map an emoji character to a Font Awesome free icon token, or null. */
+function emojiIconToken(text: string): string | null {
+  const emoji = firstEmoji(text);
+  if (!emoji) return null;
+  for (const [glyph, icon] of EMOJI_ICON_MAP) {
+    if (emoji === glyph || text.includes(glyph)) return icon;
+  }
+  return "fa-star";
+}
+
 /** Map a keyword string (class names / svg id) to a free FA solid icon token. */
 function keywordIconToken(text: string): string | null {
   const t = text.toLowerCase();
