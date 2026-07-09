@@ -270,6 +270,18 @@ class XXXV_Elementor {
 			//          when edited in Elementor. Best-effort; never fatal.
 			self::apply_template_globals( $elementor_data, $elementor_css, $body );
 
+			// ---- (6a) Persist this page's template CSS into the theme's
+			//          Customizer "Additional CSS" so every template style rule
+			//          applies site-wide exactly like a manual customization.
+			//          Each page owns a marker-wrapped block: republishing the
+			//          same page replaces only its block, and a brand-new page
+			//          appends its block after the existing ones. Elementor edits
+			//          are untouched — they live in the page's own Elementor data
+			//          and keep updating independently. Best-effort; never fatal.
+			self::apply_template_css_to_customizer( $post_id, $elementor_css );
+
+
+
 			// ---- (6b) Generate / refresh global (kit) CSS ---------------------
 			self::regenerate_global_css();
 
