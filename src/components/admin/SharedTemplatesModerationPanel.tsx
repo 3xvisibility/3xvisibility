@@ -245,8 +245,7 @@ export function SharedTemplatesModerationPanel() {
               Remove
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+        </AlertDialogContent>
       </AlertDialog>
     </div>
   );
