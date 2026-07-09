@@ -833,14 +833,18 @@ function isEmojiNode(node: HtmlNode): boolean {
   return t.length > 0 && t.length <= 8 && isEmojiOnly(t);
 }
 
-/** Map an emoji character to a Font Awesome free icon token, or null. */
+/**
+ * Map an emoji character to a Font Awesome free icon token.
+ * Returns null when the emoji is not in the map so callers can fall back to
+ * keeping the original text or a default icon instead of guessing wrong.
+ */
 function emojiIconToken(text: string): string | null {
   const emoji = firstEmoji(text);
   if (!emoji) return null;
   for (const [glyph, icon] of EMOJI_ICON_MAP) {
     if (emoji === glyph || text.includes(glyph)) return icon;
   }
-  return "fa-star";
+  return null;
 }
 
 /** Map a keyword string (class names / svg id) to a free FA solid icon token. */
