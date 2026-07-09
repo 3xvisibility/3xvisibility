@@ -1452,7 +1452,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   const directImg = findNode(node, (n) => n.tag === "img");
   const iconNode = findNode(
     node,
-    (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
+    (n) => n.tag === "i" || n.tag === "svg" || isEmojiNode(n) || hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
   );
   const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "heading", "name"));
   const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description", "subtitle"));
