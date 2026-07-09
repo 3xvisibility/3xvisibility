@@ -2723,6 +2723,11 @@ class XXXV_Elementor {
 			$applied = true;
 		}
 
+		// Site-wide + CDN invalidation with a cache-buster bump so the updated
+		// global colors/typography appear immediately on the live site (this is a
+		// site-level change, so page-scoped purges alone are not enough).
+		self::purge_all_caches( 0 );
+
 		return rest_ensure_response(
 			array(
 				'ok'     => (bool) $applied,
