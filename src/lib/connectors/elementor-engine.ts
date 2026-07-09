@@ -1510,6 +1510,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
         n.tag === "img" ||
         n.tag === "i" ||
         n.tag === "svg" ||
+        isEmojiNode(n) ||
         hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
     ) && selfOrDescendant(c, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description")),
   );
