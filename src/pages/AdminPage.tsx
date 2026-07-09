@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play, Mail, RefreshCw } from "lucide-react";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play, Mail, RefreshCw, Store } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
@@ -28,6 +28,7 @@ import { AiUsageReportPanel } from "@/components/admin/AiUsageReportPanel";
 import { AdminOverviewPanel } from "@/components/admin/AdminOverviewPanel";
 import { ContactInboxPanel } from "@/components/admin/ContactInboxPanel";
 import { TemplateSyncPanel } from "@/components/admin/TemplateSyncPanel";
+import { SharedTemplatesModerationPanel } from "@/components/admin/SharedTemplatesModerationPanel";
 import { UserDetailDialog } from "@/components/admin/UserDetailDialog";
 import { EditUserProfileDialog } from "@/components/admin/EditUserProfileDialog";
 
@@ -949,6 +950,7 @@ export default function AdminPage() {
           <TabsTrigger value="connections" className="text-xs gap-1"><AlertCircle className="h-3 w-3" />Connections</TabsTrigger>
           <TabsTrigger value="ai-access" className="text-xs gap-1"><ShieldCheck className="h-3 w-3" />AI Access</TabsTrigger>
           <TabsTrigger value="template-sync" className="text-xs gap-1"><RefreshCw className="h-3 w-3" />Template Sync</TabsTrigger>
+          <TabsTrigger value="marketplace" className="text-xs gap-1"><Store className="h-3 w-3" />Marketplace</TabsTrigger>
           <TabsTrigger value="settings" className="text-xs gap-1"><UserCog className="h-3 w-3" />Settings</TabsTrigger>
         </TabsList>
 
@@ -995,6 +997,11 @@ export default function AdminPage() {
         <TabsContent value="template-sync" className="space-y-4">
           <TemplateSyncPanel />
         </TabsContent>
+
+        <TabsContent value="marketplace" className="space-y-4">
+          <SharedTemplatesModerationPanel />
+        </TabsContent>
+
 
         {/* Activity feed tab */}
         <TabsContent value="activity" className="space-y-4">
