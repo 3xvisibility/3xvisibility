@@ -833,14 +833,18 @@ function isEmojiNode(node: HtmlNode): boolean {
   return t.length > 0 && t.length <= 8 && isEmojiOnly(t);
 }
 
-/** Map an emoji character to a Font Awesome free icon token, or null. */
+/**
+ * Map an emoji character to a Font Awesome free icon token.
+ * Returns null when the emoji is not in the map so callers can fall back to
+ * keeping the original text or a default icon instead of guessing wrong.
+ */
 function emojiIconToken(text: string): string | null {
   const emoji = firstEmoji(text);
   if (!emoji) return null;
   for (const [glyph, icon] of EMOJI_ICON_MAP) {
     if (emoji === glyph || text.includes(glyph)) return icon;
   }
-  return "fa-star";
+  return null;
 }
 
 /** Map a keyword string (class names / svg id) to a free FA solid icon token. */
@@ -909,6 +913,28 @@ function iconWidget(node: HtmlNode): ElementorElement {
     elements: [],
   };
 }
+
+/**
+ * Standalone raw emoji node -> native Elementor Icon widget when the emoji has a
+ * known Font Awesome mapping. When it is unmapped, keep the original emoji text
+ * (as a text-editor widget) instead of failing or forcing a wrong icon.
+ */
+function emojiWidget(node: HtmlNode): ElementorElement {
+  const raw = textContent(node);
+  const token = emojiIconToken(raw);
+  if (token) {
+    return {
+      id: genId(),
+      elType: "widget",
+      widgetType: "icon",
+      settings: { selected_icon: { value: `fas ${token}`, library: "fa-solid" } },
+      elements: [],
+    };
+  }
+  // No mapping -> preserve the original emoji so nothing is lost.
+  return textEditor(raw);
+}
+
 
 /* Known social networks: host fragments + Font Awesome brand icon token. */
 const SOCIAL_NETWORKS: Array<{ key: string; hosts: string[]; icon: string }> = [
@@ -1605,9 +1631,9 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
       flush();
       out.push(iconWidget(node));
     } else if (isEmojiNode(node)) {
-      // Standalone raw emoji -> native Elementor Icon widget (FA free glyph).
+      // Mapped emoji -> native Icon widget; unmapped -> keep original emoji text.
       flush();
-      out.push(iconWidget(node));
+      out.push(emojiWidget(node));
     } else if (isButton(node)) {
       flush();
       out.push(button(node));
