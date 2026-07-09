@@ -1604,6 +1604,10 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
     } else if ((node.tag === "i" || node.tag === "svg") && !textContent(node)) {
       flush();
       out.push(iconWidget(node));
+    } else if (isEmojiNode(node)) {
+      // Standalone raw emoji -> native Elementor Icon widget (FA free glyph).
+      flush();
+      out.push(iconWidget(node));
     } else if (isButton(node)) {
       flush();
       out.push(button(node));
