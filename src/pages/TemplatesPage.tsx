@@ -214,24 +214,27 @@ export default function TemplatesPage() {
         body: { template_ids: input.ids, sections: input.sections },
       });
       if (error) throw error;
-      return data as { updated: number; total: number; updatedIds?: string[] };
+      return { ...(data as { updated: number; total: number; updatedIds?: string[]; results?: SectionReconvertRun["results"] }), sections: input.sections };
     },
     onSuccess: (data) => {
-      toast({
-        title: "Sections reconverted",
-        description: `Updated FAQ/Testimonial widgets on ${data.updated} of ${data.total} template(s). The rest of each design is unchanged.`,
+      setSectionRun({
+        sections: data.sections,
+        total: data.total,
+        updated: data.updated,
+        results: data.results ?? [],
       });
+      setSectionStatusOpen(true);
       queryClient.invalidateQueries({ queryKey: ["templates"] });
       const ids = data.updatedIds ?? [];
       if (ids.length > 0) {
         setReboxedIds(ids);
-        setRepublishOpen(true);
       }
     },
     onError: (e) => {
       toast({ variant: "destructive", title: "Reconvert failed", description: friendlyError(e instanceof Error ? e.message : String(e)) });
     },
   });
+
 
 
 
