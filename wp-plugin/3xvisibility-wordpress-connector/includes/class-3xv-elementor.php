@@ -2674,6 +2674,55 @@ class XXXV_Elementor {
 	}
 
 	/**
+	 * REST endpoint: re-apply template global colors + typography into the
+	 * active Elementor kit (Site Settings) on demand, WITHOUT republishing any
+	 * page. The SaaS aggregates the palette/fonts from the site's published
+	 * templates and posts them here as `global_colors` / `global_typography`.
+	 *
+	 * @param WP_REST_Request $request Request with global_colors/global_typography.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function apply_globals_endpoint( WP_REST_Request $request ) {
+		if ( ! did_action( 'elementor/loaded' ) ) {
+			return new WP_Error(
+				'xxxv_no_elementor',
+				'Elementor is not active on this site.',
+				array( 'status' => 400 )
+			);
+		}
+
+		$body = $request->get_json_params();
+		if ( ! is_array( $body ) ) {
+			$body = array();
+		}
+
+		$colors = ( ! empty( $body['global_colors'] ) && is_array( $body['global_colors'] ) ) ? $body['global_colors'] : array();
+		$fonts  = ( ! empty( $body['global_typography'] ) && is_array( $body['global_typography'] ) ) ? $body['global_typography'] : array();
+
+		if ( empty( $colors ) && empty( $fonts ) ) {
+			return new WP_Error(
+				'xxxv_no_globals',
+				'No global colors or typography supplied to re-sync.',
+				array( 'status' => 400 )
+			);
+		}
+
+		$applied = self::apply_template_globals( array(), '', $body );
+		self::regenerate_global_css();
+		self::refresh_assets();
+
+		return rest_ensure_response(
+			array(
+				'ok'     => (bool) $applied,
+				'colors' => count( $colors ),
+				'fonts'  => count( $fonts ),
+			)
+		);
+	}
+
+
+
+	/**
 	 * Persist a published page's template CSS into the active theme's Customizer
 	 * "Additional CSS" (the `custom_css` post used by Appearance > Customize >
 	 * Additional CSS and output by WordPress in the site <head>).

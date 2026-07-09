@@ -14,7 +14,7 @@ import {
   Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save,
   Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight,
   RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3,
-  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Wrench, Send as SendIcon, LayoutTemplate
+  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Wrench, Send as SendIcon, LayoutTemplate, Palette
 } from "lucide-react";
 import ContainerWidthControl from "@/components/settings/ContainerWidthControl";
 import BulkBoxSettingsDialog from "@/components/settings/BulkBoxSettingsDialog";
@@ -451,6 +451,27 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const resyncGlobalsMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("resync-template-globals", {
+        body: { workspace_id: wsId ?? undefined },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data?.synced ? "Template globals re-synced" : "Nothing to re-sync",
+        description: data?.message ?? "",
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Re-sync failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+
 
 
   // Resolve the effective publish_type for a batch of page IDs:
@@ -833,7 +854,14 @@ export default function GeneratedPagesPage() {
                   >
                     <LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Republish all at full width
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => resyncGlobalsMutation.mutate()}
+                    disabled={resyncGlobalsMutation.isPending}
+                  >
+                    <Palette className="h-3.5 w-3.5 mr-2" /> Re-sync template globals
+                  </DropdownMenuItem>
                 </>
+
               )}
             </DropdownMenuContent>
           </DropdownMenu>

@@ -185,6 +185,16 @@ class XXXV_REST {
 				'permission_callback' => $auth,
 			)
 		);
+		register_rest_route(
+			XXXV_CONNECTOR_NS,
+			'/site-actions/apply-globals',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( 'XXXV_Elementor', 'apply_globals_endpoint' ),
+				'permission_callback' => $auth,
+			)
+		);
+
 
 		register_rest_route(
 			XXXV_CONNECTOR_NS,
