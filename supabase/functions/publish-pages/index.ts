@@ -796,7 +796,9 @@ async function handlePublishPages(req: Request): Promise<Response> {
     // Default boxed content width applied when nothing else is configured, so
     // every native Elementor page ships with full-width section bands wrapping a
     // centered 1140px boxed inner container (standard Elementor boxed layout).
-    const DEFAULT_BOX_WIDTH = 1140;
+    // Default to FULL WIDTH (0 = boxing disabled). Published pages span the
+    // full width unless a workspace/template/page explicitly sets a boxed width.
+    const DEFAULT_BOX_WIDTH = 0;
     const containerWidthCache = new Map<string, number>();
     const resolveContainerWidth = async (workspaceId: string | null | undefined): Promise<number> => {
       if (!workspaceId) return DEFAULT_BOX_WIDTH;
