@@ -1251,7 +1251,7 @@ function iconBox(node: HtmlNode): ElementorElement {
   const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description", "subtitle"));
   const iconNode = findNode(
     node,
-    (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
+    (n) => n.tag === "i" || n.tag === "svg" || isEmojiNode(n) || hasClass(n, "icon", "fa", "feature-icon", "service-icon"),
   );
   // Icon position from the source box layout so the preview matches the design.
   const style = resolveNodeStyle(node);
