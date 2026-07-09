@@ -264,7 +264,13 @@ class XXXV_Elementor {
 				throw new Exception( 'Elementor page CSS regeneration failed and no connector critical CSS fallback could be generated.' );
 			}
 
-			// ---- (6) Generate / refresh global (kit) CSS ----------------------
+			// ---- (6) Sync template global colors + typography into the active
+			//          Elementor kit (Site Settings) so the template palette /
+			//          fonts appear as global tokens and match the design 1:1
+			//          when edited in Elementor. Best-effort; never fatal.
+			self::apply_template_globals( $elementor_data, $elementor_css, $body );
+
+			// ---- (6b) Generate / refresh global (kit) CSS ---------------------
 			self::regenerate_global_css();
 
 			// ---- (7) Refresh document + assets --------------------------------
