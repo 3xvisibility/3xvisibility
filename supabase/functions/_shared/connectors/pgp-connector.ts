@@ -563,6 +563,7 @@ export class PgpConnector implements CmsConnector {
   async applyGlobals(input: {
     global_colors?: Array<{ id?: string; title?: string; value: string }>;
     global_typography?: Array<{ id?: string; title?: string; family: string; weight?: string }>;
+    regenerate_css?: boolean;
   }): Promise<{ ok: boolean; colors: number; fonts: number }> {
     const res = await this.call<{ ok?: boolean; colors?: number; fonts?: number }>(
       "/site-actions/apply-globals",
@@ -570,6 +571,7 @@ export class PgpConnector implements CmsConnector {
       {
         global_colors: input.global_colors ?? [],
         global_typography: input.global_typography ?? [],
+        regenerate_css: input.regenerate_css !== false,
       },
     );
     return { ok: Boolean(res.ok), colors: res.colors ?? 0, fonts: res.fonts ?? 0 };

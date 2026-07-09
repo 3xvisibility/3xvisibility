@@ -451,16 +451,29 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const [resyncOpen, setResyncOpen] = useState(false);
+  const [resyncOptions, setResyncOptions] = useState({
+    colors: true,
+    typography: true,
+    site_settings: true,
+  });
+
   const resyncGlobalsMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (options: { colors: boolean; typography: boolean; site_settings: boolean }) => {
       const { data, error } = await supabase.functions.invoke("resync-template-globals", {
-        body: { workspace_id: wsId ?? undefined },
+        body: {
+          workspace_id: wsId ?? undefined,
+          include_colors: options.colors,
+          include_typography: options.typography,
+          regenerate_site_settings: options.site_settings,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
     },
     onSuccess: (data) => {
+      setResyncOpen(false);
       toast({
         title: data?.synced ? "Template globals re-synced" : "Nothing to re-sync",
         description: data?.message ?? "",
@@ -470,6 +483,7 @@ export default function GeneratedPagesPage() {
       toast({ title: "Re-sync failed", description: err.message, variant: "destructive" });
     },
   });
+
 
 
 
@@ -855,11 +869,12 @@ export default function GeneratedPagesPage() {
                     <LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Republish all at full width
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => resyncGlobalsMutation.mutate()}
+                    onClick={() => setResyncOpen(true)}
                     disabled={resyncGlobalsMutation.isPending}
                   >
-                    <Palette className="h-3.5 w-3.5 mr-2" /> Re-sync template globals
+                    <Palette className="h-3.5 w-3.5 mr-2" /> Re-sync template globals…
                   </DropdownMenuItem>
+
                 </>
 
               )}
@@ -1604,6 +1619,65 @@ export default function GeneratedPagesPage() {
           setSelectedIds(new Set());
         }}
       />
+
+      <Dialog open={resyncOpen} onOpenChange={setResyncOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Re-sync template globals</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Choose which Elementor globals to reapply to your already-published pages.
+          </p>
+          <div className="space-y-3 py-2">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={resyncOptions.colors}
+                onCheckedChange={(v) => setResyncOptions((o) => ({ ...o, colors: Boolean(v) }))}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="text-sm font-medium">Global Colors</span>
+                <span className="block text-xs text-muted-foreground">Reapply the template palette to Site Settings › Global Colors.</span>
+              </span>
+            </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={resyncOptions.typography}
+                onCheckedChange={(v) => setResyncOptions((o) => ({ ...o, typography: Boolean(v) }))}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="text-sm font-medium">Global Typography</span>
+                <span className="block text-xs text-muted-foreground">Reapply the template fonts to Site Settings › Global Fonts.</span>
+              </span>
+            </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={resyncOptions.site_settings}
+                onCheckedChange={(v) => setResyncOptions((o) => ({ ...o, site_settings: Boolean(v) }))}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="text-sm font-medium">Site Settings CSS</span>
+                <span className="block text-xs text-muted-foreground">Regenerate the Elementor kit + global CSS so changes render live.</span>
+              </span>
+            </label>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setResyncOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => resyncGlobalsMutation.mutate(resyncOptions)}
+              disabled={
+                resyncGlobalsMutation.isPending ||
+                (!resyncOptions.colors && !resyncOptions.typography && !resyncOptions.site_settings)
+              }
+            >
+              {resyncGlobalsMutation.isPending ? "Syncing…" : "Re-sync"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }

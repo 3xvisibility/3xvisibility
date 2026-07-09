@@ -124,6 +124,13 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const workspaceId = (body?.workspace_id as string | undefined) || null;
     const websiteFilter = (body?.website_id as string | undefined) || null;
+    // Which Elementor globals to reapply. Defaults to all when omitted.
+    const includeColors = body?.include_colors !== false;
+    const includeTypography = body?.include_typography !== false;
+    const regenerateSiteSettings = body?.regenerate_site_settings !== false;
+    if (!includeColors && !includeTypography && !regenerateSiteSettings) {
+      return json({ error: "Select at least one global to sync." }, 400);
+    }
 
     const { data: adminRole } = await supabase
       .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
@@ -231,14 +238,18 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const topColors = [...colors.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 6)
-        .map(([value], i) => ({ id: `tpl_c${i + 1}`, title: `Template Color ${i + 1}`, value }));
-      const topFonts = [...fonts.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(([family], i) => ({ id: `tpl_f${i + 1}`, title: `Template Font ${i + 1}`, family }));
+      const topColors = includeColors
+        ? [...colors.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6)
+            .map(([value], i) => ({ id: `tpl_c${i + 1}`, title: `Template Color ${i + 1}`, value }))
+        : [];
+      const topFonts = includeTypography
+        ? [...fonts.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([family], i) => ({ id: `tpl_f${i + 1}`, title: `Template Font ${i + 1}`, family }))
+        : [];
 
       try {
         const connector = await createConnector(website as WebsiteRecord);
@@ -256,7 +267,12 @@ Deno.serve(async (req) => {
         const applied = await connector.applyGlobals({
           global_colors: topColors,
           global_typography: topFonts,
+          regenerate_css: regenerateSiteSettings,
         });
+        const parts: string[] = [];
+        if (includeColors) parts.push(`${topColors.length} color(s)`);
+        if (includeTypography) parts.push(`${topFonts.length} font(s)`);
+        if (regenerateSiteSettings) parts.push("Site Settings CSS");
         results.push({
           website_id: websiteId,
           url: website.url,
@@ -264,9 +280,10 @@ Deno.serve(async (req) => {
           colors: topColors.length,
           fonts: topFonts.length,
           message: applied.ok
-            ? `Synced ${topColors.length} color(s) + ${topFonts.length} font(s) into Site Settings.`
+            ? `Synced ${parts.join(" + ")} into Site Settings.`
             : "Site did not confirm the global update.",
         });
+
       } catch (e) {
         results.push({
           website_id: websiteId,
