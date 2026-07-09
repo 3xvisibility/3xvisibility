@@ -824,6 +824,17 @@ export default function GeneratedPagesPage() {
               <DropdownMenuItem onClick={() => setDuplicateOpen(true)} disabled={pages.length < 2}>
                 <Copy className="h-3.5 w-3.5 mr-2" /> Find Duplicates
               </DropdownMenuItem>
+              {stats.published > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => republishFullWidthMutation.mutate()}
+                    disabled={republishFullWidthMutation.isPending}
+                  >
+                    <LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Republish all at full width
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
