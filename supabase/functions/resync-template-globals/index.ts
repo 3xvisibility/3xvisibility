@@ -124,6 +124,13 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const workspaceId = (body?.workspace_id as string | undefined) || null;
     const websiteFilter = (body?.website_id as string | undefined) || null;
+    // Which Elementor globals to reapply. Defaults to all when omitted.
+    const includeColors = body?.include_colors !== false;
+    const includeTypography = body?.include_typography !== false;
+    const regenerateSiteSettings = body?.regenerate_site_settings !== false;
+    if (!includeColors && !includeTypography && !regenerateSiteSettings) {
+      return json({ error: "Select at least one global to sync." }, 400);
+    }
 
     const { data: adminRole } = await supabase
       .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
