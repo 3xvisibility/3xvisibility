@@ -888,6 +888,10 @@ function resolveIconValue(node: HtmlNode, contextHint = ""): { value: string; li
   }
   const eicon = cls.match(/\beicon-[a-z0-9-]+\b/)?.[0];
   if (eicon) return { value: eicon, library: "elementor-icons" };
+  // Raw emoji used as an icon -> map to a Font Awesome free glyph so Elementor
+  // renders a real Icon widget instead of stray emoji text.
+  const emojiToken = emojiIconToken(textContent(node));
+  if (emojiToken) return { value: `fas ${emojiToken}`, library: "fa-solid" };
   const guessed =
     keywordIconToken(collectIconHints(node)) || keywordIconToken((contextHint || "").toLowerCase());
   if (guessed) return { value: `fas ${guessed}`, library: "fa-solid" };
