@@ -427,6 +427,32 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  // Auto-republish job: convert ALL previously published pages to the new
+  // full-width default. Clears per-page boxed overrides server-side and
+  // re-publishes every published page across its website(s).
+  const republishFullWidthMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("republish-full-width", {
+        body: { workspace_id: wsId ?? undefined },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      toast({
+        title: data?.queued ? "Full-width republish started" : "Nothing to republish",
+        description: data?.message ?? "",
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Republish failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+
+
   // Resolve the effective publish_type for a batch of page IDs:
   // - If every selected page belongs to a campaign with the same `publish_type`,
   //   use the campaign value (so the wizard's "Publish As" selection wins).
@@ -798,6 +824,17 @@ export default function GeneratedPagesPage() {
               <DropdownMenuItem onClick={() => setDuplicateOpen(true)} disabled={pages.length < 2}>
                 <Copy className="h-3.5 w-3.5 mr-2" /> Find Duplicates
               </DropdownMenuItem>
+              {stats.published > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => republishFullWidthMutation.mutate()}
+                    disabled={republishFullWidthMutation.isPending}
+                  >
+                    <LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Republish all at full width
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
