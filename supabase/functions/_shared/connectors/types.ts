@@ -60,6 +60,14 @@ export interface PagePayload {
    */
   force_native?: boolean;
   /**
+   * Optional template global palette / fonts. When present these are forwarded
+   * to the WordPress connector, which writes them into the active Elementor kit
+   * (Site Settings > Global Colors / Global Fonts) so the template palette and
+   * typography appear as reusable global tokens matching the design 1:1.
+   */
+  global_colors?: Array<{ id?: string; title?: string; value: string }>;
+  global_typography?: Array<{ id?: string; title?: string; family: string; weight?: string }>;
+  /**
    * When true, this is an automatic retry that re-imports only the widgets that
    * failed the previous editor-readiness check. The connector re-runs the native
    * template-library import so the failed widgets become editable native widgets.

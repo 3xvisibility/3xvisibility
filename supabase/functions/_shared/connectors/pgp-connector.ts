@@ -364,6 +364,14 @@ export class PgpConnector implements CmsConnector {
       page_template: payload.page_template || "elementor_header_footer",
       meta,
     };
+    // Forward the template global palette / fonts so the connector can sync them
+    // into the active Elementor kit (Site Settings globals).
+    if (Array.isArray(payload.global_colors) && payload.global_colors.length > 0) {
+      body.global_colors = payload.global_colors;
+    }
+    if (Array.isArray(payload.global_typography) && payload.global_typography.length > 0) {
+      body.global_typography = payload.global_typography;
+    }
     const compressedData = canCompressPayloads && typeof elementorData === "string" && (exactRender || elementorData.length > 150_000)
       ? await gzipBase64(elementorData).catch(() => null)
       : null;

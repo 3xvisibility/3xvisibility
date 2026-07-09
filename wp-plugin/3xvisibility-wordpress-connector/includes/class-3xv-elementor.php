@@ -264,7 +264,13 @@ class XXXV_Elementor {
 				throw new Exception( 'Elementor page CSS regeneration failed and no connector critical CSS fallback could be generated.' );
 			}
 
-			// ---- (6) Generate / refresh global (kit) CSS ----------------------
+			// ---- (6) Sync template global colors + typography into the active
+			//          Elementor kit (Site Settings) so the template palette /
+			//          fonts appear as global tokens and match the design 1:1
+			//          when edited in Elementor. Best-effort; never fatal.
+			self::apply_template_globals( $elementor_data, $elementor_css, $body );
+
+			// ---- (6b) Generate / refresh global (kit) CSS ---------------------
 			self::regenerate_global_css();
 
 			// ---- (7) Refresh document + assets --------------------------------
@@ -2656,8 +2662,273 @@ class XXXV_Elementor {
 	}
 
 	/**
-	 * Regenerate the global (active kit) CSS so global colors / typography apply.
+	 * Sync the template's global colors + typography into the active Elementor
+	 * "kit" (Site Settings > Global Colors / Global Fonts) so the palette and
+	 * fonts baked into the design also appear as reusable global tokens and
+	 * match the template 1:1 when the page is edited in Elementor.
+	 *
+	 * Colors/fonts are collected from the incoming Elementor JSON (baked widget
+	 * settings) and, as a fallback, from the template CSS. The most frequently
+	 * used values win. Existing manually-authored kit tokens are preserved; we
+	 * only add/refresh a bounded set of connector-managed tokens.
+	 *
+	 * Best-effort: any failure is logged and swallowed — it never breaks publish.
+	 *
+	 * @param array  $elementor_data Elementor JSON tree.
+	 * @param string $css            Template CSS (optional fallback source).
+	 * @param array  $body           Raw request body (optional explicit globals).
 	 */
+	private static function apply_template_globals( $elementor_data, $css = '', $body = array() ) {
+		try {
+			if ( ! class_exists( '\Elementor\Plugin' ) ) {
+				return false;
+			}
+			$kit_id = (int) get_option( 'elementor_active_kit' );
+			if ( ! $kit_id || ! get_post( $kit_id ) ) {
+				return false;
+			}
+
+			// ---- Collect colors + fonts ----------------------------------------
+			$color_counts = array(); // normalized hex => count
+			$font_counts  = array(); // family label => count
+
+			// Explicit globals supplied by the SaaS take priority (highest weight).
+			if ( is_array( $body ) ) {
+				if ( ! empty( $body['global_colors'] ) && is_array( $body['global_colors'] ) ) {
+					foreach ( $body['global_colors'] as $gc ) {
+						$val = is_array( $gc ) ? ( isset( $gc['value'] ) ? $gc['value'] : '' ) : $gc;
+						$hex = self::normalize_hex_color( (string) $val );
+						if ( $hex ) {
+							$color_counts[ $hex ] = ( isset( $color_counts[ $hex ] ) ? $color_counts[ $hex ] : 0 ) + 1000;
+						}
+					}
+				}
+				if ( ! empty( $body['global_typography'] ) && is_array( $body['global_typography'] ) ) {
+					foreach ( $body['global_typography'] as $gt ) {
+						$fam = is_array( $gt ) ? ( isset( $gt['family'] ) ? $gt['family'] : ( isset( $gt['font_family'] ) ? $gt['font_family'] : '' ) ) : $gt;
+						$fam = self::normalize_font_family( (string) $fam );
+						if ( $fam ) {
+							$font_counts[ $fam ] = ( isset( $font_counts[ $fam ] ) ? $font_counts[ $fam ] : 0 ) + 1000;
+						}
+					}
+				}
+			}
+
+			// Walk the Elementor JSON collecting baked colors + fonts.
+			$walker = function ( $nodes ) use ( &$walker, &$color_counts, &$font_counts ) {
+				if ( ! is_array( $nodes ) ) {
+					return;
+				}
+				foreach ( $nodes as $node ) {
+					if ( ! is_array( $node ) ) {
+						continue;
+					}
+					if ( ! empty( $node['settings'] ) && is_array( $node['settings'] ) ) {
+						foreach ( $node['settings'] as $key => $value ) {
+							if ( ! is_string( $value ) || '' === $value ) {
+								continue;
+							}
+							if ( false !== strpos( (string) $key, 'color' ) || false !== strpos( (string) $key, 'background' ) ) {
+								$hex = self::normalize_hex_color( $value );
+								if ( $hex ) {
+									$color_counts[ $hex ] = ( isset( $color_counts[ $hex ] ) ? $color_counts[ $hex ] : 0 ) + 1;
+								}
+							}
+							if ( false !== strpos( (string) $key, 'font_family' ) ) {
+								$fam = self::normalize_font_family( $value );
+								if ( $fam ) {
+									$font_counts[ $fam ] = ( isset( $font_counts[ $fam ] ) ? $font_counts[ $fam ] : 0 ) + 1;
+								}
+							}
+						}
+					}
+					if ( ! empty( $node['elements'] ) && is_array( $node['elements'] ) ) {
+						$walker( $node['elements'] );
+					}
+				}
+			};
+			$walker( is_array( $elementor_data ) ? $elementor_data : array() );
+
+			// Fallback: pull colors + font-families out of the CSS text.
+			if ( is_string( $css ) && '' !== $css ) {
+				if ( preg_match_all( '/#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b/', $css, $m ) ) {
+					foreach ( $m[0] as $raw ) {
+						$hex = self::normalize_hex_color( $raw );
+						if ( $hex ) {
+							$color_counts[ $hex ] = ( isset( $color_counts[ $hex ] ) ? $color_counts[ $hex ] : 0 ) + 1;
+						}
+					}
+				}
+				if ( preg_match_all( '/font-family\s*:\s*([^;{}]+)/i', $css, $mf ) ) {
+					foreach ( $mf[1] as $raw ) {
+						$first = trim( explode( ',', $raw )[0] );
+						$fam   = self::normalize_font_family( $first );
+						if ( $fam ) {
+							$font_counts[ $fam ] = ( isset( $font_counts[ $fam ] ) ? $font_counts[ $fam ] : 0 ) + 1;
+						}
+					}
+				}
+			}
+
+			if ( empty( $color_counts ) && empty( $font_counts ) ) {
+				return false;
+			}
+
+			// Rank by frequency, keep the strongest tokens.
+			arsort( $color_counts );
+			arsort( $font_counts );
+			$top_colors = array_slice( array_keys( $color_counts ), 0, 6 );
+			$top_fonts  = array_slice( array_keys( $font_counts ), 0, 3 );
+
+			// ---- Merge into the active kit settings ----------------------------
+			$settings = get_post_meta( $kit_id, '_elementor_page_settings', true );
+			if ( ! is_array( $settings ) ) {
+				$settings = array();
+			}
+
+			// Map the top colors onto Elementor's four system colors so buttons,
+			// headings and text pick up the template palette when set to "global".
+			$system_defaults = array(
+				array( '_id' => 'primary',   'title' => 'Primary' ),
+				array( '_id' => 'secondary', 'title' => 'Secondary' ),
+				array( '_id' => 'text',      'title' => 'Text' ),
+				array( '_id' => 'accent',    'title' => 'Accent' ),
+			);
+			$system_colors = ( isset( $settings['system_colors'] ) && is_array( $settings['system_colors'] ) )
+				? $settings['system_colors']
+				: $system_defaults;
+			foreach ( $system_defaults as $idx => $def ) {
+				if ( ! isset( $top_colors[ $idx ] ) ) {
+					continue;
+				}
+				if ( ! isset( $system_colors[ $idx ] ) || ! is_array( $system_colors[ $idx ] ) ) {
+					$system_colors[ $idx ] = $def;
+				}
+				$system_colors[ $idx ]['_id']   = isset( $system_colors[ $idx ]['_id'] ) ? $system_colors[ $idx ]['_id'] : $def['_id'];
+				$system_colors[ $idx ]['title'] = isset( $system_colors[ $idx ]['title'] ) ? $system_colors[ $idx ]['title'] : $def['title'];
+				$system_colors[ $idx ]['color'] = $top_colors[ $idx ];
+			}
+			$settings['system_colors'] = $system_colors;
+
+			// Any remaining palette colors become connector-managed custom colors.
+			$custom_colors = ( isset( $settings['custom_colors'] ) && is_array( $settings['custom_colors'] ) )
+				? $settings['custom_colors']
+				: array();
+			// Drop previously connector-managed custom colors so we don't pile up.
+			$custom_colors = array_values( array_filter(
+				$custom_colors,
+				function ( $c ) {
+					return ! ( is_array( $c ) && isset( $c['_id'] ) && 0 === strpos( (string) $c['_id'], 'xxxv_' ) );
+				}
+			) );
+			$extra_colors = array_slice( $top_colors, 4 );
+			$ci = 0;
+			foreach ( $extra_colors as $hex ) {
+				$custom_colors[] = array(
+					'_id'   => 'xxxv_c' . ( ++$ci ),
+					'title' => 'Template Color ' . $ci,
+					'color' => $hex,
+				);
+			}
+			$settings['custom_colors'] = $custom_colors;
+
+			// Map the top font onto the system typography (primary/secondary) so
+			// headings + body inherit the template fonts globally.
+			if ( ! empty( $top_fonts ) ) {
+				$system_typo_defaults = array(
+					array( '_id' => 'primary',   'title' => 'Primary' ),
+					array( '_id' => 'secondary', 'title' => 'Secondary' ),
+					array( '_id' => 'text',      'title' => 'Text' ),
+					array( '_id' => 'accent',    'title' => 'Accent' ),
+				);
+				$system_typo = ( isset( $settings['system_typography'] ) && is_array( $settings['system_typography'] ) )
+					? $settings['system_typography']
+					: $system_typo_defaults;
+				$heading_font = $top_fonts[0];
+				$body_font    = isset( $top_fonts[1] ) ? $top_fonts[1] : $top_fonts[0];
+				$font_for     = array( $heading_font, $body_font, $body_font, $heading_font );
+				foreach ( $system_typo_defaults as $idx => $def ) {
+					if ( ! isset( $font_for[ $idx ] ) ) {
+						continue;
+					}
+					if ( ! isset( $system_typo[ $idx ] ) || ! is_array( $system_typo[ $idx ] ) ) {
+						$system_typo[ $idx ] = $def;
+					}
+					$system_typo[ $idx ]['_id']                     = isset( $system_typo[ $idx ]['_id'] ) ? $system_typo[ $idx ]['_id'] : $def['_id'];
+					$system_typo[ $idx ]['title']                   = isset( $system_typo[ $idx ]['title'] ) ? $system_typo[ $idx ]['title'] : $def['title'];
+					$system_typo[ $idx ]['typography_typography']   = 'custom';
+					$system_typo[ $idx ]['typography_font_family']  = $font_for[ $idx ];
+				}
+				$settings['system_typography'] = $system_typo;
+			}
+
+			// ---- Persist the kit ----------------------------------------------
+			// Prefer Elementor's document API so internal caches update; fall back
+			// to raw meta if the kit document can't be loaded.
+			$saved_via_document = false;
+			try {
+				if ( isset( \Elementor\Plugin::$instance->documents ) ) {
+					$kit_doc = \Elementor\Plugin::$instance->documents->get( $kit_id );
+					if ( $kit_doc && method_exists( $kit_doc, 'update_settings' ) ) {
+						$kit_doc->update_settings( $settings );
+						$saved_via_document = true;
+					}
+				}
+			} catch ( \Throwable $e ) {
+				$saved_via_document = false;
+			}
+			if ( ! $saved_via_document ) {
+				update_post_meta( $kit_id, '_elementor_page_settings', $settings );
+			}
+
+			self::log(
+				'info',
+				'Synced template globals into Elementor kit.',
+				array( 'colors' => count( $top_colors ), 'fonts' => count( $top_fonts ) )
+			);
+			return true;
+		} catch ( \Throwable $e ) {
+			self::log( 'warn', 'apply_template_globals failed: ' . $e->getMessage() );
+			return false;
+		}
+	}
+
+	/** Normalize a color value to a lowercase 6-digit hex, or '' if not a hex. */
+	private static function normalize_hex_color( $value ) {
+		$v = strtolower( trim( (string) $value ) );
+		if ( '' === $v ) {
+			return '';
+		}
+		if ( ! preg_match( '/^#?([0-9a-f]{3}|[0-9a-f]{6})$/', $v, $m ) ) {
+			return '';
+		}
+		$hex = $m[1];
+		if ( 3 === strlen( $hex ) ) {
+			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+		}
+		// Skip pure white/black which are rarely useful as brand globals but keep
+		// them if they are the only colors present (handled by caller ranking).
+		return '#' . $hex;
+	}
+
+	/** Normalize a font-family token (strip quotes, generic families). */
+	private static function normalize_font_family( $value ) {
+		$v = trim( (string) $value );
+		$v = trim( $v, "\"' " );
+		if ( '' === $v ) {
+			return '';
+		}
+		$lower = strtolower( $v );
+		$generic = array( 'inherit', 'initial', 'unset', 'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'ui-sans-serif', 'ui-serif' );
+		if ( in_array( $lower, $generic, true ) ) {
+			return '';
+		}
+		if ( strlen( $v ) > 60 ) {
+			return '';
+		}
+		return $v;
+	}
+
 	public static function regenerate_global_css() {
 		if ( ! class_exists( '\Elementor\Plugin' ) ) {
 			return false;
