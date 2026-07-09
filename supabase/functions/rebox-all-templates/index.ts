@@ -19,7 +19,7 @@ import {
 import { buildTemplatePackage } from "../_shared/connectors/elementor-package.ts";
 
 // Elementor's default boxed content width.
-const DEFAULT_BOX_WIDTH = 1140;
+const DEFAULT_BOX_WIDTH = 0;
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
