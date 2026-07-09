@@ -289,7 +289,11 @@ class XXXV_Elementor {
 			self::refresh_assets();
 
 			// ---- (8) Clear caches ---------------------------------------------
+			// Page-scoped purge first (keeps the freshly generated per-page CSS),
+			// then a site-wide + CDN invalidation with a global cache-buster bump
+			// so regenerated global (kit) color/typography CSS goes live at once.
 			self::clear_runtime_caches( $post_id );
+			self::purge_all_caches( $post_id );
 
 			// ---- (9) Validate saved JSON + CSS --------------------------------
 			$saved_check = self::validate_saved_elementor_data( $post_id, $elementor_data );
@@ -2719,6 +2723,11 @@ class XXXV_Elementor {
 			$applied = true;
 		}
 
+		// Site-wide + CDN invalidation with a cache-buster bump so the updated
+		// global colors/typography appear immediately on the live site (this is a
+		// site-level change, so page-scoped purges alone are not enough).
+		self::purge_all_caches( 0 );
+
 		return rest_ensure_response(
 			array(
 				'ok'     => (bool) $applied,
@@ -3348,6 +3357,17 @@ class XXXV_Elementor {
 			self::regenerate_page_css( $post_id );
 		}
 		self::regenerate_global_css();
+
+		// --- Global cache-buster bump ------------------------------------------
+		// Bump the site-wide version so enqueued global + per-page CSS/JS carry a
+		// fresh query string. This alone forces browsers and most CDNs to fetch
+		// the newly regenerated global (kit) CSS even if an edge cache still holds
+		// the previous file, so global color/typography changes appear at once.
+		$cache_version = (string) time();
+		if ( $post_id > 0 ) {
+			update_post_meta( $post_id, '_xxxv_cache_version', $cache_version );
+		}
+		update_option( 'xxxv_global_cache_version', $cache_version, false );
 
 		// --- WordPress object cache --------------------------------------------
 		if ( function_exists( 'wp_cache_flush' ) ) {
