@@ -805,6 +805,36 @@ const EMOJI_ICON_MAP: Array<[string, string]> = [
   ["💯", "fa-percent"], ["⚖️", "fa-scale-balanced"], ["🏭", "fa-industry"], ["🖐️", "fa-hand"],
   ["👋", "fa-hand"], ["🙌", "fa-hands-clapping"], ["🤲", "fa-hands-holding"], ["✨", "fa-wand-magic-sparkles"],
   ["🌈", "fa-rainbow"], ["🎬", "fa-clapperboard"], ["🎵", "fa-music"], ["🎶", "fa-music"],
+  // Business / commerce / finance
+  ["🏦", "fa-building-columns"], ["🏛️", "fa-landmark"], ["💱", "fa-money-bill-transfer"],
+  ["💸", "fa-money-bill-wave"], ["🪙", "fa-coins"], ["💴", "fa-yen-sign"], ["💶", "fa-euro-sign"],
+  ["💷", "fa-sterling-sign"], ["🧮", "fa-calculator"], ["📇", "fa-address-card"], ["�'", "fa-book"],
+  ["🗂️", "fa-folder-tree"], ["📥", "fa-inbox"], ["📤", "fa-paper-plane"], ["🧑‍💼", "fa-user-tie"],
+  ["👔", "fa-user-tie"], ["🤵", "fa-user-tie"], ["📊", "fa-chart-pie"], ["🗃️", "fa-box-archive"],
+  ["🏬", "fa-store"], ["🏪", "fa-shop"], ["🛎️", "fa-bell-concierge"], ["🧳", "fa-suitcase"],
+  ["🎟️", "fa-ticket"], ["🎫", "fa-ticket"], ["🧿", "fa-shield"], ["📎", "fa-paperclip"],
+  ["🖇️", "fa-paperclip"], ["📐", "fa-ruler-combined"], ["📏", "fa-ruler"], ["✂️", "fa-scissors"],
+  ["🗳️", "fa-square-poll-vertical"], ["🪪", "fa-id-card"], ["🆔", "fa-id-badge"], ["🔒️", "fa-lock"],
+  ["🤳", "fa-mobile-screen-button"], ["🖱️", "fa-computer-mouse"], ["⌨️", "fa-keyboard"],
+  ["💽", "fa-compact-disc"], ["💿", "fa-compact-disc"], ["📀", "fa-compact-disc"], ["🖲️", "fa-circle-dot"],
+  // Communication / support / people
+  ["📨", "fa-envelope-open-text"], ["📩", "fa-envelope-circle-check"], ["🗣️", "fa-comment-dots"],
+  ["💭", "fa-comment"], ["🙋", "fa-hand"], ["🤔", "fa-lightbulb"], ["👏", "fa-hands-clapping"],
+  ["🙏", "fa-hands-praying"], ["🫱", "fa-handshake"], ["🫂", "fa-people-group"], ["👨‍👩‍👧", "fa-people-roof"],
+  // Logistics / travel
+  ["🚛", "fa-truck-fast"], ["🚐", "fa-van-shuttle"], ["🛵", "fa-motorcycle"], ["🏍️", "fa-motorcycle"],
+  ["🚕", "fa-taxi"], ["🚌", "fa-bus"], ["🚆", "fa-train"], ["🚢", "fa-ship"], ["⚓", "fa-anchor"],
+  ["🛫", "fa-plane-departure"], ["🛬", "fa-plane-arrival"], ["🗽", "fa-monument"], ["🧭️", "fa-compass"],
+  // Quality / trust / marketing
+  ["🥈", "fa-medal"], ["🥉", "fa-medal"], ["🎖️", "fa-award"], ["🏅", "fa-award"], ["📢️", "fa-bullhorn"],
+  ["💥", "fa-burst"], ["🌠", "fa-meteor"], ["🎀", "fa-ribbon"], ["🔝", "fa-arrow-up"], ["🆕", "fa-certificate"],
+  ["🆓", "fa-tags"], ["💠", "fa-gem"], ["♠️", "fa-certificate"],
+  // Nature / energy / misc
+  ["🌊", "fa-water"], ["🔥️", "fa-fire-flame-curved"], ["❄️", "fa-snowflake"], ["🌡️", "fa-temperature-half"],
+  ["🌤️", "fa-cloud-sun"], ["⛅", "fa-cloud-sun"], ["🌧️", "fa-cloud-rain"], ["⛈️", "fa-cloud-bolt"],
+  ["🌬️", "fa-wind"], ["🔆", "fa-sun"], ["🕯️", "fa-fire"], ["🧯", "fa-fire-extinguisher"],
+  ["🪫", "fa-battery-quarter"], ["⛽", "fa-gas-pump"], ["🧰", "fa-toolbox"], ["🪛", "fa-screwdriver"],
+  ["⛏️", "fa-hammer"], ["🔩", "fa-gears"], ["🧱", "fa-trowel-bricks"], ["🏗️", "fa-helmet-safety"],
 ];
 
 /** Extended pictographic emoji detector. */
