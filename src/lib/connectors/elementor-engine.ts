@@ -2207,12 +2207,29 @@ export function enforceBoxedContentWidth(
       return;
     }
 
+    // Layout settings must move onto the boxed inner so the band's grid/row
+    // layout survives boxing; the band keeps only its background + full width.
+    const LAYOUT_KEYS = [
+      "container_type", "flex_direction", "flex_wrap", "flex_gap",
+      "flex_justify_content", "flex_align_items", "grid_columns",
+      "grid_columns_tablet", "grid_columns_mobile", "grid_rows_grid",
+      "grid_auto_flow", "grid_gaps",
+    ];
+    const bandSettings = section.settings as Record<string, unknown>;
+    const layoutSettings: Record<string, unknown> = {};
+    for (const k of LAYOUT_KEYS) {
+      if (k in bandSettings) {
+        layoutSettings[k] = bandSettings[k];
+        delete bandSettings[k];
+      }
+    }
     const inner: ElementorElement = {
       id: genId(),
       elType: "container",
       settings: {
         ...boxedSettings,
-        flex_direction: (section.settings as Record<string, unknown>)?.flex_direction ?? "column",
+        flex_direction: (layoutSettings.flex_direction as string) ?? "column",
+        ...layoutSettings,
         _xxxvBoxed: true,
       },
       elements: kids,
@@ -2227,6 +2244,14 @@ export function enforceBoxedContentWidth(
     const kids = el.elements || [];
     const childContainers = kids.filter((c) => c?.elType === "container");
     const hasDirectWidget = kids.some((c) => c?.elType === "widget");
+    // A container carrying its OWN background is a visual BAND: keep it full
+    // width (background bleeds edge-to-edge) and box its content as one group.
+    // Never explode its children to full width — that produced full-width bands
+    // with mis-sized inner content.
+    if (hasBackground(el)) {
+      boxSection(el);
+      return;
+    }
     const wrapsBackgroundSection =
       childContainers.length >= 1 && childContainers.some(hasBackground) && !hasDirectWidget;
     if (childContainers.length >= 2 || wrapsBackgroundSection) {
@@ -2236,6 +2261,7 @@ export function enforceBoxedContentWidth(
       boxSection(el);
     }
   };
+
 
   for (const top of tree) process(top);
   return JSON.stringify(tree);
