@@ -869,11 +869,12 @@ export default function GeneratedPagesPage() {
                     <LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Republish all at full width
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => resyncGlobalsMutation.mutate()}
+                    onClick={() => setResyncOpen(true)}
                     disabled={resyncGlobalsMutation.isPending}
                   >
-                    <Palette className="h-3.5 w-3.5 mr-2" /> Re-sync template globals
+                    <Palette className="h-3.5 w-3.5 mr-2" /> Re-sync template globals…
                   </DropdownMenuItem>
+
                 </>
 
               )}
