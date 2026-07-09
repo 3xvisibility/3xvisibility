@@ -3349,6 +3349,17 @@ class XXXV_Elementor {
 		}
 		self::regenerate_global_css();
 
+		// --- Global cache-buster bump ------------------------------------------
+		// Bump the site-wide version so enqueued global + per-page CSS/JS carry a
+		// fresh query string. This alone forces browsers and most CDNs to fetch
+		// the newly regenerated global (kit) CSS even if an edge cache still holds
+		// the previous file, so global color/typography changes appear at once.
+		$cache_version = (string) time();
+		if ( $post_id > 0 ) {
+			update_post_meta( $post_id, '_xxxv_cache_version', $cache_version );
+		}
+		update_option( 'xxxv_global_cache_version', $cache_version, false );
+
 		// --- WordPress object cache --------------------------------------------
 		if ( function_exists( 'wp_cache_flush' ) ) {
 			wp_cache_flush();
