@@ -914,6 +914,28 @@ function iconWidget(node: HtmlNode): ElementorElement {
   };
 }
 
+/**
+ * Standalone raw emoji node -> native Elementor Icon widget when the emoji has a
+ * known Font Awesome mapping. When it is unmapped, keep the original emoji text
+ * (as a text-editor widget) instead of failing or forcing a wrong icon.
+ */
+function emojiWidget(node: HtmlNode): ElementorElement {
+  const raw = textContent(node);
+  const token = emojiIconToken(raw);
+  if (token) {
+    return {
+      id: genId(),
+      elType: "widget",
+      widgetType: "icon",
+      settings: { selected_icon: { value: `fas ${token}`, library: "fa-solid" } },
+      elements: [],
+    };
+  }
+  // No mapping -> preserve the original emoji so nothing is lost.
+  return textEditor(raw);
+}
+
+
 /* Known social networks: host fragments + Font Awesome brand icon token. */
 const SOCIAL_NETWORKS: Array<{ key: string; hosts: string[]; icon: string }> = [
   { key: "facebook", hosts: ["facebook.com", "fb.com", "fb.me"], icon: "fa-facebook" },
