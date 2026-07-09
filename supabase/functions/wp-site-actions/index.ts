@@ -87,8 +87,12 @@ Deno.serve(async (req) => {
 
     const connector = await createConnector(website as WebsiteRecord);
     if (!(connector instanceof PgpConnector)) {
-      return json({ error: "WordPress connector is not available for this site." }, 400);
+      return json({
+        error:
+          "Menu, theme and template actions require the 3xVisibility companion plugin. Install/activate it on your WordPress site and reconnect with a connector API key to enable these actions.",
+      }, 400);
     }
+
 
     switch (action) {
       case "list": {
