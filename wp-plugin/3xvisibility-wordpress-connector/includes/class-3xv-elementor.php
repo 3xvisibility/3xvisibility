@@ -270,6 +270,18 @@ class XXXV_Elementor {
 			//          when edited in Elementor. Best-effort; never fatal.
 			self::apply_template_globals( $elementor_data, $elementor_css, $body );
 
+			// ---- (6a) Persist this page's template CSS into the theme's
+			//          Customizer "Additional CSS" so every template style rule
+			//          applies site-wide exactly like a manual customization.
+			//          Each page owns a marker-wrapped block: republishing the
+			//          same page replaces only its block, and a brand-new page
+			//          appends its block after the existing ones. Elementor edits
+			//          are untouched — they live in the page's own Elementor data
+			//          and keep updating independently. Best-effort; never fatal.
+			self::apply_template_css_to_customizer( $post_id, $elementor_css );
+
+
+
 			// ---- (6b) Generate / refresh global (kit) CSS ---------------------
 			self::regenerate_global_css();
 
@@ -2659,6 +2671,75 @@ class XXXV_Elementor {
 		}
 
 		return new WP_Error( 'xxxv_elementor_css_missing', 'Post-save validation failed: Elementor generated CSS file is missing or empty.', array( 'status' => 500 ) );
+	}
+
+	/**
+	 * Persist a published page's template CSS into the active theme's Customizer
+	 * "Additional CSS" (the `custom_css` post used by Appearance > Customize >
+	 * Additional CSS and output by WordPress in the site <head>).
+	 *
+	 * Every page owns a marker-wrapped block:
+	 *
+	 *   /* 3xv:page-123:start *\/  ...css...  /* 3xv:page-123:end *\/
+	 *
+	 * Republishing the SAME page replaces only that page's block (idempotent),
+	 * while a brand-new page appends its block after the existing ones. This
+	 * accumulates all template CSS site-wide so every rule applies exactly like
+	 * a manual theme customization, and it never touches the page's own
+	 * Elementor data — client edits made via "Edit with Elementor" keep working
+	 * and updating independently.
+	 *
+	 * Best-effort: any failure is logged and swallowed — it never breaks publish.
+	 *
+	 * @param int    $post_id Published page ID (marker key).
+	 * @param string $css     Sanitized template CSS to store.
+	 * @return bool
+	 */
+	private static function apply_template_css_to_customizer( $post_id, $css ) {
+		try {
+			$post_id = (int) $post_id;
+			if ( $post_id <= 0 ) {
+				return false;
+			}
+			if ( ! function_exists( 'wp_update_custom_css_post' ) || ! function_exists( 'wp_get_custom_css' ) ) {
+				return false;
+			}
+
+			$css = is_string( $css ) ? trim( $css ) : '';
+
+			$start = '/* 3xv:page-' . $post_id . ':start */';
+			$end   = '/* 3xv:page-' . $post_id . ':end */';
+
+			$existing = (string) wp_get_custom_css();
+
+			// Remove any prior block for THIS page (idempotent republish).
+			$pattern = '/\/\*\s*3xv:page-' . $post_id . ':start\s*\*\/[\s\S]*?\/\*\s*3xv:page-' . $post_id . ':end\s*\*\/\s*/';
+			$existing = preg_replace( $pattern, '', $existing );
+			$existing = is_string( $existing ) ? rtrim( $existing ) : '';
+
+			// If the template has no CSS, we've already stripped the old block —
+			// just persist the cleaned stylesheet.
+			if ( '' !== $css ) {
+				$block = $start . "\n" . $css . "\n" . $end;
+				$existing = ( '' === $existing ) ? $block : ( $existing . "\n\n" . $block );
+			}
+
+			$result = wp_update_custom_css_post( $existing );
+			if ( is_wp_error( $result ) ) {
+				self::log( 'warn', 'Customizer CSS update failed: ' . $result->get_error_message(), array( 'post_id' => $post_id ) );
+				return false;
+			}
+
+			self::log(
+				'info',
+				'Stored template CSS into Customizer Additional CSS.',
+				array( 'post_id' => $post_id, 'bytes' => strlen( $css ) )
+			);
+			return true;
+		} catch ( \Throwable $e ) {
+			self::log( 'warn', 'apply_template_css_to_customizer failed: ' . $e->getMessage(), array( 'post_id' => (int) $post_id ) );
+			return false;
+		}
 	}
 
 	/**
