@@ -289,7 +289,11 @@ class XXXV_Elementor {
 			self::refresh_assets();
 
 			// ---- (8) Clear caches ---------------------------------------------
+			// Page-scoped purge first (keeps the freshly generated per-page CSS),
+			// then a site-wide + CDN invalidation with a global cache-buster bump
+			// so regenerated global (kit) color/typography CSS goes live at once.
 			self::clear_runtime_caches( $post_id );
+			self::purge_all_caches( $post_id );
 
 			// ---- (9) Validate saved JSON + CSS --------------------------------
 			$saved_check = self::validate_saved_elementor_data( $post_id, $elementor_data );
