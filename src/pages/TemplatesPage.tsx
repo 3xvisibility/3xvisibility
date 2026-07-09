@@ -47,6 +47,7 @@ import { computeMarketplaceVersion } from "@/lib/marketplace-versioning";
 import { applyTemplateVariables, autoExtractTemplateVariables } from "@/lib/template-variable-extractor";
 import ContainerWidthControl from "@/components/settings/ContainerWidthControl";
 import BulkBoxSettingsDialog from "@/components/settings/BulkBoxSettingsDialog";
+import { SectionReconvertStatusPanel, type SectionReconvertRun } from "@/components/templates/SectionReconvertStatusPanel";
 import {
   type SectionVariants, DEFAULT_VARIANTS, summarizeVariants,
   HERO_VARIANTS, GRID_VARIANTS, CTA_VARIANTS, FAQ_VARIANTS,
