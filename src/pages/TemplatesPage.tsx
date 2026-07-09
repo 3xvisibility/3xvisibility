@@ -79,6 +79,8 @@ export default function TemplatesPage() {
   const [bulkWidthOpen, setBulkWidthOpen] = useState(false);
   const [reboxedIds, setReboxedIds] = useState<string[]>([]);
   const [republishOpen, setRepublishOpen] = useState(false);
+  const [sectionRun, setSectionRun] = useState<SectionReconvertRun | null>(null);
+  const [sectionStatusOpen, setSectionStatusOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<Template | null>(null);
   const [duplicateTarget, setDuplicateTarget] = useState<Template | null>(null);
   const [renameValue, setRenameValue] = useState("");
