@@ -553,4 +553,26 @@ export class PgpConnector implements CmsConnector {
       { post_id: postId, template },
     );
   }
+
+  /**
+   * Re-apply the template global colors + typography into the site's active
+   * Elementor kit (Site Settings > Global Colors / Global Fonts) WITHOUT
+   * republishing any page. `global_colors` / `global_typography` are the
+   * aggregated palette/fonts to install as global tokens.
+   */
+  async applyGlobals(input: {
+    global_colors?: Array<{ id?: string; title?: string; value: string }>;
+    global_typography?: Array<{ id?: string; title?: string; family: string; weight?: string }>;
+  }): Promise<{ ok: boolean; colors: number; fonts: number }> {
+    const res = await this.call<{ ok?: boolean; colors?: number; fonts?: number }>(
+      "/site-actions/apply-globals",
+      "POST",
+      {
+        global_colors: input.global_colors ?? [],
+        global_typography: input.global_typography ?? [],
+      },
+    );
+    return { ok: Boolean(res.ok), colors: res.colors ?? 0, fonts: res.fonts ?? 0 };
+  }
 }
+
