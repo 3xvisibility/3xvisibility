@@ -837,11 +837,53 @@ const EMOJI_ICON_MAP: Array<[string, string]> = [
   ["⛏️", "fa-hammer"], ["🔩", "fa-gears"], ["🧱", "fa-trowel-bricks"], ["🏗️", "fa-helmet-safety"],
 ];
 
+/**
+ * User-configurable overrides for the emoji → Font Awesome icon mapping.
+ * Populated from Settings (persisted in localStorage). An override value of ""
+ * means "remove this default mapping" (keep the original emoji text instead).
+ * Overrides take precedence over EMOJI_ICON_MAP.
+ */
+let EMOJI_ICON_OVERRIDES: Record<string, string> = {};
+
+/** Replace all emoji→icon overrides. Icon tokens are normalized to `fa-...`. */
+export function setEmojiIconOverrides(overrides: Record<string, string>): void {
+  const next: Record<string, string> = {};
+  for (const [glyph, icon] of Object.entries(overrides || {})) {
+    const key = (glyph || "").trim();
+    if (!key) continue;
+    // Empty string = explicit "unmap" sentinel; otherwise normalize the token.
+    next[key] = icon === "" ? "" : normalizeIconToken(icon);
+  }
+  EMOJI_ICON_OVERRIDES = next;
+}
+
+/** Current overrides (for the Settings UI to hydrate from the engine). */
+export function getEmojiIconOverrides(): Record<string, string> {
+  return { ...EMOJI_ICON_OVERRIDES };
+}
+
+/** The built-in default emoji→icon pairs (for the Settings UI reference list). */
+export function getDefaultEmojiIconMap(): Array<[string, string]> {
+  return EMOJI_ICON_MAP.map(([g, i]) => [g, i] as [string, string]);
+}
+
+/** Normalize a user-entered icon token to Font Awesome `fa-...` form. */
+function normalizeIconToken(raw: string): string {
+  const t = (raw || "").trim().toLowerCase();
+  if (!t) return "";
+  const match = t.match(/fa-[a-z0-9-]+/);
+  if (match) return match[0];
+  return `fa-${t.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}`;
+}
+
 /** Extended pictographic emoji detector. */
 const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{2122}\u{2139}]/u;
 
 /** Return the first emoji found in a string, or "". */
 function firstEmoji(text: string): string {
+  for (const glyph of Object.keys(EMOJI_ICON_OVERRIDES)) {
+    if (glyph && text.includes(glyph)) return glyph;
+  }
   for (const [emoji] of EMOJI_ICON_MAP) {
     if (text.includes(emoji)) return emoji;
   }
