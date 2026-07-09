@@ -2698,18 +2698,26 @@ class XXXV_Elementor {
 
 		$colors = ( ! empty( $body['global_colors'] ) && is_array( $body['global_colors'] ) ) ? $body['global_colors'] : array();
 		$fonts  = ( ! empty( $body['global_typography'] ) && is_array( $body['global_typography'] ) ) ? $body['global_typography'] : array();
+		// Whether to regenerate the site-wide Elementor kit CSS. Defaults true.
+		$regenerate = ! ( isset( $body['regenerate_css'] ) && false === $body['regenerate_css'] );
 
-		if ( empty( $colors ) && empty( $fonts ) ) {
+		if ( empty( $colors ) && empty( $fonts ) && ! $regenerate ) {
 			return new WP_Error(
 				'xxxv_no_globals',
-				'No global colors or typography supplied to re-sync.',
+				'No global colors, typography, or CSS regeneration requested.',
 				array( 'status' => 400 )
 			);
 		}
 
-		$applied = self::apply_template_globals( array(), '', $body );
-		self::regenerate_global_css();
-		self::refresh_assets();
+		$applied = false;
+		if ( ! empty( $colors ) || ! empty( $fonts ) ) {
+			$applied = self::apply_template_globals( array(), '', $body );
+		}
+		if ( $regenerate ) {
+			self::regenerate_global_css();
+			self::refresh_assets();
+			$applied = true;
+		}
 
 		return rest_ensure_response(
 			array(
