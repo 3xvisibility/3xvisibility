@@ -451,16 +451,29 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const [resyncOpen, setResyncOpen] = useState(false);
+  const [resyncOptions, setResyncOptions] = useState({
+    colors: true,
+    typography: true,
+    site_settings: true,
+  });
+
   const resyncGlobalsMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (options: { colors: boolean; typography: boolean; site_settings: boolean }) => {
       const { data, error } = await supabase.functions.invoke("resync-template-globals", {
-        body: { workspace_id: wsId ?? undefined },
+        body: {
+          workspace_id: wsId ?? undefined,
+          include_colors: options.colors,
+          include_typography: options.typography,
+          regenerate_site_settings: options.site_settings,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
     },
     onSuccess: (data) => {
+      setResyncOpen(false);
       toast({
         title: data?.synced ? "Template globals re-synced" : "Nothing to re-sync",
         description: data?.message ?? "",
@@ -470,6 +483,7 @@ export default function GeneratedPagesPage() {
       toast({ title: "Re-sync failed", description: err.message, variant: "destructive" });
     },
   });
+
 
 
 
