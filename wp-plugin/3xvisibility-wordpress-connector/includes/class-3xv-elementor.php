@@ -2742,6 +2742,8 @@ class XXXV_Elementor {
 		}
 	}
 
+	/**
+	 * Sync the template's global colors + typography into the active Elementor
 	 * "kit" (Site Settings > Global Colors / Global Fonts) so the palette and
 	 * fonts baked into the design also appear as reusable global tokens and
 	 * match the template 1:1 when the page is edited in Elementor.
