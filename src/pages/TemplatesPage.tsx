@@ -1799,6 +1799,15 @@ slug: ${fields.slug}`,
       />
 
       {/* Republish after rebox */}
+      <SectionReconvertStatusPanel
+        open={sectionStatusOpen}
+        onOpenChange={(o) => {
+          setSectionStatusOpen(o);
+          if (!o && reboxedIds.length > 0) setRepublishOpen(true);
+        }}
+        run={sectionRun}
+      />
+
       <AlertDialog open={republishOpen} onOpenChange={setRepublishOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
