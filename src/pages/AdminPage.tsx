@@ -998,6 +998,11 @@ export default function AdminPage() {
           <TemplateSyncPanel />
         </TabsContent>
 
+        <TabsContent value="marketplace" className="space-y-4">
+          <SharedTemplatesModerationPanel />
+        </TabsContent>
+
+
         {/* Activity feed tab */}
         <TabsContent value="activity" className="space-y-4">
           {isLoading ? (
