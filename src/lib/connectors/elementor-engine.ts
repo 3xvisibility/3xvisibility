@@ -1465,7 +1465,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   if (itemChildren.length >= 3) {
     const iconTextItems = itemChildren.filter(
       (c) =>
-        !!findNode(c, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa")) &&
+        !!findNode(c, (n) => n.tag === "i" || n.tag === "svg" || isEmojiNode(n) || hasClass(n, "icon", "fa")) &&
         !findNode(c, (n) => n.tag === "img") &&
         !findNode(c, (n) => HEADINGS.has(n.tag)),
     );
