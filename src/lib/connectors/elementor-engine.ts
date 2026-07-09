@@ -1471,7 +1471,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
     );
     if (iconTextItems.length >= Math.ceil(itemChildren.length * 0.6)) {
       const items = iconTextItems.map((c) => {
-        const iconNode = findNode(c, (n) => n.tag === "i" || n.tag === "svg" || hasClass(n, "icon", "fa"));
+        const iconNode = findNode(c, (n) => n.tag === "i" || n.tag === "svg" || isEmojiNode(n) || hasClass(n, "icon", "fa"));
         const text = textContent(c);
         return {
           _id: genId(),
