@@ -1631,9 +1631,9 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
       flush();
       out.push(iconWidget(node));
     } else if (isEmojiNode(node)) {
-      // Standalone raw emoji -> native Elementor Icon widget (FA free glyph).
+      // Mapped emoji -> native Icon widget; unmapped -> keep original emoji text.
       flush();
-      out.push(iconWidget(node));
+      out.push(emojiWidget(node));
     } else if (isButton(node)) {
       flush();
       out.push(button(node));
