@@ -950,6 +950,7 @@ export default function AdminPage() {
           <TabsTrigger value="connections" className="text-xs gap-1"><AlertCircle className="h-3 w-3" />Connections</TabsTrigger>
           <TabsTrigger value="ai-access" className="text-xs gap-1"><ShieldCheck className="h-3 w-3" />AI Access</TabsTrigger>
           <TabsTrigger value="template-sync" className="text-xs gap-1"><RefreshCw className="h-3 w-3" />Template Sync</TabsTrigger>
+          <TabsTrigger value="marketplace" className="text-xs gap-1"><Store className="h-3 w-3" />Marketplace</TabsTrigger>
           <TabsTrigger value="settings" className="text-xs gap-1"><UserCog className="h-3 w-3" />Settings</TabsTrigger>
         </TabsList>
 
