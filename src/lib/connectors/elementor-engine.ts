@@ -1326,28 +1326,37 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   }
   if (hasClass(node, "tabs", "tab-wrapper", "tabbed")) return tabs(node);
 
-  // Testimonials slider/carousel -> Elementor Pro Testimonial Carousel.
+  // Testimonials -> always native Elementor testimonial widgets.
+  // Whether or not the markup is a slider/carousel, every testimonial block is
+  // converted to the native Testimonial (single) or Testimonial Carousel
+  // (multiple) widget. This prevents testimonials from being exploded into
+  // loose heading/image/text widgets that reserve empty grid rows.
   const looksTestimonial = hasClass(node, "testimonial", "review", "quote");
-  const looksSlider = hasClass(node, "slider", "carousel", "swiper", "slick", "splide", "glide");
-  if (looksTestimonial && looksSlider) {
-    // Same rule: collapse only the slider list itself, not the whole section.
-    // Descend only when the nested wrapper still qualifies as a carousel on its
-    // own, so we never lose the carousel grouping.
+  if (looksTestimonial) {
+    // Collapse only the testimonial LIST itself, not the whole section, so any
+    // surrounding heading / intro copy is preserved. Descend when a nested
+    // wrapper still qualifies as a testimonial list on its own.
     const slideWrapper = lowestCommonWrapper(node, isTestimonialSlideNode);
     if (
       slideWrapper &&
       slideWrapper !== node &&
-      hasClass(slideWrapper, "testimonial", "review", "quote") &&
-      hasClass(slideWrapper, "slider", "carousel", "swiper", "slick", "splide", "glide")
+      hasClass(slideWrapper, "testimonial", "review", "quote")
     ) {
       return null;
     }
-    const carousel = testimonialCarousel(node);
-    if ((carousel.settings.slides as unknown[])?.length) return carousel;
+
+    const cards = findTestimonialCards(node);
+    if (cards.length >= 2) {
+      const carousel = testimonialCarousel(node);
+      if ((carousel.settings.slides as unknown[])?.length) return carousel;
+    }
+    // Single testimonial (or a wrapper containing exactly one) -> testimonial widget.
+    return testimonial(cards.length === 1 ? cards[0] : node);
   }
 
   if (!isMultiGroup && hasClass(node, "counter", "stat", "stats", "countup")) return counter(node);
-  if (!isMultiGroup && hasClass(node, "testimonial", "review", "quote-card")) return testimonial(node);
+  if (!isMultiGroup && hasClass(node, "quote-card")) return testimonial(node);
+
   if (!isMultiGroup && hasClass(node, "image-box", "img-box")) return imageBox(node);
   if (!isMultiGroup && hasClass(node, "icon-box", "feature-box", "feature-card", "service-box")) return iconBox(node);
 

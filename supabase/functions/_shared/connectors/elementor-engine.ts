@@ -1521,27 +1521,31 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   // Testimonials — a slider/carousel becomes Elementor Pro's Testimonial
   // Carousel; a static group becomes individual Testimonial widgets (handled
   // below when each card is recursed as a single group).
+  // Testimonials -> always native Elementor testimonial widgets, whether or not
+  // the markup is a slider. Single -> Testimonial widget; multiple -> Testimonial
+  // Carousel. Prevents testimonials being exploded into loose widgets that
+  // reserve empty grid rows.
   const looksTestimonial = hasClass(node, "testimonial", "review", "quote");
-  const looksSlider = hasClass(node, "slider", "carousel", "swiper", "slick", "splide", "glide");
-  if (looksTestimonial && looksSlider) {
-    // Same rule: collapse only the slider list itself, not the whole section.
-    // Descend only when the nested wrapper still qualifies as a carousel on its
-    // own, so we never lose the carousel grouping.
+  if (looksTestimonial) {
     const slideWrapper = lowestCommonWrapper(node, isTestimonialSlideNode);
     if (
       slideWrapper &&
       slideWrapper !== node &&
-      hasClass(slideWrapper, "testimonial", "review", "quote") &&
-      hasClass(slideWrapper, "slider", "carousel", "swiper", "slick", "splide", "glide")
+      hasClass(slideWrapper, "testimonial", "review", "quote")
     ) {
       return null;
     }
-    const carousel = testimonialCarousel(node);
-    if ((carousel.settings.slides as unknown[])?.length) return carousel;
+
+    const cards = findTestimonialCards(node);
+    if (cards.length >= 2) {
+      const carousel = testimonialCarousel(node);
+      if ((carousel.settings.slides as unknown[])?.length) return carousel;
+    }
+    return testimonial(cards.length === 1 ? cards[0] : node);
   }
 
   if (!isMultiGroup && hasClass(node, "counter", "stat", "stats", "countup")) return counter(node);
-  if (!isMultiGroup && hasClass(node, "testimonial", "review", "quote-card")) return testimonial(node);
+  if (!isMultiGroup && hasClass(node, "quote-card")) return testimonial(node);
   if (!isMultiGroup && hasClass(node, "image-box", "img-box")) return imageBox(node);
   if (!isMultiGroup && hasClass(node, "icon-box", "feature-box", "feature-card", "service-box")) return iconBox(node);
 
