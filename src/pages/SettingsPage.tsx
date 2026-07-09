@@ -147,6 +147,8 @@ export default function SettingsPage() {
       {/* Elementor layout / container width */}
       <ElementorLayoutSettingsCard />
 
+      <EmojiIconMappingCard />
+
       {/* Profile */}
       <Card className="shadow-surface">
         <CardHeader>
