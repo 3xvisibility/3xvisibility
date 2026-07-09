@@ -451,6 +451,27 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const resyncGlobalsMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("resync-template-globals", {
+        body: { workspace_id: wsId ?? undefined },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data?.synced ? "Template globals re-synced" : "Nothing to re-sync",
+        description: data?.message ?? "",
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Re-sync failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+
 
 
   // Resolve the effective publish_type for a batch of page IDs:
