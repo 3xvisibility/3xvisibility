@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import ActiveAiProviderCard from "@/components/settings/ActiveAiProviderCard";
 import LocaleSettingsCard from "@/components/settings/LocaleSettingsCard";
 import ElementorLayoutSettingsCard from "@/components/settings/ElementorLayoutSettingsCard";
+import EmojiIconMappingCard from "@/components/settings/EmojiIconMappingCard";
 
 const AI_PLAN_LIMITS: Record<string, number> = {
   free: 0,
