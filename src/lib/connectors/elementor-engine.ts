@@ -913,6 +913,16 @@ function isEmojiNode(node: HtmlNode): boolean {
 function emojiIconToken(text: string): string | null {
   const emoji = firstEmoji(text);
   if (!emoji) return null;
+  // User overrides win: a mapped token is used; "" means unmap (keep text).
+  if (Object.prototype.hasOwnProperty.call(EMOJI_ICON_OVERRIDES, emoji)) {
+    const override = EMOJI_ICON_OVERRIDES[emoji];
+    return override === "" ? null : override;
+  }
+  if (text !== emoji) {
+    for (const [glyph, icon] of Object.entries(EMOJI_ICON_OVERRIDES)) {
+      if (text.includes(glyph)) return icon === "" ? null : icon;
+    }
+  }
   for (const [glyph, icon] of EMOJI_ICON_MAP) {
     if (emoji === glyph || text.includes(glyph)) return icon;
   }
