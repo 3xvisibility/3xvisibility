@@ -808,7 +808,7 @@ const EMOJI_ICON_MAP: Array<[string, string]> = [
   // Business / commerce / finance
   ["🏦", "fa-building-columns"], ["🏛️", "fa-landmark"], ["💱", "fa-money-bill-transfer"],
   ["💸", "fa-money-bill-wave"], ["🪙", "fa-coins"], ["💴", "fa-yen-sign"], ["💶", "fa-euro-sign"],
-  ["💷", "fa-sterling-sign"], ["🧮", "fa-calculator"], ["📇", "fa-address-card"], ["�'", "fa-book"],
+  ["💷", "fa-sterling-sign"], ["🧮", "fa-calculator"], ["📇", "fa-address-card"], ["📒", "fa-book"],
   ["🗂️", "fa-folder-tree"], ["📥", "fa-inbox"], ["📤", "fa-paper-plane"], ["🧑‍💼", "fa-user-tie"],
   ["👔", "fa-user-tie"], ["🤵", "fa-user-tie"], ["📊", "fa-chart-pie"], ["🗃️", "fa-box-archive"],
   ["🏬", "fa-store"], ["🏪", "fa-shop"], ["🛎️", "fa-bell-concierge"], ["🧳", "fa-suitcase"],
