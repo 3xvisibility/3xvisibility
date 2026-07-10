@@ -56,12 +56,17 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import type { FeatureKey } from "@/lib/plan-features";
 import { getMinimumPlanFor, PLAN_FEATURES } from "@/lib/plan-features";
 
+type UserRole = "admin" | "user";
+
 interface NavItem {
   titleKey: string;
   /** Relative path within workspace, e.g. "dashboard" */
   path: string;
   icon: typeof LayoutDashboard;
+  /** Gate by plan feature flag */
   requiredFeature?: FeatureKey;
+  /** Gate by user role; item is hidden entirely if role not met */
+  requiredRole?: UserRole;
 }
 
 const mainNav: NavItem[] = [
