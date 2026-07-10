@@ -51,7 +51,6 @@ const navItems = [
   { titleKey: "sidebar.analytics", icon: BarChart3, path: "analytics", keywords: "analytics stats metrics chart" },
   { titleKey: "sidebar.performance", icon: BarChart3, path: "performance", keywords: "performance page speed views" },
   
-  { titleKey: "sidebar.contentCalendar", icon: Layers, path: "content-calendar", keywords: "calendar schedule plan content" },
   { titleKey: "sidebar.seoAudit", icon: ScanSearch, path: "seo-audit", keywords: "seo audit check score" },
   { titleKey: "sidebar.indexing", icon: SearchIcon, path: "indexing", keywords: "google index seo submit" },
   { titleKey: "sidebar.billing", icon: CreditCard, path: "billing", keywords: "billing plan subscription payment" },
