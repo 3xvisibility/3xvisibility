@@ -134,8 +134,16 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     "analytics": "analytics",
   };
 
+  const hasRole = (role?: UserRole) => {
+    if (!role) return true;
+    if (role === "admin") return isAdmin;
+    return true;
+  };
+
   const renderNavItems = (items: NavItem[]) =>
-    items.map((item) => {
+    items
+      .filter((item) => hasRole(item.requiredRole))
+      .map((item) => {
       const fullPath = `${basePath}/${item.path}`;
       const isLocked = item.requiredFeature ? !canUseFeature(item.requiredFeature) : false;
       const minPlanLabel = item.requiredFeature
