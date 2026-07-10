@@ -44,6 +44,7 @@ type StatusFilter = "__all__" | "pending" | "approved";
 
 export function SharedTemplatesModerationPanel() {
   const { toast } = useToast();
+  const { currentWorkspace } = useWorkspace();
   const [items, setItems] = useState<SharedTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
