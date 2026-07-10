@@ -23,6 +23,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { logAudit } from "@/lib/audit";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Search, Check, X, Trash2, Store, Loader2, Download } from "lucide-react";
 
 interface SharedTemplate {
@@ -42,6 +44,7 @@ type StatusFilter = "__all__" | "pending" | "approved";
 
 export function SharedTemplatesModerationPanel() {
   const { toast } = useToast();
+  const { currentWorkspace } = useWorkspace();
   const [items, setItems] = useState<SharedTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -82,6 +85,15 @@ export function SharedTemplatesModerationPanel() {
     }
     setItems((prev) => prev.map((t) => (t.id === item.id ? { ...t, is_approved: isApproved } : t)));
     toast({ title: isApproved ? "Template approved" : "Template rejected" });
+    if (currentWorkspace?.id) {
+      logAudit(
+        currentWorkspace.id,
+        isApproved ? "shared_template.approve" : "shared_template.reject",
+        "shared_template",
+        item.id,
+        { template_id: item.template_id, author_name: item.author_name, owner_id: item.user_id },
+      );
+    }
   };
 
   const remove = async () => {
@@ -97,6 +109,15 @@ export function SharedTemplatesModerationPanel() {
     }
     setItems((prev) => prev.filter((t) => t.id !== item.id));
     toast({ title: "Template removed" });
+    if (currentWorkspace?.id) {
+      logAudit(
+        currentWorkspace.id,
+        "shared_template.delete",
+        "shared_template",
+        item.id,
+        { template_id: item.template_id, author_name: item.author_name, owner_id: item.user_id },
+      );
+    }
   };
 
   const filtered = useMemo(() => {
