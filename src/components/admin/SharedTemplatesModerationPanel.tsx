@@ -23,6 +23,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { logAudit } from "@/lib/audit";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Search, Check, X, Trash2, Store, Loader2, Download } from "lucide-react";
 
 interface SharedTemplate {
