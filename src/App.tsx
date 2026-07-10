@@ -28,13 +28,11 @@ import WebsitesPage from "./pages/WebsitesPage";
 import BillingPage from "./pages/BillingPage";
 import SettingsPage from "./pages/SettingsPage";
 import GeneratedPagesPage from "./pages/GeneratedPagesPage";
-import CssScanFixPage from "./pages/CssScanFixPage";
 import AdminPage from "./pages/AdminPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import TemplateMarketplacePage from "./pages/TemplateMarketplacePage";
 import IndexingPage from "./pages/IndexingPage";
 
-import ContentCalendarPage from "./pages/ContentCalendarPage";
 import PagePerformancePage from "./pages/PagePerformancePage";
 import SeoAuditPage from "./pages/SeoAuditPage";
 import AffiliatePage from "./pages/AffiliatePage";
@@ -46,8 +44,6 @@ import WebsiteContentPage from "./pages/WebsiteContentPage";
 import PgpKeywordsPage from "./pages/PgpKeywordsPage";
 import PgpGeneratePage from "./pages/PgpGeneratePage";
 import PgpTermsPage from "./pages/PgpTermsPage";
-import TemplateMappingPage from "./pages/TemplateMappingPage";
-import TemplateKitPage from "./pages/TemplateKitPage";
 import ElementorTestPage from "./pages/ElementorTestPage";
 import RepublishDiffHarnessPage from "./pages/RepublishDiffHarnessPage";
 import WpControlPage from "./pages/WpControlPage";
@@ -136,7 +132,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="templates" element={wrap(<TemplatesPage />)} />
       <Route path="websites" element={wrap(<WebsitesPage />)} />
       <Route path="pages" element={wrap(<GeneratedPagesPage />)} />
-      <Route path="css-scan-fix" element={wrap(<CssScanFixPage />)} />
+      <Route path="css-scan-fix" element={<Navigate to="../dashboard" replace />} />
       <Route path="scanner" element={<Navigate to="../website-content" replace />} />
       <Route path="discovery" element={<Navigate to="../website-content" replace />} />
       <Route path="analytics" element={wrap(<AnalyticsPage />)} />
@@ -151,7 +147,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="data" element={wrap(<DataCsvPage />)} />
       <Route path="website-content" element={wrap(<FeatureGate feature="discovery"><WebsiteContentPage /></FeatureGate>)} />
       
-      <Route path="content-calendar" element={wrap(<FeatureGate feature="internalLinks"><ContentCalendarPage /></FeatureGate>)} />
+      <Route path="content-calendar" element={<Navigate to="../dashboard" replace />} />
       <Route path="performance" element={wrap(<PagePerformancePage />)} />
       <Route path="seo-audit" element={wrap(<SeoAuditPage />)} />
       <Route path="affiliate" element={wrap(<AffiliatePage />)} />
@@ -161,8 +157,8 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="pgp-generate" element={wrap(<PgpGeneratePage />)} />
       <Route path="pgp-terms" element={wrap(<PgpTermsPage />)} />
       <Route path="pgp-logs" element={<Navigate to="../pages" replace />} />
-      <Route path="template-mapping" element={wrap(<FeatureGate feature="discovery"><TemplateMappingPage /></FeatureGate>)} />
-      <Route path="template-kit" element={wrap(<FeatureGate feature="discovery"><TemplateKitPage /></FeatureGate>)} />
+      <Route path="template-mapping" element={<Navigate to="../dashboard" replace />} />
+      <Route path="template-kit" element={<Navigate to="../dashboard" replace />} />
       <Route path="elementor-test" element={wrap(<ElementorTestPage />)} />
       <Route path="wp-control" element={wrap(<WpControlPage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
@@ -322,7 +318,7 @@ const App = () => {
             <Route path="/data" element={<ProtectedRoute session={session}><WorkspaceRedirect path="data" /></ProtectedRoute>} />
             <Route path="/website-content" element={<ProtectedRoute session={session}><WorkspaceRedirect path="website-content" /></ProtectedRoute>} />
             
-            <Route path="/content-calendar" element={<ProtectedRoute session={session}><WorkspaceRedirect path="content-calendar" /></ProtectedRoute>} />
+            <Route path="/content-calendar" element={<Navigate to="/" replace />} />
             <Route path="/performance" element={<ProtectedRoute session={session}><WorkspaceRedirect path="performance" /></ProtectedRoute>} />
             <Route path="/seo-audit" element={<ProtectedRoute session={session}><WorkspaceRedirect path="seo-audit" /></ProtectedRoute>} />
             <Route path="/affiliate" element={<ProtectedRoute session={session}><WorkspaceRedirect path="affiliate" /></ProtectedRoute>} />
