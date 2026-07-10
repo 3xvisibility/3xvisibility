@@ -109,6 +109,15 @@ export function SharedTemplatesModerationPanel() {
     }
     setItems((prev) => prev.filter((t) => t.id !== item.id));
     toast({ title: "Template removed" });
+    if (currentWorkspace?.id) {
+      logAudit(
+        currentWorkspace.id,
+        "shared_template.delete",
+        "shared_template",
+        item.id,
+        { template_id: item.template_id, author_name: item.author_name, owner_id: item.user_id },
+      );
+    }
   };
 
   const filtered = useMemo(() => {
