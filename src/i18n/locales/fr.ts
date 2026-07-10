@@ -1831,6 +1831,7 @@ const fr: Record<string, string> = {
   "sidebar.referral": "Parrainage",
   "sidebar.seoAudit": "Audit SEO",
   "sidebar.settings": "Paramètres",
+  "sidebar.wpControl": "Contrôle WordPress",
   "sidebar.storeGenerator": "Générateur de boutique",
   "sidebar.templateKit": "Kit de modèle",
   "sidebar.templateMapping": "Mapping de variables",
