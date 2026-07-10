@@ -85,6 +85,15 @@ export function SharedTemplatesModerationPanel() {
     }
     setItems((prev) => prev.map((t) => (t.id === item.id ? { ...t, is_approved: isApproved } : t)));
     toast({ title: isApproved ? "Template approved" : "Template rejected" });
+    if (currentWorkspace?.id) {
+      logAudit(
+        currentWorkspace.id,
+        isApproved ? "shared_template.approve" : "shared_template.reject",
+        "shared_template",
+        item.id,
+        { template_id: item.template_id, author_name: item.author_name, owner_id: item.user_id },
+      );
+    }
   };
 
   const remove = async () => {
