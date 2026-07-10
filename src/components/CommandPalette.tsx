@@ -20,7 +20,7 @@ import {
   CreditCard,
   Settings,
   ScanSearch,
-  Compass,
+  
   Store,
   SearchIcon,
   Database,
