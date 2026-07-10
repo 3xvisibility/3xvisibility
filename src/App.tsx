@@ -151,7 +151,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="data" element={wrap(<DataCsvPage />)} />
       <Route path="website-content" element={wrap(<FeatureGate feature="discovery"><WebsiteContentPage /></FeatureGate>)} />
       
-      <Route path="content-calendar" element={wrap(<FeatureGate feature="internalLinks"><ContentCalendarPage /></FeatureGate>)} />
+      <Route path="content-calendar" element={<Navigate to="../dashboard" replace />} />
       <Route path="performance" element={wrap(<PagePerformancePage />)} />
       <Route path="seo-audit" element={wrap(<SeoAuditPage />)} />
       <Route path="affiliate" element={wrap(<AffiliatePage />)} />
