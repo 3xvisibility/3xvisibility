@@ -136,7 +136,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="templates" element={wrap(<TemplatesPage />)} />
       <Route path="websites" element={wrap(<WebsitesPage />)} />
       <Route path="pages" element={wrap(<GeneratedPagesPage />)} />
-      <Route path="css-scan-fix" element={wrap(<CssScanFixPage />)} />
+      <Route path="css-scan-fix" element={<Navigate to="../dashboard" replace />} />
       <Route path="scanner" element={<Navigate to="../website-content" replace />} />
       <Route path="discovery" element={<Navigate to="../website-content" replace />} />
       <Route path="analytics" element={wrap(<AnalyticsPage />)} />
