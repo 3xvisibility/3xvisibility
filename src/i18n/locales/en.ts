@@ -1840,6 +1840,7 @@ const en: Record<string, string> = {
   "sidebar.websiteContent": "Website Content",
   "sidebar.websites": "Websites",
   "sidebar.workspaceSettings": "Workspace Settings",
+  "sidebar.wpControl": "WordPress Control",
   "startGeneration.description": "Configure generation options before launching. {count} rows available to process.",
   "startGeneration.draft": "Draft",
   "startGeneration.draftDesc": "Pages saved as drafts, review before publishing",
