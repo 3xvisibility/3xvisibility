@@ -20,7 +20,7 @@ import {
   CreditCard,
   Settings,
   ScanSearch,
-  Compass,
+  
   Store,
   SearchIcon,
   Database,
@@ -46,8 +46,6 @@ const navItems = [
   { titleKey: "sidebar.marketplace", icon: Store, path: "marketplace", keywords: "marketplace shared community" },
   { titleKey: "sidebar.dataCsv", icon: Database, path: "data", keywords: "data csv upload file" },
   { titleKey: "sidebar.websiteContent", icon: Layers, path: "website-content", keywords: "content scrape fetch" },
-  { titleKey: "sidebar.aiScanner", icon: ScanSearch, path: "scanner", keywords: "scan ai analyze" },
-  { titleKey: "sidebar.discovery", icon: Compass, path: "discovery", keywords: "discover explore website" },
   { titleKey: "sidebar.analytics", icon: BarChart3, path: "analytics", keywords: "analytics stats metrics chart" },
   { titleKey: "sidebar.performance", icon: BarChart3, path: "performance", keywords: "performance page speed views" },
   
