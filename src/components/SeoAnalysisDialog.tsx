@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { friendlyError } from "@/lib/friendly-errors";
 import { extractEdgeError } from "@/lib/edge-function-error";
 import { UnifiedSeoPanel } from "@/components/UnifiedSeoPanel";
+import { calculateUnifiedSeoScore } from "@/lib/unified-seo-score";
 
 interface SeoAnalysisDialogProps {
   open: boolean;
