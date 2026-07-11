@@ -32,6 +32,37 @@ export interface CatalogBuildResult {
 const stripTags = (s: string): string =>
   s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
+const decodeEntities = (s: string): string =>
+  s
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_m, n) => String.fromCharCode(parseInt(n, 10)));
+
+/**
+ * Pull the page's OWN content out of its body HTML in document order so each
+ * generated page publishes with its unique headings and paragraphs instead of
+ * the shared template placeholder text. Returns ordered heading + text blocks.
+ */
+function extractContentBlocks(html: string | null | undefined): { headings: string[]; texts: string[] } {
+  const headings: string[] = [];
+  const texts: string[] = [];
+  if (!html) return { headings, texts };
+  const re = /<(h[1-6]|p|li|blockquote)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const tag = m[1].toLowerCase();
+    const text = decodeEntities(stripTags(m[2] || "")).trim();
+    if (!text) continue;
+    if (/^h[1-6]$/.test(tag)) headings.push(text);
+    else texts.push(text);
+  }
+  return { headings, texts };
+}
+
 /**
  * Extract every `<style>…</style>` block from raw template HTML and return the
  * concatenated CSS. This CSS carries the template's class-based design
@@ -238,20 +269,44 @@ export function buildElementorFromCatalog(
   const limits = limitsFor(fields);
   const content = defaultContentFor(fields);
 
-  // Map the page title onto the first heading field.
-  if (overrides.title) {
-    const heading = fields.find((f) => f.kind === "heading");
-    if (heading) content[heading.key] = overrides.title;
-  }
+  // Distribute the page's OWN content across the template's editable fields in
+  // document order. Without this, only one heading + one text field were filled
+  // and every other field kept the shared template placeholder text, so every
+  // page in a campaign published as a near-identical clone.
+  const blocks = extractContentBlocks(overrides.bodyHtml);
 
-  // Map the description / body text onto the largest text field.
-  const bodyText = overrides.description ||
-    (overrides.bodyHtml ? stripTags(overrides.bodyHtml) : "");
-  if (bodyText) {
-    const textField = fields
-      .filter((f) => f.kind === "text")
-      .sort((a, b) => b.originalText.length - a.originalText.length)[0];
-    if (textField) content[textField.key] = bodyText;
+  // Headings → heading fields, in order. Guarantee the page title lands first.
+  const headingValues = overrides.title
+    ? [overrides.title, ...blocks.headings.filter((h) => h !== overrides.title)]
+    : blocks.headings.slice();
+  const headingFields = fields.filter((f) => f.kind === "heading");
+  headingFields.forEach((f, i) => {
+    if (headingValues[i]) content[f.key] = headingValues[i];
+  });
+
+  // Paragraphs/list items → text fields, in order. Any surplus blocks are
+  // appended to the last text field so no page content is silently dropped.
+  const textFields = fields.filter((f) => f.kind === "text");
+  if (textFields.length > 0 && blocks.texts.length > 0) {
+    textFields.forEach((f, i) => {
+      if (i < textFields.length - 1) {
+        if (blocks.texts[i]) content[f.key] = blocks.texts[i];
+      } else {
+        const rest = blocks.texts.slice(i).filter(Boolean);
+        if (rest.length) content[f.key] = rest.join("\n\n");
+      }
+    });
+  } else {
+    // Fallback (no block-level content parsed): preserve the original behaviour
+    // of dropping the whole body / description onto the largest text field.
+    const bodyText = overrides.description ||
+      (overrides.bodyHtml ? stripTags(overrides.bodyHtml) : "");
+    if (bodyText) {
+      const textField = fields
+        .filter((f) => f.kind === "text")
+        .sort((a, b) => b.originalText.length - a.originalText.length)[0];
+      if (textField) content[textField.key] = bodyText;
+    }
   }
 
   // Validate; if it overflows, truncate offending fields safely and re-check.
