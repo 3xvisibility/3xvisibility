@@ -37,6 +37,14 @@ interface LanguageContextType {
   translationProgress: TranslationProgress;
   /** Internal — used by the runtime translator to report progress. */
   setTranslationProgress: (p: TranslationProgress) => void;
+  /** Non-null when the last translation attempt failed (network/API). */
+  translationError: string | null;
+  /** Internal — used by the runtime translator to report failure. */
+  setTranslationError: (msg: string | null) => void;
+  /** Increments to re-trigger a translation attempt after a failure. */
+  translationRetryNonce: number;
+  /** Manually retry the failed translation. */
+  retryTranslation: () => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
