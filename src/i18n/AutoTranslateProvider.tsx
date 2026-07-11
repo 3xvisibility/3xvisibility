@@ -42,7 +42,7 @@ function clearLegacyTranslations() {
 }
 
 export function AutoTranslateProvider({ children }: { children: React.ReactNode }) {
-  const { translating, translationProgress } = useLanguage();
+  const { translating, translationProgress, translationError, retryTranslation } = useLanguage();
 
   useEffect(() => {
     clearLegacyTranslations();
