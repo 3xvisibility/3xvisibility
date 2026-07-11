@@ -124,7 +124,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         const content = (
           <button
             onClick={() => navigate(`${basePath}/billing`)}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground/50 hover:bg-muted/50 transition-all duration-150 w-full cursor-pointer"
+            aria-label={t("common.upgradeToUnlock", { plan: minPlanLabel })}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted/50 transition-all duration-150 w-full cursor-pointer opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
           >
             <item.icon className="h-4 w-4 shrink-0" />
             {!collapsed && (
@@ -165,7 +166,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             <NavLink
               to={fullPath}
               end={item.path === "dashboard"}
-              className="group/nav relative flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-1 before:rounded-full before:bg-primary before:transition-all before:duration-200"
+              aria-label={t(item.titleKey)}
+              className="group/nav relative flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-1 before:rounded-full before:bg-primary before:transition-all before:duration-200"
               activeClassName="bg-primary/10 text-primary font-semibold shadow-sm before:h-5"
               {...(onboardingMap[item.path] ? { "data-onboarding": onboardingMap[item.path] } : {})}
             >
@@ -200,16 +202,17 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     return (
       <Collapsible open={isOpen} onOpenChange={() => toggleGroup(groupKey)} className={className}>
         <SidebarGroup>
-          <CollapsibleTrigger asChild>
-            <SidebarGroupLabel
-              className={`group/label flex items-center justify-between cursor-pointer select-none text-[11px] uppercase tracking-wider font-semibold px-3 mb-1 transition-colors ${
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger
+              aria-label={t(labelKey)}
+              className={`group/label flex w-full items-center justify-between cursor-pointer select-none text-[11px] uppercase tracking-wider font-semibold px-3 mb-1 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
                 groupActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <span>{t(labelKey)}</span>
               <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-data-[state=closed]/label:-rotate-90" />
-            </SidebarGroupLabel>
-          </CollapsibleTrigger>
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
 
           <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
             <SidebarGroupContent>
@@ -266,7 +269,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={`${basePath}/admin`}
-                      className="relative flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-1 before:rounded-full before:bg-primary before:transition-all before:duration-200"
+                      aria-label={t("sidebar.admin")}
+                      className="relative flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-1 before:rounded-full before:bg-primary before:transition-all before:duration-200"
                       activeClassName="bg-primary/10 text-primary font-semibold shadow-sm before:h-5"
                     >
                       <ShieldCheck className="h-4 w-4 shrink-0" />
@@ -297,7 +301,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={onLogout}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-150"
+                aria-label={t("sidebar.logout")}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
               >
                 <LogOut className="h-4 w-4 shrink-0" />
                 {!collapsed && <span className="text-sm">{t("sidebar.logout")}</span>}
