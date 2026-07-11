@@ -37,6 +37,14 @@ interface LanguageContextType {
   translationProgress: TranslationProgress;
   /** Internal — used by the runtime translator to report progress. */
   setTranslationProgress: (p: TranslationProgress) => void;
+  /** Non-null when the last translation attempt failed (network/API). */
+  translationError: string | null;
+  /** Internal — used by the runtime translator to report failure. */
+  setTranslationError: (msg: string | null) => void;
+  /** Increments to re-trigger a translation attempt after a failure. */
+  translationRetryNonce: number;
+  /** Manually retry the failed translation. */
+  retryTranslation: () => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -56,6 +64,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const [translating, setTranslating] = useState(false);
   const [translationProgress, setTranslationProgress] = useState<TranslationProgress>({ done: 0, total: 0 });
+  const [translationError, setTranslationError] = useState<string | null>(null);
+  const [translationRetryNonce, setTranslationRetryNonce] = useState(0);
+
+  const retryTranslation = useCallback(() => {
+    setTranslationError(null);
+    setTranslationRetryNonce((n) => n + 1);
+  }, []);
 
   const setLanguage = useCallback((lang: Language) => {
     // All supported languages are covered by the built-in t() dictionary, so
@@ -80,7 +95,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, translating, setTranslating, translationProgress, setTranslationProgress }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, translating, setTranslating, translationProgress, setTranslationProgress, translationError, setTranslationError, translationRetryNonce, retryTranslation }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -93,6 +108,10 @@ const fallback: LanguageContextType = {
   setTranslating: () => {},
   translationProgress: { done: 0, total: 0 },
   setTranslationProgress: () => {},
+  translationError: null,
+  setTranslationError: () => {},
+  translationRetryNonce: 0,
+  retryTranslation: () => {},
   t: (key: string, vars?: Record<string, string | number>) => {
     const template = translations.en[key] ?? key;
 

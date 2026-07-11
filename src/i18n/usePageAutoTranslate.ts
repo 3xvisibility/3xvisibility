@@ -53,12 +53,18 @@ function collectTextNodes(root: HTMLElement): Text[] {
 
 /** Number of text nodes translated per network batch ("section"). */
 const BATCH_SIZE = 20;
+/** Retry attempts per batch before giving up. */
+const MAX_RETRIES = 2;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export function usePageAutoTranslate(
   ref: React.RefObject<HTMLElement>,
   deps: unknown[] = [],
 ) {
-  const { language, setTranslating, setTranslationProgress } = useLanguage();
+  const { language, setTranslating, setTranslationProgress, setTranslationError, translationRetryNonce } = useLanguage();
   const originals = useRef<WeakMap<Text, string>>(new WeakMap());
 
   useEffect(() => {
@@ -83,8 +89,13 @@ export function usePageAutoTranslate(
       });
       setTranslating(false);
       setTranslationProgress({ done: 0, total: 0 });
+      setTranslationError(null);
       return;
     }
+
+    // Clear any prior error at the start of a fresh attempt.
+    setTranslationError(null);
+
 
     const cacheKey = `autotr:${language}:${hashStrings(origTexts)}`;
 
@@ -120,57 +131,79 @@ export function usePageAutoTranslate(
     (async () => {
       const collected: string[] = new Array(origTexts.length);
       let anyFailure = false;
+      let lastErrorMessage = "";
 
-      try {
-        for (let batch = 0; batch < totalBatches; batch++) {
+      for (let batch = 0; batch < totalBatches; batch++) {
+        if (cancelled) return;
+        const start = batch * BATCH_SIZE;
+        const slice = origTexts.slice(start, start + BATCH_SIZE);
+
+        let applied = false;
+        // Retry each batch a few times with exponential backoff before giving up.
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
           if (cancelled) return;
-          const start = batch * BATCH_SIZE;
-          const slice = origTexts.slice(start, start + BATCH_SIZE);
-
-          const { data, error } = await supabase.functions.invoke("translate-ui", {
-            body: { texts: slice, target: language },
-          });
-          if (cancelled) return;
-
-          const translations = (data as { translations?: string[] })?.translations;
-          if (!error && Array.isArray(translations) && translations.length === slice.length) {
-            // Apply this section immediately so the user sees progress fill in.
-            applyRange(translations, start);
-            translations.forEach((tr, offset) => {
-              collected[start + offset] = tr;
-            });
-          } else {
-            anyFailure = true;
-            // Keep originals for this section so lengths stay aligned in cache.
-            slice.forEach((orig, offset) => {
-              collected[start + offset] = orig;
-            });
-          }
-
-          setTranslationProgress({ done: batch + 1, total: totalBatches });
-        }
-
-        // Only cache a fully-successful translation set.
-        if (!cancelled && !anyFailure) {
           try {
-            localStorage.setItem(cacheKey, JSON.stringify(collected));
-          } catch {
-            /* storage full — ignore */
+            const { data, error } = await supabase.functions.invoke("translate-ui", {
+              body: { texts: slice, target: language },
+            });
+            if (cancelled) return;
+
+            const translations = (data as { translations?: string[] })?.translations;
+            if (!error && Array.isArray(translations) && translations.length === slice.length) {
+              applyRange(translations, start);
+              translations.forEach((tr, offset) => {
+                collected[start + offset] = tr;
+              });
+              applied = true;
+              break;
+            }
+            lastErrorMessage = error?.message || "The translation service returned an unexpected response.";
+          } catch (err) {
+            lastErrorMessage = err instanceof Error ? err.message : "Network request failed.";
+          }
+
+          if (attempt < MAX_RETRIES) {
+            await sleep(600 * Math.pow(2, attempt));
           }
         }
-      } catch {
-        /* network failure — leave original text */
-      } finally {
-        if (!cancelled) {
-          setTranslating(false);
-          setTranslationProgress({ done: 0, total: 0 });
+
+        if (!applied) {
+          anyFailure = true;
+          // Keep originals for this section so lengths stay aligned.
+          slice.forEach((orig, offset) => {
+            collected[start + offset] = orig;
+          });
         }
+
+        setTranslationProgress({ done: batch + 1, total: totalBatches });
       }
+
+      if (cancelled) return;
+
+      // Only cache a fully-successful translation set.
+      if (!anyFailure) {
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(collected));
+        } catch {
+          /* storage full — ignore */
+        }
+        setTranslationError(null);
+      } else {
+        setTranslationError(
+          lastErrorMessage
+            ? `Some content couldn't be translated: ${lastErrorMessage}`
+            : "Translation failed due to a network or service issue.",
+        );
+      }
+
+      setTranslating(false);
+      setTranslationProgress({ done: 0, total: 0 });
     })();
+
 
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language, ref, ...deps]);
+  }, [language, ref, translationRetryNonce, ...deps]);
 }

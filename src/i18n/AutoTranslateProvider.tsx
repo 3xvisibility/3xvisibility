@@ -42,7 +42,7 @@ function clearLegacyTranslations() {
 }
 
 export function AutoTranslateProvider({ children }: { children: React.ReactNode }) {
-  const { translating, translationProgress } = useLanguage();
+  const { translating, translationProgress, translationError, retryTranslation } = useLanguage();
 
   useEffect(() => {
     clearLegacyTranslations();
@@ -81,6 +81,31 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
               </p>
             </>
           )}
+        </div>
+      )}
+      {!translating && translationError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="fixed bottom-4 right-4 z-[9999] w-72 rounded-xl border border-destructive/40 bg-background/95 px-4 py-3 shadow-lg backdrop-blur"
+        >
+          <div className="flex items-start gap-2">
+            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+              !
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-foreground">Translation failed</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground break-words">
+                {translationError}
+              </p>
+              <button
+                onClick={retryTranslation}
+                className="mt-2 inline-flex items-center rounded-md bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>
