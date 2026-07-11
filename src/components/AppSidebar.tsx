@@ -214,13 +214,14 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             <NavLink
               to={fullPath}
               end={item.path === "dashboard"}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
-              activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
+              className="group/nav relative flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-1 before:rounded-full before:bg-primary before:transition-all before:duration-200"
+              activeClassName="bg-primary/10 text-primary font-semibold shadow-sm before:h-5"
               {...(onboardingMap[item.path] ? { "data-onboarding": onboardingMap[item.path] } : {})}
             >
-              <item.icon className="h-4 w-4 shrink-0" />
+              <item.icon className="h-4 w-4 shrink-0 transition-colors group-[.active]/nav:text-primary" />
               {!collapsed && <span className="text-sm">{t(item.titleKey)}</span>}
             </NavLink>
+
           </SidebarMenuButton>
         </SidebarMenuItem>
       );
