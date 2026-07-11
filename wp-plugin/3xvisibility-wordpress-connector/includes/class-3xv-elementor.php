@@ -35,6 +35,17 @@ class XXXV_Elementor {
 	 */
 	private static $counter_easings = array();
 
+	/**
+	 * True only while the connector's own REST publish workflow is running.
+	 * Used so the `elementor/document/after_save` / `save_post_page` self-heal
+	 * hook can tell a connector publish apart from a genuine, manual "Edit with
+	 * Elementor" save made by the user. Manual edits must win over the frozen
+	 * template CSS the connector captured at publish time.
+	 *
+	 * @var bool
+	 */
+	private static $publishing = false;
+
 
 	/**
 	 * Publish or update an Elementor page using the full editor save workflow.
@@ -155,6 +166,10 @@ class XXXV_Elementor {
 		// ---- Snapshot for rollback (only meaningful on update) ----------------
 		$rollback = self::snapshot( $is_update ? $post_id : 0 );
 
+		// Mark that the connector itself is saving so the after_save self-heal
+		// hook does not misread this as a manual "Edit with Elementor" edit.
+		self::$publishing = true;
+
 		try {
 			// ---- (2) Load / create document -----------------------------------
 			$postarr = array(
@@ -183,6 +198,9 @@ class XXXV_Elementor {
 			update_post_meta( $post_id, '_elementor_version', defined( 'ELEMENTOR_VERSION' ) ? ELEMENTOR_VERSION : XXXV_CONNECTOR_VERSION );
 			update_post_meta( $post_id, '_elementor_pro_version', defined( 'ELEMENTOR_PRO_VERSION' ) ? ELEMENTOR_PRO_VERSION : '' );
 			update_post_meta( $post_id, '_wp_page_template', $page_template );
+			// A fresh connector publish resets the design to the template, so the
+			// page is no longer in a user-edited state until the user edits again.
+			delete_post_meta( $post_id, '_xxxv_user_edited' );
 			if ( '' !== $elementor_css ) {
 				update_post_meta( $post_id, '_xxxv_template_css', $elementor_css );
 			} else {
@@ -367,6 +385,10 @@ class XXXV_Elementor {
 				'Publishing failed and changes were rolled back: ' . $e->getMessage(),
 				array( 'status' => 500 )
 			);
+		} finally {
+			// Always clear the publish guard so a later manual Elementor edit is
+			// correctly detected by the after_save self-heal hook.
+			self::$publishing = false;
 		}
 	}
 
@@ -3291,6 +3313,23 @@ class XXXV_Elementor {
 
 		$running[ $post_id ] = true;
 		try {
+			// Distinguish a genuine, manual "Edit with Elementor" save (made by the
+			// user in the WP editor) from the connector's own REST publish. When
+			// self::$publishing is false, the user edited the page themselves, so
+			// their Elementor edits MUST win: drop the frozen full-template CSS the
+			// connector captured at publish time and strip this page's site-wide
+			// Customizer block. Otherwise those frozen rules keep overriding the
+			// live edits and "nothing changes" on the front end.
+			if ( ! self::$publishing ) {
+				update_post_meta( $post_id, '_xxxv_user_edited', '1' );
+				// Remove the original frozen template CSS so it can no longer
+				// override manual edits. The critical CSS below is recompiled from
+				// the CURRENT Elementor data and still acts as the render fallback.
+				delete_post_meta( $post_id, '_xxxv_template_css' );
+				// Strip this page's block from the theme Customizer "Additional CSS".
+				self::apply_template_css_to_customizer( $post_id, '' );
+			}
+
 			// Rebuild the connector critical CSS from the current Elementor data so
 			// it always mirrors the latest edit (background/flex/grid/spacing).
 			$saved = get_post_meta( $post_id, '_elementor_data', true );

@@ -4,7 +4,7 @@ Tags: elementor, gutenberg, rest-api, programmatic-seo, page-builder
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.5.5
+Stable tag: 1.6.5
 License: GPLv2 or later
 
 Secure companion plugin that lets the 3xVisibility publish native Elementor & Gutenberg pages, upload media, regenerate CSS, clear caches, and detect builders/themes.
@@ -36,6 +36,10 @@ Works with Elementor (free) and the core Gutenberg block editor. Auto-updates fr
 4. Open Settings → 3xVisibility WordPress Connector and copy the Site URL + API Key into your 3xVisibility account.
 
 == Changelog ==
+
+= 1.6.5 =
+* Manual "Edit with Elementor" edits now stick on published pages. Previously the frozen template CSS captured at publish time (stored as connector critical CSS and in the theme Customizer "Additional CSS") kept overriding any changes made in the Elementor editor, so edits appeared to do nothing on the front end. When a user edits a connector page directly in Elementor, the connector now detects the manual save, drops the frozen full-template CSS, removes that page's site-wide Customizer block, and recompiles the fallback CSS from the current Elementor data — so the edit wins on the live page. Re-publishing from 3xVisibility restores the template design as before.
+
 
 = 1.5.5 =
 * Expanded popular-theme handle coverage + custom removal rules: the theme-CSS neutralizer now recognizes many more common theme stylesheet handles (Hestia, Sydney, Customify, Colibri, Botiga, Zakra, Phlox, Suki, Page Builder Framework, Enfold, BeTheme, TheGem, Salient, Jupiter/JupiterX, Woodmart, Porto, The7, additional bundled Twenty* themes, and extra Astra/GeneratePress/Kadence/OceanWP/Blocksy/Neve/Divi/Storefront/Flatsome/Avada handles), plus more slug-derived variants (-google-fonts, -fonts, -main). A new "Also remove these stylesheets" setting lets you add custom removal rules — extra handles to always dequeue on connector pages, with `*` wildcard support (e.g. `mytheme-*`, `*-google-fonts`). The "Keep these stylesheets" list always overrides removal rules.
