@@ -1806,6 +1806,8 @@ const de: Record<string, string> = {
   "sidebar.abTesting": "A/B-Tests",
   "sidebar.account": "Konto",
   "sidebar.admin": "Admin",
+  "sidebar.websiteSection": "Website",
+  "sidebar.seoSection": "SEO & Analysen",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "KI-Scanner",
   "sidebar.aiSiteBuilder": "KI-Website-Builder",
