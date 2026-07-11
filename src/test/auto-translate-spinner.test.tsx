@@ -29,7 +29,10 @@ function TranslatablePage() {
 function LanguageSwitch() {
   const { setLanguage } = useLanguage();
   return (
-    <button onClick={() => setLanguage("fr")}>switch-to-fr</button>
+    <>
+      <button onClick={() => setLanguage("fr")}>switch-to-fr</button>
+      <button onClick={() => setLanguage("en")}>switch-to-en</button>
+    </>
   );
 }
 
@@ -129,3 +132,59 @@ describe("auto-translate spinner visibility", () => {
     expect(invokeMock).not.toHaveBeenCalled();
   });
 });
+
+describe("auto-translate overlay clears on cancellation", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    invokeMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("hides the overlay when the component unmounts mid-fetch", async () => {
+    localStorage.setItem("language", "en");
+
+    // A request that never resolves — simulates an in-flight/hanging fetch.
+    invokeMock.mockReturnValue(new Promise(() => {}));
+
+    const app = renderApp();
+
+    await act(async () => {
+      screen.getByText("switch-to-fr").click();
+    });
+    await waitFor(() => expect(spinner()).toBeInTheDocument());
+
+    // Unmount while the request is still pending.
+    await act(async () => {
+      app.unmount();
+    });
+
+    // The overlay lives in the same tree, so unmount removes it entirely.
+    expect(spinner()).not.toBeInTheDocument();
+  });
+
+  it("hides the overlay when the language switches back mid-fetch", async () => {
+    localStorage.setItem("language", "en");
+
+    // First switch → hanging request keeps the spinner up.
+    invokeMock.mockReturnValue(new Promise(() => {}));
+
+    renderApp();
+
+    await act(async () => {
+      screen.getByText("switch-to-fr").click();
+    });
+    await waitFor(() => expect(spinner()).toBeInTheDocument());
+
+    // Switch back to English — cancels the pending run. English needs no
+    // network work, so the overlay must clear.
+    await act(async () => {
+      screen.getByText("switch-to-en").click();
+    });
+
+    await waitFor(() => expect(spinner()).not.toBeInTheDocument());
+  });
+});
+
