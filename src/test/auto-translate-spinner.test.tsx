@@ -52,7 +52,43 @@ function renderApp() {
   );
 }
 
+/** Number of paragraphs → forces multiple network batches (BATCH_SIZE = 20). */
+const MULTI_SECTION_COUNT = 45;
+
+/** A page with many text nodes so translation spans several sections/batches. */
+function MultiSectionPage() {
+  const ref = useRef<HTMLDivElement>(null);
+  usePageAutoTranslate(ref);
+  return (
+    <div ref={ref}>
+      {Array.from({ length: MULTI_SECTION_COUNT }, (_, i) => (
+        <p key={i}>Section paragraph number {`${i + 1}`} with translatable words.</p>
+      ))}
+    </div>
+  );
+}
+
+function renderMultiApp() {
+  return render(
+    <LanguageProvider>
+      <AutoTranslateProvider>
+        <LanguageSwitch />
+        <MultiSectionPage />
+      </AutoTranslateProvider>
+    </LanguageProvider>,
+  );
+}
+
+/** Success mock that echoes back a translated variant per input text. */
+function translateEcho() {
+  return async (_path: string, opts: { body: { texts: string[] } }) => ({
+    data: { translations: opts.body.texts.map((t) => `FR:${t}`) },
+    error: null,
+  });
+}
+
 const spinner = () => screen.queryByText("Translating…");
+
 
 describe("auto-translate spinner visibility", () => {
   beforeEach(() => {
