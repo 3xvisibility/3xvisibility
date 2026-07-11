@@ -35,6 +35,17 @@ class XXXV_Elementor {
 	 */
 	private static $counter_easings = array();
 
+	/**
+	 * True only while the connector's own REST publish workflow is running.
+	 * Used so the `elementor/document/after_save` / `save_post_page` self-heal
+	 * hook can tell a connector publish apart from a genuine, manual "Edit with
+	 * Elementor" save made by the user. Manual edits must win over the frozen
+	 * template CSS the connector captured at publish time.
+	 *
+	 * @var bool
+	 */
+	private static $publishing = false;
+
 
 	/**
 	 * Publish or update an Elementor page using the full editor save workflow.
