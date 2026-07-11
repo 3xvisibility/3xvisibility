@@ -299,7 +299,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={onLogout}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-150"
+                aria-label={t("sidebar.logout")}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
               >
                 <LogOut className="h-4 w-4 shrink-0" />
                 {!collapsed && <span className="text-sm">{t("sidebar.logout")}</span>}
