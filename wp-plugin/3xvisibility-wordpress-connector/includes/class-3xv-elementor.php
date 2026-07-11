@@ -198,6 +198,9 @@ class XXXV_Elementor {
 			update_post_meta( $post_id, '_elementor_version', defined( 'ELEMENTOR_VERSION' ) ? ELEMENTOR_VERSION : XXXV_CONNECTOR_VERSION );
 			update_post_meta( $post_id, '_elementor_pro_version', defined( 'ELEMENTOR_PRO_VERSION' ) ? ELEMENTOR_PRO_VERSION : '' );
 			update_post_meta( $post_id, '_wp_page_template', $page_template );
+			// A fresh connector publish resets the design to the template, so the
+			// page is no longer in a user-edited state until the user edits again.
+			delete_post_meta( $post_id, '_xxxv_user_edited' );
 			if ( '' !== $elementor_css ) {
 				update_post_meta( $post_id, '_xxxv_template_css', $elementor_css );
 			} else {
