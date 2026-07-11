@@ -89,8 +89,13 @@ export function usePageAutoTranslate(
       });
       setTranslating(false);
       setTranslationProgress({ done: 0, total: 0 });
+      setTranslationError(null);
       return;
     }
+
+    // Clear any prior error at the start of a fresh attempt.
+    setTranslationError(null);
+
 
     const cacheKey = `autotr:${language}:${hashStrings(origTexts)}`;
 
