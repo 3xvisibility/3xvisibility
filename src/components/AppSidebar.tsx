@@ -123,12 +123,19 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const { appName, logoUrl, isWhitelabeled } = useBranding();
   const { basePath } = useWorkspace();
 
+  // Normalize a pathname: strip any query string / hash and trailing slash.
+  const normalizePath = (p: string) => p.split(/[?#]/)[0].replace(/\/+$/, "");
+  const currentPath = normalizePath(pathname);
+
+  // Segment-aware match so "/pages" doesn't match "/pages-archive".
+  const isItemActive = (item: NavItem) => {
+    const full = normalizePath(`${basePath}/${item.path}`);
+    if (item.path === "dashboard") return currentPath === full;
+    return currentPath === full || currentPath.startsWith(`${full}/`);
+  };
+
   // Whether any nav item in a group matches the current route.
-  const isGroupActive = (items: NavItem[]) =>
-    items.some((item) => {
-      const full = `${basePath}/${item.path}`;
-      return item.path === "dashboard" ? pathname === full : pathname.startsWith(full);
-    });
+  const isGroupActive = (items: NavItem[]) => items.some(isItemActive);
   const usagePercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
   const [openGroups, setOpenGroups] = usePersistedState<Record<string, boolean>>(
     "sidebar:groups",
