@@ -29,8 +29,11 @@ import {
   Link2,
   SlidersHorizontal,
   ScanLine,
+  ChevronDown,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { usePersistedState } from "@/hooks/use-persisted-state";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { supabase } from "@/integrations/supabase/client";
 import {
