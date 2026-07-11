@@ -1796,6 +1796,8 @@ const fi: Record<string, string> = {
   "showcase.live": "Live",
   "sidebar.abTesting": "A/B-testit",
   "sidebar.account": "Tili",
+  "sidebar.websiteSection": "Verkkosivusto",
+  "sidebar.seoSection": "SEO ja analytiikka",
   "sidebar.admin": "Ylläpito",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI-skanneri",

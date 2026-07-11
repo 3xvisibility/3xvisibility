@@ -1796,6 +1796,8 @@ const hu: Record<string, string> = {
   "showcase.live": "Élő",
   "sidebar.abTesting": "A/B tesztek",
   "sidebar.account": "Fiók",
+  "sidebar.websiteSection": "Webhely",
+  "sidebar.seoSection": "SEO és analitika",
   "sidebar.admin": "Admin",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI szkenner",
