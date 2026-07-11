@@ -1796,6 +1796,8 @@ const el: Record<string, string> = {
   "showcase.live": "Online",
   "sidebar.abTesting": "A/B δοκιμές",
   "sidebar.account": "Λογαριασμός",
+  "sidebar.websiteSection": "Ιστότοπος",
+  "sidebar.seoSection": "SEO & Analytics",
   "sidebar.admin": "Διαχειριστής",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI σαρωτής",

@@ -1796,6 +1796,8 @@ const ms: Record<string, string> = {
   "showcase.live": "Dalam Talian",
   "sidebar.abTesting": "Ujian A/B",
   "sidebar.account": "Akaun",
+  "sidebar.websiteSection": "Laman Web",
+  "sidebar.seoSection": "SEO & Analitik",
   "sidebar.admin": "Admin",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "Pengimbas AI",

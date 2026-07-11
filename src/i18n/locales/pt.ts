@@ -1805,6 +1805,8 @@ const pt: Record<string, string> = {
   "showcase.live": "Ao vivo",
   "sidebar.abTesting": "Teste A/B",
   "sidebar.account": "Conta",
+  "sidebar.websiteSection": "Site",
+  "sidebar.seoSection": "SEO e análises",
   "sidebar.admin": "Administrador",
   "sidebar.affiliate": "Afiliado",
   "sidebar.aiScanner": "AI Scanner",

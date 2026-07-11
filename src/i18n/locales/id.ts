@@ -1796,6 +1796,8 @@ const id: Record<string, string> = {
   "showcase.live": "Online",
   "sidebar.abTesting": "Tes A/B",
   "sidebar.account": "Akun",
+  "sidebar.websiteSection": "Situs Web",
+  "sidebar.seoSection": "SEO & Analitik",
   "sidebar.admin": "Admin",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "Pemindai AI",

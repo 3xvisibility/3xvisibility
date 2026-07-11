@@ -1796,6 +1796,8 @@ const th: Record<string, string> = {
   "showcase.live": "ออนไลน์",
   "sidebar.abTesting": "ทดสอบ A/B",
   "sidebar.account": "บัญชี",
+  "sidebar.websiteSection": "เว็บไซต์",
+  "sidebar.seoSection": "SEO และการวิเคราะห์",
   "sidebar.admin": "แอดมิน",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "สแกนเนอร์ AI",

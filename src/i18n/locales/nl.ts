@@ -1805,6 +1805,8 @@ const nl: Record<string, string> = {
   "showcase.live": "Leef",
   "sidebar.abTesting": "A/B-testen",
   "sidebar.account": "Rekening",
+  "sidebar.websiteSection": "Website",
+  "sidebar.seoSection": "SEO en analyse",
   "sidebar.admin": "Beheerder",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI Scanner",

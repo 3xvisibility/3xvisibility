@@ -1796,6 +1796,8 @@ const uk: Record<string, string> = {
   "showcase.live": "Онлайн",
   "sidebar.abTesting": "A/B тести",
   "sidebar.account": "Акаунт",
+  "sidebar.websiteSection": "Вебсайт",
+  "sidebar.seoSection": "SEO та аналітика",
   "sidebar.admin": "Адмін",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI сканер",

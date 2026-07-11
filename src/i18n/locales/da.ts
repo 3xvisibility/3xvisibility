@@ -1796,6 +1796,8 @@ const da: Record<string, string> = {
   "showcase.live": "Live",
   "sidebar.abTesting": "A/B-tests",
   "sidebar.account": "Konto",
+  "sidebar.websiteSection": "Websted",
+  "sidebar.seoSection": "SEO og analyser",
   "sidebar.admin": "Admin",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI Scanner",

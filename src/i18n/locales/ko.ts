@@ -1796,6 +1796,8 @@ const ko: Record<string, string> = {
   "showcase.live": "라이브",
   "sidebar.abTesting": "A/B 테스트",
   "sidebar.account": "계정",
+  "sidebar.websiteSection": "웹사이트",
+  "sidebar.seoSection": "SEO 및 분석",
   "sidebar.admin": "관리자",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI 스캐너",
