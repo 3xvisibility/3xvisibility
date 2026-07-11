@@ -118,9 +118,17 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { pagesUsed, pagesLimit, canUseFeature } = useSubscription();
   const { appName, logoUrl, isWhitelabeled } = useBranding();
   const { basePath } = useWorkspace();
+
+  // Whether any nav item in a group matches the current route.
+  const isGroupActive = (items: NavItem[]) =>
+    items.some((item) => {
+      const full = `${basePath}/${item.path}`;
+      return item.path === "dashboard" ? pathname === full : pathname.startsWith(full);
+    });
   const usagePercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
   const [openGroups, setOpenGroups] = usePersistedState<Record<string, boolean>>(
     "sidebar:groups",
