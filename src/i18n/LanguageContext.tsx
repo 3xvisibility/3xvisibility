@@ -64,6 +64,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const [translating, setTranslating] = useState(false);
   const [translationProgress, setTranslationProgress] = useState<TranslationProgress>({ done: 0, total: 0 });
+  const [translationError, setTranslationError] = useState<string | null>(null);
+  const [translationRetryNonce, setTranslationRetryNonce] = useState(0);
+
+  const retryTranslation = useCallback(() => {
+    setTranslationError(null);
+    setTranslationRetryNonce((n) => n + 1);
+  }, []);
 
   const setLanguage = useCallback((lang: Language) => {
     // All supported languages are covered by the built-in t() dictionary, so
