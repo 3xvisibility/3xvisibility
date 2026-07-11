@@ -218,7 +218,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
               activeClassName="bg-primary/10 text-primary font-semibold shadow-sm before:h-5"
               {...(onboardingMap[item.path] ? { "data-onboarding": onboardingMap[item.path] } : {})}
             >
-              <item.icon className="h-4 w-4 shrink-0 transition-colors group-[.active]/nav:text-primary" />
+              <item.icon className="h-4 w-4 shrink-0" />
               {!collapsed && <span className="text-sm">{t(item.titleKey)}</span>}
             </NavLink>
 
