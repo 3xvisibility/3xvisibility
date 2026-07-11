@@ -430,7 +430,24 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     analysis.metaScore.checks.some((c) => !c.passed) ||
     analysis.sea.checks.some((c) => !c.passed) ||
     analysis.geo.checks.some((c) => !c.passed);
-  const hasIssues = hasRuleIssues || hasFailedChecks;
+  // Also consult the unified engine (the headline panel) so the Fix button
+  // appears whenever the shared score is below the 90 tier or a critical factor
+  // fails — even if the legacy rule engine finds nothing.
+  const unifiedResult = calculateUnifiedSeoScore({
+    title: page.title,
+    content: page.content,
+    slug: page.slug,
+    seoTitle: page.seo_title,
+    seoDescription: page.seo_description,
+    seoKeywords: page.seo_keywords,
+    canonicalUrl: page.canonical_url,
+    url: page.external_url,
+  });
+  const hasIssues =
+    hasRuleIssues ||
+    hasFailedChecks ||
+    !unifiedResult.gatePassed ||
+    unifiedResult.score < 90;
 
   const scoreColor = (score: number) =>
     score >= 85 ? "text-emerald-600" :
