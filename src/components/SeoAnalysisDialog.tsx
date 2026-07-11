@@ -454,7 +454,21 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 
         <ScrollArea className="flex-1">
           <div className="space-y-5 pr-2">
-            {/* Overall Score */}
+            {/* Unified SEO Score — shared engine, headline metric */}
+            <UnifiedSeoPanel
+              input={{
+                title: page.title,
+                content: page.content,
+                slug: page.slug,
+                seoTitle: page.seo_title,
+                seoDescription: page.seo_description,
+                seoKeywords: page.seo_keywords,
+                canonicalUrl: page.canonical_url,
+                url: page.external_url,
+              }}
+            />
+
+            {/* Legacy Score (kept for detailed sub-breakdowns) */}
             <div className="rounded-lg border border-border bg-muted/20 p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-semibold">Overall SEO Health</span>
