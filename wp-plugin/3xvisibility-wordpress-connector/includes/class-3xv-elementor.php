@@ -166,6 +166,10 @@ class XXXV_Elementor {
 		// ---- Snapshot for rollback (only meaningful on update) ----------------
 		$rollback = self::snapshot( $is_update ? $post_id : 0 );
 
+		// Mark that the connector itself is saving so the after_save self-heal
+		// hook does not misread this as a manual "Edit with Elementor" edit.
+		self::$publishing = true;
+
 		try {
 			// ---- (2) Load / create document -----------------------------------
 			$postarr = array(
