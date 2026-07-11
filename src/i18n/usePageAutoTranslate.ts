@@ -53,14 +53,25 @@ function collectTextNodes(root: HTMLElement): Text[] {
 
 /** Number of text nodes translated per network batch ("section"). */
 const BATCH_SIZE = 20;
-/** Retry attempts per batch before giving up. */
-const MAX_RETRIES = 2;
+/** Retry attempts per batch before giving up (total tries = MAX_RETRIES + 1). */
+export const MAX_RETRIES = 2;
+/** Base delay (ms) for the exponential backoff between retries. */
+export const BACKOFF_BASE_MS = 600;
 /** Abort a single batch request if it hasn't responded in this window. */
 const REQUEST_TIMEOUT_MS = 20000;
+
+/**
+ * Exponential backoff delay for a given zero-based retry attempt.
+ * attempt 0 -> BACKOFF_BASE_MS, attempt 1 -> 2x, attempt 2 -> 4x, ...
+ */
+export function backoffDelay(attempt: number): number {
+  return BACKOFF_BASE_MS * Math.pow(2, attempt);
+}
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
 
 /** Rejects if the given promise doesn't settle within `ms`. */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
