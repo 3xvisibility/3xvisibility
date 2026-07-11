@@ -3,6 +3,7 @@ import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Building2, ChevronRight, ChevronsUpDown, Search } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { getBreadcrumbTrail } from "@/lib/sidebar-nav";
 import {
   Popover,
   PopoverContent,
@@ -83,6 +84,14 @@ export function WorkspaceBreadcrumb() {
 
   // Build crumbs after workspace (skipping workspace itself — handled separately)
   const crumbs: { label: string; href?: string }[] = [];
+
+  // Prepend the active sidebar group label (e.g. "Website", "SEO") so the
+  // breadcrumb mirrors the sidebar section the current route lives in.
+  const { groupLabelKey } = getBreadcrumbTrail(location.pathname, basePath);
+  if (groupLabelKey) {
+    crumbs.push({ label: t(groupLabelKey) });
+  }
+
   let accPath = basePath;
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i];
@@ -96,6 +105,7 @@ export function WorkspaceBreadcrumb() {
       crumbs.push({ label: truncated });
     }
   }
+
 
   const filtered = workspaces.filter((w) =>
     w.name.toLowerCase().includes(search.toLowerCase())
@@ -157,23 +167,30 @@ export function WorkspaceBreadcrumb() {
       </span>
 
       {/* Remaining crumbs */}
-      {crumbs.map((crumb, idx) => (
-        <span key={idx} className="flex items-center gap-1 min-w-0">
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
-          {crumb.href ? (
-            <Link
-              to={crumb.href}
-              className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[120px]"
-            >
-              {crumb.label}
-            </Link>
-          ) : (
-            <span className="text-foreground font-medium truncate max-w-[160px]">
-              {crumb.label}
-            </span>
-          )}
-        </span>
-      ))}
+      {crumbs.map((crumb, idx) => {
+        const isLast = idx === crumbs.length - 1;
+        return (
+          <span key={idx} className="flex items-center gap-1 min-w-0">
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+            {crumb.href ? (
+              <Link
+                to={crumb.href}
+                className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[120px]"
+              >
+                {crumb.label}
+              </Link>
+            ) : isLast ? (
+              <span className="text-foreground font-medium truncate max-w-[160px]">
+                {crumb.label}
+              </span>
+            ) : (
+              <span className="text-muted-foreground truncate max-w-[140px]">
+                {crumb.label}
+              </span>
+            )}
+          </span>
+        );
+      })}
     </nav>
   );
 }
