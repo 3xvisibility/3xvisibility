@@ -91,6 +91,8 @@ const fallback: LanguageContextType = {
   setLanguage: () => {},
   translating: false,
   setTranslating: () => {},
+  translationProgress: { done: 0, total: 0 },
+  setTranslationProgress: () => {},
   t: (key: string, vars?: Record<string, string | number>) => {
     const template = translations.en[key] ?? key;
 
