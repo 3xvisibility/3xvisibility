@@ -61,7 +61,8 @@ Deno.serve(async (req) => {
       const { data: rolesData } = await serviceClient.from("user_roles").select("user_id, role");
       const { data: campaigns } = await serviceClient.from("campaigns").select("*");
       const { data: generatedPages } = await serviceClient.from("generated_pages").select("id, status, campaign_id, created_at, title, user_id");
-      const { data: subscriptions } = await serviceClient.from("subscriptions").select("*");
+      // Exclude sensitive columns (stripe_customer_id, stripe_subscription_id) from client payload.
+      const { data: subscriptions } = await serviceClient.from("subscriptions").select("id, user_id, plan, pages_limit, pages_used, current_period_start, current_period_end, ai_generations_used, ai_generations_limit, workspace_id, billing_cycle, created_at, updated_at");
       const { data: websites } = await serviceClient.from("websites").select("id, user_id, type, status");
       const { data: aiCredits } = await serviceClient.from("ai_credits").select("*");
 
