@@ -122,6 +122,12 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const { appName, logoUrl, isWhitelabeled } = useBranding();
   const { basePath } = useWorkspace();
   const usagePercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
+  const [openGroups, setOpenGroups] = usePersistedState<Record<string, boolean>>(
+    "sidebar:groups",
+    { main: true, website: true, seo: true },
+  );
+  const toggleGroup = (key: string) =>
+    setOpenGroups((prev) => ({ ...prev, [key]: !(prev[key] ?? true) }));
 
   useEffect(() => {
     async function checkAdmin() {
