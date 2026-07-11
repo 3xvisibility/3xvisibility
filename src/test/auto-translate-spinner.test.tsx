@@ -29,7 +29,10 @@ function TranslatablePage() {
 function LanguageSwitch() {
   const { setLanguage } = useLanguage();
   return (
-    <button onClick={() => setLanguage("fr")}>switch-to-fr</button>
+    <>
+      <button onClick={() => setLanguage("fr")}>switch-to-fr</button>
+      <button onClick={() => setLanguage("en")}>switch-to-en</button>
+    </>
   );
 }
 
