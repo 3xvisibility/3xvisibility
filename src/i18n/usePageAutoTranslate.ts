@@ -226,6 +226,11 @@ export function usePageAutoTranslate(
 
     return () => {
       cancelled = true;
+      // Ensure the overlay never gets stuck if this run is cancelled mid-flight
+      // (unmount, language switch, or retry). A new run — if one starts — will
+      // set translating=true again synchronously right after this cleanup.
+      setTranslating(false);
+      setTranslationProgress({ done: 0, total: 0 });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language, ref, translationRetryNonce, ...deps]);
