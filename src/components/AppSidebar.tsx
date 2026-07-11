@@ -71,28 +71,30 @@ interface NavItem {
 
 const mainNav: NavItem[] = [
   { titleKey: "sidebar.dashboard", path: "dashboard", icon: LayoutDashboard },
-  { titleKey: "sidebar.websites", path: "websites", icon: Globe },
   { titleKey: "sidebar.campaigns", path: "campaigns", icon: Rocket },
   { titleKey: "sidebar.aiSiteBuilder", path: "ai-site-builder", icon: Sparkles },
   { titleKey: "sidebar.generatedPages", path: "pages", icon: Layers },
   { titleKey: "sidebar.templates", path: "templates", icon: FileText },
+];
+
+// Everything related to managing websites / their content & data.
+const websiteNav: NavItem[] = [
+  { titleKey: "sidebar.websites", path: "websites", icon: Globe },
+  { titleKey: "sidebar.websiteContent", path: "website-content", icon: Boxes, requiredFeature: "discovery" },
+  { titleKey: "sidebar.wpControl", path: "wp-control", icon: SlidersHorizontal },
   { titleKey: "sidebar.marketplace", path: "marketplace", icon: Store, requiredFeature: "internalLinks" },
   { titleKey: "sidebar.dataCsv", path: "data", icon: Database },
 ];
 
-const pgpNav: NavItem[] = [
+// Everything related to SEO, keywords, ranking & analytics.
+const seoNav: NavItem[] = [
   { titleKey: "sidebar.pgpKeywords", path: "pgp-keywords", icon: KeyRound },
   { titleKey: "sidebar.pgpGenerate", path: "pgp-generate", icon: Zap },
-  { titleKey: "sidebar.pgpTerms", path: "pgp-terms", icon: Database },
-];
-
-const toolsNav: NavItem[] = [
-  { titleKey: "sidebar.websiteContent", path: "website-content", icon: Layers, requiredFeature: "discovery" },
-  { titleKey: "sidebar.wpControl", path: "wp-control", icon: SlidersHorizontal },
-  { titleKey: "sidebar.analytics", path: "analytics", icon: BarChart3 },
-  { titleKey: "sidebar.performance", path: "performance", icon: Activity },
+  { titleKey: "sidebar.pgpTerms", path: "pgp-terms", icon: Columns3 },
   { titleKey: "sidebar.seoAudit", path: "seo-audit", icon: ClipboardCheck },
   { titleKey: "sidebar.indexing", path: "indexing", icon: SearchIcon, requiredFeature: "indexing" },
+  { titleKey: "sidebar.analytics", path: "analytics", icon: BarChart3 },
+  { titleKey: "sidebar.performance", path: "performance", icon: Activity },
 ];
 
 const settingsNav: NavItem[] = [
@@ -245,12 +247,12 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              {t("sidebar.pgpSection")}
+              {t("sidebar.websiteSection")}
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
-              {renderNavItems(pgpNav)}
+              {renderNavItems(websiteNav)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -260,12 +262,12 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              {t("sidebar.tools")}
+              {t("sidebar.seoSection")}
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
-              {renderNavItems(toolsNav)}
+              {renderNavItems(seoNav)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

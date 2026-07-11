@@ -1836,6 +1836,8 @@ const en: Record<string, string> = {
   "sidebar.templateMapping": "Variable Mapping",
   "sidebar.templates": "Templates",
   "sidebar.tools": "Tools",
+  "sidebar.websiteSection": "Website",
+  "sidebar.seoSection": "SEO & Analytics",
   "sidebar.usage": "Usage",
   "sidebar.websiteContent": "Website Content",
   "sidebar.websites": "Websites",
