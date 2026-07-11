@@ -200,16 +200,17 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     return (
       <Collapsible open={isOpen} onOpenChange={() => toggleGroup(groupKey)} className={className}>
         <SidebarGroup>
-          <CollapsibleTrigger asChild>
-            <SidebarGroupLabel
-              className={`group/label flex items-center justify-between cursor-pointer select-none text-[11px] uppercase tracking-wider font-semibold px-3 mb-1 transition-colors ${
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger
+              aria-label={t(labelKey)}
+              className={`group/label flex w-full items-center justify-between cursor-pointer select-none text-[11px] uppercase tracking-wider font-semibold px-3 mb-1 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
                 groupActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <span>{t(labelKey)}</span>
               <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-data-[state=closed]/label:-rotate-90" />
-            </SidebarGroupLabel>
-          </CollapsibleTrigger>
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
 
           <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
             <SidebarGroupContent>
