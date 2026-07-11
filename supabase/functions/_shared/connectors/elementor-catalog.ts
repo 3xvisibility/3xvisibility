@@ -32,6 +32,37 @@ export interface CatalogBuildResult {
 const stripTags = (s: string): string =>
   s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
+const decodeEntities = (s: string): string =>
+  s
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_m, n) => String.fromCharCode(parseInt(n, 10)));
+
+/**
+ * Pull the page's OWN content out of its body HTML in document order so each
+ * generated page publishes with its unique headings and paragraphs instead of
+ * the shared template placeholder text. Returns ordered heading + text blocks.
+ */
+function extractContentBlocks(html: string | null | undefined): { headings: string[]; texts: string[] } {
+  const headings: string[] = [];
+  const texts: string[] = [];
+  if (!html) return { headings, texts };
+  const re = /<(h[1-6]|p|li|blockquote)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const tag = m[1].toLowerCase();
+    const text = decodeEntities(stripTags(m[2] || "")).trim();
+    if (!text) continue;
+    if (/^h[1-6]$/.test(tag)) headings.push(text);
+    else texts.push(text);
+  }
+  return { headings, texts };
+}
+
 /**
  * Extract every `<style>…</style>` block from raw template HTML and return the
  * concatenated CSS. This CSS carries the template's class-based design
