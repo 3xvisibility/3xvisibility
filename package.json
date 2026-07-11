@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:elementor": "vitest run src/lib/connectors/elementor-engine.publish-verify.test.ts src/lib/connectors/elementor-engine.regression.test.ts src/lib/connectors/elementor-engine.fixtures.test.ts",
+    "test:security": "node scripts/security/check-sensitive-grants.mjs",
     "predev": "bunx tsx scripts/generate-sitemap.ts",
     "prebuild": "bunx tsx scripts/generate-sitemap.ts"
   },
