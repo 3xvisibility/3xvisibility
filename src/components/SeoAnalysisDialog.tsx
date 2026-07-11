@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { friendlyError } from "@/lib/friendly-errors";
 import { extractEdgeError } from "@/lib/edge-function-error";
+import { UnifiedSeoPanel } from "@/components/UnifiedSeoPanel";
 
 interface SeoAnalysisDialogProps {
   open: boolean;
