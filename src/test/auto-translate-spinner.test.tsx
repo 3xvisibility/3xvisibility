@@ -405,11 +405,10 @@ describe("auto-translate caching across multiple sections", () => {
   it("does not cache (and re-fetches) when one section fails", async () => {
     localStorage.setItem("language", "en");
 
-    // Fail only the second batch; the rest succeed.
-    let call = 0;
+    // Permanently fail the batch containing paragraph 21 (the 2nd section),
+    // even across retries; every other batch succeeds.
     invokeMock.mockImplementation(async (_path: string, opts: { body: { texts: string[] } }) => {
-      call += 1;
-      if (call === 2) {
+      if (opts.body.texts.some((t) => t.includes("number 21 "))) {
         return { data: null, error: { message: "boom" } };
       }
       return { data: { translations: opts.body.texts.map((t) => `FR:${t}`) }, error: null };
