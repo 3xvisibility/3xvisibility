@@ -197,7 +197,7 @@ export function usePageAutoTranslate(
           }
 
           if (attempt < MAX_RETRIES) {
-            await sleep(600 * Math.pow(2, attempt));
+            await sleep(backoffDelay(attempt));
           }
         }
 
