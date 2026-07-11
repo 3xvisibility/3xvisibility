@@ -84,6 +84,14 @@ export function WorkspaceBreadcrumb() {
 
   // Build crumbs after workspace (skipping workspace itself — handled separately)
   const crumbs: { label: string; href?: string }[] = [];
+
+  // Prepend the active sidebar group label (e.g. "Website", "SEO") so the
+  // breadcrumb mirrors the sidebar section the current route lives in.
+  const { groupLabelKey } = getBreadcrumbTrail(location.pathname, basePath);
+  if (groupLabelKey) {
+    crumbs.push({ label: t(groupLabelKey) });
+  }
+
   let accPath = basePath;
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i];
@@ -97,6 +105,7 @@ export function WorkspaceBreadcrumb() {
       crumbs.push({ label: truncated });
     }
   }
+
 
   const filtered = workspaces.filter((w) =>
     w.name.toLowerCase().includes(search.toLowerCase())
