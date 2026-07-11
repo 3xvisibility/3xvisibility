@@ -274,48 +274,15 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
           <WorkspaceSwitcher collapsed={collapsed} />
         </div>
 
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              {t("sidebar.main")}
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              {renderNavItems(mainNav)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {renderCollapsibleGroup("main", "sidebar.main", mainNav)}
 
         {!collapsed && <Separator className="my-3 mx-3" />}
 
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              {t("sidebar.websiteSection")}
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              {renderNavItems(websiteNav)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {renderCollapsibleGroup("website", "sidebar.websiteSection", websiteNav)}
 
         {!collapsed && <Separator className="my-3 mx-3" />}
 
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              {t("sidebar.seoSection")}
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              {renderNavItems(seoNav)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {renderCollapsibleGroup("seo", "sidebar.seoSection", seoNav)}
 
         {!collapsed && <Separator className="my-3 mx-3" />}
 
