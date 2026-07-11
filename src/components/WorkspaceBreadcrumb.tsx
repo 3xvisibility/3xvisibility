@@ -167,23 +167,30 @@ export function WorkspaceBreadcrumb() {
       </span>
 
       {/* Remaining crumbs */}
-      {crumbs.map((crumb, idx) => (
-        <span key={idx} className="flex items-center gap-1 min-w-0">
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
-          {crumb.href ? (
-            <Link
-              to={crumb.href}
-              className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[120px]"
-            >
-              {crumb.label}
-            </Link>
-          ) : (
-            <span className="text-foreground font-medium truncate max-w-[160px]">
-              {crumb.label}
-            </span>
-          )}
-        </span>
-      ))}
+      {crumbs.map((crumb, idx) => {
+        const isLast = idx === crumbs.length - 1;
+        return (
+          <span key={idx} className="flex items-center gap-1 min-w-0">
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+            {crumb.href ? (
+              <Link
+                to={crumb.href}
+                className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[120px]"
+              >
+                {crumb.label}
+              </Link>
+            ) : isLast ? (
+              <span className="text-foreground font-medium truncate max-w-[160px]">
+                {crumb.label}
+              </span>
+            ) : (
+              <span className="text-muted-foreground truncate max-w-[140px]">
+                {crumb.label}
+              </span>
+            )}
+          </span>
+        );
+      })}
     </nav>
   );
 }
