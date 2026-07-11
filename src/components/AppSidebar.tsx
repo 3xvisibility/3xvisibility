@@ -60,54 +60,8 @@ import type { FeatureKey } from "@/lib/plan-features";
 import { getMinimumPlanFor, PLAN_FEATURES } from "@/lib/plan-features";
 import { isGroupActive as computeGroupActive } from "@/lib/sidebar-active";
 
-type UserRole = "admin" | "user";
-
-interface NavItem {
-  titleKey: string;
-  /** Relative path within workspace, e.g. "dashboard" */
-  path: string;
-  icon: typeof LayoutDashboard;
-  /** Gate by plan feature flag */
-  requiredFeature?: FeatureKey;
-  /** Gate by user role; item is hidden entirely if role not met */
-  requiredRole?: UserRole;
-}
-
-const mainNav: NavItem[] = [
-  { titleKey: "sidebar.dashboard", path: "dashboard", icon: LayoutDashboard },
-  { titleKey: "sidebar.campaigns", path: "campaigns", icon: Rocket },
-  { titleKey: "sidebar.aiSiteBuilder", path: "ai-site-builder", icon: Sparkles },
-  { titleKey: "sidebar.generatedPages", path: "pages", icon: Layers },
-  { titleKey: "sidebar.templates", path: "templates", icon: FileText },
-];
-
-// Everything related to managing websites / their content & data.
-const websiteNav: NavItem[] = [
-  { titleKey: "sidebar.websites", path: "websites", icon: Globe },
-  { titleKey: "sidebar.websiteContent", path: "website-content", icon: Boxes, requiredFeature: "discovery" },
-  { titleKey: "sidebar.wpControl", path: "wp-control", icon: SlidersHorizontal },
-  { titleKey: "sidebar.marketplace", path: "marketplace", icon: Store, requiredFeature: "internalLinks" },
-  { titleKey: "sidebar.dataCsv", path: "data", icon: Database },
-];
-
-// Everything related to SEO, keywords, ranking & analytics.
-const seoNav: NavItem[] = [
-  { titleKey: "sidebar.pgpKeywords", path: "pgp-keywords", icon: KeyRound },
-  { titleKey: "sidebar.pgpGenerate", path: "pgp-generate", icon: Zap },
-  { titleKey: "sidebar.pgpTerms", path: "pgp-terms", icon: Columns3 },
-  { titleKey: "sidebar.seoAudit", path: "seo-audit", icon: ClipboardCheck },
-  { titleKey: "sidebar.indexing", path: "indexing", icon: SearchIcon, requiredFeature: "indexing" },
-  { titleKey: "sidebar.analytics", path: "analytics", icon: BarChart3 },
-  { titleKey: "sidebar.performance", path: "performance", icon: Activity },
-];
-
-const settingsNav: NavItem[] = [
-  { titleKey: "sidebar.affiliate", path: "affiliate", icon: Gift },
-  { titleKey: "sidebar.referral", path: "referral", icon: Link2 },
-  { titleKey: "sidebar.billing", path: "billing", icon: CreditCard },
-  { titleKey: "sidebar.settings", path: "settings", icon: Settings },
-  { titleKey: "sidebar.workspaceSettings", path: "workspace-settings", icon: Users, requiredFeature: "teamCollaboration" },
-];
+import type { NavItem, UserRole } from "@/lib/sidebar-nav";
+import { mainNav, websiteNav, seoNav, settingsNav } from "@/lib/sidebar-nav";
 
 interface AppSidebarProps {
   onLogout?: () => void;
