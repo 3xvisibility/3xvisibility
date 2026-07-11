@@ -3310,6 +3310,23 @@ class XXXV_Elementor {
 
 		$running[ $post_id ] = true;
 		try {
+			// Distinguish a genuine, manual "Edit with Elementor" save (made by the
+			// user in the WP editor) from the connector's own REST publish. When
+			// self::$publishing is false, the user edited the page themselves, so
+			// their Elementor edits MUST win: drop the frozen full-template CSS the
+			// connector captured at publish time and strip this page's site-wide
+			// Customizer block. Otherwise those frozen rules keep overriding the
+			// live edits and "nothing changes" on the front end.
+			if ( ! self::$publishing ) {
+				update_post_meta( $post_id, '_xxxv_user_edited', '1' );
+				// Remove the original frozen template CSS so it can no longer
+				// override manual edits. The critical CSS below is recompiled from
+				// the CURRENT Elementor data and still acts as the render fallback.
+				delete_post_meta( $post_id, '_xxxv_template_css' );
+				// Strip this page's block from the theme Customizer "Additional CSS".
+				self::apply_template_css_to_customizer( $post_id, '' );
+			}
+
 			// Rebuild the connector critical CSS from the current Elementor data so
 			// it always mirrors the latest edit (background/flex/grid/spacing).
 			$saved = get_post_meta( $post_id, '_elementor_data', true );
