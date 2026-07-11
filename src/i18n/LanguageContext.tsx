@@ -18,6 +18,13 @@ function detectBrowserLanguage(): Language | null {
   return null;
 }
 
+interface TranslationProgress {
+  /** Sections (batches) completed so far. */
+  done: number;
+  /** Total sections (batches) to translate. */
+  total: number;
+}
+
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
@@ -26,6 +33,10 @@ interface LanguageContextType {
   translating: boolean;
   /** Internal — used by AutoTranslateProvider to signal completion. */
   setTranslating: (v: boolean) => void;
+  /** Per-section translation progress for the loading indicator. */
+  translationProgress: TranslationProgress;
+  /** Internal — used by the runtime translator to report progress. */
+  setTranslationProgress: (p: TranslationProgress) => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -44,6 +55,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   });
 
   const [translating, setTranslating] = useState(false);
+  const [translationProgress, setTranslationProgress] = useState<TranslationProgress>({ done: 0, total: 0 });
 
   const setLanguage = useCallback((lang: Language) => {
     // All supported languages are covered by the built-in t() dictionary, so
@@ -68,7 +80,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, translating, setTranslating }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, translating, setTranslating, translationProgress, setTranslationProgress }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -79,6 +91,8 @@ const fallback: LanguageContextType = {
   setLanguage: () => {},
   translating: false,
   setTranslating: () => {},
+  translationProgress: { done: 0, total: 0 },
+  setTranslationProgress: () => {},
   t: (key: string, vars?: Record<string, string | number>) => {
     const template = translations.en[key] ?? key;
 

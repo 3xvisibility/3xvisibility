@@ -51,11 +51,14 @@ function collectTextNodes(root: HTMLElement): Text[] {
   return nodes;
 }
 
+/** Number of text nodes translated per network batch ("section"). */
+const BATCH_SIZE = 20;
+
 export function usePageAutoTranslate(
   ref: React.RefObject<HTMLElement>,
   deps: unknown[] = [],
 ) {
-  const { language, setTranslating } = useLanguage();
+  const { language, setTranslating, setTranslationProgress } = useLanguage();
   const originals = useRef<WeakMap<Text, string>>(new WeakMap());
 
   useEffect(() => {
@@ -79,16 +82,17 @@ export function usePageAutoTranslate(
         if (node.textContent !== origTexts[i]) node.textContent = origTexts[i];
       });
       setTranslating(false);
+      setTranslationProgress({ done: 0, total: 0 });
       return;
     }
 
     const cacheKey = `autotr:${language}:${hashStrings(origTexts)}`;
 
-    const apply = (translations: string[]) => {
+    const applyRange = (translations: string[], start: number) => {
       if (cancelled) return;
-      nodes.forEach((node, i) => {
-        const tr = translations[i];
-        if (typeof tr === "string" && tr.length > 0) node.textContent = tr;
+      translations.forEach((tr, offset) => {
+        const node = nodes[start + offset];
+        if (node && typeof tr === "string" && tr.length > 0) node.textContent = tr;
       });
     };
 
@@ -98,8 +102,9 @@ export function usePageAutoTranslate(
       if (cached) {
         const parsed = JSON.parse(cached) as string[];
         if (Array.isArray(parsed) && parsed.length === origTexts.length) {
-          apply(parsed);
+          applyRange(parsed, 0);
           setTranslating(false);
+          setTranslationProgress({ done: 0, total: 0 });
           return;
         }
       }
@@ -107,20 +112,48 @@ export function usePageAutoTranslate(
       /* ignore cache errors */
     }
 
-    // No cache — we have to hit the network, so show the loading spinner.
+    // No cache — hit the network in sections so we can report real progress.
+    const totalBatches = Math.max(1, Math.ceil(origTexts.length / BATCH_SIZE));
     setTranslating(true);
+    setTranslationProgress({ done: 0, total: totalBatches });
 
     (async () => {
+      const collected: string[] = new Array(origTexts.length);
+      let anyFailure = false;
+
       try {
-        const { data, error } = await supabase.functions.invoke("translate-ui", {
-          body: { texts: origTexts, target: language },
-        });
-        if (error || cancelled) return;
-        const translations = (data as { translations?: string[] })?.translations;
-        if (Array.isArray(translations) && translations.length === origTexts.length) {
-          apply(translations);
+        for (let batch = 0; batch < totalBatches; batch++) {
+          if (cancelled) return;
+          const start = batch * BATCH_SIZE;
+          const slice = origTexts.slice(start, start + BATCH_SIZE);
+
+          const { data, error } = await supabase.functions.invoke("translate-ui", {
+            body: { texts: slice, target: language },
+          });
+          if (cancelled) return;
+
+          const translations = (data as { translations?: string[] })?.translations;
+          if (!error && Array.isArray(translations) && translations.length === slice.length) {
+            // Apply this section immediately so the user sees progress fill in.
+            applyRange(translations, start);
+            translations.forEach((tr, offset) => {
+              collected[start + offset] = tr;
+            });
+          } else {
+            anyFailure = true;
+            // Keep originals for this section so lengths stay aligned in cache.
+            slice.forEach((orig, offset) => {
+              collected[start + offset] = orig;
+            });
+          }
+
+          setTranslationProgress({ done: batch + 1, total: totalBatches });
+        }
+
+        // Only cache a fully-successful translation set.
+        if (!cancelled && !anyFailure) {
           try {
-            localStorage.setItem(cacheKey, JSON.stringify(translations));
+            localStorage.setItem(cacheKey, JSON.stringify(collected));
           } catch {
             /* storage full — ignore */
           }
@@ -128,7 +161,10 @@ export function usePageAutoTranslate(
       } catch {
         /* network failure — leave original text */
       } finally {
-        if (!cancelled) setTranslating(false);
+        if (!cancelled) {
+          setTranslating(false);
+          setTranslationProgress({ done: 0, total: 0 });
+        }
       }
     })();
 

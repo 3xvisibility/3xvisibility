@@ -42,11 +42,14 @@ function clearLegacyTranslations() {
 }
 
 export function AutoTranslateProvider({ children }: { children: React.ReactNode }) {
-  const { translating } = useLanguage();
+  const { translating, translationProgress } = useLanguage();
 
   useEffect(() => {
     clearLegacyTranslations();
   }, []);
+
+  const { done, total } = translationProgress;
+  const percent = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
 
   return (
     <>
@@ -55,10 +58,29 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-4 right-4 z-[9999] flex items-center gap-2 rounded-full border border-primary/30 bg-background/90 px-4 py-2 shadow-lg backdrop-blur"
+          aria-busy="true"
+          className="fixed bottom-4 right-4 z-[9999] w-56 rounded-xl border border-primary/30 bg-background/90 px-4 py-3 shadow-lg backdrop-blur"
         >
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <span className="text-xs font-medium text-foreground">Translating…</span>
+          <div className="flex items-center gap-2">
+            <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <span className="text-xs font-medium text-foreground">Translating…</span>
+            {total > 0 && (
+              <span className="ml-auto text-xs font-semibold tabular-nums text-primary">{percent}%</span>
+            )}
+          </div>
+          {total > 0 && (
+            <>
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Section {Math.min(done + (done < total ? 1 : 0), total)} of {total}
+              </p>
+            </>
+          )}
         </div>
       )}
     </>
