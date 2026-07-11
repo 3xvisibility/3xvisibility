@@ -54,7 +54,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useBranding } from "@/contexts/BrandingContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import type { FeatureKey } from "@/lib/plan-features";
 import { getMinimumPlanFor, PLAN_FEATURES } from "@/lib/plan-features";
@@ -118,9 +118,17 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { pagesUsed, pagesLimit, canUseFeature } = useSubscription();
   const { appName, logoUrl, isWhitelabeled } = useBranding();
   const { basePath } = useWorkspace();
+
+  // Whether any nav item in a group matches the current route.
+  const isGroupActive = (items: NavItem[]) =>
+    items.some((item) => {
+      const full = `${basePath}/${item.path}`;
+      return item.path === "dashboard" ? pathname === full : pathname.startsWith(full);
+    });
   const usagePercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
   const [openGroups, setOpenGroups] = usePersistedState<Record<string, boolean>>(
     "sidebar:groups",
@@ -206,13 +214,14 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             <NavLink
               to={fullPath}
               end={item.path === "dashboard"}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
-              activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
+              className="group/nav relative flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-1 before:rounded-full before:bg-primary before:transition-all before:duration-200"
+              activeClassName="bg-primary/10 text-primary font-semibold shadow-sm before:h-5"
               {...(onboardingMap[item.path] ? { "data-onboarding": onboardingMap[item.path] } : {})}
             >
               <item.icon className="h-4 w-4 shrink-0" />
               {!collapsed && <span className="text-sm">{t(item.titleKey)}</span>}
             </NavLink>
+
           </SidebarMenuButton>
         </SidebarMenuItem>
       );
@@ -224,6 +233,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     items: NavItem[],
     className?: string,
   ) => {
+    const groupActive = isGroupActive(items);
     // When collapsed to icon rail, groups are always shown (no toggle chrome).
     if (collapsed) {
       return (
@@ -234,16 +244,22 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         </SidebarGroup>
       );
     }
-    const isOpen = openGroups[groupKey] ?? true;
+    // Auto-expand the group that contains the active route, even if collapsed before.
+    const isOpen = (openGroups[groupKey] ?? true) || groupActive;
     return (
       <Collapsible open={isOpen} onOpenChange={() => toggleGroup(groupKey)} className={className}>
         <SidebarGroup>
           <CollapsibleTrigger asChild>
-            <SidebarGroupLabel className="group/label flex items-center justify-between cursor-pointer select-none text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1 hover:text-foreground transition-colors">
+            <SidebarGroupLabel
+              className={`group/label flex items-center justify-between cursor-pointer select-none text-[11px] uppercase tracking-wider font-semibold px-3 mb-1 transition-colors ${
+                groupActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
               <span>{t(labelKey)}</span>
               <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-data-[state=closed]/label:-rotate-90" />
             </SidebarGroupLabel>
           </CollapsibleTrigger>
+
           <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5">{renderNavItems(items)}</SidebarMenu>
@@ -299,8 +315,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={`${basePath}/admin`}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
-                      activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
+                      className="relative flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-1 before:rounded-full before:bg-primary before:transition-all before:duration-200"
+                      activeClassName="bg-primary/10 text-primary font-semibold shadow-sm before:h-5"
                     >
                       <ShieldCheck className="h-4 w-4 shrink-0" />
                       {!collapsed && <span className="text-sm">{t("sidebar.admin")}</span>}
