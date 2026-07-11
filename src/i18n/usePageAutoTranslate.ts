@@ -53,12 +53,18 @@ function collectTextNodes(root: HTMLElement): Text[] {
 
 /** Number of text nodes translated per network batch ("section"). */
 const BATCH_SIZE = 20;
+/** Retry attempts per batch before giving up. */
+const MAX_RETRIES = 2;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export function usePageAutoTranslate(
   ref: React.RefObject<HTMLElement>,
   deps: unknown[] = [],
 ) {
-  const { language, setTranslating, setTranslationProgress } = useLanguage();
+  const { language, setTranslating, setTranslationProgress, setTranslationError, translationRetryNonce } = useLanguage();
   const originals = useRef<WeakMap<Text, string>>(new WeakMap());
 
   useEffect(() => {
