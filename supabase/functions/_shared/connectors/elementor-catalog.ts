@@ -269,20 +269,44 @@ export function buildElementorFromCatalog(
   const limits = limitsFor(fields);
   const content = defaultContentFor(fields);
 
-  // Map the page title onto the first heading field.
-  if (overrides.title) {
-    const heading = fields.find((f) => f.kind === "heading");
-    if (heading) content[heading.key] = overrides.title;
-  }
+  // Distribute the page's OWN content across the template's editable fields in
+  // document order. Without this, only one heading + one text field were filled
+  // and every other field kept the shared template placeholder text, so every
+  // page in a campaign published as a near-identical clone.
+  const blocks = extractContentBlocks(overrides.bodyHtml);
 
-  // Map the description / body text onto the largest text field.
-  const bodyText = overrides.description ||
-    (overrides.bodyHtml ? stripTags(overrides.bodyHtml) : "");
-  if (bodyText) {
-    const textField = fields
-      .filter((f) => f.kind === "text")
-      .sort((a, b) => b.originalText.length - a.originalText.length)[0];
-    if (textField) content[textField.key] = bodyText;
+  // Headings → heading fields, in order. Guarantee the page title lands first.
+  const headingValues = overrides.title
+    ? [overrides.title, ...blocks.headings.filter((h) => h !== overrides.title)]
+    : blocks.headings.slice();
+  const headingFields = fields.filter((f) => f.kind === "heading");
+  headingFields.forEach((f, i) => {
+    if (headingValues[i]) content[f.key] = headingValues[i];
+  });
+
+  // Paragraphs/list items → text fields, in order. Any surplus blocks are
+  // appended to the last text field so no page content is silently dropped.
+  const textFields = fields.filter((f) => f.kind === "text");
+  if (textFields.length > 0 && blocks.texts.length > 0) {
+    textFields.forEach((f, i) => {
+      if (i < textFields.length - 1) {
+        if (blocks.texts[i]) content[f.key] = blocks.texts[i];
+      } else {
+        const rest = blocks.texts.slice(i).filter(Boolean);
+        if (rest.length) content[f.key] = rest.join("\n\n");
+      }
+    });
+  } else {
+    // Fallback (no block-level content parsed): preserve the original behaviour
+    // of dropping the whole body / description onto the largest text field.
+    const bodyText = overrides.description ||
+      (overrides.bodyHtml ? stripTags(overrides.bodyHtml) : "");
+    if (bodyText) {
+      const textField = fields
+        .filter((f) => f.kind === "text")
+        .sort((a, b) => b.originalText.length - a.originalText.length)[0];
+      if (textField) content[textField.key] = bodyText;
+    }
   }
 
   // Validate; if it overflows, truncate offending fields safely and re-check.
