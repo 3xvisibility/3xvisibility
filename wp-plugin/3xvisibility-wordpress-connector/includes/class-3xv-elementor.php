@@ -382,6 +382,10 @@ class XXXV_Elementor {
 				'Publishing failed and changes were rolled back: ' . $e->getMessage(),
 				array( 'status' => 500 )
 			);
+		} finally {
+			// Always clear the publish guard so a later manual Elementor edit is
+			// correctly detected by the after_save self-heal hook.
+			self::$publishing = false;
 		}
 	}
 
