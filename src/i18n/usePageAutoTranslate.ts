@@ -55,7 +55,7 @@ export function usePageAutoTranslate(
   ref: React.RefObject<HTMLElement>,
   deps: unknown[] = [],
 ) {
-  const { language } = useLanguage();
+  const { language, setTranslating } = useLanguage();
   const originals = useRef<WeakMap<Text, string>>(new WeakMap());
 
   useEffect(() => {
@@ -78,6 +78,7 @@ export function usePageAutoTranslate(
       nodes.forEach((node, i) => {
         if (node.textContent !== origTexts[i]) node.textContent = origTexts[i];
       });
+      setTranslating(false);
       return;
     }
 
