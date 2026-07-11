@@ -58,6 +58,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import type { FeatureKey } from "@/lib/plan-features";
 import { getMinimumPlanFor, PLAN_FEATURES } from "@/lib/plan-features";
+import { isGroupActive as computeGroupActive } from "@/lib/sidebar-active";
 
 type UserRole = "admin" | "user";
 
