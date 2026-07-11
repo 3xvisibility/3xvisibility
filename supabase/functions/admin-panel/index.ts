@@ -406,7 +406,7 @@ Deno.serve(async (req) => {
         serviceClient.from("subscriptions").select("id, user_id, plan, pages_limit, pages_used, current_period_start, current_period_end, ai_generations_used, ai_generations_limit, workspace_id, billing_cycle, created_at, updated_at").eq("user_id", target_user_id).maybeSingle(),
         serviceClient.from("campaigns").select("*").eq("user_id", target_user_id).order("created_at", { ascending: false }),
         serviceClient.from("generated_pages").select("id, title, slug, status, created_at, campaign_id").eq("user_id", target_user_id).order("created_at", { ascending: false }).limit(200),
-        serviceClient.from("websites").select("*").eq("user_id", target_user_id),
+        serviceClient.from("websites").select("id, user_id, name, url, type, status, last_sync, created_at, updated_at, google_indexing_enabled, workspace_id, language, language_locked, shop_details, site_context").eq("user_id", target_user_id),
         serviceClient.from("ai_credits").select("*").eq("user_id", target_user_id).maybeSingle(),
         serviceClient.from("ai_credits_usage").select("*").eq("user_id", target_user_id).order("created_at", { ascending: false }).limit(50),
       ]);
