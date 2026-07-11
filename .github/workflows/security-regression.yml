@@ -1,0 +1,52 @@
+name: Security Regression (RLS & column grants)
+
+# Validates that sensitive fields stay locked down after every migration.
+# Runs the psql-backed sensitive-grant regression check on pull requests and
+# pushes to main. Requires a database connection string exposed to CI via the
+# PG_CONN_STRING secret (a read-capable role is sufficient). When the secret is
+# absent the job no-ops so forks/contributors without DB access aren't blocked.
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/**"
+      - "scripts/security/**"
+      - ".github/workflows/security-regression.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/migrations/**"
+      - "scripts/security/**"
+
+concurrency:
+  group: security-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sensitive-grants:
+    name: Sensitive-field RLS & column-grant check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run sensitive-grant regression check
+        env:
+          PG_CONN_STRING: ${{ secrets.PG_CONN_STRING }}
+        run: |
+          if [ -z "$PG_CONN_STRING" ]; then
+            echo "PG_CONN_STRING not configured — skipping DB security regression check."
+            exit 0
+          fi
+          # Export connection so psql (used by the runner) picks it up.
+          export PGHOST=$(node -e "console.log(new URL(process.env.PG_CONN_STRING).hostname)")
+          export PGPORT=$(node -e "console.log(new URL(process.env.PG_CONN_STRING).port||5432)")
+          export PGUSER=$(node -e "console.log(decodeURIComponent(new URL(process.env.PG_CONN_STRING).username))")
+          export PGPASSWORD=$(node -e "console.log(decodeURIComponent(new URL(process.env.PG_CONN_STRING).password))")
+          export PGDATABASE=$(node -e "console.log(new URL(process.env.PG_CONN_STRING).pathname.slice(1))")
+          node scripts/security/check-sensitive-grants.mjs
