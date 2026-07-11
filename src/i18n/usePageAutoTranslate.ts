@@ -55,10 +55,30 @@ function collectTextNodes(root: HTMLElement): Text[] {
 const BATCH_SIZE = 20;
 /** Retry attempts per batch before giving up. */
 const MAX_RETRIES = 2;
+/** Abort a single batch request if it hasn't responded in this window. */
+const REQUEST_TIMEOUT_MS = 20000;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/** Rejects if the given promise doesn't settle within `ms`. */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("The translation request timed out.")), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
 
 export function usePageAutoTranslate(
   ref: React.RefObject<HTMLElement>,
