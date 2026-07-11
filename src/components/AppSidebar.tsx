@@ -247,12 +247,12 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              {t("sidebar.pgpSection")}
+              {t("sidebar.websiteSection")}
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
-              {renderNavItems(pgpNav)}
+              {renderNavItems(websiteNav)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -262,12 +262,12 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              {t("sidebar.tools")}
+              {t("sidebar.seoSection")}
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
-              {renderNavItems(toolsNav)}
+              {renderNavItems(seoNav)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
