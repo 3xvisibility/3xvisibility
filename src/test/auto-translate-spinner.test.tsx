@@ -188,3 +188,75 @@ describe("auto-translate overlay clears on cancellation", () => {
   });
 });
 
+const errorCard = () => screen.queryByText("Translation failed");
+
+describe("auto-translate retry after failure", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    invokeMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("shows an error with a Retry button when every attempt fails", async () => {
+    localStorage.setItem("language", "en");
+
+    // API returns an error object on every call → all retries exhaust.
+    invokeMock.mockResolvedValue({
+      data: null,
+      error: { message: "Service unavailable" },
+    });
+
+    renderApp();
+
+    await act(async () => {
+      screen.getByText("switch-to-fr").click();
+    });
+
+    await waitFor(() => expect(errorCard()).toBeInTheDocument(), { timeout: 6000 });
+    expect(screen.getByText("Retry")).toBeInTheDocument();
+    // Spinner should be gone once the failure surfaces.
+    expect(spinner()).not.toBeInTheDocument();
+  }, 10000);
+
+  it("re-attempts on Retry and clears the error when it succeeds", async () => {
+    localStorage.setItem("language", "en");
+
+    // First run fails on every attempt.
+    invokeMock.mockResolvedValue({
+      data: null,
+      error: { message: "Network error" },
+    });
+
+    renderApp();
+
+    await act(async () => {
+      screen.getByText("switch-to-fr").click();
+    });
+
+    await waitFor(() => expect(errorCard()).toBeInTheDocument(), { timeout: 6000 });
+
+    const callsBeforeRetry = invokeMock.mock.calls.length;
+    expect(callsBeforeRetry).toBeGreaterThan(0);
+
+    // Now the service recovers.
+    invokeMock.mockResolvedValue({
+      data: { translations: ["Bonjour le monde ceci est du contenu traduisible."] },
+      error: null,
+    });
+
+    await act(async () => {
+      screen.getByText("Retry").click();
+    });
+
+    // Error clears once the retry succeeds.
+    await waitFor(() => expect(errorCard()).not.toBeInTheDocument(), { timeout: 6000 });
+    // A fresh network attempt was made after clicking Retry.
+    expect(invokeMock.mock.calls.length).toBeGreaterThan(callsBeforeRetry);
+    expect(spinner()).not.toBeInTheDocument();
+  }, 10000);
+});
+
+
