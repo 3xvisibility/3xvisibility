@@ -52,7 +52,43 @@ function renderApp() {
   );
 }
 
+/** Number of paragraphs → forces multiple network batches (BATCH_SIZE = 20). */
+const MULTI_SECTION_COUNT = 45;
+
+/** A page with many text nodes so translation spans several sections/batches. */
+function MultiSectionPage() {
+  const ref = useRef<HTMLDivElement>(null);
+  usePageAutoTranslate(ref);
+  return (
+    <div ref={ref}>
+      {Array.from({ length: MULTI_SECTION_COUNT }, (_, i) => (
+        <p key={i}>{`Section paragraph number ${i + 1} with translatable words.`}</p>
+      ))}
+    </div>
+  );
+}
+
+function renderMultiApp() {
+  return render(
+    <LanguageProvider>
+      <AutoTranslateProvider>
+        <LanguageSwitch />
+        <MultiSectionPage />
+      </AutoTranslateProvider>
+    </LanguageProvider>,
+  );
+}
+
+/** Success mock that echoes back a translated variant per input text. */
+function translateEcho() {
+  return async (_path: string, opts: { body: { texts: string[] } }) => ({
+    data: { translations: opts.body.texts.map((t) => `FR:${t}`) },
+    error: null,
+  });
+}
+
 const spinner = () => screen.queryByText("Translating…");
+
 
 describe("auto-translate spinner visibility", () => {
   beforeEach(() => {
@@ -322,6 +358,81 @@ describe("auto-translate exponential backoff", () => {
     expect(delays).not.toContain(backoffDelay(MAX_RETRIES));
   }, 10000);
 });
+
+describe("auto-translate caching across multiple sections", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    invokeMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const expectedBatches = Math.ceil(MULTI_SECTION_COUNT / 20);
+
+  it("fetches each section once, then serves the whole page from cache with no network", async () => {
+    localStorage.setItem("language", "en");
+    invokeMock.mockImplementation(translateEcho());
+
+    // First pass: performs the multi-batch network fetch and caches the result.
+    const first = renderMultiApp();
+    await act(async () => {
+      screen.getByText("switch-to-fr").click();
+    });
+    await waitFor(() => expect(spinner()).not.toBeInTheDocument(), { timeout: 6000 });
+
+    // One network call per section/batch.
+    expect(invokeMock).toHaveBeenCalledTimes(expectedBatches);
+    expect(expectedBatches).toBeGreaterThan(1);
+    first.unmount();
+
+    // Second pass: start already in French. Every section is cached, so there
+    // must be ZERO network calls and the spinner must never appear.
+    invokeMock.mockReset();
+    invokeMock.mockImplementation(translateEcho());
+    localStorage.setItem("language", "fr");
+
+    renderMultiApp();
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(spinner()).not.toBeInTheDocument();
+    expect(invokeMock).not.toHaveBeenCalled();
+  }, 15000);
+
+  it("does not cache (and re-fetches) when one section fails", async () => {
+    localStorage.setItem("language", "en");
+
+    // Permanently fail the batch containing paragraph 21 (the 2nd section),
+    // even across retries; every other batch succeeds.
+    invokeMock.mockImplementation(async (_path: string, opts: { body: { texts: string[] } }) => {
+      if (opts.body.texts.some((t) => t.includes("number 21 "))) {
+        return { data: null, error: { message: "boom" } };
+      }
+      return { data: { translations: opts.body.texts.map((t) => `FR:${t}`) }, error: null };
+    });
+
+    const first = renderMultiApp();
+    await act(async () => {
+      screen.getByText("switch-to-fr").click();
+    });
+    // Failing batch retries, so wait generously for the run to settle.
+    await waitFor(() => expect(spinner()).not.toBeInTheDocument(), { timeout: 8000 });
+    first.unmount();
+
+    // Nothing should have been cached — a fresh French mount must hit the network again.
+    invokeMock.mockReset();
+    invokeMock.mockImplementation(translateEcho());
+    localStorage.setItem("language", "fr");
+
+    renderMultiApp();
+    await waitFor(() => expect(invokeMock).toHaveBeenCalled(), { timeout: 6000 });
+    expect(invokeMock.mock.calls.length).toBe(expectedBatches);
+  }, 20000);
+});
+
 
 
 
