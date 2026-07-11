@@ -55,10 +55,30 @@ function collectTextNodes(root: HTMLElement): Text[] {
 const BATCH_SIZE = 20;
 /** Retry attempts per batch before giving up. */
 const MAX_RETRIES = 2;
+/** Abort a single batch request if it hasn't responded in this window. */
+const REQUEST_TIMEOUT_MS = 20000;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/** Rejects if the given promise doesn't settle within `ms`. */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("The translation request timed out.")), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
 
 export function usePageAutoTranslate(
   ref: React.RefObject<HTMLElement>,
@@ -143,9 +163,12 @@ export function usePageAutoTranslate(
         for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
           if (cancelled) return;
           try {
-            const { data, error } = await supabase.functions.invoke("translate-ui", {
-              body: { texts: slice, target: language },
-            });
+            const { data, error } = await withTimeout(
+              supabase.functions.invoke("translate-ui", {
+                body: { texts: slice, target: language },
+              }),
+              REQUEST_TIMEOUT_MS,
+            );
             if (cancelled) return;
 
             const translations = (data as { translations?: string[] })?.translations;
@@ -203,6 +226,11 @@ export function usePageAutoTranslate(
 
     return () => {
       cancelled = true;
+      // Ensure the overlay never gets stuck if this run is cancelled mid-flight
+      // (unmount, language switch, or retry). A new run — if one starts — will
+      // set translating=true again synchronously right after this cleanup.
+      setTranslating(false);
+      setTranslationProgress({ done: 0, total: 0 });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language, ref, translationRetryNonce, ...deps]);
