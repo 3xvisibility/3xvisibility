@@ -315,8 +315,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={`${basePath}/admin`}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
-                      activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
+                      className="relative flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-1 before:rounded-full before:bg-primary before:transition-all before:duration-200"
+                      activeClassName="bg-primary/10 text-primary font-semibold shadow-sm before:h-5"
                     >
                       <ShieldCheck className="h-4 w-4 shrink-0" />
                       {!collapsed && <span className="text-sm">{t("sidebar.admin")}</span>}
