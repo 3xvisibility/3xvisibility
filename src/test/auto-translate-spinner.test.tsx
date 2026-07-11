@@ -62,7 +62,7 @@ function MultiSectionPage() {
   return (
     <div ref={ref}>
       {Array.from({ length: MULTI_SECTION_COUNT }, (_, i) => (
-        <p key={i}>Section paragraph number {`${i + 1}`} with translatable words.</p>
+        <p key={i}>{`Section paragraph number ${i + 1} with translatable words.`}</p>
       ))}
     </div>
   );
