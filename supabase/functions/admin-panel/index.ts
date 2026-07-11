@@ -403,7 +403,7 @@ Deno.serve(async (req) => {
       ] = await Promise.all([
         serviceClient.from("profiles").select("*").eq("user_id", target_user_id).maybeSingle(),
         serviceClient.from("user_roles").select("role").eq("user_id", target_user_id).maybeSingle(),
-        serviceClient.from("subscriptions").select("*").eq("user_id", target_user_id).maybeSingle(),
+        serviceClient.from("subscriptions").select("id, user_id, plan, pages_limit, pages_used, current_period_start, current_period_end, ai_generations_used, ai_generations_limit, workspace_id, billing_cycle, created_at, updated_at").eq("user_id", target_user_id).maybeSingle(),
         serviceClient.from("campaigns").select("*").eq("user_id", target_user_id).order("created_at", { ascending: false }),
         serviceClient.from("generated_pages").select("id, title, slug, status, created_at, campaign_id").eq("user_id", target_user_id).order("created_at", { ascending: false }).limit(200),
         serviceClient.from("websites").select("*").eq("user_id", target_user_id),
