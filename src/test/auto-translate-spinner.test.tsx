@@ -12,7 +12,12 @@ vi.mock("@/integrations/supabase/client", () => ({
 
 import { LanguageProvider, useLanguage } from "@/i18n/LanguageContext";
 import { AutoTranslateProvider } from "@/i18n/AutoTranslateProvider";
-import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
+import {
+  usePageAutoTranslate,
+  backoffDelay,
+  BACKOFF_BASE_MS,
+  MAX_RETRIES,
+} from "@/i18n/usePageAutoTranslate";
 
 /** A page that runs the auto-translator over its own content. */
 function TranslatablePage() {
