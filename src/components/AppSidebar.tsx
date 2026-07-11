@@ -29,8 +29,11 @@ import {
   Link2,
   SlidersHorizontal,
   ScanLine,
+  ChevronDown,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { usePersistedState } from "@/hooks/use-persisted-state";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -119,6 +122,12 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const { appName, logoUrl, isWhitelabeled } = useBranding();
   const { basePath } = useWorkspace();
   const usagePercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
+  const [openGroups, setOpenGroups] = usePersistedState<Record<string, boolean>>(
+    "sidebar:groups",
+    { main: true, website: true, seo: true },
+  );
+  const toggleGroup = (key: string) =>
+    setOpenGroups((prev) => ({ ...prev, [key]: !(prev[key] ?? true) }));
 
   useEffect(() => {
     async function checkAdmin() {
@@ -209,6 +218,42 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
       );
     });
 
+  const renderCollapsibleGroup = (
+    groupKey: string,
+    labelKey: string,
+    items: NavItem[],
+    className?: string,
+  ) => {
+    // When collapsed to icon rail, groups are always shown (no toggle chrome).
+    if (collapsed) {
+      return (
+        <SidebarGroup className={className}>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-0.5">{renderNavItems(items)}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      );
+    }
+    const isOpen = openGroups[groupKey] ?? true;
+    return (
+      <Collapsible open={isOpen} onOpenChange={() => toggleGroup(groupKey)} className={className}>
+        <SidebarGroup>
+          <CollapsibleTrigger asChild>
+            <SidebarGroupLabel className="group/label flex items-center justify-between cursor-pointer select-none text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1 hover:text-foreground transition-colors">
+              <span>{t(labelKey)}</span>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-data-[state=closed]/label:-rotate-90" />
+            </SidebarGroupLabel>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-0.5">{renderNavItems(items)}</SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+    );
+  };
+
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-card">
       <SidebarContent className="px-3 py-4">
@@ -229,48 +274,15 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
           <WorkspaceSwitcher collapsed={collapsed} />
         </div>
 
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              {t("sidebar.main")}
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              {renderNavItems(mainNav)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {renderCollapsibleGroup("main", "sidebar.main", mainNav)}
 
         {!collapsed && <Separator className="my-3 mx-3" />}
 
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              {t("sidebar.websiteSection")}
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              {renderNavItems(websiteNav)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {renderCollapsibleGroup("website", "sidebar.websiteSection", websiteNav)}
 
         {!collapsed && <Separator className="my-3 mx-3" />}
 
-        <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              {t("sidebar.seoSection")}
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              {renderNavItems(seoNav)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {renderCollapsibleGroup("seo", "sidebar.seoSection", seoNav)}
 
         {!collapsed && <Separator className="my-3 mx-3" />}
 
