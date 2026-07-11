@@ -163,9 +163,12 @@ export function usePageAutoTranslate(
         for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
           if (cancelled) return;
           try {
-            const { data, error } = await supabase.functions.invoke("translate-ui", {
-              body: { texts: slice, target: language },
-            });
+            const { data, error } = await withTimeout(
+              supabase.functions.invoke("translate-ui", {
+                body: { texts: slice, target: language },
+              }),
+              REQUEST_TIMEOUT_MS,
+            );
             if (cancelled) return;
 
             const translations = (data as { translations?: string[] })?.translations;
