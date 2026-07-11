@@ -233,6 +233,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     items: NavItem[],
     className?: string,
   ) => {
+    const groupActive = isGroupActive(items);
     // When collapsed to icon rail, groups are always shown (no toggle chrome).
     if (collapsed) {
       return (
@@ -243,16 +244,22 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         </SidebarGroup>
       );
     }
-    const isOpen = openGroups[groupKey] ?? true;
+    // Auto-expand the group that contains the active route, even if collapsed before.
+    const isOpen = (openGroups[groupKey] ?? true) || groupActive;
     return (
       <Collapsible open={isOpen} onOpenChange={() => toggleGroup(groupKey)} className={className}>
         <SidebarGroup>
           <CollapsibleTrigger asChild>
-            <SidebarGroupLabel className="group/label flex items-center justify-between cursor-pointer select-none text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1 hover:text-foreground transition-colors">
+            <SidebarGroupLabel
+              className={`group/label flex items-center justify-between cursor-pointer select-none text-[11px] uppercase tracking-wider font-semibold px-3 mb-1 transition-colors ${
+                groupActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
               <span>{t(labelKey)}</span>
               <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-data-[state=closed]/label:-rotate-90" />
             </SidebarGroupLabel>
           </CollapsibleTrigger>
+
           <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5">{renderNavItems(items)}</SidebarMenu>
