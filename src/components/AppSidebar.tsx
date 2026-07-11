@@ -124,7 +124,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         const content = (
           <button
             onClick={() => navigate(`${basePath}/billing`)}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground/50 hover:bg-muted/50 transition-all duration-150 w-full cursor-pointer"
+            aria-label={t("common.upgradeToUnlock", { plan: minPlanLabel })}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted/50 transition-all duration-150 w-full cursor-pointer opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
           >
             <item.icon className="h-4 w-4 shrink-0" />
             {!collapsed && (
