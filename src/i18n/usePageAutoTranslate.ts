@@ -55,7 +55,7 @@ export function usePageAutoTranslate(
   ref: React.RefObject<HTMLElement>,
   deps: unknown[] = [],
 ) {
-  const { language } = useLanguage();
+  const { language, setTranslating } = useLanguage();
   const originals = useRef<WeakMap<Text, string>>(new WeakMap());
 
   useEffect(() => {
@@ -78,6 +78,7 @@ export function usePageAutoTranslate(
       nodes.forEach((node, i) => {
         if (node.textContent !== origTexts[i]) node.textContent = origTexts[i];
       });
+      setTranslating(false);
       return;
     }
 
@@ -91,19 +92,23 @@ export function usePageAutoTranslate(
       });
     };
 
-    // Serve from cache when available.
+    // Serve from cache when available (instant — no spinner needed).
     try {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
         const parsed = JSON.parse(cached) as string[];
         if (Array.isArray(parsed) && parsed.length === origTexts.length) {
           apply(parsed);
+          setTranslating(false);
           return;
         }
       }
     } catch {
       /* ignore cache errors */
     }
+
+    // No cache — we have to hit the network, so show the loading spinner.
+    setTranslating(true);
 
     (async () => {
       try {
@@ -122,6 +127,8 @@ export function usePageAutoTranslate(
         }
       } catch {
         /* network failure — leave original text */
+      } finally {
+        if (!cancelled) setTranslating(false);
       }
     })();
 
