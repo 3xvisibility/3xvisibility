@@ -3,6 +3,7 @@ import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Building2, ChevronRight, ChevronsUpDown, Search } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { getBreadcrumbTrail } from "@/lib/sidebar-nav";
 import {
   Popover,
   PopoverContent,
