@@ -12,7 +12,12 @@ vi.mock("@/integrations/supabase/client", () => ({
 
 import { LanguageProvider, useLanguage } from "@/i18n/LanguageContext";
 import { AutoTranslateProvider } from "@/i18n/AutoTranslateProvider";
-import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
+import {
+  usePageAutoTranslate,
+  backoffDelay,
+  BACKOFF_BASE_MS,
+  MAX_RETRIES,
+} from "@/i18n/usePageAutoTranslate";
 
 /** A page that runs the auto-translator over its own content. */
 function TranslatablePage() {
@@ -258,5 +263,65 @@ describe("auto-translate retry after failure", () => {
     expect(spinner()).not.toBeInTheDocument();
   }, 10000);
 });
+
+describe("auto-translate exponential backoff", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    invokeMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("computes exponentially increasing delays from the base", () => {
+    expect(backoffDelay(0)).toBe(BACKOFF_BASE_MS); // 600
+    expect(backoffDelay(1)).toBe(BACKOFF_BASE_MS * 2); // 1200
+    expect(backoffDelay(2)).toBe(BACKOFF_BASE_MS * 4); // 2400
+    // Each step is exactly double the previous.
+    expect(backoffDelay(1) / backoffDelay(0)).toBe(2);
+    expect(backoffDelay(2) / backoffDelay(1)).toBe(2);
+  });
+
+  it("retries with the expected backoff delays and stops at MAX_RETRIES", async () => {
+    localStorage.setItem("language", "en");
+
+    // Every attempt fails so the full retry sequence runs.
+    invokeMock.mockResolvedValue({
+      data: null,
+      error: { message: "Service unavailable" },
+    });
+
+    // Capture the delays passed to setTimeout so we can inspect the backoff.
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+
+    renderApp();
+
+    await act(async () => {
+      screen.getByText("switch-to-fr").click();
+    });
+
+    await waitFor(() => expect(errorCard()).toBeInTheDocument(), { timeout: 6000 });
+
+    // Total network attempts for the single batch = MAX_RETRIES + 1.
+    expect(invokeMock).toHaveBeenCalledTimes(MAX_RETRIES + 1);
+
+    // The backoff sleeps use delays 600 then 1200 (no sleep after the final
+    // attempt). Filter setTimeout calls down to the backoff delays we expect.
+    const delays = setTimeoutSpy.mock.calls.map((c) => c[1]);
+    const expectedBackoffs = Array.from({ length: MAX_RETRIES }, (_, i) => backoffDelay(i));
+    for (const expected of expectedBackoffs) {
+      expect(delays).toContain(expected);
+    }
+
+    // There must be exactly MAX_RETRIES backoff waits (one fewer than attempts).
+    const backoffCalls = delays.filter((d) => expectedBackoffs.includes(d as number));
+    expect(backoffCalls).toHaveLength(MAX_RETRIES);
+
+    // And no wait for a would-be attempt beyond the cap (e.g. 2400ms).
+    expect(delays).not.toContain(backoffDelay(MAX_RETRIES));
+  }, 10000);
+});
+
 
 
