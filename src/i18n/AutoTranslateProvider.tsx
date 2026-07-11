@@ -42,12 +42,25 @@ function clearLegacyTranslations() {
 }
 
 export function AutoTranslateProvider({ children }: { children: React.ReactNode }) {
-  const { setTranslating } = useLanguage();
+  const { translating } = useLanguage();
 
   useEffect(() => {
     clearLegacyTranslations();
-    setTranslating(false);
-  }, [setTranslating]);
+  }, []);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {translating && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-4 right-4 z-[9999] flex items-center gap-2 rounded-full border border-primary/30 bg-background/90 px-4 py-2 shadow-lg backdrop-blur"
+        >
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <span className="text-xs font-medium text-foreground">Translating…</span>
+        </div>
+      )}
+    </>
+  );
 }
