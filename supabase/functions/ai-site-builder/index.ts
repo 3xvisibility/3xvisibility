@@ -49,6 +49,8 @@ interface BrandTheme {
   font?: string;
   /** Gradient style for hero/CTA backgrounds. */
   gradientStyle?: "diagonal" | "vertical" | "radial" | "conic" | "solid";
+  /** Where the brand logo/name sits in the page header. */
+  logoPlacement?: "left" | "center" | "right";
 }
 
 interface PageJson {
