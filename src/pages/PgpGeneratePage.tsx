@@ -902,6 +902,58 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   <p className="text-[10px] text-muted-foreground">
                     Auto-fills the business description, keywords, terms and locations below. Review, then generate — pages flow straight into a new campaign.
                   </p>
+
+                  {analysis.status !== "idle" && (
+                    <div className="space-y-2 rounded-md border border-border/60 bg-background/70 p-2.5">
+                      <div className="flex items-center gap-2">
+                        {analysis.status === "scanning" && <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />}
+                        {analysis.status === "ready" && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />}
+                        {analysis.status === "error" && <XCircle className="h-3.5 w-3.5 text-destructive" />}
+                        <span className="text-xs font-semibold">
+                          {analysis.status === "scanning" && "Scanning source…"}
+                          {analysis.status === "ready" && "Scan complete — review before generating"}
+                          {analysis.status === "error" && "Scan failed"}
+                        </span>
+                      </div>
+                      {analysis.source && (
+                        <p className="text-[10px] text-muted-foreground truncate">Source: {analysis.source}</p>
+                      )}
+
+                      {analysis.status === "error" && analysis.error && (
+                        <p className="text-[10px] text-destructive">{analysis.error}</p>
+                      )}
+
+                      {analysis.status === "ready" && (
+                        <div className="space-y-2">
+                          {([
+                            { label: "Keywords", items: analysis.keywords, cls: "border-primary/40 text-primary" },
+                            { label: "Terms / services", items: analysis.terms, cls: "border-blue-500/40 text-blue-600" },
+                            { label: "Locations", items: analysis.locations, cls: "border-amber-500/40 text-amber-600" },
+                          ] as const).map((grp) => (
+                            <div key={grp.label} className="space-y-1">
+                              <p className="text-[10px] font-medium text-muted-foreground">
+                                {grp.label} <span className="opacity-60">({grp.items.length})</span>
+                              </p>
+                              {grp.items.length ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {grp.items.slice(0, 24).map((it, i) => (
+                                    <Badge key={`${grp.label}-${i}`} variant="outline" className={`text-[9px] ${grp.cls}`}>
+                                      {it}
+                                    </Badge>
+                                  ))}
+                                  {grp.items.length > 24 && (
+                                    <span className="text-[9px] text-muted-foreground">+{grp.items.length - 24} more</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-[9px] text-muted-foreground italic">None detected</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {aiSource === "website" &&
