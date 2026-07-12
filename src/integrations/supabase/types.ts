@@ -565,6 +565,8 @@ export type Database = {
           geo_settings: Json | null
           id: string
           is_paused: boolean | null
+          keyword_source: string | null
+          keyword_source_details: Json | null
           language: string
           mapping: Json | null
           max_rows: number | null
@@ -608,6 +610,8 @@ export type Database = {
           geo_settings?: Json | null
           id?: string
           is_paused?: boolean | null
+          keyword_source?: string | null
+          keyword_source_details?: Json | null
           language?: string
           mapping?: Json | null
           max_rows?: number | null
@@ -651,6 +655,8 @@ export type Database = {
           geo_settings?: Json | null
           id?: string
           is_paused?: boolean | null
+          keyword_source?: string | null
+          keyword_source_details?: Json | null
           language?: string
           mapping?: Json | null
           max_rows?: number | null
@@ -967,6 +973,8 @@ export type Database = {
           gutter_mobile: number | null
           gutter_tablet: number | null
           id: string
+          keyword_source: string | null
+          keyword_source_details: Json | null
           publish_steps: Json | null
           seo_description: string | null
           seo_keywords: string[] | null
@@ -997,6 +1005,8 @@ export type Database = {
           gutter_mobile?: number | null
           gutter_tablet?: number | null
           id?: string
+          keyword_source?: string | null
+          keyword_source_details?: Json | null
           publish_steps?: Json | null
           seo_description?: string | null
           seo_keywords?: string[] | null
@@ -1027,6 +1037,8 @@ export type Database = {
           gutter_mobile?: number | null
           gutter_tablet?: number | null
           id?: string
+          keyword_source?: string | null
+          keyword_source_details?: Json | null
           publish_steps?: Json | null
           seo_description?: string | null
           seo_keywords?: string[] | null
