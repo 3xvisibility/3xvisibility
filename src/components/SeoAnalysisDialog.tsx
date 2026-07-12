@@ -787,7 +787,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 
         {/* Pinned footer — always visible */}
         {hasIssues && page.id && (
-          <div className="shrink-0 border-t border-border bg-background px-6 py-4 space-y-2">
+          <div className="relative z-10 shrink-0 border-t border-border bg-background px-6 py-4 space-y-2">
             <Button
               onClick={handleFixAndRepublish}
               disabled={fixing}
