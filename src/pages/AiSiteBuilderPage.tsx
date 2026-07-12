@@ -1072,7 +1072,11 @@ export default function AiSiteBuilderPage() {
                                   {st.status === "published" && "published"}
                                   {st.status === "failed" && "failed"}
                                 </span>
+                                <span className="ml-1.5 inline-block rounded-full border border-border px-1.5 py-px text-[10px] font-normal text-muted-foreground align-middle">
+                                  {(p.design_mode ?? designMode) === "replicate" ? "Same design" : "Best fresh design"}
+                                </span>
                               </p>
+
                               {st.status === "failed" && st.error && (
                                 <p className="text-muted-foreground break-words leading-tight">{st.error}</p>
                               )}
