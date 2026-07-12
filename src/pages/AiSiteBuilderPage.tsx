@@ -659,6 +659,20 @@ export default function AiSiteBuilderPage() {
               </div>
             ) : (
               <>
+                {pages.length > 1 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {pages.map((p, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setActiveIdx(i)}
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition ${i === activeIdx ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/70"}`}
+                      >
+                        {p.title || `Page ${i + 1}`}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="rounded-lg border overflow-hidden bg-white h-[380px] overflow-y-auto">
                   <iframe title="preview" srcDoc={page.content} className="w-full h-[1400px] border-0" />
                 </div>
@@ -668,6 +682,10 @@ export default function AiSiteBuilderPage() {
                   {page.platform === "shopify" ? (
                     <p className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-2 py-0.5 font-medium">
                       <Sparkles className="h-3 w-3" /> Shopify-style template ready
+                    </p>
+                  ) : page.publish_format === "gutenberg" ? (
+                    <p className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-2 py-0.5 font-medium">
+                      <Sparkles className="h-3 w-3" /> Gutenberg blocks ready
                     </p>
                   ) : page.elementor_data && (
                     <p className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-2 py-0.5 font-medium">
@@ -695,11 +713,18 @@ export default function AiSiteBuilderPage() {
                     </SelectContent>
                   </Select>
 
-                  <Button onClick={handlePublish} disabled={publishing || !selectedWebsite} className="gap-2">
+                  <Button onClick={() => handlePublish(false)} disabled={publishing || !selectedWebsite} className="gap-2">
                     {publishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
-                    {publishing ? "Publishing…" : "Publish"}
+                    {publishing ? "Publishing…" : pages.length > 1 ? "Publish this page" : "Publish"}
                   </Button>
                 </div>
+
+                {pages.length > 1 && (
+                  <Button onClick={() => handlePublish(true)} disabled={publishing || !selectedWebsite} variant="secondary" className="w-full gap-2">
+                    <Rocket className="h-4 w-4" /> Publish all {pages.length} pages
+                  </Button>
+                )}
+
 
                 <Button
                   variant="outline"
