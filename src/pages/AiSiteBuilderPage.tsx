@@ -620,7 +620,20 @@ export default function AiSiteBuilderPage() {
                 </div>
               </div>
 
+              <div className="space-y-1.5">
+                <Label className="text-xs">Logo placement</Label>
+                <Select value={themeLogoPlacement} onValueChange={(v) => setThemeLogoPlacement(v as "left" | "center" | "right")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="left">Left (logo left, nav right)</SelectItem>
+                    <SelectItem value="center">Centered (logo above nav)</SelectItem>
+                    <SelectItem value="right">Right (nav left, logo right)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div
+
                 className="h-16 rounded-lg border flex items-center justify-center text-sm font-semibold text-white"
                 style={{
                   background:
