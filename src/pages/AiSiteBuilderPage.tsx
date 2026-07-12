@@ -396,6 +396,31 @@ export default function AiSiteBuilderPage() {
               <p className="text-xs text-muted-foreground">Builds into the Shopify-style page template.</p>
             </button>
           </div>
+
+          {/* WordPress build format: Elementor (native JSON) vs Gutenberg (blocks). */}
+          {platform === "wordpress" && (
+            <div className="space-y-2 pt-1">
+              <Label className="text-xs text-muted-foreground">Build format</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setWpFormat("elementor")}
+                  className={`rounded-lg border p-3 text-left transition ${wpFormat === "elementor" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"}`}
+                >
+                  <p className="text-sm font-semibold">Elementor</p>
+                  <p className="text-xs text-muted-foreground">Editable native Elementor widgets.</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWpFormat("gutenberg")}
+                  className={`rounded-lg border p-3 text-left transition ${wpFormat === "gutenberg" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"}`}
+                >
+                  <p className="text-sm font-semibold">Gutenberg</p>
+                  <p className="text-xs text-muted-foreground">Native WordPress block editor.</p>
+                </button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
