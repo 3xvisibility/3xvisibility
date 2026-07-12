@@ -462,8 +462,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-2xl h-[85vh] max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b border-border">
           <DialogTitle className="text-base flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
             SEO Analysis
@@ -471,8 +471,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           <p className="text-xs text-muted-foreground truncate">{page.title}</p>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0">
-          <div className="space-y-5 pr-2">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+          <div className="space-y-5">
             {/* Unified SEO Score — shared engine, headline metric */}
             <UnifiedSeoPanel
               input={{
@@ -782,32 +782,32 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
               </Collapsible>
             )}
 
-            {/* AI Fix Button */}
-            {hasIssues && page.id && (
-              <div className="space-y-2">
-                <Button
-                  onClick={handleFixAndRepublish}
-                  disabled={fixing}
-                  className="w-full gap-2"
-                  size="lg"
-                >
-                  {fixing ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" />{fixStep || "Processing..."}</>
-                  ) : (
-                    <><Sparkles className="h-4 w-4" />AI Fix All Issues {page.status === "published" && page.external_id ? "& Republish" : ""}</>
-                  )}
-                </Button>
-                {fixing && (
-                  <div className="space-y-1">
-                    <Progress value={fixProgress} className="h-1.5" />
-                    <p className="text-[10px] text-muted-foreground text-center">{fixStep}</p>
-                  </div>
-                )}
+          </div>
+        </div>
+
+        {/* Pinned footer — always visible */}
+        {hasIssues && page.id && (
+          <div className="shrink-0 border-t border-border bg-background px-6 py-4 space-y-2">
+            <Button
+              onClick={handleFixAndRepublish}
+              disabled={fixing}
+              className="w-full gap-2"
+              size="lg"
+            >
+              {fixing ? (
+                <><Loader2 className="h-4 w-4 animate-spin" />{fixStep || "Processing..."}</>
+              ) : (
+                <><Sparkles className="h-4 w-4" />AI Fix All Issues {page.status === "published" && page.external_id ? "& Republish" : ""}</>
+              )}
+            </Button>
+            {fixing && (
+              <div className="space-y-1">
+                <Progress value={fixProgress} className="h-1.5" />
+                <p className="text-[10px] text-muted-foreground text-center">{fixStep}</p>
               </div>
             )}
-
           </div>
-        </ScrollArea>
+        )}
       </DialogContent>
     </Dialog>
   );
