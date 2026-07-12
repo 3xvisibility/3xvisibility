@@ -782,32 +782,32 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
               </Collapsible>
             )}
 
-            {/* AI Fix Button */}
-            {hasIssues && page.id && (
-              <div className="space-y-2">
-                <Button
-                  onClick={handleFixAndRepublish}
-                  disabled={fixing}
-                  className="w-full gap-2"
-                  size="lg"
-                >
-                  {fixing ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" />{fixStep || "Processing..."}</>
-                  ) : (
-                    <><Sparkles className="h-4 w-4" />AI Fix All Issues {page.status === "published" && page.external_id ? "& Republish" : ""}</>
-                  )}
-                </Button>
-                {fixing && (
-                  <div className="space-y-1">
-                    <Progress value={fixProgress} className="h-1.5" />
-                    <p className="text-[10px] text-muted-foreground text-center">{fixStep}</p>
-                  </div>
-                )}
+          </div>
+        </div>
+
+        {/* Pinned footer — always visible */}
+        {hasIssues && page.id && (
+          <div className="shrink-0 border-t border-border bg-background px-6 py-4 space-y-2">
+            <Button
+              onClick={handleFixAndRepublish}
+              disabled={fixing}
+              className="w-full gap-2"
+              size="lg"
+            >
+              {fixing ? (
+                <><Loader2 className="h-4 w-4 animate-spin" />{fixStep || "Processing..."}</>
+              ) : (
+                <><Sparkles className="h-4 w-4" />AI Fix All Issues {page.status === "published" && page.external_id ? "& Republish" : ""}</>
+              )}
+            </Button>
+            {fixing && (
+              <div className="space-y-1">
+                <Progress value={fixProgress} className="h-1.5" />
+                <p className="text-[10px] text-muted-foreground text-center">{fixStep}</p>
               </div>
             )}
-
           </div>
-        </ScrollArea>
+        )}
       </DialogContent>
     </Dialog>
   );
