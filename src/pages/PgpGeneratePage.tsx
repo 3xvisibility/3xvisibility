@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Play, Eye, FileText, KeyRound, Layers, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Zap, Settings2,
-  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles,
+  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
