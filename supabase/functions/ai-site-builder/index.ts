@@ -445,8 +445,24 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
     ? `<div style="display:inline-block;padding:8px 18px;border-radius:999px;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.28);color:#fff;font-size:13px;font-weight:600;letter-spacing:0.04em;margin:0 0 24px;backdrop-filter:blur(6px);">${esc(p.hero.eyebrow)}</div>`
     : "";
 
+  // Header with brand logo/name, positioned per theme.logoPlacement.
+  const brandName = esc(p.brand || p.title || "Brand");
+  const placement = (t as { logoPlacement?: string }).logoPlacement || "left";
+  const logo = `<span style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:${esc(t.primary)};">${brandName}</span>`;
+  const navLinks = `<nav style="display:flex;gap:24px;font-size:14px;font-weight:600;color:${muted};">
+        <span>Home</span><span>Services</span><span>About</span><span>Contact</span>
+      </nav>`;
+  const headerInner =
+    placement === "center"
+      ? `<div style="display:flex;flex-direction:column;align-items:center;gap:12px;">${logo}${navLinks}</div>`
+      : placement === "right"
+      ? `<div style="display:flex;align-items:center;justify-content:space-between;flex-direction:row-reverse;">${logo}${navLinks}</div>`
+      : `<div style="display:flex;align-items:center;justify-content:space-between;">${logo}${navLinks}</div>`;
+  const header = `<header style="max-width:1120px;margin:0 auto;padding:20px 24px;">${headerInner}</header>`;
+
   return `<div style="font-family:${font};background:${esc(t.bg)};color:${esc(t.text)};overflow:hidden;">
   <style>@import url('${fontPreset.import}');</style>
+  ${header}
   <section style="position:relative;padding:120px 24px 96px;text-align:center;background:${heroGradient};color:#fff;">
     <div style="position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(255,255,255,0.18),transparent 45%),radial-gradient(circle at 80% 0%,rgba(255,255,255,0.12),transparent 40%);pointer-events:none;"></div>
     <div style="position:relative;max-width:860px;margin:0 auto;">
