@@ -587,6 +587,10 @@ export default function CampaignDetailPage() {
               {((campaign as any).campaign_types?.length ? (campaign as any).campaign_types : [campaign.campaign_type]).map((t: string) => (
                 <Badge key={t} variant="outline" className="uppercase text-[10px] font-semibold">{t}</Badge>
               ))}
+              <Badge variant="outline" className="text-[10px] font-medium">
+                {(campaign as any).design_mode === "replicate" ? "Same design" : "Best fresh design"}
+              </Badge>
+
             </div>
             <p className="text-sm text-muted-foreground mt-0.5 break-words">
               {(campaign as any).websites?.name || t("campaignDetail.noSite")} · {(campaign as any).templates?.name || t("campaignDetail.noTemplate")} · {t("campaignDetail.rowsCount", { count: campaign.total_rows || 0 })}

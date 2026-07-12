@@ -169,6 +169,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [publishAs, setPublishAs] = useState<"page" | "product">("page");
   const [publishFormat, setPublishFormat] = useState<"elementor" | "gutenberg" | "shopify">("elementor");
   const publishFormatTouchedRef = useRef(false);
+  const [designMode, setDesignMode] = useState<"replicate" | "fresh">("fresh");
+  const designModeTouchedRef = useRef(false);
   const [maxRows, setMaxRows] = useState("");
   const [generationMethod, setGenerationMethod] = useState<"all" | "sequential" | "random">("all");
   const [scheduleMode, setScheduleMode] = useState<"now" | "later" | "recurring">("now");
@@ -677,6 +679,17 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTemplate, templates]);
 
+  // Inherit the template's design fidelity mode (set when built in the AI Site
+  // Builder) unless the user has already chosen one manually.
+  useEffect(() => {
+    if (!selectedTemplate || designModeTouchedRef.current) return;
+    const tpl = templates.find(t => t.id === selectedTemplate) as { schema_config?: { design_mode?: string } } | undefined;
+    const dm = tpl?.schema_config?.design_mode;
+    if (dm === "replicate" || dm === "fresh") setDesignMode(dm);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTemplate, templates]);
+
+
   // Zero-edit publish: when an imported template ships with stored default
   // values, pre-fill them as custom values and enable Reuse mode so the user can
   // publish the page as-is (no editing, no AI) straight to WordPress to test it.
@@ -1127,6 +1140,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         campaign_types: campaignTypes as any,
         template_id: selectedTemplate || null,
         publish_format: publishFormat,
+        design_mode: designMode,
         ai_max_lines: aiMaxLines.trim() ? parseInt(aiMaxLines, 10) : null,
         ai_max_words: aiMaxWords.trim() ? parseInt(aiMaxWords, 10) : null,
         website_id: selectedWebsite || (dataSource === "website" ? websiteForPages : null) || null,
@@ -2616,7 +2630,20 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </RadioGroup>
                       <p className="text-[10px] text-muted-foreground">Controls how the page is built when published. WordPress supports Elementor &amp; Gutenberg; Shopify uses its native sections.</p>
                     </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Design Fidelity</Label>
+                      <RadioGroup
+                        value={designMode}
+                        onValueChange={v => { designModeTouchedRef.current = true; setDesignMode(v as any); }}
+                        className="flex flex-wrap gap-3"
+                      >
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="fresh" id="w-dm-fresh" /><Label htmlFor="w-dm-fresh" className="text-xs cursor-pointer">Best fresh design</Label></div>
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="replicate" id="w-dm-replicate" /><Label htmlFor="w-dm-replicate" className="text-xs cursor-pointer">Same design</Label></div>
+                      </RadioGroup>
+                      <p className="text-[10px] text-muted-foreground">{designMode === "replicate" ? "Pages mirror the reference site's layout &amp; palette." : "Pages use an original, conversion-focused design."}</p>
+                    </div>
                   </div>
+
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
