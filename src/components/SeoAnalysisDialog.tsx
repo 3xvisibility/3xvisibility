@@ -78,8 +78,12 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       if (!open || !initialPage?.campaign_id) {
         setCsvRow(null);
         setTemplateContent(null);
+        setSupplementalLoading(false);
+        setSupplementalError(false);
         return;
       }
+      setSupplementalLoading(true);
+      setSupplementalError(false);
       try {
         const { data: campaign } = await supabase
           .from("campaigns")
@@ -110,7 +114,10 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         if (!cancelled) {
           setCsvRow(null);
           setTemplateContent(null);
+          setSupplementalError(true);
         }
+      } finally {
+        if (!cancelled) setSupplementalLoading(false);
       }
     })();
     return () => { cancelled = true; };
