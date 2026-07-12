@@ -458,6 +458,7 @@ Only return valid JSON. No markdown fences.`;
 
 Business: ${aiBusinessDesc}
 Keywords: ${aiKeywords || "auto-detect relevant keywords"}
+Terms/services to feature: ${aiTerms || "auto-detect relevant services"}
 Locations: ${aiLocations || "general/nationwide"}
 Language: ${aiLanguage}
 
