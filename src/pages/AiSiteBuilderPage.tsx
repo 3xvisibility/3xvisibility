@@ -276,7 +276,10 @@ export default function AiSiteBuilderPage() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      const built: GeneratedPage[] = Array.isArray(data.pages) && data.pages.length ? data.pages : data.page ? [data.page] : [];
+      const rawBuilt: GeneratedPage[] = Array.isArray(data.pages) && data.pages.length ? data.pages : data.page ? [data.page] : [];
+      // Stamp each generated page record with the design fidelity mode used so
+      // it's traceable in the progress list and when publishing.
+      const built: GeneratedPage[] = rawBuilt.map((pg) => ({ ...pg, design_mode: designMode }));
       setPages(built);
       setActiveIdx(0);
       setBuildError(null);
