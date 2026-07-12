@@ -200,11 +200,25 @@ export default function AiSiteBuilderPage() {
 
 
 
-  const handleBuild = async () => {
+  const isTimeoutError = (err: any) => {
+    const msg = (err?.message || String(err || "")).toLowerCase();
+    return (
+      msg.includes("timed out") ||
+      msg.includes("timeout") ||
+      msg.includes("function_safe_timeout") ||
+      msg.includes("504")
+    );
+  };
+
+  const handleBuild = async (attempt = 0) => {
+    const MAX_AUTO_RETRIES = 2;
     setBuilding(true);
-    setPages([]);
-    setPagePublish({});
-    setActiveIdx(0);
+    setBuildError(null);
+    if (attempt === 0) {
+      setPages([]);
+      setPagePublish({});
+      setActiveIdx(0);
+    }
     try {
       const { data, error } = await supabase.functions.invoke("ai-site-builder", {
         body: {
@@ -223,13 +237,24 @@ export default function AiSiteBuilderPage() {
       const built: GeneratedPage[] = Array.isArray(data.pages) && data.pages.length ? data.pages : data.page ? [data.page] : [];
       setPages(built);
       setActiveIdx(0);
+      setBuildError(null);
       toast({ title: "Preview ready", description: `${built.length} page${built.length > 1 ? "s" : ""} built — review, then publish.` });
     } catch (err: any) {
-      toast({ title: "Build failed", description: err.message || String(err), variant: "destructive" });
+      const msg = err.message || String(err);
+      if (isTimeoutError(err) && attempt < MAX_AUTO_RETRIES) {
+        setBuildRetrying(true);
+        toast({ title: "Generation timed out", description: `Retrying automatically (attempt ${attempt + 2})…` });
+        setBuildRetrying(false);
+        return handleBuild(attempt + 1);
+      }
+      setBuildError(msg);
+      toast({ title: "Build failed", description: msg, variant: "destructive" });
     } finally {
+      if (attempt === 0 || !isTimeoutError({ message: "" })) setBuilding(false);
       setBuilding(false);
     }
   };
+
 
   const handleSendChat = async () => {
     const text = chatInput.trim();
