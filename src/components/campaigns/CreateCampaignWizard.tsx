@@ -169,6 +169,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [publishAs, setPublishAs] = useState<"page" | "product">("page");
   const [publishFormat, setPublishFormat] = useState<"elementor" | "gutenberg" | "shopify">("elementor");
   const publishFormatTouchedRef = useRef(false);
+  const [designMode, setDesignMode] = useState<"replicate" | "fresh">("fresh");
+  const designModeTouchedRef = useRef(false);
   const [maxRows, setMaxRows] = useState("");
   const [generationMethod, setGenerationMethod] = useState<"all" | "sequential" | "random">("all");
   const [scheduleMode, setScheduleMode] = useState<"now" | "later" | "recurring">("now");
