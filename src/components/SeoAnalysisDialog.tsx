@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle, BarChart3, Sparkles, Loader2, ChevronDown, Plus, Minus, Target } from "lucide-react";
+import { CheckCircle2, XCircle, BarChart3, Sparkles, Loader2, ChevronDown, Plus, Minus, Target, AlertTriangle } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext } from "@/lib/seo-rules";
 import { calculateSeoScore } from "@/lib/seo-score";
@@ -17,6 +17,7 @@ import { friendlyError } from "@/lib/friendly-errors";
 import { extractEdgeError } from "@/lib/edge-function-error";
 import { UnifiedSeoPanel } from "@/components/UnifiedSeoPanel";
 import { calculateUnifiedSeoScore } from "@/lib/unified-seo-score";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 interface SeoAnalysisDialogProps {
   open: boolean;
@@ -62,6 +63,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
   const [localPage, setLocalPage] = useState(initialPage);
   const [csvRow, setCsvRow] = useState<Record<string, unknown> | null>(null);
   const [templateContent, setTemplateContent] = useState<string | null>(null);
+  const [supplementalLoading, setSupplementalLoading] = useState(false);
+  const [supplementalError, setSupplementalError] = useState(false);
   const { toast } = useToast();
 
   // Sync localPage when dialog opens with new page
@@ -75,8 +78,12 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       if (!open || !initialPage?.campaign_id) {
         setCsvRow(null);
         setTemplateContent(null);
+        setSupplementalLoading(false);
+        setSupplementalError(false);
         return;
       }
+      setSupplementalLoading(true);
+      setSupplementalError(false);
       try {
         const { data: campaign } = await supabase
           .from("campaigns")
@@ -107,7 +114,10 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         if (!cancelled) {
           setCsvRow(null);
           setTemplateContent(null);
+          setSupplementalError(true);
         }
+      } finally {
+        if (!cancelled) setSupplementalLoading(false);
       }
     })();
     return () => { cancelled = true; };
@@ -423,7 +433,30 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     }
   };
 
-  if (!page || !analysis) return null;
+  // If the dialog is open but page data is unavailable, render a graceful
+  // fallback instead of a blank dialog, so the user always sees a clear state.
+  if (!page || !analysis) {
+    if (!open) return null;
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              SEO Analysis unavailable
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            We couldn't load the page details needed for this analysis. Please close
+            this dialog and try again.
+          </p>
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const hasRuleIssues = analysis.summary.errors.length > 0 || analysis.summary.warnings.length > 0;
   const hasFailedChecks =
@@ -472,7 +505,30 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+          <ErrorBoundary
+            fallback={
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-center space-y-2">
+                <AlertTriangle className="h-6 w-6 text-destructive mx-auto" />
+                <p className="text-sm font-medium">Couldn't render the analysis details</p>
+                <p className="text-xs text-muted-foreground">
+                  You can still run the AI fix below to regenerate optimized content.
+                </p>
+              </div>
+            }
+          >
           <div className="space-y-5">
+            {supplementalLoading && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Loading keyword suggestions…
+              </div>
+            )}
+            {supplementalError && !supplementalLoading && (
+              <div className="flex items-center gap-2 text-xs text-amber-600">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Couldn't load keyword suggestions — analysis and AI fix still available.
+              </div>
+            )}
             {/* Unified SEO Score — shared engine, headline metric */}
             <UnifiedSeoPanel
               input={{
@@ -783,6 +839,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
             )}
 
           </div>
+          </ErrorBoundary>
         </div>
 
         {/* Pinned footer — always visible */}
