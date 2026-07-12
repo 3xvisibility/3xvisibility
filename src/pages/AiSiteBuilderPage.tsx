@@ -250,10 +250,10 @@ export default function AiSiteBuilderPage() {
       setBuildError(msg);
       toast({ title: "Build failed", description: msg, variant: "destructive" });
     } finally {
-      if (attempt === 0 || !isTimeoutError({ message: "" })) setBuilding(false);
       setBuilding(false);
     }
   };
+
 
 
   const handleSendChat = async () => {
