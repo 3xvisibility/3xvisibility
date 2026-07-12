@@ -745,10 +745,18 @@ export default function AiSiteBuilderPage() {
                   <Label>Extra instructions (optional)</Label>
                   <Textarea value={freeText} onChange={(e) => setFreeText(e.target.value)} placeholder="Tone, key services, offers, colors…" rows={3} />
                 </div>
-                <Button onClick={handleBuild} disabled={building} className="w-full gap-2">
+                <Button onClick={() => handleBuild()} disabled={building} className="w-full gap-2">
                   {building ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  {building ? "Building…" : "Build with AI"}
+                  {building ? (buildRetrying ? "Retrying…" : "Building…") : "Build with AI"}
                 </Button>
+                {buildError && !building && (
+                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 space-y-2">
+                    <p className="text-sm text-destructive break-words">{buildError}</p>
+                    <Button onClick={() => handleBuild()} variant="outline" size="sm" className="gap-2">
+                      <RefreshCw className="h-4 w-4" /> Try again
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
