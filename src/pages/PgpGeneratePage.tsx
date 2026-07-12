@@ -88,10 +88,18 @@ export default function PgpGeneratePage() {
   // AI generation
   const [aiBusinessDesc, setAiBusinessDesc] = useState("");
   const [aiKeywords, setAiKeywords] = useState("");
+  const [aiTerms, setAiTerms] = useState("");
   const [aiLocations, setAiLocations] = useState("");
   const [aiPageCount, setAiPageCount] = useState("10");
   const [aiLanguage, setAiLanguage] = useState("en");
   const [aiGenerating, setAiGenerating] = useState(false);
+
+  // Where the keyword strategy comes from: an existing website or a new niche.
+  const [aiSource, setAiSource] = useState<"website" | "niche">("niche");
+  const [aiSourceUrl, setAiSourceUrl] = useState("");
+  const [aiNiche, setAiNiche] = useState("");
+  const [aiCategory, setAiCategory] = useState("");
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
 
   const { toast } = useToast();
   const { t } = useLanguage();
