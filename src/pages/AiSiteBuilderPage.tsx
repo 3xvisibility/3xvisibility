@@ -157,6 +157,7 @@ export default function AiSiteBuilderPage() {
   const [themeText, setThemeText] = useState("#0f172a");
   const [themeFont, setThemeFont] = useState("plus-jakarta");
   const [themeGradient, setThemeGradient] = useState("diagonal");
+  const [themeLogoPlacement, setThemeLogoPlacement] = useState<"left" | "center" | "right">("left");
 
   const brandThemePayload = () =>
     themeOn
@@ -167,8 +168,10 @@ export default function AiSiteBuilderPage() {
           text: themeText,
           font: themeFont,
           gradientStyle: themeGradient,
+          logoPlacement: themeLogoPlacement,
         }
       : undefined;
+
 
   // Chat
   const [messages, setMessages] = useState<ChatMsg[]>([
