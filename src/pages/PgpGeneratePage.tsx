@@ -504,6 +504,13 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         throw new Error(t("pgpGenerate.errorAiInvalidFormat"));
       }
 
+      // Keyword source tracking (persisted on campaign + each page)
+      const keywordSource = aiSource === "website" ? "existing_website" : "new_business";
+      const keywordSourceDetails =
+        aiSource === "website"
+          ? { url: websites.find((w) => w.id === aiSourceUrl)?.url || aiSourceUrl || null }
+          : { niche: aiNiche || null, category: aiCategory || null };
+
       // Create campaign
       const { data: campaign, error: campErr } = await supabase.from("campaigns").insert({
         name: `AI: ${aiBusinessDesc.slice(0, 50)}`,
@@ -515,6 +522,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         publish_mode: publishMode,
         generation_method: "ai",
         campaign_types: ["seo"],
+        keyword_source: keywordSource,
+        keyword_source_details: keywordSourceDetails,
       } as any).select("id").single();
 
       if (campErr) throw campErr;
@@ -531,6 +540,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         user_id: user.id,
         workspace_id: wsId,
         website_id: selectedWebsite || null,
+        keyword_source: keywordSource,
+        keyword_source_details: keywordSourceDetails,
       }));
 
       const { error: pagesErr } = await supabase.from("generated_pages").insert(pageInserts);
