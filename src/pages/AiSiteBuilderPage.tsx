@@ -776,16 +776,23 @@ export default function AiSiteBuilderPage() {
               <>
                 {pages.length > 1 && (
                   <div className="flex flex-wrap gap-1.5">
-                    {pages.map((p, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setActiveIdx(i)}
-                        className={`rounded-full px-3 py-1 text-xs font-medium transition ${i === activeIdx ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/70"}`}
-                      >
-                        {p.title || `Page ${i + 1}`}
-                      </button>
-                    ))}
+                    {pages.map((p, i) => {
+                      const st = pagePublish[i]?.status;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setActiveIdx(i)}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${i === activeIdx ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/70"}`}
+                        >
+                          {st === "publishing" && <Loader2 className="h-3 w-3 animate-spin" />}
+                          {st === "published" && <CheckCircle2 className="h-3 w-3 text-green-500" />}
+                          {st === "failed" && <XCircle className="h-3 w-3 text-destructive" />}
+                          {st === "pending" && <CircleDot className="h-3 w-3 opacity-60" />}
+                          {p.title || `Page ${i + 1}`}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
                 <div className="rounded-lg border overflow-hidden bg-white h-[380px] overflow-y-auto">
