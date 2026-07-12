@@ -911,6 +911,19 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 </div>
 
                 <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Terms / services</Label>
+                  <Textarea
+                    placeholder="e.g. drain cleaning, water heater install, leak repair…"
+                    value={aiTerms}
+                    onChange={(e) => setAiTerms(e.target.value)}
+                    rows={2}
+                    className="resize-none"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Comma-separated services/product types the pages should feature.</p>
+                </div>
+
+                <div className="space-y-1.5">
+
                   <Label className="text-xs font-semibold">{t("pgpGenerate.targetLocationsLabel")}</Label>
                   <Textarea
                     placeholder={t("pgpGenerate.targetLocationsPlaceholder")}
