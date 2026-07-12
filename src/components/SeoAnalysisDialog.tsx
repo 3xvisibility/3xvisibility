@@ -63,6 +63,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
   const [localPage, setLocalPage] = useState(initialPage);
   const [csvRow, setCsvRow] = useState<Record<string, unknown> | null>(null);
   const [templateContent, setTemplateContent] = useState<string | null>(null);
+  const [supplementalLoading, setSupplementalLoading] = useState(false);
+  const [supplementalError, setSupplementalError] = useState(false);
   const { toast } = useToast();
 
   // Sync localPage when dialog opens with new page
