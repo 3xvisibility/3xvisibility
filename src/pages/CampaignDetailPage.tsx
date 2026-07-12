@@ -590,6 +590,18 @@ export default function CampaignDetailPage() {
               <Badge variant="outline" className="text-[10px] font-medium">
                 {(campaign as any).design_mode === "replicate" ? "Same design" : "Best fresh design"}
               </Badge>
+              {(campaign as any).keyword_source && (
+                <Badge variant="outline" className="text-[10px] font-medium">
+                  {(campaign as any).keyword_source === "existing_website" ? "Existing website" : "New business"}
+                  {(() => {
+                    const d = (campaign as any).keyword_source_details || {};
+                    const detail = (campaign as any).keyword_source === "existing_website"
+                      ? d.url
+                      : [d.niche, d.category].filter(Boolean).join(" · ");
+                    return detail ? <span className="opacity-70 ml-1">· {detail}</span> : null;
+                  })()}
+                </Badge>
+              )}
 
             </div>
             <p className="text-sm text-muted-foreground mt-0.5 break-words">
