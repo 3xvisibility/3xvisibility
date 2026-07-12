@@ -549,10 +549,19 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
       // Keyword source tracking (persisted on campaign + each page)
       const keywordSource = aiSource === "website" ? "existing_website" : "new_business";
-      const keywordSourceDetails =
-        aiSource === "website"
+      const lastRun = runHistory[0];
+      const keywordSourceDetails = {
+        ...(aiSource === "website"
           ? { url: websites.find((w) => w.id === aiSourceUrl)?.url || aiSourceUrl || null }
-          : { niche: aiNiche || null, category: aiCategory || null };
+          : { niche: aiNiche || null, category: aiCategory || null }),
+        regenerated: analysis.status === "ready" && !!lastRun,
+        regenerated_at: analysis.status === "ready" && lastRun ? lastRun.at : null,
+        regenerated_ok: analysis.status === "ready",
+        regenerated_counts:
+          analysis.status === "ready"
+            ? { keywords: analysis.keywords.length, terms: analysis.terms.length, locations: analysis.locations.length }
+            : null,
+      };
 
       // Create campaign
       const { data: campaign, error: campErr } = await supabase.from("campaigns").insert({
