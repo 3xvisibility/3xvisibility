@@ -502,6 +502,20 @@ async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: st
     };
   }
 
+  // Gutenberg format: publish the rendered HTML directly as Gutenberg blocks —
+  // no Elementor conversion. The WordPress connector wraps the HTML into blocks.
+  if (input.buildFormat === "gutenberg") {
+    return {
+      title: p.title,
+      slug: p.slug,
+      seo_title: p.metaTitle,
+      seo_description: p.metaDescription,
+      content: html,
+      publish_format: "gutenberg",
+      platform,
+    };
+  }
+
   let elementorData: string | undefined;
   let elementorCss: string | undefined;
 
