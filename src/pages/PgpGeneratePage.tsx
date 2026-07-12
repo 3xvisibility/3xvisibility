@@ -886,8 +886,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   </p>
                 </div>
 
-
+                <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">{t("pgpGenerate.businessDescLabel")}</Label>
+
                   <Textarea
                     placeholder={t("pgpGenerate.businessDescPlaceholder")}
                     value={aiBusinessDesc}
