@@ -109,6 +109,8 @@ export default function AiSiteBuilderPage() {
   const [pagesInput, setPagesInput] = useState("Home");
   const [designMode, setDesignMode] = useState<"replicate" | "fresh">("fresh");
   const [wpFormat, setWpFormat] = useState<"elementor" | "gutenberg">("elementor");
+  const [showSample, setShowSample] = useState(false);
+
 
   const MAX_PAGES = 8;
 
