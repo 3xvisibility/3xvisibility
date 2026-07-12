@@ -889,7 +889,18 @@ export default function AiSiteBuilderPage() {
                       <p className="text-xs text-muted-foreground">
                         Sample of the <span className="font-medium text-foreground">{designMode === "replicate" ? "Same design" : "Best fresh design"}</span> style — typography, spacing, and components. The full build uses your content across all pages.
                       </p>
-                      <SamplePagePreview mode={designMode} brand={brand} niche={niche} />
+                      <SamplePagePreview
+                        mode={designMode}
+                        brand={brand}
+                        niche={niche}
+                        theme={themeOn ? {
+                          primary: themePrimary,
+                          accent: themeAccent,
+                          font: themeFont,
+                          logoPlacement: themeLogoPlacement,
+                        } : undefined}
+                      />
+
                     </div>
                   )}
                 </div>
