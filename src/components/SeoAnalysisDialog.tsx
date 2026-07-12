@@ -505,7 +505,30 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+          <ErrorBoundary
+            fallback={
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-center space-y-2">
+                <AlertTriangle className="h-6 w-6 text-destructive mx-auto" />
+                <p className="text-sm font-medium">Couldn't render the analysis details</p>
+                <p className="text-xs text-muted-foreground">
+                  You can still run the AI fix below to regenerate optimized content.
+                </p>
+              </div>
+            }
+          >
           <div className="space-y-5">
+            {supplementalLoading && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Loading keyword suggestions…
+              </div>
+            )}
+            {supplementalError && !supplementalLoading && (
+              <div className="flex items-center gap-2 text-xs text-amber-600">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Couldn't load keyword suggestions — analysis and AI fix still available.
+              </div>
+            )}
             {/* Unified SEO Score — shared engine, headline metric */}
             <UnifiedSeoPanel
               input={{
