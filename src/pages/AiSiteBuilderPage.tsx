@@ -21,6 +21,14 @@ interface PublishStep {
   at?: string;
 }
 
+// Live per-page status while a "Publish all" job runs.
+interface PagePublishState {
+  status: "pending" | "publishing" | "published" | "failed";
+  url?: string;
+  error?: string;
+}
+
+
 interface GeneratedPage {
   title: string;
   slug: string;
@@ -75,6 +83,8 @@ export default function AiSiteBuilderPage() {
   const [publishing, setPublishing] = useState(false);
   const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  // Per-page publish status shown during a "Publish all" job (keyed by page index).
+  const [pagePublish, setPagePublish] = useState<Record<number, PagePublishState>>({});
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [platform, setPlatform] = useState<"wordpress" | "shopify">("wordpress");
   // Manual per-website platform overrides (id -> platform).
@@ -191,6 +201,7 @@ export default function AiSiteBuilderPage() {
   const handleBuild = async () => {
     setBuilding(true);
     setPages([]);
+    setPagePublish({});
     setActiveIdx(0);
     try {
       const { data, error } = await supabase.functions.invoke("ai-site-builder", {
@@ -244,21 +255,14 @@ export default function AiSiteBuilderPage() {
     }
   };
 
-  const handlePublish = async (all = false) => {
-    if (!page || !selectedWebsite) {
-      toast({ title: "Select a website", description: "Choose where to publish first.", variant: "destructive" });
-      return;
-    }
-    const toPublish = all ? pages : [page];
-    setPublishing(true);
-    setPublishedUrl(null);
-    setPublishSteps([{ label: `Sending ${toPublish.length} page${toPublish.length > 1 ? "s" : ""} to publisher`, status: "running" }]);
-    try {
-      const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: {
-          website_id: selectedWebsite,
-          workspace_id: currentWorkspace?.id,
-          pages: toPublish.map((p) => ({
+  // Publish a single page payload to the selected website; returns result info.
+  const publishOne = async (p: GeneratedPage) => {
+    const { data, error } = await supabase.functions.invoke("publish-pages", {
+      body: {
+        website_id: selectedWebsite,
+        workspace_id: currentWorkspace?.id,
+        pages: [
+          {
             title: p.title,
             content: p.content,
             slug: p.slug,
@@ -268,22 +272,77 @@ export default function AiSiteBuilderPage() {
             elementor_css: p.elementor_css,
             elementor_mode: p.elementor_mode,
             publish_format: p.publish_format,
-          })),
-        },
-      });
-      if (error) throw error;
-      const results = Array.isArray(data?.results) ? data.results : [];
-      const publishedCount = results.filter((r: any) => r?.status === "published").length;
-      const lastSteps = results.find((r: any) => Array.isArray(r?.steps) && r.steps.length)?.steps;
-      if (lastSteps) setPublishSteps(lastSteps);
-      if (publishedCount > 0) {
-        const url = results.find((r: any) => r?.status === "published")?.external_url || results.find((r: any) => r?.status === "published")?.url || null;
-        setPublishedUrl(url);
-        if (!lastSteps) setPublishSteps([{ label: `Published ${publishedCount} page${publishedCount > 1 ? "s" : ""}`, status: "ok", detail: url || undefined }]);
-        toast({ title: "Published!", description: `${publishedCount} of ${toPublish.length} page(s) live.` });
-      } else {
-        throw new Error(results[0]?.error || "Publish did not complete.");
+          },
+        ],
+      },
+    });
+    if (error) throw error;
+    const result = data?.results?.[0];
+    if (result?.status !== "published") {
+      throw new Error(result?.error || "Publish did not complete.");
+    }
+    return { steps: result.steps, url: result.external_url || result.url || null };
+  };
+
+  const handlePublish = async (all = false) => {
+    if (!page || !selectedWebsite) {
+      toast({ title: "Select a website", description: "Choose where to publish first.", variant: "destructive" });
+      return;
+    }
+    setPublishing(true);
+    setPublishedUrl(null);
+
+    // ── Multi-page: publish sequentially with live per-page status. ──────────
+    if (all && pages.length > 1) {
+      const initial: Record<number, PagePublishState> = {};
+      pages.forEach((_, i) => (initial[i] = { status: "pending" }));
+      setPagePublish(initial);
+      setPublishSteps([{ label: `Publishing ${pages.length} pages…`, status: "running" }]);
+
+      let publishedCount = 0;
+      let firstUrl: string | null = null;
+
+      for (let i = 0; i < pages.length; i++) {
+        setPagePublish((prev) => ({ ...prev, [i]: { status: "publishing" } }));
+        try {
+          const { url } = await publishOne(pages[i]);
+          publishedCount++;
+          if (!firstUrl) firstUrl = url;
+          setPagePublish((prev) => ({ ...prev, [i]: { status: "published", url: url || undefined } }));
+        } catch (err: any) {
+          setPagePublish((prev) => ({ ...prev, [i]: { status: "failed", error: err.message || String(err) } }));
+        }
       }
+
+      setPublishedUrl(firstUrl);
+      const failed = pages.length - publishedCount;
+      setPublishSteps([
+        {
+          label: `${publishedCount} of ${pages.length} pages published`,
+          status: failed === 0 ? "ok" : publishedCount === 0 ? "error" : "warn",
+          detail: failed > 0 ? `${failed} page(s) failed — see the list above.` : undefined,
+        },
+      ]);
+      toast({
+        title: publishedCount === 0 ? "Publish failed" : "Publish complete",
+        description: `${publishedCount} of ${pages.length} page(s) live${failed ? `, ${failed} failed` : ""}.`,
+        variant: publishedCount === 0 ? "destructive" : undefined,
+      });
+      setPublishing(false);
+      return;
+    }
+
+    // ── Single page. ─────────────────────────────────────────────────────────
+    setPagePublish({});
+    setPublishSteps([{ label: "Sending page to publisher", status: "running" }]);
+    try {
+      const { steps, url } = await publishOne(page);
+      if (Array.isArray(steps) && steps.length) setPublishSteps(steps);
+      setPublishedUrl(url);
+      if (!Array.isArray(steps) || !steps.length) {
+        setPublishSteps([{ label: "Published", status: "ok", detail: url || undefined }]);
+      }
+      toast({ title: "Published!", description: url ? `Live at ${url}` : "Page is live." });
     } catch (err: any) {
       const msg = err.message || String(err);
       setPublishSteps((prev) => {
@@ -718,16 +777,23 @@ export default function AiSiteBuilderPage() {
               <>
                 {pages.length > 1 && (
                   <div className="flex flex-wrap gap-1.5">
-                    {pages.map((p, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setActiveIdx(i)}
-                        className={`rounded-full px-3 py-1 text-xs font-medium transition ${i === activeIdx ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/70"}`}
-                      >
-                        {p.title || `Page ${i + 1}`}
-                      </button>
-                    ))}
+                    {pages.map((p, i) => {
+                      const st = pagePublish[i]?.status;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setActiveIdx(i)}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${i === activeIdx ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/70"}`}
+                        >
+                          {st === "publishing" && <Loader2 className="h-3 w-3 animate-spin" />}
+                          {st === "published" && <CheckCircle2 className="h-3 w-3 text-green-500" />}
+                          {st === "failed" && <XCircle className="h-3 w-3 text-destructive" />}
+                          {st === "pending" && <CircleDot className="h-3 w-3 opacity-60" />}
+                          {p.title || `Page ${i + 1}`}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
                 <div className="rounded-lg border overflow-hidden bg-white h-[380px] overflow-y-auto">
@@ -780,6 +846,48 @@ export default function AiSiteBuilderPage() {
                   <Button onClick={() => handlePublish(true)} disabled={publishing || !selectedWebsite} variant="secondary" className="w-full gap-2">
                     <Rocket className="h-4 w-4" /> Publish all {pages.length} pages
                   </Button>
+                )}
+
+                {/* Live per-page progress for the "Publish all" job. */}
+                {Object.keys(pagePublish).length > 0 && (
+                  <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                      <CircleDot className="h-3.5 w-3.5" /> Page progress
+                    </div>
+                    <ul className="space-y-1.5">
+                      {pages.map((p, i) => {
+                        const st = pagePublish[i];
+                        if (!st) return null;
+                        return (
+                          <li key={i} className="flex items-start gap-2 text-xs">
+                            {st.status === "publishing" && <Loader2 className="h-4 w-4 text-primary animate-spin shrink-0" />}
+                            {st.status === "published" && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
+                            {st.status === "failed" && <XCircle className="h-4 w-4 text-destructive shrink-0" />}
+                            {st.status === "pending" && <CircleDot className="h-4 w-4 text-muted-foreground shrink-0" />}
+                            <div className="min-w-0">
+                              <p className="font-medium leading-tight">
+                                {p.title || `Page ${i + 1}`}
+                                <span className="ml-1.5 font-normal text-muted-foreground">
+                                  {st.status === "pending" && "waiting…"}
+                                  {st.status === "publishing" && "publishing…"}
+                                  {st.status === "published" && "published"}
+                                  {st.status === "failed" && "failed"}
+                                </span>
+                              </p>
+                              {st.status === "failed" && st.error && (
+                                <p className="text-muted-foreground break-words leading-tight">{st.error}</p>
+                              )}
+                              {st.status === "published" && st.url && (
+                                <a href={st.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
+                                  {st.url}
+                                </a>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
                 )}
 
 
