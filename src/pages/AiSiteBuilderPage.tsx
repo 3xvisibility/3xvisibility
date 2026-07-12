@@ -190,15 +190,27 @@ export default function AiSiteBuilderPage() {
 
   const handleBuild = async () => {
     setBuilding(true);
-    setPage(null);
+    setPages([]);
+    setActiveIdx(0);
     try {
       const { data, error } = await supabase.functions.invoke("ai-site-builder", {
-        body: { action: "build", input: { brand, category, niche, referenceUrl, freeText, platform, brandTheme: brandThemePayload() } },
+        body: {
+          action: "build",
+          input: {
+            brand, category, niche, referenceUrl, freeText, platform,
+            brandTheme: brandThemePayload(),
+            pages: parsedPages(),
+            designMode,
+            buildFormat: buildFormat(),
+          },
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setPage(data.page);
-      toast({ title: "Preview ready", description: "Review it, then publish to your site." });
+      const built: GeneratedPage[] = Array.isArray(data.pages) && data.pages.length ? data.pages : data.page ? [data.page] : [];
+      setPages(built);
+      setActiveIdx(0);
+      toast({ title: "Preview ready", description: `${built.length} page${built.length > 1 ? "s" : ""} built — review, then publish.` });
     } catch (err: any) {
       toast({ title: "Build failed", description: err.message || String(err), variant: "destructive" });
     } finally {
