@@ -785,6 +785,9 @@ When ready is true, your reply should tell the user you'll build a preview now.`
         }
         // Carry the manual brand theme into the collected input.
         if (body.brandTheme) parsed.collected.brandTheme = body.brandTheme;
+        // Carry design fidelity + build format from the request.
+        if (body.designMode === "replicate" || body.designMode === "fresh") parsed.collected.designMode = body.designMode;
+        if (["elementor", "gutenberg", "shopify"].includes(body.buildFormat)) parsed.collected.buildFormat = body.buildFormat;
         const out = await generatePage(parsed.collected, authToken);
         if (out.ok && out.page) {
           pageResult = {
