@@ -68,7 +68,9 @@ export default function AiSiteBuilderPage() {
 
   const [websites, setWebsites] = useState<WebsiteRow[]>([]);
   const [selectedWebsite, setSelectedWebsite] = useState<string>("");
-  const [page, setPage] = useState<GeneratedPage | null>(null);
+  const [pages, setPages] = useState<GeneratedPage[]>([]);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const page = pages[activeIdx] || null;
   const [building, setBuilding] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
