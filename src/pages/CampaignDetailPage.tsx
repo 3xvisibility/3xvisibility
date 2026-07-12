@@ -1017,6 +1017,20 @@ export default function CampaignDetailPage() {
                                     })()}
                                   </p>
                                 )}
+                                {(() => {
+                                  const d = (page as any).keyword_source_details || {};
+                                  if (!d.regenerated) return null;
+                                  const c = d.regenerated_counts;
+                                  return (
+                                    <p
+                                      className={`text-[10px] truncate max-w-[240px] ${d.regenerated_ok ? "text-emerald-600" : "text-destructive"}`}
+                                    >
+                                      {d.regenerated_ok ? "✓ Keywords/terms regenerated" : "✗ Regeneration failed"}
+                                      {c ? ` (${c.keywords}K / ${c.terms}T / ${c.locations}L)` : ""}
+                                      {d.regenerated_at ? ` · ${new Date(d.regenerated_at).toLocaleString()}` : ""}
+                                    </p>
+                                  );
+                                })()}
                               </div>
                             </td>
                             <td className="p-3 text-xs text-muted-foreground font-mono truncate max-w-[160px]">/{page.slug}</td>
