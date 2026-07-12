@@ -679,6 +679,17 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTemplate, templates]);
 
+  // Inherit the template's design fidelity mode (set when built in the AI Site
+  // Builder) unless the user has already chosen one manually.
+  useEffect(() => {
+    if (!selectedTemplate || designModeTouchedRef.current) return;
+    const tpl = templates.find(t => t.id === selectedTemplate) as { schema_config?: { design_mode?: string } } | undefined;
+    const dm = tpl?.schema_config?.design_mode;
+    if (dm === "replicate" || dm === "fresh") setDesignMode(dm);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTemplate, templates]);
+
+
   // Zero-edit publish: when an imported template ships with stored default
   // values, pre-fill them as custom values and enable Reuse mode so the user can
   // publish the page as-is (no editing, no AI) straight to WordPress to test it.
