@@ -925,7 +925,21 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                           {analysis.status === "ready" && "Scan complete — review before generating"}
                           {analysis.status === "error" && "Scan failed"}
                         </span>
+                        {(analysis.status === "ready" || analysis.status === "error") && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="ml-auto h-7 gap-1.5 text-[11px]"
+                            onClick={handleAnalyzeSource}
+                            disabled={aiAnalyzing}
+                          >
+                            <RefreshCw className={`h-3 w-3 ${aiAnalyzing ? "animate-spin" : ""}`} />
+                            Regenerate keywords & terms
+                          </Button>
+                        )}
                       </div>
+
                       {analysis.source && (
                         <p className="text-[10px] text-muted-foreground truncate">Source: {analysis.source}</p>
                       )}
