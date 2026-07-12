@@ -1638,6 +1638,29 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           )}
         </div>
       </div>
+
+      <AlertDialog open={confirmRegen} onOpenChange={setConfirmRegen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Regenerate keywords & terms?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This re-runs the analysis and overwrites your current keywords, terms, and locations
+              with fresh results. Any manual edits you made to those fields will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep my edits</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmRegen(false);
+                handleAnalyzeSource();
+              }}
+            >
+              Regenerate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
