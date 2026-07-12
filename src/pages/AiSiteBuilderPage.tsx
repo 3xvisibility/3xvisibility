@@ -80,6 +80,8 @@ export default function AiSiteBuilderPage() {
   const [activeIdx, setActiveIdx] = useState(0);
   const page = pages[activeIdx] || null;
   const [building, setBuilding] = useState(false);
+  const [buildError, setBuildError] = useState<string | null>(null);
+  const [buildRetrying, setBuildRetrying] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
