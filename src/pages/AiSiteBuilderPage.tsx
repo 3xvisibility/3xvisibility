@@ -157,6 +157,7 @@ export default function AiSiteBuilderPage() {
   const [themeText, setThemeText] = useState("#0f172a");
   const [themeFont, setThemeFont] = useState("plus-jakarta");
   const [themeGradient, setThemeGradient] = useState("diagonal");
+  const [themeLogoPlacement, setThemeLogoPlacement] = useState<"left" | "center" | "right">("left");
 
   const brandThemePayload = () =>
     themeOn
@@ -167,8 +168,10 @@ export default function AiSiteBuilderPage() {
           text: themeText,
           font: themeFont,
           gradientStyle: themeGradient,
+          logoPlacement: themeLogoPlacement,
         }
       : undefined;
+
 
   // Chat
   const [messages, setMessages] = useState<ChatMsg[]>([
@@ -617,7 +620,20 @@ export default function AiSiteBuilderPage() {
                 </div>
               </div>
 
+              <div className="space-y-1.5">
+                <Label className="text-xs">Logo placement</Label>
+                <Select value={themeLogoPlacement} onValueChange={(v) => setThemeLogoPlacement(v as "left" | "center" | "right")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="left">Left (logo left, nav right)</SelectItem>
+                    <SelectItem value="center">Centered (logo above nav)</SelectItem>
+                    <SelectItem value="right">Right (nav left, logo right)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div
+
                 className="h-16 rounded-lg border flex items-center justify-center text-sm font-semibold text-white"
                 style={{
                   background:
@@ -873,7 +889,18 @@ export default function AiSiteBuilderPage() {
                       <p className="text-xs text-muted-foreground">
                         Sample of the <span className="font-medium text-foreground">{designMode === "replicate" ? "Same design" : "Best fresh design"}</span> style — typography, spacing, and components. The full build uses your content across all pages.
                       </p>
-                      <SamplePagePreview mode={designMode} brand={brand} niche={niche} />
+                      <SamplePagePreview
+                        mode={designMode}
+                        brand={brand}
+                        niche={niche}
+                        theme={themeOn ? {
+                          primary: themePrimary,
+                          accent: themeAccent,
+                          font: themeFont,
+                          logoPlacement: themeLogoPlacement,
+                        } : undefined}
+                      />
+
                     </div>
                   )}
                 </div>
