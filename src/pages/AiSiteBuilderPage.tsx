@@ -623,6 +623,38 @@ export default function AiSiteBuilderPage() {
                   <Label>Reference website (optional)</Label>
                   <Input value={referenceUrl} onChange={(e) => setReferenceUrl(e.target.value)} placeholder="https://example.com" />
                 </div>
+
+                {/* Design fidelity — only meaningful when a reference is given. */}
+                {referenceUrl.trim() && (
+                  <div className="space-y-1.5">
+                    <Label>Match the reference site?</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setDesignMode("replicate")}
+                        className={`rounded-lg border p-3 text-left transition ${designMode === "replicate" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"}`}
+                      >
+                        <p className="text-sm font-semibold">Same design</p>
+                        <p className="text-xs text-muted-foreground">Replicate the reference layout &amp; colors 1:1.</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDesignMode("fresh")}
+                        className={`rounded-lg border p-3 text-left transition ${designMode === "fresh" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"}`}
+                      >
+                        <p className="text-sm font-semibold">Best fresh design</p>
+                        <p className="text-xs text-muted-foreground">Use it as inspiration, design something better.</p>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <Label>Pages to build</Label>
+                  <Input value={pagesInput} onChange={(e) => setPagesInput(e.target.value)} placeholder="Home, About, Services, Contact" />
+                  <p className="text-xs text-muted-foreground">Comma-separated. AI builds a distinct page for each (up to 8).</p>
+                </div>
+
                 <div className="space-y-1.5">
                   <Label>Extra instructions (optional)</Label>
                   <Textarea value={freeText} onChange={(e) => setFreeText(e.target.value)} placeholder="Tone, key services, offers, colors…" rows={3} />
