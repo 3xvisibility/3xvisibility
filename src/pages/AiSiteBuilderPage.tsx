@@ -233,7 +233,8 @@ export default function AiSiteBuilderPage() {
       if (data?.error) throw new Error(data.error);
       setMessages([...next, { role: "assistant", content: data.reply || "..." }]);
       if (data.result?.page) {
-        setPage(data.result.page);
+        setPages([data.result.page]);
+        setActiveIdx(0);
         toast({ title: "Preview ready", description: "Scroll down to review and publish." });
       }
     } catch (err: any) {
