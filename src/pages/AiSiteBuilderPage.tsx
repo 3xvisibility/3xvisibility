@@ -454,7 +454,7 @@ export default function AiSiteBuilderPage() {
         seo_description_pattern: page.seo_description || "",
         template_kind: isElementor ? "elementor" : "html",
         elementor_data: (parsedElementor ?? null) as any,
-        schema_config: {},
+        schema_config: { design_mode: designMode },
       });
       if (error) throw error;
       // Record the first version snapshot for the new template.
