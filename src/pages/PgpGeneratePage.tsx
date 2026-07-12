@@ -431,6 +431,8 @@ Only return valid JSON. No markdown fences.`;
         return;
       }
       setAiAnalyzing(true);
+      const nicheLabel = [aiNiche, aiCategory].filter(Boolean).join(" · ") || "New business";
+      setAnalysis({ status: "scanning", source: nicheLabel, keywords: [], terms: [], locations: [] });
       try {
         const { data, error } = await supabase.functions.invoke("analyze-source-keywords", {
           body: {
@@ -443,8 +445,9 @@ Only return valid JSON. No markdown fences.`;
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
-        applyAnalysis(data);
+        applyAnalysis(data, nicheLabel);
       } catch (err: any) {
+        setAnalysis({ status: "error", source: nicheLabel, keywords: [], terms: [], locations: [], error: err.message });
         toast({ title: "Analysis failed", description: err.message, variant: "destructive" });
       } finally {
         setAiAnalyzing(false);
