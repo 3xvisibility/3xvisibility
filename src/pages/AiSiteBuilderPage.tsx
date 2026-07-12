@@ -847,6 +847,48 @@ export default function AiSiteBuilderPage() {
                   </Button>
                 )}
 
+                {/* Live per-page progress for the "Publish all" job. */}
+                {Object.keys(pagePublish).length > 0 && (
+                  <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                      <CircleDot className="h-3.5 w-3.5" /> Page progress
+                    </div>
+                    <ul className="space-y-1.5">
+                      {pages.map((p, i) => {
+                        const st = pagePublish[i];
+                        if (!st) return null;
+                        return (
+                          <li key={i} className="flex items-start gap-2 text-xs">
+                            {st.status === "publishing" && <Loader2 className="h-4 w-4 text-primary animate-spin shrink-0" />}
+                            {st.status === "published" && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
+                            {st.status === "failed" && <XCircle className="h-4 w-4 text-destructive shrink-0" />}
+                            {st.status === "pending" && <CircleDot className="h-4 w-4 text-muted-foreground shrink-0" />}
+                            <div className="min-w-0">
+                              <p className="font-medium leading-tight">
+                                {p.title || `Page ${i + 1}`}
+                                <span className="ml-1.5 font-normal text-muted-foreground">
+                                  {st.status === "pending" && "waiting…"}
+                                  {st.status === "publishing" && "publishing…"}
+                                  {st.status === "published" && "published"}
+                                  {st.status === "failed" && "failed"}
+                                </span>
+                              </p>
+                              {st.status === "failed" && st.error && (
+                                <p className="text-muted-foreground break-words leading-tight">{st.error}</p>
+                              )}
+                              {st.status === "published" && st.url && (
+                                <a href={st.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
+                                  {st.url}
+                                </a>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+
 
                 <Button
                   variant="outline"
