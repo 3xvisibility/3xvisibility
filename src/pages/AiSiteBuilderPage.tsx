@@ -201,6 +201,7 @@ export default function AiSiteBuilderPage() {
   const handleBuild = async () => {
     setBuilding(true);
     setPages([]);
+    setPagePublish({});
     setActiveIdx(0);
     try {
       const { data, error } = await supabase.functions.invoke("ai-site-builder", {
