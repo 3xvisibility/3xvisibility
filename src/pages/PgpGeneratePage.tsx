@@ -26,6 +26,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
+import { ExistingSiteOptimizePanel } from "@/components/website-content/ExistingSiteOptimizePanel";
 
 type Template = Tables<"templates">;
 
@@ -885,6 +886,17 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     Auto-fills the business description, keywords, terms and locations below. Review, then generate — pages flow straight into a new campaign.
                   </p>
                 </div>
+
+                {aiSource === "website" &&
+                  aiKeywords.trim() &&
+                  websites.some((w) => w.id === aiSourceUrl && w.status === "connected") && (
+                    <ExistingSiteOptimizePanel
+                      websiteId={aiSourceUrl}
+                      workspaceId={wsId}
+                      keywords={aiKeywords}
+                      terms={aiTerms}
+                    />
+                  )}
 
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">{t("pgpGenerate.businessDescLabel")}</Label>
