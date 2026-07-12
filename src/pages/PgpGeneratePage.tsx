@@ -411,14 +411,16 @@ Only return valid JSON. No markdown fences.`;
         return;
       }
       setAiAnalyzing(true);
+      setAnalysis({ status: "scanning", source: targetUrl, keywords: [], terms: [], locations: [] });
       try {
         const { data, error } = await supabase.functions.invoke("analyze-source-keywords", {
           body: { mode: "website", url: targetUrl, language: aiLanguage },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
-        applyAnalysis(data);
+        applyAnalysis(data, targetUrl);
       } catch (err: any) {
+        setAnalysis({ status: "error", source: targetUrl, keywords: [], terms: [], locations: [], error: err.message });
         toast({ title: "Analysis failed", description: err.message, variant: "destructive" });
       } finally {
         setAiAnalyzing(false);
