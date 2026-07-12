@@ -547,9 +547,9 @@ async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: st
   };
 }
 
-async function generatePage(input: BuildInput, authToken?: string): Promise<{ ok: boolean; page?: PageJson; hints?: string[]; error?: string }> {
-  let ref: ReferenceAnalysis | null = null;
-  if (input.referenceUrl) ref = await fetchReference(input.referenceUrl);
+async function generatePage(input: BuildInput, authToken?: string, refOverride?: ReferenceAnalysis | null): Promise<{ ok: boolean; page?: PageJson; hints?: string[]; error?: string }> {
+  let ref: ReferenceAnalysis | null = refOverride ?? null;
+  if (!ref && input.referenceUrl) ref = await fetchReference(input.referenceUrl);
 
   // Build a structured brief so generated Elementor sections map to the
   // reference outline AND the brand/category/niche inputs.
