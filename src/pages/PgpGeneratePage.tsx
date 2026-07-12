@@ -109,6 +109,25 @@ export default function PgpGeneratePage() {
     locations: string[];
     error?: string;
   }>({ status: "idle", keywords: [], terms: [], locations: [] });
+  const [scanPhase, setScanPhase] = useState(0);
+
+  const scanPhases = [
+    "Fetching source content…",
+    "Extracting keywords…",
+    "Identifying terms & locations…",
+    "Ranking best keywords…",
+  ];
+
+  useEffect(() => {
+    if (analysis.status !== "scanning") {
+      setScanPhase(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setScanPhase((p) => (p < scanPhases.length - 1 ? p + 1 : p));
+    }, 1400);
+    return () => clearInterval(id);
+  }, [analysis.status]);
 
   const { toast } = useToast();
   const { t } = useLanguage();
