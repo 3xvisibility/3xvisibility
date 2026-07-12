@@ -1519,6 +1519,24 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 {genProgress.errors > 0 && (
                   <p className="text-xs text-destructive">{t("pgpGenerate.progressErrors", { count: genProgress.errors })}</p>
                 )}
+                {analysis.status !== "idle" && (
+                  <div className="flex items-center gap-1.5 rounded-md border border-border/60 bg-background/70 px-2.5 py-1.5 text-[11px]">
+                    {analysis.status === "scanning" && <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />}
+                    {analysis.status === "ready" && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />}
+                    {analysis.status === "error" && <XCircle className="h-3.5 w-3.5 text-destructive" />}
+                    <span className="font-medium">
+                      {analysis.status === "scanning" && "Regenerating keywords & terms…"}
+                      {analysis.status === "ready" &&
+                        `Keywords & terms regenerated (${analysis.keywords.length}K / ${analysis.terms.length}T / ${analysis.locations.length}L)`}
+                      {analysis.status === "error" && "Keyword & terms regeneration failed"}
+                    </span>
+                    {runHistory[0] && analysis.status === "ready" && (
+                      <span className="ml-auto text-[10px] text-muted-foreground">
+                        {new Date(runHistory[0].at).toLocaleTimeString()}
+                      </span>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
