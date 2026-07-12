@@ -433,7 +433,30 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     }
   };
 
-  if (!page || !analysis) return null;
+  // If the dialog is open but page data is unavailable, render a graceful
+  // fallback instead of a blank dialog, so the user always sees a clear state.
+  if (!page || !analysis) {
+    if (!open) return null;
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              SEO Analysis unavailable
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            We couldn't load the page details needed for this analysis. Please close
+            this dialog and try again.
+          </p>
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const hasRuleIssues = analysis.summary.errors.length > 0 || analysis.summary.warnings.length > 0;
   const hasFailedChecks =
