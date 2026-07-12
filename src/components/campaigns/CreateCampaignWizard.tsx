@@ -2630,7 +2630,20 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </RadioGroup>
                       <p className="text-[10px] text-muted-foreground">Controls how the page is built when published. WordPress supports Elementor &amp; Gutenberg; Shopify uses its native sections.</p>
                     </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Design Fidelity</Label>
+                      <RadioGroup
+                        value={designMode}
+                        onValueChange={v => { designModeTouchedRef.current = true; setDesignMode(v as any); }}
+                        className="flex flex-wrap gap-3"
+                      >
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="fresh" id="w-dm-fresh" /><Label htmlFor="w-dm-fresh" className="text-xs cursor-pointer">Best fresh design</Label></div>
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="replicate" id="w-dm-replicate" /><Label htmlFor="w-dm-replicate" className="text-xs cursor-pointer">Same design</Label></div>
+                      </RadioGroup>
+                      <p className="text-[10px] text-muted-foreground">{designMode === "replicate" ? "Pages mirror the reference site's layout &amp; palette." : "Pages use an original, conversion-focused design."}</p>
+                    </div>
                   </div>
+
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
