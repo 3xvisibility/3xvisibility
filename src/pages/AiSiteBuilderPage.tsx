@@ -238,6 +238,14 @@ export default function AiSiteBuilderPage() {
 
   const handleBuild = async (attempt = 0) => {
     const MAX_AUTO_RETRIES = 2;
+    if (attempt === 0) {
+      const pageErr = validatePages();
+      setPagesError(pageErr);
+      if (pageErr) {
+        toast({ title: "Check pages to build", description: pageErr, variant: "destructive" });
+        return;
+      }
+    }
     setBuilding(true);
     setBuildError(null);
     if (attempt === 0) {
