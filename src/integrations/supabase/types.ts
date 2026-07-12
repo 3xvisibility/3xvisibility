@@ -555,6 +555,7 @@ export type Database = {
           csv_data: Json | null
           csv_storage_path: string | null
           current_batch: number | null
+          design_mode: string
           directory_structure: Json | null
           drip_feed_settings: Json | null
           failed_rows: number | null
@@ -597,6 +598,7 @@ export type Database = {
           csv_data?: Json | null
           csv_storage_path?: string | null
           current_batch?: number | null
+          design_mode?: string
           directory_structure?: Json | null
           drip_feed_settings?: Json | null
           failed_rows?: number | null
@@ -639,6 +641,7 @@ export type Database = {
           csv_data?: Json | null
           csv_storage_path?: string | null
           current_batch?: number | null
+          design_mode?: string
           directory_structure?: Json | null
           drip_feed_settings?: Json | null
           failed_rows?: number | null
