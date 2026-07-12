@@ -13,6 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Play, Eye, FileText, KeyRound, Layers, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Zap, Settings2,
   RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History,
