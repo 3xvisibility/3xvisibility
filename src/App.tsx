@@ -46,6 +46,7 @@ import PgpGeneratePage from "./pages/PgpGeneratePage";
 import PgpTermsPage from "./pages/PgpTermsPage";
 import ElementorTestPage from "./pages/ElementorTestPage";
 import RepublishDiffHarnessPage from "./pages/RepublishDiffHarnessPage";
+import SeoAnalysisHarnessPage from "./pages/SeoAnalysisHarnessPage";
 import WpControlPage from "./pages/WpControlPage";
 import NotFound from "./pages/NotFound";
 import ShopifyCallbackPage from "./pages/ShopifyCallbackPage";
@@ -291,7 +292,10 @@ const App = () => {
             <Route path="/shopify/callback" element={<ShopifyCallbackPage />} />
             <Route path="/api/shopify/callback" element={<ShopifyCallbackPage />} />
             {import.meta.env.DEV && (
-              <Route path="/__dev/republish-diff" element={<RepublishDiffHarnessPage />} />
+              <>
+                <Route path="/__dev/republish-diff" element={<RepublishDiffHarnessPage />} />
+                <Route path="/__dev/seo-analysis" element={<SeoAnalysisHarnessPage />} />
+              </>
             )}
 
             {/* Workspace-prefixed routes */}
