@@ -886,6 +886,17 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   </p>
                 </div>
 
+                {aiSource === "website" &&
+                  aiKeywords.trim() &&
+                  websites.some((w) => w.id === aiSourceUrl && w.status === "connected") && (
+                    <ExistingSiteOptimizePanel
+                      websiteId={aiSourceUrl}
+                      workspaceId={wsId}
+                      keywords={aiKeywords}
+                      terms={aiTerms}
+                    />
+                  )}
+
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">{t("pgpGenerate.businessDescLabel")}</Label>
 
