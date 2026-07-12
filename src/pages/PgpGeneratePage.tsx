@@ -26,6 +26,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
+import { ExistingSiteOptimizePanel } from "@/components/website-content/ExistingSiteOptimizePanel";
 
 type Template = Tables<"templates">;
 
