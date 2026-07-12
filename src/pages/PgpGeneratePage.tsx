@@ -110,6 +110,29 @@ export default function PgpGeneratePage() {
     error?: string;
   }>({ status: "idle", keywords: [], terms: [], locations: [] });
   const [scanPhase, setScanPhase] = useState(0);
+  const [runHistory, setRunHistory] = useState<
+    { at: string; source: string; keywords: number; terms: number; locations: number }[]
+  >([]);
+
+  const HISTORY_KEY = "pgp-keyword-run-history";
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (raw) setRunHistory(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, []);
+
+  const recordRun = (source: string, keywords: number, terms: number, locations: number) => {
+    setRunHistory((prev) => {
+      const next = [
+        { at: new Date().toISOString(), source, keywords, terms, locations },
+        ...prev,
+      ].slice(0, 20);
+      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   const scanPhases = [
     "Fetching source content…",
