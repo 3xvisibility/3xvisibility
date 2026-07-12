@@ -42,6 +42,7 @@ interface GeneratedPage {
   elementor_mode?: string;
   publish_format?: string;
   platform?: "wordpress" | "shopify";
+  design_mode?: "replicate" | "fresh";
 }
 
 interface ChatMsg {
