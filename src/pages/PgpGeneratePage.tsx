@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Play, Eye, FileText, KeyRound, Layers, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Zap, Settings2,
-  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw,
+  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -110,6 +110,29 @@ export default function PgpGeneratePage() {
     error?: string;
   }>({ status: "idle", keywords: [], terms: [], locations: [] });
   const [scanPhase, setScanPhase] = useState(0);
+  const [runHistory, setRunHistory] = useState<
+    { at: string; source: string; keywords: number; terms: number; locations: number }[]
+  >([]);
+
+  const HISTORY_KEY = "pgp-keyword-run-history";
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (raw) setRunHistory(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, []);
+
+  const recordRun = (source: string, keywords: number, terms: number, locations: number) => {
+    setRunHistory((prev) => {
+      const next = [
+        { at: new Date().toISOString(), source, keywords, terms, locations },
+        ...prev,
+      ].slice(0, 20);
+      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   const scanPhases = [
     "Fetching source content…",
@@ -418,6 +441,7 @@ Only return valid JSON. No markdown fences.`;
     if (terms.length) setAiTerms(terms.join(", "));
     if (locations.length) setAiLocations(locations.join(", "));
     setAnalysis({ status: "ready", source: sourceLabel, keywords, terms, locations });
+    recordRun(sourceLabel, keywords.length, terms.length, locations.length);
     toast({ title: "Keyword strategy ready", description: "Review the results below, then generate." });
   };
 
@@ -1008,6 +1032,32 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                               )}
                             </div>
                           ))}
+                        </div>
+                      )}
+
+                      {runHistory.length > 0 && (
+                        <div className="space-y-1 border-t border-border/60 pt-2">
+                          <div className="flex items-center gap-1.5">
+                            <History className="h-3 w-3 text-muted-foreground" />
+                            <p className="text-[10px] font-medium text-muted-foreground">
+                              Recalculation history
+                            </p>
+                          </div>
+                          <ul className="space-y-0.5">
+                            {runHistory.slice(0, 5).map((r, i) => (
+                              <li
+                                key={`${r.at}-${i}`}
+                                className="flex items-center justify-between gap-2 text-[9px] text-muted-foreground"
+                              >
+                                <span className="truncate">
+                                  {new Date(r.at).toLocaleString()} · {r.source}
+                                </span>
+                                <span className="whitespace-nowrap tabular-nums">
+                                  {r.keywords}K / {r.terms}T / {r.locations}L
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       )}
                     </div>
