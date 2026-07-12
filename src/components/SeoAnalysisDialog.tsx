@@ -471,7 +471,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           <p className="text-xs text-muted-foreground truncate">{page.title}</p>
         </DialogHeader>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="space-y-5 pr-2">
             {/* Unified SEO Score — shared engine, headline metric */}
             <UnifiedSeoPanel
