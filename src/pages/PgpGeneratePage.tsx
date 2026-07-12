@@ -101,6 +101,14 @@ export default function PgpGeneratePage() {
   const [aiNiche, setAiNiche] = useState("");
   const [aiCategory, setAiCategory] = useState("");
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<{
+    status: "idle" | "scanning" | "ready" | "error";
+    source?: string;
+    keywords: string[];
+    terms: string[];
+    locations: string[];
+    error?: string;
+  }>({ status: "idle", keywords: [], terms: [], locations: [] });
 
   const { toast } = useToast();
   const { t } = useLanguage();
