@@ -101,6 +101,14 @@ export default function PgpGeneratePage() {
   const [aiNiche, setAiNiche] = useState("");
   const [aiCategory, setAiCategory] = useState("");
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<{
+    status: "idle" | "scanning" | "ready" | "error";
+    source?: string;
+    keywords: string[];
+    terms: string[];
+    locations: string[];
+    error?: string;
+  }>({ status: "idle", keywords: [], terms: [], locations: [] });
 
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -382,12 +390,16 @@ Only return valid JSON. No markdown fences.`;
   const injectBrand = (rows: Record<string, string>[]) =>
     resolvedBrandName ? rows.map(r => ({ ...r, brand_name: resolvedBrandName })) : rows;
 
-  const applyAnalysis = (data: any) => {
+  const applyAnalysis = (data: any, sourceLabel: string) => {
+    const keywords = Array.isArray(data?.keywords) ? data.keywords.filter(Boolean) : [];
+    const terms = Array.isArray(data?.terms) ? data.terms.filter(Boolean) : [];
+    const locations = Array.isArray(data?.locations) ? data.locations.filter(Boolean) : [];
     if (data?.businessDescription) setAiBusinessDesc(data.businessDescription);
-    if (Array.isArray(data?.keywords) && data.keywords.length) setAiKeywords(data.keywords.join(", "));
-    if (Array.isArray(data?.terms) && data.terms.length) setAiTerms(data.terms.join(", "));
-    if (Array.isArray(data?.locations) && data.locations.length) setAiLocations(data.locations.join(", "));
-    toast({ title: "Keyword strategy ready", description: "Review the auto-filled fields, then generate." });
+    if (keywords.length) setAiKeywords(keywords.join(", "));
+    if (terms.length) setAiTerms(terms.join(", "));
+    if (locations.length) setAiLocations(locations.join(", "));
+    setAnalysis({ status: "ready", source: sourceLabel, keywords, terms, locations });
+    toast({ title: "Keyword strategy ready", description: "Review the results below, then generate." });
   };
 
   const handleAnalyzeSource = async () => {
@@ -399,14 +411,16 @@ Only return valid JSON. No markdown fences.`;
         return;
       }
       setAiAnalyzing(true);
+      setAnalysis({ status: "scanning", source: targetUrl, keywords: [], terms: [], locations: [] });
       try {
         const { data, error } = await supabase.functions.invoke("analyze-source-keywords", {
           body: { mode: "website", url: targetUrl, language: aiLanguage },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
-        applyAnalysis(data);
+        applyAnalysis(data, targetUrl);
       } catch (err: any) {
+        setAnalysis({ status: "error", source: targetUrl, keywords: [], terms: [], locations: [], error: err.message });
         toast({ title: "Analysis failed", description: err.message, variant: "destructive" });
       } finally {
         setAiAnalyzing(false);
@@ -417,6 +431,8 @@ Only return valid JSON. No markdown fences.`;
         return;
       }
       setAiAnalyzing(true);
+      const nicheLabel = [aiNiche, aiCategory].filter(Boolean).join(" · ") || "New business";
+      setAnalysis({ status: "scanning", source: nicheLabel, keywords: [], terms: [], locations: [] });
       try {
         const { data, error } = await supabase.functions.invoke("analyze-source-keywords", {
           body: {
@@ -429,8 +445,9 @@ Only return valid JSON. No markdown fences.`;
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
-        applyAnalysis(data);
+        applyAnalysis(data, nicheLabel);
       } catch (err: any) {
+        setAnalysis({ status: "error", source: nicheLabel, keywords: [], terms: [], locations: [], error: err.message });
         toast({ title: "Analysis failed", description: err.message, variant: "destructive" });
       } finally {
         setAiAnalyzing(false);
@@ -885,6 +902,58 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   <p className="text-[10px] text-muted-foreground">
                     Auto-fills the business description, keywords, terms and locations below. Review, then generate — pages flow straight into a new campaign.
                   </p>
+
+                  {analysis.status !== "idle" && (
+                    <div className="space-y-2 rounded-md border border-border/60 bg-background/70 p-2.5">
+                      <div className="flex items-center gap-2">
+                        {analysis.status === "scanning" && <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />}
+                        {analysis.status === "ready" && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />}
+                        {analysis.status === "error" && <XCircle className="h-3.5 w-3.5 text-destructive" />}
+                        <span className="text-xs font-semibold">
+                          {analysis.status === "scanning" && "Scanning source…"}
+                          {analysis.status === "ready" && "Scan complete — review before generating"}
+                          {analysis.status === "error" && "Scan failed"}
+                        </span>
+                      </div>
+                      {analysis.source && (
+                        <p className="text-[10px] text-muted-foreground truncate">Source: {analysis.source}</p>
+                      )}
+
+                      {analysis.status === "error" && analysis.error && (
+                        <p className="text-[10px] text-destructive">{analysis.error}</p>
+                      )}
+
+                      {analysis.status === "ready" && (
+                        <div className="space-y-2">
+                          {([
+                            { label: "Keywords", items: analysis.keywords, cls: "border-primary/40 text-primary" },
+                            { label: "Terms / services", items: analysis.terms, cls: "border-blue-500/40 text-blue-600" },
+                            { label: "Locations", items: analysis.locations, cls: "border-amber-500/40 text-amber-600" },
+                          ] as const).map((grp) => (
+                            <div key={grp.label} className="space-y-1">
+                              <p className="text-[10px] font-medium text-muted-foreground">
+                                {grp.label} <span className="opacity-60">({grp.items.length})</span>
+                              </p>
+                              {grp.items.length ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {grp.items.slice(0, 24).map((it, i) => (
+                                    <Badge key={`${grp.label}-${i}`} variant="outline" className={`text-[9px] ${grp.cls}`}>
+                                      {it}
+                                    </Badge>
+                                  ))}
+                                  {grp.items.length > 24 && (
+                                    <span className="text-[9px] text-muted-foreground">+{grp.items.length - 24} more</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-[9px] text-muted-foreground italic">None detected</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {aiSource === "website" &&
