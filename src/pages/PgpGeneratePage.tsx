@@ -441,6 +441,7 @@ Only return valid JSON. No markdown fences.`;
     if (terms.length) setAiTerms(terms.join(", "));
     if (locations.length) setAiLocations(locations.join(", "));
     setAnalysis({ status: "ready", source: sourceLabel, keywords, terms, locations });
+    recordRun(sourceLabel, keywords.length, terms.length, locations.length);
     toast({ title: "Keyword strategy ready", description: "Review the results below, then generate." });
   };
 
