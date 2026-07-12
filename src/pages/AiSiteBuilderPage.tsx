@@ -766,8 +766,64 @@ export default function AiSiteBuilderPage() {
                         <p className="text-xs text-muted-foreground">Use it as inspiration, design something better.</p>
                       </button>
                     </div>
+
+                    {/* Plain-language summary + expected style preview. */}
+                    <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <Palette className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {designMode === "replicate"
+                            ? "Same design: the AI closely mirrors the reference site's layout, section order, color palette, and typography — swapping in your brand's content. Best when you want a near-identical clone."
+                            : "Best fresh design: the AI studies the reference for inspiration, then creates an original, higher-converting layout tailored to your brand — modern spacing, refined palette, and a distinct hero. Best when you want an upgrade, not a copy."}
+                        </p>
+                      </div>
+
+                      {/* Expected style preview */}
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1.5">Expected style preview</p>
+                        {designMode === "replicate" ? (
+                          <div className="rounded-md border border-border bg-background overflow-hidden">
+                            <div className="flex items-center gap-1.5 border-b border-border px-2 py-1.5">
+                              <div className="h-2 w-10 rounded-sm bg-muted-foreground/40" />
+                              <div className="ml-auto flex gap-1">
+                                <div className="h-2 w-6 rounded-sm bg-muted-foreground/25" />
+                                <div className="h-2 w-6 rounded-sm bg-muted-foreground/25" />
+                                <div className="h-2 w-6 rounded-sm bg-muted-foreground/25" />
+                              </div>
+                            </div>
+                            <div className="p-2 space-y-1.5">
+                              <div className="h-8 rounded bg-muted-foreground/20" />
+                              <div className="grid grid-cols-3 gap-1.5">
+                                <div className="h-6 rounded bg-muted-foreground/15" />
+                                <div className="h-6 rounded bg-muted-foreground/15" />
+                                <div className="h-6 rounded bg-muted-foreground/15" />
+                              </div>
+                            </div>
+                            <p className="px-2 pb-2 text-[10px] text-muted-foreground">Mirrors reference structure &amp; palette</p>
+                          </div>
+                        ) : (
+                          <div className="rounded-md border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-background overflow-hidden">
+                            <div className="flex items-center gap-1.5 px-2 py-1.5">
+                              <div className="h-2 w-2 rounded-full bg-primary" />
+                              <div className="h-2 w-12 rounded-sm bg-primary/50" />
+                              <div className="ml-auto h-3 w-10 rounded-full bg-primary/70" />
+                            </div>
+                            <div className="p-2 space-y-1.5">
+                              <div className="h-3 w-3/4 rounded bg-foreground/30" />
+                              <div className="h-2 w-1/2 rounded bg-muted-foreground/30" />
+                              <div className="mt-1.5 flex gap-1.5">
+                                <div className="h-4 w-16 rounded-full bg-primary/80" />
+                                <div className="h-4 w-12 rounded-full border border-primary/40" />
+                              </div>
+                            </div>
+                            <p className="px-2 pb-2 text-[10px] text-muted-foreground">Fresh, modern, conversion-focused layout</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
+
 
                 <div className="space-y-1.5">
                   <Label>Pages to build</Label>
