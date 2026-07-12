@@ -570,6 +570,23 @@ async function generatePage(input: BuildInput, authToken?: string, refOverride?:
 
 
   const lang = input.language || "en";
+
+  // Page-specific guidance so each requested page (Home, About, Services,
+  // Contact, etc.) gets purpose-fit copy and sections instead of a generic clone.
+  const pageName = (input.pageName || "").trim();
+  const isHome = !pageName || /^(home|homepage|landing|main|index)$/i.test(pageName);
+  const pageBrief = isHome
+    ? "This is the HOME / landing page — lead with the strongest value proposition, a hero, key stats, primary services and a strong CTA."
+    : `This is the "${pageName}" page of a multi-page website. Design the hero, sections, features and FAQs specifically for a "${pageName}" page — its purpose, tone and content must fit that page (e.g. About = story/team/mission, Services = offerings/pricing, Contact = how to reach + FAQ, Blog = articles overview). Do NOT repeat the home page; make this page distinct and self-contained.`;
+
+  // Design fidelity toward the reference site.
+  const designMode = input.designMode === "replicate" ? "replicate" : "fresh";
+  const designBrief = !ref
+    ? "No reference site was given — design the most beautiful, original, high-converting page you can for this brand and niche."
+    : designMode === "replicate"
+      ? "REPLICATE MODE: reproduce the reference site as closely as possible — same section order, same layout rhythm, same style of hero/features/FAQ, and derive the exact color theme from the reference brand colors. Match it 1:1 visually while rewriting the copy for this brand."
+      : "INSPIRATION MODE: use the reference only as loose inspiration for tone and structure, but design a fresh, original, best-in-class page that is clearly better than the reference. Do not copy its layout verbatim.";
+
   const system = `You are an award-winning web designer and conversion copywriter (think Awwwards-level landing pages). Generate a complete, polished landing page as STRICT JSON only (no markdown, no commentary).
 Schema:
 {
