@@ -108,12 +108,38 @@ export default function AiSiteBuilderPage() {
   const [designMode, setDesignMode] = useState<"replicate" | "fresh">("fresh");
   const [wpFormat, setWpFormat] = useState<"elementor" | "gutenberg">("elementor");
 
-  const parsedPages = () =>
-    pagesInput
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .slice(0, 8);
+  const MAX_PAGES = 8;
+
+  // Parse, trim, and de-duplicate (case-insensitive) the page names.
+  const parsedPages = () => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const raw of pagesInput.split(",")) {
+      const name = raw.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(name);
+    }
+    return out.slice(0, MAX_PAGES);
+  };
+
+  // Returns a friendly error message when the input is invalid, else null.
+  const validatePages = (): string | null => {
+    if (!pagesInput.trim()) return "Enter at least one page name (e.g. Home, About).";
+    const names = pagesInput.split(",").map((s) => s.trim());
+    const nonEmpty = names.filter(Boolean);
+    if (nonEmpty.length === 0) return "Enter at least one page name (e.g. Home, About).";
+    if (nonEmpty.some((n) => n.length > 60)) return "Each page name must be 60 characters or fewer.";
+    const unique = new Set(nonEmpty.map((n) => n.toLowerCase()));
+    if (nonEmpty.length > MAX_PAGES) return `You can build up to ${MAX_PAGES} pages at once.`;
+    if (unique.size > MAX_PAGES) return `You can build up to ${MAX_PAGES} unique pages at once.`;
+    return null;
+  };
+
+  const [pagesError, setPagesError] = useState<string | null>(null);
+
 
   const buildFormat = (): "elementor" | "gutenberg" | "shopify" =>
     platform === "shopify" ? "shopify" : wpFormat;
@@ -212,6 +238,14 @@ export default function AiSiteBuilderPage() {
 
   const handleBuild = async (attempt = 0) => {
     const MAX_AUTO_RETRIES = 2;
+    if (attempt === 0) {
+      const pageErr = validatePages();
+      setPagesError(pageErr);
+      if (pageErr) {
+        toast({ title: "Check pages to build", description: pageErr, variant: "destructive" });
+        return;
+      }
+    }
     setBuilding(true);
     setBuildError(null);
     if (attempt === 0) {
@@ -737,9 +771,27 @@ export default function AiSiteBuilderPage() {
 
                 <div className="space-y-1.5">
                   <Label>Pages to build</Label>
-                  <Input value={pagesInput} onChange={(e) => setPagesInput(e.target.value)} placeholder="Home, About, Services, Contact" />
-                  <p className="text-xs text-muted-foreground">Comma-separated. AI builds a distinct page for each (up to 8).</p>
+                  <Input
+                    value={pagesInput}
+                    onChange={(e) => {
+                      setPagesInput(e.target.value);
+                      if (pagesError) setPagesError(null);
+                    }}
+                    onBlur={() => {
+                      const cleaned = parsedPages();
+                      if (cleaned.length) setPagesInput(cleaned.join(", "));
+                      setPagesError(validatePages());
+                    }}
+                    aria-invalid={!!pagesError}
+                    placeholder="Home, About, Services, Contact"
+                  />
+                  {pagesError ? (
+                    <p className="text-xs text-destructive">{pagesError}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Comma-separated. AI builds a distinct page for each (up to {MAX_PAGES}). Duplicates are removed automatically.</p>
+                  )}
                 </div>
+
 
                 <div className="space-y-1.5">
                   <Label>Extra instructions (optional)</Label>
