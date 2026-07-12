@@ -21,6 +21,14 @@ interface PublishStep {
   at?: string;
 }
 
+// Live per-page status while a "Publish all" job runs.
+interface PagePublishState {
+  status: "pending" | "publishing" | "published" | "failed";
+  url?: string;
+  error?: string;
+}
+
+
 interface GeneratedPage {
   title: string;
   slug: string;
