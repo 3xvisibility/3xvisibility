@@ -462,8 +462,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-2xl h-[85vh] max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b border-border">
           <DialogTitle className="text-base flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
             SEO Analysis
@@ -471,8 +471,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           <p className="text-xs text-muted-foreground truncate">{page.title}</p>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0">
-          <div className="space-y-5 pr-2">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+          <div className="space-y-5">
             {/* Unified SEO Score — shared engine, headline metric */}
             <UnifiedSeoPanel
               input={{
