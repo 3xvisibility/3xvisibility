@@ -381,7 +381,64 @@ Only return valid JSON. No markdown fences.`;
   const injectBrand = (rows: Record<string, string>[]) =>
     resolvedBrandName ? rows.map(r => ({ ...r, brand_name: resolvedBrandName })) : rows;
 
+  const applyAnalysis = (data: any) => {
+    if (data?.businessDescription) setAiBusinessDesc(data.businessDescription);
+    if (Array.isArray(data?.keywords) && data.keywords.length) setAiKeywords(data.keywords.join(", "));
+    if (Array.isArray(data?.terms) && data.terms.length) setAiTerms(data.terms.join(", "));
+    if (Array.isArray(data?.locations) && data.locations.length) setAiLocations(data.locations.join(", "));
+    toast({ title: "Keyword strategy ready", description: "Review the auto-filled fields, then generate." });
+  };
+
+  const handleAnalyzeSource = async () => {
+    if (aiSource === "website") {
+      const site = websites.find((w) => w.id === aiSourceUrl);
+      const targetUrl = site?.url || aiSourceUrl;
+      if (!targetUrl) {
+        toast({ title: "Select or enter a website first", variant: "destructive" });
+        return;
+      }
+      setAiAnalyzing(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("analyze-source-keywords", {
+          body: { mode: "website", url: targetUrl, language: aiLanguage },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        applyAnalysis(data);
+      } catch (err: any) {
+        toast({ title: "Analysis failed", description: err.message, variant: "destructive" });
+      } finally {
+        setAiAnalyzing(false);
+      }
+    } else {
+      if (!aiNiche.trim() && !aiCategory.trim()) {
+        toast({ title: "Enter a niche or category first", variant: "destructive" });
+        return;
+      }
+      setAiAnalyzing(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("analyze-source-keywords", {
+          body: {
+            mode: "niche",
+            niche: aiNiche,
+            category: aiCategory,
+            brand: resolvedBrandName,
+            language: aiLanguage,
+          },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        applyAnalysis(data);
+      } catch (err: any) {
+        toast({ title: "Analysis failed", description: err.message, variant: "destructive" });
+      } finally {
+        setAiAnalyzing(false);
+      }
+    }
+  };
+
   const handleAiGenerate = async () => {
+
     if (!wsId || !aiBusinessDesc.trim()) {
       toast({ title: t("pgpGenerate.toastDescribeFirst"), variant: "destructive" });
       return;
