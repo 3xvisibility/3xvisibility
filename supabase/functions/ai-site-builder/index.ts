@@ -26,6 +26,18 @@ interface BuildInput {
   platform?: "wordpress" | "shopify";
   /** Optional manual brand theme that overrides AI-chosen colors/typography/gradient. */
   brandTheme?: BrandTheme;
+  /** Names of the pages the user wants to build (e.g. ["Home", "About", "Contact"]). */
+  pages?: string[];
+  /** The specific page currently being generated (drives page-appropriate copy). */
+  pageName?: string;
+  /**
+   * How faithfully to follow the reference site:
+   *  - "replicate" → copy the reference layout/structure/palette as closely as possible.
+   *  - "fresh"     → use the reference only as inspiration and design the best original page.
+   */
+  designMode?: "replicate" | "fresh";
+  /** Output format: "elementor" (native JSON) or "gutenberg" (HTML blocks) for WordPress, or "shopify". */
+  buildFormat?: "elementor" | "gutenberg" | "shopify";
 }
 
 interface BrandTheme {
