@@ -259,16 +259,14 @@ export default function AiSiteBuilderPage() {
       toast({ title: "Select a website", description: "Choose where to publish first.", variant: "destructive" });
       return;
     }
-    const toPublish = all ? pages : [page];
-    setPublishing(true);
-    setPublishedUrl(null);
-    setPublishSteps([{ label: `Sending ${toPublish.length} page${toPublish.length > 1 ? "s" : ""} to publisher`, status: "running" }]);
-    try {
-      const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: {
-          website_id: selectedWebsite,
-          workspace_id: currentWorkspace?.id,
-          pages: toPublish.map((p) => ({
+  // Publish a single page payload to the selected website; returns result info.
+  const publishOne = async (p: GeneratedPage) => {
+    const { data, error } = await supabase.functions.invoke("publish-pages", {
+      body: {
+        website_id: selectedWebsite,
+        workspace_id: currentWorkspace?.id,
+        pages: [
+          {
             title: p.title,
             content: p.content,
             slug: p.slug,
@@ -278,22 +276,77 @@ export default function AiSiteBuilderPage() {
             elementor_css: p.elementor_css,
             elementor_mode: p.elementor_mode,
             publish_format: p.publish_format,
-          })),
-        },
-      });
-      if (error) throw error;
-      const results = Array.isArray(data?.results) ? data.results : [];
-      const publishedCount = results.filter((r: any) => r?.status === "published").length;
-      const lastSteps = results.find((r: any) => Array.isArray(r?.steps) && r.steps.length)?.steps;
-      if (lastSteps) setPublishSteps(lastSteps);
-      if (publishedCount > 0) {
-        const url = results.find((r: any) => r?.status === "published")?.external_url || results.find((r: any) => r?.status === "published")?.url || null;
-        setPublishedUrl(url);
-        if (!lastSteps) setPublishSteps([{ label: `Published ${publishedCount} page${publishedCount > 1 ? "s" : ""}`, status: "ok", detail: url || undefined }]);
-        toast({ title: "Published!", description: `${publishedCount} of ${toPublish.length} page(s) live.` });
-      } else {
-        throw new Error(results[0]?.error || "Publish did not complete.");
+          },
+        ],
+      },
+    });
+    if (error) throw error;
+    const result = data?.results?.[0];
+    if (result?.status !== "published") {
+      throw new Error(result?.error || "Publish did not complete.");
+    }
+    return { steps: result.steps, url: result.external_url || result.url || null };
+  };
+
+  const handlePublish = async (all = false) => {
+    if (!page || !selectedWebsite) {
+      toast({ title: "Select a website", description: "Choose where to publish first.", variant: "destructive" });
+      return;
+    }
+    setPublishing(true);
+    setPublishedUrl(null);
+
+    // ── Multi-page: publish sequentially with live per-page status. ──────────
+    if (all && pages.length > 1) {
+      const initial: Record<number, PagePublishState> = {};
+      pages.forEach((_, i) => (initial[i] = { status: "pending" }));
+      setPagePublish(initial);
+      setPublishSteps([{ label: `Publishing ${pages.length} pages…`, status: "running" }]);
+
+      let publishedCount = 0;
+      let firstUrl: string | null = null;
+
+      for (let i = 0; i < pages.length; i++) {
+        setPagePublish((prev) => ({ ...prev, [i]: { status: "publishing" } }));
+        try {
+          const { url } = await publishOne(pages[i]);
+          publishedCount++;
+          if (!firstUrl) firstUrl = url;
+          setPagePublish((prev) => ({ ...prev, [i]: { status: "published", url: url || undefined } }));
+        } catch (err: any) {
+          setPagePublish((prev) => ({ ...prev, [i]: { status: "failed", error: err.message || String(err) } }));
+        }
       }
+
+      setPublishedUrl(firstUrl);
+      const failed = pages.length - publishedCount;
+      setPublishSteps([
+        {
+          label: `${publishedCount} of ${pages.length} pages published`,
+          status: failed === 0 ? "ok" : publishedCount === 0 ? "error" : "warn",
+          detail: failed > 0 ? `${failed} page(s) failed — see the list above.` : undefined,
+        },
+      ]);
+      toast({
+        title: publishedCount === 0 ? "Publish failed" : "Publish complete",
+        description: `${publishedCount} of ${pages.length} page(s) live${failed ? `, ${failed} failed` : ""}.`,
+        variant: publishedCount === 0 ? "destructive" : undefined,
+      });
+      setPublishing(false);
+      return;
+    }
+
+    // ── Single page. ─────────────────────────────────────────────────────────
+    setPagePublish({});
+    setPublishSteps([{ label: "Sending page to publisher", status: "running" }]);
+    try {
+      const { steps, url } = await publishOne(page);
+      if (Array.isArray(steps) && steps.length) setPublishSteps(steps);
+      setPublishedUrl(url);
+      if (!Array.isArray(steps) || !steps.length) {
+        setPublishSteps([{ label: "Published", status: "ok", detail: url || undefined }]);
+      }
+      toast({ title: "Published!", description: url ? `Live at ${url}` : "Page is live." });
     } catch (err: any) {
       const msg = err.message || String(err);
       setPublishSteps((prev) => {
