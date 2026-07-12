@@ -771,9 +771,27 @@ export default function AiSiteBuilderPage() {
 
                 <div className="space-y-1.5">
                   <Label>Pages to build</Label>
-                  <Input value={pagesInput} onChange={(e) => setPagesInput(e.target.value)} placeholder="Home, About, Services, Contact" />
-                  <p className="text-xs text-muted-foreground">Comma-separated. AI builds a distinct page for each (up to 8).</p>
+                  <Input
+                    value={pagesInput}
+                    onChange={(e) => {
+                      setPagesInput(e.target.value);
+                      if (pagesError) setPagesError(null);
+                    }}
+                    onBlur={() => {
+                      const cleaned = parsedPages();
+                      if (cleaned.length) setPagesInput(cleaned.join(", "));
+                      setPagesError(validatePages());
+                    }}
+                    aria-invalid={!!pagesError}
+                    placeholder="Home, About, Services, Contact"
+                  />
+                  {pagesError ? (
+                    <p className="text-xs text-destructive">{pagesError}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Comma-separated. AI builds a distinct page for each (up to {MAX_PAGES}). Duplicates are removed automatically.</p>
+                  )}
                 </div>
+
 
                 <div className="space-y-1.5">
                   <Label>Extra instructions (optional)</Label>
