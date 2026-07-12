@@ -83,6 +83,8 @@ export default function AiSiteBuilderPage() {
   const [publishing, setPublishing] = useState(false);
   const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  // Per-page publish status shown during a "Publish all" job (keyed by page index).
+  const [pagePublish, setPagePublish] = useState<Record<number, PagePublishState>>({});
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [platform, setPlatform] = useState<"wordpress" | "shopify">("wordpress");
   // Manual per-website platform overrides (id -> platform).
