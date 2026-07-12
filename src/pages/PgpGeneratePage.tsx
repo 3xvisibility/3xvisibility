@@ -88,10 +88,18 @@ export default function PgpGeneratePage() {
   // AI generation
   const [aiBusinessDesc, setAiBusinessDesc] = useState("");
   const [aiKeywords, setAiKeywords] = useState("");
+  const [aiTerms, setAiTerms] = useState("");
   const [aiLocations, setAiLocations] = useState("");
   const [aiPageCount, setAiPageCount] = useState("10");
   const [aiLanguage, setAiLanguage] = useState("en");
   const [aiGenerating, setAiGenerating] = useState(false);
+
+  // Where the keyword strategy comes from: an existing website or a new niche.
+  const [aiSource, setAiSource] = useState<"website" | "niche">("niche");
+  const [aiSourceUrl, setAiSourceUrl] = useState("");
+  const [aiNiche, setAiNiche] = useState("");
+  const [aiCategory, setAiCategory] = useState("");
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
 
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -373,7 +381,64 @@ Only return valid JSON. No markdown fences.`;
   const injectBrand = (rows: Record<string, string>[]) =>
     resolvedBrandName ? rows.map(r => ({ ...r, brand_name: resolvedBrandName })) : rows;
 
+  const applyAnalysis = (data: any) => {
+    if (data?.businessDescription) setAiBusinessDesc(data.businessDescription);
+    if (Array.isArray(data?.keywords) && data.keywords.length) setAiKeywords(data.keywords.join(", "));
+    if (Array.isArray(data?.terms) && data.terms.length) setAiTerms(data.terms.join(", "));
+    if (Array.isArray(data?.locations) && data.locations.length) setAiLocations(data.locations.join(", "));
+    toast({ title: "Keyword strategy ready", description: "Review the auto-filled fields, then generate." });
+  };
+
+  const handleAnalyzeSource = async () => {
+    if (aiSource === "website") {
+      const site = websites.find((w) => w.id === aiSourceUrl);
+      const targetUrl = site?.url || aiSourceUrl;
+      if (!targetUrl) {
+        toast({ title: "Select or enter a website first", variant: "destructive" });
+        return;
+      }
+      setAiAnalyzing(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("analyze-source-keywords", {
+          body: { mode: "website", url: targetUrl, language: aiLanguage },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        applyAnalysis(data);
+      } catch (err: any) {
+        toast({ title: "Analysis failed", description: err.message, variant: "destructive" });
+      } finally {
+        setAiAnalyzing(false);
+      }
+    } else {
+      if (!aiNiche.trim() && !aiCategory.trim()) {
+        toast({ title: "Enter a niche or category first", variant: "destructive" });
+        return;
+      }
+      setAiAnalyzing(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("analyze-source-keywords", {
+          body: {
+            mode: "niche",
+            niche: aiNiche,
+            category: aiCategory,
+            brand: resolvedBrandName,
+            language: aiLanguage,
+          },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        applyAnalysis(data);
+      } catch (err: any) {
+        toast({ title: "Analysis failed", description: err.message, variant: "destructive" });
+      } finally {
+        setAiAnalyzing(false);
+      }
+    }
+  };
+
   const handleAiGenerate = async () => {
+
     if (!wsId || !aiBusinessDesc.trim()) {
       toast({ title: t("pgpGenerate.toastDescribeFirst"), variant: "destructive" });
       return;
@@ -393,6 +458,7 @@ Only return valid JSON. No markdown fences.`;
 
 Business: ${aiBusinessDesc}
 Keywords: ${aiKeywords || "auto-detect relevant keywords"}
+Terms/services to feature: ${aiTerms || "auto-detect relevant services"}
 Locations: ${aiLocations || "general/nationwide"}
 Language: ${aiLanguage}
 
@@ -746,8 +812,83 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   </p>
                 </div>
 
+                {/* Source of the keyword strategy: existing site vs new niche */}
+                <div className="space-y-2 rounded-lg border border-border/60 bg-muted/30 p-3">
+                  <Label className="text-xs font-semibold">Keyword source</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAiSource("niche")}
+                      className={`rounded-md border px-3 py-2 text-left text-xs transition ${aiSource === "niche" ? "border-primary bg-primary/10" : "border-border/60 hover:bg-muted"}`}
+                    >
+                      <span className="font-semibold block">New business</span>
+                      <span className="text-[10px] text-muted-foreground">From niche / category</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAiSource("website")}
+                      className={`rounded-md border px-3 py-2 text-left text-xs transition ${aiSource === "website" ? "border-primary bg-primary/10" : "border-border/60 hover:bg-muted"}`}
+                    >
+                      <span className="font-semibold block">Existing website</span>
+                      <span className="text-[10px] text-muted-foreground">Extract from a live site</span>
+                    </button>
+                  </div>
+
+                  {aiSource === "niche" ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        className="h-9"
+                        placeholder="Niche (e.g. plumbing)"
+                        value={aiNiche}
+                        onChange={(e) => setAiNiche(e.target.value)}
+                      />
+                      <Input
+                        className="h-9"
+                        placeholder="Category (e.g. home services)"
+                        value={aiCategory}
+                        onChange={(e) => setAiCategory(e.target.value)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Select value={aiSourceUrl} onValueChange={setAiSourceUrl}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="Pick a connected website" /></SelectTrigger>
+                        <SelectContent>
+                          {websites.filter((w) => w.url).map((w) => (
+                            <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        className="h-9"
+                        placeholder="…or paste any website URL"
+                        value={websites.some((w) => w.id === aiSourceUrl) ? "" : aiSourceUrl}
+                        onChange={(e) => setAiSourceUrl(e.target.value)}
+                      />
+                    </div>
+                  )}
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                    disabled={aiAnalyzing}
+                    onClick={handleAnalyzeSource}
+                  >
+                    {aiAnalyzing ? (
+                      <><Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> Analyzing…</>
+                    ) : (
+                      <><KeyRound className="h-3.5 w-3.5 mr-2" /> Find best keywords &amp; terms</>
+                    )}
+                  </Button>
+                  <p className="text-[10px] text-muted-foreground">
+                    Auto-fills the business description, keywords, terms and locations below. Review, then generate — pages flow straight into a new campaign.
+                  </p>
+                </div>
+
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">{t("pgpGenerate.businessDescLabel")}</Label>
+
                   <Textarea
                     placeholder={t("pgpGenerate.businessDescPlaceholder")}
                     value={aiBusinessDesc}
@@ -770,6 +911,19 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 </div>
 
                 <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Terms / services</Label>
+                  <Textarea
+                    placeholder="e.g. drain cleaning, water heater install, leak repair…"
+                    value={aiTerms}
+                    onChange={(e) => setAiTerms(e.target.value)}
+                    rows={2}
+                    className="resize-none"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Comma-separated services/product types the pages should feature.</p>
+                </div>
+
+                <div className="space-y-1.5">
+
                   <Label className="text-xs font-semibold">{t("pgpGenerate.targetLocationsLabel")}</Label>
                   <Textarea
                     placeholder={t("pgpGenerate.targetLocationsPlaceholder")}
