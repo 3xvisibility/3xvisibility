@@ -58,7 +58,8 @@ interface PageJson {
   slug: string;
   metaTitle: string;
   metaDescription: string;
-  theme: { primary: string; accent: string; bg: string; text: string; font?: string; gradientStyle?: string };
+  theme: { primary: string; accent: string; bg: string; text: string; font?: string; gradientStyle?: string; logoPlacement?: string };
+  brand?: string;
   hero: { headline: string; subheadline: string; cta: string; eyebrow?: string; image?: string };
   stats?: { value: string; label: string }[];
   sections: { title: string; body: string; image?: string }[];
