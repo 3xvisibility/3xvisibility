@@ -1005,6 +1005,18 @@ export default function CampaignDetailPage() {
                                 {page.seo_title && page.seo_title !== page.title && (
                                   <p className="text-[10px] text-muted-foreground truncate max-w-[240px]">SEO: {page.seo_title}</p>
                                 )}
+                                {(page as any).keyword_source && (
+                                  <p className="text-[10px] text-muted-foreground truncate max-w-[240px]">
+                                    Source: {(page as any).keyword_source === "existing_website" ? "Existing website" : "New business"}
+                                    {(() => {
+                                      const d = (page as any).keyword_source_details || {};
+                                      const detail = (page as any).keyword_source === "existing_website"
+                                        ? d.url
+                                        : [d.niche, d.category].filter(Boolean).join(" · ");
+                                      return detail ? ` · ${detail}` : "";
+                                    })()}
+                                  </p>
+                                )}
                               </div>
                             </td>
                             <td className="p-3 text-xs text-muted-foreground font-mono truncate max-w-[160px]">/{page.slug}</td>
