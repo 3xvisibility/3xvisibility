@@ -26,6 +26,18 @@ interface BuildInput {
   platform?: "wordpress" | "shopify";
   /** Optional manual brand theme that overrides AI-chosen colors/typography/gradient. */
   brandTheme?: BrandTheme;
+  /** Names of the pages the user wants to build (e.g. ["Home", "About", "Contact"]). */
+  pages?: string[];
+  /** The specific page currently being generated (drives page-appropriate copy). */
+  pageName?: string;
+  /**
+   * How faithfully to follow the reference site:
+   *  - "replicate" → copy the reference layout/structure/palette as closely as possible.
+   *  - "fresh"     → use the reference only as inspiration and design the best original page.
+   */
+  designMode?: "replicate" | "fresh";
+  /** Output format: "elementor" (native JSON) or "gutenberg" (HTML blocks) for WordPress, or "shopify". */
+  buildFormat?: "elementor" | "gutenberg" | "shopify";
 }
 
 interface BrandTheme {
@@ -490,6 +502,20 @@ async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: st
     };
   }
 
+  // Gutenberg format: publish the rendered HTML directly as Gutenberg blocks —
+  // no Elementor conversion. The WordPress connector wraps the HTML into blocks.
+  if (input.buildFormat === "gutenberg") {
+    return {
+      title: p.title,
+      slug: p.slug,
+      seo_title: p.metaTitle,
+      seo_description: p.metaDescription,
+      content: html,
+      publish_format: "gutenberg",
+      platform,
+    };
+  }
+
   let elementorData: string | undefined;
   let elementorCss: string | undefined;
 
@@ -521,9 +547,9 @@ async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: st
   };
 }
 
-async function generatePage(input: BuildInput, authToken?: string): Promise<{ ok: boolean; page?: PageJson; hints?: string[]; error?: string }> {
-  let ref: ReferenceAnalysis | null = null;
-  if (input.referenceUrl) ref = await fetchReference(input.referenceUrl);
+async function generatePage(input: BuildInput, authToken?: string, refOverride?: ReferenceAnalysis | null): Promise<{ ok: boolean; page?: PageJson; hints?: string[]; error?: string }> {
+  let ref: ReferenceAnalysis | null = refOverride ?? null;
+  if (!ref && input.referenceUrl) ref = await fetchReference(input.referenceUrl);
 
   // Build a structured brief so generated Elementor sections map to the
   // reference outline AND the brand/category/niche inputs.
@@ -544,6 +570,23 @@ async function generatePage(input: BuildInput, authToken?: string): Promise<{ ok
 
 
   const lang = input.language || "en";
+
+  // Page-specific guidance so each requested page (Home, About, Services,
+  // Contact, etc.) gets purpose-fit copy and sections instead of a generic clone.
+  const pageName = (input.pageName || "").trim();
+  const isHome = !pageName || /^(home|homepage|landing|main|index)$/i.test(pageName);
+  const pageBrief = isHome
+    ? "This is the HOME / landing page — lead with the strongest value proposition, a hero, key stats, primary services and a strong CTA."
+    : `This is the "${pageName}" page of a multi-page website. Design the hero, sections, features and FAQs specifically for a "${pageName}" page — its purpose, tone and content must fit that page (e.g. About = story/team/mission, Services = offerings/pricing, Contact = how to reach + FAQ, Blog = articles overview). Do NOT repeat the home page; make this page distinct and self-contained.`;
+
+  // Design fidelity toward the reference site.
+  const designMode = input.designMode === "replicate" ? "replicate" : "fresh";
+  const designBrief = !ref
+    ? "No reference site was given — design the most beautiful, original, high-converting page you can for this brand and niche."
+    : designMode === "replicate"
+      ? "REPLICATE MODE: reproduce the reference site as closely as possible — same section order, same layout rhythm, same style of hero/features/FAQ, and derive the exact color theme from the reference brand colors. Match it 1:1 visually while rewriting the copy for this brand."
+      : "INSPIRATION MODE: use the reference only as loose inspiration for tone and structure, but design a fresh, original, best-in-class page that is clearly better than the reference. Do not copy its layout verbatim.";
+
   const system = `You are an award-winning web designer and conversion copywriter (think Awwwards-level landing pages). Generate a complete, polished landing page as STRICT JSON only (no markdown, no commentary).
 Schema:
 {
@@ -567,15 +610,18 @@ Design rules:
 - Choose colors with real contrast and personality — luxury = deep + gold, wellness = sage + cream, tech = indigo + cyan, food = warm terracotta, etc.
 - Copy must be specific, confident and benefit-driven. Never generic placeholder text. Always fill "eyebrow" and "stats".
 Write all text in language code "${lang}".
+Page context: ${pageBrief}
+Design fidelity: ${designBrief}
 When a reference brief is provided, mirror its section structure and ordering closely (one "sections" item per reference section heading), reuse its feature and FAQ topics, and derive the theme from its brand colors — but rewrite ALL copy to fit the given brand, category and niche. Do not copy the reference text verbatim.`;
 
   const user = `Brand: ${input.brand || "(not given)"}
 Category: ${input.category || "(not given)"}
 Niche / industry: ${input.niche || "(not given)"}
+Page to build: ${pageName || "Home"}
 Extra instructions: ${input.freeText || "(none)"}
 ${referenceBrief ? `\nReference brief (structure + palette to match, content to re-write for this brand):\n${referenceBrief}` : ""}
 
-Generate the landing page JSON now.`;
+Generate the ${pageName || "landing"} page JSON now.`;
 
   const result = await aiGenerate({
     authToken,
@@ -652,19 +698,44 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      const out = await generatePage(input, authToken);
-      if (!out.ok) {
-        const code = out.error?.includes("429") ? 429 : out.error?.includes("402") ? 402 : 500;
-        return new Response(JSON.stringify({ error: out.error }), {
+      // Resolve the list of pages to build (default: a single Home page).
+      const pageNames = Array.isArray(input.pages) && input.pages.length
+        ? input.pages.map((s) => String(s).trim()).filter(Boolean).slice(0, 8)
+        : ["Home"];
+
+      // Fetch the reference site once and reuse it for every page.
+      let sharedRef: ReferenceAnalysis | null = null;
+      if (input.referenceUrl) sharedRef = await fetchReference(input.referenceUrl);
+
+      const builtPages: any[] = [];
+      const plans: PageJson[] = [];
+      let firstError: string | undefined;
+
+      for (const name of pageNames) {
+        const out = await generatePage({ ...input, pageName: name }, authToken, sharedRef);
+        if (!out.ok || !out.page) {
+          if (!firstError) firstError = out.error;
+          continue;
+        }
+        plans.push(out.page);
+        builtPages.push(await buildPagePayload(out.page, input, out.hints ?? []));
+      }
+
+      if (!builtPages.length) {
+        const err = firstError || "Failed to build any pages.";
+        const code = err.includes("429") ? 429 : err.includes("402") ? 402 : 500;
+        return new Response(JSON.stringify({ error: err }), {
           status: code,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const page = out.page!;
+
       return new Response(
         JSON.stringify({
-          page: await buildPagePayload(page, input, out.hints ?? []),
-          plan: page,
+          page: builtPages[0], // backward-compat: first page
+          pages: builtPages,
+          plan: plans[0],
+          plans,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
@@ -714,6 +785,9 @@ When ready is true, your reply should tell the user you'll build a preview now.`
         }
         // Carry the manual brand theme into the collected input.
         if (body.brandTheme) parsed.collected.brandTheme = body.brandTheme;
+        // Carry design fidelity + build format from the request.
+        if (body.designMode === "replicate" || body.designMode === "fresh") parsed.collected.designMode = body.designMode;
+        if (["elementor", "gutenberg", "shopify"].includes(body.buildFormat)) parsed.collected.buildFormat = body.buildFormat;
         const out = await generatePage(parsed.collected, authToken);
         if (out.ok && out.page) {
           pageResult = {

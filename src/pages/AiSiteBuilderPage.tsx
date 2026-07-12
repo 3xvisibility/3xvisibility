@@ -68,7 +68,9 @@ export default function AiSiteBuilderPage() {
 
   const [websites, setWebsites] = useState<WebsiteRow[]>([]);
   const [selectedWebsite, setSelectedWebsite] = useState<string>("");
-  const [page, setPage] = useState<GeneratedPage | null>(null);
+  const [pages, setPages] = useState<GeneratedPage[]>([]);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const page = pages[activeIdx] || null;
   const [building, setBuilding] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
@@ -87,6 +89,23 @@ export default function AiSiteBuilderPage() {
   const [niche, setNiche] = useState("");
   const [referenceUrl, setReferenceUrl] = useState("");
   const [freeText, setFreeText] = useState("");
+
+  // Which pages to build (comma-separated), how faithfully to follow the
+  // reference site, and the WordPress output format (Elementor vs Gutenberg).
+  const [pagesInput, setPagesInput] = useState("Home");
+  const [designMode, setDesignMode] = useState<"replicate" | "fresh">("fresh");
+  const [wpFormat, setWpFormat] = useState<"elementor" | "gutenberg">("elementor");
+
+  const parsedPages = () =>
+    pagesInput
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+
+  const buildFormat = (): "elementor" | "gutenberg" | "shopify" =>
+    platform === "shopify" ? "shopify" : wpFormat;
+
 
   // Brand theme control (colors, typography, gradient style).
   const [themeOn, setThemeOn] = useState(false);
@@ -171,15 +190,27 @@ export default function AiSiteBuilderPage() {
 
   const handleBuild = async () => {
     setBuilding(true);
-    setPage(null);
+    setPages([]);
+    setActiveIdx(0);
     try {
       const { data, error } = await supabase.functions.invoke("ai-site-builder", {
-        body: { action: "build", input: { brand, category, niche, referenceUrl, freeText, platform, brandTheme: brandThemePayload() } },
+        body: {
+          action: "build",
+          input: {
+            brand, category, niche, referenceUrl, freeText, platform,
+            brandTheme: brandThemePayload(),
+            pages: parsedPages(),
+            designMode,
+            buildFormat: buildFormat(),
+          },
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setPage(data.page);
-      toast({ title: "Preview ready", description: "Review it, then publish to your site." });
+      const built: GeneratedPage[] = Array.isArray(data.pages) && data.pages.length ? data.pages : data.page ? [data.page] : [];
+      setPages(built);
+      setActiveIdx(0);
+      toast({ title: "Preview ready", description: `${built.length} page${built.length > 1 ? "s" : ""} built — review, then publish.` });
     } catch (err: any) {
       toast({ title: "Build failed", description: err.message || String(err), variant: "destructive" });
     } finally {
@@ -196,13 +227,14 @@ export default function AiSiteBuilderPage() {
     setChatLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("ai-site-builder", {
-        body: { action: "chat", messages: next, platform, brandTheme: brandThemePayload() },
+        body: { action: "chat", messages: next, platform, brandTheme: brandThemePayload(), designMode, buildFormat: buildFormat() },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setMessages([...next, { role: "assistant", content: data.reply || "..." }]);
       if (data.result?.page) {
-        setPage(data.result.page);
+        setPages([data.result.page]);
+        setActiveIdx(0);
         toast({ title: "Preview ready", description: "Scroll down to review and publish." });
       }
     } catch (err: any) {
@@ -212,48 +244,45 @@ export default function AiSiteBuilderPage() {
     }
   };
 
-  const handlePublish = async () => {
+  const handlePublish = async (all = false) => {
     if (!page || !selectedWebsite) {
       toast({ title: "Select a website", description: "Choose where to publish first.", variant: "destructive" });
       return;
     }
+    const toPublish = all ? pages : [page];
     setPublishing(true);
     setPublishedUrl(null);
-    setPublishSteps([{ label: "Sending page to publisher", status: "running" }]);
+    setPublishSteps([{ label: `Sending ${toPublish.length} page${toPublish.length > 1 ? "s" : ""} to publisher`, status: "running" }]);
     try {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
         body: {
           website_id: selectedWebsite,
           workspace_id: currentWorkspace?.id,
-          pages: [
-            {
-              title: page.title,
-              content: page.content,
-              slug: page.slug,
-              seo_title: page.seo_title,
-              seo_description: page.seo_description,
-              elementor_data: page.elementor_data,
-              elementor_css: page.elementor_css,
-              elementor_mode: page.elementor_mode,
-              publish_format: page.publish_format,
-            },
-          ],
+          pages: toPublish.map((p) => ({
+            title: p.title,
+            content: p.content,
+            slug: p.slug,
+            seo_title: p.seo_title,
+            seo_description: p.seo_description,
+            elementor_data: p.elementor_data,
+            elementor_css: p.elementor_css,
+            elementor_mode: p.elementor_mode,
+            publish_format: p.publish_format,
+          })),
         },
       });
       if (error) throw error;
-      const result = data?.results?.[0];
-      if (Array.isArray(result?.steps) && result.steps.length) {
-        setPublishSteps(result.steps);
-      }
-      if (result?.status === "published") {
-        const url = result.external_url || result.url || null;
+      const results = Array.isArray(data?.results) ? data.results : [];
+      const publishedCount = results.filter((r: any) => r?.status === "published").length;
+      const lastSteps = results.find((r: any) => Array.isArray(r?.steps) && r.steps.length)?.steps;
+      if (lastSteps) setPublishSteps(lastSteps);
+      if (publishedCount > 0) {
+        const url = results.find((r: any) => r?.status === "published")?.external_url || results.find((r: any) => r?.status === "published")?.url || null;
         setPublishedUrl(url);
-        if (!Array.isArray(result?.steps) || !result.steps.length) {
-          setPublishSteps([{ label: "Published", status: "ok", detail: url || undefined }]);
-        }
-        toast({ title: "Published!", description: url ? `Live at ${url}` : "Page is live." });
+        if (!lastSteps) setPublishSteps([{ label: `Published ${publishedCount} page${publishedCount > 1 ? "s" : ""}`, status: "ok", detail: url || undefined }]);
+        toast({ title: "Published!", description: `${publishedCount} of ${toPublish.length} page(s) live.` });
       } else {
-        throw new Error(result?.error || "Publish did not complete.");
+        throw new Error(results[0]?.error || "Publish did not complete.");
       }
     } catch (err: any) {
       const msg = err.message || String(err);
@@ -367,6 +396,31 @@ export default function AiSiteBuilderPage() {
               <p className="text-xs text-muted-foreground">Builds into the Shopify-style page template.</p>
             </button>
           </div>
+
+          {/* WordPress build format: Elementor (native JSON) vs Gutenberg (blocks). */}
+          {platform === "wordpress" && (
+            <div className="space-y-2 pt-1">
+              <Label className="text-xs text-muted-foreground">Build format</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setWpFormat("elementor")}
+                  className={`rounded-lg border p-3 text-left transition ${wpFormat === "elementor" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"}`}
+                >
+                  <p className="text-sm font-semibold">Elementor</p>
+                  <p className="text-xs text-muted-foreground">Editable native Elementor widgets.</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWpFormat("gutenberg")}
+                  className={`rounded-lg border p-3 text-left transition ${wpFormat === "gutenberg" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"}`}
+                >
+                  <p className="text-sm font-semibold">Gutenberg</p>
+                  <p className="text-xs text-muted-foreground">Native WordPress block editor.</p>
+                </button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -569,6 +623,38 @@ export default function AiSiteBuilderPage() {
                   <Label>Reference website (optional)</Label>
                   <Input value={referenceUrl} onChange={(e) => setReferenceUrl(e.target.value)} placeholder="https://example.com" />
                 </div>
+
+                {/* Design fidelity — only meaningful when a reference is given. */}
+                {referenceUrl.trim() && (
+                  <div className="space-y-1.5">
+                    <Label>Match the reference site?</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setDesignMode("replicate")}
+                        className={`rounded-lg border p-3 text-left transition ${designMode === "replicate" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"}`}
+                      >
+                        <p className="text-sm font-semibold">Same design</p>
+                        <p className="text-xs text-muted-foreground">Replicate the reference layout &amp; colors 1:1.</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDesignMode("fresh")}
+                        className={`rounded-lg border p-3 text-left transition ${designMode === "fresh" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50"}`}
+                      >
+                        <p className="text-sm font-semibold">Best fresh design</p>
+                        <p className="text-xs text-muted-foreground">Use it as inspiration, design something better.</p>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <Label>Pages to build</Label>
+                  <Input value={pagesInput} onChange={(e) => setPagesInput(e.target.value)} placeholder="Home, About, Services, Contact" />
+                  <p className="text-xs text-muted-foreground">Comma-separated. AI builds a distinct page for each (up to 8).</p>
+                </div>
+
                 <div className="space-y-1.5">
                   <Label>Extra instructions (optional)</Label>
                   <Textarea value={freeText} onChange={(e) => setFreeText(e.target.value)} placeholder="Tone, key services, offers, colors…" rows={3} />
@@ -630,6 +716,20 @@ export default function AiSiteBuilderPage() {
               </div>
             ) : (
               <>
+                {pages.length > 1 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {pages.map((p, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setActiveIdx(i)}
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition ${i === activeIdx ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/70"}`}
+                      >
+                        {p.title || `Page ${i + 1}`}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="rounded-lg border overflow-hidden bg-white h-[380px] overflow-y-auto">
                   <iframe title="preview" srcDoc={page.content} className="w-full h-[1400px] border-0" />
                 </div>
@@ -639,6 +739,10 @@ export default function AiSiteBuilderPage() {
                   {page.platform === "shopify" ? (
                     <p className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-2 py-0.5 font-medium">
                       <Sparkles className="h-3 w-3" /> Shopify-style template ready
+                    </p>
+                  ) : page.publish_format === "gutenberg" ? (
+                    <p className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-2 py-0.5 font-medium">
+                      <Sparkles className="h-3 w-3" /> Gutenberg blocks ready
                     </p>
                   ) : page.elementor_data && (
                     <p className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-2 py-0.5 font-medium">
@@ -666,11 +770,18 @@ export default function AiSiteBuilderPage() {
                     </SelectContent>
                   </Select>
 
-                  <Button onClick={handlePublish} disabled={publishing || !selectedWebsite} className="gap-2">
+                  <Button onClick={() => handlePublish(false)} disabled={publishing || !selectedWebsite} className="gap-2">
                     {publishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />}
-                    {publishing ? "Publishing…" : "Publish"}
+                    {publishing ? "Publishing…" : pages.length > 1 ? "Publish this page" : "Publish"}
                   </Button>
                 </div>
+
+                {pages.length > 1 && (
+                  <Button onClick={() => handlePublish(true)} disabled={publishing || !selectedWebsite} variant="secondary" className="w-full gap-2">
+                    <Rocket className="h-4 w-4" /> Publish all {pages.length} pages
+                  </Button>
+                )}
+
 
                 <Button
                   variant="outline"
