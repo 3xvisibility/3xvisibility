@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Sparkles, Send, Loader2, Rocket, Wand2, MessageSquare, Globe, CheckCircle2, XCircle, AlertTriangle, CircleDot, Palette, RefreshCw } from "lucide-react";
 
+import { SamplePagePreview } from "@/components/ai-site-builder/SamplePagePreview";
+
 interface PublishStep {
   label: string;
   status: "running" | "ok" | "warn" | "error";
@@ -107,6 +109,8 @@ export default function AiSiteBuilderPage() {
   const [pagesInput, setPagesInput] = useState("Home");
   const [designMode, setDesignMode] = useState<"replicate" | "fresh">("fresh");
   const [wpFormat, setWpFormat] = useState<"elementor" | "gutenberg">("elementor");
+  const [showSample, setShowSample] = useState(false);
+
 
   const MAX_PAGES = 8;
 
@@ -853,6 +857,27 @@ export default function AiSiteBuilderPage() {
                   <Label>Extra instructions (optional)</Label>
                   <Textarea value={freeText} onChange={(e) => setFreeText(e.target.value)} placeholder="Tone, key services, offers, colors…" rows={3} />
                 </div>
+
+                <div className="space-y-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowSample((s) => !s)}
+                    className="w-full gap-2"
+                  >
+                    <Palette className="h-4 w-4" />
+                    {showSample ? "Hide sample preview" : "Preview sample page"}
+                  </Button>
+                  {showSample && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-muted-foreground">
+                        Sample of the <span className="font-medium text-foreground">{designMode === "replicate" ? "Same design" : "Best fresh design"}</span> style — typography, spacing, and components. The full build uses your content across all pages.
+                      </p>
+                      <SamplePagePreview mode={designMode} brand={brand} niche={niche} />
+                    </div>
+                  )}
+                </div>
+
                 <Button onClick={() => handleBuild()} disabled={building} className="w-full gap-2">
                   {building ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                   {building ? (buildRetrying ? "Retrying…" : "Building…") : "Build with AI"}
