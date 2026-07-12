@@ -114,6 +114,7 @@ export default function PgpGeneratePage() {
     error?: string;
   }>({ status: "idle", keywords: [], terms: [], locations: [] });
   const [scanPhase, setScanPhase] = useState(0);
+  const [confirmRegen, setConfirmRegen] = useState(false);
   const [runHistory, setRunHistory] = useState<
     { at: string; source: string; keywords: number; terms: number; locations: number }[]
   >([]);
