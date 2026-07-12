@@ -13,6 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Play, Eye, FileText, KeyRound, Layers, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Zap, Settings2,
   RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History,
@@ -110,6 +114,7 @@ export default function PgpGeneratePage() {
     error?: string;
   }>({ status: "idle", keywords: [], terms: [], locations: [] });
   const [scanPhase, setScanPhase] = useState(0);
+  const [confirmRegen, setConfirmRegen] = useState(false);
   const [runHistory, setRunHistory] = useState<
     { at: string; source: string; keywords: number; terms: number; locations: number }[]
   >([]);
@@ -988,7 +993,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                             size="sm"
                             variant="outline"
                             className="ml-auto h-7 gap-1.5 text-[11px]"
-                            onClick={handleAnalyzeSource}
+                            onClick={() => setConfirmRegen(true)}
                             disabled={aiAnalyzing}
                           >
                             <RefreshCw className={`h-3 w-3 ${aiAnalyzing ? "animate-spin" : ""}`} />
@@ -1633,6 +1638,29 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           )}
         </div>
       </div>
+
+      <AlertDialog open={confirmRegen} onOpenChange={setConfirmRegen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Regenerate keywords & terms?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This re-runs the analysis and overwrites your current keywords, terms, and locations
+              with fresh results. Any manual edits you made to those fields will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep my edits</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmRegen(false);
+                handleAnalyzeSource();
+              }}
+            >
+              Regenerate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
