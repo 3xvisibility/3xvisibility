@@ -674,7 +674,10 @@ Generate the ${pageName || "landing"} page JSON now.`;
     if (bt.text) parsed.theme.text = bt.text;
     if (bt.font) parsed.theme.font = bt.font;
     if (bt.gradientStyle) parsed.theme.gradientStyle = bt.gradientStyle;
+    if (bt.logoPlacement) parsed.theme.logoPlacement = bt.logoPlacement;
   }
+  // Carry the brand name through so the rendered header can show the logo.
+  parsed.brand = input.brand || parsed.brand;
   parsed.hero = parsed.hero || { headline: parsed.title || "Welcome", subheadline: "", cta: "Get Started" };
   parsed.sections = Array.isArray(parsed.sections) ? parsed.sections : [];
   const hints = [
