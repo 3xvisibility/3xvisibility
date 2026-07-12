@@ -254,11 +254,6 @@ export default function AiSiteBuilderPage() {
     }
   };
 
-  const handlePublish = async (all = false) => {
-    if (!page || !selectedWebsite) {
-      toast({ title: "Select a website", description: "Choose where to publish first.", variant: "destructive" });
-      return;
-    }
   // Publish a single page payload to the selected website; returns result info.
   const publishOne = async (p: GeneratedPage) => {
     const { data, error } = await supabase.functions.invoke("publish-pages", {
