@@ -109,6 +109,25 @@ export default function PgpGeneratePage() {
     locations: string[];
     error?: string;
   }>({ status: "idle", keywords: [], terms: [], locations: [] });
+  const [scanPhase, setScanPhase] = useState(0);
+
+  const scanPhases = [
+    "Fetching source content…",
+    "Extracting keywords…",
+    "Identifying terms & locations…",
+    "Ranking best keywords…",
+  ];
+
+  useEffect(() => {
+    if (analysis.status !== "scanning") {
+      setScanPhase(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setScanPhase((p) => (p < scanPhases.length - 1 ? p + 1 : p));
+    }, 1400);
+    return () => clearInterval(id);
+  }, [analysis.status]);
 
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -921,10 +940,15 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         {analysis.status === "ready" && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />}
                         {analysis.status === "error" && <XCircle className="h-3.5 w-3.5 text-destructive" />}
                         <span className="text-xs font-semibold">
-                          {analysis.status === "scanning" && "Scanning source…"}
+                          {analysis.status === "scanning" && (scanPhases[scanPhase] ?? "Scanning source…")}
                           {analysis.status === "ready" && "Scan complete — review before generating"}
                           {analysis.status === "error" && "Scan failed"}
                         </span>
+                        {analysis.status === "scanning" && (
+                          <span className="ml-auto text-[10px] font-medium text-muted-foreground">
+                            Step {Math.min(scanPhase + 1, scanPhases.length)}/{scanPhases.length}
+                          </span>
+                        )}
                         {(analysis.status === "ready" || analysis.status === "error") && (
                           <Button
                             type="button"
@@ -935,10 +959,19 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                             disabled={aiAnalyzing}
                           >
                             <RefreshCw className={`h-3 w-3 ${aiAnalyzing ? "animate-spin" : ""}`} />
-                            Regenerate keywords & terms
+                            {aiAnalyzing ? "Regenerating…" : "Regenerate keywords & terms"}
                           </Button>
                         )}
                       </div>
+
+                      {analysis.status === "scanning" && (
+                        <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-primary transition-all duration-500"
+                            style={{ width: `${((scanPhase + 1) / scanPhases.length) * 100}%` }}
+                          />
+                        </div>
+                      )}
 
                       {analysis.source && (
                         <p className="text-[10px] text-muted-foreground truncate">Source: {analysis.source}</p>
