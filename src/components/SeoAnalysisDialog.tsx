@@ -17,6 +17,7 @@ import { friendlyError } from "@/lib/friendly-errors";
 import { extractEdgeError } from "@/lib/edge-function-error";
 import { UnifiedSeoPanel } from "@/components/UnifiedSeoPanel";
 import { calculateUnifiedSeoScore } from "@/lib/unified-seo-score";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 interface SeoAnalysisDialogProps {
   open: boolean;
