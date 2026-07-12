@@ -108,12 +108,38 @@ export default function AiSiteBuilderPage() {
   const [designMode, setDesignMode] = useState<"replicate" | "fresh">("fresh");
   const [wpFormat, setWpFormat] = useState<"elementor" | "gutenberg">("elementor");
 
-  const parsedPages = () =>
-    pagesInput
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .slice(0, 8);
+  const MAX_PAGES = 8;
+
+  // Parse, trim, and de-duplicate (case-insensitive) the page names.
+  const parsedPages = () => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const raw of pagesInput.split(",")) {
+      const name = raw.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(name);
+    }
+    return out.slice(0, MAX_PAGES);
+  };
+
+  // Returns a friendly error message when the input is invalid, else null.
+  const validatePages = (): string | null => {
+    if (!pagesInput.trim()) return "Enter at least one page name (e.g. Home, About).";
+    const names = pagesInput.split(",").map((s) => s.trim());
+    const nonEmpty = names.filter(Boolean);
+    if (nonEmpty.length === 0) return "Enter at least one page name (e.g. Home, About).";
+    if (nonEmpty.some((n) => n.length > 60)) return "Each page name must be 60 characters or fewer.";
+    const unique = new Set(nonEmpty.map((n) => n.toLowerCase()));
+    if (nonEmpty.length > MAX_PAGES) return `You can build up to ${MAX_PAGES} pages at once.`;
+    if (unique.size > MAX_PAGES) return `You can build up to ${MAX_PAGES} unique pages at once.`;
+    return null;
+  };
+
+  const [pagesError, setPagesError] = useState<string | null>(null);
+
 
   const buildFormat = (): "elementor" | "gutenberg" | "shopify" =>
     platform === "shopify" ? "shopify" : wpFormat;
