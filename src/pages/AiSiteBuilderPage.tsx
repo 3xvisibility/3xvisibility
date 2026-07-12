@@ -90,6 +90,23 @@ export default function AiSiteBuilderPage() {
   const [referenceUrl, setReferenceUrl] = useState("");
   const [freeText, setFreeText] = useState("");
 
+  // Which pages to build (comma-separated), how faithfully to follow the
+  // reference site, and the WordPress output format (Elementor vs Gutenberg).
+  const [pagesInput, setPagesInput] = useState("Home");
+  const [designMode, setDesignMode] = useState<"replicate" | "fresh">("fresh");
+  const [wpFormat, setWpFormat] = useState<"elementor" | "gutenberg">("elementor");
+
+  const parsedPages = () =>
+    pagesInput
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+
+  const buildFormat = (): "elementor" | "gutenberg" | "shopify" =>
+    platform === "shopify" ? "shopify" : wpFormat;
+
+
   // Brand theme control (colors, typography, gradient style).
   const [themeOn, setThemeOn] = useState(false);
   const [themePrimary, setThemePrimary] = useState("#6d28d9");
