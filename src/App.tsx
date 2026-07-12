@@ -293,6 +293,7 @@ const App = () => {
             <Route path="/api/shopify/callback" element={<ShopifyCallbackPage />} />
             {import.meta.env.DEV && (
               <Route path="/__dev/republish-diff" element={<RepublishDiffHarnessPage />} />
+              <Route path="/__dev/seo-analysis" element={<SeoAnalysisHarnessPage />} />
             )}
 
             {/* Workspace-prefixed routes */}
