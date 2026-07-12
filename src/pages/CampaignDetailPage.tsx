@@ -141,7 +141,7 @@ export default function CampaignDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
-        .select("id, title, slug, status, external_url, external_id, error_message, created_at, seo_title, seo_description, seo_keywords, content, canonical_url, website_id")
+        .select("id, title, slug, status, external_url, external_id, error_message, created_at, seo_title, seo_description, seo_keywords, content, canonical_url, website_id, keyword_source, keyword_source_details")
         .eq("campaign_id", id!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -590,6 +590,18 @@ export default function CampaignDetailPage() {
               <Badge variant="outline" className="text-[10px] font-medium">
                 {(campaign as any).design_mode === "replicate" ? "Same design" : "Best fresh design"}
               </Badge>
+              {(campaign as any).keyword_source && (
+                <Badge variant="outline" className="text-[10px] font-medium">
+                  {(campaign as any).keyword_source === "existing_website" ? "Existing website" : "New business"}
+                  {(() => {
+                    const d = (campaign as any).keyword_source_details || {};
+                    const detail = (campaign as any).keyword_source === "existing_website"
+                      ? d.url
+                      : [d.niche, d.category].filter(Boolean).join(" · ");
+                    return detail ? <span className="opacity-70 ml-1">· {detail}</span> : null;
+                  })()}
+                </Badge>
+              )}
 
             </div>
             <p className="text-sm text-muted-foreground mt-0.5 break-words">
@@ -992,6 +1004,18 @@ export default function CampaignDetailPage() {
                                 <p className="font-medium text-xs truncate max-w-[240px]">{page.title}</p>
                                 {page.seo_title && page.seo_title !== page.title && (
                                   <p className="text-[10px] text-muted-foreground truncate max-w-[240px]">SEO: {page.seo_title}</p>
+                                )}
+                                {(page as any).keyword_source && (
+                                  <p className="text-[10px] text-muted-foreground truncate max-w-[240px]">
+                                    Source: {(page as any).keyword_source === "existing_website" ? "Existing website" : "New business"}
+                                    {(() => {
+                                      const d = (page as any).keyword_source_details || {};
+                                      const detail = (page as any).keyword_source === "existing_website"
+                                        ? d.url
+                                        : [d.niche, d.category].filter(Boolean).join(" · ");
+                                      return detail ? ` · ${detail}` : "";
+                                    })()}
+                                  </p>
                                 )}
                               </div>
                             </td>
