@@ -698,19 +698,44 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      const out = await generatePage(input, authToken);
-      if (!out.ok) {
-        const code = out.error?.includes("429") ? 429 : out.error?.includes("402") ? 402 : 500;
-        return new Response(JSON.stringify({ error: out.error }), {
+      // Resolve the list of pages to build (default: a single Home page).
+      const pageNames = Array.isArray(input.pages) && input.pages.length
+        ? input.pages.map((s) => String(s).trim()).filter(Boolean).slice(0, 8)
+        : ["Home"];
+
+      // Fetch the reference site once and reuse it for every page.
+      let sharedRef: ReferenceAnalysis | null = null;
+      if (input.referenceUrl) sharedRef = await fetchReference(input.referenceUrl);
+
+      const builtPages: any[] = [];
+      const plans: PageJson[] = [];
+      let firstError: string | undefined;
+
+      for (const name of pageNames) {
+        const out = await generatePage({ ...input, pageName: name }, authToken, sharedRef);
+        if (!out.ok || !out.page) {
+          if (!firstError) firstError = out.error;
+          continue;
+        }
+        plans.push(out.page);
+        builtPages.push(await buildPagePayload(out.page, input, out.hints ?? []));
+      }
+
+      if (!builtPages.length) {
+        const err = firstError || "Failed to build any pages.";
+        const code = err.includes("429") ? 429 : err.includes("402") ? 402 : 500;
+        return new Response(JSON.stringify({ error: err }), {
           status: code,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const page = out.page!;
+
       return new Response(
         JSON.stringify({
-          page: await buildPagePayload(page, input, out.hints ?? []),
-          plan: page,
+          page: builtPages[0], // backward-compat: first page
+          pages: builtPages,
+          plan: plans[0],
+          plans,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
