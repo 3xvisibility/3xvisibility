@@ -549,10 +549,19 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
       // Keyword source tracking (persisted on campaign + each page)
       const keywordSource = aiSource === "website" ? "existing_website" : "new_business";
-      const keywordSourceDetails =
-        aiSource === "website"
+      const lastRun = runHistory[0];
+      const keywordSourceDetails = {
+        ...(aiSource === "website"
           ? { url: websites.find((w) => w.id === aiSourceUrl)?.url || aiSourceUrl || null }
-          : { niche: aiNiche || null, category: aiCategory || null };
+          : { niche: aiNiche || null, category: aiCategory || null }),
+        regenerated: analysis.status === "ready" && !!lastRun,
+        regenerated_at: analysis.status === "ready" && lastRun ? lastRun.at : null,
+        regenerated_ok: analysis.status === "ready",
+        regenerated_counts:
+          analysis.status === "ready"
+            ? { keywords: analysis.keywords.length, terms: analysis.terms.length, locations: analysis.locations.length }
+            : null,
+      };
 
       // Create campaign
       const { data: campaign, error: campErr } = await supabase.from("campaigns").insert({
@@ -1518,6 +1527,24 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 <Progress value={genProgress.total > 0 ? (genProgress.processed / genProgress.total) * 100 : 0} className="h-2" />
                 {genProgress.errors > 0 && (
                   <p className="text-xs text-destructive">{t("pgpGenerate.progressErrors", { count: genProgress.errors })}</p>
+                )}
+                {analysis.status !== "idle" && (
+                  <div className="flex items-center gap-1.5 rounded-md border border-border/60 bg-background/70 px-2.5 py-1.5 text-[11px]">
+                    {analysis.status === "scanning" && <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />}
+                    {analysis.status === "ready" && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />}
+                    {analysis.status === "error" && <XCircle className="h-3.5 w-3.5 text-destructive" />}
+                    <span className="font-medium">
+                      {analysis.status === "scanning" && "Regenerating keywords & terms…"}
+                      {analysis.status === "ready" &&
+                        `Keywords & terms regenerated (${analysis.keywords.length}K / ${analysis.terms.length}T / ${analysis.locations.length}L)`}
+                      {analysis.status === "error" && "Keyword & terms regeneration failed"}
+                    </span>
+                    {runHistory[0] && analysis.status === "ready" && (
+                      <span className="ml-auto text-[10px] text-muted-foreground">
+                        {new Date(runHistory[0].at).toLocaleTimeString()}
+                      </span>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
