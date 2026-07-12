@@ -993,7 +993,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                             size="sm"
                             variant="outline"
                             className="ml-auto h-7 gap-1.5 text-[11px]"
-                            onClick={handleAnalyzeSource}
+                            onClick={() => setConfirmRegen(true)}
                             disabled={aiAnalyzing}
                           >
                             <RefreshCw className={`h-3 w-3 ${aiAnalyzing ? "animate-spin" : ""}`} />
