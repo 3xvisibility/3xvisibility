@@ -390,12 +390,16 @@ Only return valid JSON. No markdown fences.`;
   const injectBrand = (rows: Record<string, string>[]) =>
     resolvedBrandName ? rows.map(r => ({ ...r, brand_name: resolvedBrandName })) : rows;
 
-  const applyAnalysis = (data: any) => {
+  const applyAnalysis = (data: any, sourceLabel: string) => {
+    const keywords = Array.isArray(data?.keywords) ? data.keywords.filter(Boolean) : [];
+    const terms = Array.isArray(data?.terms) ? data.terms.filter(Boolean) : [];
+    const locations = Array.isArray(data?.locations) ? data.locations.filter(Boolean) : [];
     if (data?.businessDescription) setAiBusinessDesc(data.businessDescription);
-    if (Array.isArray(data?.keywords) && data.keywords.length) setAiKeywords(data.keywords.join(", "));
-    if (Array.isArray(data?.terms) && data.terms.length) setAiTerms(data.terms.join(", "));
-    if (Array.isArray(data?.locations) && data.locations.length) setAiLocations(data.locations.join(", "));
-    toast({ title: "Keyword strategy ready", description: "Review the auto-filled fields, then generate." });
+    if (keywords.length) setAiKeywords(keywords.join(", "));
+    if (terms.length) setAiTerms(terms.join(", "));
+    if (locations.length) setAiLocations(locations.join(", "));
+    setAnalysis({ status: "ready", source: sourceLabel, keywords, terms, locations });
+    toast({ title: "Keyword strategy ready", description: "Review the results below, then generate." });
   };
 
   const handleAnalyzeSource = async () => {
