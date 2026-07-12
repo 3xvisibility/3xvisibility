@@ -244,48 +244,45 @@ export default function AiSiteBuilderPage() {
     }
   };
 
-  const handlePublish = async () => {
+  const handlePublish = async (all = false) => {
     if (!page || !selectedWebsite) {
       toast({ title: "Select a website", description: "Choose where to publish first.", variant: "destructive" });
       return;
     }
+    const toPublish = all ? pages : [page];
     setPublishing(true);
     setPublishedUrl(null);
-    setPublishSteps([{ label: "Sending page to publisher", status: "running" }]);
+    setPublishSteps([{ label: `Sending ${toPublish.length} page${toPublish.length > 1 ? "s" : ""} to publisher`, status: "running" }]);
     try {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
         body: {
           website_id: selectedWebsite,
           workspace_id: currentWorkspace?.id,
-          pages: [
-            {
-              title: page.title,
-              content: page.content,
-              slug: page.slug,
-              seo_title: page.seo_title,
-              seo_description: page.seo_description,
-              elementor_data: page.elementor_data,
-              elementor_css: page.elementor_css,
-              elementor_mode: page.elementor_mode,
-              publish_format: page.publish_format,
-            },
-          ],
+          pages: toPublish.map((p) => ({
+            title: p.title,
+            content: p.content,
+            slug: p.slug,
+            seo_title: p.seo_title,
+            seo_description: p.seo_description,
+            elementor_data: p.elementor_data,
+            elementor_css: p.elementor_css,
+            elementor_mode: p.elementor_mode,
+            publish_format: p.publish_format,
+          })),
         },
       });
       if (error) throw error;
-      const result = data?.results?.[0];
-      if (Array.isArray(result?.steps) && result.steps.length) {
-        setPublishSteps(result.steps);
-      }
-      if (result?.status === "published") {
-        const url = result.external_url || result.url || null;
+      const results = Array.isArray(data?.results) ? data.results : [];
+      const publishedCount = results.filter((r: any) => r?.status === "published").length;
+      const lastSteps = results.find((r: any) => Array.isArray(r?.steps) && r.steps.length)?.steps;
+      if (lastSteps) setPublishSteps(lastSteps);
+      if (publishedCount > 0) {
+        const url = results.find((r: any) => r?.status === "published")?.external_url || results.find((r: any) => r?.status === "published")?.url || null;
         setPublishedUrl(url);
-        if (!Array.isArray(result?.steps) || !result.steps.length) {
-          setPublishSteps([{ label: "Published", status: "ok", detail: url || undefined }]);
-        }
-        toast({ title: "Published!", description: url ? `Live at ${url}` : "Page is live." });
+        if (!lastSteps) setPublishSteps([{ label: `Published ${publishedCount} page${publishedCount > 1 ? "s" : ""}`, status: "ok", detail: url || undefined }]);
+        toast({ title: "Published!", description: `${publishedCount} of ${toPublish.length} page(s) live.` });
       } else {
-        throw new Error(result?.error || "Publish did not complete.");
+        throw new Error(results[0]?.error || "Publish did not complete.");
       }
     } catch (err: any) {
       const msg = err.message || String(err);
