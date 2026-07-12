@@ -839,6 +839,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
             )}
 
           </div>
+          </ErrorBoundary>
         </div>
 
         {/* Pinned footer — always visible */}
