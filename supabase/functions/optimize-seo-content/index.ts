@@ -797,7 +797,7 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
     let result: Record<string, any> = {};
     try {
       ensureBudget(functionStartedAt, "SEO optimization");
-      const optimizationTimeoutMs = metadataOnly ? 20_000 : AI_CALL_TIMEOUT_MS;
+      const optimizationTimeoutMs = metadataOnly ? 40_000 : AI_CALL_TIMEOUT_MS;
       result = normalizeOptimizationResult(
         await requestOptimizationDraft(
           LOVABLE_API_KEY,
