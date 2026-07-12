@@ -610,15 +610,18 @@ Design rules:
 - Choose colors with real contrast and personality — luxury = deep + gold, wellness = sage + cream, tech = indigo + cyan, food = warm terracotta, etc.
 - Copy must be specific, confident and benefit-driven. Never generic placeholder text. Always fill "eyebrow" and "stats".
 Write all text in language code "${lang}".
+Page context: ${pageBrief}
+Design fidelity: ${designBrief}
 When a reference brief is provided, mirror its section structure and ordering closely (one "sections" item per reference section heading), reuse its feature and FAQ topics, and derive the theme from its brand colors — but rewrite ALL copy to fit the given brand, category and niche. Do not copy the reference text verbatim.`;
 
   const user = `Brand: ${input.brand || "(not given)"}
 Category: ${input.category || "(not given)"}
 Niche / industry: ${input.niche || "(not given)"}
+Page to build: ${pageName || "Home"}
 Extra instructions: ${input.freeText || "(none)"}
 ${referenceBrief ? `\nReference brief (structure + palette to match, content to re-write for this brand):\n${referenceBrief}` : ""}
 
-Generate the landing page JSON now.`;
+Generate the ${pageName || "landing"} page JSON now.`;
 
   const result = await aiGenerate({
     authToken,
