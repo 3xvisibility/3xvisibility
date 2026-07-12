@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Sparkles, Send, Loader2, Rocket, Wand2, MessageSquare, Globe, CheckCircle2, XCircle, AlertTriangle, CircleDot, Palette } from "lucide-react";
+import { Sparkles, Send, Loader2, Rocket, Wand2, MessageSquare, Globe, CheckCircle2, XCircle, AlertTriangle, CircleDot, Palette, RefreshCw } from "lucide-react";
 
 interface PublishStep {
   label: string;
@@ -80,6 +80,8 @@ export default function AiSiteBuilderPage() {
   const [activeIdx, setActiveIdx] = useState(0);
   const page = pages[activeIdx] || null;
   const [building, setBuilding] = useState(false);
+  const [buildError, setBuildError] = useState<string | null>(null);
+  const [buildRetrying, setBuildRetrying] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishSteps, setPublishSteps] = useState<PublishStep[]>([]);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
@@ -198,11 +200,25 @@ export default function AiSiteBuilderPage() {
 
 
 
-  const handleBuild = async () => {
+  const isTimeoutError = (err: any) => {
+    const msg = (err?.message || String(err || "")).toLowerCase();
+    return (
+      msg.includes("timed out") ||
+      msg.includes("timeout") ||
+      msg.includes("function_safe_timeout") ||
+      msg.includes("504")
+    );
+  };
+
+  const handleBuild = async (attempt = 0) => {
+    const MAX_AUTO_RETRIES = 2;
     setBuilding(true);
-    setPages([]);
-    setPagePublish({});
-    setActiveIdx(0);
+    setBuildError(null);
+    if (attempt === 0) {
+      setPages([]);
+      setPagePublish({});
+      setActiveIdx(0);
+    }
     try {
       const { data, error } = await supabase.functions.invoke("ai-site-builder", {
         body: {
@@ -221,13 +237,24 @@ export default function AiSiteBuilderPage() {
       const built: GeneratedPage[] = Array.isArray(data.pages) && data.pages.length ? data.pages : data.page ? [data.page] : [];
       setPages(built);
       setActiveIdx(0);
+      setBuildError(null);
       toast({ title: "Preview ready", description: `${built.length} page${built.length > 1 ? "s" : ""} built — review, then publish.` });
     } catch (err: any) {
-      toast({ title: "Build failed", description: err.message || String(err), variant: "destructive" });
+      const msg = err.message || String(err);
+      if (isTimeoutError(err) && attempt < MAX_AUTO_RETRIES) {
+        setBuildRetrying(true);
+        toast({ title: "Generation timed out", description: `Retrying automatically (attempt ${attempt + 2})…` });
+        setBuildRetrying(false);
+        return handleBuild(attempt + 1);
+      }
+      setBuildError(msg);
+      toast({ title: "Build failed", description: msg, variant: "destructive" });
     } finally {
       setBuilding(false);
     }
   };
+
+
 
   const handleSendChat = async () => {
     const text = chatInput.trim();
@@ -718,10 +745,18 @@ export default function AiSiteBuilderPage() {
                   <Label>Extra instructions (optional)</Label>
                   <Textarea value={freeText} onChange={(e) => setFreeText(e.target.value)} placeholder="Tone, key services, offers, colors…" rows={3} />
                 </div>
-                <Button onClick={handleBuild} disabled={building} className="w-full gap-2">
+                <Button onClick={() => handleBuild()} disabled={building} className="w-full gap-2">
                   {building ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  {building ? "Building…" : "Build with AI"}
+                  {building ? (buildRetrying ? "Retrying…" : "Building…") : "Build with AI"}
                 </Button>
+                {buildError && !building && (
+                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 space-y-2">
+                    <p className="text-sm text-destructive break-words">{buildError}</p>
+                    <Button onClick={() => handleBuild()} variant="outline" size="sm" className="gap-2">
+                      <RefreshCw className="h-4 w-4" /> Try again
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
