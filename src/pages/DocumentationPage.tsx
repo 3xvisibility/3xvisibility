@@ -796,7 +796,51 @@ export default function DocumentationPage() {
               </div>
             </section>
 
-            {/* FAQ */}
+            {/* Full end-to-end example */}
+            <section id="full-example" className="scroll-mt-24">
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                <Rocket className="h-6 w-6 text-primary" /> Full example — CSV → Template → Campaign → WordPress
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                A complete end-to-end walkthrough: upload a CSV, pick a template, generate a campaign, and publish the pages straight to your WordPress site.
+              </p>
+
+              <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-4 md:p-5 mb-6 text-sm">
+                <span className="font-semibold text-primary">Before you start:</span>{" "}
+                Connect your WordPress site (see the Connection Tutorials above) and make sure it shows a green status in Websites.
+              </div>
+
+              <ol className="space-y-4">
+                {E2E_WALKTHROUGH.map((s, i) => (
+                  <li key={i} className="rounded-xl border border-border bg-card p-4 md:p-5 flex gap-4">
+                    <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                      {i + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold">{s.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{s.detail}</p>
+                      {s.tip && (
+                        <div className="mt-2 flex items-start gap-1.5 text-xs text-primary">
+                          <Lightbulb className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                          <span>{s.tip}</span>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+
+              <div className="mt-6 rounded-md bg-emerald-500/5 border border-emerald-500/20 p-4 text-sm">
+                <div className="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400 mb-1">
+                  <CheckCircle2 className="h-4 w-4" /> Result
+                </div>
+                <p className="text-muted-foreground">
+                  You now have a batch of unique, variable-driven pages live on your WordPress site — one per CSV row — ready to be indexed by Google.
+                </p>
+              </div>
+            </section>
+
+
             <section id="faq" className="scroll-mt-24">
               <h2 className="text-2xl font-bold mb-6 border-b border-border pb-2 flex items-center gap-2">
                 <AlertCircle className="h-6 w-6 text-primary" /> FAQ
