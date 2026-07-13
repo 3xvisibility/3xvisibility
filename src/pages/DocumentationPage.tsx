@@ -14,6 +14,11 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+interface GuideStep {
+  title: string;
+  detail: string;
+}
+
 interface ToolDoc {
   id: string;
   icon: React.ElementType;
@@ -22,7 +27,10 @@ interface ToolDoc {
   short: string;
   steps: string[];
   tips?: string[];
+  /** Optional in-depth, numbered walkthrough shown below the quick steps. */
+  guide?: GuideStep[];
 }
+
 
 const TOOLS: ToolDoc[] = [
   {
