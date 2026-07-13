@@ -73,6 +73,15 @@ const TOOLS: ToolDoc[] = [
       "Images use Unsplash first and only fall back to AI generation when needed — this keeps credits low.",
       "You can regenerate any single section without rebuilding the whole site.",
     ],
+    guide: [
+      { title: "Open the builder", detail: "Sidebar → AI Site Builder. You start on a single input form — no design skills needed." },
+      { title: "Describe your business", detail: "Type your business name, the niche/industry, and a short list of the services or products you offer. The more specific you are, the better the copy." },
+      { title: "Choose a language & location (optional)", detail: "Set the primary language and target country so the generated copy and tone match your audience." },
+      { title: "Pick a brand vibe", detail: "Select a style/vibe preset. This locks the color palette, fonts and section rhythm before generation so the whole site feels consistent." },
+      { title: "Generate", detail: "Click Generate. AI builds every page — hero, features, services, testimonials, FAQ, contact — with matching copy and images in one pass." },
+      { title: "Review & refine", detail: "Scroll the live preview. Use the per-section regenerate to redo just one block instead of the whole site." },
+      { title: "Save or publish", detail: "Send the result to Templates to reuse it in campaigns, or publish directly to a connected website." },
+    ],
   },
   {
     id: "campaigns", icon: Rocket, group: "Core", name: "Campaigns",
@@ -88,6 +97,16 @@ const TOOLS: ToolDoc[] = [
     tips: [
       "Re-selecting a marketplace template never duplicates — it reuses the existing snapshot.",
       "Use the AI Campaign Assistant for naming, mapping and readiness checks.",
+    ],
+    guide: [
+      { title: "Start the wizard", detail: "Campaigns → Create Campaign. A step-by-step wizard opens: Name → Template → Data → Mapping → Publish." },
+      { title: "Name & type", detail: "Give the campaign a clear name and pick the campaign type (SEO / SEA / GEO). The type tunes how content is optimized." },
+      { title: "Choose a template", detail: "Select one of your own templates, an AI-generated one, or import from the Marketplace. A live preview confirms your choice." },
+      { title: "Add your data", detail: "Upload a CSV of rows (each row = one page) or generate rows with AI. Use a pipe (|) inside a cell for spintax variations." },
+      { title: "Map variables", detail: "The wizard auto-suggests which CSV column fills each {variable}. Check the confidence badges and fix any unmapped variables flagged in the alert." },
+      { title: "Set keyword source (optional)", detail: "Record whether keywords come from a New business or an Existing website so the source shows on the campaign detail later." },
+      { title: "Choose publish mode", detail: "Pick Draft (safe review on the CMS) or Live. Then choose the target connected website." },
+      { title: "Generate & monitor", detail: "Click Generate and watch live progress. Finished pages appear under Generated Pages and on the campaign detail view." },
     ],
   },
   {
