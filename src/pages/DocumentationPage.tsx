@@ -884,12 +884,12 @@ export default function DocumentationPage() {
     }
   };
 
-  const toggleSection = (id: string) =>
-    setSelectedSections((prev) => {
-      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
-      setActivePreset("custom");
-      return next;
-    });
+  const toggleSection = (id: string) => {
+    setSelectedSections((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+    setActivePreset("custom");
+  };
 
   const handleDownloadGuide = async () => {
     if (generating) return;
