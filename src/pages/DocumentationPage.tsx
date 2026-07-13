@@ -2,6 +2,7 @@ import { Seo } from "@/components/Seo";
 import docsOverviewAsset from "@/assets/docs-overview.mp4.asset.json";
 import docsCampaignsAsset from "@/assets/docs-campaigns.mp4.asset.json";
 import docsCsvAsset from "@/assets/docs-csv.mp4.asset.json";
+import docsCsvMappingAsset from "@/assets/docs-csv-mapping.mp4.asset.json";
 import docsPdfExportAsset from "@/assets/docs-pdf-export.mp4.asset.json";
 import docsWordpressAsset from "@/assets/docs-wordpress.mp4.asset.json";
 import docsShopifyAsset from "@/assets/docs-shopify.mp4.asset.json";
@@ -1458,6 +1459,25 @@ export default function DocumentationPage() {
                               </figcaption>
                             </figure>
                           )}
+
+                          {tool.id === "data" && (
+                            <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
+                              <video
+                                src={docsCsvMappingAsset.url}
+                                className="w-full aspect-video bg-background"
+                                autoPlay
+                                muted
+                                loop
+                                playsInline
+                                controls
+                                preload="metadata"
+                              />
+                              <figcaption className="px-4 py-2 text-xs text-muted-foreground">
+                                Demo — upload a CSV, map columns to variables, then preview each row before generating.
+                              </figcaption>
+                            </figure>
+                          )}
+
 
                           {tool.id === "websites" && (
                             <div className="mt-4 grid gap-4 md:grid-cols-2">
