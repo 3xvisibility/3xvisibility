@@ -681,6 +681,37 @@ const GUIDE_SECTIONS = [
   { id: "sec-troubleshoot", title: "Troubleshooting", label: "Troubleshooting" },
 ] as const;
 
+type PresetId = "all" | "essentials" | "connections" | "custom";
+
+interface GuidePreset {
+  id: PresetId;
+  label: string;
+  sections: string[];
+}
+
+const GUIDE_PRESETS: GuidePreset[] = [
+  {
+    id: "all",
+    label: "All sections",
+    sections: GUIDE_SECTIONS.map((s) => s.id),
+  },
+  {
+    id: "essentials",
+    label: "Essentials",
+    sections: ["sec-getting-started", "sec-example", "sec-faq"],
+  },
+  {
+    id: "connections",
+    label: "Connection help",
+    sections: ["sec-connect", "sec-troubleshoot", "sec-faq"],
+  },
+  {
+    id: "custom",
+    label: "Custom",
+    sections: [],
+  },
+];
+
 function buildAndDownloadGuide(selectedIds?: string[]) {
   const li = (items: string[]) =>
     `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
@@ -841,13 +872,24 @@ export default function DocumentationPage() {
   const [selectedSections, setSelectedSections] = useState<string[]>(
     GUIDE_SECTIONS.map((s) => s.id)
   );
+  const [activePreset, setActivePreset] = useState<PresetId>("all");
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
 
-  const toggleSection = (id: string) =>
+  const applyPreset = (presetId: PresetId) => {
+    setActivePreset(presetId);
+    const preset = GUIDE_PRESETS.find((p) => p.id === presetId);
+    if (preset && preset.sections.length > 0) {
+      setSelectedSections(preset.sections);
+    }
+  };
+
+  const toggleSection = (id: string) => {
     setSelectedSections((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
+    setActivePreset("custom");
+  };
 
   const handleDownloadGuide = async () => {
     if (generating) return;
@@ -925,19 +967,40 @@ export default function DocumentationPage() {
                   Sections ({selectedSections.length}/{GUIDE_SECTIONS.length})
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="center" className="w-72 text-left">
+              <PopoverContent align="center" className="w-80 text-left">
+                <div className="mb-3">
+                  <p className="text-sm font-medium mb-2">Preset</p>
+                  <div className="flex flex-wrap gap-2">
+                    {GUIDE_PRESETS.map((preset) => {
+                      const isActive = activePreset === preset.id;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => applyPreset(preset.id)}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                            isActive
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="border-t border-border my-3" />
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-sm font-medium">Sections to export</p>
                   <button
                     type="button"
                     className="text-xs text-primary hover:underline"
-                    onClick={() =>
-                      setSelectedSections(
-                        selectedSections.length === GUIDE_SECTIONS.length
-                          ? []
-                          : GUIDE_SECTIONS.map((s) => s.id)
-                      )
-                    }
+                    onClick={() => {
+                      const selectingAll = selectedSections.length !== GUIDE_SECTIONS.length;
+                      setSelectedSections(selectingAll ? GUIDE_SECTIONS.map((s) => s.id) : []);
+                      setActivePreset(selectingAll ? "all" : "custom");
+                    }}
                   >
                     {selectedSections.length === GUIDE_SECTIONS.length ? "Clear all" : "Select all"}
                   </button>
