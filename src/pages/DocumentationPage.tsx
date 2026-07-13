@@ -1208,20 +1208,15 @@ export default function DocumentationPage() {
           </p>
 
           <figure className="mt-6 mx-auto max-w-2xl overflow-hidden rounded-xl border border-border bg-card">
-            <video
+            <DocVideoPlayer
               src={docsPdfExportAsset.url}
-              className="w-full aspect-video bg-background"
-              autoPlay
-              muted
-              loop
-              playsInline
-              controls
-              preload="metadata"
+              captionSrc="/captions/docs-pdf-export.vtt"
             />
             <figcaption className="px-4 py-2 text-xs text-muted-foreground text-left">
               Watch — select sections, watch the TOC update, then preview and download the PDF in real time.
             </figcaption>
           </figure>
+
 
 
           {exportHistory.length > 0 && (
