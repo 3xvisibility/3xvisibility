@@ -1196,7 +1196,53 @@ export default function DocumentationPage() {
           <p className="mt-2 text-xs text-muted-foreground">
             Opens a printable version — choose "Save as PDF" in the print dialog.
           </p>
+
+          {exportHistory.length > 0 && (
+            <div className="mt-6 mx-auto max-w-xl text-left rounded-xl border border-border bg-card/50 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <History className="h-4 w-4 text-primary" /> Recent exports
+                </p>
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                  onClick={clearExportHistory}
+                >
+                  Clear
+                </button>
+              </div>
+              <ul className="space-y-2">
+                {exportHistory.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(entry.ts).toLocaleString()} ·{" "}
+                        {entry.sectionIds.length} section
+                        {entry.sectionIds.length !== 1 ? "s" : ""}
+                      </p>
+                      <p className="text-sm truncate">
+                        {entry.sectionIds.map(sectionLabel).join(", ")}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 shrink-0"
+                      disabled={generating}
+                      onClick={() => handleReExport(entry)}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" /> Re-export
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </header>
+
 
         {/* Live PDF preview */}
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
