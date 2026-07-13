@@ -893,6 +893,7 @@ export default function DocumentationPage() {
   );
   const [activePreset, setActivePreset] = useState<PresetId>("all");
   const [dragId, setDragId] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
 
