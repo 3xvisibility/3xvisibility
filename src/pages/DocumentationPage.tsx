@@ -7,7 +7,7 @@ import {
   KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
   ClipboardCheck, Search, Gift, CreditCard, Settings, Users,
   ArrowRight, BookOpen, CheckCircle2, Lightbulb, AlertCircle,
-  Sparkles, SlidersHorizontal, Link2, Plug, HelpCircle, Loader2, GripVertical, Eye,
+  Sparkles, SlidersHorizontal, Link2, Plug, HelpCircle, Loader2, GripVertical, Eye, History as HistoryIcon, RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { LandingNav } from "@/components/landing/LandingNav";
@@ -720,6 +720,31 @@ const GUIDE_PRESETS: GuidePreset[] = [
   },
 ];
 
+interface ExportHistoryEntry {
+  id: string;
+  ts: number;
+  sectionIds: string[];
+  preset: PresetId;
+}
+
+const EXPORT_HISTORY_KEY = "docs-pdf-export-history";
+
+function loadExportHistory(): ExportHistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(EXPORT_HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+const sectionLabel = (id: string) =>
+  GUIDE_SECTIONS.find((s) => s.id === id)?.label ?? id;
+
+
+
 function buildGuideHtml(selectedIds?: string[], forPrint = true): string {
   const li = (items: string[]) =>
     `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
@@ -894,6 +919,36 @@ export default function DocumentationPage() {
   const [activePreset, setActivePreset] = useState<PresetId>("all");
   const [dragId, setDragId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [exportHistory, setExportHistory] = useState<ExportHistoryEntry[]>(
+    () => loadExportHistory()
+  );
+
+  const recordExport = (sectionIds: string[], preset: PresetId) => {
+    setExportHistory((prev) => {
+      const entry: ExportHistoryEntry = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        ts: Date.now(),
+        sectionIds,
+        preset,
+      };
+      const next = [entry, ...prev].slice(0, 8);
+      try {
+        localStorage.setItem(EXPORT_HISTORY_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage failures
+      }
+      return next;
+    });
+  };
+
+  const clearExportHistory = () => {
+    setExportHistory([]);
+    try {
+      localStorage.removeItem(EXPORT_HISTORY_KEY);
+    } catch {
+      // ignore
+    }
+  };
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
 
@@ -941,9 +996,13 @@ export default function DocumentationPage() {
     [orderedSelectedIds.join("|")]
   );
 
-  const handleDownloadGuide = async () => {
+  const handleDownloadGuide = async (
+    idsOverride?: string[],
+    presetOverride?: PresetId
+  ) => {
     if (generating) return;
-    if (!selectedSections.length) {
+    const ids = idsOverride ?? orderedSelectedIds;
+    if (!ids.length) {
       toast.error("Select at least one section to export.");
       return;
     }
@@ -952,7 +1011,8 @@ export default function DocumentationPage() {
     try {
       // Yield a frame so the loading UI paints before the heavy work.
       await new Promise((r) => setTimeout(r, 50));
-      const result = buildAndDownloadGuide(orderedSelectedIds);
+      const result = buildAndDownloadGuide(ids);
+      recordExport(ids, presetOverride ?? activePreset);
       if (result === "download") {
         toast.success("Guide downloaded", {
           id: toastId,
@@ -973,6 +1033,17 @@ export default function DocumentationPage() {
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleReExport = (entry: ExportHistoryEntry) => {
+    // Restore the historical selection/order into the UI, then export.
+    setSectionOrder((prev) => {
+      const rest = prev.filter((id) => !entry.sectionIds.includes(id));
+      return [...entry.sectionIds, ...rest];
+    });
+    setSelectedSections(entry.sectionIds);
+    setActivePreset(entry.preset);
+    handleDownloadGuide(entry.sectionIds, entry.preset);
   };
 
   useEffect(() => {
@@ -1003,7 +1074,7 @@ export default function DocumentationPage() {
             Step-by-step instructions for every feature in your workspace.
           </p>
           <div className="mt-6 flex flex-wrap justify-center items-center gap-3">
-            <Button onClick={handleDownloadGuide} size="lg" className="gap-2" disabled={generating}>
+            <Button onClick={() => handleDownloadGuide()} size="lg" className="gap-2" disabled={generating}>
               {generating ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
               ) : (
@@ -1125,7 +1196,53 @@ export default function DocumentationPage() {
           <p className="mt-2 text-xs text-muted-foreground">
             Opens a printable version — choose "Save as PDF" in the print dialog.
           </p>
+
+          {exportHistory.length > 0 && (
+            <div className="mt-6 mx-auto max-w-xl text-left rounded-xl border border-border bg-card/50 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <HistoryIcon className="h-4 w-4 text-primary" /> Recent exports
+                </p>
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                  onClick={clearExportHistory}
+                >
+                  Clear
+                </button>
+              </div>
+              <ul className="space-y-2">
+                {exportHistory.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(entry.ts).toLocaleString()} ·{" "}
+                        {entry.sectionIds.length} section
+                        {entry.sectionIds.length !== 1 ? "s" : ""}
+                      </p>
+                      <p className="text-sm truncate">
+                        {entry.sectionIds.map(sectionLabel).join(", ")}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 shrink-0"
+                      disabled={generating}
+                      onClick={() => handleReExport(entry)}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" /> Re-export
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </header>
+
 
         {/* Live PDF preview */}
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
