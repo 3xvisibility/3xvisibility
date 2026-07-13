@@ -1361,20 +1361,15 @@ export default function DocumentationPage() {
                 New here? Follow this sequence and your first batch of pages will be live in about 10 minutes.
               </p>
               <figure className="mb-6 overflow-hidden rounded-xl border border-border bg-card">
-                <video
+                <DocVideoPlayer
                   src={docsOverviewAsset.url}
-                  className="w-full aspect-video bg-background"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  controls
-                  preload="metadata"
+                  captionSrc="/captions/docs-overview.vtt"
                 />
                 <figcaption className="px-4 py-2 text-xs text-muted-foreground">
                   Overview — how templates turn into published, SEO-optimized pages at scale.
                 </figcaption>
               </figure>
+
               <ol className="space-y-3">
                 {QUICK_FLOW.map((s) => (
                   <li key={s.step} className="flex gap-4 p-4 rounded-lg border border-border bg-card">
