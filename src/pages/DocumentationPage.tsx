@@ -831,17 +831,29 @@ function buildAndDownloadGuide(selectedIds?: string[]) {
 export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
   const [generating, setGenerating] = useState(false);
+  const [selectedSections, setSelectedSections] = useState<string[]>(
+    GUIDE_SECTIONS.map((s) => s.id)
+  );
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
 
+  const toggleSection = (id: string) =>
+    setSelectedSections((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+
   const handleDownloadGuide = async () => {
     if (generating) return;
+    if (!selectedSections.length) {
+      toast.error("Select at least one section to export.");
+      return;
+    }
     setGenerating(true);
     const toastId = toast.loading("Generating your guide…");
     try {
       // Yield a frame so the loading UI paints before the heavy work.
       await new Promise((r) => setTimeout(r, 50));
-      const result = buildAndDownloadGuide();
+      const result = buildAndDownloadGuide(selectedSections);
       if (result === "download") {
         toast.success("Guide downloaded", {
           id: toastId,
