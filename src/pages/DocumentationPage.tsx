@@ -731,7 +731,7 @@ function buildAndDownloadGuide(selectedIds?: string[]) {
     (s) => `<li><strong>${esc(s.title)}</strong> — ${esc(s.desc)}</li>`
   ).join("")}</ol>`;
 
-  const sections = [
+  const allSections = [
     { id: "sec-getting-started", title: "Getting started — 4 quick steps", body: quickHtml },
     { id: "sec-tools", title: "Tools & features", body: toolsHtml },
     { id: "sec-connect", title: "Connection tutorials", body: connectHtml },
@@ -739,6 +739,11 @@ function buildAndDownloadGuide(selectedIds?: string[]) {
     { id: "sec-faq", title: "Frequently asked questions", body: faqHtml },
     { id: "sec-troubleshoot", title: "Troubleshooting", body: troubleHtml },
   ];
+
+  const sections =
+    selectedIds && selectedIds.length
+      ? allSections.filter((s) => selectedIds.includes(s.id))
+      : allSections;
 
   const tocHtml = `<nav class="toc">
     <h2 class="toc-title">Table of contents</h2>
