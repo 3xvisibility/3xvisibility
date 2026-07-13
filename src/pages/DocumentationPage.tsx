@@ -725,6 +725,10 @@ export default function DocumentationPage() {
                 className={`block px-3 py-2 rounded-md transition-colors ${active === "faq" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
                 ❓ FAQ
               </a>
+              <a href="#troubleshooting" onClick={() => setActive("troubleshooting")}
+                className={`block px-3 py-2 rounded-md transition-colors ${active === "troubleshooting" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
+                🛠️ Troubleshooting
+              </a>
             </nav>
           </aside>
 
