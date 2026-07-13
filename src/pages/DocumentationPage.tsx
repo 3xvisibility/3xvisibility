@@ -659,6 +659,116 @@ const TROUBLESHOOTING: TroubleshootItem[] = [
   },
 ];
 
+const esc = (s: string) =>
+  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** Build a self-contained, printable HTML guide from the documentation content
+ *  and open it in a new window ready to "Save as PDF". No external deps. */
+function buildAndDownloadGuide() {
+  const li = (items: string[]) =>
+    `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
+
+  const toolsHtml = GROUPS.map((group) => {
+    const tools = TOOLS.filter((t) => t.group === group);
+    return `<h2>${esc(group)}</h2>${tools
+      .map(
+        (t) => `
+        <div class="card">
+          <h3>${esc(t.name)}</h3>
+          <p class="muted">${esc(t.short)}</p>
+          ${li(t.steps)}
+          ${t.tips?.length ? `<p class="tip"><strong>Tips:</strong></p>${li(t.tips)}` : ""}
+        </div>`
+      )
+      .join("")}`;
+  }).join("");
+
+  const connectHtml = CONNECT_TUTORIALS.map(
+    (t) => `
+    <div class="card">
+      <h3>${esc(t.name)}</h3>
+      <p class="muted">${esc(t.intro)}</p>
+      <p><strong>Fields:</strong></p>
+      <ul>${t.fields.map((f) => `<li><strong>${esc(f.label)}:</strong> ${esc(f.desc)}</li>`).join("")}</ul>
+      <p><strong>Permissions:</strong></p>${li(t.permissions)}
+      <p><strong>Test steps:</strong></p><ol>${t.test.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
+      ${t.troubleshoot?.length ? `<p><strong>Troubleshooting:</strong></p>${li(t.troubleshoot)}` : ""}
+    </div>`
+  ).join("");
+
+  const walkHtml = `<ol>${E2E_WALKTHROUGH.map(
+    (s) =>
+      `<li><strong>${esc(s.title)}</strong><br/>${esc(s.detail)}${
+        s.tip ? `<br/><em>Tip: ${esc(s.tip)}</em>` : ""
+      }</li>`
+  ).join("")}</ol>`;
+
+  const faqHtml = FAQS.map(
+    (f) => `<div class="faq"><p><strong>Q: ${esc(f.q)}</strong></p><p>${esc(f.a)}</p></div>`
+  ).join("");
+
+  const troubleHtml = TROUBLESHOOTING.map(
+    (c) => `
+    <div class="card">
+      <h3>${esc(c.category)}</h3>
+      <ul>${c.problems
+        .map((p) => `<li><strong>${esc(p.symptom)}</strong><br/>${esc(p.fix)}</li>`)
+        .join("")}</ul>
+    </div>`
+  ).join("");
+
+  const quickHtml = `<ol>${QUICK_FLOW.map(
+    (s) => `<li><strong>${esc(s.title)}</strong> — ${esc(s.desc)}</li>`
+  ).join("")}</ol>`;
+
+  const html = `<!doctype html><html><head><meta charset="utf-8"/>
+    <title>3XVISIBILITY — Quickstart Guide</title>
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111;line-height:1.5;max-width:820px;margin:0 auto;padding:40px 32px}
+      h1{font-size:28px;margin:0 0 4px}
+      h2{font-size:20px;margin:28px 0 10px;border-bottom:2px solid #eee;padding-bottom:4px}
+      h3{font-size:15px;margin:0 0 4px}
+      p{margin:6px 0}
+      ul,ol{margin:6px 0 6px 20px;padding:0}
+      li{margin:3px 0}
+      .muted{color:#555}
+      .tip{color:#a15c00;margin-top:8px}
+      .card{border:1px solid #e5e5e5;border-radius:8px;padding:12px 16px;margin:10px 0;page-break-inside:avoid}
+      .faq{margin:8px 0;page-break-inside:avoid}
+      .cover{text-align:center;margin-bottom:24px}
+      .cover p{color:#555}
+      @media print{body{padding:0 12px}}
+    </style></head>
+    <body>
+      <div class="cover">
+        <h1>3XVISIBILITY — Quickstart Guide</h1>
+        <p>Complete step-by-step guide to every tool. Generated ${new Date().toLocaleDateString()}</p>
+      </div>
+      <h2>Getting started — 4 quick steps</h2>${quickHtml}
+      <h2>Tools & features</h2>${toolsHtml}
+      <h2>Connection tutorials</h2>${connectHtml}
+      <h2>Full end-to-end example</h2>${walkHtml}
+      <h2>Frequently asked questions</h2>${faqHtml}
+      <h2>Troubleshooting</h2>${troubleHtml}
+      <script>window.onload=function(){setTimeout(function(){window.print();},400);};</script>
+    </body></html>`;
+
+  const w = window.open("", "_blank");
+  if (!w) {
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "3XVISIBILITY-Quickstart-Guide.html";
+    a.click();
+    URL.revokeObjectURL(url);
+    return;
+  }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
 
 export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
