@@ -681,6 +681,37 @@ const GUIDE_SECTIONS = [
   { id: "sec-troubleshoot", title: "Troubleshooting", label: "Troubleshooting" },
 ] as const;
 
+type PresetId = "all" | "essentials" | "connections" | "custom";
+
+interface GuidePreset {
+  id: PresetId;
+  label: string;
+  sections: string[];
+}
+
+const GUIDE_PRESETS: GuidePreset[] = [
+  {
+    id: "all",
+    label: "All sections",
+    sections: GUIDE_SECTIONS.map((s) => s.id),
+  },
+  {
+    id: "essentials",
+    label: "Essentials",
+    sections: ["sec-getting-started", "sec-example", "sec-faq"],
+  },
+  {
+    id: "connections",
+    label: "Connection help",
+    sections: ["sec-connect", "sec-troubleshoot", "sec-faq"],
+  },
+  {
+    id: "custom",
+    label: "Custom",
+    sections: [],
+  },
+];
+
 function buildAndDownloadGuide(selectedIds?: string[]) {
   const li = (items: string[]) =>
     `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
