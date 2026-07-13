@@ -7,7 +7,7 @@ import {
   KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
   ClipboardCheck, Search, Gift, CreditCard, Settings, Users,
   ArrowRight, BookOpen, CheckCircle2, Lightbulb, AlertCircle,
-  Sparkles, SlidersHorizontal, Link2, Plug,
+  Sparkles, SlidersHorizontal, Link2, Plug, HelpCircle,
 } from "lucide-react";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
@@ -518,6 +518,147 @@ const E2E_WALKTHROUGH: WalkStep[] = [
   },
 ];
 
+interface FaqItem {
+  q: string;
+  a: string;
+}
+
+const FAQS: FaqItem[] = [
+  {
+    q: "Why does my website connection keep failing?",
+    a: "The most common causes are: wrong URL format (missing https:// or extra www), invalid Application Password, pretty permalinks disabled on WordPress, or an SSL/SNI mismatch. Use the 'Test Connection' button after fixing each one.",
+  },
+  {
+    q: "I uploaded a CSV but variables are not mapping — what's wrong?",
+    a: "Make sure the first row contains column headers and that the column names exactly match the template variables (lowercase_snake_case). Empty columns or extra spaces in headers break auto-mapping.",
+  },
+  {
+    q: "Pages show 'Generated' but are not live on my site — why?",
+    a: "Check the publish mode in the campaign (Draft vs Live). Draft pages are not pushed to the CMS. Also confirm the website connection still shows a green status in Websites.",
+  },
+  {
+    q: "Why do I see a 401 / 403 error when publishing?",
+    a: "401 means the credentials are rejected (regenerate the Application Password or reconnect OAuth). 403 means the connected account lacks permission to create/update pages — use an Editor or Administrator account.",
+  },
+  {
+    q: "My generated pages look different from the preview — how do I fix it?",
+    a: "Make sure the 3XVISIBILITY WordPress connector plugin is installed and active. It preserves Elementor layout, container widths and critical CSS. Without it, styling may fall back to default theme styles.",
+  },
+  {
+    q: "Can I undo a bulk delete or republish?",
+    a: "Bulk delete is permanent — there is no undo. Republish is safe because it only updates existing pages. Always read confirmation dialogs before confirming destructive actions.",
+  },
+  {
+    q: "How are AI credits kept low?",
+    a: "Light tasks always use Gemini Flash Lite (the cheapest model). Images fall back to Unsplash and translations to LibreTranslate whenever possible.",
+  },
+  {
+    q: "If a marketplace template is updated, do my pages change?",
+    a: "No. Version pinning saves your copy as a snapshot — marketplace updates do not affect it.",
+  },
+  {
+    q: "Where do I upgrade my plan?",
+    a: "Sidebar → Billing → Upgrade plan. Pro/Agency unlock more templates, credits and team features.",
+  },
+];
+
+interface TroubleshootItem {
+  category: string;
+  icon: React.ElementType;
+  problems: { symptom: string; fix: string }[];
+}
+
+const TROUBLESHOOTING: TroubleshootItem[] = [
+  {
+    category: "Connection failures",
+    icon: Plug,
+    problems: [
+      {
+        symptom: "Test Connection shows a red cross or timeout",
+        fix: "Check the URL starts with https:// and matches exactly what the site serves (with or without www). Try opening the URL in a browser first.",
+      },
+      {
+        symptom: "WordPress: 'rest_no_route' or 404 on test",
+        fix: "Enable pretty permalinks in WordPress: Settings → Permalinks → choose any option except 'Plain' → Save Changes.",
+      },
+      {
+        symptom: "Shopify OAuth redirect fails",
+        fix: "Confirm the store domain ends in .myshopify.com and is spelled exactly as shown in your Shopify admin.",
+      },
+      {
+        symptom: "Google Search Console property list is empty",
+        fix: "The service account must have access to a verified property. Add the service-account email in Search Console → Settings → Users and permissions.",
+      },
+    ],
+  },
+  {
+    category: "Authorization problems",
+    icon: KeyRound,
+    problems: [
+      {
+        symptom: "401 Unauthorized when testing WordPress",
+        fix: "Regenerate the Application Password in WordPress (Users → Profile → Application Passwords). Copy the full password without spaces and paste it again.",
+      },
+      {
+        symptom: "403 Forbidden when publishing pages",
+        fix: "The connected WordPress user must be Editor or Administrator. Viewer/Author/Contributor accounts cannot create pages through the REST API.",
+      },
+      {
+        symptom: "Shopify shows 'insufficient permissions' after OAuth",
+        fix: "Reconnect and approve Products and Content scopes on the Shopify approval screen. Only store owners or staff with app-install permission can do this.",
+      },
+      {
+        symptom: "Google Search Console returns 403 on submission",
+        fix: "Add the service account email as a Full user or Owner on the exact property. Domain-level properties need the service account added at the domain level.",
+      },
+    ],
+  },
+  {
+    category: "CSV parsing errors",
+    icon: Database,
+    problems: [
+      {
+        symptom: "Upload fails with 'Invalid CSV format'",
+        fix: "Save the file as UTF-8 CSV with commas or semicolons. Make sure there are no merged cells and that every row has the same number of columns as the header.",
+      },
+      {
+        symptom: "Special characters or accents look broken",
+        fix: "Re-save the CSV as UTF-8 (in Excel / Google Sheets use File → Download → CSV UTF-8). Then re-upload.",
+      },
+      {
+        symptom: "Variables stay unmapped after upload",
+        fix: "Header names must match template variables exactly: lowercase, underscores instead of spaces, e.g. service_name not Service Name. Trim leading/trailing spaces.",
+      },
+      {
+        symptom: "Spintax variations are not spinning",
+        fix: "Separate variations with a pipe (|) inside the same cell, e.g. 'Roofing|Siding|Gutters'. Do not use commas or new lines for variations.",
+      },
+    ],
+  },
+  {
+    category: "Publishing failures",
+    icon: Globe,
+    problems: [
+      {
+        symptom: "Campaign shows 'Published' but pages are missing on the site",
+        fix: "Check publish mode was set to Live, not Draft. Draft pages are saved inside the app and not pushed to the CMS.",
+      },
+      {
+        symptom: "Published page layout is broken or styles missing",
+        fix: "Install and activate the 3XVISIBILITY WordPress connector plugin. It sends Elementor/container settings and critical-CSS fallback needed for fidelity.",
+      },
+      {
+        symptom: "Some rows failed while others succeeded",
+        fix: "Open the failed row's log. Common causes: a missing required variable, a special character in the title, or the CMS rejecting duplicate slugs.",
+      },
+      {
+        symptom: "Images are missing after publish",
+        fix: "Make sure the WordPress media library is writable and the connector plugin is active. Large images may also be blocked by server upload limits.",
+      },
+    ],
+  },
+];
+
 
 export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
@@ -583,6 +724,10 @@ export default function DocumentationPage() {
               <a href="#faq" onClick={() => setActive("faq")}
                 className={`block px-3 py-2 rounded-md transition-colors ${active === "faq" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
                 ❓ FAQ
+              </a>
+              <a href="#troubleshooting" onClick={() => setActive("troubleshooting")}
+                className={`block px-3 py-2 rounded-md transition-colors ${active === "troubleshooting" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
+                🛠️ Troubleshooting
               </a>
             </nav>
           </aside>
@@ -841,18 +986,16 @@ export default function DocumentationPage() {
             </section>
 
 
+            {/* FAQ */}
             <section id="faq" className="scroll-mt-24">
-              <h2 className="text-2xl font-bold mb-6 border-b border-border pb-2 flex items-center gap-2">
-                <AlertCircle className="h-6 w-6 text-primary" /> FAQ
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                <HelpCircle className="h-6 w-6 text-primary" /> Frequently asked questions
               </h2>
-              <div className="space-y-4">
-                {[
-                  { q: "How are AI credits kept low?", a: "Light tasks always use Gemini Flash Lite (the cheapest model). Images fall back to Unsplash and translations to LibreTranslate whenever possible." },
-                  { q: "If a marketplace template is updated, do my pages change?", a: "No. Version pinning saves your copy as a snapshot — marketplace updates do not affect it." },
-                  { q: "Getting an SSL error when connecting WordPress?", a: "Check whether the site URL needs the www prefix. If it is an SNI mismatch, contact your hosting provider." },
-                  { q: "Where do I upgrade my plan?", a: "Sidebar → Billing → Upgrade plan. Pro/Agency unlock more templates, credits and team features." },
-                  { q: "Can a bulk delete be undone?", a: "No — bulk delete is permanent. Always read the confirmation dialog carefully." },
-                ].map((f, i) => (
+              <p className="text-muted-foreground mb-6">
+                Quick answers to the most common questions about connections, CSVs, publishing and account limits.
+              </p>
+              <div className="space-y-3">
+                {FAQS.map((f, i) => (
                   <details key={i} className="rounded-lg border border-border bg-card p-4 group">
                     <summary className="font-medium cursor-pointer list-none flex items-center justify-between">
                       <span>{f.q}</span>
@@ -861,6 +1004,45 @@ export default function DocumentationPage() {
                     <p className="mt-3 text-sm text-muted-foreground">{f.a}</p>
                   </details>
                 ))}
+              </div>
+            </section>
+
+            {/* Troubleshooting */}
+            <section id="troubleshooting" className="scroll-mt-24">
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                <AlertCircle className="h-6 w-6 text-primary" /> Troubleshooting
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Symptom-based fixes for connection, authorization, CSV and publishing problems.
+              </p>
+              <div className="space-y-6">
+                {TROUBLESHOOTING.map((cat) => {
+                  const Icon = cat.icon;
+                  return (
+                    <article key={cat.category} className="rounded-xl border border-border bg-card p-5 md:p-6">
+                      <header className="flex items-center gap-2 mb-4">
+                        <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <h3 className="font-semibold text-lg">{cat.category}</h3>
+                      </header>
+                      <div className="space-y-3">
+                        {cat.problems.map((p, i) => (
+                          <div key={i} className="rounded-md border border-border p-3">
+                            <div className="flex items-start gap-2">
+                              <span className="text-xs font-bold text-primary mt-0.5">SYMPTOM</span>
+                              <p className="text-sm font-medium">{p.symptom}</p>
+                            </div>
+                            <div className="flex items-start gap-2 mt-2">
+                              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">FIX</span>
+                              <p className="text-sm text-muted-foreground">{p.fix}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             </section>
 
