@@ -1,6 +1,7 @@
 import { Seo } from "@/components/Seo";
 import docsOverviewAsset from "@/assets/docs-overview.mp4.asset.json";
 import docsCampaignsAsset from "@/assets/docs-campaigns.mp4.asset.json";
+import docsCsvAsset from "@/assets/docs-csv.mp4.asset.json";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
