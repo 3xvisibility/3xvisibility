@@ -204,14 +204,15 @@ export default function TemplateMarketplacePage() {
   });
 
   // Fetch ratings for shared templates
-  const { data: allRatings = [] } = useQuery({
-    queryKey: ["template-ratings"],
+  // Aggregate stats only (avg + count per template). Individual ratings are
+  // private to their owner, so we use a SECURITY DEFINER RPC that never exposes
+  // which user rated which template.
+  const { data: ratingStats = [] } = useQuery({
+    queryKey: ["template-rating-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("template_ratings")
-        .select("*");
+      const { data, error } = await supabase.rpc("get_template_rating_stats");
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
 
@@ -236,10 +237,9 @@ export default function TemplateMarketplacePage() {
   // Convert shared templates to MarketplaceTemplate format
   const communityTemplates: MarketplaceTemplate[] = useMemo(() => {
     return sharedTemplates.map((st: any) => {
-      const ratings = allRatings.filter((r: any) => r.shared_template_id === st.id);
-      const avgRating = ratings.length > 0
-        ? Math.round(ratings.reduce((s: number, r: any) => s + r.rating, 0) / ratings.length * 10) / 10
-        : 0;
+      const stat = (ratingStats as any[]).find((r: any) => r.shared_template_id === st.id);
+      const avgRating = stat ? Number(stat.avg_rating) || 0 : 0;
+      const ratingCount = stat ? Number(stat.rating_count) || 0 : 0;
       return {
         id: st.id,
         shared_id: st.id,
@@ -252,14 +252,14 @@ export default function TemplateMarketplacePage() {
         author: st.author_name || "Anonymous",
         downloads: st.downloads || 0,
         rating: avgRating,
-        ratingCount: ratings.length,
+        ratingCount: ratingCount,
         seo_title_pattern: st.seo_title_pattern,
         seo_description_pattern: st.seo_description_pattern,
         schema_type: st.schema_type,
         isShared: true,
       };
     });
-  }, [sharedTemplates, allRatings]);
+  }, [sharedTemplates, ratingStats]);
 
   // Merge built-in + community for "browse" tab.
   // NOTE: every template is universal — the top-level Elementor/Shopify switch
@@ -440,7 +440,7 @@ export default function TemplateMarketplacePage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["template-ratings"] });
+      queryClient.invalidateQueries({ queryKey: ["template-rating-stats"] });
       toast({ title: "Rating submitted!" });
     },
     onError: (err: Error) => {

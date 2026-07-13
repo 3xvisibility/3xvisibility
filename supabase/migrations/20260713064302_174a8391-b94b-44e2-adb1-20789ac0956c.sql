@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.get_template_rating_stats() FROM anon;
