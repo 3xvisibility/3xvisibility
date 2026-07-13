@@ -7,6 +7,7 @@ import {
   KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
   ClipboardCheck, Search, Gift, CreditCard, Settings, Users,
   ArrowRight, BookOpen, CheckCircle2, Lightbulb, AlertCircle,
+  Sparkles, SlidersHorizontal, Link2, Plug,
 } from "lucide-react";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
