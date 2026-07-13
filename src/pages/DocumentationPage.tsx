@@ -806,11 +806,12 @@ function buildAndDownloadGuide() {
     a.download = "3XVISIBILITY-Quickstart-Guide.html";
     a.click();
     URL.revokeObjectURL(url);
-    return;
+    return "download";
   }
   w.document.open();
   w.document.write(html);
   w.document.close();
+  return "print";
 }
 
 export default function DocumentationPage() {
