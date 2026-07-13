@@ -465,9 +465,60 @@ const CONNECT_TUTORIALS: ConnectTutorial[] = [
   },
 ];
 
+interface WalkStep {
+  title: string;
+  detail: string;
+  tip?: string;
+}
+
+const E2E_WALKTHROUGH: WalkStep[] = [
+  {
+    title: "Prepare & upload your CSV",
+    detail:
+      "Go to Data (CSV) → Upload CSV, or download a ready-made starter from any template's 'Download CSV' button. Each column becomes a variable (e.g. city, service, phone). The first row is the header; every following row generates one page.",
+    tip: "Use the per-template starter CSV so the column names already match the template's variables.",
+  },
+  {
+    title: "Create a template (or pick one)",
+    detail:
+      "Open Templates → New Template (or reuse a marketplace/AI-built one). Insert your variables as {{city}}, {{service}} etc. in the HTML, headings and meta fields. Preview to confirm the design and that variables resolve.",
+    tip: "AI Site Builder can generate a full template for you — then just add the variables.",
+  },
+  {
+    title: "Start a campaign",
+    detail:
+      "Go to Campaigns → New Campaign. Name it, choose the type (SEO / SEA / GEO) and select the template you just prepared.",
+  },
+  {
+    title: "Attach the CSV & map columns",
+    detail:
+      "In the wizard's Data step, select your uploaded CSV. In the Mapping step, match each CSV column to the matching template variable. Unmapped variables fall back to defaults or AI suggestions.",
+    tip: "Green ticks in the mapping step mean every required variable is filled.",
+  },
+  {
+    title: "Set keyword source & publish mode",
+    detail:
+      "Choose where keywords/terms come from (CSV column, extracted, or AI-generated). Then set the publish target to WordPress and the website you connected earlier.",
+  },
+  {
+    title: "Generate the pages",
+    detail:
+      "Click Generate. Watch the progress list — each row shows its status (queued → generating → success/failed) plus whether keywords/terms were regenerated. Failed rows can be retried individually.",
+  },
+  {
+    title: "Publish to WordPress",
+    detail:
+      "With publish mode set to WordPress, generated pages are pushed straight to your connected site (Elementor/critical-CSS fidelity preserved). Or generate first, review, then click Publish per page or in bulk.",
+    tip: "Make sure your WordPress connection shows a green status in Websites before publishing.",
+  },
+  {
+    title: "Verify & index",
+    detail:
+      "Open a published URL on your WordPress site to confirm layout and variables look right. Then use the Indexing page (Google Search Console) to submit the new pages to Google.",
+  },
+];
 
 
-export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
