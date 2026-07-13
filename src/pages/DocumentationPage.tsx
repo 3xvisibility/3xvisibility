@@ -7,7 +7,7 @@ import {
   KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
   ClipboardCheck, Search, Gift, CreditCard, Settings, Users,
   ArrowRight, BookOpen, CheckCircle2, Lightbulb, AlertCircle,
-  Sparkles, SlidersHorizontal, Link2, Plug, HelpCircle, Loader2,
+  Sparkles, SlidersHorizontal, Link2, Plug, HelpCircle, Loader2, GripVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import { LandingNav } from "@/components/landing/LandingNav";
@@ -780,7 +780,9 @@ function buildAndDownloadGuide(selectedIds?: string[]) {
 
   const sections =
     selectedIds && selectedIds.length
-      ? allSections.filter((s) => selectedIds.includes(s.id))
+      ? (selectedIds
+          .map((id) => allSections.find((s) => s.id === id))
+          .filter(Boolean) as typeof allSections)
       : allSections;
 
   const tocHtml = `<nav class="toc">
@@ -872,7 +874,12 @@ export default function DocumentationPage() {
   const [selectedSections, setSelectedSections] = useState<string[]>(
     GUIDE_SECTIONS.map((s) => s.id)
   );
+  // Ordered list of all section ids — drives both the picker order and export order.
+  const [sectionOrder, setSectionOrder] = useState<string[]>(
+    GUIDE_SECTIONS.map((s) => s.id)
+  );
   const [activePreset, setActivePreset] = useState<PresetId>("all");
+  const [dragId, setDragId] = useState<string | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
 
@@ -891,6 +898,25 @@ export default function DocumentationPage() {
     setActivePreset("custom");
   };
 
+  const handleReorder = (targetId: string) => {
+    if (!dragId || dragId === targetId) return;
+    setSectionOrder((prev) => {
+      const next = [...prev];
+      const from = next.indexOf(dragId);
+      const to = next.indexOf(targetId);
+      if (from === -1 || to === -1) return prev;
+      next.splice(from, 1);
+      next.splice(to, 0, dragId);
+      return next;
+    });
+    setActivePreset("custom");
+  };
+
+  // Sections ordered for export: custom drag order, filtered to selected.
+  const orderedSelectedIds = sectionOrder.filter((id) =>
+    selectedSections.includes(id)
+  );
+
   const handleDownloadGuide = async () => {
     if (generating) return;
     if (!selectedSections.length) {
@@ -902,7 +928,7 @@ export default function DocumentationPage() {
     try {
       // Yield a frame so the loading UI paints before the heavy work.
       await new Promise((r) => setTimeout(r, 50));
-      const result = buildAndDownloadGuide(selectedSections);
+      const result = buildAndDownloadGuide(orderedSelectedIds);
       if (result === "download") {
         toast.success("Guide downloaded", {
           id: toastId,
@@ -1005,23 +1031,55 @@ export default function DocumentationPage() {
                     {selectedSections.length === GUIDE_SECTIONS.length ? "Clear all" : "Select all"}
                   </button>
                 </div>
-                <div className="space-y-2.5">
-                  {GUIDE_SECTIONS.map((s) => (
-                    <div key={s.id} className="flex items-center gap-2.5">
-                      <Checkbox
-                        id={`export-${s.id}`}
-                        checked={selectedSections.includes(s.id)}
-                        onCheckedChange={() => toggleSection(s.id)}
-                      />
-                      <Label
-                        htmlFor={`export-${s.id}`}
-                        className="text-sm font-normal cursor-pointer"
+                <p className="text-xs text-muted-foreground mb-2">
+                  Drag the handle to reorder how sections appear in the PDF.
+                </p>
+                <div className="space-y-1.5">
+                  {sectionOrder.map((id) => {
+                    const s = GUIDE_SECTIONS.find((x) => x.id === id);
+                    if (!s) return null;
+                    const selected = selectedSections.includes(s.id);
+                    return (
+                      <div
+                        key={s.id}
+                        draggable
+                        onDragStart={() => setDragId(s.id)}
+                        onDragEnd={() => setDragId(null)}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          handleReorder(s.id);
+                        }}
+                        className={`flex items-center gap-2 rounded-md border px-2 py-1.5 transition-colors ${
+                          dragId === s.id
+                            ? "border-primary bg-primary/5"
+                            : "border-transparent hover:border-border hover:bg-muted/40"
+                        }`}
                       >
-                        {s.label}
-                      </Label>
-                    </div>
-                  ))}
+                        <button
+                          type="button"
+                          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+                          aria-label={`Reorder ${s.label}`}
+                        >
+                          <GripVertical className="h-4 w-4" />
+                        </button>
+                        <Checkbox
+                          id={`export-${s.id}`}
+                          checked={selected}
+                          onCheckedChange={() => toggleSection(s.id)}
+                        />
+                        <Label
+                          htmlFor={`export-${s.id}`}
+                          className={`text-sm font-normal cursor-pointer flex-1 ${
+                            selected ? "" : "text-muted-foreground"
+                          }`}
+                        >
+                          {s.label}
+                        </Label>
+                      </div>
+                    );
+                  })}
                 </div>
+
               </PopoverContent>
             </Popover>
           </div>
