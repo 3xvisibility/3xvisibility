@@ -1445,21 +1445,16 @@ export default function DocumentationPage() {
 
                           {tool.id === "data" && (
                             <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
-                              <video
+                              <DocVideoPlayer
                                 src={docsCsvMappingAsset.url}
-                                className="w-full aspect-video bg-background"
-                                autoPlay
-                                muted
-                                loop
-                                playsInline
-                                controls
-                                preload="metadata"
+                                captionSrc="/captions/docs-csv-mapping.vtt"
                               />
                               <figcaption className="px-4 py-2 text-xs text-muted-foreground">
                                 Demo — upload a CSV, map columns to variables, then preview each row before generating.
                               </figcaption>
                             </figure>
                           )}
+
 
                           {tool.id === "templates" && (
                             <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
