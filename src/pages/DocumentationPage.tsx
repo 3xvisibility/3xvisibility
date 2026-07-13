@@ -368,6 +368,104 @@ const INTEGRATIONS: Integration[] = [
   },
 ];
 
+interface ConnectField {
+  label: string;
+  desc: string;
+}
+
+interface ConnectTutorial {
+  id: string;
+  name: string;
+  icon: React.ElementType;
+  intro: string;
+  fields: ConnectField[];
+  permissions: string[];
+  test: string[];
+  troubleshoot?: string[];
+}
+
+const CONNECT_TUTORIALS: ConnectTutorial[] = [
+  {
+    id: "connect-wordpress",
+    name: "Connect WordPress (self-hosted)",
+    icon: Globe,
+    intro: "Publish and sync pages to your own WordPress site using a secure Application Password. Works with WordPress 5.6+ over HTTPS.",
+    fields: [
+      { label: "Site URL", desc: "Your full site address, e.g. https://yoursite.com — include https:// and the www prefix only if your site uses it." },
+      { label: "Username", desc: "The WordPress admin/editor username the pages will be published as." },
+      { label: "Application Password", desc: "A dedicated password (not your login password). Create it in WordPress: Users → Profile → Application Passwords → enter a name → Add New." },
+      { label: "Connector plugin", desc: "Install & activate the 3XVISIBILITY WordPress connector plugin for best publishing fidelity (Elementor, critical CSS, media)." },
+    ],
+    permissions: [
+      "The account must have Editor or Administrator role to create and update pages.",
+      "Pretty permalinks must be enabled (Settings → Permalinks → anything except 'Plain') so the REST API works.",
+      "The site must be served over HTTPS — Application Passwords are disabled on plain HTTP.",
+    ],
+    test: [
+      "Go to Websites → + Add Website → choose WordPress.",
+      "Fill in Site URL, Username and Application Password.",
+      "Click 'Test Connection'.",
+      "A green tick means it worked — click Save. Content from the site is then pulled in automatically.",
+    ],
+    troubleshoot: [
+      "SSL / SNI error → check whether the URL needs (or must drop) the www prefix; if it persists, contact your host.",
+      "'rest_no_route' error → enable pretty permalinks in WordPress.",
+      "401 Unauthorized → regenerate the Application Password and make sure you copied it without spaces.",
+    ],
+  },
+  {
+    id: "connect-shopify",
+    name: "Connect Shopify",
+    icon: Store,
+    intro: "Connect your Shopify store with a one-click OAuth flow — no manual API keys to copy. Once connected you can sync products, run bulk SEO and publish pages.",
+    fields: [
+      { label: "Store domain", desc: "Your myshopify domain, e.g. your-store.myshopify.com (used to start the OAuth handshake)." },
+      { label: "Connect button", desc: "Click 'Connect Shopify' — you're redirected to Shopify to log in and approve access. No keys are entered by hand." },
+    ],
+    permissions: [
+      "You must be the store owner or a staff account with app-install permission.",
+      "On the Shopify approval screen, grant access to Products and Content so the app can read/write product and page data.",
+      "Access is per-user and revocable at any time from Shopify → Settings → Apps and sales channels.",
+    ],
+    test: [
+      "Go to Websites → + Add Website → choose Shopify (or open the Shopify guide page).",
+      "Enter your .myshopify.com domain and click 'Connect Shopify'.",
+      "Approve the requested permissions on Shopify's screen.",
+      "You're returned to the app with a connected status — products appear under Website Content once synced.",
+    ],
+    troubleshoot: [
+      "Redirect fails or 'app not found' → confirm the store domain is spelled correctly and ends in .myshopify.com.",
+      "Permissions error later → reconnect and make sure Products & Content scopes are approved.",
+    ],
+  },
+  {
+    id: "connect-gsc",
+    name: "Connect Google Search Console",
+    icon: Search,
+    intro: "Connect Google Search Console to submit generated pages to Google and monitor indexing. Uses a Google service account with access to your verified property.",
+    fields: [
+      { label: "Property (site URL)", desc: "The exact verified property from Search Console — either a Domain property (sc-domain:example.com) or a URL-prefix (https://example.com/). Pick it from the list; don't type a random URL." },
+      { label: "Service account JSON", desc: "The credentials key file for a Google Cloud service account. Paste/upload it in Websites settings — it is stored securely and never shown in the browser." },
+    ],
+    permissions: [
+      "The property must already be verified in Google Search Console.",
+      "Add the service account email as a user on the property: Search Console → Settings → Users and permissions → Add user (Full or Owner).",
+      "Enable the 'Google Search Console API' (and Indexing API for submissions) in the Google Cloud project.",
+    ],
+    test: [
+      "Connect the Google service account under Websites / SEO settings.",
+      "Open the Indexing page — your verified properties load in the selector.",
+      "Select a property; if pages list without a 403, the connection works.",
+      "Select pages and click 'Submit for indexing' to send them to Google.",
+    ],
+    troubleshoot: [
+      "403 on a property → the service account isn't added as a user, or the property isn't verified.",
+      "Empty property list → confirm the property exists and is verified in Search Console for that Google account.",
+    ],
+  },
+];
+
+
 
 export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
