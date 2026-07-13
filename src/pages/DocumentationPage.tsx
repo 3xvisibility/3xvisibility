@@ -117,6 +117,17 @@ const TOOLS: ToolDoc[] = [
     ],
   },
   {
+    id: "wp-control", icon: SlidersHorizontal, group: "Core", name: "WP Control",
+    short: "Remote-manage your connected WordPress sites from one dashboard.",
+    steps: [
+      "Select a connected WordPress site.",
+      "Check the connector plugin status and version (auto-update supported).",
+      "Push layout, Elementor and critical-CSS settings to the site.",
+      "Trigger content sync or re-publish without leaving the app.",
+    ],
+    tips: ["Keep the 3XVISIBILITY WordPress connector plugin updated for the best publishing fidelity."],
+  },
+  {
     id: "data", icon: Database, group: "Core", name: "Data CSV",
     short: "Manage CSV data for variables and use AI to fill the gaps.",
     steps: [
