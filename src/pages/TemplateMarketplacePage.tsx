@@ -204,14 +204,15 @@ export default function TemplateMarketplacePage() {
   });
 
   // Fetch ratings for shared templates
-  const { data: allRatings = [] } = useQuery({
-    queryKey: ["template-ratings"],
+  // Aggregate stats only (avg + count per template). Individual ratings are
+  // private to their owner, so we use a SECURITY DEFINER RPC that never exposes
+  // which user rated which template.
+  const { data: ratingStats = [] } = useQuery({
+    queryKey: ["template-rating-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("template_ratings")
-        .select("*");
+      const { data, error } = await supabase.rpc("get_template_rating_stats");
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
 
