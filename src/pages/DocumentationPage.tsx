@@ -519,6 +519,7 @@ const E2E_WALKTHROUGH: WalkStep[] = [
 ];
 
 
+export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
