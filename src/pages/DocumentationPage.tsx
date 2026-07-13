@@ -1458,21 +1458,16 @@ export default function DocumentationPage() {
 
                           {tool.id === "templates" && (
                             <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
-                              <video
+                              <DocVideoPlayer
                                 src={docsTemplatesAsset.url}
-                                className="w-full aspect-video bg-background"
-                                autoPlay
-                                muted
-                                loop
-                                playsInline
-                                controls
-                                preload="metadata"
+                                captionSrc="/captions/docs-templates.vtt"
                               />
                               <figcaption className="px-4 py-2 text-xs text-muted-foreground">
                                 Watch — select a template and generate a page in one click.
                               </figcaption>
                             </figure>
                           )}
+
 
 
                           {tool.id === "websites" && (
