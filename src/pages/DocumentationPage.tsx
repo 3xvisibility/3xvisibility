@@ -941,9 +941,13 @@ export default function DocumentationPage() {
     [orderedSelectedIds.join("|")]
   );
 
-  const handleDownloadGuide = async () => {
+  const handleDownloadGuide = async (
+    idsOverride?: string[],
+    presetOverride?: PresetId
+  ) => {
     if (generating) return;
-    if (!selectedSections.length) {
+    const ids = idsOverride ?? orderedSelectedIds;
+    if (!ids.length) {
       toast.error("Select at least one section to export.");
       return;
     }
@@ -952,7 +956,8 @@ export default function DocumentationPage() {
     try {
       // Yield a frame so the loading UI paints before the heavy work.
       await new Promise((r) => setTimeout(r, 50));
-      const result = buildAndDownloadGuide(orderedSelectedIds);
+      const result = buildAndDownloadGuide(ids);
+      recordExport(ids, presetOverride ?? activePreset);
       if (result === "download") {
         toast.success("Guide downloaded", {
           id: toastId,
@@ -973,6 +978,17 @@ export default function DocumentationPage() {
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleReExport = (entry: ExportHistoryEntry) => {
+    // Restore the historical selection/order into the UI, then export.
+    setSectionOrder((prev) => {
+      const rest = prev.filter((id) => !entry.sectionIds.includes(id));
+      return [...entry.sectionIds, ...rest];
+    });
+    setSelectedSections(entry.sectionIds);
+    setActivePreset(entry.preset);
+    handleDownloadGuide(entry.sectionIds, entry.preset);
   };
 
   useEffect(() => {
