@@ -647,6 +647,95 @@ export default function DocumentationPage() {
               </div>
             </section>
 
+            {/* Connection tutorials */}
+            <section id="connect-tutorials" className="scroll-mt-24">
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                <Plug className="h-6 w-6 text-primary" /> Connection tutorials
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Full walkthroughs for connecting WordPress, Shopify and Google Search Console — input fields, permissions and how to test the connection.
+              </p>
+              <div className="space-y-6">
+                {CONNECT_TUTORIALS.map((t) => {
+                  const Icon = t.icon;
+                  return (
+                    <article key={t.id} id={t.id} className="scroll-mt-24 rounded-xl border border-border bg-card p-5 md:p-6">
+                      <header className="flex items-start gap-3 mb-3">
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-lg">{t.name}</h3>
+                          <p className="text-sm text-muted-foreground mt-0.5">{t.intro}</p>
+                        </div>
+                      </header>
+
+                      <div className="space-y-4 mt-4">
+                        {/* Input fields */}
+                        <div>
+                          <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                            Input fields
+                          </h4>
+                          <ul className="space-y-2">
+                            {t.fields.map((f, i) => (
+                              <li key={i} className="text-sm">
+                                <span className="font-semibold">{f.label}</span>
+                                <span className="text-muted-foreground"> — {f.desc}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Permissions */}
+                        <div>
+                          <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                            Permissions required
+                          </h4>
+                          <ul className="space-y-1.5">
+                            {t.permissions.map((p, i) => (
+                              <li key={i} className="flex gap-2 text-sm">
+                                <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                                <span>{p}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Test connection */}
+                        <div>
+                          <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                            Test the connection
+                          </h4>
+                          <ol className="space-y-3">
+                            {t.test.map((s, i) => (
+                              <li key={i} className="flex gap-3">
+                                <div className="flex-shrink-0 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">
+                                  {i + 1}
+                                </div>
+                                <span className="text-sm mt-0.5">{s}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+
+                        {/* Troubleshooting */}
+                        {t.troubleshoot && t.troubleshoot.length > 0 && (
+                          <div className="rounded-md bg-amber-500/5 border border-amber-500/20 p-3">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1">
+                              <AlertCircle className="h-3.5 w-3.5" /> Troubleshooting
+                            </div>
+                            <ul className="space-y-1 text-xs text-muted-foreground">
+                              {t.troubleshoot.map((tip, i) => <li key={i}>• {tip}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+
             {/* FAQ */}
             <section id="faq" className="scroll-mt-24">
               <h2 className="text-2xl font-bold mb-6 border-b border-border pb-2 flex items-center gap-2">
