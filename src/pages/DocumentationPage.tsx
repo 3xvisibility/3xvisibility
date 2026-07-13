@@ -465,6 +465,58 @@ const CONNECT_TUTORIALS: ConnectTutorial[] = [
   },
 ];
 
+interface WalkStep {
+  title: string;
+  detail: string;
+  tip?: string;
+}
+
+const E2E_WALKTHROUGH: WalkStep[] = [
+  {
+    title: "Prepare & upload your CSV",
+    detail:
+      "Go to Data (CSV) → Upload CSV, or download a ready-made starter from any template's 'Download CSV' button. Each column becomes a variable (e.g. city, service, phone). The first row is the header; every following row generates one page.",
+    tip: "Use the per-template starter CSV so the column names already match the template's variables.",
+  },
+  {
+    title: "Create a template (or pick one)",
+    detail:
+      "Open Templates → New Template (or reuse a marketplace/AI-built one). Insert your variables as {{city}}, {{service}} etc. in the HTML, headings and meta fields. Preview to confirm the design and that variables resolve.",
+    tip: "AI Site Builder can generate a full template for you — then just add the variables.",
+  },
+  {
+    title: "Start a campaign",
+    detail:
+      "Go to Campaigns → New Campaign. Name it, choose the type (SEO / SEA / GEO) and select the template you just prepared.",
+  },
+  {
+    title: "Attach the CSV & map columns",
+    detail:
+      "In the wizard's Data step, select your uploaded CSV. In the Mapping step, match each CSV column to the matching template variable. Unmapped variables fall back to defaults or AI suggestions.",
+    tip: "Green ticks in the mapping step mean every required variable is filled.",
+  },
+  {
+    title: "Set keyword source & publish mode",
+    detail:
+      "Choose where keywords/terms come from (CSV column, extracted, or AI-generated). Then set the publish target to WordPress and the website you connected earlier.",
+  },
+  {
+    title: "Generate the pages",
+    detail:
+      "Click Generate. Watch the progress list — each row shows its status (queued → generating → success/failed) plus whether keywords/terms were regenerated. Failed rows can be retried individually.",
+  },
+  {
+    title: "Publish to WordPress",
+    detail:
+      "With publish mode set to WordPress, generated pages are pushed straight to your connected site (Elementor/critical-CSS fidelity preserved). Or generate first, review, then click Publish per page or in bulk.",
+    tip: "Make sure your WordPress connection shows a green status in Websites before publishing.",
+  },
+  {
+    title: "Verify & index",
+    detail:
+      "Open a published URL on your WordPress site to confirm layout and variables look right. Then use the Indexing page (Google Search Console) to submit the new pages to Google.",
+  },
+];
 
 
 export default function DocumentationPage() {
@@ -523,6 +575,10 @@ export default function DocumentationPage() {
               <a href="#connect-tutorials" onClick={() => setActive("connect-tutorials")}
                 className={`block px-3 py-2 rounded-md transition-colors ${active === "connect-tutorials" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
                 🔗 Connection Tutorials
+              </a>
+              <a href="#full-example" onClick={() => setActive("full-example")}
+                className={`block px-3 py-2 rounded-md transition-colors ${active === "full-example" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
+                🎯 Full Example
               </a>
               <a href="#faq" onClick={() => setActive("faq")}
                 className={`block px-3 py-2 rounded-md transition-colors ${active === "faq" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
@@ -740,7 +796,51 @@ export default function DocumentationPage() {
               </div>
             </section>
 
-            {/* FAQ */}
+            {/* Full end-to-end example */}
+            <section id="full-example" className="scroll-mt-24">
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                <Rocket className="h-6 w-6 text-primary" /> Full example — CSV → Template → Campaign → WordPress
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                A complete end-to-end walkthrough: upload a CSV, pick a template, generate a campaign, and publish the pages straight to your WordPress site.
+              </p>
+
+              <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-4 md:p-5 mb-6 text-sm">
+                <span className="font-semibold text-primary">Before you start:</span>{" "}
+                Connect your WordPress site (see the Connection Tutorials above) and make sure it shows a green status in Websites.
+              </div>
+
+              <ol className="space-y-4">
+                {E2E_WALKTHROUGH.map((s, i) => (
+                  <li key={i} className="rounded-xl border border-border bg-card p-4 md:p-5 flex gap-4">
+                    <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                      {i + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold">{s.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{s.detail}</p>
+                      {s.tip && (
+                        <div className="mt-2 flex items-start gap-1.5 text-xs text-primary">
+                          <Lightbulb className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                          <span>{s.tip}</span>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+
+              <div className="mt-6 rounded-md bg-emerald-500/5 border border-emerald-500/20 p-4 text-sm">
+                <div className="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400 mb-1">
+                  <CheckCircle2 className="h-4 w-4" /> Result
+                </div>
+                <p className="text-muted-foreground">
+                  You now have a batch of unique, variable-driven pages live on your WordPress site — one per CSV row — ready to be indexed by Google.
+                </p>
+              </div>
+            </section>
+
+
             <section id="faq" className="scroll-mt-24">
               <h2 className="text-2xl font-bold mb-6 border-b border-border pb-2 flex items-center gap-2">
                 <AlertCircle className="h-6 w-6 text-primary" /> FAQ
