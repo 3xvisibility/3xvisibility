@@ -1441,6 +1441,41 @@ export default function DocumentationPage() {
                             </figure>
                           )}
 
+                          {tool.id === "websites" && (
+                            <div className="mt-4 grid gap-4 md:grid-cols-2">
+                              <figure className="overflow-hidden rounded-xl border border-border bg-card">
+                                <video
+                                  src={docsWordpressAsset.url}
+                                  className="w-full aspect-video bg-background"
+                                  autoPlay
+                                  muted
+                                  loop
+                                  playsInline
+                                  controls
+                                  preload="metadata"
+                                />
+                                <figcaption className="px-4 py-2 text-xs text-muted-foreground">
+                                  Watch — connect WordPress and publish pages with an Application Password.
+                                </figcaption>
+                              </figure>
+                              <figure className="overflow-hidden rounded-xl border border-border bg-card">
+                                <video
+                                  src={docsShopifyAsset.url}
+                                  className="w-full aspect-video bg-background"
+                                  autoPlay
+                                  muted
+                                  loop
+                                  playsInline
+                                  controls
+                                  preload="metadata"
+                                />
+                                <figcaption className="px-4 py-2 text-xs text-muted-foreground">
+                                  Watch — connect Shopify via one-click OAuth and publish content.
+                                </figcaption>
+                              </figure>
+                            </div>
+                          )}
+
 
                           {tool.guide && tool.guide.length > 0 && (
                             <details className="mt-4 rounded-md border border-primary/20 bg-primary/5 p-3 group/guide" open>
