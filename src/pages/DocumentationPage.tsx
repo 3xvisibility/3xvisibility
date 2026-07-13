@@ -6,6 +6,7 @@ import docsCsvMappingAsset from "@/assets/docs-csv-mapping.mp4.asset.json";
 import docsPdfExportAsset from "@/assets/docs-pdf-export.mp4.asset.json";
 import docsWordpressAsset from "@/assets/docs-wordpress.mp4.asset.json";
 import docsShopifyAsset from "@/assets/docs-shopify.mp4.asset.json";
+import docsTemplatesAsset from "@/assets/docs-templates.mp4.asset.json";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
@@ -1474,6 +1475,24 @@ export default function DocumentationPage() {
                               />
                               <figcaption className="px-4 py-2 text-xs text-muted-foreground">
                                 Demo — upload a CSV, map columns to variables, then preview each row before generating.
+                              </figcaption>
+                            </figure>
+                          )}
+
+                          {tool.id === "templates" && (
+                            <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
+                              <video
+                                src={docsTemplatesAsset.url}
+                                className="w-full aspect-video bg-background"
+                                autoPlay
+                                muted
+                                loop
+                                playsInline
+                                controls
+                                preload="metadata"
+                              />
+                              <figcaption className="px-4 py-2 text-xs text-muted-foreground">
+                                Watch — select a template and generate a page in one click.
                               </figcaption>
                             </figure>
                           )}
