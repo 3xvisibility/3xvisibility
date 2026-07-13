@@ -1010,6 +1010,21 @@ export default function DocumentationPage() {
                 <><FileText className="h-4 w-4" /> Download Quickstart Guide (PDF)</>
               )}
             </Button>
+            <Button
+              onClick={() => {
+                if (!selectedSections.length) {
+                  toast.error("Select at least one section to preview.");
+                  return;
+                }
+                setPreviewOpen(true);
+              }}
+              variant="outline"
+              size="lg"
+              className="gap-2"
+              disabled={generating}
+            >
+              <Eye className="h-4 w-4" /> Preview
+            </Button>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="lg" className="gap-2" disabled={generating}>
