@@ -874,7 +874,12 @@ export default function DocumentationPage() {
   const [selectedSections, setSelectedSections] = useState<string[]>(
     GUIDE_SECTIONS.map((s) => s.id)
   );
+  // Ordered list of all section ids — drives both the picker order and export order.
+  const [sectionOrder, setSectionOrder] = useState<string[]>(
+    GUIDE_SECTIONS.map((s) => s.id)
+  );
   const [activePreset, setActivePreset] = useState<PresetId>("all");
+  const [dragId, setDragId] = useState<string | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
 
@@ -892,6 +897,25 @@ export default function DocumentationPage() {
     );
     setActivePreset("custom");
   };
+
+  const handleReorder = (targetId: string) => {
+    if (!dragId || dragId === targetId) return;
+    setSectionOrder((prev) => {
+      const next = [...prev];
+      const from = next.indexOf(dragId);
+      const to = next.indexOf(targetId);
+      if (from === -1 || to === -1) return prev;
+      next.splice(from, 1);
+      next.splice(to, 0, dragId);
+      return next;
+    });
+    setActivePreset("custom");
+  };
+
+  // Sections ordered for export: custom drag order, filtered to selected.
+  const orderedSelectedIds = sectionOrder.filter((id) =>
+    selectedSections.includes(id)
+  );
 
   const handleDownloadGuide = async () => {
     if (generating) return;
