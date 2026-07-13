@@ -780,7 +780,9 @@ function buildAndDownloadGuide(selectedIds?: string[]) {
 
   const sections =
     selectedIds && selectedIds.length
-      ? allSections.filter((s) => selectedIds.includes(s.id))
+      ? (selectedIds
+          .map((id) => allSections.find((s) => s.id === id))
+          .filter(Boolean) as typeof allSections)
       : allSections;
 
   const tocHtml = `<nav class="toc">
