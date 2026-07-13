@@ -996,13 +996,11 @@ export default function DocumentationPage() {
                   <button
                     type="button"
                     className="text-xs text-primary hover:underline"
-                    onClick={() =>
-                      setSelectedSections(
-                        selectedSections.length === GUIDE_SECTIONS.length
-                          ? []
-                          : GUIDE_SECTIONS.map((s) => s.id)
-                      )
-                    }
+                    onClick={() => {
+                      const selectingAll = selectedSections.length !== GUIDE_SECTIONS.length;
+                      setSelectedSections(selectingAll ? GUIDE_SECTIONS.map((s) => s.id) : []);
+                      setActivePreset(selectingAll ? "all" : "custom");
+                    }}
                   >
                     {selectedSections.length === GUIDE_SECTIONS.length ? "Clear all" : "Select all"}
                   </button>
