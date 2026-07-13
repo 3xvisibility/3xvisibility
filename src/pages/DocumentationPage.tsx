@@ -7,8 +7,9 @@ import {
   KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
   ClipboardCheck, Search, Gift, CreditCard, Settings, Users,
   ArrowRight, BookOpen, CheckCircle2, Lightbulb, AlertCircle,
-  Sparkles, SlidersHorizontal, Link2, Plug, HelpCircle,
+  Sparkles, SlidersHorizontal, Link2, Plug, HelpCircle, Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Button } from "@/components/ui/button";
@@ -805,17 +806,49 @@ function buildAndDownloadGuide() {
     a.download = "3XVISIBILITY-Quickstart-Guide.html";
     a.click();
     URL.revokeObjectURL(url);
-    return;
+    return "download";
   }
   w.document.open();
   w.document.write(html);
   w.document.close();
+  return "print";
 }
 
 export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
+  const [generating, setGenerating] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
+
+  const handleDownloadGuide = async () => {
+    if (generating) return;
+    setGenerating(true);
+    const toastId = toast.loading("Generating your guide…");
+    try {
+      // Yield a frame so the loading UI paints before the heavy work.
+      await new Promise((r) => setTimeout(r, 50));
+      const result = buildAndDownloadGuide();
+      if (result === "download") {
+        toast.success("Guide downloaded", {
+          id: toastId,
+          description: "Popup was blocked, so we saved an HTML file instead. Open it and print to PDF.",
+        });
+      } else {
+        toast.success("Guide ready", {
+          id: toastId,
+          description: "Opened in a new tab — choose \"Save as PDF\" in the print dialog.",
+        });
+      }
+    } catch (err) {
+      console.error("Guide generation failed", err);
+      toast.error("Could not generate the guide", {
+        id: toastId,
+        description: err instanceof Error ? err.message : "Please try again in a moment.",
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   useEffect(() => {
     document.title = "Documentation — 3XVISIBILITY";
@@ -845,8 +878,12 @@ export default function DocumentationPage() {
             Step-by-step instructions for every feature in your workspace.
           </p>
           <div className="mt-6 flex justify-center">
-            <Button onClick={buildAndDownloadGuide} size="lg" className="gap-2">
-              <FileText className="h-4 w-4" /> Download Quickstart Guide (PDF)
+            <Button onClick={handleDownloadGuide} size="lg" className="gap-2" disabled={generating}>
+              {generating ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
+              ) : (
+                <><FileText className="h-4 w-4" /> Download Quickstart Guide (PDF)</>
+              )}
             </Button>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
