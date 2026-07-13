@@ -1402,6 +1402,25 @@ export default function DocumentationPage() {
                             ))}
                           </ol>
 
+                          {tool.id === "campaigns" && (
+                            <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
+                              <video
+                                src={docsCampaignsAsset.url}
+                                className="w-full aspect-video bg-background"
+                                autoPlay
+                                muted
+                                loop
+                                playsInline
+                                controls
+                                preload="metadata"
+                              />
+                              <figcaption className="px-4 py-2 text-xs text-muted-foreground">
+                                Watch — creating a campaign step by step: name & type → template → data → mapping → generate.
+                              </figcaption>
+                            </figure>
+                          )}
+
+
                           {tool.guide && tool.guide.length > 0 && (
                             <details className="mt-4 rounded-md border border-primary/20 bg-primary/5 p-3 group/guide" open>
                               <summary className="flex items-center gap-1.5 text-xs font-semibold text-primary mb-1 cursor-pointer list-none">
