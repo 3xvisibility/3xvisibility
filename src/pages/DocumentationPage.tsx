@@ -212,6 +212,16 @@ const TOOLS: ToolDoc[] = [
     steps: ["Copy your unique link.", "Share it with friends or clients.", "Track earnings on the dashboard."],
   },
   {
+    id: "referral", icon: Link2, group: "Account", name: "Referral",
+    short: "Invite users with a tracked link and earn reward credits when they join.",
+    steps: [
+      "Copy your referral link from the Referral page.",
+      "Share it — every signup and conversion is tracked automatically.",
+      "Earned reward credits are applied to your account.",
+    ],
+    tips: ["Affiliate pays cash commission; Referral rewards you with in-app credits — you can use both."],
+  },
+  {
     id: "billing", icon: CreditCard, group: "Account", name: "Billing",
     short: "Plan upgrades, invoices and payment methods.",
     steps: ["Review your current plan.", "Upgrade or downgrade.", "Use the Stripe portal to download invoices."],
