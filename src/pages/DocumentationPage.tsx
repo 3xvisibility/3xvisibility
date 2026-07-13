@@ -967,7 +967,30 @@ export default function DocumentationPage() {
                   Sections ({selectedSections.length}/{GUIDE_SECTIONS.length})
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="center" className="w-72 text-left">
+              <PopoverContent align="center" className="w-80 text-left">
+                <div className="mb-3">
+                  <p className="text-sm font-medium mb-2">Preset</p>
+                  <div className="flex flex-wrap gap-2">
+                    {GUIDE_PRESETS.map((preset) => {
+                      const isActive = activePreset === preset.id;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => applyPreset(preset.id)}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                            isActive
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="border-t border-border my-3" />
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-sm font-medium">Sections to export</p>
                   <button
