@@ -872,13 +872,24 @@ export default function DocumentationPage() {
   const [selectedSections, setSelectedSections] = useState<string[]>(
     GUIDE_SECTIONS.map((s) => s.id)
   );
+  const [activePreset, setActivePreset] = useState<PresetId>("all");
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
 
+  const applyPreset = (presetId: PresetId) => {
+    setActivePreset(presetId);
+    const preset = GUIDE_PRESETS.find((p) => p.id === presetId);
+    if (preset && preset.sections.length > 0) {
+      setSelectedSections(preset.sections);
+    }
+  };
+
   const toggleSection = (id: string) =>
-    setSelectedSections((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    setSelectedSections((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      setActivePreset("custom");
+      return next;
+    });
 
   const handleDownloadGuide = async () => {
     if (generating) return;
