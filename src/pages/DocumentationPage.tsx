@@ -816,8 +816,39 @@ function buildAndDownloadGuide() {
 
 export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
+  const [generating, setGenerating] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
+
+  const handleDownloadGuide = async () => {
+    if (generating) return;
+    setGenerating(true);
+    const toastId = toast.loading("Generating your guide…");
+    try {
+      // Yield a frame so the loading UI paints before the heavy work.
+      await new Promise((r) => setTimeout(r, 50));
+      const result = buildAndDownloadGuide();
+      if (result === "download") {
+        toast.success("Guide downloaded", {
+          id: toastId,
+          description: "Popup was blocked, so we saved an HTML file instead. Open it and print to PDF.",
+        });
+      } else {
+        toast.success("Guide ready", {
+          id: toastId,
+          description: "Opened in a new tab — choose \"Save as PDF\" in the print dialog.",
+        });
+      }
+    } catch (err) {
+      console.error("Guide generation failed", err);
+      toast.error("Could not generate the guide", {
+        id: toastId,
+        description: err instanceof Error ? err.message : "Please try again in a moment.",
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   useEffect(() => {
     document.title = "Documentation — 3XVISIBILITY";
