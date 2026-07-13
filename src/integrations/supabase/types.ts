@@ -3212,6 +3212,14 @@ export type Database = {
         Args: { _website_id: string }
         Returns: string
       }
+      get_template_rating_stats: {
+        Args: never
+        Returns: {
+          avg_rating: number
+          rating_count: number
+          shared_template_id: string
+        }[]
+      }
       get_workspace_role: {
         Args: { _user_id: string; _workspace_id: string }
         Returns: Database["public"]["Enums"]["workspace_role"]
