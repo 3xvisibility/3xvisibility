@@ -286,6 +286,15 @@ const TOOLS: ToolDoc[] = [
     id: "billing", icon: CreditCard, group: "Account", name: "Billing",
     short: "Plan upgrades, invoices and payment methods.",
     steps: ["Review your current plan.", "Upgrade or downgrade.", "Use the Stripe portal to download invoices."],
+    guide: [
+      { title: "Open Billing", detail: "Sidebar → Billing. Your current plan, usage limits and remaining AI credits are shown at the top." },
+      { title: "Compare plans", detail: "Review Free, Starter, Pro and Agency. Each lists its template limit, page limit, AI credits and team features." },
+      { title: "Choose a plan", detail: "Click Upgrade (or downgrade) on the plan that fits. Pro/Agency unlock unlimited templates and team collaboration." },
+      { title: "Pay securely", detail: "Checkout is handled by Stripe. Enter your card details on the secure Stripe page — the app never stores your card." },
+      { title: "Confirm activation", detail: "After payment you return to the app and the new limits apply immediately. A success message confirms the upgrade." },
+      { title: "Manage payment & invoices", detail: "Use the Stripe customer portal to update your card, change the plan, or download past invoices." },
+      { title: "Watch your usage", detail: "Track page and AI-credit usage on Billing so you upgrade before hitting a limit." },
+    ],
   },
   {
     id: "settings", icon: Settings, group: "Account", name: "Settings",
