@@ -79,7 +79,7 @@ export function DocVideoPlayer({
   }, []);
 
   return (
-    <div className={cn("overflow-hidden rounded-xl border border-border bg-card", className)}>
+    <div className={cn("", className)}>
       <video
         ref={videoRef}
         src={src}
@@ -142,3 +142,4 @@ export function DocVideoPlayer({
     </div>
   );
 }
+
