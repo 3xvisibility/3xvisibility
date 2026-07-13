@@ -919,6 +919,36 @@ export default function DocumentationPage() {
   const [activePreset, setActivePreset] = useState<PresetId>("all");
   const [dragId, setDragId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [exportHistory, setExportHistory] = useState<ExportHistoryEntry[]>(
+    () => loadExportHistory()
+  );
+
+  const recordExport = (sectionIds: string[], preset: PresetId) => {
+    setExportHistory((prev) => {
+      const entry: ExportHistoryEntry = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        ts: Date.now(),
+        sectionIds,
+        preset,
+      };
+      const next = [entry, ...prev].slice(0, 8);
+      try {
+        localStorage.setItem(EXPORT_HISTORY_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage failures
+      }
+      return next;
+    });
+  };
+
+  const clearExportHistory = () => {
+    setExportHistory([]);
+    try {
+      localStorage.removeItem(EXPORT_HISTORY_KEY);
+    } catch {
+      // ignore
+    }
+  };
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
 
