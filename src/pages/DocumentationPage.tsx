@@ -14,6 +14,11 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+interface GuideStep {
+  title: string;
+  detail: string;
+}
+
 interface ToolDoc {
   id: string;
   icon: React.ElementType;
@@ -22,7 +27,10 @@ interface ToolDoc {
   short: string;
   steps: string[];
   tips?: string[];
+  /** Optional in-depth, numbered walkthrough shown below the quick steps. */
+  guide?: GuideStep[];
 }
+
 
 const TOOLS: ToolDoc[] = [
   {
@@ -65,6 +73,15 @@ const TOOLS: ToolDoc[] = [
       "Images use Unsplash first and only fall back to AI generation when needed — this keeps credits low.",
       "You can regenerate any single section without rebuilding the whole site.",
     ],
+    guide: [
+      { title: "Open the builder", detail: "Sidebar → AI Site Builder. You start on a single input form — no design skills needed." },
+      { title: "Describe your business", detail: "Type your business name, the niche/industry, and a short list of the services or products you offer. The more specific you are, the better the copy." },
+      { title: "Choose a language & location (optional)", detail: "Set the primary language and target country so the generated copy and tone match your audience." },
+      { title: "Pick a brand vibe", detail: "Select a style/vibe preset. This locks the color palette, fonts and section rhythm before generation so the whole site feels consistent." },
+      { title: "Generate", detail: "Click Generate. AI builds every page — hero, features, services, testimonials, FAQ, contact — with matching copy and images in one pass." },
+      { title: "Review & refine", detail: "Scroll the live preview. Use the per-section regenerate to redo just one block instead of the whole site." },
+      { title: "Save or publish", detail: "Send the result to Templates to reuse it in campaigns, or publish directly to a connected website." },
+    ],
   },
   {
     id: "campaigns", icon: Rocket, group: "Core", name: "Campaigns",
@@ -80,6 +97,16 @@ const TOOLS: ToolDoc[] = [
     tips: [
       "Re-selecting a marketplace template never duplicates — it reuses the existing snapshot.",
       "Use the AI Campaign Assistant for naming, mapping and readiness checks.",
+    ],
+    guide: [
+      { title: "Start the wizard", detail: "Campaigns → Create Campaign. A step-by-step wizard opens: Name → Template → Data → Mapping → Publish." },
+      { title: "Name & type", detail: "Give the campaign a clear name and pick the campaign type (SEO / SEA / GEO). The type tunes how content is optimized." },
+      { title: "Choose a template", detail: "Select one of your own templates, an AI-generated one, or import from the Marketplace. A live preview confirms your choice." },
+      { title: "Add your data", detail: "Upload a CSV of rows (each row = one page) or generate rows with AI. Use a pipe (|) inside a cell for spintax variations." },
+      { title: "Map variables", detail: "The wizard auto-suggests which CSV column fills each {variable}. Check the confidence badges and fix any unmapped variables flagged in the alert." },
+      { title: "Set keyword source (optional)", detail: "Record whether keywords come from a New business or an Existing website so the source shows on the campaign detail later." },
+      { title: "Choose publish mode", detail: "Pick Draft (safe review on the CMS) or Live. Then choose the target connected website." },
+      { title: "Generate & monitor", detail: "Click Generate and watch live progress. Finished pages appear under Generated Pages and on the campaign detail view." },
     ],
   },
   {
@@ -104,6 +131,15 @@ const TOOLS: ToolDoc[] = [
       "See results instantly in the live preview.",
     ],
     tips: ["Download the CSV starter for any template — it comes pre-filled with the right columns."],
+    guide: [
+      { title: "Open Templates", detail: "Sidebar → Templates. Click 'New Template' to see the four creation methods." },
+      { title: "Pick a creation method", detail: "Manual (build from scratch), AI Generate (business + niche + service), Scan from URL (copy design from a live page), or Import (paste/upload existing HTML)." },
+      { title: "Define your variables", detail: "Insert placeholders as {variable_name} using lowercase_snake_case, e.g. {city}, {service_name}. These become the columns you fill with data later." },
+      { title: "Design the layout", detail: "Edit sections and styles. With AI Generate, the design and structure are built for you; with Scan, they are extracted from the source page." },
+      { title: "Preview live", detail: "The live preview updates instantly and shows sample values in place of each variable so you can spot layout issues early." },
+      { title: "Download the CSV starter", detail: "Use the CSV starter export — it comes pre-filled with a column for every variable so your data lines up perfectly." },
+      { title: "Save", detail: "Save the template. It's now selectable in Campaigns and PGP Generate." },
+    ],
   },
   {
     id: "marketplace", icon: Store, group: "Core", name: "Template Marketplace",
@@ -126,6 +162,15 @@ const TOOLS: ToolDoc[] = [
       "Trigger content sync or re-publish without leaving the app.",
     ],
     tips: ["Keep the 3XVISIBILITY WordPress connector plugin updated for the best publishing fidelity."],
+    guide: [
+      { title: "Connect the site first", detail: "WP Control only lists WordPress sites already added under Websites with a valid Application Password." },
+      { title: "Install / verify the connector plugin", detail: "Make sure the 3XVISIBILITY WordPress connector plugin is installed and active. WP Control shows its status and version." },
+      { title: "Check for updates", detail: "If a newer plugin version exists, use the built-in auto-updater so publishing stays reliable." },
+      { title: "Select a site", detail: "Choose the WordPress site you want to manage from the list." },
+      { title: "Push settings", detail: "Send layout, Elementor container width and critical-CSS fallback settings straight to the site." },
+      { title: "Sync or re-publish", detail: "Trigger a content sync or re-publish generated pages without opening the WordPress admin." },
+      { title: "Confirm on the live site", detail: "Open the page on your CMS to confirm the design and content match the preview." },
+    ],
   },
   {
     id: "data", icon: Database, group: "Core", name: "Data CSV",
@@ -185,6 +230,14 @@ const TOOLS: ToolDoc[] = [
     id: "analytics", icon: BarChart3, group: "Analytics", name: "Analytics",
     short: "Overview of pages, traffic and conversions.",
     steps: ["Pick a date range.", "Review your top performing pages.", "Export to CSV when you need raw data."],
+    guide: [
+      { title: "Open Analytics", detail: "Sidebar → Analytics. The overview loads your workspace totals for pages, traffic and conversions." },
+      { title: "Set the date range", detail: "Pick a start and end date (or a preset range). Every chart and table updates to that window." },
+      { title: "Read the summary cards", detail: "The top cards show total pages, visits and conversion rate so you get the headline numbers at a glance." },
+      { title: "Find top performers", detail: "Scan the top-pages table to see which generated pages bring the most traffic and where to double down." },
+      { title: "Compare campaigns", detail: "Filter by campaign or website to see which effort is driving results." },
+      { title: "Export raw data", detail: "Click Export to CSV when you need the numbers for a report or a spreadsheet." },
+    ],
   },
   {
     id: "performance", icon: Activity, group: "Analytics", name: "Page Performance",
@@ -220,11 +273,28 @@ const TOOLS: ToolDoc[] = [
       "Earned reward credits are applied to your account.",
     ],
     tips: ["Affiliate pays cash commission; Referral rewards you with in-app credits — you can use both."],
+    guide: [
+      { title: "Open Referral", detail: "Sidebar → Referral. Your unique tracked referral link is shown at the top." },
+      { title: "Copy your link", detail: "Click Copy. The link carries your referral code so every visit is attributed to you." },
+      { title: "Share it", detail: "Send the link to friends, clients or your audience — social, email or a blog all work." },
+      { title: "Track signups", detail: "Each click, signup and conversion is recorded automatically and shown on the page." },
+      { title: "Earn reward credits", detail: "When a referred user converts, reward credits are added to your account per the reward settings." },
+      { title: "Spend the credits", detail: "Use the earned credits toward AI generations and other in-app usage." },
+    ],
   },
   {
     id: "billing", icon: CreditCard, group: "Account", name: "Billing",
     short: "Plan upgrades, invoices and payment methods.",
     steps: ["Review your current plan.", "Upgrade or downgrade.", "Use the Stripe portal to download invoices."],
+    guide: [
+      { title: "Open Billing", detail: "Sidebar → Billing. Your current plan, usage limits and remaining AI credits are shown at the top." },
+      { title: "Compare plans", detail: "Review Free, Starter, Pro and Agency. Each lists its template limit, page limit, AI credits and team features." },
+      { title: "Choose a plan", detail: "Click Upgrade (or downgrade) on the plan that fits. Pro/Agency unlock unlimited templates and team collaboration." },
+      { title: "Pay securely", detail: "Checkout is handled by Stripe. Enter your card details on the secure Stripe page — the app never stores your card." },
+      { title: "Confirm activation", detail: "After payment you return to the app and the new limits apply immediately. A success message confirms the upgrade." },
+      { title: "Manage payment & invoices", detail: "Use the Stripe customer portal to update your card, change the plan, or download past invoices." },
+      { title: "Watch your usage", detail: "Track page and AI-credit usage on Billing so you upgrade before hitting a limit." },
+    ],
   },
   {
     id: "settings", icon: Settings, group: "Account", name: "Settings",
@@ -415,6 +485,29 @@ export default function DocumentationPage() {
                               </li>
                             ))}
                           </ol>
+
+                          {tool.guide && tool.guide.length > 0 && (
+                            <details className="mt-4 rounded-md border border-primary/20 bg-primary/5 p-3 group/guide" open>
+                              <summary className="flex items-center gap-1.5 text-xs font-semibold text-primary mb-1 cursor-pointer list-none">
+                                <BookOpen className="h-3.5 w-3.5" /> Detailed step-by-step guide
+                              </summary>
+                              <ol className="mt-3 space-y-3">
+                                {tool.guide.map((g, i) => (
+                                  <li key={i} className="flex gap-3">
+                                    <div className="flex-shrink-0 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">
+                                      {i + 1}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="text-sm font-semibold">{g.title}</div>
+                                      <div className="text-sm text-muted-foreground mt-0.5">{g.detail}</div>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ol>
+                            </details>
+                          )}
+
+
 
                           {tool.tips && tool.tips.length > 0 && (
                             <div className="mt-4 rounded-md bg-amber-500/5 border border-amber-500/20 p-3">
