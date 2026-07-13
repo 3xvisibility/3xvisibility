@@ -752,32 +752,39 @@ function buildAndDownloadGuide() {
   const html = `<!doctype html><html><head><meta charset="utf-8"/>
     <title>3XVISIBILITY — Quickstart Guide</title>
     <style>
+      @page{size:A4;margin:18mm 16mm}
       *{box-sizing:border-box}
-      body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111;line-height:1.5;max-width:820px;margin:0 auto;padding:40px 32px}
-      h1{font-size:28px;margin:0 0 4px}
-      h2{font-size:20px;margin:28px 0 10px;border-bottom:2px solid #eee;padding-bottom:4px}
-      h3{font-size:15px;margin:0 0 4px}
-      p{margin:6px 0}
+      html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#111;line-height:1.55;font-size:12pt;max-width:820px;margin:0 auto;padding:40px 32px}
+      h1{font-size:26pt;margin:0 0 6px;letter-spacing:-0.01em}
+      h2{font-size:16pt;margin:26px 0 10px;border-bottom:2px solid #eee;padding-bottom:4px;break-after:avoid;page-break-after:avoid}
+      h3{font-size:12.5pt;margin:0 0 4px;break-after:avoid;page-break-after:avoid}
+      p{margin:6px 0;orphans:3;widows:3}
       ul,ol{margin:6px 0 6px 20px;padding:0}
-      li{margin:3px 0}
+      li{margin:3px 0;break-inside:avoid;page-break-inside:avoid}
+      a{text-decoration:none;color:#7c3aed}
+      code,pre,.code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:10.5pt}
+      code{background:#f4f4f6;color:#b4227a;padding:1px 5px;border-radius:4px}
+      pre{background:#1e1e2e;color:#e6e6f0;padding:12px 14px;border-radius:8px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;margin:8px 0;break-inside:avoid;page-break-inside:avoid;border:1px solid #2a2a3c}
+      pre code{background:transparent;color:inherit;padding:0}
       .muted{color:#555}
       .tip{color:#a15c00;margin-top:8px}
-      .card{border:1px solid #e5e5e5;border-radius:8px;padding:12px 16px;margin:10px 0;page-break-inside:avoid}
-      .faq{margin:8px 0;page-break-inside:avoid}
+      .card{border:1px solid #e5e5e5;border-radius:8px;padding:12px 16px;margin:10px 0;break-inside:avoid;page-break-inside:avoid}
+      .faq{margin:8px 0;break-inside:avoid;page-break-inside:avoid}
       .cover{text-align:center;margin-bottom:24px}
       .cover p{color:#555}
       .sec-num{color:#7c3aed}
-      .toc{margin:24px 0 12px;page-break-after:always}
+      .toc{margin:24px 0 12px;break-after:page;page-break-after:always}
       .toc-title{border-bottom:2px solid #eee;padding-bottom:4px}
       .toc ol{list-style:none;margin:12px 0 0;padding:0;counter-reset:toc}
       .toc li{margin:8px 0}
-      .toc a{display:flex;align-items:baseline;text-decoration:none;color:#111;font-size:15px}
+      .toc a{display:flex;align-items:baseline;text-decoration:none;color:#111;font-size:12pt}
       .toc-name{white-space:nowrap}
       .toc-dots{flex:1;border-bottom:1px dotted #bbb;margin:0 6px;transform:translateY(-3px)}
       .toc-page{color:#7c3aed;font-weight:600}
-      .doc-section{page-break-before:always}
-      .doc-section:first-of-type{page-break-before:avoid}
-      @media print{body{padding:0 12px}a{color:#111}}
+      .doc-section{break-before:page;page-break-before:always}
+      .doc-section:first-of-type{break-before:avoid;page-break-before:avoid}
+      @media print{body{padding:0}a{color:#111}}
     </style></head>
     <body>
       <div class="cover">
