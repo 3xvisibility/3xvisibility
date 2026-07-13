@@ -162,6 +162,15 @@ const TOOLS: ToolDoc[] = [
       "Trigger content sync or re-publish without leaving the app.",
     ],
     tips: ["Keep the 3XVISIBILITY WordPress connector plugin updated for the best publishing fidelity."],
+    guide: [
+      { title: "Connect the site first", detail: "WP Control only lists WordPress sites already added under Websites with a valid Application Password." },
+      { title: "Install / verify the connector plugin", detail: "Make sure the 3XVISIBILITY WordPress connector plugin is installed and active. WP Control shows its status and version." },
+      { title: "Check for updates", detail: "If a newer plugin version exists, use the built-in auto-updater so publishing stays reliable." },
+      { title: "Select a site", detail: "Choose the WordPress site you want to manage from the list." },
+      { title: "Push settings", detail: "Send layout, Elementor container width and critical-CSS fallback settings straight to the site." },
+      { title: "Sync or re-publish", detail: "Trigger a content sync or re-publish generated pages without opening the WordPress admin." },
+      { title: "Confirm on the live site", detail: "Open the page on your CMS to confirm the design and content match the preview." },
+    ],
   },
   {
     id: "data", icon: Database, group: "Core", name: "Data CSV",
