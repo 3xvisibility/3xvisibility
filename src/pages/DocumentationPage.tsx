@@ -1,5 +1,5 @@
 import { Seo } from "@/components/Seo";
-import docsOverviewVideo from "@/assets/docs-overview.mp4";
+import docsOverviewAsset from "@/assets/docs-overview.mp4.asset.json";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
