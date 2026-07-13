@@ -721,6 +721,34 @@ function buildAndDownloadGuide() {
     (s) => `<li><strong>${esc(s.title)}</strong> — ${esc(s.desc)}</li>`
   ).join("")}</ol>`;
 
+  const sections = [
+    { id: "sec-getting-started", title: "Getting started — 4 quick steps", body: quickHtml },
+    { id: "sec-tools", title: "Tools & features", body: toolsHtml },
+    { id: "sec-connect", title: "Connection tutorials", body: connectHtml },
+    { id: "sec-example", title: "Full end-to-end example", body: walkHtml },
+    { id: "sec-faq", title: "Frequently asked questions", body: faqHtml },
+    { id: "sec-troubleshoot", title: "Troubleshooting", body: troubleHtml },
+  ];
+
+  const tocHtml = `<nav class="toc">
+    <h2 class="toc-title">Table of contents</h2>
+    <ol>${sections
+      .map(
+        (s, i) =>
+          `<li><a href="#${s.id}"><span class="toc-name">${esc(s.title)}</span><span class="toc-dots"></span><span class="toc-page">${i + 1}</span></a></li>`
+      )
+      .join("")}</ol>
+  </nav>`;
+
+  const sectionsHtml = sections
+    .map(
+      (s, i) =>
+        `<section id="${s.id}" class="doc-section"><h2><span class="sec-num">${i + 1}.</span> ${esc(
+          s.title
+        )}</h2>${s.body}</section>`
+    )
+    .join("");
+
   const html = `<!doctype html><html><head><meta charset="utf-8"/>
     <title>3XVISIBILITY — Quickstart Guide</title>
     <style>
@@ -738,19 +766,26 @@ function buildAndDownloadGuide() {
       .faq{margin:8px 0;page-break-inside:avoid}
       .cover{text-align:center;margin-bottom:24px}
       .cover p{color:#555}
-      @media print{body{padding:0 12px}}
+      .sec-num{color:#7c3aed}
+      .toc{margin:24px 0 12px;page-break-after:always}
+      .toc-title{border-bottom:2px solid #eee;padding-bottom:4px}
+      .toc ol{list-style:none;margin:12px 0 0;padding:0;counter-reset:toc}
+      .toc li{margin:8px 0}
+      .toc a{display:flex;align-items:baseline;text-decoration:none;color:#111;font-size:15px}
+      .toc-name{white-space:nowrap}
+      .toc-dots{flex:1;border-bottom:1px dotted #bbb;margin:0 6px;transform:translateY(-3px)}
+      .toc-page{color:#7c3aed;font-weight:600}
+      .doc-section{page-break-before:always}
+      .doc-section:first-of-type{page-break-before:avoid}
+      @media print{body{padding:0 12px}a{color:#111}}
     </style></head>
     <body>
       <div class="cover">
         <h1>3XVISIBILITY — Quickstart Guide</h1>
         <p>Complete step-by-step guide to every tool. Generated ${new Date().toLocaleDateString()}</p>
       </div>
-      <h2>Getting started — 4 quick steps</h2>${quickHtml}
-      <h2>Tools & features</h2>${toolsHtml}
-      <h2>Connection tutorials</h2>${connectHtml}
-      <h2>Full end-to-end example</h2>${walkHtml}
-      <h2>Frequently asked questions</h2>${faqHtml}
-      <h2>Troubleshooting</h2>${troubleHtml}
+      ${tocHtml}
+      ${sectionsHtml}
       <script>window.onload=function(){setTimeout(function(){window.print();},400);};</script>
     </body></html>`;
 
