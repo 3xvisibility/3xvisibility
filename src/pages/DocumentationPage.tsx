@@ -1201,7 +1201,7 @@ export default function DocumentationPage() {
             <div className="mt-6 mx-auto max-w-xl text-left rounded-xl border border-border bg-card/50 p-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-medium flex items-center gap-2">
-                  <History className="h-4 w-4 text-primary" /> Recent exports
+                  <HistoryIcon className="h-4 w-4 text-primary" /> Recent exports
                 </p>
                 <button
                   type="button"
