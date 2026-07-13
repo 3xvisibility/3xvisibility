@@ -237,10 +237,9 @@ export default function TemplateMarketplacePage() {
   // Convert shared templates to MarketplaceTemplate format
   const communityTemplates: MarketplaceTemplate[] = useMemo(() => {
     return sharedTemplates.map((st: any) => {
-      const ratings = allRatings.filter((r: any) => r.shared_template_id === st.id);
-      const avgRating = ratings.length > 0
-        ? Math.round(ratings.reduce((s: number, r: any) => s + r.rating, 0) / ratings.length * 10) / 10
-        : 0;
+      const stat = (ratingStats as any[]).find((r: any) => r.shared_template_id === st.id);
+      const avgRating = stat ? Number(stat.avg_rating) || 0 : 0;
+      const ratingCount = stat ? Number(stat.rating_count) || 0 : 0;
       return {
         id: st.id,
         shared_id: st.id,
