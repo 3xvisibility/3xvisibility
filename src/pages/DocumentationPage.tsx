@@ -986,18 +986,16 @@ export default function DocumentationPage() {
             </section>
 
 
+            {/* FAQ */}
             <section id="faq" className="scroll-mt-24">
-              <h2 className="text-2xl font-bold mb-6 border-b border-border pb-2 flex items-center gap-2">
-                <AlertCircle className="h-6 w-6 text-primary" /> FAQ
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                <HelpCircle className="h-6 w-6 text-primary" /> Frequently asked questions
               </h2>
-              <div className="space-y-4">
-                {[
-                  { q: "How are AI credits kept low?", a: "Light tasks always use Gemini Flash Lite (the cheapest model). Images fall back to Unsplash and translations to LibreTranslate whenever possible." },
-                  { q: "If a marketplace template is updated, do my pages change?", a: "No. Version pinning saves your copy as a snapshot — marketplace updates do not affect it." },
-                  { q: "Getting an SSL error when connecting WordPress?", a: "Check whether the site URL needs the www prefix. If it is an SNI mismatch, contact your hosting provider." },
-                  { q: "Where do I upgrade my plan?", a: "Sidebar → Billing → Upgrade plan. Pro/Agency unlock more templates, credits and team features." },
-                  { q: "Can a bulk delete be undone?", a: "No — bulk delete is permanent. Always read the confirmation dialog carefully." },
-                ].map((f, i) => (
+              <p className="text-muted-foreground mb-6">
+                Quick answers to the most common questions about connections, CSVs, publishing and account limits.
+              </p>
+              <div className="space-y-3">
+                {FAQS.map((f, i) => (
                   <details key={i} className="rounded-lg border border-border bg-card p-4 group">
                     <summary className="font-medium cursor-pointer list-none flex items-center justify-between">
                       <span>{f.q}</span>
@@ -1006,6 +1004,45 @@ export default function DocumentationPage() {
                     <p className="mt-3 text-sm text-muted-foreground">{f.a}</p>
                   </details>
                 ))}
+              </div>
+            </section>
+
+            {/* Troubleshooting */}
+            <section id="troubleshooting" className="scroll-mt-24">
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                <AlertCircle className="h-6 w-6 text-primary" /> Troubleshooting
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Symptom-based fixes for connection, authorization, CSV and publishing problems.
+              </p>
+              <div className="space-y-6">
+                {TROUBLESHOOTING.map((cat) => {
+                  const Icon = cat.icon;
+                  return (
+                    <article key={cat.category} className="rounded-xl border border-border bg-card p-5 md:p-6">
+                      <header className="flex items-center gap-2 mb-4">
+                        <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <h3 className="font-semibold text-lg">{cat.category}</h3>
+                      </header>
+                      <div className="space-y-3">
+                        {cat.problems.map((p, i) => (
+                          <div key={i} className="rounded-md border border-border p-3">
+                            <div className="flex items-start gap-2">
+                              <span className="text-xs font-bold text-primary mt-0.5">SYMPTOM</span>
+                              <p className="text-sm font-medium">{p.symptom}</p>
+                            </div>
+                            <div className="flex items-start gap-2 mt-2">
+                              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">FIX</span>
+                              <p className="text-sm text-muted-foreground">{p.fix}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             </section>
 
