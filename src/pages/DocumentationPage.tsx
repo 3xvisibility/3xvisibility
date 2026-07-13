@@ -14,6 +14,13 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface GuideStep {
   title: string;
@@ -665,7 +672,16 @@ const esc = (s: string) =>
 
 /** Build a self-contained, printable HTML guide from the documentation content
  *  and open it in a new window ready to "Save as PDF". No external deps. */
-function buildAndDownloadGuide() {
+const GUIDE_SECTIONS = [
+  { id: "sec-getting-started", title: "Getting started — 4 quick steps", label: "Getting started" },
+  { id: "sec-tools", title: "Tools & features", label: "Tool guides" },
+  { id: "sec-connect", title: "Connection tutorials", label: "Connection tutorials" },
+  { id: "sec-example", title: "Full end-to-end example", label: "Full example" },
+  { id: "sec-faq", title: "Frequently asked questions", label: "FAQ" },
+  { id: "sec-troubleshoot", title: "Troubleshooting", label: "Troubleshooting" },
+] as const;
+
+function buildAndDownloadGuide(selectedIds?: string[]) {
   const li = (items: string[]) =>
     `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
 
@@ -722,7 +738,7 @@ function buildAndDownloadGuide() {
     (s) => `<li><strong>${esc(s.title)}</strong> — ${esc(s.desc)}</li>`
   ).join("")}</ol>`;
 
-  const sections = [
+  const allSections = [
     { id: "sec-getting-started", title: "Getting started — 4 quick steps", body: quickHtml },
     { id: "sec-tools", title: "Tools & features", body: toolsHtml },
     { id: "sec-connect", title: "Connection tutorials", body: connectHtml },
@@ -730,6 +746,11 @@ function buildAndDownloadGuide() {
     { id: "sec-faq", title: "Frequently asked questions", body: faqHtml },
     { id: "sec-troubleshoot", title: "Troubleshooting", body: troubleHtml },
   ];
+
+  const sections =
+    selectedIds && selectedIds.length
+      ? allSections.filter((s) => selectedIds.includes(s.id))
+      : allSections;
 
   const tocHtml = `<nav class="toc">
     <h2 class="toc-title">Table of contents</h2>
@@ -817,17 +838,29 @@ function buildAndDownloadGuide() {
 export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
   const [generating, setGenerating] = useState(false);
+  const [selectedSections, setSelectedSections] = useState<string[]>(
+    GUIDE_SECTIONS.map((s) => s.id)
+  );
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
 
+  const toggleSection = (id: string) =>
+    setSelectedSections((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+
   const handleDownloadGuide = async () => {
     if (generating) return;
+    if (!selectedSections.length) {
+      toast.error("Select at least one section to export.");
+      return;
+    }
     setGenerating(true);
     const toastId = toast.loading("Generating your guide…");
     try {
       // Yield a frame so the loading UI paints before the heavy work.
       await new Promise((r) => setTimeout(r, 50));
-      const result = buildAndDownloadGuide();
+      const result = buildAndDownloadGuide(selectedSections);
       if (result === "download") {
         toast.success("Guide downloaded", {
           id: toastId,
@@ -877,7 +910,7 @@ export default function DocumentationPage() {
           <p className="text-base md:text-lg text-muted-foreground">
             Step-by-step instructions for every feature in your workspace.
           </p>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex flex-wrap justify-center items-center gap-3">
             <Button onClick={handleDownloadGuide} size="lg" className="gap-2" disabled={generating}>
               {generating ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
@@ -885,6 +918,49 @@ export default function DocumentationPage() {
                 <><FileText className="h-4 w-4" /> Download Quickstart Guide (PDF)</>
               )}
             </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="lg" className="gap-2" disabled={generating}>
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Sections ({selectedSections.length}/{GUIDE_SECTIONS.length})
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="center" className="w-72 text-left">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-medium">Sections to export</p>
+                  <button
+                    type="button"
+                    className="text-xs text-primary hover:underline"
+                    onClick={() =>
+                      setSelectedSections(
+                        selectedSections.length === GUIDE_SECTIONS.length
+                          ? []
+                          : GUIDE_SECTIONS.map((s) => s.id)
+                      )
+                    }
+                  >
+                    {selectedSections.length === GUIDE_SECTIONS.length ? "Clear all" : "Select all"}
+                  </button>
+                </div>
+                <div className="space-y-2.5">
+                  {GUIDE_SECTIONS.map((s) => (
+                    <div key={s.id} className="flex items-center gap-2.5">
+                      <Checkbox
+                        id={`export-${s.id}`}
+                        checked={selectedSections.includes(s.id)}
+                        onCheckedChange={() => toggleSection(s.id)}
+                      />
+                      <Label
+                        htmlFor={`export-${s.id}`}
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        {s.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
             Opens a printable version — choose "Save as PDF" in the print dialog.
