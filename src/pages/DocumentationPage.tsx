@@ -1,5 +1,6 @@
 import { Seo } from "@/components/Seo";
 import docsOverviewAsset from "@/assets/docs-overview.mp4.asset.json";
+import docsCampaignsAsset from "@/assets/docs-campaigns.mp4.asset.json";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
@@ -1400,6 +1401,25 @@ export default function DocumentationPage() {
                               </li>
                             ))}
                           </ol>
+
+                          {tool.id === "campaigns" && (
+                            <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
+                              <video
+                                src={docsCampaignsAsset.url}
+                                className="w-full aspect-video bg-background"
+                                autoPlay
+                                muted
+                                loop
+                                playsInline
+                                controls
+                                preload="metadata"
+                              />
+                              <figcaption className="px-4 py-2 text-xs text-muted-foreground">
+                                Watch — creating a campaign step by step: name & type → template → data → mapping → generate.
+                              </figcaption>
+                            </figure>
+                          )}
+
 
                           {tool.guide && tool.guide.length > 0 && (
                             <details className="mt-4 rounded-md border border-primary/20 bg-primary/5 p-3 group/guide" open>
