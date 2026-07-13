@@ -712,7 +712,7 @@ const GUIDE_PRESETS: GuidePreset[] = [
   },
 ];
 
-function buildAndDownloadGuide(selectedIds?: string[]) {
+function buildGuideHtml(selectedIds?: string[], forPrint = true): string {
   const li = (items: string[]) =>
     `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
 
