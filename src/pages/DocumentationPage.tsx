@@ -802,7 +802,16 @@ export default function DocumentationPage() {
           <p className="text-base md:text-lg text-muted-foreground">
             Step-by-step instructions for every feature in your workspace.
           </p>
+          <div className="mt-6 flex justify-center">
+            <Button onClick={buildAndDownloadGuide} size="lg" className="gap-2">
+              <FileText className="h-4 w-4" /> Download Quickstart Guide (PDF)
+            </Button>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Opens a printable version — choose "Save as PDF" in the print dialog.
+          </p>
         </header>
+
 
         <div className="grid lg:grid-cols-[240px_1fr] gap-8">
           {/* Sidebar TOC */}
