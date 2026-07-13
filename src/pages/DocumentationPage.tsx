@@ -931,6 +931,16 @@ export default function DocumentationPage() {
     selectedSections.includes(id)
   );
 
+  // Live preview HTML — rebuilt whenever the selection or order changes.
+  const previewHtml = useMemo(
+    () =>
+      orderedSelectedIds.length
+        ? buildGuideHtml(orderedSelectedIds, false)
+        : "",
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [orderedSelectedIds.join("|")]
+  );
+
   const handleDownloadGuide = async () => {
     if (generating) return;
     if (!selectedSections.length) {
