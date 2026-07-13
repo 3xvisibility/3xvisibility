@@ -273,6 +273,14 @@ const TOOLS: ToolDoc[] = [
       "Earned reward credits are applied to your account.",
     ],
     tips: ["Affiliate pays cash commission; Referral rewards you with in-app credits — you can use both."],
+    guide: [
+      { title: "Open Referral", detail: "Sidebar → Referral. Your unique tracked referral link is shown at the top." },
+      { title: "Copy your link", detail: "Click Copy. The link carries your referral code so every visit is attributed to you." },
+      { title: "Share it", detail: "Send the link to friends, clients or your audience — social, email or a blog all work." },
+      { title: "Track signups", detail: "Each click, signup and conversion is recorded automatically and shown on the page." },
+      { title: "Earn reward credits", detail: "When a referred user converts, reward credits are added to your account per the reward settings." },
+      { title: "Spend the credits", detail: "Use the earned credits toward AI generations and other in-app usage." },
+    ],
   },
   {
     id: "billing", icon: CreditCard, group: "Account", name: "Billing",
