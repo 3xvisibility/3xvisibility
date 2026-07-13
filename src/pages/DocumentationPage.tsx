@@ -720,6 +720,31 @@ const GUIDE_PRESETS: GuidePreset[] = [
   },
 ];
 
+interface ExportHistoryEntry {
+  id: string;
+  ts: number;
+  sectionIds: string[];
+  preset: PresetId;
+}
+
+const EXPORT_HISTORY_KEY = "docs-pdf-export-history";
+
+function loadExportHistory(): ExportHistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(EXPORT_HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+const sectionLabel = (id: string) =>
+  GUIDE_SECTIONS.find((s) => s.id === id)?.label ?? id;
+
+
+
 function buildGuideHtml(selectedIds?: string[], forPrint = true): string {
   const li = (items: string[]) =>
     `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
