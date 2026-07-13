@@ -851,6 +851,11 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true): string {
       ${forPrint ? '<script>window.onload=function(){setTimeout(function(){window.print();},400);};</script>' : ''}
     </body></html>`;
 
+  return html;
+}
+
+function buildAndDownloadGuide(selectedIds?: string[]) {
+  const html = buildGuideHtml(selectedIds, true);
   const w = window.open("", "_blank");
   if (!w) {
     const blob = new Blob([html], { type: "text/html" });
