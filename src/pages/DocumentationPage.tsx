@@ -665,7 +665,16 @@ const esc = (s: string) =>
 
 /** Build a self-contained, printable HTML guide from the documentation content
  *  and open it in a new window ready to "Save as PDF". No external deps. */
-function buildAndDownloadGuide() {
+const GUIDE_SECTIONS = [
+  { id: "sec-getting-started", title: "Getting started — 4 quick steps", label: "Getting started" },
+  { id: "sec-tools", title: "Tools & features", label: "Tool guides" },
+  { id: "sec-connect", title: "Connection tutorials", label: "Connection tutorials" },
+  { id: "sec-example", title: "Full end-to-end example", label: "Full example" },
+  { id: "sec-faq", title: "Frequently asked questions", label: "FAQ" },
+  { id: "sec-troubleshoot", title: "Troubleshooting", label: "Troubleshooting" },
+] as const;
+
+function buildAndDownloadGuide(selectedIds?: string[]) {
   const li = (items: string[]) =>
     `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
 
