@@ -430,6 +430,28 @@ export default function DocumentationPage() {
               </section>
             ))}
 
+            {/* Integrations */}
+            <section id="integrations" className="scroll-mt-24">
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                <Plug className="h-6 w-6 text-primary" /> Integrations &amp; Connections
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                What connects with what — and how each connection is used across the app.
+              </p>
+              <div className="space-y-4">
+                {INTEGRATIONS.map((it) => (
+                  <div key={it.name} className="rounded-xl border border-border bg-card p-5">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h3 className="font-semibold text-lg">{it.name}</h3>
+                      <Badge variant="secondary" className="text-xs">{it.connects}</Badge>
+                    </div>
+                    <p className="text-sm mb-1"><span className="font-medium">Used for: </span><span className="text-muted-foreground">{it.used}</span></p>
+                    <p className="text-sm"><span className="font-medium">How to connect: </span><span className="text-muted-foreground">{it.how}</span></p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
             {/* FAQ */}
             <section id="faq" className="scroll-mt-24">
               <h2 className="text-2xl font-bold mb-6 border-b border-border pb-2 flex items-center gap-2">
