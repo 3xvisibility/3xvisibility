@@ -7,6 +7,7 @@ import docsPdfExportAsset from "@/assets/docs-pdf-export.mp4.asset.json";
 import docsWordpressAsset from "@/assets/docs-wordpress.mp4.asset.json";
 import docsShopifyAsset from "@/assets/docs-shopify.mp4.asset.json";
 import docsTemplatesAsset from "@/assets/docs-templates.mp4.asset.json";
+import { DocVideoPlayer } from "@/components/docs/DocVideoPlayer";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
@@ -37,6 +38,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+
 
 interface GuideStep {
   title: string;
