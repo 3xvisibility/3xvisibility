@@ -1031,23 +1031,55 @@ export default function DocumentationPage() {
                     {selectedSections.length === GUIDE_SECTIONS.length ? "Clear all" : "Select all"}
                   </button>
                 </div>
-                <div className="space-y-2.5">
-                  {GUIDE_SECTIONS.map((s) => (
-                    <div key={s.id} className="flex items-center gap-2.5">
-                      <Checkbox
-                        id={`export-${s.id}`}
-                        checked={selectedSections.includes(s.id)}
-                        onCheckedChange={() => toggleSection(s.id)}
-                      />
-                      <Label
-                        htmlFor={`export-${s.id}`}
-                        className="text-sm font-normal cursor-pointer"
+                <p className="text-xs text-muted-foreground mb-2">
+                  Drag the handle to reorder how sections appear in the PDF.
+                </p>
+                <div className="space-y-1.5">
+                  {sectionOrder.map((id) => {
+                    const s = GUIDE_SECTIONS.find((x) => x.id === id);
+                    if (!s) return null;
+                    const selected = selectedSections.includes(s.id);
+                    return (
+                      <div
+                        key={s.id}
+                        draggable
+                        onDragStart={() => setDragId(s.id)}
+                        onDragEnd={() => setDragId(null)}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          handleReorder(s.id);
+                        }}
+                        className={`flex items-center gap-2 rounded-md border px-2 py-1.5 transition-colors ${
+                          dragId === s.id
+                            ? "border-primary bg-primary/5"
+                            : "border-transparent hover:border-border hover:bg-muted/40"
+                        }`}
                       >
-                        {s.label}
-                      </Label>
-                    </div>
-                  ))}
+                        <button
+                          type="button"
+                          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+                          aria-label={`Reorder ${s.label}`}
+                        >
+                          <GripVertical className="h-4 w-4" />
+                        </button>
+                        <Checkbox
+                          id={`export-${s.id}`}
+                          checked={selected}
+                          onCheckedChange={() => toggleSection(s.id)}
+                        />
+                        <Label
+                          htmlFor={`export-${s.id}`}
+                          className={`text-sm font-normal cursor-pointer flex-1 ${
+                            selected ? "" : "text-muted-foreground"
+                          }`}
+                        >
+                          {s.label}
+                        </Label>
+                      </div>
+                    );
+                  })}
                 </div>
+
               </PopoverContent>
             </Popover>
           </div>
