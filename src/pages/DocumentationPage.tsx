@@ -246,6 +246,59 @@ const QUICK_FLOW = [
   { step: 4, title: "Run the campaign", desc: "Map variables and click 'Generate' — pages go straight to your site." },
 ];
 
+interface Integration {
+  name: string;
+  connects: string;
+  used: string;
+  how: string;
+}
+
+const INTEGRATIONS: Integration[] = [
+  {
+    name: "WordPress",
+    connects: "Websites · WP Control",
+    used: "Publish generated pages, sync content, remote-manage the site",
+    how: "Install the 3XVISIBILITY connector plugin, then add the site with an Application Password.",
+  },
+  {
+    name: "WooCommerce",
+    connects: "Websites · Campaigns",
+    used: "Publish product & category landing pages on a WordPress store",
+    how: "Connect the WordPress site first; WooCommerce is detected automatically.",
+  },
+  {
+    name: "Shopify",
+    connects: "Websites · Website Content",
+    used: "Sync products, bulk SEO, publish pages to your store",
+    how: "Use the one-click Shopify OAuth flow (Connect Shopify) — no manual keys needed.",
+  },
+  {
+    name: "PrestaShop",
+    connects: "Websites · Campaigns",
+    used: "Publish pages and product content to a PrestaShop store",
+    how: "Add the site URL and API key under Websites → Add.",
+  },
+  {
+    name: "Google Search Console",
+    connects: "Indexing · SEO Audit",
+    used: "Submit generated pages to Google for faster indexing",
+    how: "Connect a Google service account, then submit pages from the Indexing page.",
+  },
+  {
+    name: "AI (Gemini)",
+    connects: "AI Site Builder · Templates · Campaigns · Data CSV",
+    used: "Generate designs, copy, images, keywords and fill missing data",
+    how: "Built in — no API key required. Light tasks use the cheapest model to save credits.",
+  },
+  {
+    name: "Stripe (Billing)",
+    connects: "Billing",
+    used: "Plan upgrades, invoices and payment methods",
+    how: "Managed for you — upgrade from Billing and use the portal for invoices.",
+  },
+];
+
+
 export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
   const pageRef = useRef<HTMLDivElement>(null);
