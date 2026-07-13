@@ -7,7 +7,7 @@ import {
   KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
   ClipboardCheck, Search, Gift, CreditCard, Settings, Users,
   ArrowRight, BookOpen, CheckCircle2, Lightbulb, AlertCircle,
-  Sparkles, SlidersHorizontal, Link2, Plug, HelpCircle, Loader2, GripVertical, Eye,
+  Sparkles, SlidersHorizontal, Link2, Plug, HelpCircle, Loader2, GripVertical, Eye, History as HistoryIcon, RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { LandingNav } from "@/components/landing/LandingNav";
