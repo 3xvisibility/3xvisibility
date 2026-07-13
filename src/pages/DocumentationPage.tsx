@@ -1419,21 +1419,16 @@ export default function DocumentationPage() {
 
                           {tool.id === "campaigns" && (
                             <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
-                              <video
+                              <DocVideoPlayer
                                 src={docsCampaignsAsset.url}
-                                className="w-full aspect-video bg-background"
-                                autoPlay
-                                muted
-                                loop
-                                playsInline
-                                controls
-                                preload="metadata"
+                                captionSrc="/captions/docs-campaigns.vtt"
                               />
                               <figcaption className="px-4 py-2 text-xs text-muted-foreground">
                                 Watch — creating a campaign step by step: name & type → template → data → mapping → generate.
                               </figcaption>
                             </figure>
                           )}
+
 
                           {tool.id === "data" && (
                             <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
