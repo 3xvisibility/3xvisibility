@@ -848,7 +848,7 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true): string {
       </div>
       ${tocHtml}
       ${sectionsHtml}
-      <script>window.onload=function(){setTimeout(function(){window.print();},400);};</script>
+      ${forPrint ? '<script>window.onload=function(){setTimeout(function(){window.print();},400);};</script>' : ''}
     </body></html>`;
 
   const w = window.open("", "_blank");
