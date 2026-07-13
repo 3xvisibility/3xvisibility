@@ -230,6 +230,14 @@ const TOOLS: ToolDoc[] = [
     id: "analytics", icon: BarChart3, group: "Analytics", name: "Analytics",
     short: "Overview of pages, traffic and conversions.",
     steps: ["Pick a date range.", "Review your top performing pages.", "Export to CSV when you need raw data."],
+    guide: [
+      { title: "Open Analytics", detail: "Sidebar → Analytics. The overview loads your workspace totals for pages, traffic and conversions." },
+      { title: "Set the date range", detail: "Pick a start and end date (or a preset range). Every chart and table updates to that window." },
+      { title: "Read the summary cards", detail: "The top cards show total pages, visits and conversion rate so you get the headline numbers at a glance." },
+      { title: "Find top performers", detail: "Scan the top-pages table to see which generated pages bring the most traffic and where to double down." },
+      { title: "Compare campaigns", detail: "Filter by campaign or website to see which effort is driving results." },
+      { title: "Export raw data", detail: "Click Export to CSV when you need the numbers for a report or a spreadsheet." },
+    ],
   },
   {
     id: "performance", icon: Activity, group: "Analytics", name: "Page Performance",
