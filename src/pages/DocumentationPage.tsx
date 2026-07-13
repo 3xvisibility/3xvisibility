@@ -131,6 +131,15 @@ const TOOLS: ToolDoc[] = [
       "See results instantly in the live preview.",
     ],
     tips: ["Download the CSV starter for any template — it comes pre-filled with the right columns."],
+    guide: [
+      { title: "Open Templates", detail: "Sidebar → Templates. Click 'New Template' to see the four creation methods." },
+      { title: "Pick a creation method", detail: "Manual (build from scratch), AI Generate (business + niche + service), Scan from URL (copy design from a live page), or Import (paste/upload existing HTML)." },
+      { title: "Define your variables", detail: "Insert placeholders as {variable_name} using lowercase_snake_case, e.g. {city}, {service_name}. These become the columns you fill with data later." },
+      { title: "Design the layout", detail: "Edit sections and styles. With AI Generate, the design and structure are built for you; with Scan, they are extracted from the source page." },
+      { title: "Preview live", detail: "The live preview updates instantly and shows sample values in place of each variable so you can spot layout issues early." },
+      { title: "Download the CSV starter", detail: "Use the CSV starter export — it comes pre-filled with a column for every variable so your data lines up perfectly." },
+      { title: "Save", detail: "Save the template. It's now selectable in Campaigns and PGP Generate." },
+    ],
   },
   {
     id: "marketplace", icon: Store, group: "Core", name: "Template Marketplace",
