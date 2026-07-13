@@ -440,7 +440,7 @@ export default function TemplateMarketplacePage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["template-ratings"] });
+      queryClient.invalidateQueries({ queryKey: ["template-rating-stats"] });
       toast({ title: "Rating submitted!" });
     },
     onError: (err: Error) => {
