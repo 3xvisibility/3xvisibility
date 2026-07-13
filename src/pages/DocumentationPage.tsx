@@ -928,7 +928,7 @@ export default function DocumentationPage() {
     try {
       // Yield a frame so the loading UI paints before the heavy work.
       await new Promise((r) => setTimeout(r, 50));
-      const result = buildAndDownloadGuide(selectedSections);
+      const result = buildAndDownloadGuide(orderedSelectedIds);
       if (result === "download") {
         toast.success("Guide downloaded", {
           id: toastId,
