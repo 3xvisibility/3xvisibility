@@ -2,6 +2,7 @@ import { Seo } from "@/components/Seo";
 import docsOverviewAsset from "@/assets/docs-overview.mp4.asset.json";
 import docsCampaignsAsset from "@/assets/docs-campaigns.mp4.asset.json";
 import docsCsvAsset from "@/assets/docs-csv.mp4.asset.json";
+import docsPdfExportAsset from "@/assets/docs-pdf-export.mp4.asset.json";
 import docsWordpressAsset from "@/assets/docs-wordpress.mp4.asset.json";
 import docsShopifyAsset from "@/assets/docs-shopify.mp4.asset.json";
 import { Link } from "react-router-dom";
@@ -1201,6 +1202,23 @@ export default function DocumentationPage() {
           <p className="mt-2 text-xs text-muted-foreground">
             Opens a printable version — choose "Save as PDF" in the print dialog.
           </p>
+
+          <figure className="mt-6 mx-auto max-w-2xl overflow-hidden rounded-xl border border-border bg-card">
+            <video
+              src={docsPdfExportAsset.url}
+              className="w-full aspect-video bg-background"
+              autoPlay
+              muted
+              loop
+              playsInline
+              controls
+              preload="metadata"
+            />
+            <figcaption className="px-4 py-2 text-xs text-muted-foreground text-left">
+              Watch — select sections, watch the TOC update, then preview and download the PDF in real time.
+            </figcaption>
+          </figure>
+
 
           {exportHistory.length > 0 && (
             <div className="mt-6 mx-auto max-w-xl text-left rounded-xl border border-border bg-card/50 p-4">
