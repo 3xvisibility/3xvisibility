@@ -576,6 +576,10 @@ export default function DocumentationPage() {
                 className={`block px-3 py-2 rounded-md transition-colors ${active === "connect-tutorials" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
                 🔗 Connection Tutorials
               </a>
+              <a href="#full-example" onClick={() => setActive("full-example")}
+                className={`block px-3 py-2 rounded-md transition-colors ${active === "full-example" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
+                🎯 Full Example
+              </a>
               <a href="#faq" onClick={() => setActive("faq")}
                 className={`block px-3 py-2 rounded-md transition-colors ${active === "faq" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
                 ❓ FAQ
