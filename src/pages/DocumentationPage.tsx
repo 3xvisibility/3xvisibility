@@ -1421,6 +1421,24 @@ export default function DocumentationPage() {
                             </figure>
                           )}
 
+                          {tool.id === "data" && (
+                            <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
+                              <video
+                                src={docsCsvAsset.url}
+                                className="w-full aspect-video bg-background"
+                                autoPlay
+                                muted
+                                loop
+                                playsInline
+                                controls
+                                preload="metadata"
+                              />
+                              <figcaption className="px-4 py-2 text-xs text-muted-foreground">
+                                Watch — how CSV upload, parsing and column/keyword mapping work.
+                              </figcaption>
+                            </figure>
+                          )}
+
 
                           {tool.guide && tool.guide.length > 0 && (
                             <details className="mt-4 rounded-md border border-primary/20 bg-primary/5 p-3 group/guide" open>
