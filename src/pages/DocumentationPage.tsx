@@ -7,6 +7,7 @@ import docsPdfExportAsset from "@/assets/docs-pdf-export.mp4.asset.json";
 import docsWordpressAsset from "@/assets/docs-wordpress.mp4.asset.json";
 import docsShopifyAsset from "@/assets/docs-shopify.mp4.asset.json";
 import docsTemplatesAsset from "@/assets/docs-templates.mp4.asset.json";
+import { DocVideoPlayer } from "@/components/docs/DocVideoPlayer";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
@@ -37,6 +38,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+
 
 interface GuideStep {
   title: string;
@@ -1206,20 +1208,15 @@ export default function DocumentationPage() {
           </p>
 
           <figure className="mt-6 mx-auto max-w-2xl overflow-hidden rounded-xl border border-border bg-card">
-            <video
+            <DocVideoPlayer
               src={docsPdfExportAsset.url}
-              className="w-full aspect-video bg-background"
-              autoPlay
-              muted
-              loop
-              playsInline
-              controls
-              preload="metadata"
+              captionSrc="/captions/docs-pdf-export.vtt"
             />
             <figcaption className="px-4 py-2 text-xs text-muted-foreground text-left">
               Watch — select sections, watch the TOC update, then preview and download the PDF in real time.
             </figcaption>
           </figure>
+
 
 
           {exportHistory.length > 0 && (
@@ -1364,20 +1361,15 @@ export default function DocumentationPage() {
                 New here? Follow this sequence and your first batch of pages will be live in about 10 minutes.
               </p>
               <figure className="mb-6 overflow-hidden rounded-xl border border-border bg-card">
-                <video
+                <DocVideoPlayer
                   src={docsOverviewAsset.url}
-                  className="w-full aspect-video bg-background"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  controls
-                  preload="metadata"
+                  captionSrc="/captions/docs-overview.vtt"
                 />
                 <figcaption className="px-4 py-2 text-xs text-muted-foreground">
                   Overview — how templates turn into published, SEO-optimized pages at scale.
                 </figcaption>
               </figure>
+
               <ol className="space-y-3">
                 {QUICK_FLOW.map((s) => (
                   <li key={s.step} className="flex gap-4 p-4 rounded-lg border border-border bg-card">
@@ -1427,15 +1419,9 @@ export default function DocumentationPage() {
 
                           {tool.id === "campaigns" && (
                             <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
-                              <video
+                              <DocVideoPlayer
                                 src={docsCampaignsAsset.url}
-                                className="w-full aspect-video bg-background"
-                                autoPlay
-                                muted
-                                loop
-                                playsInline
-                                controls
-                                preload="metadata"
+                                captionSrc="/captions/docs-campaigns.vtt"
                               />
                               <figcaption className="px-4 py-2 text-xs text-muted-foreground">
                                 Watch — creating a campaign step by step: name & type → template → data → mapping → generate.
@@ -1443,17 +1429,12 @@ export default function DocumentationPage() {
                             </figure>
                           )}
 
+
                           {tool.id === "data" && (
                             <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
-                              <video
+                              <DocVideoPlayer
                                 src={docsCsvAsset.url}
-                                className="w-full aspect-video bg-background"
-                                autoPlay
-                                muted
-                                loop
-                                playsInline
-                                controls
-                                preload="metadata"
+                                captionSrc="/captions/docs-csv.vtt"
                               />
                               <figcaption className="px-4 py-2 text-xs text-muted-foreground">
                                 Watch — how CSV upload, parsing and column/keyword mapping work.
@@ -1461,17 +1442,12 @@ export default function DocumentationPage() {
                             </figure>
                           )}
 
+
                           {tool.id === "data" && (
                             <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
-                              <video
+                              <DocVideoPlayer
                                 src={docsCsvMappingAsset.url}
-                                className="w-full aspect-video bg-background"
-                                autoPlay
-                                muted
-                                loop
-                                playsInline
-                                controls
-                                preload="metadata"
+                                captionSrc="/captions/docs-csv-mapping.vtt"
                               />
                               <figcaption className="px-4 py-2 text-xs text-muted-foreground">
                                 Demo — upload a CSV, map columns to variables, then preview each row before generating.
@@ -1479,17 +1455,12 @@ export default function DocumentationPage() {
                             </figure>
                           )}
 
+
                           {tool.id === "templates" && (
                             <figure className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
-                              <video
+                              <DocVideoPlayer
                                 src={docsTemplatesAsset.url}
-                                className="w-full aspect-video bg-background"
-                                autoPlay
-                                muted
-                                loop
-                                playsInline
-                                controls
-                                preload="metadata"
+                                captionSrc="/captions/docs-templates.vtt"
                               />
                               <figcaption className="px-4 py-2 text-xs text-muted-foreground">
                                 Watch — select a template and generate a page in one click.
@@ -1498,33 +1469,22 @@ export default function DocumentationPage() {
                           )}
 
 
+
                           {tool.id === "websites" && (
                             <div className="mt-4 grid gap-4 md:grid-cols-2">
                               <figure className="overflow-hidden rounded-xl border border-border bg-card">
-                                <video
+                                <DocVideoPlayer
                                   src={docsWordpressAsset.url}
-                                  className="w-full aspect-video bg-background"
-                                  autoPlay
-                                  muted
-                                  loop
-                                  playsInline
-                                  controls
-                                  preload="metadata"
+                                  captionSrc="/captions/docs-wordpress.vtt"
                                 />
                                 <figcaption className="px-4 py-2 text-xs text-muted-foreground">
                                   Watch — connect WordPress and publish pages with an Application Password.
                                 </figcaption>
                               </figure>
                               <figure className="overflow-hidden rounded-xl border border-border bg-card">
-                                <video
+                                <DocVideoPlayer
                                   src={docsShopifyAsset.url}
-                                  className="w-full aspect-video bg-background"
-                                  autoPlay
-                                  muted
-                                  loop
-                                  playsInline
-                                  controls
-                                  preload="metadata"
+                                  captionSrc="/captions/docs-shopify.vtt"
                                 />
                                 <figcaption className="px-4 py-2 text-xs text-muted-foreground">
                                   Watch — connect Shopify via one-click OAuth and publish content.
@@ -1532,6 +1492,7 @@ export default function DocumentationPage() {
                               </figure>
                             </div>
                           )}
+
 
 
                           {tool.guide && tool.guide.length > 0 && (
