@@ -910,7 +910,7 @@ export default function DocumentationPage() {
           <p className="text-base md:text-lg text-muted-foreground">
             Step-by-step instructions for every feature in your workspace.
           </p>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex flex-wrap justify-center items-center gap-3">
             <Button onClick={handleDownloadGuide} size="lg" className="gap-2" disabled={generating}>
               {generating ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
@@ -918,6 +918,49 @@ export default function DocumentationPage() {
                 <><FileText className="h-4 w-4" /> Download Quickstart Guide (PDF)</>
               )}
             </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="lg" className="gap-2" disabled={generating}>
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Sections ({selectedSections.length}/{GUIDE_SECTIONS.length})
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="center" className="w-72 text-left">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-medium">Sections to export</p>
+                  <button
+                    type="button"
+                    className="text-xs text-primary hover:underline"
+                    onClick={() =>
+                      setSelectedSections(
+                        selectedSections.length === GUIDE_SECTIONS.length
+                          ? []
+                          : GUIDE_SECTIONS.map((s) => s.id)
+                      )
+                    }
+                  >
+                    {selectedSections.length === GUIDE_SECTIONS.length ? "Clear all" : "Select all"}
+                  </button>
+                </div>
+                <div className="space-y-2.5">
+                  {GUIDE_SECTIONS.map((s) => (
+                    <div key={s.id} className="flex items-center gap-2.5">
+                      <Checkbox
+                        id={`export-${s.id}`}
+                        checked={selectedSections.includes(s.id)}
+                        onCheckedChange={() => toggleSection(s.id)}
+                      />
+                      <Label
+                        htmlFor={`export-${s.id}`}
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        {s.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
             Opens a printable version — choose "Save as PDF" in the print dialog.
