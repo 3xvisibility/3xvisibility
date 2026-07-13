@@ -348,6 +348,10 @@ export default function DocumentationPage() {
                   {g}
                 </a>
               ))}
+              <a href="#integrations" onClick={() => setActive("integrations")}
+                className={`block px-3 py-2 rounded-md transition-colors ${active === "integrations" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
+                🔌 Integrations
+              </a>
               <a href="#faq" onClick={() => setActive("faq")}
                 className={`block px-3 py-2 rounded-md transition-colors ${active === "faq" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
                 ❓ FAQ
