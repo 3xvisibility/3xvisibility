@@ -368,6 +368,104 @@ const INTEGRATIONS: Integration[] = [
   },
 ];
 
+interface ConnectField {
+  label: string;
+  desc: string;
+}
+
+interface ConnectTutorial {
+  id: string;
+  name: string;
+  icon: React.ElementType;
+  intro: string;
+  fields: ConnectField[];
+  permissions: string[];
+  test: string[];
+  troubleshoot?: string[];
+}
+
+const CONNECT_TUTORIALS: ConnectTutorial[] = [
+  {
+    id: "connect-wordpress",
+    name: "Connect WordPress (self-hosted)",
+    icon: Globe,
+    intro: "Publish and sync pages to your own WordPress site using a secure Application Password. Works with WordPress 5.6+ over HTTPS.",
+    fields: [
+      { label: "Site URL", desc: "Your full site address, e.g. https://yoursite.com — include https:// and the www prefix only if your site uses it." },
+      { label: "Username", desc: "The WordPress admin/editor username the pages will be published as." },
+      { label: "Application Password", desc: "A dedicated password (not your login password). Create it in WordPress: Users → Profile → Application Passwords → enter a name → Add New." },
+      { label: "Connector plugin", desc: "Install & activate the 3XVISIBILITY WordPress connector plugin for best publishing fidelity (Elementor, critical CSS, media)." },
+    ],
+    permissions: [
+      "The account must have Editor or Administrator role to create and update pages.",
+      "Pretty permalinks must be enabled (Settings → Permalinks → anything except 'Plain') so the REST API works.",
+      "The site must be served over HTTPS — Application Passwords are disabled on plain HTTP.",
+    ],
+    test: [
+      "Go to Websites → + Add Website → choose WordPress.",
+      "Fill in Site URL, Username and Application Password.",
+      "Click 'Test Connection'.",
+      "A green tick means it worked — click Save. Content from the site is then pulled in automatically.",
+    ],
+    troubleshoot: [
+      "SSL / SNI error → check whether the URL needs (or must drop) the www prefix; if it persists, contact your host.",
+      "'rest_no_route' error → enable pretty permalinks in WordPress.",
+      "401 Unauthorized → regenerate the Application Password and make sure you copied it without spaces.",
+    ],
+  },
+  {
+    id: "connect-shopify",
+    name: "Connect Shopify",
+    icon: Store,
+    intro: "Connect your Shopify store with a one-click OAuth flow — no manual API keys to copy. Once connected you can sync products, run bulk SEO and publish pages.",
+    fields: [
+      { label: "Store domain", desc: "Your myshopify domain, e.g. your-store.myshopify.com (used to start the OAuth handshake)." },
+      { label: "Connect button", desc: "Click 'Connect Shopify' — you're redirected to Shopify to log in and approve access. No keys are entered by hand." },
+    ],
+    permissions: [
+      "You must be the store owner or a staff account with app-install permission.",
+      "On the Shopify approval screen, grant access to Products and Content so the app can read/write product and page data.",
+      "Access is per-user and revocable at any time from Shopify → Settings → Apps and sales channels.",
+    ],
+    test: [
+      "Go to Websites → + Add Website → choose Shopify (or open the Shopify guide page).",
+      "Enter your .myshopify.com domain and click 'Connect Shopify'.",
+      "Approve the requested permissions on Shopify's screen.",
+      "You're returned to the app with a connected status — products appear under Website Content once synced.",
+    ],
+    troubleshoot: [
+      "Redirect fails or 'app not found' → confirm the store domain is spelled correctly and ends in .myshopify.com.",
+      "Permissions error later → reconnect and make sure Products & Content scopes are approved.",
+    ],
+  },
+  {
+    id: "connect-gsc",
+    name: "Connect Google Search Console",
+    icon: Search,
+    intro: "Connect Google Search Console to submit generated pages to Google and monitor indexing. Uses a Google service account with access to your verified property.",
+    fields: [
+      { label: "Property (site URL)", desc: "The exact verified property from Search Console — either a Domain property (sc-domain:example.com) or a URL-prefix (https://example.com/). Pick it from the list; don't type a random URL." },
+      { label: "Service account JSON", desc: "The credentials key file for a Google Cloud service account. Paste/upload it in Websites settings — it is stored securely and never shown in the browser." },
+    ],
+    permissions: [
+      "The property must already be verified in Google Search Console.",
+      "Add the service account email as a user on the property: Search Console → Settings → Users and permissions → Add user (Full or Owner).",
+      "Enable the 'Google Search Console API' (and Indexing API for submissions) in the Google Cloud project.",
+    ],
+    test: [
+      "Connect the Google service account under Websites / SEO settings.",
+      "Open the Indexing page — your verified properties load in the selector.",
+      "Select a property; if pages list without a 403, the connection works.",
+      "Select pages and click 'Submit for indexing' to send them to Google.",
+    ],
+    troubleshoot: [
+      "403 on a property → the service account isn't added as a user, or the property isn't verified.",
+      "Empty property list → confirm the property exists and is verified in Search Console for that Google account.",
+    ],
+  },
+];
+
+
 
 export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
@@ -421,6 +519,10 @@ export default function DocumentationPage() {
               <a href="#integrations" onClick={() => setActive("integrations")}
                 className={`block px-3 py-2 rounded-md transition-colors ${active === "integrations" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
                 🔌 Integrations
+              </a>
+              <a href="#connect-tutorials" onClick={() => setActive("connect-tutorials")}
+                className={`block px-3 py-2 rounded-md transition-colors ${active === "connect-tutorials" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
+                🔗 Connection Tutorials
               </a>
               <a href="#faq" onClick={() => setActive("faq")}
                 className={`block px-3 py-2 rounded-md transition-colors ${active === "faq" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
@@ -546,6 +648,95 @@ export default function DocumentationPage() {
                     <p className="text-sm"><span className="font-medium">How to connect: </span><span className="text-muted-foreground">{it.how}</span></p>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            {/* Connection tutorials */}
+            <section id="connect-tutorials" className="scroll-mt-24">
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                <Plug className="h-6 w-6 text-primary" /> Connection tutorials
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Full walkthroughs for connecting WordPress, Shopify and Google Search Console — input fields, permissions and how to test the connection.
+              </p>
+              <div className="space-y-6">
+                {CONNECT_TUTORIALS.map((t) => {
+                  const Icon = t.icon;
+                  return (
+                    <article key={t.id} id={t.id} className="scroll-mt-24 rounded-xl border border-border bg-card p-5 md:p-6">
+                      <header className="flex items-start gap-3 mb-3">
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-lg">{t.name}</h3>
+                          <p className="text-sm text-muted-foreground mt-0.5">{t.intro}</p>
+                        </div>
+                      </header>
+
+                      <div className="space-y-4 mt-4">
+                        {/* Input fields */}
+                        <div>
+                          <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                            Input fields
+                          </h4>
+                          <ul className="space-y-2">
+                            {t.fields.map((f, i) => (
+                              <li key={i} className="text-sm">
+                                <span className="font-semibold">{f.label}</span>
+                                <span className="text-muted-foreground"> — {f.desc}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Permissions */}
+                        <div>
+                          <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                            Permissions required
+                          </h4>
+                          <ul className="space-y-1.5">
+                            {t.permissions.map((p, i) => (
+                              <li key={i} className="flex gap-2 text-sm">
+                                <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                                <span>{p}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Test connection */}
+                        <div>
+                          <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                            Test the connection
+                          </h4>
+                          <ol className="space-y-3">
+                            {t.test.map((s, i) => (
+                              <li key={i} className="flex gap-3">
+                                <div className="flex-shrink-0 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">
+                                  {i + 1}
+                                </div>
+                                <span className="text-sm mt-0.5">{s}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+
+                        {/* Troubleshooting */}
+                        {t.troubleshoot && t.troubleshoot.length > 0 && (
+                          <div className="rounded-md bg-amber-500/5 border border-amber-500/20 p-3">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1">
+                              <AlertCircle className="h-3.5 w-3.5" /> Troubleshooting
+                            </div>
+                            <ul className="space-y-1 text-xs text-muted-foreground">
+                              {t.troubleshoot.map((tip, i) => <li key={i}>• {tip}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             </section>
 
