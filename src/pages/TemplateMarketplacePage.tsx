@@ -252,7 +252,7 @@ export default function TemplateMarketplacePage() {
         author: st.author_name || "Anonymous",
         downloads: st.downloads || 0,
         rating: avgRating,
-        ratingCount: ratings.length,
+        ratingCount: ratingCount,
         seo_title_pattern: st.seo_title_pattern,
         seo_description_pattern: st.seo_description_pattern,
         schema_type: st.schema_type,
