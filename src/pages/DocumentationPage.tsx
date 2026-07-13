@@ -2,6 +2,8 @@ import { Seo } from "@/components/Seo";
 import docsOverviewAsset from "@/assets/docs-overview.mp4.asset.json";
 import docsCampaignsAsset from "@/assets/docs-campaigns.mp4.asset.json";
 import docsCsvAsset from "@/assets/docs-csv.mp4.asset.json";
+import docsWordpressAsset from "@/assets/docs-wordpress.mp4.asset.json";
+import docsShopifyAsset from "@/assets/docs-shopify.mp4.asset.json";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
@@ -1437,6 +1439,41 @@ export default function DocumentationPage() {
                                 Watch — how CSV upload, parsing and column/keyword mapping work.
                               </figcaption>
                             </figure>
+                          )}
+
+                          {tool.id === "websites" && (
+                            <div className="mt-4 grid gap-4 md:grid-cols-2">
+                              <figure className="overflow-hidden rounded-xl border border-border bg-card">
+                                <video
+                                  src={docsWordpressAsset.url}
+                                  className="w-full aspect-video bg-background"
+                                  autoPlay
+                                  muted
+                                  loop
+                                  playsInline
+                                  controls
+                                  preload="metadata"
+                                />
+                                <figcaption className="px-4 py-2 text-xs text-muted-foreground">
+                                  Watch — connect WordPress and publish pages with an Application Password.
+                                </figcaption>
+                              </figure>
+                              <figure className="overflow-hidden rounded-xl border border-border bg-card">
+                                <video
+                                  src={docsShopifyAsset.url}
+                                  className="w-full aspect-video bg-background"
+                                  autoPlay
+                                  muted
+                                  loop
+                                  playsInline
+                                  controls
+                                  preload="metadata"
+                                />
+                                <figcaption className="px-4 py-2 text-xs text-muted-foreground">
+                                  Watch — connect Shopify via one-click OAuth and publish content.
+                                </figcaption>
+                              </figure>
+                            </div>
                           )}
 
 
