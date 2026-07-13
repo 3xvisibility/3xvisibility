@@ -2,6 +2,7 @@ import { Seo } from "@/components/Seo";
 import docsOverviewAsset from "@/assets/docs-overview.mp4.asset.json";
 import docsCampaignsAsset from "@/assets/docs-campaigns.mp4.asset.json";
 import docsCsvAsset from "@/assets/docs-csv.mp4.asset.json";
+import docsCsvMappingAsset from "@/assets/docs-csv-mapping.mp4.asset.json";
 import docsPdfExportAsset from "@/assets/docs-pdf-export.mp4.asset.json";
 import docsWordpressAsset from "@/assets/docs-wordpress.mp4.asset.json";
 import docsShopifyAsset from "@/assets/docs-shopify.mp4.asset.json";
