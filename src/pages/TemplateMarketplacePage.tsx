@@ -259,7 +259,7 @@ export default function TemplateMarketplacePage() {
         isShared: true,
       };
     });
-  }, [sharedTemplates, allRatings]);
+  }, [sharedTemplates, ratingStats]);
 
   // Merge built-in + community for "browse" tab.
   // NOTE: every template is universal — the top-level Elementor/Shopify switch
