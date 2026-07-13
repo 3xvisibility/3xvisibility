@@ -486,6 +486,29 @@ export default function DocumentationPage() {
                             ))}
                           </ol>
 
+                          {tool.guide && tool.guide.length > 0 && (
+                            <details className="mt-4 rounded-md border border-primary/20 bg-primary/5 p-3 group/guide" open>
+                              <summary className="flex items-center gap-1.5 text-xs font-semibold text-primary mb-1 cursor-pointer list-none">
+                                <BookOpen className="h-3.5 w-3.5" /> Detailed step-by-step guide
+                              </summary>
+                              <ol className="mt-3 space-y-3">
+                                {tool.guide.map((g, i) => (
+                                  <li key={i} className="flex gap-3">
+                                    <div className="flex-shrink-0 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">
+                                      {i + 1}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="text-sm font-semibold">{g.title}</div>
+                                      <div className="text-sm text-muted-foreground mt-0.5">{g.detail}</div>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ol>
+                            </details>
+                          )}
+
+
+
                           {tool.tips && tool.tips.length > 0 && (
                             <div className="mt-4 rounded-md bg-amber-500/5 border border-amber-500/20 p-3">
                               <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1">
