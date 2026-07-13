@@ -1127,6 +1127,51 @@ export default function DocumentationPage() {
           </p>
         </header>
 
+        {/* Live PDF preview */}
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-w-4xl w-[95vw] max-h-[92vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-4 w-4" /> PDF preview
+              </DialogTitle>
+              <DialogDescription>
+                Live preview of the guide with your selected sections and order
+                ({orderedSelectedIds.length}/{GUIDE_SECTIONS.length} sections). This
+                is how the pages will be laid out.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-muted/30">
+              {previewHtml ? (
+                <iframe
+                  title="PDF preview"
+                  srcDoc={previewHtml}
+                  className="w-full h-[70vh] bg-white"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-[70vh] text-sm text-muted-foreground">
+                  Select at least one section to preview.
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPreviewOpen(false)}>
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  setPreviewOpen(false);
+                  handleDownloadGuide();
+                }}
+                disabled={generating || !orderedSelectedIds.length}
+                className="gap-2"
+              >
+                <FileText className="h-4 w-4" /> Download PDF
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+
 
         <div className="grid lg:grid-cols-[240px_1fr] gap-8">
           {/* Sidebar TOC */}
