@@ -1,13 +1,13 @@
 import { Seo } from "@/components/Seo";
 import { Link } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
 import {
   LayoutDashboard, Globe, Rocket, Layers, FileText, Store, Database,
   KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
   ClipboardCheck, Search, Gift, CreditCard, Settings, Users,
   ArrowRight, BookOpen, CheckCircle2, Lightbulb, AlertCircle,
-  Sparkles, SlidersHorizontal, Link2, Plug, HelpCircle, Loader2, GripVertical,
+  Sparkles, SlidersHorizontal, Link2, Plug, HelpCircle, Loader2, GripVertical, Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { LandingNav } from "@/components/landing/LandingNav";
@@ -21,6 +21,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface GuideStep {
   title: string;
@@ -712,7 +720,7 @@ const GUIDE_PRESETS: GuidePreset[] = [
   },
 ];
 
-function buildAndDownloadGuide(selectedIds?: string[]) {
+function buildGuideHtml(selectedIds?: string[], forPrint = true): string {
   const li = (items: string[]) =>
     `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
 
@@ -848,9 +856,14 @@ function buildAndDownloadGuide(selectedIds?: string[]) {
       </div>
       ${tocHtml}
       ${sectionsHtml}
-      <script>window.onload=function(){setTimeout(function(){window.print();},400);};</script>
+      ${forPrint ? '<script>window.onload=function(){setTimeout(function(){window.print();},400);};</script>' : ''}
     </body></html>`;
 
+  return html;
+}
+
+function buildAndDownloadGuide(selectedIds?: string[]) {
+  const html = buildGuideHtml(selectedIds, true);
   const w = window.open("", "_blank");
   if (!w) {
     const blob = new Blob([html], { type: "text/html" });
@@ -880,6 +893,7 @@ export default function DocumentationPage() {
   );
   const [activePreset, setActivePreset] = useState<PresetId>("all");
   const [dragId, setDragId] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
   usePageAutoTranslate(pageRef, [active]);
 
@@ -915,6 +929,16 @@ export default function DocumentationPage() {
   // Sections ordered for export: custom drag order, filtered to selected.
   const orderedSelectedIds = sectionOrder.filter((id) =>
     selectedSections.includes(id)
+  );
+
+  // Live preview HTML — rebuilt whenever the selection or order changes.
+  const previewHtml = useMemo(
+    () =>
+      orderedSelectedIds.length
+        ? buildGuideHtml(orderedSelectedIds, false)
+        : "",
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [orderedSelectedIds.join("|")]
   );
 
   const handleDownloadGuide = async () => {
@@ -985,6 +1009,21 @@ export default function DocumentationPage() {
               ) : (
                 <><FileText className="h-4 w-4" /> Download Quickstart Guide (PDF)</>
               )}
+            </Button>
+            <Button
+              onClick={() => {
+                if (!selectedSections.length) {
+                  toast.error("Select at least one section to preview.");
+                  return;
+                }
+                setPreviewOpen(true);
+              }}
+              variant="outline"
+              size="lg"
+              className="gap-2"
+              disabled={generating}
+            >
+              <Eye className="h-4 w-4" /> Preview
             </Button>
             <Popover>
               <PopoverTrigger asChild>
@@ -1087,6 +1126,51 @@ export default function DocumentationPage() {
             Opens a printable version — choose "Save as PDF" in the print dialog.
           </p>
         </header>
+
+        {/* Live PDF preview */}
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-w-4xl w-[95vw] max-h-[92vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-4 w-4" /> PDF preview
+              </DialogTitle>
+              <DialogDescription>
+                Live preview of the guide with your selected sections and order
+                ({orderedSelectedIds.length}/{GUIDE_SECTIONS.length} sections). This
+                is how the pages will be laid out.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-muted/30">
+              {previewHtml ? (
+                <iframe
+                  title="PDF preview"
+                  srcDoc={previewHtml}
+                  className="w-full h-[70vh] bg-white"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-[70vh] text-sm text-muted-foreground">
+                  Select at least one section to preview.
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPreviewOpen(false)}>
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  setPreviewOpen(false);
+                  handleDownloadGuide();
+                }}
+                disabled={generating || !orderedSelectedIds.length}
+                className="gap-2"
+              >
+                <FileText className="h-4 w-4" /> Download PDF
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
 
         <div className="grid lg:grid-cols-[240px_1fr] gap-8">
