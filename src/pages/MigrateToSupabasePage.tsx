@@ -227,15 +227,55 @@ export default function MigrateToSupabasePage() {
 
     const report: NonNullable<typeof schemaReport> = [];
 
+    // Fetch PostgREST OpenAPI spec once so we know each target column's
+    // default value and nullability. Swagger 2.0 shape: definitions[table].properties[col]
+    // → { format, default, description }, plus required[] listing NOT NULL columns.
+    type OpenApiCol = { default?: string; nullable: boolean; format?: string };
+    const targetInfoByTable: Record<string, Record<string, OpenApiCol>> = {};
+    try {
+      const res = await fetch(`${targetUrl.replace(/\/$/, "")}/rest/v1/`, {
+        headers: { apikey: targetKey, Authorization: `Bearer ${targetKey}` },
+      });
+      if (res.ok) {
+        const spec = (await res.json()) as {
+          definitions?: Record<
+            string,
+            {
+              required?: string[];
+              properties?: Record<
+                string,
+                { default?: unknown; format?: string }
+              >;
+            }
+          >;
+        };
+        for (const [tbl, def] of Object.entries(spec.definitions || {})) {
+          const req = new Set(def.required || []);
+          const cols: Record<string, OpenApiCol> = {};
+          for (const [col, meta] of Object.entries(def.properties || {})) {
+            cols[col] = {
+              default: meta.default !== undefined ? String(meta.default) : undefined,
+              nullable: !req.has(col),
+              format: meta.format,
+            };
+          }
+          targetInfoByTable[tbl] = cols;
+        }
+      }
+    } catch {
+      // Non-fatal — mapping UI just won't show defaults.
+    }
+
     for (const name of chosen) {
+      const targetInfo = targetInfoByTable[name] || {};
       try {
         const { data: srcRow, error: srcErr } = await source.from(name).select("*").limit(1);
         if (srcErr) {
-          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], error: `source: ${srcErr.message}` });
+          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], targetInfo, error: `source: ${srcErr.message}` });
           continue;
         }
         if (!srcRow || srcRow.length === 0) {
-          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], note: "source empty — skipped" });
+          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], targetInfo, note: "source empty — skipped" });
           continue;
         }
         const srcKeys = Object.keys(srcRow[0] as Record<string, unknown>);
@@ -263,16 +303,19 @@ export default function MigrateToSupabasePage() {
           remaining = remaining.filter((c) => c !== bad);
         }
 
-        // Sample target for extra columns (target has cols source doesn't).
-        let extra: string[] = [];
-        const { data: tgtRow } = await target.from(name).select("*").limit(1);
-        if (tgtRow && tgtRow.length > 0) {
-          const tgtKeys = Object.keys(tgtRow[0] as Record<string, unknown>);
+        // Prefer OpenAPI's column list when available — richer than sampling one row.
+        const openApiCols = Object.keys(targetInfo);
+        let extra: string[];
+        let targetCols: string[];
+        if (openApiCols.length > 0) {
+          extra = openApiCols.filter((k) => !srcKeys.includes(k));
+          targetCols = [...openApiCols].sort();
+        } else {
+          const { data: tgtRow } = await target.from(name).select("*").limit(1);
+          const tgtKeys = tgtRow && tgtRow.length > 0 ? Object.keys(tgtRow[0] as Record<string, unknown>) : [];
           extra = tgtKeys.filter((k) => !srcKeys.includes(k));
+          targetCols = [...srcKeys.filter((c) => !missing.includes(c)), ...extra].sort();
         }
-
-        // Best-effort target column list = shared source cols + extras.
-        const targetCols = [...srcKeys.filter((c) => !missing.includes(c)), ...extra].sort();
 
         report.push({
           name,
@@ -280,6 +323,7 @@ export default function MigrateToSupabasePage() {
           extra,
           sourceCols: srcKeys,
           targetCols,
+          targetInfo,
           error: probeError ?? undefined,
         });
       } catch (e) {
@@ -289,6 +333,7 @@ export default function MigrateToSupabasePage() {
           extra: [],
           sourceCols: [],
           targetCols: [],
+          targetInfo,
           error: e instanceof Error ? e.message : String(e),
         });
       }
