@@ -694,9 +694,19 @@ export default function MigrateToSupabasePage() {
                           return (
                             <div key={r.name} className="flex flex-wrap items-start gap-2 border-b last:border-0 py-1">
                               <span className="font-mono min-w-[160px]">{r.name}</span>
-                              {ok && !r.note && <span className="text-emerald-600">✓ matches</span>}
+                              {ok && !r.note && !r.pkMismatch && <span className="text-emerald-600">✓ matches</span>}
                               {r.note && <span className="text-muted-foreground">{r.note}</span>}
                               {r.error && <span className="text-destructive">{r.error}</span>}
+                              {r.pkMismatch && (
+                                <span className="basis-full text-destructive">
+                                  🔑 primary-key mismatch — {r.pkMismatch}. Migration will skip this table.
+                                </span>
+                              )}
+                              {!r.pkMismatch && (r.sourcePk.length > 0 || r.targetPk.length > 0) && (
+                                <span className="text-muted-foreground">
+                                  🔑 PK: {r.sourcePk.join(", ") || "—"}
+                                </span>
+                              )}
                               {r.missing.length > 0 && (
                                 <span className="text-destructive">
                                   missing in target: {r.missing.join(", ")}
