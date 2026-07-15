@@ -111,8 +111,20 @@ export default function MigrateToSupabasePage() {
   const [done, setDone] = useState(false);
   const [schemaChecking, setSchemaChecking] = useState(false);
   const [schemaReport, setSchemaReport] = useState<
-    Array<{ name: string; missing: string[]; extra: string[]; note?: string; error?: string }> | null
+    Array<{
+      name: string;
+      missing: string[];
+      extra: string[];
+      sourceCols: string[];
+      targetCols: string[];
+      note?: string;
+      error?: string;
+    }> | null
   >(null);
+  // mappings[table][sourceColumn] = targetColumn | "__drop__"
+  const [mappings, setMappings] = useState<Record<string, Record<string, string>>>({});
+
+  const DROP = "__drop__";
 
   const allTables = () => {
     const custom = customTables.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
