@@ -124,7 +124,7 @@ export default function MigrateToSupabasePage() {
 
     let from = 0;
     let total = 0;
-    // paginate through source
+    let skippedBad = 0;
     while (true) {
       const { data, error } = await source
         .from(name)
@@ -136,26 +136,53 @@ export default function MigrateToSupabasePage() {
       }
       if (!data || data.length === 0) break;
 
+      // Guard: drop empty rows and rows missing a primary key value so we
+      // don't hit "null value in column id violates not-null constraint"
+      // when source rows don't line up with the target schema.
+      const clean = (data as Record<string, unknown>[]).filter((row) => {
+        if (!row || typeof row !== "object") return false;
+        const keys = Object.keys(row);
+        if (keys.length === 0) return false;
+        const hasAnyValue = keys.some((k) => row[k] !== null && row[k] !== undefined);
+        if (!hasAnyValue) return false;
+        if ("id" in row && (row.id === null || row.id === undefined || row.id === "")) return false;
+        return true;
+      });
+      skippedBad += data.length - clean.length;
+
       onUpdate({ state: "writing", read: from + data.length });
 
-      const { error: upErr } = await target.from(name).upsert(data, {
-        onConflict: "id",
-        ignoreDuplicates: false,
-      });
-      if (upErr) {
-        // fallback to insert without upsert if no id column
-        const { error: insErr } = await target.from(name).insert(data);
-        if (insErr) {
-          onUpdate({ state: "error", error: `write: ${upErr.message}` });
+      if (clean.length > 0) {
+        const hasIdColumn = "id" in (clean[0] as Record<string, unknown>);
+        let writeError: string | null = null;
+        if (hasIdColumn) {
+          const { error: upErr } = await target.from(name).upsert(clean, {
+            onConflict: "id",
+            ignoreDuplicates: false,
+          });
+          if (upErr) writeError = upErr.message;
+        } else {
+          const { error: insErr } = await target.from(name).insert(clean);
+          if (insErr) writeError = insErr.message;
+        }
+        if (writeError) {
+          onUpdate({
+            state: "error",
+            error: `write: ${writeError}${skippedBad ? ` (skipped ${skippedBad} empty rows)` : ""}`,
+          });
           return;
         }
+        total += clean.length;
+        onUpdate({ written: total });
       }
-      total += data.length;
-      onUpdate({ written: total });
+
       if (data.length < BATCH) break;
       from += BATCH;
     }
-    onUpdate({ state: "done" });
+    onUpdate({
+      state: "done",
+      error: skippedBad > 0 ? `skipped ${skippedBad} empty/keyless rows` : undefined,
+    });
   };
 
   const runMigration = async () => {
