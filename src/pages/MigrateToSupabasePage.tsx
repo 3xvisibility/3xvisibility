@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Loader2, Database, ShieldAlert, Play } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Loader2, Database, ShieldAlert, Play, AlertTriangle, SearchCheck } from "lucide-react";
 
 /**
  * Cloud → own Supabase data-migration wizard.
@@ -102,6 +102,10 @@ export default function MigrateToSupabasePage() {
   const [statuses, setStatuses] = useState<TableStatus[]>([]);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
+  const [schemaChecking, setSchemaChecking] = useState(false);
+  const [schemaReport, setSchemaReport] = useState<
+    Array<{ name: string; missing: string[]; extra: string[]; note?: string; error?: string }> | null
+  >(null);
 
   const allTables = () => {
     const custom = customTables.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
@@ -184,6 +188,81 @@ export default function MigrateToSupabasePage() {
       error: skippedBad > 0 ? `skipped ${skippedBad} empty/keyless rows` : undefined,
     });
   };
+
+  const checkSchema = async () => {
+    setSchemaChecking(true);
+    setSchemaReport(null);
+    const chosen = allTables().filter((t) => selected[t]);
+    const source = createClient(sourceUrl, sourceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const target = createClient(targetUrl, targetKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const report: Array<{ name: string; missing: string[]; extra: string[]; note?: string; error?: string }> = [];
+
+    for (const name of chosen) {
+      try {
+        const { data: srcRow, error: srcErr } = await source.from(name).select("*").limit(1);
+        if (srcErr) {
+          report.push({ name, missing: [], extra: [], error: `source: ${srcErr.message}` });
+          continue;
+        }
+        if (!srcRow || srcRow.length === 0) {
+          report.push({ name, missing: [], extra: [], note: "source empty — skipped" });
+          continue;
+        }
+        const srcKeys = Object.keys(srcRow[0] as Record<string, unknown>);
+
+        // Probe target: iteratively drop unknown columns based on PostgREST 42703 errors.
+        const missing: string[] = [];
+        let remaining = [...srcKeys];
+        for (let i = 0; i < 60 && remaining.length > 0; i++) {
+          const { error: tgtErr } = await target
+            .from(name)
+            .select(remaining.join(","))
+            .limit(0);
+          if (!tgtErr) break;
+          const msg = tgtErr.message || "";
+          const m =
+            msg.match(/column\s+"?([\w.]+)"?\s+does not exist/i) ||
+            msg.match(/column\s+([\w.]+)\s+of relation/i);
+          if (!m) {
+            report.push({ name, missing, extra: [], error: `target: ${msg}` });
+            remaining = [];
+            break;
+          }
+          const bad = m[1].split(".").pop() as string;
+          missing.push(bad);
+          remaining = remaining.filter((c) => c !== bad);
+        }
+
+        // Sample target for extra columns (target has cols source doesn't) — informational only.
+        let extra: string[] = [];
+        const { data: tgtRow } = await target.from(name).select("*").limit(1);
+        if (tgtRow && tgtRow.length > 0) {
+          const tgtKeys = Object.keys(tgtRow[0] as Record<string, unknown>);
+          extra = tgtKeys.filter((k) => !srcKeys.includes(k));
+        }
+
+        report.push({ name, missing, extra });
+      } catch (e) {
+        report.push({
+          name,
+          missing: [],
+          extra: [],
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }
+
+    setSchemaReport(report);
+    setSchemaChecking(false);
+  };
+
+  const hasBlockingSchemaIssues =
+    !!schemaReport && schemaReport.some((r) => r.missing.length > 0 || r.error);
 
   const runMigration = async () => {
     const chosen = allTables().filter((t) => selected[t]);
@@ -380,8 +459,15 @@ export default function MigrateToSupabasePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Button onClick={runMigration} disabled={running}>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" onClick={checkSchema} disabled={schemaChecking || running}>
+                  {schemaChecking ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking schema…</>
+                  ) : (
+                    <><SearchCheck className="mr-2 h-4 w-4" /> Verify schema</>
+                  )}
+                </Button>
+                <Button onClick={runMigration} disabled={running || schemaChecking}>
                   {running ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Running…</>
                   ) : (
@@ -394,6 +480,53 @@ export default function MigrateToSupabasePage() {
                   </Button>
                 )}
               </div>
+
+              {schemaReport && (
+                <Alert variant={hasBlockingSchemaIssues ? "destructive" : "default"}>
+                  {hasBlockingSchemaIssues ? (
+                    <AlertTriangle className="h-4 w-4" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  )}
+                  <AlertTitle>
+                    {hasBlockingSchemaIssues
+                      ? "Schema mismatch detected"
+                      : "Schema check passed"}
+                  </AlertTitle>
+                  <AlertDescription>
+                    <div className="mt-2 space-y-1 max-h-64 overflow-auto text-xs">
+                      {schemaReport.map((r) => {
+                        const ok = r.missing.length === 0 && !r.error;
+                        return (
+                          <div key={r.name} className="flex flex-wrap items-start gap-2 border-b last:border-0 py-1">
+                            <span className="font-mono min-w-[160px]">{r.name}</span>
+                            {ok && !r.note && <span className="text-emerald-600">✓ matches</span>}
+                            {r.note && <span className="text-muted-foreground">{r.note}</span>}
+                            {r.error && <span className="text-destructive">{r.error}</span>}
+                            {r.missing.length > 0 && (
+                              <span className="text-destructive">
+                                missing in target: {r.missing.join(", ")}
+                              </span>
+                            )}
+                            {r.extra.length > 0 && (
+                              <span className="text-muted-foreground">
+                                extra in target: {r.extra.join(", ")}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {hasBlockingSchemaIssues && (
+                      <p className="mt-2 text-xs">
+                        Run <code>supabase db push</code> against your target project to create the
+                        missing columns before starting the migration, or de-select the affected
+                        tables in Step 3.
+                      </p>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {statuses.length > 0 && (
                 <div className="space-y-1 max-h-[500px] overflow-auto rounded-md border p-2">
