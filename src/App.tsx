@@ -50,6 +50,7 @@ import SeoAnalysisHarnessPage from "./pages/SeoAnalysisHarnessPage";
 import WpControlPage from "./pages/WpControlPage";
 import NotFound from "./pages/NotFound";
 import SupabaseConnectionTestPage from "./pages/SupabaseConnectionTestPage";
+import MigrateToSupabasePage from "./pages/MigrateToSupabasePage";
 import ShopifyCallbackPage from "./pages/ShopifyCallbackPage";
 import ShopifyOAuthLaunchPage from "./pages/ShopifyOAuthLaunchPage";
 import AboutPage from "./pages/AboutPage";
@@ -280,6 +281,7 @@ const App = () => {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/docs" element={<DocumentationPage />} />
             <Route path="/supabase-test" element={<SupabaseConnectionTestPage />} />
+            <Route path="/migrate-to-supabase" element={<MigrateToSupabasePage />} />
             <Route path="/guides/wordpress" element={<WordPressGuidePage />} />
             <Route path="/guides/shopify" element={<ShopifyGuidePage />} />
             <Route path="/about" element={<AboutPage />} />
