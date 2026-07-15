@@ -639,9 +639,30 @@ export default function MigrateToSupabasePage() {
                                 </span>
                               )}
                               {r.extra.length > 0 && (
-                                <span className="text-muted-foreground">
-                                  extra in target: {r.extra.join(", ")}
-                                </span>
+                                <div className="basis-full text-muted-foreground">
+                                  <span className="font-medium">extra in target</span> (source has no value → target default fills these):
+                                  <ul className="ml-4 mt-1 space-y-0.5">
+                                    {r.extra.map((c) => {
+                                      const info = r.targetInfo[c];
+                                      const fallback = info
+                                        ? info.default !== undefined
+                                          ? `default: ${info.default}`
+                                          : info.nullable
+                                            ? "NULL"
+                                            : "⚠ required, no default"
+                                        : "unknown";
+                                      const willFail = info && info.default === undefined && !info.nullable;
+                                      return (
+                                        <li key={c} className={willFail ? "text-destructive" : ""}>
+                                          <code>{c}</code>
+                                          {info?.format ? ` · ${info.format}` : ""}
+                                          {" → "}
+                                          {fallback}
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
                               )}
                             </div>
                           );
