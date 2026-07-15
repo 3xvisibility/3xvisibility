@@ -102,6 +102,10 @@ export default function MigrateToSupabasePage() {
   const [statuses, setStatuses] = useState<TableStatus[]>([]);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
+  const [schemaChecking, setSchemaChecking] = useState(false);
+  const [schemaReport, setSchemaReport] = useState<
+    Array<{ name: string; missing: string[]; extra: string[]; note?: string; error?: string }> | null
+  >(null);
 
   const allTables = () => {
     const custom = customTables.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
