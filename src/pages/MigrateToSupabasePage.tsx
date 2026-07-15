@@ -289,11 +289,58 @@ export default function MigrateToSupabasePage() {
     }
 
     setSchemaReport(report);
+
+    // Initialize mappings for any missing source column that lacks a user choice yet.
+    // Default: identity map when a matching target column exists, else "__drop__".
+    setMappings((prev) => {
+      const next = { ...prev };
+      for (const r of report) {
+        if (r.missing.length === 0) continue;
+        const cur = { ...(next[r.name] || {}) };
+        for (const col of r.missing) {
+          if (!cur[col]) {
+            cur[col] = r.targetCols.includes(col) ? col : DROP;
+          }
+        }
+        next[r.name] = cur;
+      }
+      return next;
+    });
     setSchemaChecking(false);
   };
 
+  // Apply user column mapping to a row: rename or drop missing source columns.
+  const applyMapping = (name: string, row: Record<string, unknown>): Record<string, unknown> => {
+    const map = mappings[name];
+    if (!map) return row;
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(row)) {
+      const target = map[k];
+      if (target === undefined) {
+        out[k] = v; // no mapping entry → pass through
+      } else if (target === DROP) {
+        continue;
+      } else {
+        out[target] = v;
+      }
+    }
+    return out;
+  };
+
   const hasBlockingSchemaIssues =
-    !!schemaReport && schemaReport.some((r) => r.missing.length > 0 || r.error);
+    !!schemaReport &&
+    schemaReport.some((r) => {
+      if (r.error) return true;
+      if (r.missing.length === 0) return false;
+      const map = mappings[r.name] || {};
+      // Blocking if any missing column has no decision or target is not in target schema.
+      return r.missing.some((col) => {
+        const choice = map[col];
+        if (!choice) return true;
+        if (choice === DROP) return false;
+        return !r.targetCols.includes(choice);
+      });
+    });
 
   const runMigration = async () => {
     const chosen = allTables().filter((t) => selected[t]);
