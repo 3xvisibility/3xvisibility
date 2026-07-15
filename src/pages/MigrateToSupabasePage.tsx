@@ -121,6 +121,9 @@ export default function MigrateToSupabasePage() {
       // Undefined default with nullable=true → row will be NULL.
       // Undefined default with nullable=false → INSERT will fail without a value.
       targetInfo: Record<string, { default?: string; nullable: boolean; format?: string }>;
+      sourcePk: string[];
+      targetPk: string[];
+      pkMismatch?: string;
       note?: string;
       error?: string;
     }> | null
