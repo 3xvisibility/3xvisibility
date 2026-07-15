@@ -459,8 +459,15 @@ export default function MigrateToSupabasePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Button onClick={runMigration} disabled={running}>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" onClick={checkSchema} disabled={schemaChecking || running}>
+                  {schemaChecking ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking schema…</>
+                  ) : (
+                    <><SearchCheck className="mr-2 h-4 w-4" /> Verify schema</>
+                  )}
+                </Button>
+                <Button onClick={runMigration} disabled={running || schemaChecking}>
                   {running ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Running…</>
                   ) : (
@@ -473,6 +480,53 @@ export default function MigrateToSupabasePage() {
                   </Button>
                 )}
               </div>
+
+              {schemaReport && (
+                <Alert variant={hasBlockingSchemaIssues ? "destructive" : "default"}>
+                  {hasBlockingSchemaIssues ? (
+                    <AlertTriangle className="h-4 w-4" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  )}
+                  <AlertTitle>
+                    {hasBlockingSchemaIssues
+                      ? "Schema mismatch detected"
+                      : "Schema check passed"}
+                  </AlertTitle>
+                  <AlertDescription>
+                    <div className="mt-2 space-y-1 max-h-64 overflow-auto text-xs">
+                      {schemaReport.map((r) => {
+                        const ok = r.missing.length === 0 && !r.error;
+                        return (
+                          <div key={r.name} className="flex flex-wrap items-start gap-2 border-b last:border-0 py-1">
+                            <span className="font-mono min-w-[160px]">{r.name}</span>
+                            {ok && !r.note && <span className="text-emerald-600">✓ matches</span>}
+                            {r.note && <span className="text-muted-foreground">{r.note}</span>}
+                            {r.error && <span className="text-destructive">{r.error}</span>}
+                            {r.missing.length > 0 && (
+                              <span className="text-destructive">
+                                missing in target: {r.missing.join(", ")}
+                              </span>
+                            )}
+                            {r.extra.length > 0 && (
+                              <span className="text-muted-foreground">
+                                extra in target: {r.extra.join(", ")}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {hasBlockingSchemaIssues && (
+                      <p className="mt-2 text-xs">
+                        Run <code>supabase db push</code> against your target project to create the
+                        missing columns before starting the migration, or de-select the affected
+                        tables in Step 3.
+                      </p>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {statuses.length > 0 && (
                 <div className="space-y-1 max-h-[500px] overflow-auto rounded-md border p-2">
