@@ -219,17 +219,17 @@ export default function MigrateToSupabasePage() {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const report: Array<{ name: string; missing: string[]; extra: string[]; note?: string; error?: string }> = [];
+    const report: NonNullable<typeof schemaReport> = [];
 
     for (const name of chosen) {
       try {
         const { data: srcRow, error: srcErr } = await source.from(name).select("*").limit(1);
         if (srcErr) {
-          report.push({ name, missing: [], extra: [], error: `source: ${srcErr.message}` });
+          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], error: `source: ${srcErr.message}` });
           continue;
         }
         if (!srcRow || srcRow.length === 0) {
-          report.push({ name, missing: [], extra: [], note: "source empty — skipped" });
+          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], note: "source empty — skipped" });
           continue;
         }
         const srcKeys = Object.keys(srcRow[0] as Record<string, unknown>);
@@ -237,6 +237,7 @@ export default function MigrateToSupabasePage() {
         // Probe target: iteratively drop unknown columns based on PostgREST 42703 errors.
         const missing: string[] = [];
         let remaining = [...srcKeys];
+        let probeError: string | null = null;
         for (let i = 0; i < 60 && remaining.length > 0; i++) {
           const { error: tgtErr } = await target
             .from(name)
@@ -248,8 +249,7 @@ export default function MigrateToSupabasePage() {
             msg.match(/column\s+"?([\w.]+)"?\s+does not exist/i) ||
             msg.match(/column\s+([\w.]+)\s+of relation/i);
           if (!m) {
-            report.push({ name, missing, extra: [], error: `target: ${msg}` });
-            remaining = [];
+            probeError = `target: ${msg}`;
             break;
           }
           const bad = m[1].split(".").pop() as string;
@@ -257,7 +257,7 @@ export default function MigrateToSupabasePage() {
           remaining = remaining.filter((c) => c !== bad);
         }
 
-        // Sample target for extra columns (target has cols source doesn't) — informational only.
+        // Sample target for extra columns (target has cols source doesn't).
         let extra: string[] = [];
         const { data: tgtRow } = await target.from(name).select("*").limit(1);
         if (tgtRow && tgtRow.length > 0) {
@@ -265,12 +265,24 @@ export default function MigrateToSupabasePage() {
           extra = tgtKeys.filter((k) => !srcKeys.includes(k));
         }
 
-        report.push({ name, missing, extra });
+        // Best-effort target column list = shared source cols + extras.
+        const targetCols = [...srcKeys.filter((c) => !missing.includes(c)), ...extra].sort();
+
+        report.push({
+          name,
+          missing,
+          extra,
+          sourceCols: srcKeys,
+          targetCols,
+          error: probeError ?? undefined,
+        });
       } catch (e) {
         report.push({
           name,
           missing: [],
           extra: [],
+          sourceCols: [],
+          targetCols: [],
           error: e instanceof Error ? e.message : String(e),
         });
       }
