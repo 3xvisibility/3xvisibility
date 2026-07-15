@@ -50,6 +50,7 @@ import SeoAnalysisHarnessPage from "./pages/SeoAnalysisHarnessPage";
 import WpControlPage from "./pages/WpControlPage";
 import NotFound from "./pages/NotFound";
 import SupabaseConnectionTestPage from "./pages/SupabaseConnectionTestPage";
+import MigrateToSupabasePage from "./pages/MigrateToSupabasePage";
 import ShopifyCallbackPage from "./pages/ShopifyCallbackPage";
 import ShopifyOAuthLaunchPage from "./pages/ShopifyOAuthLaunchPage";
 import AboutPage from "./pages/AboutPage";
