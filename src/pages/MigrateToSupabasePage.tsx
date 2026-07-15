@@ -189,6 +189,81 @@ export default function MigrateToSupabasePage() {
     });
   };
 
+  const checkSchema = async () => {
+    setSchemaChecking(true);
+    setSchemaReport(null);
+    const chosen = allTables().filter((t) => selected[t]);
+    const source = createClient(sourceUrl, sourceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const target = createClient(targetUrl, targetKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const report: Array<{ name: string; missing: string[]; extra: string[]; note?: string; error?: string }> = [];
+
+    for (const name of chosen) {
+      try {
+        const { data: srcRow, error: srcErr } = await source.from(name).select("*").limit(1);
+        if (srcErr) {
+          report.push({ name, missing: [], extra: [], error: `source: ${srcErr.message}` });
+          continue;
+        }
+        if (!srcRow || srcRow.length === 0) {
+          report.push({ name, missing: [], extra: [], note: "source empty — skipped" });
+          continue;
+        }
+        const srcKeys = Object.keys(srcRow[0] as Record<string, unknown>);
+
+        // Probe target: iteratively drop unknown columns based on PostgREST 42703 errors.
+        const missing: string[] = [];
+        let remaining = [...srcKeys];
+        for (let i = 0; i < 60 && remaining.length > 0; i++) {
+          const { error: tgtErr } = await target
+            .from(name)
+            .select(remaining.join(","))
+            .limit(0);
+          if (!tgtErr) break;
+          const msg = tgtErr.message || "";
+          const m =
+            msg.match(/column\s+"?([\w.]+)"?\s+does not exist/i) ||
+            msg.match(/column\s+([\w.]+)\s+of relation/i);
+          if (!m) {
+            report.push({ name, missing, extra: [], error: `target: ${msg}` });
+            remaining = [];
+            break;
+          }
+          const bad = m[1].split(".").pop() as string;
+          missing.push(bad);
+          remaining = remaining.filter((c) => c !== bad);
+        }
+
+        // Sample target for extra columns (target has cols source doesn't) — informational only.
+        let extra: string[] = [];
+        const { data: tgtRow } = await target.from(name).select("*").limit(1);
+        if (tgtRow && tgtRow.length > 0) {
+          const tgtKeys = Object.keys(tgtRow[0] as Record<string, unknown>);
+          extra = tgtKeys.filter((k) => !srcKeys.includes(k));
+        }
+
+        report.push({ name, missing, extra });
+      } catch (e) {
+        report.push({
+          name,
+          missing: [],
+          extra: [],
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }
+
+    setSchemaReport(report);
+    setSchemaChecking(false);
+  };
+
+  const hasBlockingSchemaIssues =
+    !!schemaReport && schemaReport.some((r) => r.missing.length > 0 || r.error);
+
   const runMigration = async () => {
     const chosen = allTables().filter((t) => selected[t]);
     const init: TableStatus[] = chosen.map((n) => ({
