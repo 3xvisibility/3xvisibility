@@ -458,8 +458,22 @@ export default function MigrateToSupabasePage() {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
+    const pkIssueByTable: Record<string, string> = {};
+    for (const r of schemaReport || []) {
+      if (r.pkMismatch) pkIssueByTable[r.name] = r.pkMismatch;
+    }
+
     for (let i = 0; i < chosen.length; i++) {
       const name = chosen[i];
+      const pkIssue = pkIssueByTable[name];
+      if (pkIssue) {
+        setStatuses((prev) =>
+          prev.map((s, idx) =>
+            idx === i ? { ...s, state: "error", error: `blocked: ${pkIssue}` } : s
+          )
+        );
+        continue;
+      }
       await migrateTable(source, target, name, (patch) => {
         setStatuses((prev) =>
           prev.map((s, idx) => (idx === i ? { ...s, ...patch } : s))
