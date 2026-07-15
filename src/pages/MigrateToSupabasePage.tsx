@@ -162,15 +162,17 @@ export default function MigrateToSupabasePage() {
       // Guard: drop empty rows and rows missing a primary key value so we
       // don't hit "null value in column id violates not-null constraint"
       // when source rows don't line up with the target schema.
-      const clean = (data as Record<string, unknown>[]).filter((row) => {
-        if (!row || typeof row !== "object") return false;
-        const keys = Object.keys(row);
-        if (keys.length === 0) return false;
-        const hasAnyValue = keys.some((k) => row[k] !== null && row[k] !== undefined);
-        if (!hasAnyValue) return false;
-        if ("id" in row && (row.id === null || row.id === undefined || row.id === "")) return false;
-        return true;
-      });
+      const clean = (data as Record<string, unknown>[])
+        .filter((row) => {
+          if (!row || typeof row !== "object") return false;
+          const keys = Object.keys(row);
+          if (keys.length === 0) return false;
+          const hasAnyValue = keys.some((k) => row[k] !== null && row[k] !== undefined);
+          if (!hasAnyValue) return false;
+          if ("id" in row && (row.id === null || row.id === undefined || row.id === "")) return false;
+          return true;
+        })
+        .map((row) => applyMapping(name, row));
       skippedBad += data.length - clean.length;
 
       onUpdate({ state: "writing", read: from + data.length });
