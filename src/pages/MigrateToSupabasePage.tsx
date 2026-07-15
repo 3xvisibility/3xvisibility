@@ -117,6 +117,10 @@ export default function MigrateToSupabasePage() {
       extra: string[];
       sourceCols: string[];
       targetCols: string[];
+      // Per-column target metadata parsed from PostgREST's OpenAPI spec.
+      // Undefined default with nullable=true → row will be NULL.
+      // Undefined default with nullable=false → INSERT will fail without a value.
+      targetInfo: Record<string, { default?: string; nullable: boolean; format?: string }>;
       note?: string;
       error?: string;
     }> | null
