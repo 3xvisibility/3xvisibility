@@ -656,7 +656,11 @@ export default function MigrateToSupabasePage() {
                     <><SearchCheck className="mr-2 h-4 w-4" /> Verify schema</>
                   )}
                 </Button>
-                <Button onClick={runMigration} disabled={running || schemaChecking}>
+                <Button
+                  onClick={runMigration}
+                  disabled={running || schemaChecking || hasBlockingSchemaIssues}
+                  title={hasBlockingSchemaIssues ? "Resolve schema/PK issues first" : undefined}
+                >
                   {running ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Running…</>
                   ) : (
