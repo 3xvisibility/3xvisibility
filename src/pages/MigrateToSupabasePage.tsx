@@ -379,7 +379,6 @@ export default function MigrateToSupabasePage() {
         });
       } catch (e) {
         report.push(emptyRow(name, targetInfo, { error: e instanceof Error ? e.message : String(e), pkMismatch }));
-        });
       }
     }
 
