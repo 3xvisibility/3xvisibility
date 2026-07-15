@@ -1,4 +1,11 @@
 import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,8 +111,20 @@ export default function MigrateToSupabasePage() {
   const [done, setDone] = useState(false);
   const [schemaChecking, setSchemaChecking] = useState(false);
   const [schemaReport, setSchemaReport] = useState<
-    Array<{ name: string; missing: string[]; extra: string[]; note?: string; error?: string }> | null
+    Array<{
+      name: string;
+      missing: string[];
+      extra: string[];
+      sourceCols: string[];
+      targetCols: string[];
+      note?: string;
+      error?: string;
+    }> | null
   >(null);
+  // mappings[table][sourceColumn] = targetColumn | "__drop__"
+  const [mappings, setMappings] = useState<Record<string, Record<string, string>>>({});
+
+  const DROP = "__drop__";
 
   const allTables = () => {
     const custom = customTables.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
@@ -143,15 +162,17 @@ export default function MigrateToSupabasePage() {
       // Guard: drop empty rows and rows missing a primary key value so we
       // don't hit "null value in column id violates not-null constraint"
       // when source rows don't line up with the target schema.
-      const clean = (data as Record<string, unknown>[]).filter((row) => {
-        if (!row || typeof row !== "object") return false;
-        const keys = Object.keys(row);
-        if (keys.length === 0) return false;
-        const hasAnyValue = keys.some((k) => row[k] !== null && row[k] !== undefined);
-        if (!hasAnyValue) return false;
-        if ("id" in row && (row.id === null || row.id === undefined || row.id === "")) return false;
-        return true;
-      });
+      const clean = (data as Record<string, unknown>[])
+        .filter((row) => {
+          if (!row || typeof row !== "object") return false;
+          const keys = Object.keys(row);
+          if (keys.length === 0) return false;
+          const hasAnyValue = keys.some((k) => row[k] !== null && row[k] !== undefined);
+          if (!hasAnyValue) return false;
+          if ("id" in row && (row.id === null || row.id === undefined || row.id === "")) return false;
+          return true;
+        })
+        .map((row) => applyMapping(name, row));
       skippedBad += data.length - clean.length;
 
       onUpdate({ state: "writing", read: from + data.length });
@@ -200,17 +221,17 @@ export default function MigrateToSupabasePage() {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const report: Array<{ name: string; missing: string[]; extra: string[]; note?: string; error?: string }> = [];
+    const report: NonNullable<typeof schemaReport> = [];
 
     for (const name of chosen) {
       try {
         const { data: srcRow, error: srcErr } = await source.from(name).select("*").limit(1);
         if (srcErr) {
-          report.push({ name, missing: [], extra: [], error: `source: ${srcErr.message}` });
+          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], error: `source: ${srcErr.message}` });
           continue;
         }
         if (!srcRow || srcRow.length === 0) {
-          report.push({ name, missing: [], extra: [], note: "source empty — skipped" });
+          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], note: "source empty — skipped" });
           continue;
         }
         const srcKeys = Object.keys(srcRow[0] as Record<string, unknown>);
@@ -218,6 +239,7 @@ export default function MigrateToSupabasePage() {
         // Probe target: iteratively drop unknown columns based on PostgREST 42703 errors.
         const missing: string[] = [];
         let remaining = [...srcKeys];
+        let probeError: string | null = null;
         for (let i = 0; i < 60 && remaining.length > 0; i++) {
           const { error: tgtErr } = await target
             .from(name)
@@ -229,8 +251,7 @@ export default function MigrateToSupabasePage() {
             msg.match(/column\s+"?([\w.]+)"?\s+does not exist/i) ||
             msg.match(/column\s+([\w.]+)\s+of relation/i);
           if (!m) {
-            report.push({ name, missing, extra: [], error: `target: ${msg}` });
-            remaining = [];
+            probeError = `target: ${msg}`;
             break;
           }
           const bad = m[1].split(".").pop() as string;
@@ -238,7 +259,7 @@ export default function MigrateToSupabasePage() {
           remaining = remaining.filter((c) => c !== bad);
         }
 
-        // Sample target for extra columns (target has cols source doesn't) — informational only.
+        // Sample target for extra columns (target has cols source doesn't).
         let extra: string[] = [];
         const { data: tgtRow } = await target.from(name).select("*").limit(1);
         if (tgtRow && tgtRow.length > 0) {
@@ -246,23 +267,82 @@ export default function MigrateToSupabasePage() {
           extra = tgtKeys.filter((k) => !srcKeys.includes(k));
         }
 
-        report.push({ name, missing, extra });
+        // Best-effort target column list = shared source cols + extras.
+        const targetCols = [...srcKeys.filter((c) => !missing.includes(c)), ...extra].sort();
+
+        report.push({
+          name,
+          missing,
+          extra,
+          sourceCols: srcKeys,
+          targetCols,
+          error: probeError ?? undefined,
+        });
       } catch (e) {
         report.push({
           name,
           missing: [],
           extra: [],
+          sourceCols: [],
+          targetCols: [],
           error: e instanceof Error ? e.message : String(e),
         });
       }
     }
 
     setSchemaReport(report);
+
+    // Initialize mappings for any missing source column that lacks a user choice yet.
+    // Default: identity map when a matching target column exists, else "__drop__".
+    setMappings((prev) => {
+      const next = { ...prev };
+      for (const r of report) {
+        if (r.missing.length === 0) continue;
+        const cur = { ...(next[r.name] || {}) };
+        for (const col of r.missing) {
+          if (!cur[col]) {
+            cur[col] = r.targetCols.includes(col) ? col : DROP;
+          }
+        }
+        next[r.name] = cur;
+      }
+      return next;
+    });
     setSchemaChecking(false);
   };
 
+  // Apply user column mapping to a row: rename or drop missing source columns.
+  const applyMapping = (name: string, row: Record<string, unknown>): Record<string, unknown> => {
+    const map = mappings[name];
+    if (!map) return row;
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(row)) {
+      const target = map[k];
+      if (target === undefined) {
+        out[k] = v; // no mapping entry → pass through
+      } else if (target === DROP) {
+        continue;
+      } else {
+        out[target] = v;
+      }
+    }
+    return out;
+  };
+
   const hasBlockingSchemaIssues =
-    !!schemaReport && schemaReport.some((r) => r.missing.length > 0 || r.error);
+    !!schemaReport &&
+    schemaReport.some((r) => {
+      if (r.error) return true;
+      if (r.missing.length === 0) return false;
+      const map = mappings[r.name] || {};
+      // Blocking if any missing column has no decision or target is not in target schema.
+      return r.missing.some((col) => {
+        const choice = map[col];
+        if (!choice) return true;
+        if (choice === DROP) return false;
+        return !r.targetCols.includes(choice);
+      });
+    });
 
   const runMigration = async () => {
     const chosen = allTables().filter((t) => selected[t]);
@@ -482,50 +562,105 @@ export default function MigrateToSupabasePage() {
               </div>
 
               {schemaReport && (
-                <Alert variant={hasBlockingSchemaIssues ? "destructive" : "default"}>
-                  {hasBlockingSchemaIssues ? (
-                    <AlertTriangle className="h-4 w-4" />
-                  ) : (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  )}
-                  <AlertTitle>
-                    {hasBlockingSchemaIssues
-                      ? "Schema mismatch detected"
-                      : "Schema check passed"}
-                  </AlertTitle>
-                  <AlertDescription>
-                    <div className="mt-2 space-y-1 max-h-64 overflow-auto text-xs">
-                      {schemaReport.map((r) => {
-                        const ok = r.missing.length === 0 && !r.error;
-                        return (
-                          <div key={r.name} className="flex flex-wrap items-start gap-2 border-b last:border-0 py-1">
-                            <span className="font-mono min-w-[160px]">{r.name}</span>
-                            {ok && !r.note && <span className="text-emerald-600">✓ matches</span>}
-                            {r.note && <span className="text-muted-foreground">{r.note}</span>}
-                            {r.error && <span className="text-destructive">{r.error}</span>}
-                            {r.missing.length > 0 && (
-                              <span className="text-destructive">
-                                missing in target: {r.missing.join(", ")}
-                              </span>
-                            )}
-                            {r.extra.length > 0 && (
-                              <span className="text-muted-foreground">
-                                extra in target: {r.extra.join(", ")}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {hasBlockingSchemaIssues && (
-                      <p className="mt-2 text-xs">
-                        Run <code>supabase db push</code> against your target project to create the
-                        missing columns before starting the migration, or de-select the affected
-                        tables in Step 3.
-                      </p>
+                <div className="space-y-3">
+                  <Alert variant={hasBlockingSchemaIssues ? "destructive" : "default"}>
+                    {hasBlockingSchemaIssues ? (
+                      <AlertTriangle className="h-4 w-4" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                     )}
-                  </AlertDescription>
-                </Alert>
+                    <AlertTitle>
+                      {hasBlockingSchemaIssues
+                        ? "Schema mismatch — assign every missing column below"
+                        : "Schema check passed"}
+                    </AlertTitle>
+                    <AlertDescription>
+                      <div className="mt-2 space-y-1 max-h-48 overflow-auto text-xs">
+                        {schemaReport.map((r) => {
+                          const ok = r.missing.length === 0 && !r.error;
+                          return (
+                            <div key={r.name} className="flex flex-wrap items-start gap-2 border-b last:border-0 py-1">
+                              <span className="font-mono min-w-[160px]">{r.name}</span>
+                              {ok && !r.note && <span className="text-emerald-600">✓ matches</span>}
+                              {r.note && <span className="text-muted-foreground">{r.note}</span>}
+                              {r.error && <span className="text-destructive">{r.error}</span>}
+                              {r.missing.length > 0 && (
+                                <span className="text-destructive">
+                                  missing in target: {r.missing.join(", ")}
+                                </span>
+                              )}
+                              {r.extra.length > 0 && (
+                                <span className="text-muted-foreground">
+                                  extra in target: {r.extra.join(", ")}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+
+                  {schemaReport
+                    .filter((r) => r.missing.length > 0)
+                    .map((r) => {
+                      const map = mappings[r.name] || {};
+                      return (
+                        <Card key={r.name}>
+                          <CardHeader className="py-3">
+                            <CardTitle className="text-sm font-mono">
+                              Column mapping · {r.name}
+                            </CardTitle>
+                            <CardDescription className="text-xs">
+                              Rename each unmatched source column to a target column, or drop it.
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            {r.missing.map((col) => {
+                              const choice = map[col] || "";
+                              return (
+                                <div key={col} className="flex items-center gap-2 text-xs">
+                                  <span className="font-mono text-destructive min-w-[180px] truncate">
+                                    {col}
+                                  </span>
+                                  <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                  <Select
+                                    value={choice}
+                                    onValueChange={(v) =>
+                                      setMappings((prev) => ({
+                                        ...prev,
+                                        [r.name]: { ...(prev[r.name] || {}), [col]: v },
+                                      }))
+                                    }
+                                  >
+                                    <SelectTrigger className="h-8 text-xs flex-1">
+                                      <SelectValue placeholder="Choose target column…" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value={DROP}>— Drop this column —</SelectItem>
+                                      {r.targetCols.map((tc) => (
+                                        <SelectItem key={tc} value={tc}>
+                                          {tc}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              );
+                            })}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+
+                  {hasBlockingSchemaIssues && (
+                    <p className="text-xs text-muted-foreground">
+                      Assign a target column (or Drop) for every red row above, or run{" "}
+                      <code>supabase db push</code> against your target project so the columns
+                      exist.
+                    </p>
+                  )}
+                </div>
               )}
 
               {statuses.length > 0 && (
