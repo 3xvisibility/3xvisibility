@@ -281,6 +281,7 @@ const App = () => {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/docs" element={<DocumentationPage />} />
             <Route path="/supabase-test" element={<SupabaseConnectionTestPage />} />
+            <Route path="/migrate-to-supabase" element={<MigrateToSupabasePage />} />
             <Route path="/guides/wordpress" element={<WordPressGuidePage />} />
             <Route path="/guides/shopify" element={<ShopifyGuidePage />} />
             <Route path="/about" element={<AboutPage />} />
