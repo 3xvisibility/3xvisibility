@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Loader2, Database, ShieldAlert, Play } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Loader2, Database, ShieldAlert, Play, AlertTriangle, SearchCheck } from "lucide-react";
 
 /**
  * Cloud → own Supabase data-migration wizard.
