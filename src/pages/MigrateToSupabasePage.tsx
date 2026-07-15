@@ -425,6 +425,9 @@ export default function MigrateToSupabasePage() {
     !!schemaReport &&
     schemaReport.some((r) => {
       if (r.error) return true;
+      // PK mismatch is always blocking — upsert relies on matching keys and
+      // silently inserting into a table with a different PK will corrupt data.
+      if (r.pkMismatch) return true;
       if (r.missing.length === 0) return false;
       const map = mappings[r.name] || {};
       // Blocking if any missing column has no decision or target is not in target schema.
