@@ -688,33 +688,62 @@ export default function MigrateToSupabasePage() {
                           <CardContent className="space-y-2">
                             {r.missing.map((col) => {
                               const choice = map[col] || "";
+                              const chosenInfo = choice && choice !== DROP ? r.targetInfo[choice] : undefined;
+                              // What lands in the target when we Drop this source column
+                              // depends on whether the target has a same-named column requiring a default.
+                              const dropInfo = r.targetInfo[col];
+                              const dropHint = dropInfo
+                                ? dropInfo.default !== undefined
+                                  ? `will use default: ${dropInfo.default}`
+                                  : dropInfo.nullable
+                                    ? "will be NULL"
+                                    : "⚠ target requires a value — insert will fail"
+                                : "no matching target column — value discarded";
                               return (
-                                <div key={col} className="flex items-center gap-2 text-xs">
-                                  <span className="font-mono text-destructive min-w-[180px] truncate">
-                                    {col}
-                                  </span>
-                                  <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                                  <Select
-                                    value={choice}
-                                    onValueChange={(v) =>
-                                      setMappings((prev) => ({
-                                        ...prev,
-                                        [r.name]: { ...(prev[r.name] || {}), [col]: v },
-                                      }))
-                                    }
-                                  >
-                                    <SelectTrigger className="h-8 text-xs flex-1">
-                                      <SelectValue placeholder="Choose target column…" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value={DROP}>— Drop this column —</SelectItem>
-                                      {r.targetCols.map((tc) => (
-                                        <SelectItem key={tc} value={tc}>
-                                          {tc}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                <div key={col} className="space-y-1">
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <span className="font-mono text-destructive min-w-[180px] truncate">
+                                      {col}
+                                    </span>
+                                    <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                    <Select
+                                      value={choice}
+                                      onValueChange={(v) =>
+                                        setMappings((prev) => ({
+                                          ...prev,
+                                          [r.name]: { ...(prev[r.name] || {}), [col]: v },
+                                        }))
+                                      }
+                                    >
+                                      <SelectTrigger className="h-8 text-xs flex-1">
+                                        <SelectValue placeholder="Choose target column…" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value={DROP}>— Drop this column —</SelectItem>
+                                        {r.targetCols.map((tc) => (
+                                          <SelectItem key={tc} value={tc}>
+                                            {tc}
+                                            {r.targetInfo[tc]?.format ? ` · ${r.targetInfo[tc]?.format}` : ""}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="ml-[188px] text-[11px] text-muted-foreground">
+                                    {choice === DROP && <>Dropping → {dropHint}</>}
+                                    {choice && choice !== DROP && chosenInfo && (
+                                      <>
+                                        Target <code>{choice}</code>
+                                        {chosenInfo.format ? ` · ${chosenInfo.format}` : ""}
+                                        {chosenInfo.default !== undefined
+                                          ? ` · default: ${chosenInfo.default}`
+                                          : chosenInfo.nullable
+                                            ? " · nullable"
+                                            : " · required (NOT NULL)"}
+                                      </>
+                                    )}
+                                    {!choice && <>Pick a target column, or drop.</>}
+                                  </div>
                                 </div>
                               );
                             })}
