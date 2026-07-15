@@ -117,6 +117,10 @@ export default function MigrateToSupabasePage() {
       extra: string[];
       sourceCols: string[];
       targetCols: string[];
+      // Per-column target metadata parsed from PostgREST's OpenAPI spec.
+      // Undefined default with nullable=true → row will be NULL.
+      // Undefined default with nullable=false → INSERT will fail without a value.
+      targetInfo: Record<string, { default?: string; nullable: boolean; format?: string }>;
       note?: string;
       error?: string;
     }> | null
@@ -223,15 +227,55 @@ export default function MigrateToSupabasePage() {
 
     const report: NonNullable<typeof schemaReport> = [];
 
+    // Fetch PostgREST OpenAPI spec once so we know each target column's
+    // default value and nullability. Swagger 2.0 shape: definitions[table].properties[col]
+    // → { format, default, description }, plus required[] listing NOT NULL columns.
+    type OpenApiCol = { default?: string; nullable: boolean; format?: string };
+    const targetInfoByTable: Record<string, Record<string, OpenApiCol>> = {};
+    try {
+      const res = await fetch(`${targetUrl.replace(/\/$/, "")}/rest/v1/`, {
+        headers: { apikey: targetKey, Authorization: `Bearer ${targetKey}` },
+      });
+      if (res.ok) {
+        const spec = (await res.json()) as {
+          definitions?: Record<
+            string,
+            {
+              required?: string[];
+              properties?: Record<
+                string,
+                { default?: unknown; format?: string }
+              >;
+            }
+          >;
+        };
+        for (const [tbl, def] of Object.entries(spec.definitions || {})) {
+          const req = new Set(def.required || []);
+          const cols: Record<string, OpenApiCol> = {};
+          for (const [col, meta] of Object.entries(def.properties || {})) {
+            cols[col] = {
+              default: meta.default !== undefined ? String(meta.default) : undefined,
+              nullable: !req.has(col),
+              format: meta.format,
+            };
+          }
+          targetInfoByTable[tbl] = cols;
+        }
+      }
+    } catch {
+      // Non-fatal — mapping UI just won't show defaults.
+    }
+
     for (const name of chosen) {
+      const targetInfo = targetInfoByTable[name] || {};
       try {
         const { data: srcRow, error: srcErr } = await source.from(name).select("*").limit(1);
         if (srcErr) {
-          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], error: `source: ${srcErr.message}` });
+          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], targetInfo, error: `source: ${srcErr.message}` });
           continue;
         }
         if (!srcRow || srcRow.length === 0) {
-          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], note: "source empty — skipped" });
+          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], targetInfo, note: "source empty — skipped" });
           continue;
         }
         const srcKeys = Object.keys(srcRow[0] as Record<string, unknown>);
@@ -259,16 +303,19 @@ export default function MigrateToSupabasePage() {
           remaining = remaining.filter((c) => c !== bad);
         }
 
-        // Sample target for extra columns (target has cols source doesn't).
-        let extra: string[] = [];
-        const { data: tgtRow } = await target.from(name).select("*").limit(1);
-        if (tgtRow && tgtRow.length > 0) {
-          const tgtKeys = Object.keys(tgtRow[0] as Record<string, unknown>);
+        // Prefer OpenAPI's column list when available — richer than sampling one row.
+        const openApiCols = Object.keys(targetInfo);
+        let extra: string[];
+        let targetCols: string[];
+        if (openApiCols.length > 0) {
+          extra = openApiCols.filter((k) => !srcKeys.includes(k));
+          targetCols = [...openApiCols].sort();
+        } else {
+          const { data: tgtRow } = await target.from(name).select("*").limit(1);
+          const tgtKeys = tgtRow && tgtRow.length > 0 ? Object.keys(tgtRow[0] as Record<string, unknown>) : [];
           extra = tgtKeys.filter((k) => !srcKeys.includes(k));
+          targetCols = [...srcKeys.filter((c) => !missing.includes(c)), ...extra].sort();
         }
-
-        // Best-effort target column list = shared source cols + extras.
-        const targetCols = [...srcKeys.filter((c) => !missing.includes(c)), ...extra].sort();
 
         report.push({
           name,
@@ -276,6 +323,7 @@ export default function MigrateToSupabasePage() {
           extra,
           sourceCols: srcKeys,
           targetCols,
+          targetInfo,
           error: probeError ?? undefined,
         });
       } catch (e) {
@@ -285,6 +333,7 @@ export default function MigrateToSupabasePage() {
           extra: [],
           sourceCols: [],
           targetCols: [],
+          targetInfo,
           error: e instanceof Error ? e.message : String(e),
         });
       }
@@ -590,9 +639,30 @@ export default function MigrateToSupabasePage() {
                                 </span>
                               )}
                               {r.extra.length > 0 && (
-                                <span className="text-muted-foreground">
-                                  extra in target: {r.extra.join(", ")}
-                                </span>
+                                <div className="basis-full text-muted-foreground">
+                                  <span className="font-medium">extra in target</span> (source has no value → target default fills these):
+                                  <ul className="ml-4 mt-1 space-y-0.5">
+                                    {r.extra.map((c) => {
+                                      const info = r.targetInfo[c];
+                                      const fallback = info
+                                        ? info.default !== undefined
+                                          ? `default: ${info.default}`
+                                          : info.nullable
+                                            ? "NULL"
+                                            : "⚠ required, no default"
+                                        : "unknown";
+                                      const willFail = info && info.default === undefined && !info.nullable;
+                                      return (
+                                        <li key={c} className={willFail ? "text-destructive" : ""}>
+                                          <code>{c}</code>
+                                          {info?.format ? ` · ${info.format}` : ""}
+                                          {" → "}
+                                          {fallback}
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
                               )}
                             </div>
                           );
@@ -618,33 +688,62 @@ export default function MigrateToSupabasePage() {
                           <CardContent className="space-y-2">
                             {r.missing.map((col) => {
                               const choice = map[col] || "";
+                              const chosenInfo = choice && choice !== DROP ? r.targetInfo[choice] : undefined;
+                              // What lands in the target when we Drop this source column
+                              // depends on whether the target has a same-named column requiring a default.
+                              const dropInfo = r.targetInfo[col];
+                              const dropHint = dropInfo
+                                ? dropInfo.default !== undefined
+                                  ? `will use default: ${dropInfo.default}`
+                                  : dropInfo.nullable
+                                    ? "will be NULL"
+                                    : "⚠ target requires a value — insert will fail"
+                                : "no matching target column — value discarded";
                               return (
-                                <div key={col} className="flex items-center gap-2 text-xs">
-                                  <span className="font-mono text-destructive min-w-[180px] truncate">
-                                    {col}
-                                  </span>
-                                  <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                                  <Select
-                                    value={choice}
-                                    onValueChange={(v) =>
-                                      setMappings((prev) => ({
-                                        ...prev,
-                                        [r.name]: { ...(prev[r.name] || {}), [col]: v },
-                                      }))
-                                    }
-                                  >
-                                    <SelectTrigger className="h-8 text-xs flex-1">
-                                      <SelectValue placeholder="Choose target column…" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value={DROP}>— Drop this column —</SelectItem>
-                                      {r.targetCols.map((tc) => (
-                                        <SelectItem key={tc} value={tc}>
-                                          {tc}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                <div key={col} className="space-y-1">
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <span className="font-mono text-destructive min-w-[180px] truncate">
+                                      {col}
+                                    </span>
+                                    <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                    <Select
+                                      value={choice}
+                                      onValueChange={(v) =>
+                                        setMappings((prev) => ({
+                                          ...prev,
+                                          [r.name]: { ...(prev[r.name] || {}), [col]: v },
+                                        }))
+                                      }
+                                    >
+                                      <SelectTrigger className="h-8 text-xs flex-1">
+                                        <SelectValue placeholder="Choose target column…" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value={DROP}>— Drop this column —</SelectItem>
+                                        {r.targetCols.map((tc) => (
+                                          <SelectItem key={tc} value={tc}>
+                                            {tc}
+                                            {r.targetInfo[tc]?.format ? ` · ${r.targetInfo[tc]?.format}` : ""}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="ml-[188px] text-[11px] text-muted-foreground">
+                                    {choice === DROP && <>Dropping → {dropHint}</>}
+                                    {choice && choice !== DROP && chosenInfo && (
+                                      <>
+                                        Target <code>{choice}</code>
+                                        {chosenInfo.format ? ` · ${chosenInfo.format}` : ""}
+                                        {chosenInfo.default !== undefined
+                                          ? ` · default: ${chosenInfo.default}`
+                                          : chosenInfo.nullable
+                                            ? " · nullable"
+                                            : " · required (NOT NULL)"}
+                                      </>
+                                    )}
+                                    {!choice && <>Pick a target column, or drop.</>}
+                                  </div>
                                 </div>
                               );
                             })}
