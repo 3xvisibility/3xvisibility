@@ -121,6 +121,9 @@ export default function MigrateToSupabasePage() {
       // Undefined default with nullable=true → row will be NULL.
       // Undefined default with nullable=false → INSERT will fail without a value.
       targetInfo: Record<string, { default?: string; nullable: boolean; format?: string }>;
+      sourcePk: string[];
+      targetPk: string[];
+      pkMismatch?: string;
       note?: string;
       error?: string;
     }> | null
@@ -227,55 +230,100 @@ export default function MigrateToSupabasePage() {
 
     const report: NonNullable<typeof schemaReport> = [];
 
-    // Fetch PostgREST OpenAPI spec once so we know each target column's
-    // default value and nullability. Swagger 2.0 shape: definitions[table].properties[col]
-    // → { format, default, description }, plus required[] listing NOT NULL columns.
+    // Fetch PostgREST OpenAPI specs (source + target) so we know each column's
+    // default/nullability and — critically — which columns form the primary key.
+    // PostgREST marks PK columns in each property's `description` with `<pk/>`.
     type OpenApiCol = { default?: string; nullable: boolean; format?: string };
-    const targetInfoByTable: Record<string, Record<string, OpenApiCol>> = {};
-    try {
-      const res = await fetch(`${targetUrl.replace(/\/$/, "")}/rest/v1/`, {
-        headers: { apikey: targetKey, Authorization: `Bearer ${targetKey}` },
-      });
-      if (res.ok) {
-        const spec = (await res.json()) as {
-          definitions?: Record<
+    type PgrstSpec = {
+      definitions?: Record<
+        string,
+        {
+          required?: string[];
+          properties?: Record<
             string,
-            {
-              required?: string[];
-              properties?: Record<
-                string,
-                { default?: unknown; format?: string }
-              >;
-            }
+            { default?: unknown; format?: string; description?: string }
           >;
-        };
-        for (const [tbl, def] of Object.entries(spec.definitions || {})) {
-          const req = new Set(def.required || []);
-          const cols: Record<string, OpenApiCol> = {};
-          for (const [col, meta] of Object.entries(def.properties || {})) {
-            cols[col] = {
-              default: meta.default !== undefined ? String(meta.default) : undefined,
-              nullable: !req.has(col),
-              format: meta.format,
-            };
-          }
-          targetInfoByTable[tbl] = cols;
         }
+      >;
+    };
+    const fetchSpec = async (url: string, key: string): Promise<PgrstSpec> => {
+      try {
+        const res = await fetch(`${url.replace(/\/$/, "")}/rest/v1/`, {
+          headers: { apikey: key, Authorization: `Bearer ${key}` },
+        });
+        if (!res.ok) return {};
+        return (await res.json()) as PgrstSpec;
+      } catch {
+        return {};
       }
-    } catch {
-      // Non-fatal — mapping UI just won't show defaults.
-    }
+    };
+    const parseColumns = (spec: PgrstSpec) => {
+      const cols: Record<string, Record<string, OpenApiCol>> = {};
+      const pks: Record<string, string[]> = {};
+      for (const [tbl, def] of Object.entries(spec.definitions || {})) {
+        const req = new Set(def.required || []);
+        const tblCols: Record<string, OpenApiCol> = {};
+        const tblPk: string[] = [];
+        for (const [col, meta] of Object.entries(def.properties || {})) {
+          tblCols[col] = {
+            default: meta.default !== undefined ? String(meta.default) : undefined,
+            nullable: !req.has(col),
+            format: meta.format,
+          };
+          if (typeof meta.description === "string" && meta.description.includes("<pk/>")) {
+            tblPk.push(col);
+          }
+        }
+        cols[tbl] = tblCols;
+        pks[tbl] = tblPk;
+      }
+      return { cols, pks };
+    };
+
+    const [targetSpec, sourceSpec] = await Promise.all([
+      fetchSpec(targetUrl, targetKey),
+      fetchSpec(sourceUrl, sourceKey),
+    ]);
+    const { cols: targetInfoByTable, pks: targetPkByTable } = parseColumns(targetSpec);
+    const { pks: sourcePkByTable } = parseColumns(sourceSpec);
+
+    const emptyRow = (name: string, targetInfo: Record<string, OpenApiCol>, extras: Partial<NonNullable<typeof schemaReport>[number]>) => ({
+      name,
+      missing: [] as string[],
+      extra: [] as string[],
+      sourceCols: [] as string[],
+      targetCols: [] as string[],
+      targetInfo,
+      sourcePk: sourcePkByTable[name] || [],
+      targetPk: targetPkByTable[name] || [],
+      ...extras,
+    });
 
     for (const name of chosen) {
       const targetInfo = targetInfoByTable[name] || {};
+      const sourcePk = sourcePkByTable[name] || [];
+      const targetPk = targetPkByTable[name] || [];
+      const sortedSrcPk = [...sourcePk].sort();
+      const sortedTgtPk = [...targetPk].sort();
+      let pkMismatch: string | undefined;
+      if (sortedSrcPk.length === 0 && sortedTgtPk.length === 0) {
+        pkMismatch = "no primary key on either side";
+      } else if (sortedSrcPk.length === 0) {
+        pkMismatch = `source has no primary key (target: ${targetPk.join(", ")})`;
+      } else if (sortedTgtPk.length === 0) {
+        pkMismatch = `target has no primary key (source: ${sourcePk.join(", ")})`;
+      } else if (sortedSrcPk.join(",") !== sortedTgtPk.join(",")) {
+        pkMismatch = `PK differs — source: ${sourcePk.join(", ")} · target: ${targetPk.join(", ")}`;
+      }
+
       try {
         const { data: srcRow, error: srcErr } = await source.from(name).select("*").limit(1);
         if (srcErr) {
-          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], targetInfo, error: `source: ${srcErr.message}` });
+          report.push(emptyRow(name, targetInfo, { error: `source: ${srcErr.message}`, pkMismatch }));
           continue;
         }
         if (!srcRow || srcRow.length === 0) {
-          report.push({ name, missing: [], extra: [], sourceCols: [], targetCols: [], targetInfo, note: "source empty — skipped" });
+          report.push(emptyRow(name, targetInfo, { note: "source empty — skipped", pkMismatch }));
           continue;
         }
         const srcKeys = Object.keys(srcRow[0] as Record<string, unknown>);
@@ -324,18 +372,13 @@ export default function MigrateToSupabasePage() {
           sourceCols: srcKeys,
           targetCols,
           targetInfo,
+          sourcePk,
+          targetPk,
+          pkMismatch,
           error: probeError ?? undefined,
         });
       } catch (e) {
-        report.push({
-          name,
-          missing: [],
-          extra: [],
-          sourceCols: [],
-          targetCols: [],
-          targetInfo,
-          error: e instanceof Error ? e.message : String(e),
-        });
+        report.push(emptyRow(name, targetInfo, { error: e instanceof Error ? e.message : String(e), pkMismatch }));
       }
     }
 
@@ -382,6 +425,9 @@ export default function MigrateToSupabasePage() {
     !!schemaReport &&
     schemaReport.some((r) => {
       if (r.error) return true;
+      // PK mismatch is always blocking — upsert relies on matching keys and
+      // silently inserting into a table with a different PK will corrupt data.
+      if (r.pkMismatch) return true;
       if (r.missing.length === 0) return false;
       const map = mappings[r.name] || {};
       // Blocking if any missing column has no decision or target is not in target schema.
@@ -412,8 +458,22 @@ export default function MigrateToSupabasePage() {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
+    const pkIssueByTable: Record<string, string> = {};
+    for (const r of schemaReport || []) {
+      if (r.pkMismatch) pkIssueByTable[r.name] = r.pkMismatch;
+    }
+
     for (let i = 0; i < chosen.length; i++) {
       const name = chosen[i];
+      const pkIssue = pkIssueByTable[name];
+      if (pkIssue) {
+        setStatuses((prev) =>
+          prev.map((s, idx) =>
+            idx === i ? { ...s, state: "error", error: `blocked: ${pkIssue}` } : s
+          )
+        );
+        continue;
+      }
       await migrateTable(source, target, name, (patch) => {
         setStatuses((prev) =>
           prev.map((s, idx) => (idx === i ? { ...s, ...patch } : s))
@@ -596,7 +656,11 @@ export default function MigrateToSupabasePage() {
                     <><SearchCheck className="mr-2 h-4 w-4" /> Verify schema</>
                   )}
                 </Button>
-                <Button onClick={runMigration} disabled={running || schemaChecking}>
+                <Button
+                  onClick={runMigration}
+                  disabled={running || schemaChecking || hasBlockingSchemaIssues}
+                  title={hasBlockingSchemaIssues ? "Resolve schema/PK issues first" : undefined}
+                >
                   {running ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Running…</>
                   ) : (
@@ -630,9 +694,19 @@ export default function MigrateToSupabasePage() {
                           return (
                             <div key={r.name} className="flex flex-wrap items-start gap-2 border-b last:border-0 py-1">
                               <span className="font-mono min-w-[160px]">{r.name}</span>
-                              {ok && !r.note && <span className="text-emerald-600">✓ matches</span>}
+                              {ok && !r.note && !r.pkMismatch && <span className="text-emerald-600">✓ matches</span>}
                               {r.note && <span className="text-muted-foreground">{r.note}</span>}
                               {r.error && <span className="text-destructive">{r.error}</span>}
+                              {r.pkMismatch && (
+                                <span className="basis-full text-destructive">
+                                  🔑 primary-key mismatch — {r.pkMismatch}. Migration will skip this table.
+                                </span>
+                              )}
+                              {!r.pkMismatch && (r.sourcePk.length > 0 || r.targetPk.length > 0) && (
+                                <span className="text-muted-foreground">
+                                  🔑 PK: {r.sourcePk.join(", ") || "—"}
+                                </span>
+                              )}
                               {r.missing.length > 0 && (
                                 <span className="text-destructive">
                                   missing in target: {r.missing.join(", ")}
