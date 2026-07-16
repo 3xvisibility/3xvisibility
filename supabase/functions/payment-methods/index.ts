@@ -76,18 +76,31 @@ serve(async (req) => {
         customerId = created.id;
       }
       const origin = req.headers.get("origin") ?? "";
+
+      // Respect admin-configured enabled payment methods.
+      const { data: settings } = await supabaseClient
+        .from("system_settings")
+        .select("feature_flags")
+        .eq("id", "global")
+        .maybeSingle();
+      const flags = (settings?.feature_flags || {}) as Record<string, boolean>;
+      const methods: string[] = [];
+      if (flags.pay_method_card !== false) methods.push("card");
+      if (flags.pay_method_paypal !== false) methods.push("paypal");
+      if (methods.length === 0) methods.push("card");
+
       let session;
       try {
         session = await stripe.checkout.sessions.create({
           mode: "setup",
           customer: customerId,
-          payment_method_types: ["card", "paypal"],
-          currency: "eur",
+          payment_method_types: methods as any,
+          ...(methods.includes("paypal") ? { currency: "eur" } : {}),
           success_url: `${origin}/billing?card_added=true`,
           cancel_url: `${origin}/billing`,
         });
       } catch (_e) {
-        // Fallback when PayPal is not enabled on the Stripe account
+        // Fallback when PayPal isn't enabled on the Stripe account
         session = await stripe.checkout.sessions.create({
           mode: "setup",
           customer: customerId,
