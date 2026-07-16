@@ -994,6 +994,10 @@ export default function AdminPage() {
           <SystemSettingsPanel />
         </TabsContent>
 
+        <TabsContent value="payments" className="space-y-4">
+          <AdminPaymentsPanel />
+        </TabsContent>
+
         <TabsContent value="template-sync" className="space-y-4">
           <TemplateSyncPanel />
         </TabsContent>
