@@ -246,7 +246,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `sitemap-${site.name.toLowerCase().replace(/\s+/g, "-")}.xml`;
+    a.download = `sitemap-${(site.name || "site").toLowerCase().replace(/\s+/g, "-")}.xml`;
     a.click();
     URL.revokeObjectURL(url);
   };

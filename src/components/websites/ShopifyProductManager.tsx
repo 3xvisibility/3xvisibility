@@ -264,7 +264,7 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
   };
 
   const creds = website.credentials as Record<string, string> | null;
-  const domain = creds?.shop_domain || website.url.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+  const domain = creds?.shop_domain || (website.url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

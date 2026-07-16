@@ -168,7 +168,7 @@ export default function WebsitesPage() {
   const filteredWebsites = filterType === "all" ? websites : websites.filter((s) => s.type === filterType);
 
   // Shopify-specific frontend validation
-  const normalizedShopDomain = shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+  const normalizedShopDomain = (shopDomain || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
   const shopifyDomainError = siteType === "shopify" ? validateShopifyDomain(shopDomain) : null;
   const shopifyInvalid = siteType === "shopify" && !!shopifyDomainError;
 
