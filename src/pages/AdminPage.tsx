@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play, Mail, RefreshCw, Store } from "lucide-react";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play, Mail, RefreshCw, Store, CreditCard } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
@@ -31,6 +31,7 @@ import { TemplateSyncPanel } from "@/components/admin/TemplateSyncPanel";
 import { SharedTemplatesModerationPanel } from "@/components/admin/SharedTemplatesModerationPanel";
 import { UserDetailDialog } from "@/components/admin/UserDetailDialog";
 import { EditUserProfileDialog } from "@/components/admin/EditUserProfileDialog";
+import { AdminPaymentsPanel } from "@/components/admin/AdminPaymentsPanel";
 
 import { PLAN_FEATURES } from "@/lib/plan-features";
 
@@ -945,6 +946,7 @@ export default function AdminPage() {
           <TabsTrigger value="pages" className="text-xs gap-1"><FileText className="h-3 w-3" />Pages</TabsTrigger>
           <TabsTrigger value="inbox" className="text-xs gap-1"><Mail className="h-3 w-3" />Inbox</TabsTrigger>
           <TabsTrigger value="subscriptions" className="text-xs">{t("admin.subscriptions")}</TabsTrigger>
+          <TabsTrigger value="payments" className="text-xs gap-1"><CreditCard className="h-3 w-3" />Payments</TabsTrigger>
           <TabsTrigger value="ai-credits" className="text-xs gap-1"><Zap className="h-3 w-3" />AI Credits</TabsTrigger>
           <TabsTrigger value="ai-usage" className="text-xs gap-1"><Activity className="h-3 w-3" />Usage Report</TabsTrigger>
           <TabsTrigger value="connections" className="text-xs gap-1"><AlertCircle className="h-3 w-3" />Connections</TabsTrigger>
@@ -992,6 +994,10 @@ export default function AdminPage() {
 
         <TabsContent value="settings" className="space-y-4">
           <SystemSettingsPanel />
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-4">
+          <AdminPaymentsPanel />
         </TabsContent>
 
         <TabsContent value="template-sync" className="space-y-4">
