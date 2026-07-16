@@ -31,6 +31,7 @@ import { TemplateSyncPanel } from "@/components/admin/TemplateSyncPanel";
 import { SharedTemplatesModerationPanel } from "@/components/admin/SharedTemplatesModerationPanel";
 import { UserDetailDialog } from "@/components/admin/UserDetailDialog";
 import { EditUserProfileDialog } from "@/components/admin/EditUserProfileDialog";
+import { AdminPaymentsPanel } from "@/components/admin/AdminPaymentsPanel";
 
 import { PLAN_FEATURES } from "@/lib/plan-features";
 
