@@ -121,7 +121,7 @@ checkFile(TRANSLATIONS_FILE);
 //
 // The critical prefixes are defined in scripts/i18n-critical.config.json and are
 // used only to highlight which untranslated keys are most worth filling in.
-const CONFIG_FILE = join(import.meta.dir, "i18n-critical.config.json");
+const CONFIG_FILE = join(__dirname, "i18n-critical.config.json");
 let CRITICAL_PREFIXES: string[] = ["contact.", "footer."];
 try {
   const cfg = JSON.parse(readFileSync(CONFIG_FILE, "utf-8"));
