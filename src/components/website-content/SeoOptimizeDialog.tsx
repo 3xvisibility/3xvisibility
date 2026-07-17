@@ -164,6 +164,10 @@ export function SeoOptimizeDialog({
           page_seo_description: page.seo_description || page.excerpt,
           page_seo_keywords: page.seo_keywords || [],
           instruction: instruction || undefined,
+          // When the user opts into rewriting body content, allow the backend
+          // to push the rewritten HTML to the CMS (default preserves design
+          // and would otherwise strip "content" from the request).
+          overwrite_design: selectedFields.includes("content"),
         },
       });
 
