@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import { friendlyError } from "@/lib/friendly-errors";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -348,7 +349,34 @@ export default function WebsiteContentPage() {
         </Card>
       )}
 
+      {/* Disconnected warning */}
+      {currentWebsite && currentWebsite.status !== "connected" && (
+        <Card className="border-destructive/40 bg-destructive/5">
+          <CardContent className="py-3 px-4 flex items-start gap-3 flex-wrap">
+            <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-[200px]">
+              <p className="text-sm font-medium text-destructive">
+                This site is <span className="capitalize">{currentWebsite.status}</span> — pages cannot be loaded.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                The stored credentials (Application Password / API token) are invalid, expired, or the site is unreachable.
+                Reconnect the site to refresh authentication, then reload this page.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button asChild size="sm" variant="destructive">
+                <RouterLink to="/websites">Reconnect site</RouterLink>
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => { refetchPages(); refetchProducts(); }}>
+                <RefreshCw className="h-3.5 w-3.5 mr-1" /> Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Search by URL */}
+
       <Card className="border-dashed">
         <CardContent className="py-3 px-4">
           <form
