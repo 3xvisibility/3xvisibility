@@ -141,6 +141,9 @@ Deno.serve(async (req) => {
     const preflight = (connector as { preflight?: () => Promise<unknown> }).preflight;
     if (type === "wordpress" && typeof preflight === "function") {
       const info = await preflight.call(connector);
+      if (website_id) {
+        await serviceClient.from("websites").update({ status: "connected" }).eq("id", String(website_id));
+      }
       return jsonResponse({ success: true, message: "3xVisibility WordPress Connector is ready", connector: info });
     }
     let ok = false;
@@ -153,6 +156,10 @@ Deno.serve(async (req) => {
 
     if (!ok) {
       throw new Error(`${type} connection test failed (no detail returned by provider)`);
+    }
+
+    if (website_id) {
+      await serviceClient.from("websites").update({ status: "connected" }).eq("id", String(website_id));
     }
 
     return jsonResponse({ success: true, message: `${type} connection successful` });
