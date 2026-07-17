@@ -73,6 +73,8 @@ export function SeoOptimizeDialog({
   const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords", "content"]);
   const [instruction, setInstruction] = useState("");
   const [loading, setLoading] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [applied, setApplied] = useState(false);
   const [result, setResult] = useState<{
     seo_title?: string;
     seo_description?: string;
@@ -85,6 +87,19 @@ export function SeoOptimizeDialog({
   const [copied, setCopied] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
   const [rolledBack, setRolledBack] = useState(false);
+
+  // Strip HTML → plain text for old-vs-new body preview (design HTML is huge
+  // and unreadable in a side-by-side; text-only makes the diff easy to scan).
+  const htmlToText = (html: string | null | undefined) =>
+    (html || "")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const oldBodyText = useMemo(() => htmlToText(page.content), [page.content]);
+  const newBodyText = useMemo(() => htmlToText(result?.content), [result?.content]);
 
   const handleRollback = async () => {
     setRollingBack(true);
@@ -132,6 +147,7 @@ export function SeoOptimizeDialog({
     );
   };
 
+  // Phase 1: generate the AI preview WITHOUT pushing to the connected site.
   const runOptimize = async () => {
     if (selectedFields.length === 0) {
       toast({ title: "Select fields", description: "Pick at least one field to optimize", variant: "destructive" });
@@ -140,6 +156,7 @@ export function SeoOptimizeDialog({
 
     setLoading(true);
     setResult(null);
+    setApplied(false);
     setRolledBack(false);
 
     try {
@@ -164,9 +181,9 @@ export function SeoOptimizeDialog({
           page_seo_description: page.seo_description || page.excerpt,
           page_seo_keywords: page.seo_keywords || [],
           instruction: instruction || undefined,
-          // When the user opts into rewriting body content, allow the backend
-          // to push the rewritten HTML to the CMS (default preserves design
-          // and would otherwise strip "content" from the request).
+          // Preview only — do NOT push to CMS yet. The user reviews the diff
+          // and clicks "Apply to site" to actually update the live page.
+          skip_push: true,
           overwrite_design: selectedFields.includes("content"),
         },
       });
@@ -176,24 +193,70 @@ export function SeoOptimizeDialog({
 
       setResult({
         ...data.result,
-        pushed_to_cms: data.pushed_to_cms,
-        push_error: data.push_error || undefined,
-        external_url: data.external_url,
+        pushed_to_cms: false,
       });
 
       toast({
-        title: data.pushed_to_cms ? "SEO optimized & updated on site!" : "SEO optimized!",
+        title: "Preview ready",
+        description: "Review the old vs new changes below, then click \"Apply to site\".",
+      });
+    } catch (err: any) {
+      handleApiError(err, { title: "Optimization failed" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Phase 2: push the previewed values to the connected site.
+  const applyToSite = async () => {
+    if (!result) return;
+    setApplying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("optimize-seo-content", {
+        body: {
+          website_id: websiteId,
+          page_external_id: page.id,
+          page_title: page.title,
+          page_slug: page.slug,
+          page_url: page.url,
+          page_type: page.type,
+          workspace_id: workspaceId,
+          manual_update: true,
+          // Preserve the actual live-page name — only body/SEO fields change.
+          manual_title: page.title,
+          manual_content: result.content || page.content,
+          seo_title: result.seo_title,
+          seo_description: result.seo_description,
+          seo_keywords: result.seo_keywords,
+          // We just previewed a full rewrite — publish it as-is.
+          overwrite_design: true,
+        },
+      });
+
+      if (error) throw new Error(await extractEdgeError(error, "Apply failed"));
+      if (data?.error) throw new Error(data.error);
+
+      setResult((prev) => prev && {
+        ...prev,
+        pushed_to_cms: !!data.pushed_to_cms,
+        push_error: data.push_error || undefined,
+        external_url: data.external_url,
+      });
+      setApplied(true);
+
+      toast({
+        title: data.pushed_to_cms ? "Applied to your site" : "Saved",
         description: data.pushed_to_cms
           ? "Existing page updated — same URL, no new page created."
-          : data.push_error || "Review the results below.",
+          : data.push_error || "Changes were saved locally.",
         variant: data.push_error ? "destructive" : undefined,
       });
 
       onOptimized?.();
     } catch (err: any) {
-      handleApiError(err, { title: "Optimization failed" });
+      handleApiError(err, { title: "Apply failed" });
     } finally {
-      setLoading(false);
+      setApplying(false);
     }
   };
 
@@ -212,7 +275,7 @@ export function SeoOptimizeDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setResult(null); setInstruction(""); clearSeoSnapshot(); } }}>
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setResult(null); setApplied(false); setInstruction(""); clearSeoSnapshot(); } }}>
       <DialogContent className="w-[calc(100%-1rem)] sm:max-w-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-y-auto p-3 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -279,17 +342,24 @@ export function SeoOptimizeDialog({
         />
 
         {/* Action button */}
-        <Button onClick={runOptimize} disabled={loading || selectedFields.length === 0} className="gap-2">
+        <Button onClick={runOptimize} disabled={loading || applying || selectedFields.length === 0} className="gap-2">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {loading ? "Optimizing..." : "Optimize & Update on Site"}
+          {loading ? "Generating preview..." : result ? "Regenerate preview" : "Preview changes"}
         </Button>
 
-        {/* Results */}
+        {/* Preview / Results */}
         {result && (
           <div className="space-y-3 border-t pt-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">Results</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-sm font-medium">
+                  {applied ? "Applied" : "Preview — old vs new"}
+                </p>
+                {!applied && !result.pushed_to_cms && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    Not yet applied
+                  </Badge>
+                )}
                 {result.pushed_to_cms && (
                   <Badge className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
                     <Check className="h-3 w-3 mr-1" /> Updated on site (same URL)
@@ -307,8 +377,137 @@ export function SeoOptimizeDialog({
               </Button>
             </div>
 
-            {/* Rollback — let the client revert to the previous design/text after previewing */}
-            {result.pushed_to_cms && (
+            {/* SEO Title diff */}
+            {result.seo_title && (
+              <div className="rounded-md border p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">SEO Title</span>
+                  <Badge
+                    variant={result.seo_title.length >= 30 && result.seo_title.length <= 60 ? "default" : "secondary"}
+                    className="text-[10px]"
+                  >
+                    {result.seo_title.length} chars
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="rounded border border-destructive/30 bg-destructive/5 p-2">
+                    <span className="text-[10px] uppercase tracking-wide text-destructive/80 block mb-1">Old</span>
+                    <p className="text-xs break-words">{page.seo_title || <span className="italic text-muted-foreground">(none)</span>}</p>
+                  </div>
+                  <div className="rounded border border-emerald-500/30 bg-emerald-500/5 p-2">
+                    <span className="text-[10px] uppercase tracking-wide text-emerald-600 block mb-1">New</span>
+                    <p className="text-xs font-medium break-words">{result.seo_title}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Meta Description diff */}
+            {result.seo_description && (
+              <div className="rounded-md border p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">Meta Description</span>
+                  <Badge
+                    variant={result.seo_description.length >= 120 && result.seo_description.length <= 160 ? "default" : "secondary"}
+                    className="text-[10px]"
+                  >
+                    {result.seo_description.length} chars
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="rounded border border-destructive/30 bg-destructive/5 p-2">
+                    <span className="text-[10px] uppercase tracking-wide text-destructive/80 block mb-1">Old</span>
+                    <p className="text-xs break-words">
+                      {page.seo_description || page.excerpt || <span className="italic text-muted-foreground">(none)</span>}
+                    </p>
+                  </div>
+                  <div className="rounded border border-emerald-500/30 bg-emerald-500/5 p-2">
+                    <span className="text-[10px] uppercase tracking-wide text-emerald-600 block mb-1">New</span>
+                    <p className="text-xs break-words">{result.seo_description}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Keywords diff */}
+            {result.seo_keywords && result.seo_keywords.length > 0 && (
+              <div className="rounded-md border p-3 space-y-2">
+                <span className="text-xs font-medium text-muted-foreground block">Keywords</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="rounded border border-destructive/30 bg-destructive/5 p-2">
+                    <span className="text-[10px] uppercase tracking-wide text-destructive/80 block mb-1">Old</span>
+                    <div className="flex flex-wrap gap-1">
+                      {(page.seo_keywords && page.seo_keywords.length > 0)
+                        ? page.seo_keywords.map((kw) => (
+                            <Badge key={kw} variant="outline" className="text-[10px]">{kw}</Badge>
+                          ))
+                        : <span className="text-xs italic text-muted-foreground">(none)</span>}
+                    </div>
+                  </div>
+                  <div className="rounded border border-emerald-500/30 bg-emerald-500/5 p-2">
+                    <span className="text-[10px] uppercase tracking-wide text-emerald-600 block mb-1">New</span>
+                    <div className="flex flex-wrap gap-1">
+                      {result.seo_keywords.map((kw) => (
+                        <Badge key={kw} variant="outline" className="text-[10px]">{kw}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Body text diff (plain-text side-by-side — design HTML stays intact on apply) */}
+            {result.content && (
+              <div className="rounded-md border p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">Body Content</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {oldBodyText.length} → {newBodyText.length} chars
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="rounded border border-destructive/30 bg-destructive/5 p-2">
+                    <span className="text-[10px] uppercase tracking-wide text-destructive/80 block mb-1">Old</span>
+                    <p className="text-[11px] leading-relaxed whitespace-pre-wrap break-words max-h-56 overflow-y-auto">
+                      {oldBodyText || <span className="italic text-muted-foreground">(empty)</span>}
+                    </p>
+                  </div>
+                  <div className="rounded border border-emerald-500/30 bg-emerald-500/5 p-2">
+                    <span className="text-[10px] uppercase tracking-wide text-emerald-600 block mb-1">New</span>
+                    <p className="text-[11px] leading-relaxed whitespace-pre-wrap break-words max-h-56 overflow-y-auto">
+                      {newBodyText}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Apply / discard */}
+            {!applied && (
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setResult(null)}
+                  disabled={applying}
+                  className="text-xs"
+                >
+                  Discard
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={applyToSite}
+                  disabled={applying}
+                  className="gap-1.5 text-xs"
+                >
+                  {applying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                  {applying ? "Applying..." : "Apply to site"}
+                </Button>
+              </div>
+            )}
+
+            {/* Rollback — only relevant after we actually pushed */}
+            {applied && result.pushed_to_cms && (
               <div className="flex items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-amber-600">Don't like the result?</p>
@@ -329,57 +528,7 @@ export function SeoOptimizeDialog({
               </div>
             )}
 
-            {result.seo_title && (
-              <div className="rounded-md border p-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground">SEO Title</span>
-                  <Badge
-                    variant={result.seo_title.length >= 30 && result.seo_title.length <= 60 ? "default" : "secondary"}
-                    className="text-[10px]"
-                  >
-                    {result.seo_title.length} chars
-                  </Badge>
-                </div>
-                <p className="text-sm font-medium">{result.seo_title}</p>
-              </div>
-            )}
-
-            {result.seo_description && (
-              <div className="rounded-md border p-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground">Meta Description</span>
-                  <Badge
-                    variant={result.seo_description.length >= 120 && result.seo_description.length <= 160 ? "default" : "secondary"}
-                    className="text-[10px]"
-                  >
-                    {result.seo_description.length} chars
-                  </Badge>
-                </div>
-                <p className="text-sm">{result.seo_description}</p>
-              </div>
-            )}
-
-            {result.seo_keywords && result.seo_keywords.length > 0 && (
-              <div className="rounded-md border p-3">
-                <span className="text-xs text-muted-foreground block mb-1.5">Keywords</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {result.seo_keywords.map((kw) => (
-                    <Badge key={kw} variant="outline" className="text-xs">{kw}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {result.content && (
-              <div className="rounded-md border p-3">
-                <span className="text-xs text-muted-foreground block mb-1">Content Updated</span>
-                <p className="text-xs text-muted-foreground">
-                  Content text has been rewritten for SEO while preserving the page design.
-                </p>
-              </div>
-            )}
-
-            {result.external_url && (
+            {result.external_url && applied && (
               <Button
                 size="sm"
                 variant="outline"
