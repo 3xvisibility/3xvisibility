@@ -5,17 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "validate:locales": "bun scripts/validate-locales.ts",
-    "build": "bun scripts/validate-locales.ts && vite build",
-    "build:dev": "bun scripts/validate-locales.ts && vite build --mode development",
+    "validate:locales": "tsx scripts/validate-locales.ts",
+    "build": "tsx scripts/validate-locales.ts && vite build",
+    "build:dev": "tsx scripts/validate-locales.ts && vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:elementor": "vitest run src/lib/connectors/elementor-engine.publish-verify.test.ts src/lib/connectors/elementor-engine.regression.test.ts src/lib/connectors/elementor-engine.fixtures.test.ts",
     "test:security": "node scripts/security/check-sensitive-grants.mjs",
-    "predev": "bunx tsx scripts/generate-sitemap.ts",
-    "prebuild": "bunx tsx scripts/generate-sitemap.ts"
+    "predev": "tsx scripts/generate-sitemap.ts",
+    "prebuild": "tsx scripts/generate-sitemap.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -99,6 +99,7 @@
     "lovable-tagger": "^1.1.13",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.23.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
     "vite": "^5.4.19",
