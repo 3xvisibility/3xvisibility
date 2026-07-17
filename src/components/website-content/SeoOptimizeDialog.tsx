@@ -76,6 +76,8 @@ export function SeoOptimizeDialog({
   const [regenerating, setRegenerating] = useState(false);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [autoRefreshAfterApply, setAutoRefreshAfterApply] = useState(true);
+  const [autoRefreshing, setAutoRefreshing] = useState(false);
   const [result, setResult] = useState<{
     seo_title?: string;
     seo_description?: string;
@@ -254,10 +256,111 @@ export function SeoOptimizeDialog({
       });
 
       onOptimized?.();
+
+      // Auto-refresh: regenerate SEO fields grounded on the just-applied body
+      // and push them straight back so the live page's title/description/
+      // keywords match the newly published content length targets.
+      if (
+        autoRefreshAfterApply &&
+        data.pushed_to_cms &&
+        result.content &&
+        selectedFields.includes("content")
+      ) {
+        await autoRefreshSeoOnLive(result.content);
+      }
     } catch (err: any) {
       handleApiError(err, { title: "Apply failed" });
     } finally {
       setApplying(false);
+    }
+  };
+
+  // Regenerate SEO from the freshly published body, then push SEO-only back
+  // to the live page (no body rewrite) so the layout stays intact.
+  const autoRefreshSeoOnLive = async (publishedContent: string) => {
+    setAutoRefreshing(true);
+    try {
+      const maxContentLen = 30000;
+      const contentToSend = publishedContent.length > maxContentLen
+        ? publishedContent.slice(0, maxContentLen)
+        : publishedContent;
+
+      const oldTitleLen = (page.seo_title || page.title || "").length;
+      const oldDescLen = (page.seo_description || page.excerpt || "").length;
+      const lengthHint = [
+        oldTitleLen ? `SEO title ≈ ${oldTitleLen} chars (±10%)` : null,
+        oldDescLen ? `Meta description ≈ ${oldDescLen} chars (±10%)` : null,
+        "Match the original title, subtitle, and paragraph length targets so the page layout stays intact.",
+      ].filter(Boolean).join(". ");
+
+      // 1) regenerate SEO fields from the applied body (preview only)
+      const { data: regen, error: regenErr } = await supabase.functions.invoke("optimize-seo-content", {
+        body: {
+          website_id: websiteId,
+          page_external_id: page.id,
+          page_title: page.title,
+          page_content: contentToSend,
+          page_slug: page.slug,
+          page_url: page.url,
+          page_type: page.type,
+          workspace_id: workspaceId,
+          optimize_fields: ["seo_title", "seo_description", "seo_keywords"],
+          page_seo_title: result?.seo_title || page.seo_title,
+          page_seo_description: result?.seo_description || page.seo_description || page.excerpt,
+          page_seo_keywords: result?.seo_keywords || page.seo_keywords || [],
+          instruction: [instruction, lengthHint].filter(Boolean).join(" — "),
+          skip_push: true,
+          overwrite_design: false,
+        },
+      });
+      if (regenErr) throw new Error(await extractEdgeError(regenErr, "Auto-refresh failed"));
+      if (regen?.error) throw new Error(regen.error);
+
+      const refreshed = {
+        seo_title: regen?.result?.seo_title,
+        seo_description: regen?.result?.seo_description,
+        seo_keywords: regen?.result?.seo_keywords,
+      };
+
+      // 2) push SEO-only update to CMS (no body change)
+      const { data: pushRes, error: pushErr } = await supabase.functions.invoke("optimize-seo-content", {
+        body: {
+          website_id: websiteId,
+          page_external_id: page.id,
+          page_title: page.title,
+          page_slug: page.slug,
+          page_url: page.url,
+          page_type: page.type,
+          workspace_id: workspaceId,
+          manual_update: true,
+          manual_title: page.title,
+          manual_content: publishedContent,
+          seo_title: refreshed.seo_title,
+          seo_description: refreshed.seo_description,
+          seo_keywords: refreshed.seo_keywords,
+          overwrite_design: false,
+        },
+      });
+      if (pushErr) throw new Error(await extractEdgeError(pushErr, "Auto-refresh push failed"));
+      if (pushRes?.error) throw new Error(pushRes.error);
+
+      setResult((prev) => prev && {
+        ...prev,
+        seo_title: refreshed.seo_title ?? prev.seo_title,
+        seo_description: refreshed.seo_description ?? prev.seo_description,
+        seo_keywords: refreshed.seo_keywords ?? prev.seo_keywords,
+        pushed_to_cms: !!pushRes?.pushed_to_cms || prev.pushed_to_cms,
+      });
+
+      toast({
+        title: "SEO auto-refreshed on live site",
+        description: "Title, description, and keywords now match the newly published content.",
+      });
+      onOptimized?.();
+    } catch (err: any) {
+      handleApiError(err, { title: "Auto-refresh failed" });
+    } finally {
+      setAutoRefreshing(false);
     }
   };
 
@@ -547,39 +650,61 @@ export function SeoOptimizeDialog({
 
             {/* Apply / discard */}
             {!applied && (
-              <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-                {result.content && (
+              <>
+                {result.content && selectedFields.includes("content") && (
+                  <label className="flex items-start gap-2 text-xs text-muted-foreground rounded-md border border-dashed p-2 cursor-pointer hover:bg-muted/40">
+                    <Checkbox
+                      checked={autoRefreshAfterApply}
+                      onCheckedChange={(v) => setAutoRefreshAfterApply(v === true)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="font-medium text-foreground">Auto-refresh SEO after apply</span>
+                      <br />
+                      After pushing the new content, regenerate the SEO title, description, and keywords from the just-published body (keeping the original length targets) and push them back to the live page.
+                    </span>
+                  </label>
+                )}
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                  {result.content && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={regenerateSeoFromNewContent}
+                      disabled={applying || regenerating || loading || autoRefreshing}
+                      className="gap-1.5 text-xs mr-auto"
+                      title="Regenerate SEO title, description, and keywords from the new body content, keeping original length targets."
+                    >
+                      {regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                      {regenerating ? "Regenerating..." : "Regenerate SEO from new content"}
+                    </Button>
+                  )}
                   <Button
                     size="sm"
-                    variant="outline"
-                    onClick={regenerateSeoFromNewContent}
-                    disabled={applying || regenerating || loading}
-                    className="gap-1.5 text-xs mr-auto"
-                    title="Regenerate SEO title, description, and keywords from the new body content, keeping original length targets."
+                    variant="ghost"
+                    onClick={() => setResult(null)}
+                    disabled={applying || regenerating || autoRefreshing}
+                    className="text-xs"
                   >
-                    {regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                    {regenerating ? "Regenerating..." : "Regenerate SEO from new content"}
+                    Discard
                   </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setResult(null)}
-                  disabled={applying || regenerating}
-                  className="text-xs"
-                >
-                  Discard
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={applyToSite}
-                  disabled={applying || regenerating}
-                  className="gap-1.5 text-xs"
-                >
-                  {applying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                  {applying ? "Applying..." : "Apply to site"}
-                </Button>
-              </div>
+                  <Button
+                    size="sm"
+                    onClick={applyToSite}
+                    disabled={applying || regenerating || autoRefreshing}
+                    className="gap-1.5 text-xs"
+                  >
+                    {applying || autoRefreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                    {applying
+                      ? "Applying..."
+                      : autoRefreshing
+                        ? "Refreshing SEO..."
+                        : autoRefreshAfterApply && result.content && selectedFields.includes("content")
+                          ? "Apply & auto-refresh SEO"
+                          : "Apply to site"}
+                  </Button>
+                </div>
+              </>
             )}
 
 
