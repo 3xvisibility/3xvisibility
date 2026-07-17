@@ -119,7 +119,7 @@ export function SeoOptimizeDialog({
     (s: any) => {
       if (!s || typeof s !== "object") return;
       if (Array.isArray(s.selectedFields) && s.selectedFields.length) {
-        setSelectedFields(s.selectedFields.filter((field: string) => field !== "content"));
+        setSelectedFields(s.selectedFields);
       }
       if (typeof s.instruction === "string") setInstruction(s.instruction);
     },
