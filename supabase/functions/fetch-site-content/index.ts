@@ -106,17 +106,25 @@ Deno.serve(async (req) => {
       const msg = fetchErr?.message || "";
       if (msg.includes("dns error") || msg.includes("failed to lookup address")) {
         return new Response(
-          JSON.stringify({ error: `Could not connect to "${hostname}". Please verify the website URL is correct and the site is online.` }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: `Could not connect to "${hostname}". Please verify the website URL is correct and the site is online.`, items: [], total: 0, fallback: true }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (msg.includes("timed out") || msg.includes("timeout") || fetchErr?.name === "AbortError") {
+        return new Response(
+          JSON.stringify({ error: `"${hostname}" took too long to respond. The site may be slow or temporarily unavailable — please try again in a moment.`, items: [], total: 0, fallback: true, code: "TIMEOUT" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       throw fetchErr;
     }
   } catch (err: any) {
     console.error("fetch-site-content error:", err);
+    const msg = err?.message || "Failed to fetch site content";
+    const isTimeout = msg.includes("timed out") || msg.includes("timeout");
     return new Response(
-      JSON.stringify({ error: err.message || "Failed to fetch site content" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: msg, items: [], total: 0, fallback: true, code: isTimeout ? "TIMEOUT" : "ERROR" }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
