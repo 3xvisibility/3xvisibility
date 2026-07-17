@@ -220,14 +220,107 @@ export function UserDetailDialog({ userId, open, onOpenChange }: UserDetailDialo
                 </Card>
               </div>
 
+              {/* Page usage breakdown */}
+              {pageUsage && (
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                        <TrendingUp className="h-3.5 w-3.5" /> Page usage
+                      </p>
+                      <span className="text-xs text-muted-foreground">Last 6 months</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                      <div className="rounded-md bg-muted/40 p-2">
+                        <p className="text-lg font-bold tabular-nums">{pageUsage.total_all_time}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">All-time</p>
+                      </div>
+                      <div className="rounded-md bg-success/10 p-2">
+                        <p className="text-lg font-bold tabular-nums text-success">{pageUsage.published}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Published</p>
+                      </div>
+                      <div className="rounded-md bg-muted/40 p-2">
+                        <p className="text-lg font-bold tabular-nums">{pageUsage.draft}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Drafts</p>
+                      </div>
+                      <div className="rounded-md bg-destructive/10 p-2">
+                        <p className="text-lg font-bold tabular-nums text-destructive">{pageUsage.failed}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Failed</p>
+                      </div>
+                    </div>
+                    <div className="flex items-end gap-2 h-24 pt-2">
+                      {pageUsage.monthly.map((m: any) => (
+                        <div key={m.key} className="flex-1 flex flex-col items-center gap-1">
+                          <div className="w-full flex-1 flex items-end">
+                            <div
+                              className="w-full rounded-t bg-primary/70 hover:bg-primary transition-colors"
+                              style={{ height: `${(m.count / maxMonthly) * 100}%`, minHeight: m.count > 0 ? "4px" : "0" }}
+                              title={`${m.count} pages`}
+                            />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground tabular-nums">{m.count}</span>
+                          <span className="text-[10px] text-muted-foreground">{m.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Detail tabs */}
-              <Tabs defaultValue="campaigns">
+              <Tabs defaultValue="plan-history">
                 <TabsList className="flex-wrap h-auto">
+                  <TabsTrigger value="plan-history" className="text-xs">
+                    <History className="h-3 w-3 mr-1" /> Plan history ({planHistory.length})
+                  </TabsTrigger>
                   <TabsTrigger value="campaigns" className="text-xs">Campaigns ({campaigns.length})</TabsTrigger>
                   <TabsTrigger value="pages" className="text-xs">Pages ({pages.length})</TabsTrigger>
                   <TabsTrigger value="websites" className="text-xs">Websites ({websites.length})</TabsTrigger>
                   <TabsTrigger value="payments" className="text-xs">Payments ({payments.length})</TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="plan-history" className="mt-3">
+                  <div className="rounded-lg border overflow-auto max-h-72">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Plan</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                          <TableHead>Started</TableHead>
+                          <TableHead>Ended / renews</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {planHistory.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                              No paid plan history — user is on the default plan.
+                            </TableCell>
+                          </TableRow>
+                        ) : planHistory.map((h: any) => (
+                          <TableRow key={h.id}>
+                            <TableCell className="text-sm font-medium capitalize">{h.plan}</TableCell>
+                            <TableCell>
+                              {statusBadge(h.status)}
+                              {h.cancel_at_period_end && (
+                                <Badge variant="outline" className="ml-1 text-[10px]">cancels at period end</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums text-sm">
+                              {h.amount != null ? `${h.amount.toFixed(2)} ${h.currency}${h.interval ? ` / ${h.interval}` : ""}` : "—"}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{fmtDate(h.started)}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {fmtDate(h.ended_at || h.canceled_at || h.current_period_end)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
+
 
                 <TabsContent value="campaigns" className="mt-3">
                   <div className="rounded-lg border overflow-auto max-h-72">
