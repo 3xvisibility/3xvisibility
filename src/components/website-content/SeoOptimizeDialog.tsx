@@ -73,6 +73,8 @@ export function SeoOptimizeDialog({
   const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords", "content"]);
   const [instruction, setInstruction] = useState("");
   const [loading, setLoading] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [applied, setApplied] = useState(false);
   const [result, setResult] = useState<{
     seo_title?: string;
     seo_description?: string;
@@ -85,6 +87,19 @@ export function SeoOptimizeDialog({
   const [copied, setCopied] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
   const [rolledBack, setRolledBack] = useState(false);
+
+  // Strip HTML → plain text for old-vs-new body preview (design HTML is huge
+  // and unreadable in a side-by-side; text-only makes the diff easy to scan).
+  const htmlToText = (html: string | null | undefined) =>
+    (html || "")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const oldBodyText = useMemo(() => htmlToText(page.content), [page.content]);
+  const newBodyText = useMemo(() => htmlToText(result?.content), [result?.content]);
 
   const handleRollback = async () => {
     setRollingBack(true);
@@ -132,6 +147,7 @@ export function SeoOptimizeDialog({
     );
   };
 
+  // Phase 1: generate the AI preview WITHOUT pushing to the connected site.
   const runOptimize = async () => {
     if (selectedFields.length === 0) {
       toast({ title: "Select fields", description: "Pick at least one field to optimize", variant: "destructive" });
@@ -140,6 +156,7 @@ export function SeoOptimizeDialog({
 
     setLoading(true);
     setResult(null);
+    setApplied(false);
     setRolledBack(false);
 
     try {
@@ -164,9 +181,9 @@ export function SeoOptimizeDialog({
           page_seo_description: page.seo_description || page.excerpt,
           page_seo_keywords: page.seo_keywords || [],
           instruction: instruction || undefined,
-          // When the user opts into rewriting body content, allow the backend
-          // to push the rewritten HTML to the CMS (default preserves design
-          // and would otherwise strip "content" from the request).
+          // Preview only — do NOT push to CMS yet. The user reviews the diff
+          // and clicks "Apply to site" to actually update the live page.
+          skip_push: true,
           overwrite_design: selectedFields.includes("content"),
         },
       });
@@ -176,24 +193,70 @@ export function SeoOptimizeDialog({
 
       setResult({
         ...data.result,
-        pushed_to_cms: data.pushed_to_cms,
-        push_error: data.push_error || undefined,
-        external_url: data.external_url,
+        pushed_to_cms: false,
       });
 
       toast({
-        title: data.pushed_to_cms ? "SEO optimized & updated on site!" : "SEO optimized!",
+        title: "Preview ready",
+        description: "Review the old vs new changes below, then click \"Apply to site\".",
+      });
+    } catch (err: any) {
+      handleApiError(err, { title: "Optimization failed" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Phase 2: push the previewed values to the connected site.
+  const applyToSite = async () => {
+    if (!result) return;
+    setApplying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("optimize-seo-content", {
+        body: {
+          website_id: websiteId,
+          page_external_id: page.id,
+          page_title: page.title,
+          page_slug: page.slug,
+          page_url: page.url,
+          page_type: page.type,
+          workspace_id: workspaceId,
+          manual_update: true,
+          // Preserve the actual live-page name — only body/SEO fields change.
+          manual_title: page.title,
+          manual_content: result.content || page.content,
+          seo_title: result.seo_title,
+          seo_description: result.seo_description,
+          seo_keywords: result.seo_keywords,
+          // We just previewed a full rewrite — publish it as-is.
+          overwrite_design: true,
+        },
+      });
+
+      if (error) throw new Error(await extractEdgeError(error, "Apply failed"));
+      if (data?.error) throw new Error(data.error);
+
+      setResult((prev) => prev && {
+        ...prev,
+        pushed_to_cms: !!data.pushed_to_cms,
+        push_error: data.push_error || undefined,
+        external_url: data.external_url,
+      });
+      setApplied(true);
+
+      toast({
+        title: data.pushed_to_cms ? "Applied to your site" : "Saved",
         description: data.pushed_to_cms
           ? "Existing page updated — same URL, no new page created."
-          : data.push_error || "Review the results below.",
+          : data.push_error || "Changes were saved locally.",
         variant: data.push_error ? "destructive" : undefined,
       });
 
       onOptimized?.();
     } catch (err: any) {
-      handleApiError(err, { title: "Optimization failed" });
+      handleApiError(err, { title: "Apply failed" });
     } finally {
-      setLoading(false);
+      setApplying(false);
     }
   };
 
