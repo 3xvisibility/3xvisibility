@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import {
   User as UserIcon,
   Mail,
@@ -18,6 +19,8 @@ import {
   Receipt,
   ExternalLink,
   Copy,
+  History,
+  TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 
