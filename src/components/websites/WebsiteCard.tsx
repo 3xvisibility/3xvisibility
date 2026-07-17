@@ -117,7 +117,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
   const testConnectionMutation = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("test-connection", {
-        body: { url: site.url, type: site.type, credentials: site.credentials },
+        body: { website_id: site.id },
       });
       if (error) throw new Error(await extractEdgeError(error, "Connection test failed"));
       if (data?.error) throw new Error(data.error);

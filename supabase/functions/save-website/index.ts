@@ -62,6 +62,7 @@ Deno.serve(async (req) => {
       // Update existing website (only patch fields the caller sent)
       const updatePayload: Record<string, unknown> = {};
       if (encryptedCreds) updatePayload.credentials = encryptedCreds;
+      if (encryptedCreds) updatePayload.status = "connected";
       if (name) updatePayload.name = name;
       if (url) updatePayload.url = url;
       if (languageProvided) updatePayload.language = normalizedLanguage;
