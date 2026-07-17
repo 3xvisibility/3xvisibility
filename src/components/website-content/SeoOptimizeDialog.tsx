@@ -261,6 +261,68 @@ export function SeoOptimizeDialog({
     }
   };
 
+  // One-click: regenerate SEO title/description/keywords grounded on the
+  // freshly previewed body content, keeping the original length targets so
+  // the layout still fits (title, subtitle, paragraph slots).
+  const regenerateSeoFromNewContent = async () => {
+    if (!result?.content) return;
+    setRegenerating(true);
+    try {
+      const maxContentLen = 30000;
+      const contentToSend = result.content.length > maxContentLen
+        ? result.content.slice(0, maxContentLen)
+        : result.content;
+
+      const oldTitleLen = (page.seo_title || page.title || "").length;
+      const oldDescLen = (page.seo_description || page.excerpt || "").length;
+      const lengthHint = [
+        oldTitleLen ? `SEO title ≈ ${oldTitleLen} chars (±10%)` : null,
+        oldDescLen ? `Meta description ≈ ${oldDescLen} chars (±10%)` : null,
+        "Match the original title, subtitle, and paragraph length targets so the page layout stays intact.",
+      ].filter(Boolean).join(". ");
+
+      const { data, error } = await supabase.functions.invoke("optimize-seo-content", {
+        body: {
+          website_id: websiteId,
+          page_external_id: page.id,
+          page_title: page.title,
+          page_content: contentToSend,
+          page_slug: page.slug,
+          page_url: page.url,
+          page_type: page.type,
+          workspace_id: workspaceId,
+          // SEO fields only — do NOT touch the newly generated body.
+          optimize_fields: ["seo_title", "seo_description", "seo_keywords"],
+          page_seo_title: page.seo_title,
+          page_seo_description: page.seo_description || page.excerpt,
+          page_seo_keywords: page.seo_keywords || [],
+          instruction: [instruction, lengthHint].filter(Boolean).join(" — "),
+          skip_push: true,
+          overwrite_design: false,
+        },
+      });
+
+      if (error) throw new Error(await extractEdgeError(error, "Regenerate failed"));
+      if (data?.error) throw new Error(data.error);
+
+      setResult((prev) => prev && {
+        ...prev,
+        seo_title: data.result?.seo_title ?? prev.seo_title,
+        seo_description: data.result?.seo_description ?? prev.seo_description,
+        seo_keywords: data.result?.seo_keywords ?? prev.seo_keywords,
+      });
+
+      toast({
+        title: "SEO fields regenerated",
+        description: "Title, description, and keywords updated from the new content.",
+      });
+    } catch (err: any) {
+      handleApiError(err, { title: "Regenerate failed" });
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   const copyAll = () => {
     if (!result) return;
     const text = [
