@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createConnector } from "../_shared/connectors/factory.ts";
 import type { WebsiteRecord } from "../_shared/connectors/factory.ts";
+import { decryptCredentials } from "../_shared/crypto.ts";
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -72,11 +73,13 @@ async function resolveSavedWebsite(
     throw new Error("Website credentials could not be loaded. Reconnect the site and try again.");
   }
 
+  const credentials = await decryptCredentials(cleanCredentials(site.credentials));
+
   return {
     id: site.id,
     url: site.url,
     type: site.type,
-    credentials: cleanCredentials(site.credentials),
+    credentials,
   };
 }
 
