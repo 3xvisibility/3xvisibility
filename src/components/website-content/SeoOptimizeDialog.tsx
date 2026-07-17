@@ -70,7 +70,7 @@ export function SeoOptimizeDialog({
   onOptimized,
 }: SeoOptimizeDialogProps) {
   const { toast } = useToast();
-  const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords"]);
+  const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords", "content"]);
   const [instruction, setInstruction] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
