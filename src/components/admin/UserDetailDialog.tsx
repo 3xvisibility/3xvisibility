@@ -93,7 +93,10 @@ export function UserDetailDialog({ userId, open, onOpenChange }: UserDetailDialo
   const pages = data?.pages || [];
   const websites = data?.websites || [];
   const payments = data?.payments || [];
+  const planHistory = data?.plan_history || [];
+  const pageUsage = data?.page_usage || null;
   const stripeCustomer = data?.stripe_customer;
+  const maxMonthly = Math.max(1, ...(pageUsage?.monthly || []).map((m: any) => m.count));
 
   const copy = (text: string) => {
     navigator.clipboard.writeText(text);
