@@ -201,18 +201,40 @@ export default function WebsitesPage() {
 
   const buildCredentials = () => {
     if (siteType === "wordpress") {
+      const trimmedUsername = username.trim();
+      const trimmedJwt = jwtToken.trim();
+      const trimmedConnectorKey = connectorKey.trim();
       const base =
         wpAuthMethod === "application_password"
-          ? { username, app_password: appPassword, auth_method: "application_password" }
-          : { jwt_token: jwtToken, auth_method: "jwt" };
-      return connectorKey.trim()
-        ? { ...base, pgp_connector_key: connectorKey.trim() }
+          ? { username: trimmedUsername, app_password: appPassword.trim(), auth_method: "application_password" }
+          : { jwt_token: trimmedJwt, auth_method: "jwt" };
+      return trimmedConnectorKey
+        ? { ...base, pgp_connector_key: trimmedConnectorKey }
         : base;
     }
 
     if (siteType === "shopify") return { shop_domain: shopDomain };
     if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
     return { api_key: prestashopApiKey };
+  };
+
+  const getCredentialValidationError = () => {
+    if (siteType === "wordpress") {
+      if (connectorKey.trim()) return null;
+      if (wpAuthMethod === "jwt") {
+        return jwtToken.trim() ? null : "Enter a WordPress JWT token, or add the 3xVisibility Connector Key.";
+      }
+      if (!username.trim() || !appPassword.trim()) {
+        return "Enter the WordPress username and Application Password, or add the 3xVisibility Connector Key.";
+      }
+    }
+    if (siteType === "woocommerce" && (!wooConsumerKey.trim() || !wooConsumerSecret.trim())) {
+      return "Enter both WooCommerce Consumer Key and Consumer Secret.";
+    }
+    if (siteType === "prestashop" && !prestashopApiKey.trim()) {
+      return "Enter the PrestaShop API key.";
+    }
+    return null;
   };
 
   const updateStep = (key: string, status: StepStatus, detail?: string) => {
@@ -249,6 +271,12 @@ export default function WebsitesPage() {
     }
     if (!siteUrl && !(siteType === "shopify" && shopDomain)) {
       toast({ title: "Error", description: "Missing website info", variant: "destructive" });
+      return;
+    }
+    const credentialValidationError = getCredentialValidationError();
+    if (credentialValidationError) {
+      setWpTestError(credentialValidationError);
+      toast({ title: "Missing credentials", description: credentialValidationError, variant: "destructive" });
       return;
     }
 
@@ -390,6 +418,8 @@ export default function WebsitesPage() {
         const dErr = validateShopifyDomain(shopDomain);
         if (dErr) throw new Error(dErr || "Invalid Shopify domain");
       }
+      const credentialValidationError = getCredentialValidationError();
+      if (credentialValidationError) throw new Error(credentialValidationError);
       const { data, error } = await supabase.functions.invoke("test-connection", {
         body: { url: buildTestUrl(), type: siteType, credentials: buildCredentials() },
       });
@@ -646,7 +676,7 @@ export default function WebsitesPage() {
                       variant="outline"
                       className="w-full sm:w-auto"
                       onClick={() => testConnectionMutation.mutate()}
-                      disabled={!siteUrl || !siteType || testConnectionMutation.isPending || isConnecting}
+                      disabled={!siteUrl || !siteType || !!getCredentialValidationError() || testConnectionMutation.isPending || isConnecting}
                     >
                       {testConnectionMutation.isPending ? (
                         <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
@@ -662,7 +692,7 @@ export default function WebsitesPage() {
                           <Button
                             className="w-full sm:w-auto"
                             onClick={() => runConnectFlow()}
-                            disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting || shopifyOAuthLoading || siteType === "prestashop"}
+                            disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || !!getCredentialValidationError() || shopifyInvalid || isConnecting || shopifyOAuthLoading || siteType === "prestashop"}
                             style={siteType === "prestashop" ? { pointerEvents: "none" } : undefined}
                           >
                             {isConnecting || shopifyOAuthLoading ? (
