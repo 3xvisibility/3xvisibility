@@ -414,6 +414,7 @@ Deno.serve(async (req) => {
       // Payment / billing history from Stripe (best-effort)
       let payments: any[] = [];
       let stripeCustomer: any = null;
+      let planHistory: any[] = [];
       try {
         const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
         const email = targetUser?.email;
@@ -436,7 +437,30 @@ Deno.serve(async (req) => {
               created: inv.created ? new Date(inv.created * 1000).toISOString() : null,
               hosted_invoice_url: inv.hosted_invoice_url,
               pdf: inv.invoice_pdf,
+              plan: inv.lines?.data?.[0]?.description || inv.lines?.data?.[0]?.plan?.nickname || null,
             }));
+
+            // Plan history from Stripe subscriptions (all statuses, including canceled)
+            const subsRes = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${customer.id}&status=all&limit=25&expand[]=data.items.data.price.product`, { headers });
+            const subsJson = await subsRes.json();
+            planHistory = (subsJson?.data || []).map((s: any) => {
+              const item = s.items?.data?.[0];
+              const price = item?.price;
+              const product = price?.product;
+              return {
+                id: s.id,
+                status: s.status,
+                plan: (typeof product === "object" ? product?.name : null) || price?.nickname || price?.id || "—",
+                amount: price?.unit_amount ? price.unit_amount / 100 : null,
+                currency: (price?.currency || "usd").toUpperCase(),
+                interval: price?.recurring?.interval || null,
+                started: s.start_date ? new Date(s.start_date * 1000).toISOString() : null,
+                current_period_end: s.current_period_end ? new Date(s.current_period_end * 1000).toISOString() : null,
+                canceled_at: s.canceled_at ? new Date(s.canceled_at * 1000).toISOString() : null,
+                ended_at: s.ended_at ? new Date(s.ended_at * 1000).toISOString() : null,
+                cancel_at_period_end: s.cancel_at_period_end || false,
+              };
+            }).sort((a: any, b: any) => (b.started || "").localeCompare(a.started || ""));
           }
         }
       } catch (e) {
