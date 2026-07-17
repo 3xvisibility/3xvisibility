@@ -16,9 +16,11 @@
  */
 
 import { readFileSync, readdirSync } from "fs";
-import { join } from "path";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 
-const ROOT = join(import.meta.dir, "..");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, "..");
 const LOCALES_DIR = join(ROOT, "src/i18n/locales");
 const TRANSLATIONS_FILE = join(ROOT, "src/i18n/translations.ts");
 
