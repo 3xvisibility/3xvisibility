@@ -70,7 +70,7 @@ export function SeoOptimizeDialog({
   onOptimized,
 }: SeoOptimizeDialogProps) {
   const { toast } = useToast();
-  const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords"]);
+  const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords", "content"]);
   const [instruction, setInstruction] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
@@ -119,7 +119,7 @@ export function SeoOptimizeDialog({
     (s: any) => {
       if (!s || typeof s !== "object") return;
       if (Array.isArray(s.selectedFields) && s.selectedFields.length) {
-        setSelectedFields(s.selectedFields.filter((field: string) => field !== "content"));
+        setSelectedFields(s.selectedFields);
       }
       if (typeof s.instruction === "string") setInstruction(s.instruction);
     },
@@ -164,6 +164,10 @@ export function SeoOptimizeDialog({
           page_seo_description: page.seo_description || page.excerpt,
           page_seo_keywords: page.seo_keywords || [],
           instruction: instruction || undefined,
+          // When the user opts into rewriting body content, allow the backend
+          // to push the rewritten HTML to the CMS (default preserves design
+          // and would otherwise strip "content" from the request).
+          overwrite_design: selectedFields.includes("content"),
         },
       });
 
