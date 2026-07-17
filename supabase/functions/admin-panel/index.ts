@@ -470,6 +470,39 @@ Deno.serve(async (req) => {
       const campaigns = campaignsRes.data || [];
       const pages = pagesRes.data || [];
 
+      // Page usage breakdown (last 6 months + status buckets)
+      const now = new Date();
+      const months: { key: string; label: string; count: number }[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push({
+          key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+          label: d.toLocaleString("en-US", { month: "short", year: "2-digit" }),
+          count: 0,
+        });
+      }
+      for (const p of pages) {
+        if (!p.created_at) continue;
+        const d = new Date(p.created_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const m = months.find((x) => x.key === key);
+        if (m) m.count++;
+      }
+
+      const sub = subRes.data;
+      const pageUsage = {
+        used: sub?.pages_used ?? 0,
+        limit: sub?.pages_limit ?? null,
+        percent: sub?.pages_limit ? Math.min(100, Math.round(((sub.pages_used ?? 0) / sub.pages_limit) * 100)) : null,
+        period_start: sub?.current_period_start || null,
+        period_end: sub?.current_period_end || null,
+        published: pages.filter((p: any) => p.status === "published").length,
+        draft: pages.filter((p: any) => p.status === "draft").length,
+        failed: pages.filter((p: any) => p.status === "failed").length,
+        total_all_time: pages.length,
+        monthly: months,
+      };
+
       return new Response(
         JSON.stringify({
           user: targetUser
@@ -491,6 +524,8 @@ Deno.serve(async (req) => {
           websites: websitesRes.data || [],
           usage: usageRes.data || [],
           payments,
+          plan_history: planHistory,
+          page_usage: pageUsage,
           stripe_customer: stripeCustomer,
           totals: {
             campaigns: campaigns.length,
