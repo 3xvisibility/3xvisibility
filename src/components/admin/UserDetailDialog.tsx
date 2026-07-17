@@ -157,17 +157,28 @@ export function UserDetailDialog({ userId, open, onOpenChange }: UserDetailDialo
               {/* Subscription & billing */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Card>
-                  <CardContent className="p-4 space-y-2">
+                  <CardContent className="p-4 space-y-3">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                      <CreditCard className="h-3.5 w-3.5" /> Subscription
+                      <CreditCard className="h-3.5 w-3.5" /> Current plan
                     </p>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Plan</span>
-                      <Badge variant="outline" className="capitalize">{sub?.plan || "free"}</Badge>
+                    <div className="flex items-center justify-between">
+                      <Badge className="capitalize bg-primary/15 text-primary border-primary/30 text-sm px-2.5 py-1">
+                        {sub?.plan || "free"}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground capitalize">
+                        {sub?.billing_cycle || "—"}
+                      </span>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Pages used</span>
-                      <span className="tabular-nums">{sub?.pages_used ?? 0} / {sub?.pages_limit || "∞"}</span>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Pages this period</span>
+                        <span className="tabular-nums font-medium">
+                          {pageUsage?.used ?? sub?.pages_used ?? 0} / {pageUsage?.limit ?? sub?.pages_limit ?? "∞"}
+                        </span>
+                      </div>
+                      {pageUsage?.percent !== null && pageUsage?.percent !== undefined && (
+                        <Progress value={pageUsage.percent} className="h-1.5" />
+                      )}
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Period ends</span>
