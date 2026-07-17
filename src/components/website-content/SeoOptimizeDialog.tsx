@@ -73,6 +73,7 @@ export function SeoOptimizeDialog({
   const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords", "content"]);
   const [instruction, setInstruction] = useState("");
   const [loading, setLoading] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
   const [result, setResult] = useState<{
@@ -257,6 +258,68 @@ export function SeoOptimizeDialog({
       handleApiError(err, { title: "Apply failed" });
     } finally {
       setApplying(false);
+    }
+  };
+
+  // One-click: regenerate SEO title/description/keywords grounded on the
+  // freshly previewed body content, keeping the original length targets so
+  // the layout still fits (title, subtitle, paragraph slots).
+  const regenerateSeoFromNewContent = async () => {
+    if (!result?.content) return;
+    setRegenerating(true);
+    try {
+      const maxContentLen = 30000;
+      const contentToSend = result.content.length > maxContentLen
+        ? result.content.slice(0, maxContentLen)
+        : result.content;
+
+      const oldTitleLen = (page.seo_title || page.title || "").length;
+      const oldDescLen = (page.seo_description || page.excerpt || "").length;
+      const lengthHint = [
+        oldTitleLen ? `SEO title ≈ ${oldTitleLen} chars (±10%)` : null,
+        oldDescLen ? `Meta description ≈ ${oldDescLen} chars (±10%)` : null,
+        "Match the original title, subtitle, and paragraph length targets so the page layout stays intact.",
+      ].filter(Boolean).join(". ");
+
+      const { data, error } = await supabase.functions.invoke("optimize-seo-content", {
+        body: {
+          website_id: websiteId,
+          page_external_id: page.id,
+          page_title: page.title,
+          page_content: contentToSend,
+          page_slug: page.slug,
+          page_url: page.url,
+          page_type: page.type,
+          workspace_id: workspaceId,
+          // SEO fields only — do NOT touch the newly generated body.
+          optimize_fields: ["seo_title", "seo_description", "seo_keywords"],
+          page_seo_title: page.seo_title,
+          page_seo_description: page.seo_description || page.excerpt,
+          page_seo_keywords: page.seo_keywords || [],
+          instruction: [instruction, lengthHint].filter(Boolean).join(" — "),
+          skip_push: true,
+          overwrite_design: false,
+        },
+      });
+
+      if (error) throw new Error(await extractEdgeError(error, "Regenerate failed"));
+      if (data?.error) throw new Error(data.error);
+
+      setResult((prev) => prev && {
+        ...prev,
+        seo_title: data.result?.seo_title ?? prev.seo_title,
+        seo_description: data.result?.seo_description ?? prev.seo_description,
+        seo_keywords: data.result?.seo_keywords ?? prev.seo_keywords,
+      });
+
+      toast({
+        title: "SEO fields regenerated",
+        description: "Title, description, and keywords updated from the new content.",
+      });
+    } catch (err: any) {
+      handleApiError(err, { title: "Regenerate failed" });
+    } finally {
+      setRegenerating(false);
     }
   };
 
@@ -484,12 +547,25 @@ export function SeoOptimizeDialog({
 
             {/* Apply / discard */}
             {!applied && (
-              <div className="flex items-center justify-end gap-2 pt-1">
+              <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                {result.content && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={regenerateSeoFromNewContent}
+                    disabled={applying || regenerating || loading}
+                    className="gap-1.5 text-xs mr-auto"
+                    title="Regenerate SEO title, description, and keywords from the new body content, keeping original length targets."
+                  >
+                    {regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    {regenerating ? "Regenerating..." : "Regenerate SEO from new content"}
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={() => setResult(null)}
-                  disabled={applying}
+                  disabled={applying || regenerating}
                   className="text-xs"
                 >
                   Discard
@@ -497,7 +573,7 @@ export function SeoOptimizeDialog({
                 <Button
                   size="sm"
                   onClick={applyToSite}
-                  disabled={applying}
+                  disabled={applying || regenerating}
                   className="gap-1.5 text-xs"
                 >
                   {applying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
@@ -505,6 +581,7 @@ export function SeoOptimizeDialog({
                 </Button>
               </div>
             )}
+
 
             {/* Rollback — only relevant after we actually pushed */}
             {applied && result.pushed_to_cms && (
