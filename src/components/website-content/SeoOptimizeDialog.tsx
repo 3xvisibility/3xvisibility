@@ -76,6 +76,8 @@ export function SeoOptimizeDialog({
   const [regenerating, setRegenerating] = useState(false);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [autoRefreshAfterApply, setAutoRefreshAfterApply] = useState(true);
+  const [autoRefreshing, setAutoRefreshing] = useState(false);
   const [result, setResult] = useState<{
     seo_title?: string;
     seo_description?: string;
