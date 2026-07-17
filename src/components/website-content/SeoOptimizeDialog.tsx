@@ -650,39 +650,61 @@ export function SeoOptimizeDialog({
 
             {/* Apply / discard */}
             {!applied && (
-              <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-                {result.content && (
+              <>
+                {result.content && selectedFields.includes("content") && (
+                  <label className="flex items-start gap-2 text-xs text-muted-foreground rounded-md border border-dashed p-2 cursor-pointer hover:bg-muted/40">
+                    <Checkbox
+                      checked={autoRefreshAfterApply}
+                      onCheckedChange={(v) => setAutoRefreshAfterApply(v === true)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="font-medium text-foreground">Auto-refresh SEO after apply</span>
+                      <br />
+                      After pushing the new content, regenerate the SEO title, description, and keywords from the just-published body (keeping the original length targets) and push them back to the live page.
+                    </span>
+                  </label>
+                )}
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                  {result.content && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={regenerateSeoFromNewContent}
+                      disabled={applying || regenerating || loading || autoRefreshing}
+                      className="gap-1.5 text-xs mr-auto"
+                      title="Regenerate SEO title, description, and keywords from the new body content, keeping original length targets."
+                    >
+                      {regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                      {regenerating ? "Regenerating..." : "Regenerate SEO from new content"}
+                    </Button>
+                  )}
                   <Button
                     size="sm"
-                    variant="outline"
-                    onClick={regenerateSeoFromNewContent}
-                    disabled={applying || regenerating || loading}
-                    className="gap-1.5 text-xs mr-auto"
-                    title="Regenerate SEO title, description, and keywords from the new body content, keeping original length targets."
+                    variant="ghost"
+                    onClick={() => setResult(null)}
+                    disabled={applying || regenerating || autoRefreshing}
+                    className="text-xs"
                   >
-                    {regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                    {regenerating ? "Regenerating..." : "Regenerate SEO from new content"}
+                    Discard
                   </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setResult(null)}
-                  disabled={applying || regenerating}
-                  className="text-xs"
-                >
-                  Discard
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={applyToSite}
-                  disabled={applying || regenerating}
-                  className="gap-1.5 text-xs"
-                >
-                  {applying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                  {applying ? "Applying..." : "Apply to site"}
-                </Button>
-              </div>
+                  <Button
+                    size="sm"
+                    onClick={applyToSite}
+                    disabled={applying || regenerating || autoRefreshing}
+                    className="gap-1.5 text-xs"
+                  >
+                    {applying || autoRefreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                    {applying
+                      ? "Applying..."
+                      : autoRefreshing
+                        ? "Refreshing SEO..."
+                        : autoRefreshAfterApply && result.content && selectedFields.includes("content")
+                          ? "Apply & auto-refresh SEO"
+                          : "Apply to site"}
+                  </Button>
+                </div>
+              </>
             )}
 
 
