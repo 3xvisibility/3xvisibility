@@ -48,6 +48,7 @@ const managementNav: AdminNavItem[] = [
   { label: "Campaigns", section: "campaigns", icon: Rocket },
   { label: "Generated Pages", section: "pages", icon: FileText },
   { label: "Subscriptions", section: "subscriptions", icon: CreditCard },
+  { label: "Payments", section: "payments", icon: CreditCard },
 ];
 
 const aiNav: AdminNavItem[] = [

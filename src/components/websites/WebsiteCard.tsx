@@ -117,7 +117,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
   const testConnectionMutation = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("test-connection", {
-        body: { url: site.url, type: site.type, credentials: site.credentials },
+        body: { website_id: site.id },
       });
       if (error) throw new Error(await extractEdgeError(error, "Connection test failed"));
       if (data?.error) throw new Error(data.error);
@@ -246,7 +246,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `sitemap-${site.name.toLowerCase().replace(/\s+/g, "-")}.xml`;
+    a.download = `sitemap-${(site.name || "site").toLowerCase().replace(/\s+/g, "-")}.xml`;
     a.click();
     URL.revokeObjectURL(url);
   };

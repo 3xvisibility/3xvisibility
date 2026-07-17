@@ -414,6 +414,7 @@ Deno.serve(async (req) => {
       // Payment / billing history from Stripe (best-effort)
       let payments: any[] = [];
       let stripeCustomer: any = null;
+      let planHistory: any[] = [];
       try {
         const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
         const email = targetUser?.email;
@@ -436,7 +437,30 @@ Deno.serve(async (req) => {
               created: inv.created ? new Date(inv.created * 1000).toISOString() : null,
               hosted_invoice_url: inv.hosted_invoice_url,
               pdf: inv.invoice_pdf,
+              plan: inv.lines?.data?.[0]?.description || inv.lines?.data?.[0]?.plan?.nickname || null,
             }));
+
+            // Plan history from Stripe subscriptions (all statuses, including canceled)
+            const subsRes = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${customer.id}&status=all&limit=25&expand[]=data.items.data.price.product`, { headers });
+            const subsJson = await subsRes.json();
+            planHistory = (subsJson?.data || []).map((s: any) => {
+              const item = s.items?.data?.[0];
+              const price = item?.price;
+              const product = price?.product;
+              return {
+                id: s.id,
+                status: s.status,
+                plan: (typeof product === "object" ? product?.name : null) || price?.nickname || price?.id || "—",
+                amount: price?.unit_amount ? price.unit_amount / 100 : null,
+                currency: (price?.currency || "usd").toUpperCase(),
+                interval: price?.recurring?.interval || null,
+                started: s.start_date ? new Date(s.start_date * 1000).toISOString() : null,
+                current_period_end: s.current_period_end ? new Date(s.current_period_end * 1000).toISOString() : null,
+                canceled_at: s.canceled_at ? new Date(s.canceled_at * 1000).toISOString() : null,
+                ended_at: s.ended_at ? new Date(s.ended_at * 1000).toISOString() : null,
+                cancel_at_period_end: s.cancel_at_period_end || false,
+              };
+            }).sort((a: any, b: any) => (b.started || "").localeCompare(a.started || ""));
           }
         }
       } catch (e) {
@@ -445,6 +469,39 @@ Deno.serve(async (req) => {
 
       const campaigns = campaignsRes.data || [];
       const pages = pagesRes.data || [];
+
+      // Page usage breakdown (last 6 months + status buckets)
+      const now = new Date();
+      const months: { key: string; label: string; count: number }[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push({
+          key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+          label: d.toLocaleString("en-US", { month: "short", year: "2-digit" }),
+          count: 0,
+        });
+      }
+      for (const p of pages) {
+        if (!p.created_at) continue;
+        const d = new Date(p.created_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const m = months.find((x) => x.key === key);
+        if (m) m.count++;
+      }
+
+      const sub = subRes.data;
+      const pageUsage = {
+        used: sub?.pages_used ?? 0,
+        limit: sub?.pages_limit ?? null,
+        percent: sub?.pages_limit ? Math.min(100, Math.round(((sub.pages_used ?? 0) / sub.pages_limit) * 100)) : null,
+        period_start: sub?.current_period_start || null,
+        period_end: sub?.current_period_end || null,
+        published: pages.filter((p: any) => p.status === "published").length,
+        draft: pages.filter((p: any) => p.status === "draft").length,
+        failed: pages.filter((p: any) => p.status === "failed").length,
+        total_all_time: pages.length,
+        monthly: months,
+      };
 
       return new Response(
         JSON.stringify({
@@ -467,6 +524,8 @@ Deno.serve(async (req) => {
           websites: websitesRes.data || [],
           usage: usageRes.data || [],
           payments,
+          plan_history: planHistory,
+          page_usage: pageUsage,
           stripe_customer: stripeCustomer,
           totals: {
             campaigns: campaigns.length,
