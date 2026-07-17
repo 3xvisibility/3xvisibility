@@ -547,12 +547,25 @@ export function SeoOptimizeDialog({
 
             {/* Apply / discard */}
             {!applied && (
-              <div className="flex items-center justify-end gap-2 pt-1">
+              <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                {result.content && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={regenerateSeoFromNewContent}
+                    disabled={applying || regenerating || loading}
+                    className="gap-1.5 text-xs mr-auto"
+                    title="Regenerate SEO title, description, and keywords from the new body content, keeping original length targets."
+                  >
+                    {regenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    {regenerating ? "Regenerating..." : "Regenerate SEO from new content"}
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={() => setResult(null)}
-                  disabled={applying}
+                  disabled={applying || regenerating}
                   className="text-xs"
                 >
                   Discard
@@ -560,7 +573,7 @@ export function SeoOptimizeDialog({
                 <Button
                   size="sm"
                   onClick={applyToSite}
-                  disabled={applying}
+                  disabled={applying || regenerating}
                   className="gap-1.5 text-xs"
                 >
                   {applying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
@@ -568,6 +581,7 @@ export function SeoOptimizeDialog({
                 </Button>
               </div>
             )}
+
 
             {/* Rollback — only relevant after we actually pushed */}
             {applied && result.pushed_to_cms && (
