@@ -2206,7 +2206,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                           onCheckedChange={() => toggle(c.key)}
                                         />
                                         <span className="font-mono truncate flex-1">{c.label}</span>
-                                        {c.kind === "seo" && (
+                                        {c.kind !== "data" && (
                                           <Badge variant="outline" className="text-[9px] h-4">resolved</Badge>
                                         )}
                                       </label>
