@@ -583,6 +583,19 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     },
   });
 
+  // Load keyword groups for auto-mapping template variables → keyword terms.
+  const { data: keywordGroups = [] } = useQuery({
+    queryKey: ["pgp-keyword-groups-wizard", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("pgp_keywords")
+        .select("name, terms")
+        .eq("workspace_id", wsId!);
+      return (data ?? []) as { name: string; terms: string[] | null }[];
+    },
+  });
+
   // Auto-suggest publish target: Shopify sites & ecommerce campaigns default
   // to "product"; non-ecommerce sites default to "page". Skipped once the
   // user explicitly toggles the radio (tracked via publishAsTouchedRef).
