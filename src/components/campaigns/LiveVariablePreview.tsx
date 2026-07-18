@@ -101,6 +101,29 @@ export function LiveVariablePreview({ templateVars, patterns, rows, manualMappin
     };
   }, [rows, idx, templateVars, patterns, manualMappings, customValues]);
 
+  const [view, setView] = useState<"detail" | "matrix">("detail");
+  const MATRIX_ROWS = 10;
+
+  // Per-variable resolved value across the first MATRIX_ROWS CSV rows.
+  const matrix = useMemo(() => {
+    if (!rows || rows.length === 0 || templateVars.length === 0) return null;
+    const take = rows.slice(0, MATRIX_ROWS);
+    const resolveVar = (v: string, row: Record<string, string>) => {
+      if (customValues[v] && customValues[v].trim() !== "") return customValues[v];
+      if (manualMappings[v] && row[manualMappings[v]] != null) return String(row[manualMappings[v]] ?? "");
+      if (row[v] != null) return String(row[v] ?? "");
+      const key = Object.keys(row).find(k => k.toLowerCase() === v.toLowerCase());
+      return key ? String(row[key] ?? "") : "";
+    };
+    return {
+      rows: take,
+      cells: templateVars.map(v => ({
+        variable: v,
+        values: take.map(r => resolveVar(v, r)),
+      })),
+    };
+  }, [rows, templateVars, manualMappings, customValues]);
+
   if (!resolved) return null;
 
   const total = rows.length;
