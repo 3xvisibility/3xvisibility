@@ -728,16 +728,38 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     });
   }, [selectedTemplate, templates, vibePalette, vibeTypography, vibeDensity]);
 
-  const baseCsvData =
+  const rawBaseData =
     dataSource === "website" ? websitePagesAsCsv.rows :
     dataSource === "locations" ? locationData :
     dataSource === "ai" ? aiGeneratedRows :
     csvData;
-  const baseCsvHeaders =
+  const rawBaseHeaders =
     dataSource === "website" ? websitePagesAsCsv.headers :
     dataSource === "locations" ? locationHeaders :
     dataSource === "ai" ? (selectedTemplateVars.length > 0 ? selectedTemplateVars : Object.keys(aiGeneratedRows[0] || {})) :
     csvHeaders;
+
+  // Cross-join with merged locations when applicable (AI / CSV / Website only).
+  // Each base row is combined with every selected location row so the template
+  // gets both business variables and location variables (city, country, etc.).
+  const canMergeLocations = dataSource !== "locations" && mergedLocations.length > 0 && rawBaseData.length > 0;
+  const baseCsvData = useMemo(() => {
+    if (!canMergeLocations) return rawBaseData;
+    const out: Record<string, string>[] = [];
+    for (const row of rawBaseData) {
+      for (const loc of mergedLocations) {
+        out.push({ ...loc, ...row });
+      }
+    }
+    return out;
+  }, [canMergeLocations, rawBaseData, mergedLocations]);
+  const baseCsvHeaders = useMemo(() => {
+    if (!canMergeLocations) return rawBaseHeaders;
+    const set = new Set<string>(rawBaseHeaders);
+    locationHeaders.forEach(h => set.add(h));
+    return Array.from(set);
+  }, [canMergeLocations, rawBaseHeaders, locationHeaders]);
+
 
   // Custom values are fixed substitutions, not page rows. A comma-separated
   // list like tags/services/reviews must stay inside the same generated page;
