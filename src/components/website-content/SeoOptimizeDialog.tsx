@@ -478,12 +478,53 @@ export function SeoOptimizeDialog({
     }
   };
 
+  // Fetch the current live values from the connected site without touching
+  // the post-apply verification state. Used to snapshot the "before" values
+  // right before we push, so we can diff what actually changed on the live
+  // page after Force republish.
+  const fetchLiveSnapshot = async (): Promise<{
+    title: string;
+    contentText: string;
+    seoTitle?: string | null;
+    seoDescription?: string | null;
+  } | null> => {
+    try {
+      const contentType = page.type === "product" ? "products" : "pages";
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", {
+        body: { website_id: websiteId, content_type: contentType },
+      });
+      if (error || !data) return null;
+      const items: any[] = Array.isArray(data?.items) ? data.items : [];
+      const fresh =
+        items.find((i) => String(i.id) === String(page.id)) ||
+        items.find((i) => i.slug && i.slug === page.slug) ||
+        items.find((i) => i.url && page.url && i.url === page.url);
+      if (!fresh) return null;
+      return {
+        title: String(fresh.title || ""),
+        contentText: htmlToText(fresh.content || ""),
+        seoTitle: fresh.seo_title ?? null,
+        seoDescription: fresh.seo_description ?? null,
+      };
+    } catch {
+      return null;
+    }
+  };
+
   // Phase 2: push the previewed values to the connected site.
   const applyToSite = async () => {
     if (!result) return;
     setApplying(true);
     setApplyError(null);
     try {
+      // Snapshot the live page BEFORE we push so the verification panel can
+      // show which Elementor fields actually changed after Force republish.
+      const before = await fetchLiveSnapshot();
+      if (before) {
+        setPreApplySnapshot({ ...before, fetchedAt: new Date().toISOString() });
+      } else {
+        setPreApplySnapshot(null);
+      }
       const { data, error } = await supabase.functions.invoke("optimize-seo-content", {
         body: {
           website_id: websiteId,
