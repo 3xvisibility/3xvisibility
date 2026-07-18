@@ -1273,6 +1273,16 @@ export function SeoOptimizeDialog({
                   </Button>
                   <Button
                     size="sm"
+                    variant="outline"
+                    onClick={() => purgeCache()}
+                    disabled={purging || applying || !websiteId}
+                    className="gap-1.5 text-xs"
+                    title="Clear WordPress and CDN caches now (WP Rocket, LiteSpeed, W3TC, WP Super Cache, SG Optimizer, Cloudflare plugin, Elementor CSS)."
+                  >
+                    {purging ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    {purging ? "Purging..." : "Purge cache now"}
+                  <Button
+                    size="sm"
                     onClick={applyToSite}
                     disabled={applying || regenerating || autoRefreshing}
                     className="gap-1.5 text-xs"
