@@ -730,7 +730,7 @@ export default function TemplateMarketplacePage() {
 
               {(() => {
                 const conv = getConversionStatus(tpl);
-                const chip = (label: string, state: ConvState, active: boolean) => {
+                const chip = (label: string, state: ConvState, active: boolean, platform: "elementor" | "shopify" | "html") => {
                   const cls =
                     state === "ready"
                       ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30"
@@ -739,20 +739,20 @@ export default function TemplateMarketplacePage() {
                       : "bg-amber-500/15 text-amber-500 border-amber-500/30";
                   const dot =
                     state === "ready" ? "bg-emerald-500" : state === "failed" ? "bg-rose-500" : "bg-amber-500";
-                  const title =
-                    state === "ready"
-                      ? `${label}: converted and ready to publish`
-                      : state === "failed"
-                      ? `${label}: conversion failed — re-run the backfill`
-                      : `${label}: pending — will convert on import`;
+                  const title = `${label}: click for details`;
                   return (
-                    <span
+                    <button
+                      type="button"
                       title={title}
-                      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9px] font-medium ${cls} ${active ? "ring-1 ring-current/40" : "opacity-80"}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDetailsCtx({ tpl, platform, state });
+                      }}
+                      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9px] font-medium hover:opacity-100 transition ${cls} ${active ? "ring-1 ring-current/40" : "opacity-80"}`}
                     >
                       <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
                       {label}
-                    </span>
+                    </button>
                   );
                 };
                 return (
@@ -784,9 +784,9 @@ export default function TemplateMarketplacePage() {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-1">
-                      {chip("Elementor", conv.elementor, platformChoice === "elementor")}
-                      {chip("Shopify", conv.shopify, platformChoice === "shopify")}
-                      {chip("HTML / CSS", conv.html, platformChoice === "html")}
+                      {chip("Elementor", conv.elementor, platformChoice === "elementor", "elementor")}
+                      {chip("Shopify", conv.shopify, platformChoice === "shopify", "shopify")}
+                      {chip("HTML / CSS", conv.html, platformChoice === "html", "html")}
                     </div>
                   </div>
                 );
