@@ -296,7 +296,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
               />
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-3">
                 <button type="button" className="text-xs text-primary hover:underline font-medium" onClick={selectAll}>
                   {selectedIds.size === filteredLocations.length && filteredLocations.length > 0 ? "Deselect all" : "Select all"}
@@ -305,9 +305,44 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   {selectedIds.size} / {filteredLocations.length} selected
                 </span>
               </div>
-              <Badge variant="outline" className="text-[10px]">
-                {filteredLocations.length} cities
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 rounded-xl gap-1.5 text-xs"
+                  disabled={seedMutation.isPending}
+                  onClick={async () => {
+                    await seedMutation.mutateAsync({
+                      countryCode: countryFilter,
+                      expand: true,
+                      state: stateFilter !== "all" ? stateFilter : undefined,
+                      region: regionFilter !== "all" ? regionFilter : undefined,
+                    });
+                    refetch();
+                  }}
+                  title={
+                    stateFilter !== "all" || regionFilter !== "all"
+                      ? `Load more cities in ${stateFilter !== "all" ? stateFilter : regionFilter}`
+                      : `Load more cities across ${countryName}`
+                  }
+                >
+                  {seedMutation.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Download className="h-3 w-3" />
+                  )}
+                  {seedMutation.isPending
+                    ? "Loading..."
+                    : stateFilter !== "all"
+                      ? `Load all in ${stateFilter}`
+                      : regionFilter !== "all"
+                        ? `Load all in ${regionFilter}`
+                        : "Load more cities"}
+                </Button>
+                <Badge variant="outline" className="text-[10px]">
+                  {filteredLocations.length} cities
+                </Badge>
+              </div>
             </div>
 
             {isLoading ? (
