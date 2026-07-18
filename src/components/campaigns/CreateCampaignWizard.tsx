@@ -2100,8 +2100,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         {(() => {
                           const tpl = templates.find((t) => t.id === selectedTemplate) as any;
                           const hasTitle = !!tpl?.seo_title_pattern;
-                          const allCols: { key: string; label: string; kind: "seo" | "data" }[] = [
+                          const slugPattern: string = tpl?.slug_pattern || tpl?.seo_title_pattern || "";
+                          const hasSlug = !!slugPattern;
+                          const allCols: { key: string; label: string; kind: "seo" | "slug" | "data" }[] = [
                             ...(hasTitle ? [{ key: "__seo_title__", label: "seo_title", kind: "seo" as const }] : []),
+                            ...(hasSlug ? [{ key: "__slug__", label: "slug", kind: "slug" as const }] : []),
                             ...baseCsvHeaders.map((h) => ({ key: h, label: h, kind: "data" as const })),
                           ];
                           const isIncluded = (k: string) => !csvExportExcluded.has(k);
@@ -2115,6 +2118,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           };
                           const selectAll = () => setCsvExportExcluded(new Set());
                           const clearAll = () => setCsvExportExcluded(new Set(allCols.map((c) => c.key)));
+                          const slugify = (s: string) =>
+                            s.toLowerCase()
+                              .normalize("NFKD")
+                              .replace(/[\u0300-\u036f]/g, "")
+                              .replace(/[^a-z0-9]+/g, "-")
+                              .replace(/^-+|-+$/g, "")
+                              .replace(/-{2,}/g, "-");
                           const doExport = () => {
                             const included = allCols.filter((c) => isIncluded(c.key));
                             if (included.length === 0) {
@@ -2138,6 +2148,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             for (const row of baseCsvData) {
                               const cells = included.map((c) => {
                                 if (c.kind === "seo") return escape(resolve(tpl.seo_title_pattern, row as Record<string, string>));
+                                if (c.kind === "slug") return escape(slugify(resolve(slugPattern, row as Record<string, string>)));
                                 return escape((row as Record<string, string>)[c.key] ?? "");
                               });
                               lines.push(cells.join(","));
