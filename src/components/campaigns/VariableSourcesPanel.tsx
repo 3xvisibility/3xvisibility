@@ -1,8 +1,11 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Database, Sparkles, Globe, Bookmark, Pencil, HelpCircle, Info } from "lucide-react";
+import { ChevronDown, Database, Sparkles, Globe, Bookmark, Pencil, HelpCircle, Info, Settings2, RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
@@ -19,6 +22,12 @@ interface Props {
   variableMapping: { matched: VariableMappingItem[] } | null;
   /** Sample row (for showing an example value). */
   sampleRow?: Record<string, string>;
+  /** Optional overrides — when provided, each row gets a Manual Override popover. */
+  csvHeaders?: string[];
+  manualMappings?: Record<string, string>;
+  setManualMappings?: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  customValues?: Record<string, string>;
+  setCustomValues?: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }
 
 type SourceKind = "csv" | "ai" | "website" | "custom" | "keywords" | "unmapped";
@@ -32,9 +41,152 @@ const SOURCE_META: Record<SourceKind, { label: string; icon: typeof Database; cl
   unmapped:  { label: "Unmapped",  icon: HelpCircle, className: "bg-destructive/10 text-destructive border-destructive/30", description: "No source found — please map this variable or set a custom value." },
 };
 
-export function VariableSourcesPanel({ dataSource, variableMapping, sampleRow }: Props) {
+type OverrideMode = "auto" | "csv" | "custom" | "keywords";
+
+function OverridePopover({
+  variable,
+  csvHeaders,
+  manualMappings,
+  setManualMappings,
+  customValues,
+  setCustomValues,
+  currentSource,
+}: {
+  variable: string;
+  csvHeaders: string[];
+  manualMappings: Record<string, string>;
+  setManualMappings: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  customValues: Record<string, string>;
+  setCustomValues: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  currentSource: SourceKind;
+}) {
+  const initialMode: OverrideMode =
+    customValues[variable] ? "custom" : manualMappings[variable] ? "csv" : "auto";
+  const [mode, setMode] = useState<OverrideMode>(initialMode);
+  const [customDraft, setCustomDraft] = useState<string>(customValues[variable] ?? "");
+  const [columnDraft, setColumnDraft] = useState<string>(manualMappings[variable] ?? "");
+
+  const apply = (next: OverrideMode) => {
+    if (next === "auto") {
+      setManualMappings(m => { const c = { ...m }; delete c[variable]; return c; });
+      setCustomValues(v => { const c = { ...v }; delete c[variable]; return c; });
+    } else if (next === "csv" && columnDraft) {
+      setCustomValues(v => { const c = { ...v }; delete c[variable]; return c; });
+      setManualMappings(m => ({ ...m, [variable]: columnDraft }));
+    } else if (next === "custom") {
+      setManualMappings(m => { const c = { ...m }; delete c[variable]; return c; });
+      setCustomValues(v => ({ ...v, [variable]: customDraft }));
+    } else if (next === "keywords") {
+      setManualMappings(m => { const c = { ...m }; delete c[variable]; return c; });
+      setCustomValues(v => { const c = { ...v }; delete c[variable]; return c; });
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-6 gap-1 px-1.5 text-[10px] text-muted-foreground hover:text-foreground shrink-0"
+          title="Manually override this variable's source"
+        >
+          <Settings2 className="h-3 w-3" />
+          Override
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 p-3 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-semibold">
+            Override <code className="font-mono">{`{${variable}}`}</code>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 gap-1 px-1.5 text-[10px]"
+            onClick={() => { setMode("auto"); apply("auto"); }}
+          >
+            <RotateCcw className="h-3 w-3" /> Reset
+          </Button>
+        </div>
+        <p className="text-[10.5px] text-muted-foreground leading-snug">
+          Force a specific value source. Current: <span className="font-medium text-foreground/80">{SOURCE_META[currentSource].label}</span>.
+        </p>
+
+        <Select
+          value={mode}
+          onValueChange={(val) => {
+            const next = val as OverrideMode;
+            setMode(next);
+            if (next !== "csv" && next !== "custom") apply(next);
+          }}
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto">Auto detect (default)</SelectItem>
+            <SelectItem value="csv" disabled={csvHeaders.length === 0}>Force CSV column</SelectItem>
+            <SelectItem value="custom">Force custom static value</SelectItem>
+            <SelectItem value="keywords">Force Keywords Library fallback</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {mode === "csv" && (
+          <div className="space-y-1.5">
+            <Select value={columnDraft || "__none__"} onValueChange={(v) => { setColumnDraft(v); apply("csv"); }}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Pick a CSV column" />
+              </SelectTrigger>
+              <SelectContent>
+                {csvHeaders.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {mode === "custom" && (
+          <div className="flex items-center gap-1.5">
+            <Input
+              value={customDraft}
+              onChange={(e) => setCustomDraft(e.target.value)}
+              placeholder="Static value for every row"
+              className="h-8 text-xs"
+            />
+            <Button type="button" size="sm" className="h-8 text-[11px]" onClick={() => apply("custom")}>
+              Save
+            </Button>
+          </div>
+        )}
+
+        {mode === "keywords" && (
+          <p className="text-[10.5px] text-muted-foreground bg-muted/40 rounded px-2 py-1.5">
+            Will pick a random matching term from your <span className="font-medium">Keywords Library</span> per row.
+            If no matching keyword exists, the variable stays unmapped.
+          </p>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export function VariableSourcesPanel({
+  dataSource,
+  variableMapping,
+  sampleRow,
+  csvHeaders,
+  manualMappings,
+  setManualMappings,
+  customValues,
+  setCustomValues,
+}: Props) {
   const { currentWorkspace } = useWorkspace();
   const [expanded, setExpanded] = useState(true);
+
+  const canOverride =
+    !!csvHeaders && !!manualMappings && !!setManualMappings && !!customValues && !!setCustomValues;
 
   // Load keyword library names for fallback detection.
   const { data: keywordNames = [] } = useQuery({
@@ -82,6 +234,7 @@ export function VariableSourcesPanel({ dataSource, variableMapping, sampleRow }:
             <p className="text-xs font-semibold">Where do variable values come from?</p>
             <p className="text-[11px] text-muted-foreground truncate">
               A quick breakdown of the source for each &#123;variable&#125; in your template.
+              {canOverride && " Click Override to force a specific source per variable."}
             </p>
           </div>
         </div>
@@ -122,6 +275,9 @@ export function VariableSourcesPanel({ dataSource, variableMapping, sampleRow }:
             {rows.map(r => {
               const meta = SOURCE_META[r.source];
               const Icon = meta.icon;
+              const isOverridden =
+                canOverride &&
+                (customValues![r.variable] !== undefined || manualMappings![r.variable] !== undefined);
               return (
                 <div key={r.variable} className="px-3.5 py-2 flex items-center gap-3 text-xs hover:bg-muted/40">
                   <code className="font-mono text-[11px] bg-muted px-1.5 py-0.5 rounded shrink-0">
@@ -131,6 +287,11 @@ export function VariableSourcesPanel({ dataSource, variableMapping, sampleRow }:
                     <Icon className="h-2.5 w-2.5" />
                     {meta.label}
                   </Badge>
+                  {isOverridden && (
+                    <Badge variant="outline" className="h-5 px-1.5 text-[10px] shrink-0 bg-foreground/5 text-foreground/70 border-foreground/20">
+                      manual
+                    </Badge>
+                  )}
                   <div className="min-w-0 flex-1 text-[11px] text-muted-foreground truncate">
                     {r.source === "unmapped" ? (
                       <span className="italic">No source — map a column or set a custom value.</span>
@@ -150,6 +311,17 @@ export function VariableSourcesPanel({ dataSource, variableMapping, sampleRow }:
                       </>
                     )}
                   </div>
+                  {canOverride && (
+                    <OverridePopover
+                      variable={r.variable}
+                      csvHeaders={csvHeaders!}
+                      manualMappings={manualMappings!}
+                      setManualMappings={setManualMappings!}
+                      customValues={customValues!}
+                      setCustomValues={setCustomValues!}
+                      currentSource={r.source}
+                    />
+                  )}
                 </div>
               );
             })}
