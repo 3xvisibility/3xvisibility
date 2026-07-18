@@ -378,7 +378,14 @@ export class WordPressConnector implements CmsConnector {
         throw new Error(`WordPress ${action} failed: your host blocked unsupported HTML in the page body.`);
       }
 
+      // Retries have been exhausted upstream — surface a retryable marker so
+      // the UI can offer a Retry button with a friendly message.
+      if (RETRYABLE_STATUSES.has(response.status)) {
+        throw makeRetryableError(`WordPress ${action} temporarily unavailable [${response.status}] after ${WORDPRESS_MAX_ATTEMPTS} attempts. The site is likely rate-limiting or overloaded — please retry in a moment.`);
+      }
+
       throw new Error(`WordPress ${action} error [${response.status}]: ${errorText}`);
+
     }
 
     return response.json();
