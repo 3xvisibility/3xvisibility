@@ -3313,6 +3313,27 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         sampleRow={effectiveCsvData?.[0] as Record<string, string> | undefined}
                       />
 
+                      {(() => {
+                        const tpl = templates.find(t => t.id === selectedTemplate) as any;
+                        if (!tpl) return null;
+                        return (
+                          <LiveVariablePreview
+                            templateVars={selectedTemplateVars}
+                            patterns={{
+                              seoTitle: tpl.seo_title_pattern,
+                              seoDescription: tpl.seo_description_pattern,
+                              slug: tpl.schema_config?.slug_pattern || tpl.slug_pattern,
+                              h1: tpl.h1_pattern || tpl.schema_config?.h1_pattern,
+                              contentHtml: tpl.content,
+                            }}
+                            rows={(effectiveCsvData || []) as Record<string, string>[]}
+                            manualMappings={manualMappings}
+                            customValues={customValues}
+                          />
+                        );
+                      })()}
+
+
                       <MappingStep
                         csvHeaders={effectiveCsvHeaders}
                         templateVars={selectedTemplateVars}
