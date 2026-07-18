@@ -338,6 +338,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         if (Array.isArray(s.csvData)) setCsvData(s.csvData);
         if (Array.isArray(s.locationData)) setLocationData(s.locationData);
         if (Array.isArray(s.mergedLocations)) setMergedLocations(s.mergedLocations);
+        if (s.locationMergeMode === "zip" || s.locationMergeMode === "cross") setLocationMergeMode(s.locationMergeMode);
         if (typeof s.locationKeywordEnabled === "boolean") setLocationKeywordEnabled(s.locationKeywordEnabled);
         if (typeof s.locationKeywordPattern === "string") setLocationKeywordPattern(s.locationKeywordPattern);
         if (typeof s.websiteForPages === "string") setWebsiteForPages(s.websiteForPages);
