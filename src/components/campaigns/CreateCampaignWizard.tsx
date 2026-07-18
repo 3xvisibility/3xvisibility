@@ -285,7 +285,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   }), [
     step, campaignName, campaignLanguage, campaignCountry, campaignTypes,
     dataSource, aiBusiness, aiNiche, aiServiceProduct, aiPageCount, aiGeneratedRows, activePresetId,
-    csvRawText, csvHeaders, csvData, locationData, mergedLocations, locationKeywordEnabled, locationKeywordPattern,
+    csvRawText, csvHeaders, csvData, locationData, mergedLocations, locationMergeMode, locationKeywordEnabled, locationKeywordPattern,
     websiteForPages, websiteContentType, selectedPageIds, websitePagesSearch,
     selectedTemplate, selectedWebsite,
     manualMappings, customValues, transforms, targetFieldMappings,
