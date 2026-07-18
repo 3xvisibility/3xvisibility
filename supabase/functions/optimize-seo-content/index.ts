@@ -280,13 +280,18 @@ async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.n
       page_seo_keywords,
       update_template,
       overwrite_design,
+      force_republish,
     } = body;
     // Republishing an existing CMS page → preserve its on-site design (Elementor
     // layout, theme blocks, builder structure) by default. Caller can opt out
     // with `overwrite_design: true` (e.g. manual full-rewrite flows). When the
     // caller explicitly supplies `manual_content`, we treat it as an intentional
     // body update so the new content actually reaches the CMS.
-    const allowOverwriteDesign = overwrite_design === true || !!manual_content;
+    // `force_republish` is a stronger opt-out: it forces a raw HTML push and
+    // clears Elementor edit-mode meta so the new content actually renders on
+    // pages that were previously built with Elementor.
+    const forceRepublish = force_republish === true;
+    const allowOverwriteDesign = forceRepublish || overwrite_design === true || !!manual_content;
     const preserveDesign = !allowOverwriteDesign;
 
     if (!website_id) {
