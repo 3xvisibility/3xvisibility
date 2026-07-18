@@ -47,6 +47,7 @@ const actionConfig: Record<string, { icon: React.ReactNode; labelKey: string; co
   page_published:    { icon: <FileText className="h-3.5 w-3.5" />, labelKey: "audit.action.pagePublished",     color: "bg-success/10 text-success" },
   page_deleted:      { icon: <Trash2 className="h-3.5 w-3.5" />,   labelKey: "audit.action.pageDeleted",       color: "bg-destructive/10 text-destructive" },
   pages_bulk_published: { icon: <FileText className="h-3.5 w-3.5" />, labelKey: "audit.action.bulkPublish",    color: "bg-success/10 text-success" },
+  force_republish:   { icon: <RefreshCw className="h-3.5 w-3.5" />, labelKey: "audit.action.forceRepublish",  color: "bg-warning/10 text-warning" },
   // Plan / billing
   plan_changed:      { icon: <CreditCard className="h-3.5 w-3.5" />, labelKey: "audit.action.planChanged",     color: "bg-warning/10 text-warning" },
   subscription_updated: { icon: <CreditCard className="h-3.5 w-3.5" />, labelKey: "audit.action.subscriptionUpdated", color: "bg-primary/10 text-primary" },
