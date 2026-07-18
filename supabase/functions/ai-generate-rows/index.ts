@@ -154,7 +154,65 @@ Make every row meaningfully different so each generated page is unique.`;
       return safeMode ? enforceRowBudget(out, budget) : out;
     });
 
-    return new Response(JSON.stringify({ rows: normalized }), {
+    // Diversity repair: for each field, detect rows that share the same value
+    // (or match the reference sample) and ask the AI to rewrite ONLY those cells
+    // with fresh distinct wording. Runs up to 2 passes.
+    const norm = (s: string) => (s || "").toLowerCase().replace(/\s+/g, " ").trim();
+    const findDupFields = (rowsIn: Record<string, string>[]) => {
+      const fields: string[] = [];
+      for (const v of variables) {
+        const seen = new Map<string, number>();
+        for (const r of rowsIn) {
+          const key = norm(r[v]);
+          if (!key) continue;
+          seen.set(key, (seen.get(key) || 0) + 1);
+        }
+        const sampleKey = norm(String(body.defaultValues?.[v] || ""));
+        const hasDup = Array.from(seen.values()).some((n) => n > 1);
+        const echoesSample = sampleKey && rowsIn.filter((r) => norm(r[v]) === sampleKey).length >= Math.max(2, Math.ceil(rowsIn.length / 2));
+        if (hasDup || echoesSample) fields.push(v);
+      }
+      return fields;
+    };
+
+    let final = normalized;
+    for (let pass = 0; pass < 2; pass++) {
+      const dupFields = findDupFields(final);
+      if (dupFields.length === 0) break;
+      const repairPrompt = `The following fields have duplicate or sample-echoing values across rows: ${dupFields.join(", ")}.
+Rewrite ONLY these fields so every one of the ${final.length} rows has a completely different, freshly-worded value for each listed field. Keep the same length budget.
+Return the FULL set of ${final.length} rows with EVERY variable populated (unchanged fields may keep their current value, but must still be returned).
+Current rows (JSON):
+${JSON.stringify(final)}`;
+      const repair = await aiGenerate({
+        authToken: extractAuthToken(req),
+        promptType: "medium_content",
+        model: "google/gemini-2.5-flash",
+        temperature: 1.0,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+          { role: "user", content: repairPrompt },
+        ],
+        tools: [tool],
+        tool_choice: { type: "function", function: { name: "emit_rows" } },
+      });
+      if (!repair.success) break;
+      let repaired: any;
+      try { repaired = typeof repair.content === "string" ? JSON.parse(repair.content) : repair.content; } catch { break; }
+      const nextRows: Record<string, string>[] = Array.isArray(repaired?.rows) ? repaired.rows : [];
+      if (nextRows.length === 0) break;
+      final = nextRows.slice(0, final.length).map((r, i) => {
+        const out: Record<string, string> = {};
+        for (const v of variables) {
+          const nv = String(r?.[v] ?? "").trim();
+          out[v] = dupFields.includes(v) && nv ? nv : (final[i]?.[v] ?? nv);
+        }
+        return safeMode ? enforceRowBudget(out, budget) : out;
+      });
+    }
+
+    return new Response(JSON.stringify({ rows: final }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
