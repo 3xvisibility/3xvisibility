@@ -200,6 +200,86 @@ export function SeoOptimizeDialog({
     error?: string;
   } | null>(null);
 
+  // Prior verification runs pulled from the DB for this page — surfaced at the
+  // top of the dialog so users can see when each field was last confirmed live.
+  type PastVerification = {
+    id: string;
+    created_at: string;
+    verified_all: boolean;
+    force_republish: boolean;
+    attempts: number;
+    page_url: string | null;
+    matches: { title?: boolean; content?: boolean; seoTitle?: boolean; seoDescription?: boolean };
+    error: string | null;
+  };
+  const [pastVerifications, setPastVerifications] = useState<PastVerification[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Persist a single verification snapshot to Postgres. Best-effort — a failure
+  // here should never break the Apply/verify flow, so we swallow the error.
+  const persistVerification = async (snapshot: {
+    ok: boolean;
+    attempts: number;
+    live: { title: string; contentText: string; seoTitle?: string | null; seoDescription?: string | null };
+    matches: { title: boolean; content: boolean; seoTitle: boolean; seoDescription: boolean };
+    error?: string;
+  }) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id;
+      if (!uid || !workspaceId) return;
+      await supabase.from("seo_apply_verifications").insert({
+        user_id: uid,
+        workspace_id: workspaceId,
+        website_id: websiteId ?? null,
+        page_id: String(page.id),
+        page_slug: page.slug ?? null,
+        page_url: result?.external_url || page.url || null,
+        page_type: page.type ?? null,
+        expected: {
+          title: page.title || "",
+          seo_title: result?.seo_title || "",
+          seo_description: result?.seo_description || "",
+          content_preview: htmlToText(result?.content || page.content).slice(0, 500),
+        },
+        live: {
+          title: snapshot.live.title,
+          seo_title: snapshot.live.seoTitle ?? null,
+          seo_description: snapshot.live.seoDescription ?? null,
+          content_preview: (snapshot.live.contentText || "").slice(0, 500),
+        },
+        matches: snapshot.matches,
+        attempts: snapshot.attempts,
+        verified_all: snapshot.ok,
+        force_republish: forceRepublish,
+        error: snapshot.error ?? null,
+      });
+    } catch {
+      // silent — history is a nice-to-have
+    }
+  };
+
+  // Load past verification runs when the dialog opens so users can see the
+  // last known state for each field on the live site.
+  useEffect(() => {
+    if (!open || !workspaceId || !page?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("seo_apply_verifications")
+        .select("id, created_at, verified_all, force_republish, attempts, page_url, matches, error")
+        .eq("workspace_id", workspaceId)
+        .eq("page_id", String(page.id))
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (cancelled || error) return;
+      setPastVerifications((data || []) as PastVerification[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, workspaceId, page?.id]);
+
   // Strip HTML → plain text for old-vs-new body preview (design HTML is huge
   // and unreadable in a side-by-side; text-only makes the diff easy to scan).
   const htmlToText = (html: string | null | undefined) =>
