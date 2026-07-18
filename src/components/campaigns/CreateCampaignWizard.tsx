@@ -115,6 +115,9 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // Auto-build the {keywords} field from selected locations (city/country/etc.)
   const [locationKeywordEnabled, setLocationKeywordEnabled] = useState(false);
   const [locationKeywordPattern, setLocationKeywordPattern] = useState<string>("{city}, {country}");
+  // CSV export column selection — columns whose keys are in this set are EXCLUDED.
+  const [csvExportExcluded, setCsvExportExcluded] = useState<Set<string>>(new Set());
+  const [csvExportOpen, setCsvExportOpen] = useState(false);
   const [websiteForPages, setWebsiteForPages] = useState("");
   const [websiteContentType, setWebsiteContentType] = useState<"pages" | "products" | "all">("all");
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
