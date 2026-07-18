@@ -304,7 +304,21 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         if (typeof s.campaignLanguage === "string") setCampaignLanguage(s.campaignLanguage);
         if (typeof s.campaignCountry === "string") setCampaignCountry(s.campaignCountry);
         if (Array.isArray(s.campaignTypes)) setCampaignTypes(s.campaignTypes);
-        if (typeof s.dataSource === "string") setDataSource(s.dataSource);
+        if (typeof s.dataSource === "string") {
+          // The "locations" tab was removed. Older drafts still have it stored
+          // — promote any saved location rows into the CSV source so the wizard
+          // keeps working and generated pages stay unaffected.
+          if (s.dataSource === "locations") {
+            setDataSource("csv");
+            if (Array.isArray(s.locationData) && s.locationData.length > 0) {
+              const rows = s.locationData as Record<string, string>[];
+              setCsvData(rows);
+              setCsvHeaders(Object.keys(rows[0] || {}));
+            }
+          } else {
+            setDataSource(s.dataSource as typeof dataSource);
+          }
+        }
         if (typeof s.aiBusiness === "string") setAiBusiness(s.aiBusiness);
         if (typeof s.aiNiche === "string") setAiNiche(s.aiNiche);
         if (typeof s.aiServiceProduct === "string") setAiServiceProduct(s.aiServiceProduct);
