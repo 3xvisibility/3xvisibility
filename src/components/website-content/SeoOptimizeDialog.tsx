@@ -898,7 +898,24 @@ export function SeoOptimizeDialog({
     } finally {
       setVerifying(false);
     }
+    return { ok: lastOk, snapshot: lastSnapshot };
   };
+
+  // Compare the post-apply live snapshot against the pre-apply snapshot.
+  // Returns true if the live page still looks like the OLD content
+  // (i.e. the push didn't actually replace what's rendered).
+  const stillMatchesOld = (
+    liveSnap: { live: { title: string; contentText: string; seoTitle?: string | null; seoDescription?: string | null } },
+    old: { title: string; contentText: string; seoTitle?: string | null; seoDescription?: string | null },
+  ): boolean => {
+    const norm = (s: string | null | undefined) => (s || "").replace(/\s+/g, " ").trim().toLowerCase();
+    const contentSame = norm(liveSnap.live.contentText).slice(0, 400) === norm(old.contentText).slice(0, 400);
+    const titleSame = norm(liveSnap.live.title) === norm(old.title);
+    // "Still old" means the two biggest fields (title + content) both
+    // still equal the pre-apply values.
+    return contentSame && titleSame;
+  };
+
 
 
 
