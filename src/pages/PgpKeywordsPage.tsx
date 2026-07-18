@@ -211,6 +211,7 @@ export default function PgpKeywordsPage() {
   // Template source state
   const [tmplId, setTmplId] = useState("");
   const [tmplBulkCreating, setTmplBulkCreating] = useState(false);
+  const [tmplConfirmOpen, setTmplConfirmOpen] = useState(false);
 
   // Auto wizard state
   const [wizService, setWizService] = useState("");
