@@ -1158,6 +1158,99 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
               </div>
             )}
 
+            {/* Template source */}
+            {kwSource === "template" && (() => {
+              const selectedTpl = pgpTemplates.find(x => x.id === tmplId);
+              const extractVars = (tpl: typeof pgpTemplates[number] | undefined): string[] => {
+                if (!tpl) return [];
+                if (Array.isArray(tpl.variables) && tpl.variables.length > 0) {
+                  return [...new Set(tpl.variables.map(v => String(v).replace(/[{}]/g, "").trim()).filter(Boolean))];
+                }
+                const combined = `${tpl.content || ""} ${tpl.seo_title_pattern || ""} ${tpl.seo_description_pattern || ""}`;
+                const matches = combined.match(/\{([a-z0-9_]+)\}/gi) || [];
+                return [...new Set(matches.map(m => m.replace(/[{}]/g, "").toLowerCase()))];
+              };
+              const vars = extractVars(selectedTpl);
+              const existingNames = new Set(keywords.map(k => k.name.toLowerCase()));
+              const bulkCreate = async () => {
+                if (!wsId || !selectedTpl || vars.length === 0) return;
+                setTmplBulkCreating(true);
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) throw new Error("Not signed in");
+                  const toCreate = vars.filter(v => !existingNames.has(v.toLowerCase()));
+                  if (toCreate.length === 0) {
+                    toast({ title: "Nothing to create", description: "All variables already have keyword groups." });
+                    return;
+                  }
+                  const rows = toCreate.map(v => ({
+                    name: v, source: "local", terms: [], term_count: 0, columns: [], delimiter: null,
+                    source_config: { from_template: selectedTpl.id, template_name: selectedTpl.name },
+                    workspace_id: wsId, user_id: user.id,
+                  }));
+                  const { error } = await supabase.from("pgp_keywords").insert(rows as any);
+                  if (error) throw error;
+                  queryClient.invalidateQueries({ queryKey: ["pgp-keywords"] });
+                  toast({ title: `Created ${toCreate.length} keyword group${toCreate.length !== 1 ? "s" : ""}`, description: `From template "${selectedTpl.name}".` });
+                  setEditorOpen(false); resetEditor();
+                } catch (err: any) {
+                  toast({ title: "Bulk create failed", description: err.message, variant: "destructive" });
+                } finally { setTmplBulkCreating(false); }
+              };
+              return (
+                <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+                  <p className="text-xs font-semibold flex items-center gap-1.5"><Wand2 className="h-3.5 w-3.5 text-primary" /> Pull variables from a template</p>
+                  <p className="text-[11px] text-muted-foreground">Pick one of your campaign templates. Every &#123;variable&#125; in that template becomes a keyword group.</p>
+                  <Select value={tmplId || "__none__"} onValueChange={(v) => setTmplId(v === "__none__" ? "" : v)}>
+                    <SelectTrigger className="h-9"><SelectValue placeholder={pgpTemplates.length === 0 ? "No templates yet — create one from Templates" : "Pick a template"} /></SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {pgpTemplates.length === 0
+                        ? <SelectItem value="__none__" disabled>No templates in this workspace</SelectItem>
+                        : pgpTemplates.map(tpl => <SelectItem key={tpl.id} value={tpl.id}>{tpl.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+
+                  {selectedTpl && (
+                    <>
+                      {vars.length === 0 ? (
+                        <p className="text-[11px] text-warning">This template has no &#123;variables&#125;. Add some in the Templates page first.</p>
+                      ) : (
+                        <>
+                          <div className="space-y-1.5">
+                            <Label className="text-[11px] text-muted-foreground">{vars.length} variable{vars.length !== 1 ? "s" : ""} found — click one to use its name for this group:</Label>
+                            <div className="flex flex-wrap gap-1.5">
+                              {vars.map(v => {
+                                const exists = existingNames.has(v.toLowerCase());
+                                return (
+                                  <button
+                                    key={v}
+                                    type="button"
+                                    onClick={() => { setKwName(v); setKwSource("local"); }}
+                                    className={`font-mono text-[11px] px-2 py-1 rounded border transition-colors ${exists ? "bg-muted text-muted-foreground border-border cursor-help" : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"}`}
+                                    title={exists ? "A keyword group with this name already exists" : "Use this variable as this group's name"}
+                                  >
+                                    {`{${v}}`}{exists && " ✓"}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between gap-2 pt-1">
+                            <p className="text-[10.5px] text-muted-foreground">
+                              Or bulk-create empty groups for every variable not yet in your library.
+                            </p>
+                            <Button size="sm" variant="outline" onClick={bulkCreate} disabled={tmplBulkCreating || vars.every(v => existingNames.has(v.toLowerCase()))}>
+                              {tmplBulkCreating ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Creating…</> : <><Plus className="h-3.5 w-3.5 mr-1.5" /> Create all missing</>}
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* File Import (CSV, Excel, TXT, JSON) */}
             {(kwSource === "csv" || kwSource === "text") && (
               <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
