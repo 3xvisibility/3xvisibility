@@ -1281,6 +1281,7 @@ export function SeoOptimizeDialog({
                   >
                     {purging ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                     {purging ? "Purging..." : "Purge cache now"}
+                  </Button>
                   <Button
                     size="sm"
                     onClick={applyToSite}
