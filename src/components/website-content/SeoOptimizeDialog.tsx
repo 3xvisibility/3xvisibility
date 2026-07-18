@@ -279,12 +279,103 @@ export function SeoOptimizeDialog({
       ) {
         await autoRefreshSeoOnLive(result.content);
       }
+
+      // After everything is pushed, re-fetch from the live site and verify
+      // the update actually landed on the published page.
+      if (data.pushed_to_cms) {
+        await verifyLive();
+      }
     } catch (err: any) {
       handleApiError(err, { title: "Apply failed" });
     } finally {
       setApplying(false);
     }
   };
+
+  // Re-fetch the page from the connected site and compare it against the
+  // values we just pushed, so the user can be sure the changes are live.
+  const verifyLive = async () => {
+    setVerifying(true);
+    setVerification(null);
+    try {
+      const contentType = page.type === "product" ? "products" : "pages";
+      // Small delay so the CMS has a moment to flush caches before re-reading.
+      await new Promise((r) => setTimeout(r, 1500));
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", {
+        body: { website_id: websiteId, content_type: contentType },
+      });
+      if (error) throw new Error(await extractEdgeError(error, "Verification failed"));
+      if (data?.error && !data.items?.length) throw new Error(data.error);
+
+      const items: any[] = Array.isArray(data?.items) ? data.items : [];
+      const fresh =
+        items.find((i) => String(i.id) === String(page.id)) ||
+        items.find((i) => i.slug && i.slug === page.slug) ||
+        items.find((i) => i.url && page.url && i.url === page.url);
+
+      if (!fresh) {
+        setVerification({
+          ok: false,
+          fetchedAt: new Date().toISOString(),
+          live: { title: "", contentText: "" },
+          matches: { title: false, content: false, seoTitle: false, seoDescription: false },
+          error: "Could not find this page on the live site after refresh.",
+        });
+        return;
+      }
+
+      const liveTitle = String(fresh.title || "");
+      const liveContentText = htmlToText(fresh.content || "");
+      const liveSeoTitle: string | null | undefined = fresh.seo_title;
+      const liveSeoDesc: string | null | undefined = fresh.seo_description;
+
+      const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
+      const contains = (hay: string, needle: string) => {
+        if (!needle) return true;
+        const h = norm(hay);
+        const n = norm(needle);
+        if (!n) return true;
+        // For long bodies, look for a healthy chunk of the pushed text.
+        const probe = n.length > 120 ? n.slice(0, 120) : n;
+        return h.includes(probe);
+      };
+
+      const expectedContentText = htmlToText(result?.content || page.content);
+      const matches = {
+        title: contains(liveTitle, page.title),
+        content: contains(liveContentText, expectedContentText),
+        seoTitle: result?.seo_title ? contains(String(liveSeoTitle || ""), result.seo_title) : true,
+        seoDescription: result?.seo_description ? contains(String(liveSeoDesc || ""), result.seo_description) : true,
+      };
+      const ok = matches.title && matches.content && matches.seoTitle && matches.seoDescription;
+
+      setVerification({
+        ok,
+        fetchedAt: new Date().toISOString(),
+        live: { title: liveTitle, contentText: liveContentText, seoTitle: liveSeoTitle, seoDescription: liveSeoDesc },
+        matches,
+      });
+
+      toast({
+        title: ok ? "Verified on live site" : "Live page differs",
+        description: ok
+          ? "The published page now reflects your changes."
+          : "We refetched the page but some fields don't match yet — the CMS may still be caching.",
+        variant: ok ? undefined : "destructive",
+      });
+    } catch (err: any) {
+      setVerification({
+        ok: false,
+        fetchedAt: new Date().toISOString(),
+        live: { title: "", contentText: "" },
+        matches: { title: false, content: false, seoTitle: false, seoDescription: false },
+        error: err?.message || "Verification failed",
+      });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
 
   // Regenerate SEO from the freshly published body, then push SEO-only back
   // to the live page (no body rewrite) so the layout stays intact.
