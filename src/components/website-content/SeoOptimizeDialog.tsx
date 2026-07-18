@@ -1223,6 +1223,31 @@ export function SeoOptimizeDialog({
                     Use this when content updates don't show on the live page. Clears <code className="text-[10px]">_elementor_edit_mode</code> and <code className="text-[10px]">_elementor_data</code> so the pushed HTML actually renders at the same URL. The Elementor editor will need to re-import the layout after.
                   </span>
                 </label>
+                <label className="flex items-start gap-2 text-xs text-muted-foreground rounded-md border border-dashed border-sky-500/40 bg-sky-500/5 p-2 cursor-pointer hover:bg-sky-500/10">
+                  <Checkbox
+                    checked={purgeAfterApply}
+                    onCheckedChange={(v) => setPurgeAfterApply(v === true)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="font-medium text-foreground">Purge WordPress cache after apply</span>
+                    <br />
+                    After the push, automatically clears WP Rocket, LiteSpeed, W3 Total Cache, WP Super Cache, SG Optimizer, Cloudflare (WP plugin), Elementor CSS, and other detected caches so the live page shows the update immediately.
+                    {purgeResult && (
+                      <span className="block mt-1">
+                        {purgeResult.success ? (
+                          <span className="text-emerald-600 dark:text-emerald-400">
+                            ✓ Purged: {purgeResult.purged_plugins.join(", ") || "cache endpoint accepted"}
+                          </span>
+                        ) : (
+                          <span className="text-amber-600 dark:text-amber-400">
+                            • {purgeResult.note || "No cache plugin responded — check your CDN dashboard."}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </span>
+                </label>
                 <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
                   {result.content && (
                     <Button
