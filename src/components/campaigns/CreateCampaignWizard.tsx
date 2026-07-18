@@ -3475,32 +3475,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         </div>
                       )}
 
-                      {(autoMappedInfo.fromKeywords.length > 0 || autoMappedInfo.fromFallback.length > 0) && (
-                        <div className="rounded-xl border border-primary/30 bg-primary/[0.04] p-3 flex items-start gap-2.5">
-                          <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <p className="text-xs font-semibold text-primary">
-                              Auto-mapped {autoMappedInfo.fromKeywords.length + autoMappedInfo.fromFallback.length} variable{(autoMappedInfo.fromKeywords.length + autoMappedInfo.fromFallback.length) !== 1 ? "s" : ""}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground leading-snug">
-                              Template &#123;variables&#125; matched with your Keywords Library — terms rotate per row so every page gets a different value.
-                              Missing groups fall back to a smart default so nothing renders as a raw placeholder.
-                            </p>
-                            <div className="flex flex-wrap gap-1 pt-0.5">
-                              {autoMappedInfo.fromKeywords.map(v => (
-                                <code key={`kw-${v}`} className="font-mono text-[10.5px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/25">
-                                  {`{${v}}`} · keywords
-                                </code>
-                              ))}
-                              {autoMappedInfo.fromFallback.map(v => (
-                                <code key={`fb-${v}`} className="font-mono text-[10.5px] bg-amber-500/10 text-amber-600 px-1.5 py-0.5 rounded border border-amber-500/25">
-                                  {`{${v}}`} · fallback
-                                </code>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+
+
 
 
                       <VariableSourcesPanel
