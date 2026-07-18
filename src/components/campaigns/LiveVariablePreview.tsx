@@ -185,8 +185,27 @@ export function LiveVariablePreview({ templateVars, patterns, rows, manualMappin
               {missingCount} missing
             </Badge>
           )}
+          <div className="ml-1 inline-flex rounded-md border border-border/60 bg-background overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setView("detail")}
+              className={`px-1.5 py-0.5 text-[10px] inline-flex items-center gap-1 ${view === "detail" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+              title="Row detail view"
+            >
+              <LayoutList className="h-2.5 w-2.5" /> Row
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("matrix")}
+              className={`px-1.5 py-0.5 text-[10px] inline-flex items-center gap-1 border-l border-border/60 ${view === "matrix" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+              title="All rows table view"
+            >
+              <TableIcon className="h-2.5 w-2.5" /> Table
+            </button>
+          </div>
         </div>
       </div>
+
 
       {/* Row navigator */}
       <div className="flex items-center justify-between gap-3 px-3.5 py-2 border-b border-border/60">
