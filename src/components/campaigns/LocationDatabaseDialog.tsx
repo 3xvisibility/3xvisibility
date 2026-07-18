@@ -46,7 +46,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [minPop, setMinPop] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [countryOpen, setCountryOpen] = useState(false);
-  const [batchSize, setBatchSize] = useState<number>(150);
+  const [batchSize, setBatchSize] = useState<number>(100);
   const [seedProgress, setSeedProgress] = useState(0);
   const [seedElapsed, setSeedElapsed] = useState(0);
   const [seedStage, setSeedStage] = useState<string>("");
@@ -681,10 +681,6 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                     <SelectContent>
                       <SelectItem value="50">50</SelectItem>
                       <SelectItem value="100">100</SelectItem>
-                      <SelectItem value="150">150</SelectItem>
-                      <SelectItem value="250">250</SelectItem>
-                      <SelectItem value="500">500</SelectItem>
-                      <SelectItem value="1000">1000</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
