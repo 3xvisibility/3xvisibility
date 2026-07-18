@@ -918,7 +918,12 @@ export function SeoOptimizeDialog({
         ].filter(Boolean) as string[];
         toast({
           title: "✓ Verified on live site",
-          description: `Confirmed updated${confirmed.length ? `: ${confirmed.join(", ")}` : ""}${liveUrl ? ` — ${liveUrl}` : ""}`,
+          description: (
+            <span className="flex flex-col gap-0.5">
+              <span>{`Confirmed updated${confirmed.length ? `: ${confirmed.join(", ")}` : ""}`}</span>
+              {renderToastUrlLine(liveUrl)}
+            </span>
+          ),
           action: liveUrl
             ? (
                 <ToastAction altText="Open live page" onClick={() => window.open(liveUrl, "_blank", "noopener,noreferrer")}>
