@@ -33,20 +33,27 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [countryOpen, setCountryOpen] = useState(false);
 
   const seedMutation = useMutation({
-    mutationFn: async (countryCode?: string) => {
-      const { data, error } = await supabase.functions.invoke("seed-locations", {
-        body: countryCode ? { country_code: countryCode } : {},
-      });
+    mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string }) => {
+      const body: Record<string, unknown> = {};
+      if (opts?.countryCode) body.country_code = opts.countryCode;
+      if (opts?.expand) body.expand = true;
+      if (opts?.state && opts.state !== "all") body.state = opts.state;
+      if (opts?.region && opts.region !== "all") body.region = opts.region;
+      const { data, error } = await supabase.functions.invoke("seed-locations", { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data;
+      return data as { inserted?: number; skipped_duplicates?: number };
     },
-    onSuccess: () => {
-      toast({ title: "Location database loaded", description: "Cities are now available." });
+    onSuccess: (data) => {
+      toast({
+        title: "Location database updated",
+        description: `Added ${data?.inserted ?? 0} cities${data?.skipped_duplicates ? ` (skipped ${data.skipped_duplicates} duplicates)` : ""}.`,
+      });
       queryClient.invalidateQueries({ queryKey: ["locations-db"] });
+      queryClient.invalidateQueries({ queryKey: ["locations-db-meta"] });
     },
     onError: (err: Error) => {
-      toast({ title: "Seeding failed", description: err.message, variant: "destructive" });
+      toast({ title: "Loading failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -59,7 +66,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
         .select("*")
         .eq("country_code", countryFilter)
         .order("population", { ascending: false })
-        .limit(1000);
+        .limit(5000);
 
       if (stateFilter !== "all") query = query.eq("state", stateFilter);
       if (regionFilter !== "all") query = query.eq("region", regionFilter);
@@ -230,7 +237,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             </div>
             <Button
               onClick={async () => {
-                await seedMutation.mutateAsync(countryFilter);
+                await seedMutation.mutateAsync({ countryCode: countryFilter });
                 refetch();
               }}
               disabled={seedMutation.isPending}
@@ -289,7 +296,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
               />
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-3">
                 <button type="button" className="text-xs text-primary hover:underline font-medium" onClick={selectAll}>
                   {selectedIds.size === filteredLocations.length && filteredLocations.length > 0 ? "Deselect all" : "Select all"}
@@ -298,9 +305,44 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   {selectedIds.size} / {filteredLocations.length} selected
                 </span>
               </div>
-              <Badge variant="outline" className="text-[10px]">
-                {filteredLocations.length} cities
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 rounded-xl gap-1.5 text-xs"
+                  disabled={seedMutation.isPending}
+                  onClick={async () => {
+                    await seedMutation.mutateAsync({
+                      countryCode: countryFilter,
+                      expand: true,
+                      state: stateFilter !== "all" ? stateFilter : undefined,
+                      region: regionFilter !== "all" ? regionFilter : undefined,
+                    });
+                    refetch();
+                  }}
+                  title={
+                    stateFilter !== "all" || regionFilter !== "all"
+                      ? `Load more cities in ${stateFilter !== "all" ? stateFilter : regionFilter}`
+                      : `Load more cities across ${countryName}`
+                  }
+                >
+                  {seedMutation.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Download className="h-3 w-3" />
+                  )}
+                  {seedMutation.isPending
+                    ? "Loading..."
+                    : stateFilter !== "all"
+                      ? `Load all in ${stateFilter}`
+                      : regionFilter !== "all"
+                        ? `Load all in ${regionFilter}`
+                        : "Load more cities"}
+                </Button>
+                <Badge variant="outline" className="text-[10px]">
+                  {filteredLocations.length} cities
+                </Badge>
+              </div>
             </div>
 
             {isLoading ? (

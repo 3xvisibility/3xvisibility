@@ -265,6 +265,61 @@ const COUNTRY_DATA: Record<string, CityEntry[]> = {
   BR: BR_CITIES,
 };
 
+async function generateWithAI(
+  req: Request,
+  code: string,
+  opts: { state?: string; region?: string; target?: number; existingCities?: string[] }
+): Promise<CityEntry[]> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) throw new Error("AI service not configured for dynamic country seeding.");
+
+  const credit = await deductCreditsForRequest(req, "default", "google/gemini-2.5-flash");
+  if (!credit.allowed) {
+    throw new Error(credit.error === "insufficient_credits"
+      ? `Insufficient AI credits (remaining: ${credit.remaining ?? 0}).`
+      : "Authentication required to use AI features.");
+  }
+
+  const target = opts.target ?? 150;
+  const scopeParts: string[] = [];
+  if (opts.state) scopeParts.push(`state/province "${opts.state}"`);
+  if (opts.region) scopeParts.push(`region "${opts.region}"`);
+  const scope = scopeParts.length ? ` within ${scopeParts.join(" and ")}` : "";
+  const excludeNote = opts.existingCities && opts.existingCities.length
+    ? ` EXCLUDE these already-known cities (do not repeat): ${opts.existingCities.slice(0, 200).join(", ")}.`
+    : "";
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 55_000);
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: `You are a geography data expert. Return ONLY a valid JSON array of the top ${target} cities and towns for the requested area${scope}. Include big, medium AND small cities/towns — aim for broad coverage across every state/province/region of the country, not just the largest metros. Each object must have these exact keys: city (string), county (string or null), state (string - province/region name), state_code (string - short abbreviation), zip_code (string or null - real postal code for the city center; null if country has none), latitude (number), longitude (number), population (number, approximate), timezone (string - IANA), region (string - geographic region within country), country (string - full name), country_code (string - ISO 2). No markdown, no prose, ONLY the JSON array.${excludeNote}`
+          },
+          { role: "user", content: `Generate ${target} cities for country code: ${code}${scope}.` }
+        ],
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) throw new Error(`AI generation failed (${response.status})`);
+    const data = await response.json();
+    let content = data.choices?.[0]?.message?.content ?? "";
+    content = content.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+    const parsed = JSON.parse(content) as CityEntry[];
+    if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("AI returned no valid city data");
+    return parsed;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -275,35 +330,38 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    let body: { country_code?: string } = {};
+    let body: { country_code?: string; expand?: boolean; state?: string; region?: string; target?: number } = {};
     try { body = await req.json(); } catch { /* empty body ok */ }
 
+    const expand = body.expand === true || !!body.state || !!body.region;
     const targetCodes = body.country_code
       ? [body.country_code.toUpperCase()]
       : Object.keys(COUNTRY_DATA);
 
     let totalInserted = 0;
+    let totalSkipped = 0;
 
     for (const code of targetCodes) {
-      // Check if already seeded for this country
+      // Existing count
       const { count } = await supabase
         .from("locations")
         .select("id", { count: "exact", head: true })
         .eq("country_code", code);
-      if (count && count >= 5) continue; // already has data
 
-      const cities = COUNTRY_DATA[code];
+      const hardcoded = COUNTRY_DATA[code];
 
-      if (cities) {
-        // Use hardcoded data
+      // Skip only when not expanding AND already has data
+      if (!expand && count && count >= 5) continue;
+
+      // Step 1: seed hardcoded (if any and empty)
+      if (hardcoded && (!count || count < 5)) {
         const seen = new Set<string>();
-        const unique = cities.filter((c) => {
+        const unique = hardcoded.filter((c) => {
           const key = `${c.city}-${c.state_code}-${c.country_code}`;
           if (seen.has(key)) return false;
           seen.add(key);
           return true;
         });
-
         for (let i = 0; i < unique.length; i += 50) {
           const batch = unique.slice(i, i + 50).map((c) => ({
             city: c.city, county: c.county, state: c.state, state_code: c.state_code,
@@ -315,68 +373,57 @@ Deno.serve(async (req) => {
           if (error) throw error;
           totalInserted += batch.length;
         }
-      } else {
-        // No hardcoded data — generate via AI
-        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-        if (!LOVABLE_API_KEY) throw new Error("AI service not configured for dynamic country seeding.");
+      }
 
-        const credit = await deductCreditsForRequest(req, "default", "google/gemini-2.5-flash-lite");
-        if (!credit.allowed) {
-          throw new Error(credit.error === "insufficient_credits"
-            ? `Insufficient AI credits (remaining: ${credit.remaining ?? 0}).`
-            : "Authentication required to use AI features.");
-        }
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 45_000);
-        try {
-          const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: "google/gemini-2.5-flash-lite",
-              messages: [
-                {
-                  role: "system",
-                  content: `You are a geography data expert. Return ONLY a valid JSON array of the top 30-50 major cities for the given country code. Each object must have these exact keys: city (string), county (string or null), state (string - province/region name), state_code (string - 2-3 letter abbreviation), zip_code (string or null - use the real, correct postal/zip code for each city's central area in the local format used by that country, e.g. "75001" for Paris France, "110001" for New Delhi India, "EC1A 1BB" for London UK; set to null if the country does not use postal codes), latitude (number), longitude (number), population (number, approximate), timezone (string - IANA timezone), region (string - geographic region within the country), country (string - full country name), country_code (string - ISO 2-letter). No markdown, no explanation, ONLY the JSON array.`
-                },
-                { role: "user", content: `Generate city data for country code: ${code}` }
-              ],
-            }),
-            signal: controller.signal,
-          });
-
-          if (!response.ok) throw new Error(`AI generation failed (${response.status})`);
-
-          const data = await response.json();
-          let content = data.choices?.[0]?.message?.content ?? "";
-          content = content.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
-
-          const generatedCities = JSON.parse(content) as CityEntry[];
-
-          if (!Array.isArray(generatedCities) || generatedCities.length === 0) {
-            throw new Error("AI returned no valid city data");
+      // Step 2: AI generation (initial for non-hardcoded, or expand for any country)
+      const needsAI = !hardcoded || expand;
+      if (needsAI) {
+        // Fetch existing city names to avoid duplicates
+        let existingCities: string[] = [];
+        let existingCountry = "";
+        {
+          let q = supabase.from("locations").select("city, country").eq("country_code", code).limit(500);
+          if (body.state) q = q.eq("state", body.state);
+          if (body.region) q = q.eq("region", body.region);
+          const { data: existing } = await q;
+          if (existing && existing.length) {
+            existingCities = existing.map((r: any) => r.city).filter(Boolean);
+            existingCountry = existing[0]?.country || "";
           }
-
-          for (let i = 0; i < generatedCities.length; i += 50) {
-            const batch = generatedCities.slice(i, i + 50).map((c) => ({
-              city: c.city || "", county: c.county || null, state: c.state || "",
-              state_code: c.state_code || "", zip_code: c.zip_code || null,
-              country: c.country || "", country_code: code,
-              latitude: c.latitude || 0, longitude: c.longitude || 0,
-              population: c.population || 0, timezone: c.timezone || "",
-              region: c.region || "",
-            }));
-            const { error } = await supabase.from("locations").insert(batch);
-            if (error) throw error;
-            totalInserted += batch.length;
-          }
-        } finally {
-          clearTimeout(timeout);
         }
+
+        const generated = await generateWithAI(req, code, {
+          state: body.state,
+          region: body.region,
+          target: body.target ?? (expand ? 150 : 50),
+          existingCities,
+        });
+
+        // De-duplicate against existing (by city + state_code)
+        const existingSet = new Set(existingCities.map((c) => c.toLowerCase()));
+        const filtered = generated.filter((c: any) => c.city && !existingSet.has(String(c.city).toLowerCase()));
+
+        for (let i = 0; i < filtered.length; i += 50) {
+          const batch = filtered.slice(i, i + 50).map((c: any) => ({
+            city: c.city || "", county: c.county || null, state: c.state || "",
+            state_code: c.state_code || "", zip_code: c.zip_code || null,
+            country: c.country || existingCountry || "", country_code: code,
+            latitude: Number(c.latitude) || 0, longitude: Number(c.longitude) || 0,
+            population: Number(c.population) || 0, timezone: c.timezone || "",
+            region: c.region || "",
+          }));
+          const { error } = await supabase.from("locations").insert(batch);
+          if (error) {
+            console.error("insert error", error);
+            continue;
+          }
+          totalInserted += batch.length;
+        }
+        totalSkipped += generated.length - filtered.length;
       }
     }
 
-    return new Response(JSON.stringify({ message: "Seeded successfully", inserted: totalInserted }), {
+    return new Response(JSON.stringify({ message: "Seeded successfully", inserted: totalInserted, skipped_duplicates: totalSkipped }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
