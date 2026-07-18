@@ -1780,6 +1780,48 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     ))}
                   </div>
 
+                  {/* Attach Locations — cross-joins city/country/state/zip variables
+                      into every AI / CSV / Website row so templates can use
+                      {city}, {country}, {state}, {zip_code}, etc. */}
+                  {dataSource !== "locations" && (
+                    <div className="rounded-xl border border-border/60 bg-muted/20 p-3 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <MapPin className="h-4 w-4 text-primary shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold">Attach Locations <span className="text-muted-foreground font-normal">(optional)</span></p>
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            {mergedLocations.length > 0
+                              ? `${mergedLocations.length} location${mergedLocations.length !== 1 ? "s" : ""} × ${rawBaseData.length || 0} rows = ${mergedLocations.length * (rawBaseData.length || 0)} pages`
+                              : "Add city / country / state / zip variables from the Location Database"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {mergedLocations.length > 0 && (
+                          <Button type="button" size="sm" variant="ghost" onClick={() => setMergedLocations([])} className="rounded-lg h-8 text-xs">
+                            Clear
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={mergedLocations.length > 0 ? "outline" : "default"}
+                          onClick={() => setMergeLocationsOpen(true)}
+                          className="rounded-lg h-8 text-xs gap-1.5"
+                        >
+                          <DatabaseIcon className="h-3.5 w-3.5" />
+                          {mergedLocations.length > 0 ? "Change" : "Select Locations"}
+                        </Button>
+                      </div>
+                      <LocationDatabaseDialog
+                        open={mergeLocationsOpen}
+                        onOpenChange={setMergeLocationsOpen}
+                        onSelect={(rows) => setMergedLocations(rows)}
+                      />
+                    </div>
+                  )}
+
+
                   {dataSource === "csv" && (
                     <>
                       <div
