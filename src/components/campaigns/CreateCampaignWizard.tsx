@@ -747,22 +747,37 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // Each base row is combined with every selected location row so the template
   // gets both business variables and location variables (city, country, etc.).
   const canMergeLocations = dataSource !== "locations" && mergedLocations.length > 0 && rawBaseData.length > 0;
+  const keywordsFromLocation = canMergeLocations && locationKeywordEnabled && !!locationKeywordPattern.trim();
+  const fillLocPattern = (pattern: string, loc: Record<string, string>) => {
+    let out = pattern;
+    for (const [k, v] of Object.entries(loc)) {
+      const safe = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      out = out.replace(new RegExp(`\\{${safe}\\}`, "gi"), v || "");
+    }
+    return out.replace(/\{[^}]+\}/g, "").replace(/\s*,\s*,+/g, ", ").replace(/^[\s,]+|[\s,]+$/g, "").trim();
+  };
   const baseCsvData = useMemo(() => {
     if (!canMergeLocations) return rawBaseData;
     const out: Record<string, string>[] = [];
     for (const row of rawBaseData) {
       for (const loc of mergedLocations) {
-        out.push({ ...loc, ...row });
+        const merged: Record<string, string> = { ...loc, ...row };
+        if (keywordsFromLocation) {
+          const kw = fillLocPattern(locationKeywordPattern, loc);
+          if (kw) merged.keywords = row.keywords ? `${row.keywords}, ${kw}` : kw;
+        }
+        out.push(merged);
       }
     }
     return out;
-  }, [canMergeLocations, rawBaseData, mergedLocations]);
+  }, [canMergeLocations, rawBaseData, mergedLocations, keywordsFromLocation, locationKeywordPattern]);
   const baseCsvHeaders = useMemo(() => {
     if (!canMergeLocations) return rawBaseHeaders;
     const set = new Set<string>(rawBaseHeaders);
     locationHeaders.forEach(h => set.add(h));
+    if (keywordsFromLocation) set.add("keywords");
     return Array.from(set);
-  }, [canMergeLocations, rawBaseHeaders, locationHeaders]);
+  }, [canMergeLocations, rawBaseHeaders, locationHeaders, keywordsFromLocation]);
 
 
   // Custom values are fixed substitutions, not page rows. A comma-separated
