@@ -231,8 +231,11 @@ export function SeoOptimizeDialog({
           seo_title: result.seo_title,
           seo_description: result.seo_description,
           seo_keywords: result.seo_keywords,
-          // We just previewed a full rewrite — publish it as-is.
+          // We just previewed a full rewrite — publish it as-is and also
+          // propagate the changes to the linked template + campaign row so
+          // any future page generated from the same template inherits the fix.
           overwrite_design: true,
+          update_template: true,
         },
       });
 

@@ -480,8 +480,16 @@ export class WordPressConnector implements CmsConnector {
     let elementorApplied = false;
     if (!preserveDesign && !payload.product_data && format === "html" && typeof payload.content === "string") {
       body.content = sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content, "page", await this.themeAssets())) || "<p></p>";
+      // The live page may previously have been built with Elementor. Elementor's
+      // frontend renders from `_elementor_data` and ignores `post_content` when
+      // `_elementor_edit_mode = builder`. Clear those meta values so the newly
+      // pushed HTML body actually shows on the published page.
+      meta._elementor_edit_mode = "";
+      meta._elementor_data = "";
     } else if (!preserveDesign && !payload.product_data && format === "gutenberg" && typeof payload.content === "string") {
       body.content = htmlToGutenberg(payload.content) || (body.content as string);
+      meta._elementor_edit_mode = "";
+      meta._elementor_data = "";
     } else if (!preserveDesign && !payload.product_data && (typeof payload.content === "string" || payload.elementor_data)) {
       const elementorData = payload.elementor_data
         ? await this.importElementorImages(payload.elementor_data)
