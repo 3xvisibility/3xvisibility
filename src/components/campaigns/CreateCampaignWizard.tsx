@@ -118,6 +118,9 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // CSV export column selection — columns whose keys are in this set are EXCLUDED.
   const [csvExportExcluded, setCsvExportExcluded] = useState<Set<string>>(new Set());
   const [csvExportOpen, setCsvExportOpen] = useState(false);
+  const [csvExportRowMode, setCsvExportRowMode] = useState<"all" | "first">("all");
+  const [csvExportRowLimit, setCsvExportRowLimit] = useState<number>(10);
+  const [csvExportLocFilter, setCsvExportLocFilter] = useState<Set<string>>(new Set());
   const [websiteForPages, setWebsiteForPages] = useState("");
   const [websiteContentType, setWebsiteContentType] = useState<"pages" | "products" | "all">("all");
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
