@@ -1007,7 +1007,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           niche: aiNiche || undefined,
           service: aiServiceProduct || undefined,
           language: campaignLanguage,
-          country: campaignCountry,
+          // Country intentionally omitted — location context is only applied
+          // when the user explicitly attaches Location Database rows.
           // Template Safe Mode: keep generated content within the template's
           // original length budget so the layout/design never breaks.
           templateSafeMode: true,
@@ -1021,8 +1022,12 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       if (data?.error) throw new Error(data.error);
       const baseRows = Array.isArray(data?.rows) ? data.rows : [];
       if (baseRows.length === 0) throw new Error("AI returned no rows");
+      // Blank out any location-shaped variables so no location-based text
+      // sneaks into generated pages unless the user attaches Location data.
+      const locBlank: Record<string, string> = {};
+      for (const v of locationVars) locBlank[v] = "";
       // Apply the user's fixed contact values to every row.
-      const rows = baseRows.map((r: Record<string, string>) => ({ ...r, ...fixedValues }));
+      const rows = baseRows.map((r: Record<string, string>) => ({ ...r, ...locBlank, ...fixedValues }));
       setAiGeneratedRows(rows);
       toast({ title: `Generated ${rows.length} rows`, description: "Edit any cell below before continuing." });
 
