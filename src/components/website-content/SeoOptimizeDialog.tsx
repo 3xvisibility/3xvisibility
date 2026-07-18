@@ -63,6 +63,96 @@ const FIELD_OPTIONS = [
   { id: "content", label: "Content Text", icon: <RefreshCw className="h-3.5 w-3.5" />, desc: "Rewrite text for SEO (keeps design intact)" },
 ];
 
+/**
+ * Explain why a field didn't match on the live page and offer concrete fixes.
+ * Runs on the client with only the compared strings + a few UI hints.
+ */
+function diagnoseFieldMismatch(
+  field: "title" | "content" | "seoTitle" | "seoDescription",
+  expected: string,
+  live: string,
+  ctx: { forceRepublish: boolean; attempts: number; hasElementorHint: boolean }
+): { cause: string; fixes: string[] } {
+  const exp = (expected || "").trim();
+  const liv = (live || "").trim();
+  const label = field === "seoTitle" ? "SEO title" : field === "seoDescription" ? "meta description" : field;
+
+  // Nothing pushed for this field
+  if (!exp) {
+    return {
+      cause: `No new ${label} was generated, so there's nothing to verify on the live page yet.`,
+      fixes: [
+        `Enable "${label}" in the Optimize options and re-run to generate a new value.`,
+      ],
+    };
+  }
+
+  // Field is completely empty on the live page
+  if (!liv) {
+    if (field === "seoTitle" || field === "seoDescription") {
+      return {
+        cause: `The live page didn't expose a ${label} tag — your SEO plugin (Yoast / Rank Math / AIOSEO) may not be storing this field, or it's using a different meta key.`,
+        fixes: [
+          "Make sure Yoast / Rank Math / AIOSEO is active on the site.",
+          "Open the page in WordPress admin and confirm the SEO plugin panel shows your value.",
+          "If you use a custom SEO plugin, ensure it writes the standard `<meta name=\"description\">` / `<title>` tags.",
+        ],
+      };
+    }
+    return {
+      cause: `The live page returned an empty ${label}. Publish may have partially failed, or a caching layer is still serving the old shell.`,
+      fixes: [
+        "Toggle Force republish ON and click Apply again.",
+        "Clear your CDN/site cache (Cloudflare, WP Rocket, LiteSpeed, W3 Total Cache).",
+        "Confirm the page status is Published (not Draft) in WordPress.",
+      ],
+    };
+  }
+
+  // Elementor / builder cache
+  if ((field === "content" || field === "title") && ctx.hasElementorHint) {
+    return {
+      cause: "The live page is still rendering from Elementor's cached data — Elementor stores the design in `_elementor_data` and ignores HTML updates until that cache is cleared.",
+      fixes: [
+        "Turn ON Force republish and click Apply — it clears `_elementor_edit_mode` and `_elementor_data`.",
+        "In WordPress: Elementor → Tools → Regenerate CSS & Data.",
+        "As a last resort, open the page in Elementor editor and click Update once.",
+      ],
+    };
+  }
+
+  // Live still equals the old value (approximate: none of the expected words are present)
+  const expTokens = exp.toLowerCase().split(/\s+/).filter((w) => w.length > 3).slice(0, 8);
+  const overlap = expTokens.filter((w) => liv.toLowerCase().includes(w)).length;
+  if (expTokens.length > 0 && overlap === 0) {
+    return {
+      cause: `The live ${label} still shows the old value — the update reached WordPress but a cache layer (CDN, page cache, or browser) is serving a stale copy.`,
+      fixes: [
+        "Purge your CDN cache: Cloudflare → Caching → Purge Everything (or purge the single URL).",
+        "Clear the WordPress page cache (WP Rocket, LiteSpeed, W3 Total Cache, WP Super Cache).",
+        "If using Cloudflare, temporarily enable Development Mode for 3 hours.",
+        ctx.attempts >= 5
+          ? "Verification retried 5× already — the cache TTL is longer than 60s. Wait a few minutes and click Recheck."
+          : "Wait 30–60 seconds and click Recheck — auto-verify will keep polling.",
+      ],
+    };
+  }
+
+  // Partial match — content is close but not identical
+  return {
+    cause: `The live ${label} partially matches what we pushed. This usually means a theme/plugin is post-processing the content (auto-excerpts, shortcode expansion, or a canonical SEO plugin overriding the field).`,
+    fixes: [
+      field === "seoTitle" || field === "seoDescription"
+        ? "Check that only ONE SEO plugin is active — multiple plugins (Yoast + Rank Math) overwrite each other."
+        : "Disable content filters like Jetpack \"Related Posts\" or auto-excerpt plugins temporarily and retry.",
+      "Open the page URL in an incognito window to bypass your browser cache.",
+      !ctx.forceRepublish ? "Turn ON Force republish and click Apply again." : "Try clearing the site cache — Force republish is already ON.",
+    ],
+  };
+}
+
+
+
 export function SeoOptimizeDialog({
   open,
   onOpenChange,
