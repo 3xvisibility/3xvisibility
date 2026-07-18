@@ -957,6 +957,9 @@ export default function CampaignDetailPage() {
                   <Button size="sm" variant="outline" onClick={() => exportDataFile(pages.map(p => ({ Title: p.title, Slug: p.slug, Status: p.status, URL: p.external_url || "", Error: p.error_message || "" })), "xlsx", `${campaign?.name || "pages"}-export`)}>
                     <Download className="h-3.5 w-3.5 mr-1.5" /> Excel
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => setVerifyHistoryOpen(true)}>
+                    <ShieldCheck className="h-3.5 w-3.5 mr-1.5" /> Verifications
+                  </Button>
                 </div>
               </div>
               <Card className="border-0 shadow-surface">
