@@ -1602,16 +1602,30 @@ export function SeoOptimizeDialog({
                       <><RefreshCw className="h-3.5 w-3.5 text-amber-600" /> Live page differs</>
                     )}
                   </p>
-                  {!verifying && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={verifyLive}
-                      className="h-6 text-[11px] gap-1"
-                    >
-                      <RefreshCw className="h-3 w-3" /> Recheck
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {(result?.external_url || page.url) && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyLiveUrl(result?.external_url || page.url)}
+                        className="h-6 text-[11px] gap-1"
+                        title={result?.external_url || page.url}
+                      >
+                        {urlCopied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                        {urlCopied ? "Copied" : "Copy URL"}
+                      </Button>
+                    )}
+                    {!verifying && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={verifyLive}
+                        className="h-6 text-[11px] gap-1"
+                      >
+                        <RefreshCw className="h-3 w-3" /> Recheck
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {verifying && (
