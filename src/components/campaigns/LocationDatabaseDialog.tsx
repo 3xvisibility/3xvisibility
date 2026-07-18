@@ -184,6 +184,84 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     }
   };
 
+  const buildExportRows = (source: "filtered" | "selected") => {
+    const base = source === "selected"
+      ? filteredLocations.filter((l: any) => selectedIds.has(l.id))
+      : filteredLocations;
+    return base.map((l: any) => ({
+      city: l.city ?? "",
+      county: l.county ?? "",
+      state: l.state ?? "",
+      state_code: l.state_code ?? "",
+      zip_code: l.zip_code ?? "",
+      country: l.country ?? "",
+      country_code: l.country_code ?? "",
+      latitude: l.latitude ?? "",
+      longitude: l.longitude ?? "",
+      population: l.population ?? "",
+      timezone: l.timezone ?? "",
+      region: l.region ?? "",
+      area_code: l.area_code ?? "",
+      phone_country_code: l.phone_country_code ?? "",
+      population_male: l.population_male ?? "",
+      population_female: l.population_female ?? "",
+      median_age: l.median_age ?? "",
+      median_household_income: l.median_household_income ?? "",
+      wikipedia_url: l.wikipedia_url ?? "",
+    }));
+  };
+
+  const exportFileName = (ext: string) => {
+    const parts = ["locations", countryFilter];
+    if (stateFilter !== "all") parts.push(stateFilter.replace(/\s+/g, "-"));
+    if (regionFilter !== "all") parts.push(regionFilter.replace(/\s+/g, "-"));
+    const stamp = new Date().toISOString().slice(0, 10);
+    return `${parts.join("_")}_${stamp}.${ext}`;
+  };
+
+  const downloadBlob = (content: string, mime: string, filename: string) => {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const escapeCsv = (val: unknown) => {
+    const s = val === null || val === undefined ? "" : String(val);
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const handleExport = (format: "csv" | "json", source: "filtered" | "selected") => {
+    const rows = buildExportRows(source);
+    if (rows.length === 0) {
+      toast({
+        title: "Nothing to export",
+        description: source === "selected"
+          ? "Select at least one city, or export the full filtered list."
+          : "No cities match the current filters.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (format === "json") {
+      downloadBlob(JSON.stringify(rows, null, 2), "application/json", exportFileName("json"));
+    } else {
+      const headers = Object.keys(rows[0]);
+      const lines = [headers.join(",")];
+      for (const r of rows) lines.push(headers.map((h) => escapeCsv((r as any)[h])).join(","));
+      downloadBlob(lines.join("\n"), "text/csv;charset=utf-8", exportFileName("csv"));
+    }
+    toast({
+      title: `Exported ${rows.length} ${rows.length === 1 ? "city" : "cities"}`,
+      description: `${format.toUpperCase()} · ${countryName}${stateFilter !== "all" ? ` · ${stateFilter}` : ""}${regionFilter !== "all" ? ` · ${regionFilter}` : ""}`,
+    });
+  };
+
   const handleConfirm = () => {
     const selected = filteredLocations.filter((l: any) => selectedIds.has(l.id));
     const rows = selected.map((l: any) => ({
