@@ -849,6 +849,9 @@ export default function GeneratedPagesPage() {
               {t("generatedPages.retryQueued", { count: retryableQueuedPages.length })}
             </Button>
           )}
+          <Button variant="outline" size="sm" onClick={() => setVerifyHistoryOpen(true)}>
+            <ShieldCheck className="h-3.5 w-3.5 mr-1.5" /> Verifications
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm"><Download className="h-3.5 w-3.5 mr-1.5" /> Export</Button>
