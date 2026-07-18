@@ -1337,7 +1337,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setAdCampaignId(""); setAdGroupId(""); setSeaDirectoryLevels("");
     setGeoCountry("{country}"); setGeoRegion("{region}"); setGeoCity("{city}"); setGeoPostcode("{zip_code}");
     setGeoLat("{latitude}"); setGeoLng("{longitude}"); setGeoLanguage("en");
-    setDataSource("csv"); setLocationData([]); setWebsiteForPages(""); setWebsiteContentType("all");
+    setDataSource("csv"); setLocationData([]); setMergedLocations([]); setWebsiteForPages(""); setWebsiteContentType("all");
     setSelectedPageIds(new Set()); setWebsitePagesSearch("");
     setManualMappings({}); setCustomValues({}); setTransforms({}); setTargetFieldMappings({});
     setAiNameSuggestions([]); setAiReadinessCheck(null);
