@@ -781,11 +781,11 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           <Card className="shadow-surface">
             <CardContent className="p-5 space-y-4">
               <Label className="text-sm font-semibold flex items-center gap-2">
-                <Layers className="h-4 w-4 text-primary" /> {t("pgpGenerate.contentGroupLabel")}
+                <Layers className="h-4 w-4 text-primary" /> Template
               </Label>
               <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
                 <SelectTrigger className="h-11">
-                  <SelectValue placeholder={t("pgpGenerate.selectGroupPlaceholder")} />
+                  <SelectValue placeholder="Select a Template..." />
                 </SelectTrigger>
                 <SelectContent>
                   {contentGroups.map(g => (
