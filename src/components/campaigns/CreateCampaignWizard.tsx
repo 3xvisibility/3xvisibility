@@ -115,6 +115,10 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // Optional locations merged into ai/csv/website sources (cross-join)
   const [mergedLocations, setMergedLocations] = useState<Record<string, string>[]>([]);
   const [mergeLocationsOpen, setMergeLocationsOpen] = useState(false);
+  // Location merge strategy:
+  //   "zip"   → pair each base row with ONE location by index (5 rows + 5 locations = 5 pages)
+  //   "cross" → cartesian product (5 rows × 5 locations = 25 pages)
+  const [locationMergeMode, setLocationMergeMode] = useState<"zip" | "cross">("zip");
   const [keywordsLibraryOpen, setKeywordsLibraryOpen] = useState(false);
   // Auto-build the {keywords} field from selected locations (city/country/etc.)
   const [locationKeywordEnabled, setLocationKeywordEnabled] = useState(false);
