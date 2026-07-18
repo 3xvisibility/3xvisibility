@@ -243,6 +243,20 @@ export default function PgpKeywordsPage() {
     },
   });
 
+  const { data: pgpTemplates = [] } = useQuery({
+    queryKey: ["templates-for-keywords", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("templates")
+        .select("id, name, variables, content, seo_title_pattern, seo_description_pattern")
+        .eq("workspace_id", wsId!)
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string; variables: string[] | null; content: string | null; seo_title_pattern: string | null; seo_description_pattern: string | null }[];
+    },
+  });
+
   const { data: locCountries = [] } = useQuery({
     queryKey: ["loc-countries"],
     queryFn: async () => {
