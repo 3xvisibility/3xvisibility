@@ -369,6 +369,7 @@ async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.n
         };
         if (isProductContent) updatePayload.product_data = { handle: page_slug || undefined };
         if (preserveDesign) updatePayload.preserve_design = true;
+        if (forceRepublish) updatePayload.publish_format = "html";
         if (manual_excerpt) updatePayload.excerpt = manual_excerpt;
         if (seo_title) updatePayload.seo_title = seo_title;
         if (seo_description) updatePayload.seo_description = seo_description;
