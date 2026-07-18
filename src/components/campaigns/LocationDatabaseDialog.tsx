@@ -263,6 +263,43 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
           </PopoverContent>
         </Popover>
 
+        {(seedMutation.isPending || seedProgress > 0 || seedResult) && (
+          <div
+            className={cn(
+              "rounded-xl border p-3 space-y-2 animate-in fade-in slide-in-from-top-1",
+              seedResult ? "border-success/30 bg-success/5" : "border-primary/30 bg-primary/5",
+            )}
+            role="status"
+            aria-live="polite"
+          >
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-2 font-medium">
+                {seedMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                ) : (
+                  <Check className="h-3.5 w-3.5 text-success" />
+                )}
+                <span className={seedResult ? "text-success" : "text-primary"}>
+                  {seedResult
+                    ? `Done — added ${seedResult.inserted} cities${seedResult.skipped ? ` (${seedResult.skipped} duplicates skipped)` : ""}`
+                    : seedStage || "Loading cities…"}
+                </span>
+              </span>
+              <span className="tabular-nums text-muted-foreground">
+                {Math.round(seedProgress)}%
+                {seedMutation.isPending && ` · ${seedElapsed.toFixed(1)}s`}
+              </span>
+            </div>
+            <Progress value={seedProgress} className="h-1.5" />
+            {seedMutation.isPending && (
+              <p className="text-[10px] text-muted-foreground">
+                AI is generating cities — this usually takes 15–45 seconds. Please keep this dialog open.
+              </p>
+            )}
+          </div>
+        )}
+
+
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <Globe className="h-12 w-12 text-muted-foreground/30" />
