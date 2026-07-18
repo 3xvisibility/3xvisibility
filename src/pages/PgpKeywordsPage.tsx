@@ -182,6 +182,7 @@ export default function PgpKeywordsPage() {
   const [kwColumns, setKwColumns] = useState("");
   const [aiTopic, setAiTopic] = useState("");
   const [aiCount, setAiCount] = useState("20");
+  const [aiLanguage, setAiLanguage] = useState("English");
   const [aiGenerating, setAiGenerating] = useState(false);
 
   // Location source state
