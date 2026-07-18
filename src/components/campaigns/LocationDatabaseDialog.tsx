@@ -66,7 +66,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
         .select("*")
         .eq("country_code", countryFilter)
         .order("population", { ascending: false })
-        .limit(1000);
+        .limit(5000);
 
       if (stateFilter !== "all") query = query.eq("state", stateFilter);
       if (regionFilter !== "all") query = query.eq("region", regionFilter);
