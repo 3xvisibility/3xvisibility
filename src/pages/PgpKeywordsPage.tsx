@@ -182,6 +182,7 @@ export default function PgpKeywordsPage() {
   const [kwColumns, setKwColumns] = useState("");
   const [aiTopic, setAiTopic] = useState("");
   const [aiCount, setAiCount] = useState("20");
+  const [aiLanguage, setAiLanguage] = useState("English");
   const [aiGenerating, setAiGenerating] = useState(false);
 
   // Location source state
@@ -430,7 +431,7 @@ export default function PgpKeywordsPage() {
         temperature: 0.2,
         messages: [
           { role: "system", content: SEO_KEYWORD_SYSTEM_PROMPT },
-          { role: "user", content: `Generate exactly ${aiCount} high-value SEO keywords for keyword group "${kwName || aiTopic}". Topic: ${aiTopic}. Use a natural mix of high-intent, long-tail and local SEO phrases. Each keyword must be 1-6 plain words. One keyword per line only.` },
+          { role: "user", content: `Generate exactly ${aiCount} high-value SEO keywords for keyword group "${kwName || aiTopic}". Topic: ${aiTopic}. Use a natural mix of high-intent, long-tail and local SEO phrases. Each keyword must be 1-6 plain words. One keyword per line only. IMPORTANT: Write ALL keywords in ${aiLanguage} language only — do not mix languages, do not translate to English.` },
         ],
       });
       if (!result.success) throw new Error(result.content || "AI request failed");
@@ -979,8 +980,16 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
             {kwSource === "ai" && (
               <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
                 <p className="text-xs font-semibold flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-primary" /> {t("pgpKeywords.aiSectionTitle")}</p>
-                <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px] gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_100px] gap-2">
                   <Input placeholder={t("pgpKeywords.aiTopicPlaceholder")} value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} className="h-9" />
+                  <Select value={aiLanguage} onValueChange={setAiLanguage}>
+                    <SelectTrigger className="h-9"><SelectValue placeholder="Language" /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {["English","French","Spanish","German","Italian","Portuguese","Dutch","Polish","Turkish","Arabic","Hindi","Bengali","Urdu","Chinese","Japanese","Korean","Russian","Swedish","Norwegian","Danish","Finnish","Greek","Hebrew","Indonesian","Malay","Thai","Vietnamese","Ukrainian","Czech","Romanian","Hungarian"].map(l => (
+                        <SelectItem key={l} value={l}>{l}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Input type="number" placeholder={t("pgpKeywords.aiCountPlaceholder")} value={aiCount} onChange={(e) => setAiCount(e.target.value)} className="h-9" min={1} max={500} />
                 </div>
                 <Button size="sm" onClick={generateAiTerms} disabled={aiGenerating || !aiTopic.trim()}>
