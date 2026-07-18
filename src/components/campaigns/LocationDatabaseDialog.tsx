@@ -469,7 +469,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search city, county, zip..."
+                    placeholder="Search city, region, state, zip..."
                     className="h-8 pl-8 text-xs rounded-xl"
                   />
                 </div>
