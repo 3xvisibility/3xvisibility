@@ -641,24 +641,28 @@ export function SeoOptimizeDialog({
 
     let lastOk = false;
     let lastErr: string | undefined;
+    let lastSnapshot: Awaited<ReturnType<typeof runVerifyOnce>>["snapshot"] | null = null;
+    let attemptsUsed = 0;
 
     try {
       for (let i = 0; i < VERIFY_MAX_ATTEMPTS; i++) {
         setVerifyAttempt(i + 1);
+        attemptsUsed = i + 1;
         await new Promise((r) => setTimeout(r, VERIFY_DELAYS_MS[i] ?? 30000));
         try {
-          const { ok } = await runVerifyOnce();
+          const { ok, snapshot } = await runVerifyOnce();
           lastOk = ok;
+          lastSnapshot = snapshot;
           if (ok) break;
         } catch (err: any) {
           lastErr = err?.message || "Verification failed";
-          setVerification({
+          lastSnapshot = {
             ok: false,
-            fetchedAt: new Date().toISOString(),
             live: { title: "", contentText: "" },
             matches: { title: false, content: false, seoTitle: false, seoDescription: false },
             error: lastErr,
-          });
+          };
+          setVerification({ ...lastSnapshot, fetchedAt: new Date().toISOString() });
           // keep retrying — transient fetch errors shouldn't stop auto-verify
         }
       }
@@ -688,6 +692,22 @@ export function SeoOptimizeDialog({
           description: `We re-checked ${VERIFY_MAX_ATTEMPTS}× but the CMS/CDN may still be caching. Click Recheck in a minute.`,
           variant: "destructive",
         });
+      }
+
+      // Save the final verification result so users can review this Apply run later.
+      if (lastSnapshot) {
+        await persistVerification({ ...lastSnapshot, attempts: attemptsUsed });
+        // Refresh the history list (fire-and-forget)
+        supabase
+          .from("seo_apply_verifications")
+          .select("id, created_at, verified_all, force_republish, attempts, page_url, matches, error")
+          .eq("workspace_id", workspaceId!)
+          .eq("page_id", String(page.id))
+          .order("created_at", { ascending: false })
+          .limit(10)
+          .then(({ data }) => {
+            if (data) setPastVerifications(data as PastVerification[]);
+          });
       }
     } finally {
       setVerifying(false);
