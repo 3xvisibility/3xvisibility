@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Database, Download, Loader2, Globe, Check, ChevronsUpDown } from "lucide-react";
+import { Search, Database, Download, Loader2, Globe, Check, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -94,9 +94,15 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     return () => clearInterval(tick);
   }, [seedMutation.isPending]);
 
-  const { data: locations = [], isLoading, refetch } = useQuery({
+  const { data: locations = [], isLoading, isFetching, dataUpdatedAt, refetch } = useQuery({
     queryKey: ["locations-db", countryFilter, stateFilter, regionFilter],
     enabled: open,
+    // Cache filter results so switching back is instant, and keep prior rows
+    // visible while the new filter fetches in the background.
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    placeholderData: keepPreviousData,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       let query = supabase
         .from("locations")
@@ -117,6 +123,10 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const { data: allCountryLocations = [] } = useQuery({
     queryKey: ["locations-db-meta", countryFilter],
     enabled: open,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    placeholderData: keepPreviousData,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("locations")
@@ -421,6 +431,26 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                 </span>
               </div>
               <div className="flex items-center gap-2">
+                {dataUpdatedAt > 0 && !isLoading && (
+                  <span className="text-[10px] text-muted-foreground tabular-nums hidden sm:inline">
+                    {isFetching ? "Refreshing…" : `Cached · updated ${new Date(dataUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
+                  </span>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 rounded-xl gap-1.5 text-xs"
+                  disabled={isFetching}
+                  onClick={() => {
+                    queryClient.invalidateQueries({ queryKey: ["locations-db", countryFilter, stateFilter, regionFilter] });
+                    queryClient.invalidateQueries({ queryKey: ["locations-db-meta", countryFilter] });
+                    refetch();
+                  }}
+                  title="Refresh from database"
+                >
+                  <RefreshCw className={cn("h-3 w-3", isFetching && "animate-spin")} />
+                  Refresh
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
