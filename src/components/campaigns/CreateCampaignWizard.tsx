@@ -1789,12 +1789,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
               {/* Step 2: Data Source */}
               {step === 2 && (
                 <>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-muted rounded-xl">
+                  <div className="grid grid-cols-3 gap-1 p-1 bg-muted rounded-xl">
                     {([
                       { key: "ai" as const, icon: Sparkles, label: "AI Generate" },
                       { key: "csv" as const, icon: Upload, label: "CSV / Excel" },
                       { key: "website" as const, icon: Globe, label: "Website" },
-                      { key: "locations" as const, icon: MapPin, label: "Locations" },
                     ]).map(ds => (
                       <button key={ds.key} type="button" onClick={() => setDataSource(ds.key)}
                         className={cn(
