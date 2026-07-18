@@ -268,7 +268,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   }), [
     step, campaignName, campaignLanguage, campaignCountry, campaignTypes,
     dataSource, aiBusiness, aiNiche, aiServiceProduct, aiPageCount, aiGeneratedRows, activePresetId,
-    csvRawText, csvHeaders, csvData, locationData,
+    csvRawText, csvHeaders, csvData, locationData, mergedLocations,
     websiteForPages, websiteContentType, selectedPageIds, websitePagesSearch,
     selectedTemplate, selectedWebsite,
     manualMappings, customValues, transforms, targetFieldMappings,
