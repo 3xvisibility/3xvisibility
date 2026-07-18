@@ -1041,22 +1041,49 @@ export function SeoOptimizeDialog({
                     {verification.error && (
                       <p className="text-[11px] text-amber-700 dark:text-amber-400">{verification.error}</p>
                     )}
-                    <ul className="text-[11px] space-y-1">
-                      {(["title", "content", "seoTitle", "seoDescription"] as const).map((k) => (
-                        <li key={k} className="flex items-center gap-2">
-                          {verification.matches[k] ? (
-                            <Check className="h-3 w-3 text-emerald-600 shrink-0" />
-                          ) : (
-                            <span className="h-3 w-3 rounded-full border border-amber-500 shrink-0" />
-                          )}
-                          <span className="capitalize text-muted-foreground">
-                            {k === "seoTitle" ? "SEO title" : k === "seoDescription" ? "Meta description" : k}
-                          </span>
-                          <span className={verification.matches[k] ? "text-emerald-600" : "text-amber-600"}>
-                            {verification.matches[k] ? "updated on live" : "not detected yet"}
-                          </span>
-                        </li>
-                      ))}
+                    <ul className="text-[11px] space-y-2">
+                      {(["title", "content", "seoTitle", "seoDescription"] as const).map((k) => {
+                        const matched = verification.matches[k];
+                        const label = k === "seoTitle" ? "SEO title" : k === "seoDescription" ? "Meta description" : k;
+                        const liveVal = k === "title" ? (verification.live.title || "")
+                          : k === "content" ? (verification.live.contentText || "")
+                          : k === "seoTitle" ? String(verification.live.seoTitle || "")
+                          : String(verification.live.seoDescription || "");
+                        const expectedVal = k === "title" ? (page.title || "")
+                          : k === "content" ? htmlToText(result?.content || page.content)
+                          : k === "seoTitle" ? (result?.seo_title || "")
+                          : (result?.seo_description || "");
+                        const reason = !matched ? diagnoseFieldMismatch(k, expectedVal, liveVal, {
+                          forceRepublish,
+                          attempts: verifyAttempt,
+                          hasElementorHint: /elementor/i.test(verification.live.contentText || verification.live.title || ""),
+                        }) : null;
+                        return (
+                          <li key={k} className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              {matched ? (
+                                <Check className="h-3 w-3 text-emerald-600 shrink-0" />
+                              ) : (
+                                <span className="h-3 w-3 rounded-full border border-amber-500 shrink-0" />
+                              )}
+                              <span className="capitalize text-muted-foreground">{label}</span>
+                              <span className={matched ? "text-emerald-600" : "text-amber-600"}>
+                                {matched ? "updated on live" : "not detected yet"}
+                              </span>
+                            </div>
+                            {reason && (
+                              <div className="ml-5 rounded border border-amber-500/30 bg-amber-500/5 p-2 space-y-1">
+                                <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                                  <span className="font-medium">Likely cause:</span> {reason.cause}
+                                </p>
+                                <ul className="text-[11px] text-muted-foreground list-disc pl-4 space-y-0.5">
+                                  {reason.fixes.map((f, i) => <li key={i}>{f}</li>)}
+                                </ul>
+                              </div>
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
                     {verification.live.title && (
                       <div className="rounded border border-border bg-background/60 p-2 mt-1 space-y-1">
