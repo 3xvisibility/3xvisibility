@@ -1010,6 +1010,7 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
           updatePayload.content = rewrittenContent;
         }
         if (preserveDesign) updatePayload.preserve_design = true;
+        if (forceRepublish) updatePayload.publish_format = "html";
         if (nextSeoTitle) updatePayload.seo_title = nextSeoTitle;
         if (nextSeoDescription) {
           updatePayload.seo_description = nextSeoDescription;
