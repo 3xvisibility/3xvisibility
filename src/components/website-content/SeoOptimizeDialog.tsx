@@ -198,6 +198,18 @@ export function SeoOptimizeDialog({
   const [verifying, setVerifying] = useState(false);
   const [verifyAttempt, setVerifyAttempt] = useState(0);
   const [showVerifyDiff, setShowVerifyDiff] = useState(false);
+  const [showFieldChanges, setShowFieldChanges] = useState(true);
+
+  // Pre-apply live snapshot — captured right before we push to WordPress so we
+  // can show a before/after diff of what actually changed on the live page
+  // after Force republish (title, content, SEO title, meta description).
+  const [preApplySnapshot, setPreApplySnapshot] = useState<{
+    title: string;
+    contentText: string;
+    seoTitle?: string | null;
+    seoDescription?: string | null;
+    fetchedAt: string;
+  } | null>(null);
 
   const VERIFY_MAX_ATTEMPTS = 5;
   const VERIFY_DELAYS_MS = [1500, 4000, 8000, 15000, 30000];
