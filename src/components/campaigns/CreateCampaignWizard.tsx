@@ -306,6 +306,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         if (Array.isArray(s.csvHeaders)) setCsvHeaders(s.csvHeaders);
         if (Array.isArray(s.csvData)) setCsvData(s.csvData);
         if (Array.isArray(s.locationData)) setLocationData(s.locationData);
+        if (Array.isArray(s.mergedLocations)) setMergedLocations(s.mergedLocations);
         if (typeof s.websiteForPages === "string") setWebsiteForPages(s.websiteForPages);
         if (typeof s.websiteContentType === "string") setWebsiteContentType(s.websiteContentType);
         if (Array.isArray(s.selectedPageIdsArr)) setSelectedPageIds(new Set(s.selectedPageIdsArr));
