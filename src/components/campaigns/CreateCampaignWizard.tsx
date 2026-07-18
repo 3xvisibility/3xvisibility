@@ -2224,7 +2224,71 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             toast({ title: `${format.toUpperCase()} exported`, description: `${filteredRows.length} of ${baseCsvData.length} row${baseCsvData.length !== 1 ? "s" : ""} × ${included.length} column${included.length !== 1 ? "s" : ""}.` });
                             setCsvExportOpen(false);
                           };
+                          const downloadPreviewSnapshot = () => {
+                            const previewRows = baseCsvData.slice(0, 5) as Record<string, string>[];
+                            if (previewRows.length === 0) {
+                              toast({ title: "No preview rows available", variant: "destructive" as any });
+                              return;
+                            }
+                            const resolve = (pattern: string, row: Record<string, string>) => {
+                              const vars: Record<string, string> = { ...customValues, ...row };
+                              let r = pattern || "";
+                              for (const [k, v] of Object.entries(vars)) {
+                                const safe = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                                r = r.replace(new RegExp(`\\{${safe}\\}`, "gi"), v || "");
+                              }
+                              return r.replace(/\{[^}]+\}/g, "").trim();
+                            };
+                            // Only include columns for the template's actual variables
+                            const previewVars = selectedTemplateVars.filter((v) => baseCsvHeaders.includes(v) || v in (previewRows[0] || {}));
+                            const rows = previewRows.map((row, idx) => {
+                              const vars: Record<string, string> = { ...customValues, ...row };
+                              const resolved: Record<string, string> = {};
+                              for (const v of previewVars) resolved[v] = vars[v] ?? "";
+                              return {
+                                row: idx + 1,
+                                ...(hasTitle ? { seo_title: resolve(tpl.seo_title_pattern, row) } : {}),
+                                ...(hasSlug ? { slug: slugify(resolve(slugPattern, row)) } : {}),
+                                variables: resolved,
+                              };
+                            });
+                            const payload = {
+                              exported_at: new Date().toISOString(),
+                              source: "preview_snapshot",
+                              campaign: campaignName || null,
+                              template_id: selectedTemplate || null,
+                              preview_row_count: rows.length,
+                              total_available: baseCsvData.length,
+                              resolved_variables: previewVars,
+                              unresolved_variables: selectedTemplateVars.filter((v) => !previewVars.includes(v)),
+                              rows,
+                            };
+                            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8;" });
+                            const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+                            const slug = (campaignName || "campaign").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "campaign";
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `${slug}-preview-${stamp}.json`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                            toast({ title: "Preview exported", description: `${rows.length} row${rows.length !== 1 ? "s" : ""} × ${previewVars.length} template variable${previewVars.length !== 1 ? "s" : ""}.` });
+                          };
                           return (
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-[11px] gap-1.5"
+                                onClick={downloadPreviewSnapshot}
+                                title="Download the exact preview state (first 5 rows, only resolved template variables)"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                                Preview
+                              </Button>
                             <Popover open={csvExportOpen} onOpenChange={setCsvExportOpen}>
                               <PopoverTrigger asChild>
                                 <Button type="button" variant="outline" size="sm" className="h-7 text-[11px] gap-1.5">
@@ -2367,6 +2431,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                 </div>
                               </PopoverContent>
                             </Popover>
+                            </div>
                           );
                         })()}
                       </div>
