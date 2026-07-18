@@ -1894,7 +1894,9 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             <p className="text-xs font-semibold">Attach Locations <span className="text-muted-foreground font-normal">(optional)</span></p>
                             <p className="text-[11px] text-muted-foreground truncate">
                               {mergedLocations.length > 0
-                                ? `${mergedLocations.length} location${mergedLocations.length !== 1 ? "s" : ""} × ${rawBaseData.length || 0} rows = ${mergedLocations.length * (rawBaseData.length || 0)} pages`
+                                ? (locationMergeMode === "zip"
+                                    ? `${mergedLocations.length} location${mergedLocations.length !== 1 ? "s" : ""} zipped with ${rawBaseData.length || 0} rows = ${Math.max(mergedLocations.length, rawBaseData.length || 0)} pages`
+                                    : `${mergedLocations.length} location${mergedLocations.length !== 1 ? "s" : ""} × ${rawBaseData.length || 0} rows = ${mergedLocations.length * (rawBaseData.length || 0)} pages`)
                                 : "Add city / country / state / zip variables from the Location Database"}
                             </p>
                           </div>
