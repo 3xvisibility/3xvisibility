@@ -777,7 +777,39 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left: Configuration */}
         <div className="lg:col-span-2 space-y-4 sm:space-y-5">
-          {/* Content Group Selection */}
+          {/* Keyword Groups overview */}
+          <Card className="shadow-surface">
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold flex items-center gap-2">
+                  <KeyRound className="h-4 w-4 text-primary" /> Keyword Groups
+                </Label>
+                <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => navigate(`${basePath}/pgp-keywords`)}>
+                  Manage →
+                </Button>
+              </div>
+              {keywords.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">
+                  No keyword groups yet. Create some in the Keywords page to use as variables here.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {keywords.map(k => (
+                    <Badge key={k.id} variant="secondary" className="font-mono text-[11px] gap-1.5">
+                      <code>{`{${k.name}}`}</code>
+                      <span className="text-muted-foreground">·</span>
+                      <span>{k.term_count} terms</span>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <p className="text-[11px] text-muted-foreground">
+                Pick a template below — its <code className="font-mono">{`{variables}`}</code> pull values from these keyword groups.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Template Selection */}
           <Card className="shadow-surface">
             <CardContent className="p-5 space-y-4">
               <Label className="text-sm font-semibold flex items-center gap-2">
