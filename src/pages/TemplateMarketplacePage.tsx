@@ -218,15 +218,40 @@ export default function TemplateMarketplacePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("elementor_templates")
-        .select("source_template_id, elementor_json, shopify_section_json, status");
+        .select("source_template_id, elementor_json, shopify_section_json, status, updated_at, created_at");
       if (error) throw error;
       return data ?? [];
     },
     staleTime: 60_000,
   });
 
+  // Details modal: shows exact error + timestamp for a clicked conversion chip.
+  const [detailsCtx, setDetailsCtx] = useState<{
+    tpl: MarketplaceTemplate;
+    platform: "elementor" | "shopify" | "html";
+    state: "ready" | "failed" | "pending";
+  } | null>(null);
+
+  const { data: detailsItem, isLoading: detailsLoading } = useQuery({
+    queryKey: ["conversion-details", detailsCtx?.tpl.id, detailsCtx?.platform],
+    enabled: !!detailsCtx && detailsCtx.platform !== "html",
+    queryFn: async () => {
+      const tpl = detailsCtx!.tpl;
+      const ids = [tpl.id, (tpl as any).source_marketplace_id].filter(Boolean) as string[];
+      const { data, error } = await supabase
+        .from("template_backfill_items")
+        .select("status, error, attempts, run_id, created_at, template_name")
+        .in("template_id", ids)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const conversionMap = useMemo(() => {
-    const m = new Map<string, { elementor: "ready" | "failed"; shopify: "ready" | "failed" }>();
+    const m = new Map<string, { elementor: "ready" | "failed"; shopify: "ready" | "failed"; updatedAt: string | null }>();
     for (const r of conversionRows as any[]) {
       const elJson = r.elementor_json;
       const shJson = r.shopify_section_json;
@@ -238,20 +263,23 @@ export default function TemplateMarketplacePage() {
       m.set(r.source_template_id, {
         elementor: failed ? "failed" : elReady ? "ready" : "failed",
         shopify: failed ? "failed" : shReady ? "ready" : "failed",
+        updatedAt: r.updated_at || r.created_at || null,
       });
     }
     return m;
   }, [conversionRows]);
 
   type ConvState = "ready" | "failed" | "pending";
-  function getConversionStatus(tpl: MarketplaceTemplate): { elementor: ConvState; shopify: ConvState; html: ConvState } {
+  function getConversionStatus(tpl: MarketplaceTemplate): { elementor: ConvState; shopify: ConvState; html: ConvState; updatedAt: string | null } {
     const hit = conversionMap.get(tpl.id) || conversionMap.get((tpl as any).source_marketplace_id);
     return {
       elementor: hit ? hit.elementor : "pending",
       shopify: hit ? hit.shopify : "pending",
       html: tpl.content && tpl.content.length > 0 ? "ready" : "failed",
+      updatedAt: hit?.updatedAt ?? null,
     };
   }
+
 
   // Per-template retry: reruns the widget-engine conversion for a single
   // marketplace template. Uses the sync-template-engine edge function which
@@ -702,7 +730,7 @@ export default function TemplateMarketplacePage() {
 
               {(() => {
                 const conv = getConversionStatus(tpl);
-                const chip = (label: string, state: ConvState, active: boolean) => {
+                const chip = (label: string, state: ConvState, active: boolean, platform: "elementor" | "shopify" | "html") => {
                   const cls =
                     state === "ready"
                       ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30"
@@ -711,20 +739,20 @@ export default function TemplateMarketplacePage() {
                       : "bg-amber-500/15 text-amber-500 border-amber-500/30";
                   const dot =
                     state === "ready" ? "bg-emerald-500" : state === "failed" ? "bg-rose-500" : "bg-amber-500";
-                  const title =
-                    state === "ready"
-                      ? `${label}: converted and ready to publish`
-                      : state === "failed"
-                      ? `${label}: conversion failed — re-run the backfill`
-                      : `${label}: pending — will convert on import`;
+                  const title = `${label}: click for details`;
                   return (
-                    <span
+                    <button
+                      type="button"
                       title={title}
-                      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9px] font-medium ${cls} ${active ? "ring-1 ring-current/40" : "opacity-80"}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDetailsCtx({ tpl, platform, state });
+                      }}
+                      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9px] font-medium hover:opacity-100 transition ${cls} ${active ? "ring-1 ring-current/40" : "opacity-80"}`}
                     >
                       <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
                       {label}
-                    </span>
+                    </button>
                   );
                 };
                 return (
@@ -756,9 +784,9 @@ export default function TemplateMarketplacePage() {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-1">
-                      {chip("Elementor", conv.elementor, platformChoice === "elementor")}
-                      {chip("Shopify", conv.shopify, platformChoice === "shopify")}
-                      {chip("HTML / CSS", conv.html, platformChoice === "html")}
+                      {chip("Elementor", conv.elementor, platformChoice === "elementor", "elementor")}
+                      {chip("Shopify", conv.shopify, platformChoice === "shopify", "shopify")}
+                      {chip("HTML / CSS", conv.html, platformChoice === "html", "html")}
                     </div>
                   </div>
                 );
@@ -1085,6 +1113,112 @@ export default function TemplateMarketplacePage() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Conversion details modal */}
+      <Dialog open={!!detailsCtx} onOpenChange={(v) => !v && setDetailsCtx(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  detailsCtx?.state === "ready"
+                    ? "bg-emerald-500"
+                    : detailsCtx?.state === "failed"
+                    ? "bg-rose-500"
+                    : "bg-amber-500"
+                }`}
+              />
+              {detailsCtx?.platform === "elementor"
+                ? "Elementor"
+                : detailsCtx?.platform === "shopify"
+                ? "Shopify"
+                : "HTML / CSS"}{" "}
+              conversion — {detailsCtx?.tpl.name}
+            </DialogTitle>
+          </DialogHeader>
+          {detailsCtx && (() => {
+            const conv = getConversionStatus(detailsCtx.tpl);
+            const stateLabel =
+              detailsCtx.state === "ready"
+                ? "Ready to publish"
+                : detailsCtx.state === "failed"
+                ? "Conversion failed"
+                : "Pending — converts on import";
+            const fmtDate = (iso: string | null) => {
+              if (!iso) return "—";
+              try {
+                return new Date(iso).toLocaleString();
+              } catch {
+                return iso;
+              }
+            };
+            const item: any = detailsItem;
+            return (
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-muted-foreground">State</div>
+                  <div className="col-span-2 font-medium">{stateLabel}</div>
+                  <div className="text-muted-foreground">Last conversion</div>
+                  <div className="col-span-2">{fmtDate(conv.updatedAt)}</div>
+                  {detailsCtx.platform !== "html" && (
+                    <>
+                      <div className="text-muted-foreground">Last attempt</div>
+                      <div className="col-span-2">
+                        {detailsLoading ? "Loading…" : item ? fmtDate(item.created_at) : "No attempt recorded"}
+                      </div>
+                      {item && (
+                        <>
+                          <div className="text-muted-foreground">Attempts</div>
+                          <div className="col-span-2">{item.attempts ?? 0}</div>
+                          <div className="text-muted-foreground">Result</div>
+                          <div className="col-span-2 capitalize">{item.status}</div>
+                          <div className="text-muted-foreground">Run ID</div>
+                          <div className="col-span-2 font-mono text-xs break-all">{item.run_id}</div>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+                {detailsCtx.platform !== "html" && item?.error && (
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+                      Error message
+                    </div>
+                    <pre className="text-xs bg-muted/50 border border-border rounded-md p-2 whitespace-pre-wrap break-words max-h-48 overflow-auto">
+                      {item.error}
+                    </pre>
+                  </div>
+                )}
+                {detailsCtx.platform === "html" && (
+                  <p className="text-muted-foreground text-xs">
+                    HTML / CSS ships the raw template markup with no conversion step, so it's ready
+                    whenever the template has content.
+                  </p>
+                )}
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => setDetailsCtx(null)}>
+                    Close
+                  </Button>
+                  {detailsCtx.platform !== "html" && (
+                    <Button
+                      onClick={() => {
+                        retryConversionMutation.mutate(detailsCtx.tpl);
+                      }}
+                      disabled={retryingId === detailsCtx.tpl.id}
+                    >
+                      {retryingId === detailsCtx.tpl.id ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Retrying…</>
+                      ) : (
+                        <><RefreshCw className="mr-2 h-4 w-4" /> Retry conversion</>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
