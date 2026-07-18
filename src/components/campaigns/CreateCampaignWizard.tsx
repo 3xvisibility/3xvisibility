@@ -2431,6 +2431,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                 </div>
                               </PopoverContent>
                             </Popover>
+                            </div>
                           );
                         })()}
                       </div>
