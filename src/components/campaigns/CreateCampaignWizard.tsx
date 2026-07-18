@@ -957,7 +957,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       if (dataSource === "ai") return aiGeneratedRows.length > 0;
       return selectedPageIds.size > 0;
     }
-    if (step === 3) return !!selectedTemplate;
+    if (step === 3) return !!selectedTemplate && unmappedVars.length === 0;
     return true;
   };
 
