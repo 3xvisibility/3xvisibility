@@ -559,6 +559,15 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                     {isFetching ? "Refreshing…" : `Cached · updated ${new Date(dataUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
                   </span>
                 )}
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] tabular-nums gap-1 rounded-lg font-normal"
+                  title={`Cache hits: ${cacheStats.hits} · misses: ${cacheStats.misses} · ${cacheStats.entries} filter combo(s) cached · ${cacheStats.rows.toLocaleString()} rows in memory (this session)`}
+                >
+                  <span className="text-success">✓{cacheStats.hits}</span>
+                  <span className="text-warning">✗{cacheStats.misses}</span>
+                  <span className="text-muted-foreground">· {cacheStats.entries}k/{cacheStats.rows.toLocaleString()}r</span>
+                </Badge>
                 <Button
                   size="sm"
                   variant="ghost"
