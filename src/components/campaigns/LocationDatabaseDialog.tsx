@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { Progress } from "@/components/ui/progress";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,10 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [minPop, setMinPop] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [countryOpen, setCountryOpen] = useState(false);
+  const [seedProgress, setSeedProgress] = useState(0);
+  const [seedElapsed, setSeedElapsed] = useState(0);
+  const [seedStage, setSeedStage] = useState<string>("");
+  const [seedResult, setSeedResult] = useState<{ inserted: number; skipped: number } | null>(null);
 
   const seedMutation = useMutation({
     mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string }) => {
@@ -45,17 +50,49 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
       return data as { inserted?: number; skipped_duplicates?: number };
     },
     onSuccess: (data) => {
+      setSeedProgress(100);
+      setSeedStage("Complete");
+      setSeedResult({ inserted: data?.inserted ?? 0, skipped: data?.skipped_duplicates ?? 0 });
       toast({
         title: "Location database updated",
         description: `Added ${data?.inserted ?? 0} cities${data?.skipped_duplicates ? ` (skipped ${data.skipped_duplicates} duplicates)` : ""}.`,
       });
       queryClient.invalidateQueries({ queryKey: ["locations-db"] });
       queryClient.invalidateQueries({ queryKey: ["locations-db-meta"] });
+      setTimeout(() => { setSeedProgress(0); setSeedStage(""); setSeedResult(null); }, 3500);
     },
     onError: (err: Error) => {
+      setSeedProgress(0);
+      setSeedStage("");
       toast({ title: "Loading failed", description: err.message, variant: "destructive" });
     },
   });
+
+  // Simulated progress + elapsed timer while seeding (AI call, no server events).
+  useEffect(() => {
+    if (!seedMutation.isPending) return;
+    setSeedProgress(5);
+    setSeedElapsed(0);
+    setSeedResult(null);
+    const start = Date.now();
+    const stages = [
+      { at: 0, label: "Preparing request…" },
+      { at: 2, label: "Asking AI for cities…" },
+      { at: 8, label: "Generating city data…" },
+      { at: 18, label: "Deduplicating & saving…" },
+      { at: 30, label: "Finalizing…" },
+    ];
+    const tick = setInterval(() => {
+      const elapsed = (Date.now() - start) / 1000;
+      setSeedElapsed(elapsed);
+      // Asymptotic curve toward 92% over ~35s
+      const pct = Math.min(92, 5 + (1 - Math.exp(-elapsed / 12)) * 87);
+      setSeedProgress(pct);
+      const active = [...stages].reverse().find(s => elapsed >= s.at);
+      if (active) setSeedStage(active.label);
+    }, 300);
+    return () => clearInterval(tick);
+  }, [seedMutation.isPending]);
 
   const { data: locations = [], isLoading, refetch } = useQuery({
     queryKey: ["locations-db", countryFilter, stateFilter, regionFilter],
@@ -225,6 +262,43 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             </Command>
           </PopoverContent>
         </Popover>
+
+        {(seedMutation.isPending || seedProgress > 0 || seedResult) && (
+          <div
+            className={cn(
+              "rounded-xl border p-3 space-y-2 animate-in fade-in slide-in-from-top-1",
+              seedResult ? "border-success/30 bg-success/5" : "border-primary/30 bg-primary/5",
+            )}
+            role="status"
+            aria-live="polite"
+          >
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-2 font-medium">
+                {seedMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                ) : (
+                  <Check className="h-3.5 w-3.5 text-success" />
+                )}
+                <span className={seedResult ? "text-success" : "text-primary"}>
+                  {seedResult
+                    ? `Done — added ${seedResult.inserted} cities${seedResult.skipped ? ` (${seedResult.skipped} duplicates skipped)` : ""}`
+                    : seedStage || "Loading cities…"}
+                </span>
+              </span>
+              <span className="tabular-nums text-muted-foreground">
+                {Math.round(seedProgress)}%
+                {seedMutation.isPending && ` · ${seedElapsed.toFixed(1)}s`}
+              </span>
+            </div>
+            <Progress value={seedProgress} className="h-1.5" />
+            {seedMutation.isPending && (
+              <p className="text-[10px] text-muted-foreground">
+                AI is generating cities — this usually takes 15–45 seconds. Please keep this dialog open.
+              </p>
+            )}
+          </div>
+        )}
+
 
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
