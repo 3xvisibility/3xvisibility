@@ -582,6 +582,53 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                         ? `Load all in ${regionFilter}`
                         : "Load more cities"}
                 </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 rounded-xl gap-1.5 text-xs"
+                      disabled={filteredLocations.length === 0}
+                      title="Export current filter as CSV or JSON"
+                    >
+                      <Download className="h-3 w-3" />
+                      Export
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      {countryName}
+                      {stateFilter !== "all" && ` · ${stateFilter}`}
+                      {regionFilter !== "all" && ` · ${regionFilter}`}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleExport("csv", "filtered")} className="gap-2 text-xs">
+                      <FileSpreadsheet className="h-3.5 w-3.5" />
+                      CSV · filtered ({filteredLocations.length})
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport("json", "filtered")} className="gap-2 text-xs">
+                      <FileJson className="h-3.5 w-3.5" />
+                      JSON · filtered ({filteredLocations.length})
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => handleExport("csv", "selected")}
+                      disabled={selectedIds.size === 0}
+                      className="gap-2 text-xs"
+                    >
+                      <FileSpreadsheet className="h-3.5 w-3.5" />
+                      CSV · selected ({selectedIds.size})
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleExport("json", "selected")}
+                      disabled={selectedIds.size === 0}
+                      className="gap-2 text-xs"
+                    >
+                      <FileJson className="h-3.5 w-3.5" />
+                      JSON · selected ({selectedIds.size})
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Badge variant="outline" className="text-[10px]">
                   {filteredLocations.length} cities
                 </Badge>
