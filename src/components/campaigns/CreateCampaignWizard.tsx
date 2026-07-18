@@ -3514,6 +3514,71 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         setCustomValues={setCustomValues}
                       />
 
+                      {selectedTemplateVars.length > 0 && effectiveCsvData.length > 0 && (() => {
+                        const previewRows = effectiveCsvData.slice(0, 10);
+                        const resolve = (row: Record<string, string>, v: string) => {
+                          if (customValues[v]) return customValues[v];
+                          const col = manualMappings[v];
+                          if (col && row[col] != null && row[col] !== "") return row[col];
+                          if (row[v] != null && row[v] !== "") return row[v];
+                          const hit = Object.keys(row).find(h => h.toLowerCase() === v.toLowerCase());
+                          return hit ? row[hit] : "";
+                        };
+                        return (
+                          <div className="rounded-xl border border-border overflow-hidden">
+                            <div className="px-3.5 py-2 border-b border-border bg-muted/40 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Info className="h-4 w-4 text-primary shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold">Live pairing preview</p>
+                                  <p className="text-[11px] text-muted-foreground truncate">
+                                    Exact value each row will use for every &#123;variable&#125; — showing first {previewRows.length} of {effectiveCsvData.length} pages.
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge variant="outline" className="h-5 px-1.5 text-[10px] shrink-0">
+                                {selectedTemplateVars.length} vars × {effectiveCsvData.length} rows
+                              </Badge>
+                            </div>
+                            <div className="overflow-x-auto max-h-72">
+                              <table className="w-full text-[11px]">
+                                <thead className="sticky top-0 bg-background border-b border-border">
+                                  <tr>
+                                    <th className="text-left px-2.5 py-1.5 font-medium text-muted-foreground w-10">#</th>
+                                    {selectedTemplateVars.map(v => (
+                                      <th key={v} className="text-left px-2.5 py-1.5 font-medium">
+                                        <code className="font-mono text-[10.5px] bg-muted px-1 py-0.5 rounded">{`{${v}}`}</code>
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {previewRows.map((row, i) => (
+                                    <tr key={i} className="border-b border-border/40 hover:bg-muted/30">
+                                      <td className="px-2.5 py-1.5 text-muted-foreground font-mono">{i + 1}</td>
+                                      {selectedTemplateVars.map(v => {
+                                        const val = resolve(row as Record<string, string>, v);
+                                        return (
+                                          <td key={v} className="px-2.5 py-1.5 align-top">
+                                            {val ? (
+                                              <span className="text-foreground">{String(val).slice(0, 60)}</span>
+                                            ) : (
+                                              <span className="italic text-destructive/80">— empty</span>
+                                            )}
+                                          </td>
+                                        );
+                                      })}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+
+
                       {(() => {
                         const tpl = templates.find(t => t.id === selectedTemplate) as any;
                         if (!tpl) return null;
