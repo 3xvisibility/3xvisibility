@@ -392,13 +392,29 @@ export function SeoOptimizeDialog({
         matches,
       });
 
+      const liveUrl = result?.external_url || page.url;
+      const confirmed = [
+        matches.title && "title",
+        matches.content && "content",
+        matches.seoTitle && "SEO title",
+        matches.seoDescription && "meta description",
+      ].filter(Boolean) as string[];
+
       toast({
-        title: ok ? "Verified on live site" : "Live page differs",
+        title: ok ? "✓ Verified on live site" : "Live page differs",
         description: ok
-          ? "The published page now reflects your changes."
+          ? `Confirmed updated: ${confirmed.join(", ")}${liveUrl ? ` — ${liveUrl}` : ""}`
           : "We refetched the page but some fields don't match yet — the CMS may still be caching.",
         variant: ok ? undefined : "destructive",
+        action: liveUrl
+          ? (
+              <ToastAction altText="Open live page" onClick={() => window.open(liveUrl, "_blank", "noopener,noreferrer")}>
+                Open page
+              </ToastAction>
+            )
+          : undefined,
       });
+
     } catch (err: any) {
       setVerification({
         ok: false,
