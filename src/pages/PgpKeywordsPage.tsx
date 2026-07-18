@@ -211,6 +211,7 @@ export default function PgpKeywordsPage() {
   // Template source state
   const [tmplId, setTmplId] = useState("");
   const [tmplBulkCreating, setTmplBulkCreating] = useState(false);
+  const [tmplConfirmOpen, setTmplConfirmOpen] = useState(false);
 
   // Auto wizard state
   const [wizService, setWizService] = useState("");
@@ -1288,10 +1289,60 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
                             <p className="text-[10.5px] text-muted-foreground">
                               Or bulk-create empty groups for every variable not yet in your library.
                             </p>
-                            <Button size="sm" variant="outline" onClick={bulkCreate} disabled={tmplBulkCreating || vars.every(v => existingNames.has(v.toLowerCase()))}>
+                            <Button size="sm" variant="outline" onClick={() => setTmplConfirmOpen(true)} disabled={tmplBulkCreating || vars.every(v => existingNames.has(v.toLowerCase()))}>
                               {tmplBulkCreating ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Creating…</> : <><Plus className="h-3.5 w-3.5 mr-1.5" /> Create all missing</>}
                             </Button>
                           </div>
+
+                          <AlertDialog open={tmplConfirmOpen} onOpenChange={setTmplConfirmOpen}>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Create missing keyword groups?</AlertDialogTitle>
+                                <AlertDialogDescription asChild>
+                                  <div className="space-y-3">
+                                    {(() => {
+                                      const toCreate = vars.filter(v => !existingNames.has(v.toLowerCase()));
+                                      const skipped = vars.filter(v => existingNames.has(v.toLowerCase()));
+                                      return (
+                                        <>
+                                          <p className="text-sm">
+                                            Template <span className="font-semibold text-foreground">"{selectedTpl.name}"</span> — {toCreate.length} new keyword group{toCreate.length !== 1 ? "s" : ""} will be created, {skipped.length} skipped (already exist).
+                                          </p>
+                                          {toCreate.length > 0 && (
+                                            <div>
+                                              <p className="text-xs font-semibold text-foreground mb-1.5">Will create:</p>
+                                              <div className="flex flex-wrap gap-1.5 max-h-40 overflow-auto rounded border bg-muted/40 p-2">
+                                                {toCreate.map(v => (
+                                                  <span key={v} className="font-mono text-[11px] px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/30">{`{${v}}`}</span>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
+                                          {skipped.length > 0 && (
+                                            <div>
+                                              <p className="text-xs font-semibold text-foreground mb-1.5">Will skip (already exist):</p>
+                                              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-auto rounded border bg-muted/40 p-2">
+                                                {skipped.map(v => (
+                                                  <span key={v} className="font-mono text-[11px] px-2 py-0.5 rounded bg-muted text-muted-foreground border">{`{${v}}`} ✓</span>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
+                                          <p className="text-[11px] text-muted-foreground">Each new group starts empty — you can add terms afterwards.</p>
+                                        </>
+                                      );
+                                    })()}
+                                  </div>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel disabled={tmplBulkCreating}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={(e) => { e.preventDefault(); setTmplConfirmOpen(false); bulkCreate(); }} disabled={tmplBulkCreating}>
+                                  {tmplBulkCreating ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Creating…</> : "Confirm & create"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </>
                       )}
                     </>
