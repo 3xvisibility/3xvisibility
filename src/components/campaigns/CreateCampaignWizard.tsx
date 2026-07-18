@@ -2125,7 +2125,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                               .replace(/[^a-z0-9]+/g, "-")
                               .replace(/^-+|-+$/g, "")
                               .replace(/-{2,}/g, "-");
-                          const doExport = () => {
+                          const doExport = (format: "csv" | "json" = "csv") => {
                             const included = allCols.filter((c) => isIncluded(c.key));
                             if (included.length === 0) {
                               toast({ title: "Select at least one column", variant: "destructive" as any });
@@ -2144,28 +2144,49 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                               }
                               return r.replace(/\{[^}]+\}/g, "").trim();
                             };
-                            const lines = [included.map((c) => escape(c.label)).join(",")];
-                            for (const row of baseCsvData) {
-                              const cells = included.map((c) => {
-                                if (c.kind === "seo") return escape(resolve(tpl.seo_title_pattern, row as Record<string, string>));
-                                if (c.kind === "slug") return escape(slugify(resolve(slugPattern, row as Record<string, string>)));
-                                return escape((row as Record<string, string>)[c.key] ?? "");
-                              });
-                              lines.push(cells.join(","));
-                            }
-                            const csv = "\uFEFF" + lines.join("\r\n");
-                            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement("a");
+                            const cellFor = (c: { key: string; label: string; kind: "seo" | "slug" | "data" }, row: Record<string, string>) => {
+                              if (c.kind === "seo") return resolve(tpl.seo_title_pattern, row);
+                              if (c.kind === "slug") return slugify(resolve(slugPattern, row));
+                              return (row as Record<string, string>)[c.key] ?? "";
+                            };
                             const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
                             const slug = (campaignName || "campaign").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "campaign";
+                            let blob: Blob;
+                            let filename: string;
+                            if (format === "json") {
+                              const rows = baseCsvData.map((row) => {
+                                const obj: Record<string, string> = {};
+                                for (const c of included) obj[c.label] = String(cellFor(c, row as Record<string, string>));
+                                return obj;
+                              });
+                              const payload = {
+                                exported_at: new Date().toISOString(),
+                                campaign: campaignName || null,
+                                template_id: selectedTemplate || null,
+                                row_count: rows.length,
+                                columns: included.map((c) => ({ name: c.label, kind: c.kind })),
+                                rows,
+                              };
+                              blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8;" });
+                              filename = `${slug}-merged-${stamp}.json`;
+                            } else {
+                              const lines = [included.map((c) => escape(c.label)).join(",")];
+                              for (const row of baseCsvData) {
+                                lines.push(included.map((c) => escape(cellFor(c, row as Record<string, string>))).join(","));
+                              }
+                              const csv = "\uFEFF" + lines.join("\r\n");
+                              blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                              filename = `${slug}-merged-${stamp}.csv`;
+                            }
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
                             a.href = url;
-                            a.download = `${slug}-merged-${stamp}.csv`;
+                            a.download = filename;
                             document.body.appendChild(a);
                             a.click();
                             document.body.removeChild(a);
                             URL.revokeObjectURL(url);
-                            toast({ title: "CSV exported", description: `${baseCsvData.length} row${baseCsvData.length !== 1 ? "s" : ""} × ${included.length} column${included.length !== 1 ? "s" : ""}.` });
+                            toast({ title: `${format.toUpperCase()} exported`, description: `${baseCsvData.length} row${baseCsvData.length !== 1 ? "s" : ""} × ${included.length} column${included.length !== 1 ? "s" : ""}.` });
                             setCsvExportOpen(false);
                           };
                           return (
