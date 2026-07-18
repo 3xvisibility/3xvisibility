@@ -22,6 +22,7 @@ import { ShopifyFieldMappingEditor } from "../websites/ShopifyFieldMappingEditor
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
+import { KeywordsLibraryDialog, type KeywordsLibraryResult } from "@/components/campaigns/KeywordsLibraryDialog";
 import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
 import { MappingStep } from "@/components/campaigns/MappingStep";
 import { FillRulesPanel } from "@/components/campaigns/FillRulesPanel";
