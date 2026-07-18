@@ -26,6 +26,7 @@ import { KeywordsLibraryDialog, type KeywordsLibraryResult } from "@/components/
 import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
 import { MappingStep } from "@/components/campaigns/MappingStep";
 import { VariableSourcesPanel } from "@/components/campaigns/VariableSourcesPanel";
+import { LiveVariablePreview } from "@/components/campaigns/LiveVariablePreview";
 import { FillRulesPanel } from "@/components/campaigns/FillRulesPanel";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { readAiPresets, saveAiPreset, deleteAiPreset, type AiPreset } from "@/lib/ai-presets";
