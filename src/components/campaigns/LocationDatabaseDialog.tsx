@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Database, Download, Loader2, Globe, Check, ChevronsUpDown, RefreshCw, FileJson, FileSpreadsheet } from "lucide-react";
+import { Search, Database, Download, Loader2, Globe, Check, ChevronsUpDown, RefreshCw, FileJson, FileSpreadsheet, AlertTriangle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -121,7 +121,9 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     setCacheStats((s) => ({ ...s, entries, rows }));
   };
 
-  const { data: locations = [], isLoading, isFetching, dataUpdatedAt, refetch } = useQuery({
+  const [retryAttempt, setRetryAttempt] = useState(0);
+
+  const { data: locations = [], isLoading, isFetching, dataUpdatedAt, refetch, error, isError, failureCount } = useQuery({
     queryKey: ["locations-db", countryFilter, stateFilter, regionFilter],
     enabled: open,
     // Cache filter results so switching back is instant, and keep prior rows
@@ -130,8 +132,12 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     gcTime: 30 * 60 * 1000,
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
+    // Auto-retry up to 3 times with exponential backoff (1s, 2s, 4s, capped at 8s).
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
     queryFn: async () => {
       setCacheStats((s) => ({ ...s, misses: s.misses + 1 }));
+      setRetryAttempt((n) => n + 1);
       let query = supabase
         .from("locations")
         .select("*")
@@ -143,11 +149,38 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
       if (regionFilter !== "all") query = query.eq("region", regionFilter);
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        const enriched = new Error(
+          `[${error.code ?? "db_error"}] ${error.message}${error.hint ? ` — ${error.hint}` : ""}${error.details ? ` (${error.details})` : ""}`,
+        );
+        (enriched as any).cause = error;
+        throw enriched;
+      }
       queueMicrotask(recomputeCacheSize);
       return data || [];
     },
   });
+
+  const errorMessage = useMemo(() => {
+    if (!error) return null;
+    const raw = error instanceof Error ? error.message : String(error);
+    // Best-effort friendly hint mapping for common failure classes.
+    const lower = raw.toLowerCase();
+    let hint = "Try again in a moment.";
+    if (lower.includes("failed to fetch") || lower.includes("network")) {
+      hint = "You appear to be offline — check your internet connection.";
+    } else if (lower.includes("jwt") || lower.includes("auth") || lower.includes("401")) {
+      hint = "Your session may have expired — reload the page to sign in again.";
+    } else if (lower.includes("permission") || lower.includes("rls") || lower.includes("403")) {
+      hint = "You don't have access to this workspace's locations.";
+    } else if (lower.includes("timeout") || lower.includes("timed out")) {
+      hint = "The database took too long to respond. Try a narrower filter.";
+    } else if (lower.includes("rate") || lower.includes("429")) {
+      hint = "Too many requests — wait a few seconds before retrying.";
+    }
+    return { raw, hint };
+  }, [error]);
+
 
   // Detect cache hits when filters change: if fresh data is already in cache
   // for the new key, queryFn won't fire — count it as a hit.
@@ -686,9 +719,58 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
               </div>
             </div>
 
+            {isError && errorMessage && (
+              <div
+                className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 space-y-2 animate-in fade-in slide-in-from-top-1"
+                role="alert"
+                aria-live="assertive"
+              >
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold text-destructive">
+                      Couldn't load locations
+                      {failureCount > 1 && (
+                        <span className="ml-1.5 font-normal text-muted-foreground">
+                          · retried {failureCount}×
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{errorMessage.hint}</p>
+                    <details className="mt-1.5">
+                      <summary className="text-[10px] text-muted-foreground cursor-pointer hover:text-foreground">
+                        Technical details
+                      </summary>
+                      <pre className="mt-1 text-[10px] font-mono whitespace-pre-wrap break-all rounded bg-muted/50 p-2 text-muted-foreground">
+                        {errorMessage.raw}
+                      </pre>
+                    </details>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 rounded-lg gap-1.5 text-xs shrink-0"
+                    disabled={isFetching}
+                    onClick={() => {
+                      toast({ title: "Retrying…", description: `Attempt ${failureCount + 1}` });
+                      refetch();
+                    }}
+                  >
+                    <RefreshCw className={cn("h-3 w-3", isFetching && "animate-spin")} />
+                    Retry
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {isLoading ? (
-              <div className="flex items-center justify-center py-8">
+              <div className="flex flex-col items-center justify-center py-8 gap-2">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                {retryAttempt > 1 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    Retry attempt {retryAttempt}…
+                  </span>
+                )}
               </div>
             ) : (
               <ScrollArea className="flex-1 min-h-0 max-h-[300px] rounded-xl border border-border">
