@@ -724,7 +724,27 @@ export default function TemplateMarketplacePage() {
                       <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                         Conversion status
                       </span>
-                      <Badge variant="secondary" className="text-[9px]">{formatLabel}</Badge>
+                      <div className="flex items-center gap-1">
+                        <Badge variant="secondary" className="text-[9px]">{formatLabel}</Badge>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 px-1.5 text-[9px] gap-1"
+                          title="Rerun Elementor + Shopify conversion for this template"
+                          disabled={retryingId === tpl.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            retryConversionMutation.mutate(tpl);
+                          }}
+                        >
+                          {retryingId === tpl.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3 w-3" />
+                          )}
+                          Retry
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-1">
                       {chip("Elementor", conv.elementor, platformChoice === "elementor")}
