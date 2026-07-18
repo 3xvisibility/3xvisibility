@@ -90,21 +90,81 @@ function isInvalidTemplateError(errorText: string): boolean {
 }
 
 const WORDPRESS_TIMEOUT_MS = 25_000;
+const WORDPRESS_MAX_ATTEMPTS = 3;
+const RETRYABLE_STATUSES = new Set([408, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524]);
+const RETRYABLE_MARKER = "[retryable]";
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function backoffDelayMs(attempt: number): number {
+  // Exponential (1s, 2s, 4s…) capped at 8s with 30% jitter.
+  const base = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
+  const jitter = base * 0.3 * Math.random();
+  return Math.round(base + jitter);
+}
+
+function parseRetryAfter(header: string | null): number | null {
+  if (!header) return null;
+  const seconds = Number(header);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const dateMs = Date.parse(header);
+  if (!Number.isNaN(dateMs)) return Math.max(0, dateMs - Date.now());
+  return null;
+}
+
+function isNetworkError(err: unknown): boolean {
+  const msg = String((err as any)?.message ?? err ?? "");
+  return err instanceof TypeError
+    || /network|fetch failed|ECONN|ENOTFOUND|EAI_AGAIN|socket hang up|reset/i.test(msg);
+}
+
+function makeRetryableError(message: string): Error {
+  const e = new Error(`${RETRYABLE_MARKER} ${message}`);
+  (e as any).retryable = true;
+  return e;
+}
 
 async function wordpressFetch(url: string, init: RequestInit = {}, timeoutMs = WORDPRESS_TIMEOUT_MS): Promise<Response> {
-  const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: init.signal ?? ac.signal });
-  } catch (err: any) {
-    if (err?.name === "AbortError") {
-      throw new Error(`WordPress request timed out after ${timeoutMs}ms`);
+  let lastErr: unknown = null;
+  for (let attempt = 1; attempt <= WORDPRESS_MAX_ATTEMPTS; attempt++) {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { ...init, signal: init.signal ?? ac.signal });
+      if (!res.ok && RETRYABLE_STATUSES.has(res.status) && attempt < WORDPRESS_MAX_ATTEMPTS) {
+        const retryAfter = parseRetryAfter(res.headers.get("retry-after"));
+        const delay = retryAfter ?? backoffDelayMs(attempt);
+        console.warn(`[WP] retryable ${res.status} on attempt ${attempt}/${WORDPRESS_MAX_ATTEMPTS}, waiting ${delay}ms`);
+        try { await res.body?.cancel(); } catch { /* ignore */ }
+        clearTimeout(timer);
+        await sleep(delay);
+        continue;
+      }
+      return res;
+    } catch (err: any) {
+      lastErr = err;
+      const isAbort = err?.name === "AbortError";
+      const transient = isAbort || isNetworkError(err);
+      if (!transient || attempt >= WORDPRESS_MAX_ATTEMPTS) {
+        clearTimeout(timer);
+        if (isAbort) {
+          throw makeRetryableError(`WordPress request timed out after ${timeoutMs}ms (tried ${attempt}×). This is usually a temporary hosting/network hiccup — please retry.`);
+        }
+        if (transient) {
+          throw makeRetryableError(`WordPress connection failed after ${attempt} attempts: ${err?.message || err}. Check that the site is reachable and retry.`);
+        }
+        throw err;
+      }
+      const delay = backoffDelayMs(attempt);
+      console.warn(`[WP] transient error on attempt ${attempt}/${WORDPRESS_MAX_ATTEMPTS}: ${err?.message}, waiting ${delay}ms`);
+      await sleep(delay);
+    } finally {
+      clearTimeout(timer);
     }
-    throw err;
-  } finally {
-    clearTimeout(timer);
   }
+  throw lastErr ?? new Error("WordPress request failed");
 }
+
 
 export class WordPressConnector implements CmsConnector {
   readonly type = "wordpress";
@@ -318,7 +378,14 @@ export class WordPressConnector implements CmsConnector {
         throw new Error(`WordPress ${action} failed: your host blocked unsupported HTML in the page body.`);
       }
 
+      // Retries have been exhausted upstream — surface a retryable marker so
+      // the UI can offer a Retry button with a friendly message.
+      if (RETRYABLE_STATUSES.has(response.status)) {
+        throw makeRetryableError(`WordPress ${action} temporarily unavailable [${response.status}] after ${WORDPRESS_MAX_ATTEMPTS} attempts. The site is likely rate-limiting or overloaded — please retry in a moment.`);
+      }
+
       throw new Error(`WordPress ${action} error [${response.status}]: ${errorText}`);
+
     }
 
     return response.json();

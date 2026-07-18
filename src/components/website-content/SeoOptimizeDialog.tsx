@@ -91,6 +91,8 @@ export function SeoOptimizeDialog({
   const [copied, setCopied] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
   const [rolledBack, setRolledBack] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
+  const [retryAttempt, setRetryAttempt] = useState(0);
   const [verifying, setVerifying] = useState(false);
   const [verification, setVerification] = useState<{
     ok: boolean;
@@ -223,6 +225,7 @@ export function SeoOptimizeDialog({
   const applyToSite = async () => {
     if (!result) return;
     setApplying(true);
+    setApplyError(null);
     try {
       const { data, error } = await supabase.functions.invoke("optimize-seo-content", {
         body: {
@@ -288,11 +291,24 @@ export function SeoOptimizeDialog({
         await verifyLive();
       }
     } catch (err: any) {
+      const message = err?.message || String(err);
+      setApplyError(message);
       handleApiError(err, { title: "Apply failed" });
     } finally {
       setApplying(false);
     }
   };
+
+  // Retry-aware wrapper for transient WordPress failures. Uses exponential
+  // backoff on the client too so we don't hammer a struggling host.
+  const retryApply = async () => {
+    const next = retryAttempt + 1;
+    setRetryAttempt(next);
+    const delay = Math.min(1000 * Math.pow(2, next - 1), 8000);
+    await new Promise((r) => setTimeout(r, delay));
+    await applyToSite();
+  };
+
 
   // Re-fetch the page from the connected site and compare it against the
   // values we just pushed, so the user can be sure the changes are live.
@@ -751,6 +767,43 @@ export function SeoOptimizeDialog({
                 </div>
               </div>
             )}
+
+            {/* Retryable transient failure banner (WordPress hosting hiccups) */}
+            {(() => {
+              const raw = applyError || result.push_error || "";
+              const isRetryable = /\[retryable\]/i.test(raw)
+                || /timed out|temporarily unavailable|rate.?limit|502|503|504|econn|network|fetch failed/i.test(raw);
+              if (!raw || !isRetryable) return null;
+              const friendly = raw.replace(/^\s*\[retryable\]\s*/i, "").trim();
+              return (
+                <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <RefreshCw className="h-4 w-4 mt-0.5 text-amber-600 shrink-0" />
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <p className="text-xs font-medium text-foreground">
+                        Temporary WordPress issue — safe to retry
+                      </p>
+                      <p className="text-[11px] text-muted-foreground break-words">{friendly}</p>
+                      {retryAttempt > 0 && (
+                        <p className="text-[10px] text-muted-foreground">
+                          Retried {retryAttempt}× with backoff. Nothing else was changed on your site.
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={retryApply}
+                      disabled={applying || regenerating || autoRefreshing}
+                      className="gap-1.5 text-xs shrink-0"
+                    >
+                      {applying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                      {applying ? "Retrying…" : "Retry"}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Apply / discard */}
             {!applied && (
