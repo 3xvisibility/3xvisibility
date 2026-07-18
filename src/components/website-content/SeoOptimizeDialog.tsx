@@ -90,6 +90,14 @@ export function SeoOptimizeDialog({
   const [copied, setCopied] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
   const [rolledBack, setRolledBack] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verification, setVerification] = useState<{
+    ok: boolean;
+    fetchedAt: string;
+    live: { title: string; contentText: string; seoTitle?: string | null; seoDescription?: string | null };
+    matches: { title: boolean; content: boolean; seoTitle: boolean; seoDescription: boolean };
+    error?: string;
+  } | null>(null);
 
   // Strip HTML → plain text for old-vs-new body preview (design HTML is huge
   // and unreadable in a side-by-side; text-only makes the diff easy to scan).
@@ -271,12 +279,103 @@ export function SeoOptimizeDialog({
       ) {
         await autoRefreshSeoOnLive(result.content);
       }
+
+      // After everything is pushed, re-fetch from the live site and verify
+      // the update actually landed on the published page.
+      if (data.pushed_to_cms) {
+        await verifyLive();
+      }
     } catch (err: any) {
       handleApiError(err, { title: "Apply failed" });
     } finally {
       setApplying(false);
     }
   };
+
+  // Re-fetch the page from the connected site and compare it against the
+  // values we just pushed, so the user can be sure the changes are live.
+  const verifyLive = async () => {
+    setVerifying(true);
+    setVerification(null);
+    try {
+      const contentType = page.type === "product" ? "products" : "pages";
+      // Small delay so the CMS has a moment to flush caches before re-reading.
+      await new Promise((r) => setTimeout(r, 1500));
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", {
+        body: { website_id: websiteId, content_type: contentType },
+      });
+      if (error) throw new Error(await extractEdgeError(error, "Verification failed"));
+      if (data?.error && !data.items?.length) throw new Error(data.error);
+
+      const items: any[] = Array.isArray(data?.items) ? data.items : [];
+      const fresh =
+        items.find((i) => String(i.id) === String(page.id)) ||
+        items.find((i) => i.slug && i.slug === page.slug) ||
+        items.find((i) => i.url && page.url && i.url === page.url);
+
+      if (!fresh) {
+        setVerification({
+          ok: false,
+          fetchedAt: new Date().toISOString(),
+          live: { title: "", contentText: "" },
+          matches: { title: false, content: false, seoTitle: false, seoDescription: false },
+          error: "Could not find this page on the live site after refresh.",
+        });
+        return;
+      }
+
+      const liveTitle = String(fresh.title || "");
+      const liveContentText = htmlToText(fresh.content || "");
+      const liveSeoTitle: string | null | undefined = fresh.seo_title;
+      const liveSeoDesc: string | null | undefined = fresh.seo_description;
+
+      const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
+      const contains = (hay: string, needle: string) => {
+        if (!needle) return true;
+        const h = norm(hay);
+        const n = norm(needle);
+        if (!n) return true;
+        // For long bodies, look for a healthy chunk of the pushed text.
+        const probe = n.length > 120 ? n.slice(0, 120) : n;
+        return h.includes(probe);
+      };
+
+      const expectedContentText = htmlToText(result?.content || page.content);
+      const matches = {
+        title: contains(liveTitle, page.title),
+        content: contains(liveContentText, expectedContentText),
+        seoTitle: result?.seo_title ? contains(String(liveSeoTitle || ""), result.seo_title) : true,
+        seoDescription: result?.seo_description ? contains(String(liveSeoDesc || ""), result.seo_description) : true,
+      };
+      const ok = matches.title && matches.content && matches.seoTitle && matches.seoDescription;
+
+      setVerification({
+        ok,
+        fetchedAt: new Date().toISOString(),
+        live: { title: liveTitle, contentText: liveContentText, seoTitle: liveSeoTitle, seoDescription: liveSeoDesc },
+        matches,
+      });
+
+      toast({
+        title: ok ? "Verified on live site" : "Live page differs",
+        description: ok
+          ? "The published page now reflects your changes."
+          : "We refetched the page but some fields don't match yet — the CMS may still be caching.",
+        variant: ok ? undefined : "destructive",
+      });
+    } catch (err: any) {
+      setVerification({
+        ok: false,
+        fetchedAt: new Date().toISOString(),
+        live: { title: "", contentText: "" },
+        matches: { title: false, content: false, seoTitle: false, seoDescription: false },
+        error: err?.message || "Verification failed",
+      });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
 
   // Regenerate SEO from the freshly published body, then push SEO-only back
   // to the live page (no body rewrite) so the layout stays intact.
@@ -444,7 +543,7 @@ export function SeoOptimizeDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setResult(null); setApplied(false); setInstruction(""); clearSeoSnapshot(); } }}>
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setResult(null); setApplied(false); setInstruction(""); setVerification(null); clearSeoSnapshot(); } }}>
       <DialogContent className="w-[calc(100%-1rem)] sm:max-w-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-y-auto p-3 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -708,6 +807,83 @@ export function SeoOptimizeDialog({
                   </Button>
                 </div>
               </>
+            )}
+
+
+            {/* Live verification — refetch published page and compare */}
+            {applied && result.pushed_to_cms && (verifying || verification) && (
+              <div className={`rounded-md border p-3 space-y-2 ${
+                verifying
+                  ? "border-border bg-muted/40"
+                  : verification?.ok
+                    ? "border-emerald-500/30 bg-emerald-500/5"
+                    : "border-amber-500/40 bg-amber-500/5"
+              }`}>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium flex items-center gap-1.5">
+                    {verifying ? (
+                      <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Verifying live page…</>
+                    ) : verification?.ok ? (
+                      <><Check className="h-3.5 w-3.5 text-emerald-600" /> Verified on live site</>
+                    ) : (
+                      <><RefreshCw className="h-3.5 w-3.5 text-amber-600" /> Live page differs</>
+                    )}
+                  </p>
+                  {!verifying && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={verifyLive}
+                      className="h-6 text-[11px] gap-1"
+                    >
+                      <RefreshCw className="h-3 w-3" /> Recheck
+                    </Button>
+                  )}
+                </div>
+
+                {verifying && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Refetching the page from your site to confirm the changes are live…
+                  </p>
+                )}
+
+                {!verifying && verification && (
+                  <>
+                    {verification.error && (
+                      <p className="text-[11px] text-amber-700 dark:text-amber-400">{verification.error}</p>
+                    )}
+                    <ul className="text-[11px] space-y-1">
+                      {(["title", "content", "seoTitle", "seoDescription"] as const).map((k) => (
+                        <li key={k} className="flex items-center gap-2">
+                          {verification.matches[k] ? (
+                            <Check className="h-3 w-3 text-emerald-600 shrink-0" />
+                          ) : (
+                            <span className="h-3 w-3 rounded-full border border-amber-500 shrink-0" />
+                          )}
+                          <span className="capitalize text-muted-foreground">
+                            {k === "seoTitle" ? "SEO title" : k === "seoDescription" ? "Meta description" : k}
+                          </span>
+                          <span className={verification.matches[k] ? "text-emerald-600" : "text-amber-600"}>
+                            {verification.matches[k] ? "updated on live" : "not detected yet"}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    {verification.live.title && (
+                      <div className="rounded border border-border bg-background/60 p-2 mt-1 space-y-1">
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Live now</p>
+                        <p className="text-[11px] font-medium truncate">{verification.live.title}</p>
+                        <p className="text-[11px] text-muted-foreground line-clamp-3">
+                          {verification.live.contentText || <span className="italic">(empty body)</span>}
+                        </p>
+                      </div>
+                    )}
+                    <p className="text-[10px] text-muted-foreground">
+                      Fetched {new Date(verification.fetchedAt).toLocaleTimeString()}. If fields still show "not detected yet", your CMS/CDN may be caching — wait a moment and click Recheck.
+                    </p>
+                  </>
+                )}
+              </div>
             )}
 
 
