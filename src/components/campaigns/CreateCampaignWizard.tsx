@@ -3305,7 +3305,35 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             </div>
                           </div>
                         );
-                      })()}
+                       })()}
+
+                      {/* Hard block: any unmapped variables prevent generation */}
+                      {unmappedVars.length > 0 && (
+                        <div className="rounded-xl border-2 border-destructive/50 bg-destructive/5 p-3.5 flex items-start gap-2.5">
+                          <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1 space-y-1.5">
+                            <p className="text-xs font-semibold text-destructive">
+                              {unmappedVars.length} variable{unmappedVars.length !== 1 ? "s" : ""} still unmapped — generation is blocked
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Every &#123;variable&#125; must have a source (CSV column, custom value, AI auto-fill, or Keywords fallback) before you can continue. Otherwise pages would publish with raw placeholder text.
+                            </p>
+                            <div className="flex flex-wrap gap-1 pt-0.5">
+                              {unmappedVars.slice(0, 12).map(v => (
+                                <code key={v} className="font-mono text-[10.5px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded border border-destructive/25">
+                                  {`{${v}}`}
+                                </code>
+                              ))}
+                              {unmappedVars.length > 12 && (
+                                <span className="text-[10.5px] text-muted-foreground self-center">+{unmappedVars.length - 12} more</span>
+                              )}
+                            </div>
+                            <p className="text-[10.5px] text-muted-foreground pt-0.5">
+                              Fix: map each variable in the table below, use the <span className="font-medium">Override</span> button on the sources panel above, or enable <span className="font-medium">AI auto-fill for unmapped variables</span>.
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
                       <VariableSourcesPanel
                         dataSource={dataSource as "csv" | "ai" | "website" | "locations"}
