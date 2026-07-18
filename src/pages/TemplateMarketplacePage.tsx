@@ -253,6 +253,50 @@ export default function TemplateMarketplacePage() {
     };
   }
 
+  // Per-template retry: reruns the widget-engine conversion for a single
+  // marketplace template. Uses the sync-template-engine edge function which
+  // records a run in template_backfill_runs so admins can inspect progress in
+  // the Template Sync job runner. Tracks the in-flight template id so we can
+  // show a spinner on the specific card that's converting.
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const retryConversionMutation = useMutation({
+    mutationFn: async (tpl: MarketplaceTemplate) => {
+      setRetryingId(tpl.id);
+      const { data, error } = await supabase.functions.invoke("sync-template-engine", {
+        body: {
+          source_marketplace_ids: [tpl.id],
+          template_ids: [tpl.id],
+          trigger_source: "marketplace-card",
+        },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data: any, tpl) => {
+      const converted = data?.converted ?? 0;
+      const failed = data?.failed ?? 0;
+      queryClient.invalidateQueries({ queryKey: ["marketplace-conversion-status"] });
+      if (failed > 0 && converted === 0) {
+        toast({
+          title: "Retry failed",
+          description: `Conversion did not succeed for "${tpl.name}". Open the Job runner for details.`,
+          variant: "destructive",
+        });
+      } else if (converted === 0 && failed === 0) {
+        toast({
+          title: "Nothing to convert",
+          description: `"${tpl.name}" isn't imported yet. Click Import to add it, then retry.`,
+        });
+      } else {
+        toast({ title: "Conversion re-run", description: `"${tpl.name}" reconverted successfully.` });
+      }
+    },
+    onError: (err: Error) => {
+      toast({ title: "Retry failed", description: err.message, variant: "destructive" });
+    },
+    onSettled: () => setRetryingId(null),
+  });
+
   // Fetch ratings for shared templates
   // Aggregate stats only (avg + count per template). Individual ratings are
   // private to their owner, so we use a SECURITY DEFINER RPC that never exposes
