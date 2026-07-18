@@ -160,6 +160,9 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
       result = result.filter((l: any) =>
         l.city?.toLowerCase().includes(q) ||
         l.county?.toLowerCase().includes(q) ||
+        l.region?.toLowerCase().includes(q) ||
+        l.state?.toLowerCase().includes(q) ||
+        l.state_code?.toLowerCase().includes(q) ||
         l.zip_code?.includes(q)
       );
     }
@@ -466,7 +469,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search city, county, zip..."
+                    placeholder="Search city, region, state, zip..."
                     className="h-8 pl-8 text-xs rounded-xl"
                   />
                 </div>
