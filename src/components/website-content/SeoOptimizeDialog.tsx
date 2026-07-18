@@ -171,6 +171,16 @@ export function SeoOptimizeDialog({
   const [autoRefreshAfterApply, setAutoRefreshAfterApply] = useState(true);
   const [autoRefreshing, setAutoRefreshing] = useState(false);
   const [forceRepublish, setForceRepublish] = useState(false);
+  const [purgeAfterApply, setPurgeAfterApply] = useState(true);
+  const [purging, setPurging] = useState(false);
+  const [purgeResult, setPurgeResult] = useState<{
+    success: boolean;
+    purged_plugins: string[];
+    detected_plugins: string[];
+    total_attempts: number;
+    note?: string;
+    at: string;
+  } | null>(null);
   const [result, setResult] = useState<{
     seo_title?: string;
     seo_description?: string;
