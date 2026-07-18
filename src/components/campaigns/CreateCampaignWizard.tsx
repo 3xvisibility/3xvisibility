@@ -115,6 +115,10 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // Optional locations merged into ai/csv/website sources (cross-join)
   const [mergedLocations, setMergedLocations] = useState<Record<string, string>[]>([]);
   const [mergeLocationsOpen, setMergeLocationsOpen] = useState(false);
+  // Location merge strategy:
+  //   "zip"   → pair each base row with ONE location by index (5 rows + 5 locations = 5 pages)
+  //   "cross" → cartesian product (5 rows × 5 locations = 25 pages)
+  const [locationMergeMode, setLocationMergeMode] = useState<"zip" | "cross">("zip");
   const [keywordsLibraryOpen, setKeywordsLibraryOpen] = useState(false);
   // Auto-build the {keywords} field from selected locations (city/country/etc.)
   const [locationKeywordEnabled, setLocationKeywordEnabled] = useState(false);
@@ -260,7 +264,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     dataSource,
     aiBusiness, aiNiche, aiServiceProduct, aiPageCount, aiGeneratedRows, activePresetId,
     csvRawText, csvHeaders, csvData,
-    locationData, mergedLocations, locationKeywordEnabled, locationKeywordPattern,
+    locationData, mergedLocations, locationMergeMode, locationKeywordEnabled, locationKeywordPattern,
     websiteForPages, websiteContentType, selectedPageIdsArr: Array.from(selectedPageIds), websitePagesSearch,
     selectedTemplate, selectedWebsite,
     manualMappings, customValues, transforms, targetFieldMappings,
@@ -281,7 +285,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   }), [
     step, campaignName, campaignLanguage, campaignCountry, campaignTypes,
     dataSource, aiBusiness, aiNiche, aiServiceProduct, aiPageCount, aiGeneratedRows, activePresetId,
-    csvRawText, csvHeaders, csvData, locationData, mergedLocations, locationKeywordEnabled, locationKeywordPattern,
+    csvRawText, csvHeaders, csvData, locationData, mergedLocations, locationMergeMode, locationKeywordEnabled, locationKeywordPattern,
     websiteForPages, websiteContentType, selectedPageIds, websitePagesSearch,
     selectedTemplate, selectedWebsite,
     manualMappings, customValues, transforms, targetFieldMappings,
@@ -334,6 +338,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         if (Array.isArray(s.csvData)) setCsvData(s.csvData);
         if (Array.isArray(s.locationData)) setLocationData(s.locationData);
         if (Array.isArray(s.mergedLocations)) setMergedLocations(s.mergedLocations);
+        if (s.locationMergeMode === "zip" || s.locationMergeMode === "cross") setLocationMergeMode(s.locationMergeMode);
         if (typeof s.locationKeywordEnabled === "boolean") setLocationKeywordEnabled(s.locationKeywordEnabled);
         if (typeof s.locationKeywordPattern === "string") setLocationKeywordPattern(s.locationKeywordPattern);
         if (typeof s.websiteForPages === "string") setWebsiteForPages(s.websiteForPages);
@@ -792,6 +797,25 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const baseCsvData = useMemo(() => {
     if (!canMergeLocations) return rawBaseData;
     const out: Record<string, string>[] = [];
+    if (locationMergeMode === "zip") {
+      // Parallel pairing — one location per row by index. If either side is
+      // shorter, we iterate the maximum length and cycle the shorter list so
+      // every base row still gets a location (5 rows + 3 locations = 5 pages,
+      // locations reused; 3 rows + 5 locations = 5 pages, rows reused).
+      const n = Math.max(rawBaseData.length, mergedLocations.length);
+      for (let i = 0; i < n; i++) {
+        const row = rawBaseData[i % rawBaseData.length];
+        const loc = mergedLocations[i % mergedLocations.length];
+        const merged: Record<string, string> = { ...loc, ...row };
+        if (keywordsFromLocation) {
+          const kw = fillLocPattern(locationKeywordPattern, loc);
+          if (kw) merged.keywords = (row as any).keywords ? `${(row as any).keywords}, ${kw}` : kw;
+        }
+        out.push(merged);
+      }
+      return out;
+    }
+    // Cartesian — every base row × every location.
     for (const row of rawBaseData) {
       for (const loc of mergedLocations) {
         const merged: Record<string, string> = { ...loc, ...row };
@@ -803,7 +827,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       }
     }
     return out;
-  }, [canMergeLocations, rawBaseData, mergedLocations, keywordsFromLocation, locationKeywordPattern]);
+  }, [canMergeLocations, rawBaseData, mergedLocations, keywordsFromLocation, locationKeywordPattern, locationMergeMode]);
   const baseCsvHeaders = useMemo(() => {
     if (!canMergeLocations) return rawBaseHeaders;
     const set = new Set<string>(rawBaseHeaders);
@@ -1871,7 +1895,9 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             <p className="text-xs font-semibold">Attach Locations <span className="text-muted-foreground font-normal">(optional)</span></p>
                             <p className="text-[11px] text-muted-foreground truncate">
                               {mergedLocations.length > 0
-                                ? `${mergedLocations.length} location${mergedLocations.length !== 1 ? "s" : ""} × ${rawBaseData.length || 0} rows = ${mergedLocations.length * (rawBaseData.length || 0)} pages`
+                                ? (locationMergeMode === "zip"
+                                    ? `${mergedLocations.length} location${mergedLocations.length !== 1 ? "s" : ""} zipped with ${rawBaseData.length || 0} rows = ${Math.max(mergedLocations.length, rawBaseData.length || 0)} pages`
+                                    : `${mergedLocations.length} location${mergedLocations.length !== 1 ? "s" : ""} × ${rawBaseData.length || 0} rows = ${mergedLocations.length * (rawBaseData.length || 0)} pages`)
                                 : "Add city / country / state / zip variables from the Location Database"}
                             </p>
                           </div>
@@ -1897,6 +1923,48 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
                       {mergedLocations.length > 0 && (
                         <div className="rounded-lg border border-border/50 bg-background/40 p-2.5 space-y-2">
+                          <div className="space-y-1.5">
+                            <p className="text-xs font-semibold">Combine mode</p>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setLocationMergeMode("zip")}
+                                className={cn(
+                                  "text-left rounded-md border p-2 transition-colors",
+                                  locationMergeMode === "zip"
+                                    ? "border-primary bg-primary/10"
+                                    : "border-border/60 hover:bg-muted/40"
+                                )}
+                              >
+                                <p className="text-[11px] font-semibold flex items-center gap-1.5">
+                                  Zip (1:1 pairing)
+                                  {locationMergeMode === "zip" && <span className="text-[9px] bg-primary text-primary-foreground rounded px-1">ON</span>}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground leading-snug">
+                                  5 rows + 5 locations = 5 pages. Each row paired with one location by index.
+                                </p>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setLocationMergeMode("cross")}
+                                className={cn(
+                                  "text-left rounded-md border p-2 transition-colors",
+                                  locationMergeMode === "cross"
+                                    ? "border-primary bg-primary/10"
+                                    : "border-border/60 hover:bg-muted/40"
+                                )}
+                              >
+                                <p className="text-[11px] font-semibold flex items-center gap-1.5">
+                                  Cartesian (all combinations)
+                                  {locationMergeMode === "cross" && <span className="text-[9px] bg-primary text-primary-foreground rounded px-1">ON</span>}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground leading-snug">
+                                  5 rows × 5 locations = 25 pages. Every row combined with every location.
+                                </p>
+                              </button>
+                            </div>
+                          </div>
+
                           <label className="flex items-start gap-2 cursor-pointer">
                             <Checkbox
                               checked={locationKeywordEnabled}
