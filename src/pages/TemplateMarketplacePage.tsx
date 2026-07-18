@@ -601,7 +601,7 @@ export default function TemplateMarketplacePage() {
 
               <div className="mt-3 pt-3 border-t border-border flex items-center gap-1.5">
                 <Badge variant="secondary" className="text-[10px]">
-                  {resolveFormat(tpl) === "shopify" ? "Shopify" : "Elementor"}
+                  {formatLabel}
                 </Badge>
                 <span className="text-[10px] text-muted-foreground">ready</span>
               </div>
