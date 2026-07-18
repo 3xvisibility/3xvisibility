@@ -1190,7 +1190,7 @@ export default function TemplateMarketplacePage() {
               }
             };
             const history: any[] = detailsHistory as any[];
-            const latest = history[0] ?? null;
+            
             const dotFor = (s: string) =>
               s === "success" ? "bg-emerald-500" : s === "failed" ? "bg-rose-500" : s === "skipped" ? "bg-muted-foreground" : "bg-amber-500";
             return (
