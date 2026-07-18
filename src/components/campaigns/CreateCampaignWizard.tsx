@@ -26,6 +26,7 @@ import { KeywordsLibraryDialog, type KeywordsLibraryResult } from "@/components/
 import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
 import { MappingStep } from "@/components/campaigns/MappingStep";
 import { VariableSourcesPanel } from "@/components/campaigns/VariableSourcesPanel";
+import { LiveVariablePreview } from "@/components/campaigns/LiveVariablePreview";
 import { FillRulesPanel } from "@/components/campaigns/FillRulesPanel";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { readAiPresets, saveAiPreset, deleteAiPreset, type AiPreset } from "@/lib/ai-presets";
@@ -3311,6 +3312,27 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         variableMapping={variableMapping}
                         sampleRow={effectiveCsvData?.[0] as Record<string, string> | undefined}
                       />
+
+                      {(() => {
+                        const tpl = templates.find(t => t.id === selectedTemplate) as any;
+                        if (!tpl) return null;
+                        return (
+                          <LiveVariablePreview
+                            templateVars={selectedTemplateVars}
+                            patterns={{
+                              seoTitle: tpl.seo_title_pattern,
+                              seoDescription: tpl.seo_description_pattern,
+                              slug: tpl.schema_config?.slug_pattern || tpl.slug_pattern,
+                              h1: tpl.h1_pattern || tpl.schema_config?.h1_pattern,
+                              contentHtml: tpl.content,
+                            }}
+                            rows={(effectiveCsvData || []) as Record<string, string>[]}
+                            manualMappings={manualMappings}
+                            customValues={customValues}
+                          />
+                        );
+                      })()}
+
 
                       <MappingStep
                         csvHeaders={effectiveCsvHeaders}
