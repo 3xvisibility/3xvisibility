@@ -3311,6 +3311,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         dataSource={dataSource as "csv" | "ai" | "website" | "locations"}
                         variableMapping={variableMapping}
                         sampleRow={effectiveCsvData?.[0] as Record<string, string> | undefined}
+                        csvHeaders={effectiveCsvHeaders}
+                        manualMappings={manualMappings}
+                        setManualMappings={setManualMappings}
+                        customValues={customValues}
+                        setCustomValues={setCustomValues}
                       />
 
                       {(() => {
