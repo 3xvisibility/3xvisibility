@@ -823,11 +823,8 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
             {keywords.length === 0 && (
               <>
                 <div className="flex flex-col sm:flex-row items-center gap-2 justify-center mb-4">
-                  <Button onClick={() => setAutoWizardOpen(true)} className="w-full sm:w-auto">
-                    <Wand2 className="mr-2 h-4 w-4" /> {t("pgpKeywords.autoGenerateEasiest")}
-                  </Button>
-                  <Button variant="outline" onClick={() => openEditor()} className="w-full sm:w-auto">
-                    <Plus className="mr-2 h-4 w-4" /> {t("pgpKeywords.addManually")}
+                  <Button onClick={() => openEditor()} className="w-full sm:w-auto">
+                    <Plus className="mr-2 h-4 w-4" /> {t("pgpKeywords.addKeywordBtn")}
                   </Button>
                 </div>
                 <div className="text-left max-w-sm mx-auto space-y-1.5 mt-4">
