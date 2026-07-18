@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { usePersistedSnapshot } from "@/hooks/use-persisted-state";
 import { handleApiError } from "@/lib/handle-api-error";
 import { extractEdgeError } from "@/lib/edge-function-error";
@@ -210,6 +210,14 @@ export function SeoOptimizeDialog({
     seoDescription?: string | null;
     fetchedAt: string;
   } | null>(null);
+
+  // Auto-republish: when verification finds the live page still matches the
+  // pre-apply (old) snapshot, we retrigger Apply with Force republish up to
+  // MAX_AUTO_REPUBLISH times before giving up and asking the user to retry.
+  const MAX_AUTO_REPUBLISH = 2;
+  const autoRepublishRef = useRef(0);
+  const [autoRepublishAttempt, setAutoRepublishAttempt] = useState(0);
+  const [autoRepublishing, setAutoRepublishing] = useState(false);
 
   const VERIFY_MAX_ATTEMPTS = 5;
   const VERIFY_DELAYS_MS = [1500, 4000, 8000, 15000, 30000];
@@ -512,7 +520,15 @@ export function SeoOptimizeDialog({
   };
 
   // Phase 2: push the previewed values to the connected site.
-  const applyToSite = async () => {
+  // `isAutoRetry`: internal recursion flag used by the auto-republish loop so
+  // we can force `force_republish=true` on retries and not reset the counter.
+  const applyToSite = async (opts?: { isAutoRetry?: boolean }) => {
+    const isAutoRetry = !!opts?.isAutoRetry;
+    if (!isAutoRetry) {
+      autoRepublishRef.current = 0;
+      setAutoRepublishAttempt(0);
+      setAutoRepublishing(false);
+    }
     if (!result) return;
     setApplying(true);
     setApplyError(null);
@@ -546,7 +562,7 @@ export function SeoOptimizeDialog({
           // any future page generated from the same template inherits the fix.
           overwrite_design: true,
           update_template: true,
-          force_republish: forceRepublish,
+          force_republish: forceRepublish || isAutoRetry,
         },
       });
 
@@ -608,8 +624,58 @@ export function SeoOptimizeDialog({
 
       // After everything is pushed, re-fetch from the live site and verify
       // the update actually landed on the published page.
+      let verifyResult: Awaited<ReturnType<typeof verifyLive>> = { ok: false, snapshot: null };
       if (data.pushed_to_cms) {
-        await verifyLive();
+        verifyResult = await verifyLive();
+      }
+
+      // Auto-republish loop: if verification says the live page STILL matches
+      // the old (pre-apply) content — i.e. the push didn't actually land on
+      // the rendered page — retry Apply with Force republish up to
+      // MAX_AUTO_REPUBLISH times. This handles Elementor/edit-mode caches
+      // and CDN edges that ignore the first push.
+      if (
+        data.pushed_to_cms &&
+        !verifyResult.ok &&
+        verifyResult.snapshot &&
+        before &&
+        stillMatchesOld(verifyResult.snapshot, before) &&
+        autoRepublishRef.current < MAX_AUTO_REPUBLISH
+      ) {
+        autoRepublishRef.current += 1;
+        const attemptNo = autoRepublishRef.current;
+        setAutoRepublishAttempt(attemptNo);
+        setAutoRepublishing(true);
+        toast({
+          title: `Live still shows old content — republishing (${attemptNo}/${MAX_AUTO_REPUBLISH})`,
+          description: "Forcing a republish with Elementor cache clear and retrying verification.",
+        });
+        // Brief pause so any in-flight cache purge finishes flushing before
+        // we push again.
+        await new Promise((r) => setTimeout(r, 2500));
+        setApplying(false); // let the recursive call own the applying state
+        await applyToSite({ isAutoRetry: true });
+        return;
+      }
+
+      // Reached max auto-retries without success — surface a clear notice.
+      if (
+        data.pushed_to_cms &&
+        !verifyResult.ok &&
+        verifyResult.snapshot &&
+        before &&
+        stillMatchesOld(verifyResult.snapshot, before) &&
+        autoRepublishRef.current >= MAX_AUTO_REPUBLISH
+      ) {
+        toast({
+          title: `Live page still shows old content after ${MAX_AUTO_REPUBLISH + 1} pushes`,
+          description: "Try purging your CDN (Cloudflare/etc.) from its own dashboard, or regenerate Elementor CSS & Data, then click Recheck.",
+          variant: "destructive",
+        });
+      }
+
+      if (!isAutoRetry) {
+        setAutoRepublishing(false);
       }
     } catch (err: any) {
       const message = err?.message || String(err);
@@ -755,7 +821,10 @@ export function SeoOptimizeDialog({
   // Re-fetch the page from the connected site until every pushed field is
   // confirmed live. Polls with exponential backoff so CDN/CMS caches have
   // time to flush without the user having to click "Recheck" manually.
-  const verifyLive = async () => {
+  const verifyLive = async (): Promise<{
+    ok: boolean;
+    snapshot: Awaited<ReturnType<typeof runVerifyOnce>>["snapshot"] | null;
+  }> => {
     setVerifying(true);
     setVerification(null);
     setVerifyAttempt(0);
@@ -833,7 +902,24 @@ export function SeoOptimizeDialog({
     } finally {
       setVerifying(false);
     }
+    return { ok: lastOk, snapshot: lastSnapshot };
   };
+
+  // Compare the post-apply live snapshot against the pre-apply snapshot.
+  // Returns true if the live page still looks like the OLD content
+  // (i.e. the push didn't actually replace what's rendered).
+  const stillMatchesOld = (
+    liveSnap: { live: { title: string; contentText: string; seoTitle?: string | null; seoDescription?: string | null } },
+    old: { title: string; contentText: string; seoTitle?: string | null; seoDescription?: string | null },
+  ): boolean => {
+    const norm = (s: string | null | undefined) => (s || "").replace(/\s+/g, " ").trim().toLowerCase();
+    const contentSame = norm(liveSnap.live.contentText).slice(0, 400) === norm(old.contentText).slice(0, 400);
+    const titleSame = norm(liveSnap.live.title) === norm(old.title);
+    // "Still old" means the two biggest fields (title + content) both
+    // still equal the pre-apply values.
+    return contentSame && titleSame;
+  };
+
 
 
 
@@ -1337,7 +1423,7 @@ export function SeoOptimizeDialog({
                   </Button>
                   <Button
                     size="sm"
-                    onClick={applyToSite}
+                    onClick={() => applyToSite()}
                     disabled={applying || regenerating || autoRefreshing}
                     className="gap-1.5 text-xs"
                   >
@@ -1474,6 +1560,13 @@ export function SeoOptimizeDialog({
                 {verifying && (
                   <p className="text-[11px] text-muted-foreground">
                     Auto-verifying live page… attempt {verifyAttempt || 1} of {VERIFY_MAX_ATTEMPTS}. We keep retrying until the CDN/CMS cache clears.
+                  </p>
+                )}
+
+                {autoRepublishing && autoRepublishAttempt > 0 && (
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                    Live page still showed old content — auto-republishing with Force republish ({autoRepublishAttempt} of {MAX_AUTO_REPUBLISH}).
                   </p>
                 )}
 
