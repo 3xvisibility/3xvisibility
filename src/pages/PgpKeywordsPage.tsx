@@ -208,6 +208,10 @@ export default function PgpKeywordsPage() {
   const [scanUrl, setScanUrl] = useState("");
   const [scanLoading, setScanLoading] = useState(false);
 
+  // Template source state
+  const [tmplId, setTmplId] = useState("");
+  const [tmplBulkCreating, setTmplBulkCreating] = useState(false);
+
   // Auto wizard state
   const [wizService, setWizService] = useState("");
   const [wizLocations, setWizLocations] = useState("");
