@@ -280,15 +280,6 @@ export default function TemplateMarketplacePage() {
     };
   }
 
-  type ConvState = "ready" | "failed" | "pending";
-  function getConversionStatus(tpl: MarketplaceTemplate): { elementor: ConvState; shopify: ConvState; html: ConvState } {
-    const hit = conversionMap.get(tpl.id) || conversionMap.get((tpl as any).source_marketplace_id);
-    return {
-      elementor: hit ? hit.elementor : "pending",
-      shopify: hit ? hit.shopify : "pending",
-      html: tpl.content && tpl.content.length > 0 ? "ready" : "failed",
-    };
-  }
 
   // Per-template retry: reruns the widget-engine conversion for a single
   // marketplace template. Uses the sync-template-engine edge function which
