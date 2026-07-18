@@ -563,7 +563,17 @@ export function SeoOptimizeDialog({
 
   // Perform a single verification pass. Returns whether all monitored
   // fields matched, plus the verification snapshot that was stored to state.
-  const runVerifyOnce = async (): Promise<{ ok: boolean; found: boolean; error?: string }> => {
+  const runVerifyOnce = async (): Promise<{
+    ok: boolean;
+    found: boolean;
+    error?: string;
+    snapshot: {
+      ok: boolean;
+      live: { title: string; contentText: string; seoTitle?: string | null; seoDescription?: string | null };
+      matches: { title: boolean; content: boolean; seoTitle: boolean; seoDescription: boolean };
+      error?: string;
+    };
+  }> => {
     const contentType = page.type === "product" ? "products" : "pages";
     const { data, error } = await supabase.functions.invoke("fetch-site-content", {
       body: { website_id: websiteId, content_type: contentType },
@@ -578,14 +588,14 @@ export function SeoOptimizeDialog({
       items.find((i) => i.url && page.url && i.url === page.url);
 
     if (!fresh) {
-      setVerification({
+      const snap = {
         ok: false,
-        fetchedAt: new Date().toISOString(),
         live: { title: "", contentText: "" },
         matches: { title: false, content: false, seoTitle: false, seoDescription: false },
         error: "Could not find this page on the live site after refresh.",
-      });
-      return { ok: false, found: false, error: "not_found" };
+      };
+      setVerification({ ...snap, fetchedAt: new Date().toISOString() });
+      return { ok: false, found: false, error: "not_found", snapshot: snap };
     }
 
     const liveTitle = String(fresh.title || "");
@@ -612,13 +622,13 @@ export function SeoOptimizeDialog({
     };
     const ok = matches.title && matches.content && matches.seoTitle && matches.seoDescription;
 
-    setVerification({
+    const snap = {
       ok,
-      fetchedAt: new Date().toISOString(),
       live: { title: liveTitle, contentText: liveContentText, seoTitle: liveSeoTitle, seoDescription: liveSeoDesc },
       matches,
-    });
-    return { ok, found: true };
+    };
+    setVerification({ ...snap, fetchedAt: new Date().toISOString() });
+    return { ok, found: true, snapshot: snap };
   };
 
   // Re-fetch the page from the connected site until every pushed field is
