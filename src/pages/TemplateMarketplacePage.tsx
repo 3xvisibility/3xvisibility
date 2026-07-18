@@ -646,12 +646,49 @@ export default function TemplateMarketplacePage() {
                 />
               </div>
 
-              <div className="mt-3 pt-3 border-t border-border flex items-center gap-1.5">
-                <Badge variant="secondary" className="text-[10px]">
-                  {formatLabel}
-                </Badge>
-                <span className="text-[10px] text-muted-foreground">ready</span>
-              </div>
+              {(() => {
+                const conv = getConversionStatus(tpl);
+                const chip = (label: string, state: ConvState, active: boolean) => {
+                  const cls =
+                    state === "ready"
+                      ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30"
+                      : state === "failed"
+                      ? "bg-rose-500/15 text-rose-500 border-rose-500/30"
+                      : "bg-amber-500/15 text-amber-500 border-amber-500/30";
+                  const dot =
+                    state === "ready" ? "bg-emerald-500" : state === "failed" ? "bg-rose-500" : "bg-amber-500";
+                  const title =
+                    state === "ready"
+                      ? `${label}: converted and ready to publish`
+                      : state === "failed"
+                      ? `${label}: conversion failed — re-run the backfill`
+                      : `${label}: pending — will convert on import`;
+                  return (
+                    <span
+                      title={title}
+                      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9px] font-medium ${cls} ${active ? "ring-1 ring-current/40" : "opacity-80"}`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+                      {label}
+                    </span>
+                  );
+                };
+                return (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        Conversion status
+                      </span>
+                      <Badge variant="secondary" className="text-[9px]">{formatLabel}</Badge>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1">
+                      {chip("Elementor", conv.elementor, platformChoice === "elementor")}
+                      {chip("Shopify", conv.shopify, platformChoice === "shopify")}
+                      {chip("HTML / CSS", conv.html, platformChoice === "html")}
+                    </div>
+                  </div>
+                );
+              })()}
 
 
               <div className="flex items-center justify-between mt-3">
