@@ -33,20 +33,27 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [countryOpen, setCountryOpen] = useState(false);
 
   const seedMutation = useMutation({
-    mutationFn: async (countryCode?: string) => {
-      const { data, error } = await supabase.functions.invoke("seed-locations", {
-        body: countryCode ? { country_code: countryCode } : {},
-      });
+    mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string }) => {
+      const body: Record<string, unknown> = {};
+      if (opts?.countryCode) body.country_code = opts.countryCode;
+      if (opts?.expand) body.expand = true;
+      if (opts?.state && opts.state !== "all") body.state = opts.state;
+      if (opts?.region && opts.region !== "all") body.region = opts.region;
+      const { data, error } = await supabase.functions.invoke("seed-locations", { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data;
+      return data as { inserted?: number; skipped_duplicates?: number };
     },
-    onSuccess: () => {
-      toast({ title: "Location database loaded", description: "Cities are now available." });
+    onSuccess: (data) => {
+      toast({
+        title: "Location database updated",
+        description: `Added ${data?.inserted ?? 0} cities${data?.skipped_duplicates ? ` (skipped ${data.skipped_duplicates} duplicates)` : ""}.`,
+      });
       queryClient.invalidateQueries({ queryKey: ["locations-db"] });
+      queryClient.invalidateQueries({ queryKey: ["locations-db-meta"] });
     },
     onError: (err: Error) => {
-      toast({ title: "Seeding failed", description: err.message, variant: "destructive" });
+      toast({ title: "Loading failed", description: err.message, variant: "destructive" });
     },
   });
 
