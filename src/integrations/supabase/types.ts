@@ -2017,6 +2017,63 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_apply_verifications: {
+        Row: {
+          attempts: number
+          created_at: string
+          error: string | null
+          expected: Json
+          force_republish: boolean
+          id: string
+          live: Json
+          matches: Json
+          page_id: string
+          page_slug: string | null
+          page_type: string | null
+          page_url: string | null
+          user_id: string
+          verified_all: boolean
+          website_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          expected?: Json
+          force_republish?: boolean
+          id?: string
+          live?: Json
+          matches?: Json
+          page_id: string
+          page_slug?: string | null
+          page_type?: string | null
+          page_url?: string | null
+          user_id: string
+          verified_all?: boolean
+          website_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          expected?: Json
+          force_republish?: boolean
+          id?: string
+          live?: Json
+          matches?: Json
+          page_id?: string
+          page_slug?: string | null
+          page_type?: string | null
+          page_url?: string | null
+          user_id?: string
+          verified_all?: boolean
+          website_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       shared_templates: {
         Row: {
           author_name: string
