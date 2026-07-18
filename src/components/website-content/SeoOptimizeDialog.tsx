@@ -209,6 +209,35 @@ export function SeoOptimizeDialog({
     external_url?: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
+
+  const copyLiveUrl = async (url?: string | null) => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setUrlCopied(true);
+      toast({ title: "URL copied", description: url });
+      setTimeout(() => setUrlCopied(false), 2000);
+    } catch {
+      toast({ title: "Copy failed", description: "Could not access clipboard.", variant: "destructive" });
+    }
+  };
+
+  const renderToastUrlLine = (url?: string | null) => {
+    if (!url) return null;
+    return (
+      <span className="flex items-center gap-1.5 mt-1 text-[11px]">
+        <span className="truncate max-w-[240px] font-mono opacity-90">{url}</span>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); copyLiveUrl(url); }}
+          className="inline-flex items-center gap-1 rounded border border-border/60 bg-background/60 px-1.5 py-0.5 hover:bg-background"
+        >
+          <Copy className="h-2.5 w-2.5" /> Copy
+        </button>
+      </span>
+    );
+  };
   const [rollingBack, setRollingBack] = useState(false);
   const [rolledBack, setRolledBack] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
