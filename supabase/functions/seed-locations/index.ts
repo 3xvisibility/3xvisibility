@@ -289,8 +289,10 @@ async function generateWithAI(
     ? ` EXCLUDE these already-known cities (do not repeat): ${opts.existingCities.slice(0, 200).join(", ")}.`
     : "";
 
+  // Cap per-call target so AI doesn't stall; caller can loop for more.
+  const perCallTarget = Math.min(target, 250);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 55_000);
+  const timeout = setTimeout(() => controller.abort(), 140_000);
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -300,9 +302,9 @@ async function generateWithAI(
         messages: [
           {
             role: "system",
-            content: `You are a geography data expert. Return ONLY a valid JSON array of the top ${target} cities and towns for the requested area${scope}. Include big, medium AND small cities/towns — aim for broad coverage across every state/province/region of the country, not just the largest metros. Each object must have these exact keys: city (string), county (string or null), state (string - province/region name), state_code (string - short abbreviation), zip_code (string or null - real postal code for the city center; null if country has none), latitude (number), longitude (number), population (number, approximate), timezone (string - IANA), region (string - geographic region within country), country (string - full name), country_code (string - ISO 2). No markdown, no prose, ONLY the JSON array.${excludeNote}`
+            content: `You are a geography data expert. Return ONLY a valid JSON array of the top ${perCallTarget} cities and towns for the requested area${scope}. Include big, medium AND small cities/towns — aim for broad coverage across every state/province/region of the country, not just the largest metros. Each object must have these exact keys: city (string), county (string or null), state (string - province/region name), state_code (string - short abbreviation), zip_code (string or null - real postal code for the city center; null if country has none), latitude (number), longitude (number), population (number, approximate), timezone (string - IANA), region (string - geographic region within country), country (string - full name), country_code (string - ISO 2). No markdown, no prose, ONLY the JSON array.${excludeNote}`
           },
-          { role: "user", content: `Generate ${target} cities for country code: ${code}${scope}.` }
+          { role: "user", content: `Generate ${perCallTarget} cities for country code: ${code}${scope}.` }
         ],
       }),
       signal: controller.signal,
@@ -315,6 +317,11 @@ async function generateWithAI(
     const parsed = JSON.parse(content) as CityEntry[];
     if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("AI returned no valid city data");
     return parsed;
+  } catch (err: any) {
+    if (err?.name === "AbortError" || String(err?.message || "").includes("aborted")) {
+      throw new Error("AI took too long to respond. Try a smaller batch size (e.g. 100–150).");
+    }
+    throw err;
   } finally {
     clearTimeout(timeout);
   }
