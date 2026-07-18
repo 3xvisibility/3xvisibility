@@ -972,9 +972,10 @@ export function SeoOptimizeDialog({
 
                 {verifying && (
                   <p className="text-[11px] text-muted-foreground">
-                    Refetching the page from your site to confirm the changes are live…
+                    Auto-verifying live page… attempt {verifyAttempt || 1} of {VERIFY_MAX_ATTEMPTS}. We keep retrying until the CDN/CMS cache clears.
                   </p>
                 )}
+
 
                 {!verifying && verification && (
                   <>
