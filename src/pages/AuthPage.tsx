@@ -104,9 +104,12 @@ export default function AuthPage() {
   const mapAuthError = (errorMessage: string): { title: string; description: string } => {
     const msg = errorMessage.toLowerCase();
     if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("timeout")) {
+      const iframeHint = typeof window !== "undefined" && window.self !== window.top
+        ? " You're viewing this inside the Lovable preview iframe — third-party cookies are often blocked here. Open the preview in a new tab (↗ button at the top of the preview) or use the published URL to sign in."
+        : " Try disabling VPN/ad-blocker or switching networks.";
       return {
         title: "Connection Failed",
-        description: "Your browser could not connect to the login server. Common causes: unstable internet, VPN, firewall, or ad-blocker blocking the request. Try disabling your VPN/ad-blocker or switching to a different network.",
+        description: "Your browser could not reach the login server." + iframeHint,
       };
     }
     if (msg.includes("cors") || msg.includes("access-control")) {
@@ -153,25 +156,8 @@ export default function AuthPage() {
     }
 
     const authUrl = `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/token?grant_type=password`;
-    console.log("[Auth Debug] Attempting login to:", authUrl);
-
-    // Step 1: Raw fetch diagnostic before Supabase SDK
-    try {
-      const probe = await fetch(authUrl, { method: "HEAD", mode: "cors" }).catch((fetchErr) => fetchErr);
-      if (probe instanceof Error) {
-        console.error("[Auth Debug] Raw probe FAILED:", probe.message);
-        toast({
-          title: "Login Server Unreachable",
-          description: `Could not connect to the login server (${new URL(authUrl).hostname}). Please check your internet connection, disable any VPN or ad-blocker, and try again.`,
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-      console.log("[Auth Debug] Raw probe status:", probe.status);
-    } catch (probeErr: any) {
-      console.error("[Auth Debug] Probe exception:", probeErr);
-    }
+    const inIframe = typeof window !== "undefined" && window.self !== window.top;
+    console.log("[Auth Debug] Attempting login to:", authUrl, "inIframe:", inIframe);
 
     // Step 2: Actual login via SDK with retries
     let error: Error | null = null;
