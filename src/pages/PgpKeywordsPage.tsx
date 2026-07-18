@@ -723,9 +723,6 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
           <p className="text-muted-foreground text-xs sm:text-sm mt-1">{t("pgpKeywords.pageDescription")}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button size="sm" variant="outline" onClick={() => setAutoWizardOpen(true)}>
-            <Wand2 className="mr-1.5 h-3.5 w-3.5" /> <span className="hidden sm:inline">Auto-</span>{t("pgpKeywords.autoGenerateBtnSuffix")}
-          </Button>
           <Button size="sm" onClick={() => openEditor()}>
             <Plus className="mr-1.5 h-3.5 w-3.5" /> {t("pgpKeywords.addKeywordBtn")}
           </Button>
