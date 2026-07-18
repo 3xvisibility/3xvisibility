@@ -1922,6 +1922,48 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
                       {mergedLocations.length > 0 && (
                         <div className="rounded-lg border border-border/50 bg-background/40 p-2.5 space-y-2">
+                          <div className="space-y-1.5">
+                            <p className="text-xs font-semibold">Combine mode</p>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setLocationMergeMode("zip")}
+                                className={cn(
+                                  "text-left rounded-md border p-2 transition-colors",
+                                  locationMergeMode === "zip"
+                                    ? "border-primary bg-primary/10"
+                                    : "border-border/60 hover:bg-muted/40"
+                                )}
+                              >
+                                <p className="text-[11px] font-semibold flex items-center gap-1.5">
+                                  Zip (1:1 pairing)
+                                  {locationMergeMode === "zip" && <span className="text-[9px] bg-primary text-primary-foreground rounded px-1">ON</span>}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground leading-snug">
+                                  5 rows + 5 locations = 5 pages. Each row paired with one location by index.
+                                </p>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setLocationMergeMode("cross")}
+                                className={cn(
+                                  "text-left rounded-md border p-2 transition-colors",
+                                  locationMergeMode === "cross"
+                                    ? "border-primary bg-primary/10"
+                                    : "border-border/60 hover:bg-muted/40"
+                                )}
+                              >
+                                <p className="text-[11px] font-semibold flex items-center gap-1.5">
+                                  Cartesian (all combinations)
+                                  {locationMergeMode === "cross" && <span className="text-[9px] bg-primary text-primary-foreground rounded px-1">ON</span>}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground leading-snug">
+                                  5 rows × 5 locations = 25 pages. Every row combined with every location.
+                                </p>
+                              </button>
+                            </div>
+                          </div>
+
                           <label className="flex items-start gap-2 cursor-pointer">
                             <Checkbox
                               checked={locationKeywordEnabled}
