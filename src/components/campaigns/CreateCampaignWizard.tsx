@@ -1898,6 +1898,91 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     </div>
                   )}
 
+                  {/* Sample generated pages preview — first rows of the merged dataset
+                      (base rows × attached locations) that will drive page generation. */}
+                  {baseCsvData.length > 0 && baseCsvHeaders.length > 0 && (
+                    <div className="rounded-xl border border-border/60 bg-background/40 p-3 space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold flex items-center gap-1.5">
+                            Sample generated pages
+                            <Badge variant="outline" className="text-[10px]">
+                              {baseCsvData.length} total
+                            </Badge>
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            Preview of the first {Math.min(5, baseCsvData.length)} row{Math.min(5, baseCsvData.length) !== 1 ? "s" : ""} that will be used to generate pages.
+                            {canMergeLocations && " Location fields are merged into every row."}
+                          </p>
+                        </div>
+                      </div>
+                      <ScrollArea className="max-h-[220px] rounded-lg border border-border/50">
+                        <table className="w-full text-[11px]">
+                          <thead className="sticky top-0 bg-muted/60 backdrop-blur">
+                            <tr>
+                              <th className="text-left font-medium text-muted-foreground px-2 py-1.5 w-8">#</th>
+                              {(() => {
+                                const tpl = templates.find((t) => t.id === selectedTemplate) as any;
+                                return tpl ? (
+                                  <th className="text-left font-medium text-muted-foreground px-2 py-1.5 whitespace-nowrap">
+                                    SEO title
+                                  </th>
+                                ) : null;
+                              })()}
+                              {baseCsvHeaders.slice(0, 8).map((h) => (
+                                <th key={h} className="text-left font-medium text-muted-foreground px-2 py-1.5 whitespace-nowrap">
+                                  {h}
+                                </th>
+                              ))}
+                              {baseCsvHeaders.length > 8 && (
+                                <th className="text-left font-medium text-muted-foreground px-2 py-1.5">
+                                  +{baseCsvHeaders.length - 8}
+                                </th>
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {baseCsvData.slice(0, 5).map((row, i) => {
+                              const tpl = templates.find((t) => t.id === selectedTemplate) as any;
+                              const vars: Record<string, string> = { ...customValues, ...row };
+                              const resolve = (pattern: string) => {
+                                let r = pattern || "";
+                                for (const [k, v] of Object.entries(vars)) {
+                                  const safe = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                                  r = r.replace(new RegExp(`\\{${safe}\\}`, "gi"), v || "");
+                                }
+                                return r.replace(/\{[^}]+\}/g, "").trim();
+                              };
+                              return (
+                                <tr key={i} className="border-t border-border/40 hover:bg-muted/30">
+                                  <td className="px-2 py-1.5 text-muted-foreground tabular-nums">{i + 1}</td>
+                                  {tpl && (
+                                    <td className="px-2 py-1.5 max-w-[220px] truncate font-medium" title={resolve(tpl.seo_title_pattern || "")}>
+                                      {resolve(tpl.seo_title_pattern || "") || <span className="text-muted-foreground italic">—</span>}
+                                    </td>
+                                  )}
+                                  {baseCsvHeaders.slice(0, 8).map((h) => (
+                                    <td key={h} className="px-2 py-1.5 max-w-[160px] truncate" title={String(row[h] ?? "")}>
+                                      {String(row[h] ?? "") || <span className="text-muted-foreground/60">—</span>}
+                                    </td>
+                                  ))}
+                                  {baseCsvHeaders.length > 8 && (
+                                    <td className="px-2 py-1.5 text-muted-foreground text-[10px]">…</td>
+                                  )}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </ScrollArea>
+                      {baseCsvData.length > 5 && (
+                        <p className="text-[10px] text-muted-foreground text-center">
+                          Showing 5 of {baseCsvData.length} row{baseCsvData.length !== 1 ? "s" : ""}. All rows will be used at generation time.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
 
                   {dataSource === "csv" && (
                     <>
