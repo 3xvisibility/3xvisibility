@@ -1610,6 +1610,15 @@ export default function GeneratedPagesPage() {
         after={diffState?.after}
       />
 
+      <VerificationHistoryDialog
+        open={verifyHistoryOpen}
+        onOpenChange={setVerifyHistoryOpen}
+        workspaceId={wsId}
+        title="SEO Apply — Verifications for Generated Pages"
+      />
+
+
+
       <BulkBoxSettingsDialog
         open={bulkWidthOpen}
         onOpenChange={setBulkWidthOpen}
