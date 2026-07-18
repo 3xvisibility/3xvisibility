@@ -112,6 +112,9 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // Optional locations merged into ai/csv/website sources (cross-join)
   const [mergedLocations, setMergedLocations] = useState<Record<string, string>[]>([]);
   const [mergeLocationsOpen, setMergeLocationsOpen] = useState(false);
+  // Auto-build the {keywords} field from selected locations (city/country/etc.)
+  const [locationKeywordEnabled, setLocationKeywordEnabled] = useState(false);
+  const [locationKeywordPattern, setLocationKeywordPattern] = useState<string>("{city}, {country}");
   const [websiteForPages, setWebsiteForPages] = useState("");
   const [websiteContentType, setWebsiteContentType] = useState<"pages" | "products" | "all">("all");
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
@@ -247,7 +250,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     dataSource,
     aiBusiness, aiNiche, aiServiceProduct, aiPageCount, aiGeneratedRows, activePresetId,
     csvRawText, csvHeaders, csvData,
-    locationData, mergedLocations,
+    locationData, mergedLocations, locationKeywordEnabled, locationKeywordPattern,
     websiteForPages, websiteContentType, selectedPageIdsArr: Array.from(selectedPageIds), websitePagesSearch,
     selectedTemplate, selectedWebsite,
     manualMappings, customValues, transforms, targetFieldMappings,
@@ -268,7 +271,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   }), [
     step, campaignName, campaignLanguage, campaignCountry, campaignTypes,
     dataSource, aiBusiness, aiNiche, aiServiceProduct, aiPageCount, aiGeneratedRows, activePresetId,
-    csvRawText, csvHeaders, csvData, locationData, mergedLocations,
+    csvRawText, csvHeaders, csvData, locationData, mergedLocations, locationKeywordEnabled, locationKeywordPattern,
     websiteForPages, websiteContentType, selectedPageIds, websitePagesSearch,
     selectedTemplate, selectedWebsite,
     manualMappings, customValues, transforms, targetFieldMappings,
@@ -307,6 +310,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         if (Array.isArray(s.csvData)) setCsvData(s.csvData);
         if (Array.isArray(s.locationData)) setLocationData(s.locationData);
         if (Array.isArray(s.mergedLocations)) setMergedLocations(s.mergedLocations);
+        if (typeof s.locationKeywordEnabled === "boolean") setLocationKeywordEnabled(s.locationKeywordEnabled);
+        if (typeof s.locationKeywordPattern === "string") setLocationKeywordPattern(s.locationKeywordPattern);
         if (typeof s.websiteForPages === "string") setWebsiteForPages(s.websiteForPages);
         if (typeof s.websiteContentType === "string") setWebsiteContentType(s.websiteContentType);
         if (Array.isArray(s.selectedPageIdsArr)) setSelectedPageIds(new Set(s.selectedPageIdsArr));
@@ -744,22 +749,37 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // Each base row is combined with every selected location row so the template
   // gets both business variables and location variables (city, country, etc.).
   const canMergeLocations = dataSource !== "locations" && mergedLocations.length > 0 && rawBaseData.length > 0;
+  const keywordsFromLocation = canMergeLocations && locationKeywordEnabled && !!locationKeywordPattern.trim();
+  const fillLocPattern = (pattern: string, loc: Record<string, string>) => {
+    let out = pattern;
+    for (const [k, v] of Object.entries(loc)) {
+      const safe = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      out = out.replace(new RegExp(`\\{${safe}\\}`, "gi"), v || "");
+    }
+    return out.replace(/\{[^}]+\}/g, "").replace(/\s*,\s*,+/g, ", ").replace(/^[\s,]+|[\s,]+$/g, "").trim();
+  };
   const baseCsvData = useMemo(() => {
     if (!canMergeLocations) return rawBaseData;
     const out: Record<string, string>[] = [];
     for (const row of rawBaseData) {
       for (const loc of mergedLocations) {
-        out.push({ ...loc, ...row });
+        const merged: Record<string, string> = { ...loc, ...row };
+        if (keywordsFromLocation) {
+          const kw = fillLocPattern(locationKeywordPattern, loc);
+          if (kw) merged.keywords = (row as any).keywords ? `${(row as any).keywords}, ${kw}` : kw;
+        }
+        out.push(merged);
       }
     }
     return out;
-  }, [canMergeLocations, rawBaseData, mergedLocations]);
+  }, [canMergeLocations, rawBaseData, mergedLocations, keywordsFromLocation, locationKeywordPattern]);
   const baseCsvHeaders = useMemo(() => {
     if (!canMergeLocations) return rawBaseHeaders;
     const set = new Set<string>(rawBaseHeaders);
     locationHeaders.forEach(h => set.add(h));
+    if (keywordsFromLocation) set.add("keywords");
     return Array.from(set);
-  }, [canMergeLocations, rawBaseHeaders, locationHeaders]);
+  }, [canMergeLocations, rawBaseHeaders, locationHeaders, keywordsFromLocation]);
 
 
   // Custom values are fixed substitutions, not page rows. A comma-separated
@@ -1337,7 +1357,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setAdCampaignId(""); setAdGroupId(""); setSeaDirectoryLevels("");
     setGeoCountry("{country}"); setGeoRegion("{region}"); setGeoCity("{city}"); setGeoPostcode("{zip_code}");
     setGeoLat("{latitude}"); setGeoLng("{longitude}"); setGeoLanguage("en");
-    setDataSource("csv"); setLocationData([]); setMergedLocations([]); setWebsiteForPages(""); setWebsiteContentType("all");
+    setDataSource("csv"); setLocationData([]); setMergedLocations([]); setLocationKeywordEnabled(false); setLocationKeywordPattern("{city}, {country}"); setWebsiteForPages(""); setWebsiteContentType("all");
     setSelectedPageIds(new Set()); setWebsitePagesSearch("");
     setManualMappings({}); setCustomValues({}); setTransforms({}); setTargetFieldMappings({});
     setAiNameSuggestions([]); setAiReadinessCheck(null);
@@ -1784,35 +1804,92 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       into every AI / CSV / Website row so templates can use
                       {city}, {country}, {state}, {zip_code}, etc. */}
                   {dataSource !== "locations" && (
-                    <div className="rounded-xl border border-border/60 bg-muted/20 p-3 flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <MapPin className="h-4 w-4 text-primary shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold">Attach Locations <span className="text-muted-foreground font-normal">(optional)</span></p>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {mergedLocations.length > 0
-                              ? `${mergedLocations.length} location${mergedLocations.length !== 1 ? "s" : ""} × ${rawBaseData.length || 0} rows = ${mergedLocations.length * (rawBaseData.length || 0)} pages`
-                              : "Add city / country / state / zip variables from the Location Database"}
-                          </p>
+                    <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <MapPin className="h-4 w-4 text-primary shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold">Attach Locations <span className="text-muted-foreground font-normal">(optional)</span></p>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {mergedLocations.length > 0
+                                ? `${mergedLocations.length} location${mergedLocations.length !== 1 ? "s" : ""} × ${rawBaseData.length || 0} rows = ${mergedLocations.length * (rawBaseData.length || 0)} pages`
+                                : "Add city / country / state / zip variables from the Location Database"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {mergedLocations.length > 0 && (
+                            <Button type="button" size="sm" variant="ghost" onClick={() => setMergedLocations([])} className="rounded-lg h-8 text-xs">
+                              Clear
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={mergedLocations.length > 0 ? "outline" : "default"}
+                            onClick={() => setMergeLocationsOpen(true)}
+                            className="rounded-lg h-8 text-xs gap-1.5"
+                          >
+                            <DatabaseIcon className="h-3.5 w-3.5" />
+                            {mergedLocations.length > 0 ? "Change" : "Select Locations"}
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        {mergedLocations.length > 0 && (
-                          <Button type="button" size="sm" variant="ghost" onClick={() => setMergedLocations([])} className="rounded-lg h-8 text-xs">
-                            Clear
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={mergedLocations.length > 0 ? "outline" : "default"}
-                          onClick={() => setMergeLocationsOpen(true)}
-                          className="rounded-lg h-8 text-xs gap-1.5"
-                        >
-                          <DatabaseIcon className="h-3.5 w-3.5" />
-                          {mergedLocations.length > 0 ? "Change" : "Select Locations"}
-                        </Button>
-                      </div>
+
+                      {mergedLocations.length > 0 && (
+                        <div className="rounded-lg border border-border/50 bg-background/40 p-2.5 space-y-2">
+                          <label className="flex items-start gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={locationKeywordEnabled}
+                              onCheckedChange={(v) => setLocationKeywordEnabled(!!v)}
+                              className="mt-0.5"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold">Auto-build <code className="text-[10px] bg-muted px-1 py-0.5 rounded">{"{keywords}"}</code> from locations</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                Fill each page's keywords using the selected location's city / country / state values.
+                              </p>
+                            </div>
+                          </label>
+                          {locationKeywordEnabled && (
+                            <div className="pl-6 space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-[10px] text-muted-foreground">Presets:</span>
+                                {[
+                                  { label: "City, Country", val: "{city}, {country}" },
+                                  { label: "City, State", val: "{city}, {state}" },
+                                  { label: "City only", val: "{city}" },
+                                  { label: "City, State, Country", val: "{city}, {state}, {country}" },
+                                ].map((p) => (
+                                  <button
+                                    key={p.val}
+                                    type="button"
+                                    onClick={() => setLocationKeywordPattern(p.val)}
+                                    className={cn(
+                                      "text-[10px] px-2 py-0.5 rounded-md border transition-colors",
+                                      locationKeywordPattern === p.val
+                                        ? "border-primary bg-primary/10 text-primary"
+                                        : "border-border/60 hover:bg-muted/40"
+                                    )}
+                                  >
+                                    {p.label}
+                                  </button>
+                                ))}
+                              </div>
+                              <Input
+                                value={locationKeywordPattern}
+                                onChange={(e) => setLocationKeywordPattern(e.target.value)}
+                                placeholder="{city}, {country}"
+                                className="h-8 text-xs rounded-lg font-mono"
+                              />
+                              <p className="text-[10px] text-muted-foreground">
+                                Preview: <span className="font-mono text-foreground/80">{fillLocPattern(locationKeywordPattern, mergedLocations[0] || {}) || "—"}</span>
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <LocationDatabaseDialog
                         open={mergeLocationsOpen}
                         onOpenChange={setMergeLocationsOpen}
