@@ -22,6 +22,7 @@ import { ShopifyFieldMappingEditor } from "../websites/ShopifyFieldMappingEditor
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
+import { KeywordsLibraryDialog, type KeywordsLibraryResult } from "@/components/campaigns/KeywordsLibraryDialog";
 import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
 import { MappingStep } from "@/components/campaigns/MappingStep";
 import { FillRulesPanel } from "@/components/campaigns/FillRulesPanel";
@@ -112,6 +113,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // Optional locations merged into ai/csv/website sources (cross-join)
   const [mergedLocations, setMergedLocations] = useState<Record<string, string>[]>([]);
   const [mergeLocationsOpen, setMergeLocationsOpen] = useState(false);
+  const [keywordsLibraryOpen, setKeywordsLibraryOpen] = useState(false);
   // Auto-build the {keywords} field from selected locations (city/country/etc.)
   const [locationKeywordEnabled, setLocationKeywordEnabled] = useState(false);
   const [locationKeywordPattern, setLocationKeywordPattern] = useState<string>("{city}, {country}");
@@ -1831,6 +1833,30 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     ))}
                   </div>
 
+                  {/* Use Keywords Library — pull variables & values from the Keywords page */}
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Bookmark className="h-4 w-4 text-primary shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold">Use Keywords Library</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Pick variables and values directly from your Keywords page — cross-joined into campaign rows.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setKeywordsLibraryOpen(true)}
+                      className="rounded-lg h-8 text-xs gap-1.5"
+                    >
+                      <Bookmark className="h-3.5 w-3.5" /> Open Library
+                    </Button>
+                  </div>
+
+
+
                   {/* Attach Locations — cross-joins city/country/state/zip variables
                       into every AI / CSV / Website row so templates can use
                       {city}, {country}, {state}, {zip_code}, etc. */}
@@ -2960,8 +2986,32 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       <LocationDatabaseDialog open={locationDbOpen} onOpenChange={setLocationDbOpen} onSelect={rows => setLocationData(rows)} />
                     </>
                   )}
+
+                  <KeywordsLibraryDialog
+                    open={keywordsLibraryOpen}
+                    onOpenChange={setKeywordsLibraryOpen}
+                    templateVariables={selectedTemplateVars}
+                    onInsert={(result: KeywordsLibraryResult) => {
+                      // Load keyword rows into the CSV data source so mapping,
+                      // preview and generation all work through the existing pipeline.
+                      const raw = [
+                        result.headers.join(","),
+                        ...result.rows.map(r => result.headers.map(h => {
+                          const v = r[h] ?? "";
+                          return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+                        }).join(",")),
+                      ].join("\n");
+                      setCsvFile(null);
+                      setCsvRawText(raw);
+                      setCsvHeaders(result.headers);
+                      setCsvData(result.rows);
+                      setDataSource("csv");
+                    }}
+                  />
                 </>
               )}
+
+
 
               {/* Step 3: Template + Mapping */}
               {step === 3 && (
