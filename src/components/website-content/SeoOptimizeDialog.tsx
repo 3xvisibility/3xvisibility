@@ -171,6 +171,16 @@ export function SeoOptimizeDialog({
   const [autoRefreshAfterApply, setAutoRefreshAfterApply] = useState(true);
   const [autoRefreshing, setAutoRefreshing] = useState(false);
   const [forceRepublish, setForceRepublish] = useState(false);
+  const [purgeAfterApply, setPurgeAfterApply] = useState(true);
+  const [purging, setPurging] = useState(false);
+  const [purgeResult, setPurgeResult] = useState<{
+    success: boolean;
+    purged_plugins: string[];
+    detected_plugins: string[];
+    total_attempts: number;
+    note?: string;
+    at: string;
+  } | null>(null);
   const [result, setResult] = useState<{
     seo_title?: string;
     seo_description?: string;
@@ -536,6 +546,13 @@ export function SeoOptimizeDialog({
         await autoRefreshSeoOnLive(result.content);
       }
 
+      // Optionally purge WordPress / CDN cache so the fresh HTML shows up
+      // right away — especially useful after Force republish since CDN edge
+      // nodes and page-cache plugins otherwise keep serving the stale copy.
+      if (data.pushed_to_cms && purgeAfterApply && websiteId) {
+        await purgeCache({ silent: true });
+      }
+
       // After everything is pushed, re-fetch from the live site and verify
       // the update actually landed on the published page.
       if (data.pushed_to_cms) {
@@ -629,6 +646,57 @@ export function SeoOptimizeDialog({
     };
     setVerification({ ...snap, fetchedAt: new Date().toISOString() });
     return { ok, found: true, snapshot: snap };
+  };
+
+  // Purge WordPress / CDN cache via known plugin REST endpoints so the fresh
+  // HTML shows up right after Force republish instead of the cached copy.
+  const purgeCache = async (opts: { silent?: boolean } = {}) => {
+    if (!websiteId) return null;
+    setPurging(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("purge-wordpress-cache", {
+        body: { website_id: websiteId, page_url: result?.external_url || page.url || undefined },
+      });
+      if (error) throw error;
+      const snap = {
+        success: !!data?.success,
+        purged_plugins: data?.purged_plugins || [],
+        detected_plugins: data?.detected_plugins || [],
+        total_attempts: data?.total_attempts || 0,
+        note: data?.note,
+        at: new Date().toISOString(),
+      };
+      setPurgeResult(snap);
+      if (!opts.silent) {
+        if (snap.success) {
+          toast({
+            title: "Cache purged",
+            description: snap.purged_plugins.length
+              ? `Cleared: ${snap.purged_plugins.join(", ")}`
+              : "Cache clear request accepted.",
+          });
+        } else {
+          toast({
+            title: "No cache plugin responded",
+            description: snap.note || "If Cloudflare or another CDN sits in front of the site, purge it from that dashboard.",
+          });
+        }
+      }
+      return snap;
+    } catch (err: any) {
+      if (!opts.silent) handleApiError(err, { title: "Cache purge failed" });
+      setPurgeResult({
+        success: false,
+        purged_plugins: [],
+        detected_plugins: [],
+        total_attempts: 0,
+        note: err?.message || String(err),
+        at: new Date().toISOString(),
+      });
+      return null;
+    } finally {
+      setPurging(false);
+    }
   };
 
   // Re-fetch the page from the connected site until every pushed field is
@@ -1155,6 +1223,31 @@ export function SeoOptimizeDialog({
                     Use this when content updates don't show on the live page. Clears <code className="text-[10px]">_elementor_edit_mode</code> and <code className="text-[10px]">_elementor_data</code> so the pushed HTML actually renders at the same URL. The Elementor editor will need to re-import the layout after.
                   </span>
                 </label>
+                <label className="flex items-start gap-2 text-xs text-muted-foreground rounded-md border border-dashed border-sky-500/40 bg-sky-500/5 p-2 cursor-pointer hover:bg-sky-500/10">
+                  <Checkbox
+                    checked={purgeAfterApply}
+                    onCheckedChange={(v) => setPurgeAfterApply(v === true)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="font-medium text-foreground">Purge WordPress cache after apply</span>
+                    <br />
+                    After the push, automatically clears WP Rocket, LiteSpeed, W3 Total Cache, WP Super Cache, SG Optimizer, Cloudflare (WP plugin), Elementor CSS, and other detected caches so the live page shows the update immediately.
+                    {purgeResult && (
+                      <span className="block mt-1">
+                        {purgeResult.success ? (
+                          <span className="text-emerald-600 dark:text-emerald-400">
+                            ✓ Purged: {purgeResult.purged_plugins.join(", ") || "cache endpoint accepted"}
+                          </span>
+                        ) : (
+                          <span className="text-amber-600 dark:text-amber-400">
+                            • {purgeResult.note || "No cache plugin responded — check your CDN dashboard."}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </span>
+                </label>
                 <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
                   {result.content && (
                     <Button
@@ -1177,6 +1270,17 @@ export function SeoOptimizeDialog({
                     className="text-xs"
                   >
                     Discard
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => purgeCache()}
+                    disabled={purging || applying || !websiteId}
+                    className="gap-1.5 text-xs"
+                    title="Clear WordPress and CDN caches now (WP Rocket, LiteSpeed, W3TC, WP Super Cache, SG Optimizer, Cloudflare plugin, Elementor CSS)."
+                  >
+                    {purging ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    {purging ? "Purging..." : "Purge cache now"}
                   </Button>
                   <Button
                     size="sm"
