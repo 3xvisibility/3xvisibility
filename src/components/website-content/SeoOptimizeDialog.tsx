@@ -620,8 +620,58 @@ export function SeoOptimizeDialog({
 
       // After everything is pushed, re-fetch from the live site and verify
       // the update actually landed on the published page.
+      let verifyResult: { ok: boolean; snapshot: typeof verification | null } = { ok: false, snapshot: null };
       if (data.pushed_to_cms) {
-        await verifyLive();
+        verifyResult = await verifyLive();
+      }
+
+      // Auto-republish loop: if verification says the live page STILL matches
+      // the old (pre-apply) content — i.e. the push didn't actually land on
+      // the rendered page — retry Apply with Force republish up to
+      // MAX_AUTO_REPUBLISH times. This handles Elementor/edit-mode caches
+      // and CDN edges that ignore the first push.
+      if (
+        data.pushed_to_cms &&
+        !verifyResult.ok &&
+        verifyResult.snapshot &&
+        before &&
+        stillMatchesOld(verifyResult.snapshot, before) &&
+        autoRepublishRef.current < MAX_AUTO_REPUBLISH
+      ) {
+        autoRepublishRef.current += 1;
+        const attemptNo = autoRepublishRef.current;
+        setAutoRepublishAttempt(attemptNo);
+        setAutoRepublishing(true);
+        toast({
+          title: `Live still shows old content — republishing (${attemptNo}/${MAX_AUTO_REPUBLISH})`,
+          description: "Forcing a republish with Elementor cache clear and retrying verification.",
+        });
+        // Brief pause so any in-flight cache purge finishes flushing before
+        // we push again.
+        await new Promise((r) => setTimeout(r, 2500));
+        setApplying(false); // let the recursive call own the applying state
+        await applyToSite({ isAutoRetry: true });
+        return;
+      }
+
+      // Reached max auto-retries without success — surface a clear notice.
+      if (
+        data.pushed_to_cms &&
+        !verifyResult.ok &&
+        verifyResult.snapshot &&
+        before &&
+        stillMatchesOld(verifyResult.snapshot, before) &&
+        autoRepublishRef.current >= MAX_AUTO_REPUBLISH
+      ) {
+        toast({
+          title: `Live page still shows old content after ${MAX_AUTO_REPUBLISH + 1} pushes`,
+          description: "Try purging your CDN (Cloudflare/etc.) from its own dashboard, or regenerate Elementor CSS & Data, then click Recheck.",
+          variant: "destructive",
+        });
+      }
+
+      if (!isAutoRetry) {
+        setAutoRepublishing(false);
       }
     } catch (err: any) {
       const message = err?.message || String(err);
