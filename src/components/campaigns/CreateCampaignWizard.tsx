@@ -957,7 +957,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       if (dataSource === "ai") return aiGeneratedRows.length > 0;
       return selectedPageIds.size > 0;
     }
-    if (step === 3) return !!selectedTemplate;
+    if (step === 3) return !!selectedTemplate && unmappedVars.length === 0;
     return true;
   };
 
@@ -3305,7 +3305,35 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             </div>
                           </div>
                         );
-                      })()}
+                       })()}
+
+                      {/* Hard block: any unmapped variables prevent generation */}
+                      {unmappedVars.length > 0 && (
+                        <div className="rounded-xl border-2 border-destructive/50 bg-destructive/5 p-3.5 flex items-start gap-2.5">
+                          <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1 space-y-1.5">
+                            <p className="text-xs font-semibold text-destructive">
+                              {unmappedVars.length} variable{unmappedVars.length !== 1 ? "s" : ""} still unmapped — generation is blocked
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Every &#123;variable&#125; must have a source (CSV column, custom value, AI auto-fill, or Keywords fallback) before you can continue. Otherwise pages would publish with raw placeholder text.
+                            </p>
+                            <div className="flex flex-wrap gap-1 pt-0.5">
+                              {unmappedVars.slice(0, 12).map(v => (
+                                <code key={v} className="font-mono text-[10.5px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded border border-destructive/25">
+                                  {`{${v}}`}
+                                </code>
+                              ))}
+                              {unmappedVars.length > 12 && (
+                                <span className="text-[10.5px] text-muted-foreground self-center">+{unmappedVars.length - 12} more</span>
+                              )}
+                            </div>
+                            <p className="text-[10.5px] text-muted-foreground pt-0.5">
+                              Fix: map each variable in the table below, use the <span className="font-medium">Override</span> button on the sources panel above, or enable <span className="font-medium">AI auto-fill for unmapped variables</span>.
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
                       <VariableSourcesPanel
                         dataSource={dataSource as "csv" | "ai" | "website" | "locations"}
@@ -3743,23 +3771,34 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
               )}
               {step < totalSteps ? (
                 <Button
-                  onClick={() => {
-                    if (step === 3 && unmappedVars.length > 0) {
-                      toast({
-                        title: `${unmappedVars.length} variable${unmappedVars.length !== 1 ? "s" : ""} still unmapped`,
-                        description: `Missing: ${unmappedVars.slice(0, 5).map(v => `{${v}}`).join(", ")}${unmappedVars.length > 5 ? ` +${unmappedVars.length - 5} more` : ""}. Pages will show raw placeholders for these.`,
-                        variant: "destructive",
-                      });
-                    }
-                    setStep(step + 1);
-                  }}
+                  onClick={() => setStep(step + 1)}
                   disabled={!canProceed()}
+                  title={step === 3 && unmappedVars.length > 0
+                    ? `Blocked: ${unmappedVars.length} unmapped variable${unmappedVars.length !== 1 ? "s" : ""} (${unmappedVars.slice(0, 3).map(v => `{${v}}`).join(", ")}${unmappedVars.length > 3 ? "…" : ""})`
+                    : undefined}
                   className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110"
                 >
                   Continue <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Button>
               ) : (
-                <Button onClick={() => createMutation.mutate()} disabled={!campaignName || createMutation.isPending} className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110">
+                <Button
+                  onClick={() => {
+                    if (unmappedVars.length > 0) {
+                      toast({
+                        title: `Cannot generate — ${unmappedVars.length} unmapped variable${unmappedVars.length !== 1 ? "s" : ""}`,
+                        description: `Go back to the mapping step and resolve: ${unmappedVars.slice(0, 5).map(v => `{${v}}`).join(", ")}${unmappedVars.length > 5 ? ` +${unmappedVars.length - 5} more` : ""}.`,
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    createMutation.mutate();
+                  }}
+                  disabled={!campaignName || createMutation.isPending || unmappedVars.length > 0}
+                  title={unmappedVars.length > 0
+                    ? `Blocked: ${unmappedVars.length} unmapped variable${unmappedVars.length !== 1 ? "s" : ""}`
+                    : undefined}
+                  className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110"
+                >
                   {createMutation.isPending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Creating...</> :
                    scheduleMode !== "now" ? "Schedule Campaign" :
                    publishMode === "published" ? "Generate & Publish" : "Create Campaign"}
