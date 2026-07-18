@@ -207,80 +207,138 @@ export function LiveVariablePreview({ templateVars, patterns, rows, manualMappin
       </div>
 
 
-      {/* Row navigator */}
-      <div className="flex items-center justify-between gap-3 px-3.5 py-2 border-b border-border/60">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 px-2 text-[11px] gap-1"
-          disabled={!canPrev}
-          onClick={() => setIdx(i => Math.max(0, i - 1))}
-        >
-          <ChevronLeft className="h-3.5 w-3.5" /> Prev
-        </Button>
-        <p className="text-[11px] text-muted-foreground">
-          Row <span className="font-semibold text-foreground">{resolved.resolvedIndex + 1}</span> of{" "}
-          <span className="font-semibold text-foreground">{total}</span>
-        </p>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 px-2 text-[11px] gap-1"
-          disabled={!canNext}
-          onClick={() => setIdx(i => Math.min(total - 1, i + 1))}
-        >
-          Next <ChevronRight className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-
-      {/* Resolved variable chips */}
-      <div className="px-3.5 py-2 flex flex-wrap gap-1.5 border-b border-border/50 bg-background/40">
-        {templateVars.map(v => {
-          const val = resolved.varMap[v];
-          const has = val && val.trim() !== "";
-          return (
-            <div
-              key={v}
-              className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10.5px] ${
-                has
-                  ? "border-emerald-500/30 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-400"
-                  : "border-destructive/30 bg-destructive/[0.06] text-destructive"
-              }`}
+      {view === "detail" && (
+        <>
+          {/* Row navigator */}
+          <div className="flex items-center justify-between gap-3 px-3.5 py-2 border-b border-border/60">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-[11px] gap-1"
+              disabled={!canPrev}
+              onClick={() => setIdx(i => Math.max(0, i - 1))}
             >
-              <code className="font-mono">{`{${v}}`}</code>
-              <span className="text-foreground/40">→</span>
-              <span className="font-medium truncate max-w-[140px]">
-                {has ? val : "missing"}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Field previews */}
-      <div className="px-3.5 py-3 space-y-3 max-h-72 overflow-y-auto">
-        <Field label="SEO Title"       original={patterns.seoTitle}       filled={resolved.title} />
-        <Field label="SEO Description" original={patterns.seoDescription} filled={resolved.description} />
-        <Field label="URL Slug"        original={patterns.slug}           filled={resolved.slug} />
-        <Field label="H1 / Heading"    original={patterns.h1}             filled={resolved.h1} />
-        {patterns.contentHtml && (
-          <div className="space-y-1">
-            <span className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Content preview
-            </span>
-            <div className="rounded-lg border border-primary/25 bg-primary/[0.03] px-2.5 py-1.5">
-              <p
-                className="text-[11.5px] leading-relaxed break-words"
-                dangerouslySetInnerHTML={{
-                  __html: highlightFilledSegments(resolved.contentSnippet + "…", resolved.usedValues),
-                }}
-              />
-            </div>
+              <ChevronLeft className="h-3.5 w-3.5" /> Prev
+            </Button>
+            <p className="text-[11px] text-muted-foreground">
+              Row <span className="font-semibold text-foreground">{resolved.resolvedIndex + 1}</span> of{" "}
+              <span className="font-semibold text-foreground">{total}</span>
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-[11px] gap-1"
+              disabled={!canNext}
+              onClick={() => setIdx(i => Math.min(total - 1, i + 1))}
+            >
+              Next <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
           </div>
-        )}
-      </div>
+
+          {/* Resolved variable chips */}
+          <div className="px-3.5 py-2 flex flex-wrap gap-1.5 border-b border-border/50 bg-background/40">
+            {templateVars.map(v => {
+              const val = resolved.varMap[v];
+              const has = val && val.trim() !== "";
+              return (
+                <div
+                  key={v}
+                  className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10.5px] ${
+                    has
+                      ? "border-emerald-500/30 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-400"
+                      : "border-destructive/30 bg-destructive/[0.06] text-destructive"
+                  }`}
+                >
+                  <code className="font-mono">{`{${v}}`}</code>
+                  <span className="text-foreground/40">→</span>
+                  <span className="font-medium truncate max-w-[140px]">
+                    {has ? val : "missing"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Field previews */}
+          <div className="px-3.5 py-3 space-y-3 max-h-72 overflow-y-auto">
+            <Field label="SEO Title"       original={patterns.seoTitle}       filled={resolved.title} />
+            <Field label="SEO Description" original={patterns.seoDescription} filled={resolved.description} />
+            <Field label="URL Slug"        original={patterns.slug}           filled={resolved.slug} />
+            <Field label="H1 / Heading"    original={patterns.h1}             filled={resolved.h1} />
+            {patterns.contentHtml && (
+              <div className="space-y-1">
+                <span className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Content preview
+                </span>
+                <div className="rounded-lg border border-primary/25 bg-primary/[0.03] px-2.5 py-1.5">
+                  <p
+                    className="text-[11.5px] leading-relaxed break-words"
+                    dangerouslySetInnerHTML={{
+                      __html: highlightFilledSegments(resolved.contentSnippet + "…", resolved.usedValues),
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {view === "matrix" && matrix && (
+        <div className="p-3">
+          <p className="text-[11px] text-muted-foreground mb-2">
+            Resolved values for the first{" "}
+            <span className="font-semibold text-foreground">{matrix.rows.length}</span> row
+            {matrix.rows.length !== 1 ? "s" : ""} · scroll horizontally to see more.
+          </p>
+          <div className="overflow-auto max-h-80 rounded-lg border border-border/60">
+            <table className="min-w-full text-[11px]">
+              <thead className="bg-muted/60 sticky top-0 z-10">
+                <tr>
+                  <th className="px-2.5 py-1.5 text-left font-semibold sticky left-0 bg-muted/60 border-r border-border/60">
+                    Variable
+                  </th>
+                  {matrix.rows.map((_, i) => (
+                    <th key={i} className="px-2.5 py-1.5 text-left font-semibold whitespace-nowrap">
+                      Row {i + 1}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {matrix.cells.map(cell => (
+                  <tr key={cell.variable} className="border-t border-border/40 hover:bg-muted/30">
+                    <td className="px-2.5 py-1.5 sticky left-0 bg-background border-r border-border/60">
+                      <code className="font-mono text-[10.5px] bg-muted px-1.5 py-0.5 rounded">
+                        {`{${cell.variable}}`}
+                      </code>
+                    </td>
+                    {cell.values.map((v, i) => {
+                      const has = v && v.trim() !== "";
+                      return (
+                        <td
+                          key={i}
+                          className={`px-2.5 py-1.5 whitespace-nowrap max-w-[220px] truncate ${
+                            has
+                              ? "text-emerald-700 dark:text-emerald-400"
+                              : "text-destructive italic"
+                          }`}
+                          title={has ? v : "missing"}
+                        >
+                          {has ? v : "—"}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
