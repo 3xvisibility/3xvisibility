@@ -251,7 +251,7 @@ export default function TemplateMarketplacePage() {
   });
 
   const conversionMap = useMemo(() => {
-    const m = new Map<string, { elementor: "ready" | "failed"; shopify: "ready" | "failed" }>();
+    const m = new Map<string, { elementor: "ready" | "failed"; shopify: "ready" | "failed"; updatedAt: string | null }>();
     for (const r of conversionRows as any[]) {
       const elJson = r.elementor_json;
       const shJson = r.shopify_section_json;
@@ -263,10 +263,22 @@ export default function TemplateMarketplacePage() {
       m.set(r.source_template_id, {
         elementor: failed ? "failed" : elReady ? "ready" : "failed",
         shopify: failed ? "failed" : shReady ? "ready" : "failed",
+        updatedAt: r.updated_at || r.created_at || null,
       });
     }
     return m;
   }, [conversionRows]);
+
+  type ConvState = "ready" | "failed" | "pending";
+  function getConversionStatus(tpl: MarketplaceTemplate): { elementor: ConvState; shopify: ConvState; html: ConvState; updatedAt: string | null } {
+    const hit = conversionMap.get(tpl.id) || conversionMap.get((tpl as any).source_marketplace_id);
+    return {
+      elementor: hit ? hit.elementor : "pending",
+      shopify: hit ? hit.shopify : "pending",
+      html: tpl.content && tpl.content.length > 0 ? "ready" : "failed",
+      updatedAt: hit?.updatedAt ?? null,
+    };
+  }
 
   type ConvState = "ready" | "failed" | "pending";
   function getConversionStatus(tpl: MarketplaceTemplate): { elementor: ConvState; shopify: ConvState; html: ConvState } {
