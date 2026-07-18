@@ -1898,6 +1898,99 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     </div>
                   )}
 
+                  {/* Placeholder validation — verifies every {var} referenced by the
+                      selected template is resolvable from merged data (base rows
+                      × attached locations), custom values, or manual mappings. */}
+                  {selectedTemplate && selectedTemplateVars.length > 0 && baseCsvData.length > 0 && (() => {
+                    const firstRow = (baseCsvData[0] || {}) as Record<string, string>;
+                    const headersLower = baseCsvHeaders.map(h => h.toLowerCase());
+                    const locationKeys = new Set(
+                      mergedLocations.length > 0 ? Object.keys(mergedLocations[0] || {}) : []
+                    );
+                    const checks = selectedTemplateVars.map((v) => {
+                      const vLower = v.toLowerCase();
+                      // 1. Custom value (user typed)
+                      if (customValues[v] && customValues[v].trim() !== "") {
+                        return { variable: v, ok: true, source: "Custom value", value: customValues[v] };
+                      }
+                      // 2. Manual mapping
+                      const mapped = manualMappings[v];
+                      if (mapped && baseCsvHeaders.includes(mapped)) {
+                        const val = String(firstRow[mapped] ?? "");
+                        return { variable: v, ok: val.trim() !== "", source: `Mapped → ${mapped}`, value: val };
+                      }
+                      // 3. Exact/fuzzy header match on merged data
+                      const exact = baseCsvHeaders.find(h => h.toLowerCase() === vLower);
+                      const header = exact || baseCsvHeaders.find(h => h.toLowerCase().includes(vLower) || vLower.includes(h.toLowerCase()));
+                      if (header) {
+                        const val = String(firstRow[header] ?? "");
+                        const fromLoc = locationKeys.has(header) || locationKeys.has(vLower);
+                        return {
+                          variable: v,
+                          ok: val.trim() !== "",
+                          source: fromLoc ? `Location → ${header}` : `Data → ${header}`,
+                          value: val,
+                        };
+                      }
+                      // 4. Location field the user may still need to attach
+                      const isLocVar = /^(city|country|state|region|zip_?code|postcode|latitude|longitude|lat|lng)$/i.test(v);
+                      return {
+                        variable: v,
+                        ok: false,
+                        source: isLocVar ? "Missing — attach Locations" : (v.toLowerCase() === "keywords" ? "Missing — enable keyword builder" : "Missing"),
+                        value: "",
+                      };
+                    });
+                    const missing = checks.filter(c => !c.ok);
+                    const ok = checks.length - missing.length;
+                    return (
+                      <div className={cn(
+                        "rounded-xl border p-3 space-y-2",
+                        missing.length === 0 ? "border-success/30 bg-success/5" : "border-warning/40 bg-warning/5"
+                      )}>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold flex items-center gap-1.5">
+                              {missing.length === 0 ? (
+                                <><CheckCircle2 className="h-3.5 w-3.5 text-success" /> All placeholders resolved</>
+                              ) : (
+                                <><AlertCircle className="h-3.5 w-3.5 text-warning" /> {missing.length} placeholder{missing.length !== 1 ? "s" : ""} unresolved</>
+                              )}
+                              <Badge variant="outline" className="text-[10px]">{ok}/{checks.length}</Badge>
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Checked against the first merged row (base data{canMergeLocations ? " × locations" : ""}{keywordsFromLocation ? " + auto keywords" : ""}).
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {checks.map((c) => (
+                            <div
+                              key={c.variable}
+                              title={c.ok ? `${c.source}${c.value ? ` = ${c.value}` : ""}` : c.source}
+                              className={cn(
+                                "flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px]",
+                                c.ok
+                                  ? "border-success/30 bg-success/10 text-success-foreground"
+                                  : "border-warning/40 bg-warning/10 text-warning-foreground"
+                              )}
+                            >
+                              {c.ok ? <CheckCircle2 className="h-3 w-3 text-success" /> : <AlertCircle className="h-3 w-3 text-warning" />}
+                              <span className="font-mono">{`{${c.variable}}`}</span>
+                              <span className="text-muted-foreground">·</span>
+                              <span className="truncate max-w-[140px]">{c.source}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {missing.length > 0 && (
+                          <p className="text-[10px] text-muted-foreground">
+                            Fix by attaching Locations, enabling the keyword builder, mapping a column in Step 3, or adding a custom value.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {/* Sample generated pages preview — first rows of the merged dataset
                       (base rows × attached locations) that will drive page generation. */}
                   {baseCsvData.length > 0 && baseCsvHeaders.length > 0 && (
