@@ -153,25 +153,8 @@ export default function AuthPage() {
     }
 
     const authUrl = `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/token?grant_type=password`;
-    console.log("[Auth Debug] Attempting login to:", authUrl);
-
-    // Step 1: Raw fetch diagnostic before Supabase SDK
-    try {
-      const probe = await fetch(authUrl, { method: "HEAD", mode: "cors" }).catch((fetchErr) => fetchErr);
-      if (probe instanceof Error) {
-        console.error("[Auth Debug] Raw probe FAILED:", probe.message);
-        toast({
-          title: "Login Server Unreachable",
-          description: `Could not connect to the login server (${new URL(authUrl).hostname}). Please check your internet connection, disable any VPN or ad-blocker, and try again.`,
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-      console.log("[Auth Debug] Raw probe status:", probe.status);
-    } catch (probeErr: any) {
-      console.error("[Auth Debug] Probe exception:", probeErr);
-    }
+    const inIframe = typeof window !== "undefined" && window.self !== window.top;
+    console.log("[Auth Debug] Attempting login to:", authUrl, "inIframe:", inIframe);
 
     // Step 2: Actual login via SDK with retries
     let error: Error | null = null;
