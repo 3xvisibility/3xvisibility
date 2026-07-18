@@ -589,9 +589,18 @@ export default function TemplateMarketplacePage() {
       {/* Step 1 — choose the target platform. Every template is available on both
           Elementor (WordPress) and Shopify and is re-skinned to match. */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-2">
-          {t("marketplace.choosePlatform") || "Choose your format"}
-        </p>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-medium text-muted-foreground">
+            {t("marketplace.choosePlatform") || "Choose your format"}
+          </p>
+          <a
+            href="/admin"
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            title="Open the Template Sync job runner (admin only)"
+          >
+            <Wrench className="h-3 w-3" /> Job runner
+          </a>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl">
           {([
             { id: "elementor" as const, label: "Elementor", desc: "WordPress / Elementor JSON", icon: FileText },
