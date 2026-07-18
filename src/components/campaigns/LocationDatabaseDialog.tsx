@@ -160,6 +160,9 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
       result = result.filter((l: any) =>
         l.city?.toLowerCase().includes(q) ||
         l.county?.toLowerCase().includes(q) ||
+        l.region?.toLowerCase().includes(q) ||
+        l.state?.toLowerCase().includes(q) ||
+        l.state_code?.toLowerCase().includes(q) ||
         l.zip_code?.includes(q)
       );
     }
