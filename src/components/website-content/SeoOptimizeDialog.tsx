@@ -655,7 +655,7 @@ export function SeoOptimizeDialog({
     setPurging(true);
     try {
       const { data, error } = await supabase.functions.invoke("purge-wordpress-cache", {
-        body: { website_id: websiteId, page_url: page.external_url || page.url || undefined },
+        body: { website_id: websiteId, page_url: result?.external_url || page.url || undefined },
       });
       if (error) throw error;
       const snap = {
