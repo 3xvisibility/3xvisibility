@@ -520,7 +520,11 @@ export function SeoOptimizeDialog({
   };
 
   // Phase 2: push the previewed values to the connected site.
-  const applyToSite = async () => {
+  // `isAutoRetry`: internal recursion flag used by the auto-republish loop so
+  // we can force `force_republish=true` on retries and not reset the counter.
+  const applyToSite = async (opts?: { isAutoRetry?: boolean }) => {
+    const isAutoRetry = !!opts?.isAutoRetry;
+    if (!isAutoRetry) autoRepublishRef.current = 0;
     if (!result) return;
     setApplying(true);
     setApplyError(null);
