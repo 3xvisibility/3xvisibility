@@ -104,9 +104,12 @@ export default function AuthPage() {
   const mapAuthError = (errorMessage: string): { title: string; description: string } => {
     const msg = errorMessage.toLowerCase();
     if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("timeout")) {
+      const iframeHint = typeof window !== "undefined" && window.self !== window.top
+        ? " You're viewing this inside the Lovable preview iframe — third-party cookies are often blocked here. Open the preview in a new tab (↗ button at the top of the preview) or use the published URL to sign in."
+        : " Try disabling VPN/ad-blocker or switching networks.";
       return {
         title: "Connection Failed",
-        description: "Your browser could not connect to the login server. Common causes: unstable internet, VPN, firewall, or ad-blocker blocking the request. Try disabling your VPN/ad-blocker or switching to a different network.",
+        description: "Your browser could not reach the login server." + iframeHint,
       };
     }
     if (msg.includes("cors") || msg.includes("access-control")) {
