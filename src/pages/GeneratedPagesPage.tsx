@@ -1185,9 +1185,6 @@ export default function GeneratedPagesPage() {
                             </Tooltip>
                           </TooltipProvider>
                         )}
-                        <div className="mt-1">
-                          <EditorReadinessBadge value={(page as { editor_readiness?: unknown }).editor_readiness} />
-                        </div>
                       </td>
                       <td className="p-3 hidden xl:table-cell">
                         {page.campaigns?.name ? (
