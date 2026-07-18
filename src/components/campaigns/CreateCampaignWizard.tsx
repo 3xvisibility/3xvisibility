@@ -764,7 +764,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         const merged: Record<string, string> = { ...loc, ...row };
         if (keywordsFromLocation) {
           const kw = fillLocPattern(locationKeywordPattern, loc);
-          if (kw) merged.keywords = row.keywords ? `${row.keywords}, ${kw}` : kw;
+          if (kw) merged.keywords = (row as any).keywords ? `${(row as any).keywords}, ${kw}` : kw;
         }
         out.push(merged);
       }
