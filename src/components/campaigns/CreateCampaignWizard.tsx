@@ -2986,8 +2986,32 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       <LocationDatabaseDialog open={locationDbOpen} onOpenChange={setLocationDbOpen} onSelect={rows => setLocationData(rows)} />
                     </>
                   )}
+
+                  <KeywordsLibraryDialog
+                    open={keywordsLibraryOpen}
+                    onOpenChange={setKeywordsLibraryOpen}
+                    templateVariables={selectedTemplateVars}
+                    onInsert={(result: KeywordsLibraryResult) => {
+                      // Load keyword rows into the CSV data source so mapping,
+                      // preview and generation all work through the existing pipeline.
+                      const raw = [
+                        result.headers.join(","),
+                        ...result.rows.map(r => result.headers.map(h => {
+                          const v = r[h] ?? "";
+                          return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+                        }).join(",")),
+                      ].join("\n");
+                      setCsvFile(null);
+                      setCsvRawText(raw);
+                      setCsvHeaders(result.headers);
+                      setCsvData(result.rows);
+                      setDataSource("csv");
+                    }}
+                  />
                 </>
               )}
+
+
 
               {/* Step 3: Template + Mapping */}
               {step === 3 && (
