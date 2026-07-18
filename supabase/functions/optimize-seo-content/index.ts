@@ -934,7 +934,7 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
         const repairTimeoutMs = Math.min(AI_CALL_TIMEOUT_MS, Math.max(8_000, remainingBudgetMs(functionStartedAt, 45_000)));
         if (repairTimeoutMs < 8_000) break;
         result = normalizeOptimizationResult(
-          await requestOptimizationDraft(LOVABLE_API_KEY, systemPrompt, repairPrompt, repairTimeoutMs),
+          await requestOptimizationDraft(LOVABLE_API_KEY, systemPrompt, repairPrompt, repairTimeoutMs, activeModel),
           fallbackResult,
           fields,
           includeContent,
