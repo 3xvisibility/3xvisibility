@@ -768,6 +768,43 @@ export function SeoOptimizeDialog({
               </div>
             )}
 
+            {/* Retryable transient failure banner (WordPress hosting hiccups) */}
+            {(() => {
+              const raw = applyError || result.push_error || "";
+              const isRetryable = /\[retryable\]/i.test(raw)
+                || /timed out|temporarily unavailable|rate.?limit|502|503|504|econn|network|fetch failed/i.test(raw);
+              if (!raw || !isRetryable) return null;
+              const friendly = raw.replace(/^\s*\[retryable\]\s*/i, "").trim();
+              return (
+                <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <RefreshCw className="h-4 w-4 mt-0.5 text-amber-600 shrink-0" />
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <p className="text-xs font-medium text-foreground">
+                        Temporary WordPress issue — safe to retry
+                      </p>
+                      <p className="text-[11px] text-muted-foreground break-words">{friendly}</p>
+                      {retryAttempt > 0 && (
+                        <p className="text-[10px] text-muted-foreground">
+                          Retried {retryAttempt}× with backoff. Nothing else was changed on your site.
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={retryApply}
+                      disabled={applying || regenerating || autoRefreshing}
+                      className="gap-1.5 text-xs shrink-0"
+                    >
+                      {applying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                      {applying ? "Retrying…" : "Retry"}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Apply / discard */}
             {!applied && (
               <>
