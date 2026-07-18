@@ -846,7 +846,12 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
       content: page_content,
     };
 
-    const credit = await deductCreditsForRequest(req, "seo_optimization", OPTIMIZATION_MODEL);
+    // Pick the model based on whether we're rewriting the full page body.
+    // Lite is fine for meta-only tweaks; a body rewrite needs the stronger
+    // model or it echoes the original HTML back unchanged.
+    const activeModel = includeContent ? CONTENT_REWRITE_MODEL : METADATA_MODEL;
+
+    const credit = await deductCreditsForRequest(req, "seo_optimization", activeModel);
     if (!credit.allowed) {
       return new Response(JSON.stringify({
         error: credit.error === "insufficient_credits"
@@ -869,6 +874,7 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
           systemPrompt,
           userPrompt,
           Math.min(optimizationTimeoutMs, Math.max(8_000, remainingBudgetMs(functionStartedAt, 55_000))),
+          activeModel,
         ),
         fallbackResult,
         fields,
