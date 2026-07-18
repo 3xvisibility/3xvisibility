@@ -36,7 +36,7 @@ import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeo
 import { calculateFreshness } from "@/lib/content-freshness";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { EditorReadinessBadge } from "@/components/generated-pages/EditorReadinessBadge";
+
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { logAudit } from "@/lib/audit";
 import { useLanguage } from "@/i18n/LanguageContext";
