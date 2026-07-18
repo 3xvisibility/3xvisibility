@@ -1349,7 +1349,7 @@ export function SeoOptimizeDialog({
                   </Button>
                   <Button
                     size="sm"
-                    onClick={applyToSite}
+                    onClick={() => applyToSite()}
                     disabled={applying || regenerating || autoRefreshing}
                     className="gap-1.5 text-xs"
                   >
