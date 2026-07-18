@@ -364,7 +364,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             </div>
             <Button
               onClick={async () => {
-                await seedMutation.mutateAsync({ countryCode: countryFilter });
+                await seedMutation.mutateAsync({ countryCode: countryFilter, target: batchSize });
                 refetch();
               }}
               disabled={seedMutation.isPending}
@@ -464,6 +464,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                       expand: true,
                       state: stateFilter !== "all" ? stateFilter : undefined,
                       region: regionFilter !== "all" ? regionFilter : undefined,
+                      target: batchSize,
                     });
                     refetch();
                   }}
