@@ -245,6 +245,47 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     return result;
   }, [locations, search, minPop]);
 
+  // Infinite scroll: render in chunks of PAGE_SIZE and grow as the user
+  // scrolls near the bottom of the list. Reset when filters/search change.
+  const PAGE_SIZE = 100;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [countryFilter, stateFilter, regionFilter, search, minPop]);
+
+  const visibleLocations = useMemo(
+    () => filteredLocations.slice(0, visibleCount),
+    [filteredLocations, visibleCount],
+  );
+  const hasMore = visibleCount < filteredLocations.length;
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const setSentinel = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (sentinelRef.current) sentinelRef.current = null;
+      sentinelRef.current = node;
+      if (!node || !hasMore) return;
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredLocations.length));
+          }
+        },
+        { root: null, rootMargin: "200px", threshold: 0 },
+      );
+      io.observe(node);
+      // Detach on next sentinel mount
+      (node as any).__io = io;
+    },
+    [hasMore, filteredLocations.length],
+  );
+  useEffect(() => {
+    return () => {
+      const n = sentinelRef.current as any;
+      if (n?.__io) n.__io.disconnect();
+    };
+  }, []);
+
   const toggleLocation = (id: string) => {
     const next = new Set(selectedIds);
     if (next.has(id)) next.delete(id); else next.add(id);
