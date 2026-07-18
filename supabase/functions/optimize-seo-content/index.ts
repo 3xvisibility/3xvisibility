@@ -20,8 +20,12 @@ const corsHeaders = {
 
 
 
-// Lite model is enough for SEO meta + minor text tweaks; saves significant credits.
-const OPTIMIZATION_MODEL = "google/gemini-2.5-flash-lite";
+// Metadata-only tweaks can use the cheap lite model; a full body rewrite
+// requires the stronger flash model — the lite one tends to echo the input
+// HTML back unchanged instead of actually rewriting every heading/paragraph,
+// which is exactly what users are hitting when "only meta text changes".
+const METADATA_MODEL = "google/gemini-2.5-flash-lite";
+const CONTENT_REWRITE_MODEL = "google/gemini-2.5-flash";
 const MAX_QUALITY_REPAIR_ATTEMPTS = 1;
 // Stop the repair loop once we're approaching the 150s edge function idle timeout.
 // Leaves headroom for CMS push + DB writes after the AI loop completes.
