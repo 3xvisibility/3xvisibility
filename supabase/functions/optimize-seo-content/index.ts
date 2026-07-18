@@ -104,6 +104,7 @@ async function requestOptimizationDraft(
   systemPrompt: string,
   userPrompt: string,
   timeoutMs = AI_CALL_TIMEOUT_MS,
+  model: string = METADATA_MODEL,
 ) {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), timeoutMs);
@@ -117,7 +118,7 @@ async function requestOptimizationDraft(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: OPTIMIZATION_MODEL,
+      model,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
