@@ -635,9 +635,12 @@ export function SeoOptimizeDialog({
 
       toast({
         title: data.pushed_to_cms ? "✓ Applied to your site" : "Saved",
-        description: data.pushed_to_cms
-          ? `Updated ${updatedFields.join(", ") || "page"} on the same URL${liveUrl ? ` — ${liveUrl}` : ""}.`
-          : data.push_error || "Changes were saved locally.",
+        description: data.pushed_to_cms ? (
+          <span className="flex flex-col gap-0.5">
+            <span>Updated {updatedFields.join(", ") || "page"} on the same URL.</span>
+            {renderToastUrlLine(liveUrl)}
+          </span>
+        ) : (data.push_error || "Changes were saved locally."),
         variant: data.push_error ? "destructive" : undefined,
         action: data.pushed_to_cms && liveUrl
           ? (
