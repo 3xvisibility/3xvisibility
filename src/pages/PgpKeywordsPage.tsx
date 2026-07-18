@@ -431,7 +431,7 @@ export default function PgpKeywordsPage() {
         temperature: 0.2,
         messages: [
           { role: "system", content: SEO_KEYWORD_SYSTEM_PROMPT },
-          { role: "user", content: `Generate exactly ${aiCount} high-value SEO keywords for keyword group "${kwName || aiTopic}". Topic: ${aiTopic}. Use a natural mix of high-intent, long-tail and local SEO phrases. Each keyword must be 1-6 plain words. One keyword per line only.` },
+          { role: "user", content: `Generate exactly ${aiCount} high-value SEO keywords for keyword group "${kwName || aiTopic}". Topic: ${aiTopic}. Use a natural mix of high-intent, long-tail and local SEO phrases. Each keyword must be 1-6 plain words. One keyword per line only. IMPORTANT: Write ALL keywords in ${aiLanguage} language only — do not mix languages, do not translate to English.` },
         ],
       });
       if (!result.success) throw new Error(result.content || "AI request failed");
