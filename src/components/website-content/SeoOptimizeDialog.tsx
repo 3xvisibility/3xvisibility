@@ -620,7 +620,7 @@ export function SeoOptimizeDialog({
 
       // After everything is pushed, re-fetch from the live site and verify
       // the update actually landed on the published page.
-      let verifyResult: { ok: boolean; snapshot: typeof verification | null } = { ok: false, snapshot: null };
+      let verifyResult: Awaited<ReturnType<typeof verifyLive>> = { ok: false, snapshot: null };
       if (data.pushed_to_cms) {
         verifyResult = await verifyLive();
       }
