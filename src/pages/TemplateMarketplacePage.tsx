@@ -389,11 +389,14 @@ export default function TemplateMarketplacePage() {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
       toast({ title: "Template imported!", description: `"${tpl.name}" added to your templates.` });
       setPreviewTemplate(null);
-      // Elementor (WordPress) templates are converted to native Elementor widget
-      // JSON up front so publishing renders 1:1 native widgets/CSS. Shopify uses
-      // its own theme-adapter strategy at publish time, so no JSON seeding there.
-      if (platformChoice === "elementor") {
-        void supabase.functions.invoke("backfill-elementor-catalog", { body: {} }).catch(() => {});
+      // Elementor (WordPress) and Shopify templates are pre-converted server-side
+      // into native Elementor widget JSON + Shopify section Liquid so publishing
+      // renders 1:1 without any HTML-to-widget conversion at publish time. The
+      // backfill endpoint writes BOTH kits for every template in one pass, so we
+      // trigger it whenever the user imports an Elementor or Shopify variant.
+      // HTML/CSS imports skip this (raw markup is used as-is).
+      if (platformChoice === "elementor" || platformChoice === "shopify") {
+        void supabase.functions.invoke("backfill-elementor-catalog", { body: { force: true } }).catch(() => {});
       }
     },
     onError: (err: Error) => {
