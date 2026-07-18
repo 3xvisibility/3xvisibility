@@ -816,7 +816,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             ) : (
               <ScrollArea className="flex-1 min-h-0 max-h-[300px] rounded-xl border border-border">
                 <div className="space-y-0.5 p-1">
-                  {filteredLocations.map((loc: any) => {
+                  {visibleLocations.map((loc: any) => {
                     const isSelected = selectedIds.has(loc.id);
                     return (
                       <button
@@ -849,6 +849,31 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                       </button>
                     );
                   })}
+                  {hasMore && (
+                    <div
+                      ref={setSentinel}
+                      className="flex items-center justify-center gap-2 py-3 text-[10px] text-muted-foreground"
+                    >
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Loading more… ({visibleLocations.length}/{filteredLocations.length})
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-[10px]"
+                        onClick={() =>
+                          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredLocations.length))
+                        }
+                      >
+                        Load more
+                      </Button>
+                    </div>
+                  )}
+                  {!hasMore && filteredLocations.length > PAGE_SIZE && (
+                    <div className="text-center py-2 text-[10px] text-muted-foreground">
+                      Showing all {filteredLocations.length} cities
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
             )}
