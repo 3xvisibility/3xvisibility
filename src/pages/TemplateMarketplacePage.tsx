@@ -208,6 +208,53 @@ export default function TemplateMarketplacePage() {
     },
   });
 
+  // Fetch conversion status from the elementor_templates catalog so each card
+  // can show whether the template has been pre-converted into Elementor JSON
+  // and Shopify section JSON at seed/backfill time. HTML/CSS is always ready
+  // because the raw markup lives on the template itself.
+  const { data: conversionRows = [] } = useQuery({
+    queryKey: ["marketplace-conversion-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("elementor_templates")
+        .select("source_template_id, elementor_json, shopify_section_json, status");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  const conversionMap = useMemo(() => {
+    const m = new Map<string, { elementor: "ready" | "failed"; shopify: "ready" | "failed" }>();
+    for (const r of conversionRows as any[]) {
+      const elJson = r.elementor_json;
+      const shJson = r.shopify_section_json;
+      const elReady = Array.isArray(elJson) ? elJson.length > 0 : !!elJson;
+      const shReady = shJson && typeof shJson === "object"
+        ? !!(shJson.sectionLiquid || shJson.template)
+        : false;
+      const failed = r.status === "failed";
+      m.set(r.source_template_id, {
+        elementor: failed ? "failed" : elReady ? "ready" : "failed",
+        shopify: failed ? "failed" : shReady ? "ready" : "failed",
+      });
+    }
+    return m;
+  }, [conversionRows]);
+
+  function getConversionStatus(tpl: MarketplaceTemplate): {
+    elementor: "ready" | "failed" | "pending";
+    shopify: "ready" | "failed" | "pending";
+    html: "ready";
+  } {
+    const hit = conversionMap.get(tpl.id) || conversionMap.get((tpl as any).source_marketplace_id);
+    return {
+      elementor: hit ? hit.elementor : "pending",
+      shopify: hit ? hit.shopify : "pending",
+      html: tpl.content && tpl.content.length > 0 ? "ready" : ("failed" as any),
+    };
+  }
+
   // Fetch ratings for shared templates
   // Aggregate stats only (avg + count per template). Individual ratings are
   // private to their owner, so we use a SECURITY DEFINER RPC that never exposes
