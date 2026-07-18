@@ -524,7 +524,11 @@ export function SeoOptimizeDialog({
   // we can force `force_republish=true` on retries and not reset the counter.
   const applyToSite = async (opts?: { isAutoRetry?: boolean }) => {
     const isAutoRetry = !!opts?.isAutoRetry;
-    if (!isAutoRetry) autoRepublishRef.current = 0;
+    if (!isAutoRetry) {
+      autoRepublishRef.current = 0;
+      setAutoRepublishAttempt(0);
+      setAutoRepublishing(false);
+    }
     if (!result) return;
     setApplying(true);
     setApplyError(null);
