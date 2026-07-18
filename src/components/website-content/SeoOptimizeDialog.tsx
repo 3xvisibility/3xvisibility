@@ -78,6 +78,7 @@ export function SeoOptimizeDialog({
   const [applied, setApplied] = useState(false);
   const [autoRefreshAfterApply, setAutoRefreshAfterApply] = useState(true);
   const [autoRefreshing, setAutoRefreshing] = useState(false);
+  const [forceRepublish, setForceRepublish] = useState(false);
   const [result, setResult] = useState<{
     seo_title?: string;
     seo_description?: string;
@@ -244,6 +245,7 @@ export function SeoOptimizeDialog({
           // any future page generated from the same template inherits the fix.
           overwrite_design: true,
           update_template: true,
+          force_republish: forceRepublish,
         },
       });
 
@@ -767,6 +769,18 @@ export function SeoOptimizeDialog({
                     </span>
                   </label>
                 )}
+                <label className="flex items-start gap-2 text-xs text-muted-foreground rounded-md border border-dashed border-amber-500/40 bg-amber-500/5 p-2 cursor-pointer hover:bg-amber-500/10">
+                  <Checkbox
+                    checked={forceRepublish}
+                    onCheckedChange={(v) => setForceRepublish(v === true)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="font-medium text-foreground">Force republish (clear Elementor edit-mode)</span>
+                    <br />
+                    Use this when content updates don't show on the live page. Clears <code className="text-[10px]">_elementor_edit_mode</code> and <code className="text-[10px]">_elementor_data</code> so the pushed HTML actually renders at the same URL. The Elementor editor will need to re-import the layout after.
+                  </span>
+                </label>
                 <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
                   {result.content && (
                     <Button

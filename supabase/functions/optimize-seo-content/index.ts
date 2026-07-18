@@ -280,13 +280,18 @@ async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.n
       page_seo_keywords,
       update_template,
       overwrite_design,
+      force_republish,
     } = body;
     // Republishing an existing CMS page → preserve its on-site design (Elementor
     // layout, theme blocks, builder structure) by default. Caller can opt out
     // with `overwrite_design: true` (e.g. manual full-rewrite flows). When the
     // caller explicitly supplies `manual_content`, we treat it as an intentional
     // body update so the new content actually reaches the CMS.
-    const allowOverwriteDesign = overwrite_design === true || !!manual_content;
+    // `force_republish` is a stronger opt-out: it forces a raw HTML push and
+    // clears Elementor edit-mode meta so the new content actually renders on
+    // pages that were previously built with Elementor.
+    const forceRepublish = force_republish === true;
+    const allowOverwriteDesign = forceRepublish || overwrite_design === true || !!manual_content;
     const preserveDesign = !allowOverwriteDesign;
 
     if (!website_id) {
@@ -364,6 +369,7 @@ async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.n
         };
         if (isProductContent) updatePayload.product_data = { handle: page_slug || undefined };
         if (preserveDesign) updatePayload.preserve_design = true;
+        if (forceRepublish) updatePayload.publish_format = "html";
         if (manual_excerpt) updatePayload.excerpt = manual_excerpt;
         if (seo_title) updatePayload.seo_title = seo_title;
         if (seo_description) updatePayload.seo_description = seo_description;
@@ -1004,6 +1010,7 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
           updatePayload.content = rewrittenContent;
         }
         if (preserveDesign) updatePayload.preserve_design = true;
+        if (forceRepublish) updatePayload.publish_format = "html";
         if (nextSeoTitle) updatePayload.seo_title = nextSeoTitle;
         if (nextSeoDescription) {
           updatePayload.seo_description = nextSeoDescription;
