@@ -90,6 +90,14 @@ export function SeoOptimizeDialog({
   const [copied, setCopied] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
   const [rolledBack, setRolledBack] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verification, setVerification] = useState<{
+    ok: boolean;
+    fetchedAt: string;
+    live: { title: string; contentText: string; seoTitle?: string | null; seoDescription?: string | null };
+    matches: { title: boolean; content: boolean; seoTitle: boolean; seoDescription: boolean };
+    error?: string;
+  } | null>(null);
 
   // Strip HTML → plain text for old-vs-new body preview (design HTML is huge
   // and unreadable in a side-by-side; text-only makes the diff easy to scan).
