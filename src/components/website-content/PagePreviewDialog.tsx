@@ -33,10 +33,10 @@ interface PagePreviewDialogProps {
 export function PagePreviewDialog({ open, onOpenChange, page }: PagePreviewDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="text-base truncate">{decodeHtmlEntities(page.title) || "(Untitled)"}</DialogTitle>
-          <div className="flex items-center gap-2 mt-1">
+      <DialogContent className="sm:max-w-3xl h-[90vh] max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-3 border-b shrink-0">
+          <DialogTitle className="text-base truncate pr-6">{decodeHtmlEntities(page.title) || "(Untitled)"}</DialogTitle>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             <Badge variant="outline" className="text-[10px] capitalize">{page.type}</Badge>
             <Badge variant="outline" className="text-[10px]">{page.status}</Badge>
             {page.url && (
@@ -51,13 +51,13 @@ export function PagePreviewDialog({ open, onOpenChange, page }: PagePreviewDialo
             )}
           </div>
         </DialogHeader>
-        <HeadingOutline html={page.content} hideWhenEmpty className="mt-3" />
-        <ScrollArea className="flex-1 mt-3">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+          <HeadingOutline html={page.content} hideWhenEmpty className="mb-4" />
           <div
             className="prose prose-sm dark:prose-invert max-w-none"
             dangerouslySetInnerHTML={{ __html: page.content }}
           />
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
