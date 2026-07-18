@@ -1804,35 +1804,92 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       into every AI / CSV / Website row so templates can use
                       {city}, {country}, {state}, {zip_code}, etc. */}
                   {dataSource !== "locations" && (
-                    <div className="rounded-xl border border-border/60 bg-muted/20 p-3 flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <MapPin className="h-4 w-4 text-primary shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold">Attach Locations <span className="text-muted-foreground font-normal">(optional)</span></p>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {mergedLocations.length > 0
-                              ? `${mergedLocations.length} location${mergedLocations.length !== 1 ? "s" : ""} × ${rawBaseData.length || 0} rows = ${mergedLocations.length * (rawBaseData.length || 0)} pages`
-                              : "Add city / country / state / zip variables from the Location Database"}
-                          </p>
+                    <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <MapPin className="h-4 w-4 text-primary shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold">Attach Locations <span className="text-muted-foreground font-normal">(optional)</span></p>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {mergedLocations.length > 0
+                                ? `${mergedLocations.length} location${mergedLocations.length !== 1 ? "s" : ""} × ${rawBaseData.length || 0} rows = ${mergedLocations.length * (rawBaseData.length || 0)} pages`
+                                : "Add city / country / state / zip variables from the Location Database"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {mergedLocations.length > 0 && (
+                            <Button type="button" size="sm" variant="ghost" onClick={() => setMergedLocations([])} className="rounded-lg h-8 text-xs">
+                              Clear
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={mergedLocations.length > 0 ? "outline" : "default"}
+                            onClick={() => setMergeLocationsOpen(true)}
+                            className="rounded-lg h-8 text-xs gap-1.5"
+                          >
+                            <DatabaseIcon className="h-3.5 w-3.5" />
+                            {mergedLocations.length > 0 ? "Change" : "Select Locations"}
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        {mergedLocations.length > 0 && (
-                          <Button type="button" size="sm" variant="ghost" onClick={() => setMergedLocations([])} className="rounded-lg h-8 text-xs">
-                            Clear
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={mergedLocations.length > 0 ? "outline" : "default"}
-                          onClick={() => setMergeLocationsOpen(true)}
-                          className="rounded-lg h-8 text-xs gap-1.5"
-                        >
-                          <DatabaseIcon className="h-3.5 w-3.5" />
-                          {mergedLocations.length > 0 ? "Change" : "Select Locations"}
-                        </Button>
-                      </div>
+
+                      {mergedLocations.length > 0 && (
+                        <div className="rounded-lg border border-border/50 bg-background/40 p-2.5 space-y-2">
+                          <label className="flex items-start gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={locationKeywordEnabled}
+                              onCheckedChange={(v) => setLocationKeywordEnabled(!!v)}
+                              className="mt-0.5"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold">Auto-build <code className="text-[10px] bg-muted px-1 py-0.5 rounded">{"{keywords}"}</code> from locations</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                Fill each page's keywords using the selected location's city / country / state values.
+                              </p>
+                            </div>
+                          </label>
+                          {locationKeywordEnabled && (
+                            <div className="pl-6 space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-[10px] text-muted-foreground">Presets:</span>
+                                {[
+                                  { label: "City, Country", val: "{city}, {country}" },
+                                  { label: "City, State", val: "{city}, {state}" },
+                                  { label: "City only", val: "{city}" },
+                                  { label: "City, State, Country", val: "{city}, {state}, {country}" },
+                                ].map((p) => (
+                                  <button
+                                    key={p.val}
+                                    type="button"
+                                    onClick={() => setLocationKeywordPattern(p.val)}
+                                    className={cn(
+                                      "text-[10px] px-2 py-0.5 rounded-md border transition-colors",
+                                      locationKeywordPattern === p.val
+                                        ? "border-primary bg-primary/10 text-primary"
+                                        : "border-border/60 hover:bg-muted/40"
+                                    )}
+                                  >
+                                    {p.label}
+                                  </button>
+                                ))}
+                              </div>
+                              <Input
+                                value={locationKeywordPattern}
+                                onChange={(e) => setLocationKeywordPattern(e.target.value)}
+                                placeholder="{city}, {country}"
+                                className="h-8 text-xs rounded-lg font-mono"
+                              />
+                              <p className="text-[10px] text-muted-foreground">
+                                Preview: <span className="font-mono text-foreground/80">{fillLocPattern(locationKeywordPattern, mergedLocations[0] || {}) || "—"}</span>
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <LocationDatabaseDialog
                         open={mergeLocationsOpen}
                         onOpenChange={setMergeLocationsOpen}
