@@ -232,23 +232,41 @@ export default function TemplateMarketplacePage() {
     state: "ready" | "failed" | "pending";
   } | null>(null);
 
-  const { data: detailsItem, isLoading: detailsLoading } = useQuery({
+  const { data: detailsHistory = [], isLoading: detailsLoading } = useQuery({
     queryKey: ["conversion-details", detailsCtx?.tpl.id, detailsCtx?.platform],
     enabled: !!detailsCtx && detailsCtx.platform !== "html",
     queryFn: async () => {
       const tpl = detailsCtx!.tpl;
-      const ids = [tpl.id, (tpl as any).source_marketplace_id].filter(Boolean) as string[];
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tpl.id);
+      // Resolve marketplace slug -> real templates.id(s) via source_marketplace_id.
+      const templateIds = new Set<string>();
+      if (isUuid) templateIds.add(tpl.id);
+      const { data: matched } = await supabase
+        .from("templates")
+        .select("id")
+        .eq("source_marketplace_id", tpl.id);
+      for (const r of matched ?? []) templateIds.add((r as any).id);
+      if (templateIds.size === 0) return [];
       const { data, error } = await supabase
         .from("template_backfill_items")
-        .select("status, error, attempts, run_id, created_at, template_name")
-        .in("template_id", ids)
+        .select("id, status, error, attempts, run_id, created_at, template_name, widgets, fields")
+        .in("template_id", Array.from(templateIds))
         .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(20);
       if (error) throw error;
-      return data;
+      const runIds = Array.from(new Set((data ?? []).map((r: any) => r.run_id).filter(Boolean)));
+      let runMap = new Map<string, any>();
+      if (runIds.length) {
+        const { data: runs } = await supabase
+          .from("template_backfill_runs")
+          .select("id, trigger_source, status, started_by")
+          .in("id", runIds);
+        for (const r of runs ?? []) runMap.set((r as any).id, r);
+      }
+      return (data ?? []).map((r: any) => ({ ...r, run: runMap.get(r.run_id) ?? null }));
     },
   });
+
 
   const conversionMap = useMemo(() => {
     const m = new Map<string, { elementor: "ready" | "failed"; shopify: "ready" | "failed"; updatedAt: string | null }>();
@@ -1171,7 +1189,10 @@ export default function TemplateMarketplacePage() {
                 return iso;
               }
             };
-            const item: any = detailsItem;
+            const history: any[] = detailsHistory as any[];
+            
+            const dotFor = (s: string) =>
+              s === "success" ? "bg-emerald-500" : s === "failed" ? "bg-rose-500" : s === "skipped" ? "bg-muted-foreground" : "bg-amber-500";
             return (
               <div className="space-y-3 text-sm">
                 <div className="grid grid-cols-3 gap-2">
@@ -1181,39 +1202,60 @@ export default function TemplateMarketplacePage() {
                   <div className="col-span-2">{fmtDate(conv.updatedAt)}</div>
                   {detailsCtx.platform !== "html" && (
                     <>
-                      <div className="text-muted-foreground">Last attempt</div>
-                      <div className="col-span-2">
-                        {detailsLoading ? "Loading…" : item ? fmtDate(item.created_at) : "No attempt recorded"}
-                      </div>
-                      {item && (
-                        <>
-                          <div className="text-muted-foreground">Attempts</div>
-                          <div className="col-span-2">{item.attempts ?? 0}</div>
-                          <div className="text-muted-foreground">Result</div>
-                          <div className="col-span-2 capitalize">{item.status}</div>
-                          <div className="text-muted-foreground">Run ID</div>
-                          <div className="col-span-2 font-mono text-xs break-all">{item.run_id}</div>
-                        </>
-                      )}
+                      <div className="text-muted-foreground">Total attempts</div>
+                      <div className="col-span-2">{history.length}</div>
                     </>
                   )}
                 </div>
-                {detailsCtx.platform !== "html" && item?.error && (
+
+                {detailsCtx.platform !== "html" && (
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-                      Error message
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                      Conversion history
                     </div>
-                    <pre className="text-xs bg-muted/50 border border-border rounded-md p-2 whitespace-pre-wrap break-words max-h-48 overflow-auto">
-                      {item.error}
-                    </pre>
+                    {detailsLoading ? (
+                      <p className="text-xs text-muted-foreground">Loading timeline…</p>
+                    ) : history.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No conversion attempts recorded yet.</p>
+                    ) : (
+                      <ol className="relative border-l border-border pl-4 space-y-3 max-h-72 overflow-auto pr-1">
+                        {history.map((h: any) => (
+                          <li key={h.id} className="relative">
+                            <span
+                              className={`absolute -left-[19px] top-1 h-2.5 w-2.5 rounded-full ring-2 ring-background ${dotFor(h.status)}`}
+                            />
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="text-xs font-medium capitalize">{h.status}</div>
+                              <div className="text-[10px] text-muted-foreground">{fmtDate(h.created_at)}</div>
+                            </div>
+                            <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                              <span>Attempts: {h.attempts ?? 0}</span>
+                              {typeof h.widgets === "number" && <span>Widgets: {h.widgets}</span>}
+                              {typeof h.fields === "number" && <span>Fields: {h.fields}</span>}
+                              {h.run?.trigger_source && <span>Trigger: {h.run.trigger_source}</span>}
+                            </div>
+                            <div className="mt-0.5 text-[10px] text-muted-foreground font-mono break-all">
+                              run: {h.run_id}
+                            </div>
+                            {h.error && (
+                              <pre className="mt-1 text-[10px] bg-muted/50 border border-border rounded-md p-2 whitespace-pre-wrap break-words max-h-32 overflow-auto">
+                                {h.error}
+                              </pre>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                    )}
                   </div>
                 )}
+
                 {detailsCtx.platform === "html" && (
                   <p className="text-muted-foreground text-xs">
                     HTML / CSS ships the raw template markup with no conversion step, so it's ready
                     whenever the template has content.
                   </p>
                 )}
+
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setDetailsCtx(null)}>
                     Close
