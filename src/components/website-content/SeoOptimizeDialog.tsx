@@ -546,6 +546,13 @@ export function SeoOptimizeDialog({
         await autoRefreshSeoOnLive(result.content);
       }
 
+      // Optionally purge WordPress / CDN cache so the fresh HTML shows up
+      // right away — especially useful after Force republish since CDN edge
+      // nodes and page-cache plugins otherwise keep serving the stale copy.
+      if (data.pushed_to_cms && purgeAfterApply && websiteId) {
+        await purgeCache({ silent: true });
+      }
+
       // After everything is pushed, re-fetch from the live site and verify
       // the update actually landed on the published page.
       if (data.pushed_to_cms) {
