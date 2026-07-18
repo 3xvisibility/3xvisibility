@@ -208,6 +208,50 @@ export default function TemplateMarketplacePage() {
     },
   });
 
+  // Fetch conversion status from the elementor_templates catalog so each card
+  // can show whether the template has been pre-converted into Elementor JSON
+  // and Shopify section JSON at seed/backfill time. HTML/CSS is always ready
+  // because the raw markup lives on the template itself.
+  const { data: conversionRows = [] } = useQuery({
+    queryKey: ["marketplace-conversion-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("elementor_templates")
+        .select("source_template_id, elementor_json, shopify_section_json, status");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  const conversionMap = useMemo(() => {
+    const m = new Map<string, { elementor: "ready" | "failed"; shopify: "ready" | "failed" }>();
+    for (const r of conversionRows as any[]) {
+      const elJson = r.elementor_json;
+      const shJson = r.shopify_section_json;
+      const elReady = Array.isArray(elJson) ? elJson.length > 0 : !!elJson;
+      const shReady = shJson && typeof shJson === "object"
+        ? !!(shJson.sectionLiquid || shJson.template)
+        : false;
+      const failed = r.status === "failed";
+      m.set(r.source_template_id, {
+        elementor: failed ? "failed" : elReady ? "ready" : "failed",
+        shopify: failed ? "failed" : shReady ? "ready" : "failed",
+      });
+    }
+    return m;
+  }, [conversionRows]);
+
+  type ConvState = "ready" | "failed" | "pending";
+  function getConversionStatus(tpl: MarketplaceTemplate): { elementor: ConvState; shopify: ConvState; html: ConvState } {
+    const hit = conversionMap.get(tpl.id) || conversionMap.get((tpl as any).source_marketplace_id);
+    return {
+      elementor: hit ? hit.elementor : "pending",
+      shopify: hit ? hit.shopify : "pending",
+      html: tpl.content && tpl.content.length > 0 ? "ready" : "failed",
+    };
+  }
+
   // Fetch ratings for shared templates
   // Aggregate stats only (avg + count per template). Individual ratings are
   // private to their owner, so we use a SECURITY DEFINER RPC that never exposes
@@ -602,12 +646,49 @@ export default function TemplateMarketplacePage() {
                 />
               </div>
 
-              <div className="mt-3 pt-3 border-t border-border flex items-center gap-1.5">
-                <Badge variant="secondary" className="text-[10px]">
-                  {formatLabel}
-                </Badge>
-                <span className="text-[10px] text-muted-foreground">ready</span>
-              </div>
+              {(() => {
+                const conv = getConversionStatus(tpl);
+                const chip = (label: string, state: ConvState, active: boolean) => {
+                  const cls =
+                    state === "ready"
+                      ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30"
+                      : state === "failed"
+                      ? "bg-rose-500/15 text-rose-500 border-rose-500/30"
+                      : "bg-amber-500/15 text-amber-500 border-amber-500/30";
+                  const dot =
+                    state === "ready" ? "bg-emerald-500" : state === "failed" ? "bg-rose-500" : "bg-amber-500";
+                  const title =
+                    state === "ready"
+                      ? `${label}: converted and ready to publish`
+                      : state === "failed"
+                      ? `${label}: conversion failed — re-run the backfill`
+                      : `${label}: pending — will convert on import`;
+                  return (
+                    <span
+                      title={title}
+                      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9px] font-medium ${cls} ${active ? "ring-1 ring-current/40" : "opacity-80"}`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+                      {label}
+                    </span>
+                  );
+                };
+                return (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        Conversion status
+                      </span>
+                      <Badge variant="secondary" className="text-[9px]">{formatLabel}</Badge>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1">
+                      {chip("Elementor", conv.elementor, platformChoice === "elementor")}
+                      {chip("Shopify", conv.shopify, platformChoice === "shopify")}
+                      {chip("HTML / CSS", conv.html, platformChoice === "html")}
+                    </div>
+                  </div>
+                );
+              })()}
 
 
               <div className="flex items-center justify-between mt-3">
