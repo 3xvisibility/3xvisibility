@@ -20,8 +20,12 @@ const corsHeaders = {
 
 
 
-// Lite model is enough for SEO meta + minor text tweaks; saves significant credits.
-const OPTIMIZATION_MODEL = "google/gemini-2.5-flash-lite";
+// Metadata-only tweaks can use the cheap lite model; a full body rewrite
+// requires the stronger flash model — the lite one tends to echo the input
+// HTML back unchanged instead of actually rewriting every heading/paragraph,
+// which is exactly what users are hitting when "only meta text changes".
+const METADATA_MODEL = "google/gemini-2.5-flash-lite";
+const CONTENT_REWRITE_MODEL = "google/gemini-2.5-flash";
 const MAX_QUALITY_REPAIR_ATTEMPTS = 1;
 // Stop the repair loop once we're approaching the 150s edge function idle timeout.
 // Leaves headroom for CMS push + DB writes after the AI loop completes.
@@ -100,6 +104,7 @@ async function requestOptimizationDraft(
   systemPrompt: string,
   userPrompt: string,
   timeoutMs = AI_CALL_TIMEOUT_MS,
+  model: string = METADATA_MODEL,
 ) {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), timeoutMs);
@@ -113,7 +118,7 @@ async function requestOptimizationDraft(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: OPTIMIZATION_MODEL,
+      model,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -841,7 +846,12 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
       content: page_content,
     };
 
-    const credit = await deductCreditsForRequest(req, "seo_optimization", OPTIMIZATION_MODEL);
+    // Pick the model based on whether we're rewriting the full page body.
+    // Lite is fine for meta-only tweaks; a body rewrite needs the stronger
+    // model or it echoes the original HTML back unchanged.
+    const activeModel = includeContent ? CONTENT_REWRITE_MODEL : METADATA_MODEL;
+
+    const credit = await deductCreditsForRequest(req, "seo_optimization", activeModel);
     if (!credit.allowed) {
       return new Response(JSON.stringify({
         error: credit.error === "insufficient_credits"
@@ -864,6 +874,7 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
           systemPrompt,
           userPrompt,
           Math.min(optimizationTimeoutMs, Math.max(8_000, remainingBudgetMs(functionStartedAt, 55_000))),
+          activeModel,
         ),
         fallbackResult,
         fields,
@@ -882,6 +893,46 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
       }
       console.error("AI error:", error?.status, error?.details || error);
       throw timeoutError(error?.message || "AI generation failed", error?.status || 500, error?.details);
+    }
+
+    // Guardrail: if the model echoed the body back byte-for-byte (or only
+    // whitespace-different), issue one stronger rewrite so headings / subheadings
+    // / paragraph text actually change instead of only the meta fields.
+    const normalizeForCompare = (s: string) =>
+      (s || "").replace(/\s+/g, " ").trim();
+    if (
+      includeContent &&
+      result.content &&
+      page_content &&
+      normalizeForCompare(result.content) === normalizeForCompare(page_content)
+    ) {
+      console.warn("[OPTIMIZE] AI returned identical body — retrying with strict rewrite prompt.");
+      try {
+        const strictPrompt = `${userPrompt}
+
+The previous attempt returned the body HTML unchanged. That is INVALID.
+
+You MUST rewrite every visible text node inside the HTML:
+- Every heading (h1-h6) — new wording, same tag/class/attributes.
+- Every paragraph, list item, blockquote — new wording.
+- Every button / link label text — new wording (URLs stay identical).
+- Keep length within ±15% of the original per node.
+- Do NOT change any tag, class, id, style attribute, script, or inline SVG.
+- Do NOT drop or add nodes.
+
+Return the FULL JSON again with the fully rewritten "content".`;
+        const strictTimeoutMs = Math.min(AI_CALL_TIMEOUT_MS, Math.max(8_000, remainingBudgetMs(functionStartedAt, 45_000)));
+        if (strictTimeoutMs >= 8_000) {
+          result = normalizeOptimizationResult(
+            await requestOptimizationDraft(LOVABLE_API_KEY, systemPrompt, strictPrompt, strictTimeoutMs, activeModel),
+            fallbackResult,
+            fields,
+            includeContent,
+          );
+        }
+      } catch (err: any) {
+        console.error("[OPTIMIZE] Strict rewrite retry failed:", err?.status, err?.message);
+      }
     }
 
     let qualityReport = analyzeSeoQuality({
@@ -923,7 +974,7 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
         const repairTimeoutMs = Math.min(AI_CALL_TIMEOUT_MS, Math.max(8_000, remainingBudgetMs(functionStartedAt, 45_000)));
         if (repairTimeoutMs < 8_000) break;
         result = normalizeOptimizationResult(
-          await requestOptimizationDraft(LOVABLE_API_KEY, systemPrompt, repairPrompt, repairTimeoutMs),
+          await requestOptimizationDraft(LOVABLE_API_KEY, systemPrompt, repairPrompt, repairTimeoutMs, activeModel),
           fallbackResult,
           fields,
           includeContent,
