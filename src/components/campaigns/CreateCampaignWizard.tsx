@@ -25,6 +25,7 @@ import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseD
 import { KeywordsLibraryDialog, type KeywordsLibraryResult } from "@/components/campaigns/KeywordsLibraryDialog";
 import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
 import { MappingStep } from "@/components/campaigns/MappingStep";
+import { VariableSourcesPanel } from "@/components/campaigns/VariableSourcesPanel";
 import { FillRulesPanel } from "@/components/campaigns/FillRulesPanel";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { readAiPresets, saveAiPreset, deleteAiPreset, type AiPreset } from "@/lib/ai-presets";
