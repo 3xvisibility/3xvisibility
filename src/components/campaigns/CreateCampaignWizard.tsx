@@ -640,10 +640,17 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       ),
     [selectedTemplateVars]
   );
-  // Variables the AI should generate (everything that's not a fixed contact value).
+  // Location-based variables — never asked from the AI so generated pages
+  // don't drag in city/country/region text unless real location data is merged.
+  const LOCATION_VAR_RE = /^(city|country|state|state_code|zip|zip_code|postcode|postal_code|region|county|area|location|place|latitude|longitude|timezone|population)$/i;
+  const locationVars = useMemo(
+    () => selectedTemplateVars.filter((v) => LOCATION_VAR_RE.test(v)),
+    [selectedTemplateVars]
+  );
+  // Variables the AI should generate (everything that's not a fixed contact value or a location field).
   const aiGenVars = useMemo(
-    () => selectedTemplateVars.filter((v) => !contactVars.includes(v)),
-    [selectedTemplateVars, contactVars]
+    () => selectedTemplateVars.filter((v) => !contactVars.includes(v) && !locationVars.includes(v)),
+    [selectedTemplateVars, contactVars, locationVars]
   );
   const [aiFixedValues, setAiFixedValues] = useState<Record<string, string>>({});
   // Optional button/link label text shown for a link variable (separate from its URL).
