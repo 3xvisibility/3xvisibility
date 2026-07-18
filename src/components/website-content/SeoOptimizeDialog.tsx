@@ -170,7 +170,25 @@ export function SeoOptimizeDialog({
   const [applied, setApplied] = useState(false);
   const [autoRefreshAfterApply, setAutoRefreshAfterApply] = useState(true);
   const [autoRefreshing, setAutoRefreshing] = useState(false);
-  const [forceRepublish, setForceRepublish] = useState(false);
+  // Persist Force republish per website so users don't have to re-enable it
+  // on every page/session. Scoped by websiteId (falls back to a global key).
+  const forceRepublishStorageKey = `seo:forceRepublish:${websiteId || "global"}`;
+  const [forceRepublish, setForceRepublish] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(forceRepublishStorageKey) === "1";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(forceRepublishStorageKey, forceRepublish ? "1" : "0");
+    } catch {
+      /* ignore quota / privacy-mode errors */
+    }
+  }, [forceRepublish, forceRepublishStorageKey]);
   const [purgeAfterApply, setPurgeAfterApply] = useState(true);
   const [purging, setPurging] = useState(false);
   const [purgeResult, setPurgeResult] = useState<{
