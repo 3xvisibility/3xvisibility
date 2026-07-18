@@ -2008,6 +2008,53 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             {canMergeLocations && " Location fields are merged into every row."}
                           </p>
                         </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[11px] gap-1.5"
+                          onClick={() => {
+                            const tpl = templates.find((t) => t.id === selectedTemplate) as any;
+                            const includeTitle = !!tpl?.seo_title_pattern;
+                            const headers = includeTitle ? ["seo_title", ...baseCsvHeaders] : [...baseCsvHeaders];
+                            const escape = (val: unknown) => {
+                              const s = val == null ? "" : String(val);
+                              return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+                            };
+                            const resolve = (pattern: string, row: Record<string, string>) => {
+                              const vars: Record<string, string> = { ...customValues, ...row };
+                              let r = pattern || "";
+                              for (const [k, v] of Object.entries(vars)) {
+                                const safe = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                                r = r.replace(new RegExp(`\\{${safe}\\}`, "gi"), v || "");
+                              }
+                              return r.replace(/\{[^}]+\}/g, "").trim();
+                            };
+                            const lines = [headers.map(escape).join(",")];
+                            for (const row of baseCsvData) {
+                              const cells: string[] = [];
+                              if (includeTitle) cells.push(escape(resolve(tpl.seo_title_pattern, row as Record<string, string>)));
+                              for (const h of baseCsvHeaders) cells.push(escape((row as Record<string, string>)[h] ?? ""));
+                              lines.push(cells.join(","));
+                            }
+                            const csv = "\uFEFF" + lines.join("\r\n");
+                            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+                            const slug = (campaignName || "campaign").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "campaign";
+                            a.href = url;
+                            a.download = `${slug}-merged-${stamp}.csv`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                            toast({ title: "CSV exported", description: `${baseCsvData.length} row${baseCsvData.length !== 1 ? "s" : ""} downloaded.` });
+                          }}
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          Export CSV
+                        </Button>
                       </div>
                       <ScrollArea className="max-h-[220px] rounded-lg border border-border/50">
                         <table className="w-full text-[11px]">
