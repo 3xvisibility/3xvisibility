@@ -1188,40 +1188,6 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
         </DialogContent>
       </Dialog>
 
-      {/* Auto-Generate Wizard */}
-      <Dialog open={autoWizardOpen} onOpenChange={setAutoWizardOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5 text-primary" /> {t("pgpKeywords.wizardTitle")}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <p className="text-sm text-muted-foreground">{t("pgpKeywords.wizardDesc")}</p>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">{t("pgpKeywords.wizardLabelService")}</Label>
-              <Input placeholder={t("pgpKeywords.wizardPlaceholderService")} value={wizService} onChange={(e) => setWizService(e.target.value)} className="h-11" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">{t("pgpKeywords.wizardLabelLocations")}</Label>
-              <Input placeholder={t("pgpKeywords.wizardPlaceholderLocations")} value={wizLocations} onChange={(e) => setWizLocations(e.target.value)} />
-              <p className="text-[11px] text-muted-foreground">{t("pgpKeywords.wizardLocationsHint")}</p>
-            </div>
-            <div className="bg-muted/50 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
-              <p className="font-medium text-foreground">{t("pgpKeywords.wizardWillCreate")}</p>
-              <ul className="list-disc pl-4 space-y-0.5">
-                <li>{t("pgpKeywords.wizardItem1Pre")} <strong>{t("pgpKeywords.wizardItem1Bold")}</strong> {t("pgpKeywords.wizardItem1Post")}</li>
-                <li>{t("pgpKeywords.wizardItem2Pre")} <strong>{t("pgpKeywords.wizardItem2Bold")}</strong> {t("pgpKeywords.wizardItem2Post")}</li>
-                <li>{t("pgpKeywords.wizardItem3Pre")} <strong>{t("pgpKeywords.wizardItem3Bold")}</strong> {t("pgpKeywords.wizardItem3Post")}</li>
-              </ul>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setAutoWizardOpen(false)}>{t("pgpKeywords.btnCancel")}</Button>
-              <Button onClick={runAutoWizard} disabled={wizGenerating || !wizService.trim()}>
-                {wizGenerating ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> {t("pgpKeywords.wizardGenerating")}</> : <><Wand2 className="h-4 w-4 mr-1.5" /> {t("pgpKeywords.wizardCreateBtn")}</>}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }}>
