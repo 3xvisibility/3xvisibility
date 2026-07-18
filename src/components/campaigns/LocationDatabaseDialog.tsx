@@ -23,6 +23,19 @@ interface LocationDatabaseDialogProps {
   onSelect: (locations: Record<string, string>[]) => void;
 }
 
+const getFunctionErrorMessage = async (error: unknown) => {
+  const fallback = error instanceof Error ? error.message : "Location loading failed";
+  const response = (error as { context?: Response })?.context;
+  if (!response || typeof response.clone !== "function") return fallback;
+
+  try {
+    const payload = await response.clone().json();
+    return payload?.error || payload?.message || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: LocationDatabaseDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -33,7 +46,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [minPop, setMinPop] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [countryOpen, setCountryOpen] = useState(false);
-  const [batchSize, setBatchSize] = useState<number>(150);
+  const [batchSize, setBatchSize] = useState<number>(100);
   const [seedProgress, setSeedProgress] = useState(0);
   const [seedElapsed, setSeedElapsed] = useState(0);
   const [seedStage, setSeedStage] = useState<string>("");
@@ -48,7 +61,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
       if (opts?.region && opts.region !== "all") body.region = opts.region;
       if (opts?.target && opts.target > 0) body.target = opts.target;
       const { data, error } = await supabase.functions.invoke("seed-locations", { body });
-      if (error) throw error;
+      if (error) throw new Error(await getFunctionErrorMessage(error));
       if (data?.error) throw new Error(data.error);
       return data as { inserted?: number; skipped_duplicates?: number };
     },
@@ -558,9 +571,11 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
               </p>
             </div>
             <Button
-              onClick={async () => {
-                await seedMutation.mutateAsync({ countryCode: countryFilter, target: batchSize });
-                refetch();
+              onClick={() => {
+                seedMutation.mutate(
+                  { countryCode: countryFilter, target: batchSize },
+                  { onSuccess: () => void refetch() },
+                );
               }}
               disabled={seedMutation.isPending}
               className="rounded-xl gap-2"
@@ -666,10 +681,6 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                     <SelectContent>
                       <SelectItem value="50">50</SelectItem>
                       <SelectItem value="100">100</SelectItem>
-                      <SelectItem value="150">150</SelectItem>
-                      <SelectItem value="250">250</SelectItem>
-                      <SelectItem value="500">500</SelectItem>
-                      <SelectItem value="1000">1000</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -678,15 +689,17 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   variant="outline"
                   className="h-7 rounded-xl gap-1.5 text-xs"
                   disabled={seedMutation.isPending}
-                  onClick={async () => {
-                    await seedMutation.mutateAsync({
-                      countryCode: countryFilter,
-                      expand: true,
-                      state: stateFilter !== "all" ? stateFilter : undefined,
-                      region: regionFilter !== "all" ? regionFilter : undefined,
-                      target: batchSize,
-                    });
-                    refetch();
+                  onClick={() => {
+                    seedMutation.mutate(
+                      {
+                        countryCode: countryFilter,
+                        expand: true,
+                        state: stateFilter !== "all" ? stateFilter : undefined,
+                        region: regionFilter !== "all" ? regionFilter : undefined,
+                        target: batchSize,
+                      },
+                      { onSuccess: () => void refetch() },
+                    );
                   }}
                   title={
                     stateFilter !== "all" || regionFilter !== "all"
