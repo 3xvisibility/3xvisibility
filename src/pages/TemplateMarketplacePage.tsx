@@ -104,15 +104,20 @@ export default function TemplateMarketplacePage() {
   const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
   const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const [contentOverrides, setContentOverrides] = useState<Record<string, string>>({});
-  // Top-level platform split: users first choose Elementor (WordPress) or Shopify,
-  // then browse that platform's templates by category. Every template is offered
-  // for both platforms and is re-skinned to match the chosen platform's look.
-  const [platformChoice, setPlatformChoice] = useState<"elementor" | "shopify">("elementor");
-  const skinPlatform: TemplatePlatform = platformChoice === "shopify" ? "shopify" : "wordpress";
+  // Top-level format split: Elementor (WordPress), Shopify, or raw HTML/CSS.
+  // Every marketplace template is available in all three formats — Elementor and
+  // Shopify variants are re-skinned to match the target platform, while HTML/CSS
+  // returns the raw template markup so the client can grab whichever chunk they
+  // need for their own stack.
+  const [platformChoice, setPlatformChoice] = useState<"elementor" | "shopify" | "html">("elementor");
+  const skinPlatform: TemplatePlatform =
+    platformChoice === "shopify" ? "shopify" : platformChoice === "html" ? "generic" : "wordpress";
   const convertForPlatform = (content: string) =>
-    reskinContent(content, skinPlatform, defaultSkinVariant(skinPlatform));
+    reskinContent(content, skinPlatform, skinPlatform === "generic" ? undefined : defaultSkinVariant(skinPlatform));
   const resolveFormat = (_tpl: MarketplaceTemplate): TemplateFormat =>
-    platformChoice === "shopify" ? "shopify" : "elementor";
+    platformChoice === "shopify" ? "shopify" : platformChoice === "html" ? "gutenberg" : "elementor";
+  const formatLabel =
+    platformChoice === "shopify" ? "Shopify" : platformChoice === "html" ? "HTML / CSS" : "Elementor";
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
