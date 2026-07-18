@@ -648,6 +648,57 @@ export function SeoOptimizeDialog({
     return { ok, found: true, snapshot: snap };
   };
 
+  // Purge WordPress / CDN cache via known plugin REST endpoints so the fresh
+  // HTML shows up right after Force republish instead of the cached copy.
+  const purgeCache = async (opts: { silent?: boolean } = {}) => {
+    if (!websiteId) return null;
+    setPurging(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("purge-wordpress-cache", {
+        body: { website_id: websiteId, page_url: page.external_url || page.url || undefined },
+      });
+      if (error) throw error;
+      const snap = {
+        success: !!data?.success,
+        purged_plugins: data?.purged_plugins || [],
+        detected_plugins: data?.detected_plugins || [],
+        total_attempts: data?.total_attempts || 0,
+        note: data?.note,
+        at: new Date().toISOString(),
+      };
+      setPurgeResult(snap);
+      if (!opts.silent) {
+        if (snap.success) {
+          toast({
+            title: "Cache purged",
+            description: snap.purged_plugins.length
+              ? `Cleared: ${snap.purged_plugins.join(", ")}`
+              : "Cache clear request accepted.",
+          });
+        } else {
+          toast({
+            title: "No cache plugin responded",
+            description: snap.note || "If Cloudflare or another CDN sits in front of the site, purge it from that dashboard.",
+          });
+        }
+      }
+      return snap;
+    } catch (err: any) {
+      if (!opts.silent) handleApiError(err, { title: "Cache purge failed" });
+      setPurgeResult({
+        success: false,
+        purged_plugins: [],
+        detected_plugins: [],
+        total_attempts: 0,
+        note: err?.message || String(err),
+        at: new Date().toISOString(),
+      });
+      return null;
+    } finally {
+      setPurging(false);
+    }
+  };
+
   // Re-fetch the page from the connected site until every pushed field is
   // confirmed live. Polls with exponential backoff so CDN/CMS caches have
   // time to flush without the user having to click "Recheck" manually.
