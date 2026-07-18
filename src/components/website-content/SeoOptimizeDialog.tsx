@@ -245,6 +245,7 @@ export function SeoOptimizeDialog({
           // any future page generated from the same template inherits the fix.
           overwrite_design: true,
           update_template: true,
+          force_republish: forceRepublish,
         },
       });
 
