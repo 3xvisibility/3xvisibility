@@ -453,6 +453,22 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   <RefreshCw className={cn("h-3 w-3", isFetching && "animate-spin")} />
                   Refresh
                 </Button>
+                <div className="flex items-center gap-1" title="How many cities the AI should generate per load">
+                  <span className="text-[10px] text-muted-foreground hidden md:inline">Batch</span>
+                  <Select value={String(batchSize)} onValueChange={(v) => setBatchSize(Number(v))}>
+                    <SelectTrigger className="h-7 w-[80px] rounded-xl text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                      <SelectItem value="150">150</SelectItem>
+                      <SelectItem value="250">250</SelectItem>
+                      <SelectItem value="500">500</SelectItem>
+                      <SelectItem value="1000">1000</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button
                   size="sm"
                   variant="outline"
