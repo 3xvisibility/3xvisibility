@@ -1067,9 +1067,49 @@ export function SeoOptimizeDialog({
                         </p>
                       </div>
                     )}
-                    <p className="text-[10px] text-muted-foreground">
-                      Fetched {new Date(verification.fetchedAt).toLocaleTimeString()}. If fields still show "not detected yet", your CMS/CDN may be caching — wait a moment and click Recheck.
-                    </p>
+
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <p className="text-[10px] text-muted-foreground">
+                        Fetched {new Date(verification.fetchedAt).toLocaleTimeString()}. If fields still show "not detected yet", your CMS/CDN may be caching — wait a moment and click Recheck.
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setShowVerifyDiff((v) => !v)}
+                        className="h-6 text-[11px] gap-1 shrink-0"
+                      >
+                        {showVerifyDiff ? "Hide diff" : "Show diff"}
+                      </Button>
+                    </div>
+
+                    {showVerifyDiff && (
+                      <div className="space-y-3 pt-2 border-t border-border/60">
+                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                          <span className="inline-flex items-center gap-1"><span className="inline-block h-2 w-3 rounded bg-amber-500/40" /> Missing on live</span>
+                          <span className="inline-flex items-center gap-1"><span className="inline-block h-2 w-3 rounded bg-sky-500/30" /> Extra on live</span>
+                        </div>
+                        {(() => {
+                          const rows: { label: string; expected: string; live: string; matched: boolean }[] = [
+                            { label: "Title", expected: page.title || "", live: verification.live.title || "", matched: verification.matches.title },
+                            { label: "Content", expected: htmlToText(result?.content || page.content), live: verification.live.contentText || "", matched: verification.matches.content },
+                            { label: "SEO title", expected: result?.seo_title || "", live: String(verification.live.seoTitle || ""), matched: verification.matches.seoTitle },
+                            { label: "Meta description", expected: result?.seo_description || "", live: String(verification.live.seoDescription || ""), matched: verification.matches.seoDescription },
+                          ].filter((r) => r.expected || r.live);
+                          return rows.map((r) => (
+                            <div key={r.label} className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-[11px] font-medium">{r.label}</p>
+                                <span className={`text-[10px] ${r.matched ? "text-emerald-600" : "text-amber-600"}`}>
+                                  {r.matched ? "match" : "differs"}
+                                </span>
+                              </div>
+                              <DiffText expected={r.expected} live={r.live} />
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    )}
+
                   </>
                 )}
               </div>
