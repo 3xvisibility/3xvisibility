@@ -1237,6 +1237,53 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
                               })}
                             </div>
                           </div>
+
+                          {/* Table preview: mapping status + default values per variable */}
+                          <div className="rounded-lg border bg-background/50 overflow-hidden">
+                            <div className="px-3 py-2 border-b bg-muted/40 flex items-center justify-between">
+                              <p className="text-[11px] font-semibold">Variable mapping preview</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {vars.filter(v => existingNames.has(v.toLowerCase())).length} mapped · {vars.filter(v => !existingNames.has(v.toLowerCase())).length} empty
+                              </p>
+                            </div>
+                            <div className="max-h-64 overflow-auto">
+                              <table className="w-full text-[11px]">
+                                <thead className="bg-muted/20 sticky top-0">
+                                  <tr className="text-left text-muted-foreground">
+                                    <th className="px-3 py-1.5 font-medium">Variable</th>
+                                    <th className="px-3 py-1.5 font-medium">Status</th>
+                                    <th className="px-3 py-1.5 font-medium">Terms</th>
+                                    <th className="px-3 py-1.5 font-medium">Sample default values</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {vars.map(v => {
+                                    const match = keywords.find(k => k.name.toLowerCase() === v.toLowerCase());
+                                    const terms: string[] = Array.isArray(match?.terms) ? (match!.terms as any[]).map(String) : [];
+                                    const sample = terms.slice(0, 3).join(", ");
+                                    return (
+                                      <tr key={v} className="border-t">
+                                        <td className="px-3 py-1.5 font-mono text-primary">{`{${v}}`}</td>
+                                        <td className="px-3 py-1.5">
+                                          {match ? (
+                                            terms.length > 0
+                                              ? <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">● Mapped</span>
+                                              : <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">● Empty group</span>
+                                          ) : (
+                                            <span className="inline-flex items-center gap-1 text-muted-foreground">○ Not created</span>
+                                          )}
+                                        </td>
+                                        <td className="px-3 py-1.5 tabular-nums">{match ? terms.length : "—"}</td>
+                                        <td className="px-3 py-1.5 text-muted-foreground truncate max-w-[240px]" title={terms.join(", ")}>
+                                          {sample || <span className="italic opacity-70">no values yet</span>}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
                           <div className="flex items-center justify-between gap-2 pt-1">
                             <p className="text-[10.5px] text-muted-foreground">
                               Or bulk-create empty groups for every variable not yet in your library.
