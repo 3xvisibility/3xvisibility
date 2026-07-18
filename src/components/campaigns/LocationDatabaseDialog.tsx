@@ -59,7 +59,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
       });
       queryClient.invalidateQueries({ queryKey: ["locations-db"] });
       queryClient.invalidateQueries({ queryKey: ["locations-db-meta"] });
-      setTimeout(() => { setSeedProgress(0); setSeedStage(""); setSeedResult(null); }, 3500);
+      // Report stays visible until user dismisses it.
     },
     onError: (err: Error) => {
       setSeedProgress(0);
@@ -281,19 +281,60 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                 )}
                 <span className={seedResult ? "text-success" : "text-primary"}>
                   {seedResult
-                    ? `Done — added ${seedResult.inserted} cities${seedResult.skipped ? ` (${seedResult.skipped} duplicates skipped)` : ""}`
+                    ? "Load complete"
                     : seedStage || "Loading cities…"}
                 </span>
               </span>
-              <span className="tabular-nums text-muted-foreground">
-                {Math.round(seedProgress)}%
-                {seedMutation.isPending && ` · ${seedElapsed.toFixed(1)}s`}
+              <span className="flex items-center gap-2 tabular-nums text-muted-foreground">
+                <span>
+                  {Math.round(seedProgress)}%
+                  {seedMutation.isPending && ` · ${seedElapsed.toFixed(1)}s`}
+                </span>
+                {seedResult && (
+                  <button
+                    type="button"
+                    onClick={() => { setSeedResult(null); setSeedProgress(0); setSeedStage(""); }}
+                    className="rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition"
+                    aria-label="Dismiss report"
+                  >
+                    Dismiss
+                  </button>
+                )}
               </span>
             </div>
             <Progress value={seedProgress} className="h-1.5" />
             {seedMutation.isPending && (
               <p className="text-[10px] text-muted-foreground">
                 AI is generating cities — this usually takes 15–45 seconds. Please keep this dialog open.
+              </p>
+            )}
+            {seedResult && (
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                <div className="rounded-lg border border-success/20 bg-success/10 p-2">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Added</div>
+                  <div className="text-lg font-bold tabular-nums text-success">+{seedResult.inserted}</div>
+                  <div className="text-[10px] text-muted-foreground">new cities</div>
+                </div>
+                <div className="rounded-lg border border-warning/20 bg-warning/10 p-2">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Skipped</div>
+                  <div className="text-lg font-bold tabular-nums text-warning">{seedResult.skipped}</div>
+                  <div className="text-[10px] text-muted-foreground">duplicates</div>
+                </div>
+                <div className="rounded-lg border border-primary/20 bg-primary/10 p-2">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Processed</div>
+                  <div className="text-lg font-bold tabular-nums text-primary">{seedResult.inserted + seedResult.skipped}</div>
+                  <div className="text-[10px] text-muted-foreground">total rows</div>
+                </div>
+              </div>
+            )}
+            {seedResult && seedResult.inserted === 0 && seedResult.skipped > 0 && (
+              <p className="text-[10px] text-muted-foreground">
+                All returned cities already existed in your database — nothing new to add.
+              </p>
+            )}
+            {seedResult && seedResult.inserted === 0 && seedResult.skipped === 0 && (
+              <p className="text-[10px] text-muted-foreground">
+                No cities returned. Try a different country/region or check your AI credits.
               </p>
             )}
           </div>
