@@ -1189,7 +1189,10 @@ export default function TemplateMarketplacePage() {
                 return iso;
               }
             };
-            const item: any = detailsItem;
+            const history: any[] = detailsHistory as any[];
+            const latest = history[0] ?? null;
+            const dotFor = (s: string) =>
+              s === "success" ? "bg-emerald-500" : s === "failed" ? "bg-rose-500" : s === "skipped" ? "bg-muted-foreground" : "bg-amber-500";
             return (
               <div className="space-y-3 text-sm">
                 <div className="grid grid-cols-3 gap-2">
@@ -1199,39 +1202,60 @@ export default function TemplateMarketplacePage() {
                   <div className="col-span-2">{fmtDate(conv.updatedAt)}</div>
                   {detailsCtx.platform !== "html" && (
                     <>
-                      <div className="text-muted-foreground">Last attempt</div>
-                      <div className="col-span-2">
-                        {detailsLoading ? "Loading…" : item ? fmtDate(item.created_at) : "No attempt recorded"}
-                      </div>
-                      {item && (
-                        <>
-                          <div className="text-muted-foreground">Attempts</div>
-                          <div className="col-span-2">{item.attempts ?? 0}</div>
-                          <div className="text-muted-foreground">Result</div>
-                          <div className="col-span-2 capitalize">{item.status}</div>
-                          <div className="text-muted-foreground">Run ID</div>
-                          <div className="col-span-2 font-mono text-xs break-all">{item.run_id}</div>
-                        </>
-                      )}
+                      <div className="text-muted-foreground">Total attempts</div>
+                      <div className="col-span-2">{history.length}</div>
                     </>
                   )}
                 </div>
-                {detailsCtx.platform !== "html" && item?.error && (
+
+                {detailsCtx.platform !== "html" && (
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-                      Error message
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                      Conversion history
                     </div>
-                    <pre className="text-xs bg-muted/50 border border-border rounded-md p-2 whitespace-pre-wrap break-words max-h-48 overflow-auto">
-                      {item.error}
-                    </pre>
+                    {detailsLoading ? (
+                      <p className="text-xs text-muted-foreground">Loading timeline…</p>
+                    ) : history.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No conversion attempts recorded yet.</p>
+                    ) : (
+                      <ol className="relative border-l border-border pl-4 space-y-3 max-h-72 overflow-auto pr-1">
+                        {history.map((h: any) => (
+                          <li key={h.id} className="relative">
+                            <span
+                              className={`absolute -left-[19px] top-1 h-2.5 w-2.5 rounded-full ring-2 ring-background ${dotFor(h.status)}`}
+                            />
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="text-xs font-medium capitalize">{h.status}</div>
+                              <div className="text-[10px] text-muted-foreground">{fmtDate(h.created_at)}</div>
+                            </div>
+                            <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                              <span>Attempts: {h.attempts ?? 0}</span>
+                              {typeof h.widgets === "number" && <span>Widgets: {h.widgets}</span>}
+                              {typeof h.fields === "number" && <span>Fields: {h.fields}</span>}
+                              {h.run?.trigger_source && <span>Trigger: {h.run.trigger_source}</span>}
+                            </div>
+                            <div className="mt-0.5 text-[10px] text-muted-foreground font-mono break-all">
+                              run: {h.run_id}
+                            </div>
+                            {h.error && (
+                              <pre className="mt-1 text-[10px] bg-muted/50 border border-border rounded-md p-2 whitespace-pre-wrap break-words max-h-32 overflow-auto">
+                                {h.error}
+                              </pre>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                    )}
                   </div>
                 )}
+
                 {detailsCtx.platform === "html" && (
                   <p className="text-muted-foreground text-xs">
                     HTML / CSS ships the raw template markup with no conversion step, so it's ready
                     whenever the template has content.
                   </p>
                 )}
+
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setDetailsCtx(null)}>
                     Close
