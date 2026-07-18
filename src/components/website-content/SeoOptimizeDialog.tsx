@@ -97,6 +97,8 @@ export function SeoOptimizeDialog({
   const [retryAttempt, setRetryAttempt] = useState(0);
   const [verifying, setVerifying] = useState(false);
   const [verifyAttempt, setVerifyAttempt] = useState(0);
+  const [showVerifyDiff, setShowVerifyDiff] = useState(false);
+
   const VERIFY_MAX_ATTEMPTS = 5;
   const VERIFY_DELAYS_MS = [1500, 4000, 8000, 15000, 30000];
 
@@ -120,6 +122,63 @@ export function SeoOptimizeDialog({
 
   const oldBodyText = useMemo(() => htmlToText(page.content), [page.content]);
   const newBodyText = useMemo(() => htmlToText(result?.content), [result?.content]);
+
+  // Lightweight word-level diff. Returns segments with a status per token so
+  // the verification panel can highlight what's missing/extra on the live page.
+  const wordDiff = (expected: string, live: string) => {
+    const a = (expected || "").split(/(\s+)/).filter((t) => t.length);
+    const b = (live || "").split(/(\s+)/).filter((t) => t.length);
+    const n = a.length, m = b.length;
+    // LCS table (small strings only; cap tokens to keep it cheap)
+    const cap = 400;
+    const aa = a.slice(0, cap);
+    const bb = b.slice(0, cap);
+    const N = aa.length, M = bb.length;
+    const dp: number[][] = Array.from({ length: N + 1 }, () => new Array(M + 1).fill(0));
+    for (let i = N - 1; i >= 0; i--)
+      for (let j = M - 1; j >= 0; j--)
+        dp[i][j] = aa[i] === bb[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    const expSeg: { t: string; s: "same" | "missing" }[] = [];
+    const liveSeg: { t: string; s: "same" | "extra" }[] = [];
+    let i = 0, j = 0;
+    while (i < N && j < M) {
+      if (aa[i] === bb[j]) { expSeg.push({ t: aa[i], s: "same" }); liveSeg.push({ t: bb[j], s: "same" }); i++; j++; }
+      else if (dp[i + 1][j] >= dp[i][j + 1]) { expSeg.push({ t: aa[i], s: "missing" }); i++; }
+      else { liveSeg.push({ t: bb[j], s: "extra" }); j++; }
+    }
+    while (i < N) { expSeg.push({ t: aa[i++], s: "missing" }); }
+    while (j < M) { liveSeg.push({ t: bb[j++], s: "extra" }); }
+    if (n > cap) expSeg.push({ t: ` …(+${n - cap} more)`, s: "same" });
+    if (m > cap) liveSeg.push({ t: ` …(+${m - cap} more)`, s: "same" });
+    return { expSeg, liveSeg };
+  };
+
+  const DiffText = ({ expected, live }: { expected: string; live: string }) => {
+    const { expSeg, liveSeg } = wordDiff(expected || "", live || "");
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="rounded border border-border bg-background/60 p-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">You pushed</p>
+          <p className="text-[11px] leading-relaxed break-words">
+            {expSeg.map((s, i) => (
+              <span key={i} className={s.s === "missing" ? "bg-amber-500/25 text-amber-800 dark:text-amber-200 rounded px-0.5" : ""}>{s.t}</span>
+            ))}
+            {!expected && <span className="italic text-muted-foreground">(empty)</span>}
+          </p>
+        </div>
+        <div className="rounded border border-border bg-background/60 p-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Live now</p>
+          <p className="text-[11px] leading-relaxed break-words">
+            {liveSeg.map((s, i) => (
+              <span key={i} className={s.s === "extra" ? "bg-sky-500/20 text-sky-800 dark:text-sky-200 rounded px-0.5" : ""}>{s.t}</span>
+            ))}
+            {!live && <span className="italic text-muted-foreground">(empty)</span>}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
 
   const handleRollback = async () => {
     setRollingBack(true);
@@ -1008,9 +1067,49 @@ export function SeoOptimizeDialog({
                         </p>
                       </div>
                     )}
-                    <p className="text-[10px] text-muted-foreground">
-                      Fetched {new Date(verification.fetchedAt).toLocaleTimeString()}. If fields still show "not detected yet", your CMS/CDN may be caching — wait a moment and click Recheck.
-                    </p>
+
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <p className="text-[10px] text-muted-foreground">
+                        Fetched {new Date(verification.fetchedAt).toLocaleTimeString()}. If fields still show "not detected yet", your CMS/CDN may be caching — wait a moment and click Recheck.
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setShowVerifyDiff((v) => !v)}
+                        className="h-6 text-[11px] gap-1 shrink-0"
+                      >
+                        {showVerifyDiff ? "Hide diff" : "Show diff"}
+                      </Button>
+                    </div>
+
+                    {showVerifyDiff && (
+                      <div className="space-y-3 pt-2 border-t border-border/60">
+                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                          <span className="inline-flex items-center gap-1"><span className="inline-block h-2 w-3 rounded bg-amber-500/40" /> Missing on live</span>
+                          <span className="inline-flex items-center gap-1"><span className="inline-block h-2 w-3 rounded bg-sky-500/30" /> Extra on live</span>
+                        </div>
+                        {(() => {
+                          const rows: { label: string; expected: string; live: string; matched: boolean }[] = [
+                            { label: "Title", expected: page.title || "", live: verification.live.title || "", matched: verification.matches.title },
+                            { label: "Content", expected: htmlToText(result?.content || page.content), live: verification.live.contentText || "", matched: verification.matches.content },
+                            { label: "SEO title", expected: result?.seo_title || "", live: String(verification.live.seoTitle || ""), matched: verification.matches.seoTitle },
+                            { label: "Meta description", expected: result?.seo_description || "", live: String(verification.live.seoDescription || ""), matched: verification.matches.seoDescription },
+                          ].filter((r) => r.expected || r.live);
+                          return rows.map((r) => (
+                            <div key={r.label} className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-[11px] font-medium">{r.label}</p>
+                                <span className={`text-[10px] ${r.matched ? "text-emerald-600" : "text-amber-600"}`}>
+                                  {r.matched ? "match" : "differs"}
+                                </span>
+                              </div>
+                              <DiffText expected={r.expected} live={r.live} />
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    )}
+
                   </>
                 )}
               </div>
