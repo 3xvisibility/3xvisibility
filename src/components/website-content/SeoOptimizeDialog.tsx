@@ -1198,6 +1198,91 @@ export function SeoOptimizeDialog({
             )}
 
 
+            {/* Verification history — surface past Apply-to-site runs saved in the DB */}
+            {pastVerifications.length > 0 && (
+              <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium flex items-center gap-1.5">
+                    <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />
+                    Previous verifications
+                    <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{pastVerifications.length}</Badge>
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 text-[11px]"
+                    onClick={() => setShowHistory((v) => !v)}
+                  >
+                    {showHistory ? "Hide" : "Show"}
+                  </Button>
+                </div>
+                {showHistory && (
+                  <ul className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                    {pastVerifications.map((v) => {
+                      const fields: Array<[string, boolean | undefined]> = [
+                        ["Title", v.matches?.title],
+                        ["Content", v.matches?.content],
+                        ["SEO title", v.matches?.seoTitle],
+                        ["Meta desc", v.matches?.seoDescription],
+                      ];
+                      return (
+                        <li key={v.id} className="rounded border border-border/60 bg-background/60 p-2 text-[11px] space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="flex items-center gap-1.5">
+                              {v.verified_all ? (
+                                <Check className="h-3 w-3 text-emerald-600" />
+                              ) : (
+                                <span className="h-2.5 w-2.5 rounded-full border border-amber-500" />
+                              )}
+                              <span className={v.verified_all ? "text-emerald-600" : "text-amber-600"}>
+                                {v.verified_all ? "All fields matched" : "Partial match"}
+                              </span>
+                              {v.force_republish && (
+                                <Badge variant="outline" className="h-4 text-[9px] px-1">force</Badge>
+                              )}
+                            </span>
+                            <span className="text-muted-foreground text-[10px]">
+                              {new Date(v.created_at).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {fields.map(([label, ok]) => (
+                              <span
+                                key={label}
+                                className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] ${
+                                  ok
+                                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                                    : "bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                                }`}
+                              >
+                                {ok ? "✓" : "•"} {label}
+                              </span>
+                            ))}
+                            <span className="text-muted-foreground text-[10px] ml-auto">
+                              {v.attempts} attempt{v.attempts === 1 ? "" : "s"}
+                            </span>
+                          </div>
+                          {v.page_url && (
+                            <a
+                              href={v.page_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-primary hover:underline inline-flex items-center gap-1 truncate"
+                            >
+                              <ArrowUpRight className="h-2.5 w-2.5" /> {v.page_url}
+                            </a>
+                          )}
+                          {v.error && (
+                            <p className="text-[10px] text-amber-600 dark:text-amber-400">{v.error}</p>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+
             {/* Live verification — refetch published page and compare */}
             {applied && result.pushed_to_cms && (verifying || verification) && (
               <div className={`rounded-md border p-3 space-y-2 ${
