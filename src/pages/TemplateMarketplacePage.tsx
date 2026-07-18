@@ -498,12 +498,13 @@ export default function TemplateMarketplacePage() {
           Elementor (WordPress) and Shopify and is re-skinned to match. */}
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-2">
-          {t("marketplace.choosePlatform") || "Choose your platform"}
+          {t("marketplace.choosePlatform") || "Choose your format"}
         </p>
-        <div className="grid grid-cols-2 gap-3 max-w-md">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl">
           {([
-            { id: "elementor" as const, label: "Elementor", desc: "WordPress / Elementor pages", icon: FileText },
-            { id: "shopify" as const, label: "Shopify", desc: "Shopify storefront pages", icon: ShoppingBag },
+            { id: "elementor" as const, label: "Elementor", desc: "WordPress / Elementor JSON", icon: FileText },
+            { id: "shopify" as const, label: "Shopify", desc: "Shopify section / Liquid", icon: ShoppingBag },
+            { id: "html" as const, label: "HTML / CSS", desc: "Raw HTML + CSS markup", icon: Code },
           ]).map((p) => {
             const active = platformChoice === p.id;
             return (
