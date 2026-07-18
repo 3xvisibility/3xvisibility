@@ -95,6 +95,7 @@ export default function GeneratedPagesPage() {
   // Before/after republish diff: snapshots captured at trigger time, keyed by page id.
   const republishSnapshotsRef = useRef<Record<string, RepublishSnapshot>>({});
   const [diffState, setDiffState] = useState<{ before: RepublishSnapshot; after: RepublishSnapshot } | null>(null);
+  const [verifyHistoryOpen, setVerifyHistoryOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
