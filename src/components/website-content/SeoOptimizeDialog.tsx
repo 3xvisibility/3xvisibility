@@ -91,6 +91,8 @@ export function SeoOptimizeDialog({
   const [copied, setCopied] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
   const [rolledBack, setRolledBack] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
+  const [retryAttempt, setRetryAttempt] = useState(0);
   const [verifying, setVerifying] = useState(false);
   const [verification, setVerification] = useState<{
     ok: boolean;
