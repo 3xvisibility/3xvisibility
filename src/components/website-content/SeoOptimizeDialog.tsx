@@ -211,6 +211,14 @@ export function SeoOptimizeDialog({
     fetchedAt: string;
   } | null>(null);
 
+  // Auto-republish: when verification finds the live page still matches the
+  // pre-apply (old) snapshot, we retrigger Apply with Force republish up to
+  // MAX_AUTO_REPUBLISH times before giving up and asking the user to retry.
+  const MAX_AUTO_REPUBLISH = 2;
+  const autoRepublishRef = useRef(0);
+  const [autoRepublishAttempt, setAutoRepublishAttempt] = useState(0);
+  const [autoRepublishing, setAutoRepublishing] = useState(false);
+
   const VERIFY_MAX_ATTEMPTS = 5;
   const VERIFY_DELAYS_MS = [1500, 4000, 8000, 15000, 30000];
 
