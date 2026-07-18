@@ -3516,6 +3516,12 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
                       {selectedTemplateVars.length > 0 && effectiveCsvData.length > 0 && (() => {
                         const previewRows = effectiveCsvData.slice(0, 10);
+                        const tpl = templates.find(t => t.id === selectedTemplate) as any;
+                        const titlePat: string = tpl?.seo_title_pattern || "";
+                        const descPat: string = tpl?.seo_description_pattern || "";
+                        const h1Pat: string = tpl?.h1_pattern || tpl?.schema_config?.h1_pattern || "";
+                        const slugPat: string = tpl?.schema_config?.slug_pattern || tpl?.slug_pattern || "";
+                        const contentPat: string = tpl?.content || "";
                         const resolve = (row: Record<string, string>, v: string) => {
                           if (customValues[v]) return customValues[v];
                           const col = manualMappings[v];
@@ -3524,27 +3530,74 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           const hit = Object.keys(row).find(h => h.toLowerCase() === v.toLowerCase());
                           return hit ? row[hit] : "";
                         };
+                        const interp = (pat: string, row: Record<string, string>) =>
+                          pat.replace(/\{([a-zA-Z0-9_\-]+)\}/g, (_, k) => String(resolve(row, k) || ""));
+                        const scoreRow = (row: Record<string, string>) => {
+                          const filled = selectedTemplateVars.filter(v => !!resolve(row, v)).length;
+                          const coverage = selectedTemplateVars.length
+                            ? Math.round((filled / selectedTemplateVars.length) * 100)
+                            : 100;
+                          const title = interp(titlePat, row).trim();
+                          const desc = interp(descPat, row).trim();
+                          const h1 = interp(h1Pat, row).trim();
+                          const slug = interp(slugPat, row).trim();
+                          const content = interp(contentPat, row);
+                          const wordCount = content.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
+                          let pts = 0;
+                          // Title 25pts
+                          if (title.length >= 30 && title.length <= 60) pts += 25;
+                          else if (title.length >= 20 && title.length <= 70) pts += 15;
+                          else if (title.length > 0) pts += 8;
+                          // Desc 20pts
+                          if (desc.length >= 120 && desc.length <= 160) pts += 20;
+                          else if (desc.length >= 80 && desc.length <= 180) pts += 12;
+                          else if (desc.length > 0) pts += 6;
+                          // Coverage 25pts
+                          pts += Math.round((coverage / 100) * 25);
+                          // H1 10pts
+                          if (h1.length >= 15) pts += 10; else if (h1.length > 0) pts += 5;
+                          // Slug 10pts
+                          if (slug && !/\{[a-z0-9_\-]+\}/i.test(slug)) pts += 10; else if (slug) pts += 4;
+                          // Content 10pts
+                          if (wordCount >= 300) pts += 10; else if (wordCount >= 120) pts += 6; else if (wordCount > 0) pts += 3;
+                          const score = Math.max(0, Math.min(100, pts));
+                          return { score, coverage, filled };
+                        };
+                        const allScores = effectiveCsvData.map(r => scoreRow(r as any));
+                        const avgScore = Math.round(allScores.reduce((a, b) => a + b.score, 0) / allScores.length);
+                        const avgCoverage = Math.round(allScores.reduce((a, b) => a + b.coverage, 0) / allScores.length);
+                        const excellent = allScores.filter(s => s.score >= 80).length;
+                        const poor = allScores.filter(s => s.score < 50).length;
+                        const scoreColor = (n: number) =>
+                          n >= 80 ? "text-emerald-500" : n >= 60 ? "text-amber-500" : "text-destructive";
+                        const scoreBg = (n: number) =>
+                          n >= 80 ? "bg-emerald-500/10 border-emerald-500/30" : n >= 60 ? "bg-amber-500/10 border-amber-500/30" : "bg-destructive/10 border-destructive/30";
                         return (
                           <div className="rounded-xl border border-border overflow-hidden">
-                            <div className="px-3.5 py-2 border-b border-border bg-muted/40 flex items-center justify-between gap-2">
+                            <div className="px-3.5 py-2 border-b border-border bg-muted/40 flex items-center justify-between gap-2 flex-wrap">
                               <div className="flex items-center gap-2 min-w-0">
                                 <Info className="h-4 w-4 text-primary shrink-0" />
                                 <div className="min-w-0">
-                                  <p className="text-xs font-semibold">Live pairing preview</p>
+                                  <p className="text-xs font-semibold">Live pairing preview · SEO score & keyword coverage</p>
                                   <p className="text-[11px] text-muted-foreground truncate">
-                                    Exact value each row will use for every &#123;variable&#125; — showing first {previewRows.length} of {effectiveCsvData.length} pages.
+                                    First {previewRows.length} of {effectiveCsvData.length} pages · pick the strongest rows before generate.
                                   </p>
                                 </div>
                               </div>
-                              <Badge variant="outline" className="h-5 px-1.5 text-[10px] shrink-0">
-                                {selectedTemplateVars.length} vars × {effectiveCsvData.length} rows
-                              </Badge>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Badge variant="outline" className={`h-5 px-1.5 text-[10px] ${scoreColor(avgScore)}`}>Avg SEO {avgScore}</Badge>
+                                <Badge variant="outline" className={`h-5 px-1.5 text-[10px] ${scoreColor(avgCoverage)}`}>Avg coverage {avgCoverage}%</Badge>
+                                <Badge variant="outline" className="h-5 px-1.5 text-[10px] text-emerald-500">{excellent} strong</Badge>
+                                {poor > 0 && <Badge variant="outline" className="h-5 px-1.5 text-[10px] text-destructive">{poor} weak</Badge>}
+                              </div>
                             </div>
                             <div className="overflow-x-auto max-h-72">
                               <table className="w-full text-[11px]">
                                 <thead className="sticky top-0 bg-background border-b border-border">
                                   <tr>
                                     <th className="text-left px-2.5 py-1.5 font-medium text-muted-foreground w-10">#</th>
+                                    <th className="text-left px-2.5 py-1.5 font-medium w-20">SEO score</th>
+                                    <th className="text-left px-2.5 py-1.5 font-medium w-24">Keyword coverage</th>
                                     {selectedTemplateVars.map(v => (
                                       <th key={v} className="text-left px-2.5 py-1.5 font-medium">
                                         <code className="font-mono text-[10.5px] bg-muted px-1 py-0.5 rounded">{`{${v}}`}</code>
@@ -3553,23 +3606,39 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {previewRows.map((row, i) => (
-                                    <tr key={i} className="border-b border-border/40 hover:bg-muted/30">
-                                      <td className="px-2.5 py-1.5 text-muted-foreground font-mono">{i + 1}</td>
-                                      {selectedTemplateVars.map(v => {
-                                        const val = resolve(row as Record<string, string>, v);
-                                        return (
-                                          <td key={v} className="px-2.5 py-1.5 align-top">
-                                            {val ? (
-                                              <span className="text-foreground">{String(val).slice(0, 60)}</span>
-                                            ) : (
-                                              <span className="italic text-destructive/80">— empty</span>
-                                            )}
-                                          </td>
-                                        );
-                                      })}
-                                    </tr>
-                                  ))}
+                                  {previewRows.map((row, i) => {
+                                    const s = allScores[i];
+                                    return (
+                                      <tr key={i} className="border-b border-border/40 hover:bg-muted/30">
+                                        <td className="px-2.5 py-1.5 text-muted-foreground font-mono">{i + 1}</td>
+                                        <td className="px-2.5 py-1.5 align-middle">
+                                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[10.5px] font-semibold ${scoreBg(s.score)} ${scoreColor(s.score)}`}>
+                                            {s.score}
+                                          </span>
+                                        </td>
+                                        <td className="px-2.5 py-1.5 align-middle">
+                                          <div className="flex items-center gap-1.5 min-w-[80px]">
+                                            <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
+                                              <div className={`h-full ${s.coverage >= 80 ? "bg-emerald-500" : s.coverage >= 60 ? "bg-amber-500" : "bg-destructive"}`} style={{ width: `${s.coverage}%` }} />
+                                            </div>
+                                            <span className={`text-[10.5px] font-medium ${scoreColor(s.coverage)}`}>{s.coverage}%</span>
+                                          </div>
+                                        </td>
+                                        {selectedTemplateVars.map(v => {
+                                          const val = resolve(row as Record<string, string>, v);
+                                          return (
+                                            <td key={v} className="px-2.5 py-1.5 align-top">
+                                              {val ? (
+                                                <span className="text-foreground">{String(val).slice(0, 60)}</span>
+                                              ) : (
+                                                <span className="italic text-destructive/80">— empty</span>
+                                              )}
+                                            </td>
+                                          );
+                                        })}
+                                      </tr>
+                                    );
+                                  })}
                                 </tbody>
                               </table>
                             </div>
