@@ -97,6 +97,30 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     return () => clearInterval(tick);
   }, [seedMutation.isPending]);
 
+  const [cacheStats, setCacheStats] = useState<{ hits: number; misses: number; entries: number; rows: number }>({
+    hits: 0,
+    misses: 0,
+    entries: 0,
+    rows: 0,
+  });
+
+  const recomputeCacheSize = () => {
+    const cache = queryClient.getQueryCache();
+    let entries = 0;
+    let rows = 0;
+    for (const q of cache.getAll()) {
+      const key = q.queryKey as unknown[];
+      if (Array.isArray(key) && key[0] === "locations-db") {
+        const data = q.state.data as any[] | undefined;
+        if (Array.isArray(data)) {
+          entries += 1;
+          rows += data.length;
+        }
+      }
+    }
+    setCacheStats((s) => ({ ...s, entries, rows }));
+  };
+
   const { data: locations = [], isLoading, isFetching, dataUpdatedAt, refetch } = useQuery({
     queryKey: ["locations-db", countryFilter, stateFilter, regionFilter],
     enabled: open,
@@ -107,6 +131,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
     queryFn: async () => {
+      setCacheStats((s) => ({ ...s, misses: s.misses + 1 }));
       let query = supabase
         .from("locations")
         .select("*")
@@ -119,9 +144,23 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
 
       const { data, error } = await query;
       if (error) throw error;
+      queueMicrotask(recomputeCacheSize);
       return data || [];
     },
   });
+
+  // Detect cache hits when filters change: if fresh data is already in cache
+  // for the new key, queryFn won't fire — count it as a hit.
+  useEffect(() => {
+    if (!open) return;
+    const state = queryClient.getQueryState(["locations-db", countryFilter, stateFilter, regionFilter]);
+    if (state?.data && state.status === "success" && Date.now() - state.dataUpdatedAt < 5 * 60 * 1000) {
+      setCacheStats((s) => ({ ...s, hits: s.hits + 1 }));
+    }
+    recomputeCacheSize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countryFilter, stateFilter, regionFilter, open]);
+
 
   const { data: allCountryLocations = [] } = useQuery({
     queryKey: ["locations-db-meta", countryFilter],
@@ -520,6 +559,15 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                     {isFetching ? "Refreshing…" : `Cached · updated ${new Date(dataUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
                   </span>
                 )}
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] tabular-nums gap-1 rounded-lg font-normal"
+                  title={`Cache hits: ${cacheStats.hits} · misses: ${cacheStats.misses} · ${cacheStats.entries} filter combo(s) cached · ${cacheStats.rows.toLocaleString()} rows in memory (this session)`}
+                >
+                  <span className="text-success">✓{cacheStats.hits}</span>
+                  <span className="text-warning">✗{cacheStats.misses}</span>
+                  <span className="text-muted-foreground">· {cacheStats.entries}k/{cacheStats.rows.toLocaleString()}r</span>
+                </Badge>
                 <Button
                   size="sm"
                   variant="ghost"
