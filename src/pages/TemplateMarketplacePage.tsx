@@ -218,11 +218,36 @@ export default function TemplateMarketplacePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("elementor_templates")
-        .select("source_template_id, elementor_json, shopify_section_json, status");
+        .select("source_template_id, elementor_json, shopify_section_json, status, updated_at, created_at");
       if (error) throw error;
       return data ?? [];
     },
     staleTime: 60_000,
+  });
+
+  // Details modal: shows exact error + timestamp for a clicked conversion chip.
+  const [detailsCtx, setDetailsCtx] = useState<{
+    tpl: MarketplaceTemplate;
+    platform: "elementor" | "shopify" | "html";
+    state: "ready" | "failed" | "pending";
+  } | null>(null);
+
+  const { data: detailsItem, isLoading: detailsLoading } = useQuery({
+    queryKey: ["conversion-details", detailsCtx?.tpl.id, detailsCtx?.platform],
+    enabled: !!detailsCtx && detailsCtx.platform !== "html",
+    queryFn: async () => {
+      const tpl = detailsCtx!.tpl;
+      const ids = [tpl.id, (tpl as any).source_marketplace_id].filter(Boolean) as string[];
+      const { data, error } = await supabase
+        .from("template_backfill_items")
+        .select("status, error, attempts, run_id, created_at, template_name")
+        .in("template_id", ids)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
   });
 
   const conversionMap = useMemo(() => {
