@@ -1559,6 +1559,13 @@ export function SeoOptimizeDialog({
                   </p>
                 )}
 
+                {autoRepublishing && autoRepublishAttempt > 0 && (
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                    Live page still showed old content — auto-republishing with Force republish ({autoRepublishAttempt} of {MAX_AUTO_REPUBLISH}).
+                  </p>
+                )}
+
 
                 {!verifying && verification && (
                   <>
