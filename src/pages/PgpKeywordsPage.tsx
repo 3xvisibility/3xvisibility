@@ -809,26 +809,83 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
         )}
       </div>
 
-      {/* Folder summary cards */}
-      {folders.length > 0 && folderFilter === "__all__" && !searchQuery && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          {folders.map(folder => {
-            const count = keywords.filter(k => k.folder === folder).length;
-            return (
-              <div key={folder} className="group flex items-center justify-between rounded-lg border bg-card hover:bg-accent/50 transition-colors p-2.5">
-                <button onClick={() => { setFolderFilter(folder); setCurrentPage(1); }} className="flex items-center gap-2 min-w-0 flex-1 text-left">
-                  <FolderOpen className="h-4 w-4 text-primary shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold truncate">{folder}</p>
-                    <p className="text-[10px] text-muted-foreground">{count} {count !== 1 ? t("pgpKeywords.keywords") : t("pgpKeywords.keyword")}</p>
+      {/* Folder / Keyword Group cards — top-level view */}
+      {folderFilter === "__all__" && !searchQuery && (() => {
+        const uncategorizedCount = keywords.filter(k => !k.folder).length;
+        const hasAnything = folders.length > 0 || uncategorizedCount > 0;
+        if (!hasAnything) return null;
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {folders.map(folder => {
+              const groupKws = keywords.filter(k => k.folder === folder);
+              const count = groupKws.length;
+              const totalTerms = groupKws.reduce((s, k) => s + (k.term_count || 0), 0);
+              return (
+                <div
+                  key={folder}
+                  className="group relative rounded-xl border bg-card hover:bg-accent/40 hover:border-primary/50 transition-all p-4 cursor-pointer"
+                  onClick={() => { setFolderFilter(folder); setCurrentPage(1); }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <FolderOpen className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">{folder}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {count} {count !== 1 ? t("pgpKeywords.keywords") : t("pgpKeywords.keyword")} · {totalTerms} term{totalTerms !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                      onClick={(e) => { e.stopPropagation(); openEditor(undefined, folder); }}
+                      title={t("pgpKeywords.addKeywordToFolder", { folder })}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
-                </button>
-                <Button size="icon" variant="ghost" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={() => openEditor(undefined, folder)} title={t("pgpKeywords.addKeywordToFolder", { folder })}>
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
+                  <ChevronRight className="absolute right-3 bottom-3 h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              );
+            })}
+            {uncategorizedCount > 0 && (
+              <div
+                className="group relative rounded-xl border border-dashed bg-card hover:bg-accent/40 hover:border-primary/50 transition-all p-4 cursor-pointer"
+                onClick={() => { setFolderFilter("__none__"); setCurrentPage(1); }}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <KeyRound className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold truncate">{t("pgpKeywords.uncategorized")}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {uncategorizedCount} {uncategorizedCount !== 1 ? t("pgpKeywords.keywords") : t("pgpKeywords.keyword")}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="absolute right-3 bottom-3 h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-            );
-          })}
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Back to folders bar — shown when drilled into a folder */}
+      {(folderFilter !== "__all__") && !searchQuery && (
+        <div className="flex items-center gap-2 text-sm">
+          <Button variant="ghost" size="sm" onClick={() => { setFolderFilter("__all__"); setCurrentPage(1); }} className="h-8 -ml-2">
+            <ChevronLeft className="h-4 w-4 mr-1" /> {t("pgpKeywords.allFolders")}
+          </Button>
+          <span className="text-muted-foreground">/</span>
+          <span className="font-semibold flex items-center gap-1.5">
+            <FolderOpen className="h-4 w-4 text-primary" />
+            {folderFilter === "__none__" ? t("pgpKeywords.uncategorized") : folderFilter}
+          </span>
         </div>
       )}
 
