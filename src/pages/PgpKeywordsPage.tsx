@@ -208,6 +208,10 @@ export default function PgpKeywordsPage() {
   const [scanUrl, setScanUrl] = useState("");
   const [scanLoading, setScanLoading] = useState(false);
 
+  // Template source state
+  const [tmplId, setTmplId] = useState("");
+  const [tmplBulkCreating, setTmplBulkCreating] = useState(false);
+
   // Auto wizard state
   const [wizService, setWizService] = useState("");
   const [wizLocations, setWizLocations] = useState("");
@@ -236,6 +240,20 @@ export default function PgpKeywordsPage() {
       const { data, error } = await supabase.from("websites").select("id, name, url").eq("workspace_id", wsId!).order("name");
       if (error) throw error;
       return data as { id: string; name: string; url: string }[];
+    },
+  });
+
+  const { data: pgpTemplates = [] } = useQuery({
+    queryKey: ["templates-for-keywords", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("templates")
+        .select("id, name, variables, content, seo_title_pattern, seo_description_pattern")
+        .eq("workspace_id", wsId!)
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string; variables: string[] | null; content: string | null; seo_title_pattern: string | null; seo_description_pattern: string | null }[];
     },
   });
 
@@ -329,6 +347,8 @@ export default function PgpKeywordsPage() {
         sourceConfig.websiteId = webSiteId;
       } else if (kwSource === "url_scan") {
         sourceConfig.url = scanUrl;
+      } else if (kwSource === "template") {
+        sourceConfig.templateId = tmplId;
       }
       const folderValue = newFolderName.trim() || (kwFolder && kwFolder !== "__new__" && kwFolder !== "__none__" ? kwFolder : null);
       const payload = { name: cleanName, folder: folderValue, source: kwSource, terms: termsArray, delimiter: kwDelimiter || null, columns: columnsArray, term_count: termsArray.length, source_config: sourceConfig, workspace_id: wsId, user_id: user.id };
@@ -689,6 +709,7 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
     website: t("pgpKeywords.sourceWebsite"),
     url_scan: t("pgpKeywords.sourceUrlScan"),
     text: t("pgpKeywords.sourceText"),
+    template: "Template",
   };
 
   const sourceOptions = [
@@ -702,6 +723,7 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
     { value: "website",      label: t("pgpKeywords.sourceWebsite"),    icon: Globe,       desc: t("pgpKeywords.sourceWebsiteDesc") },
     { value: "url_scan",     label: t("pgpKeywords.sourceUrlScan"),    icon: ExternalLink, desc: t("pgpKeywords.sourceUrlScanDesc") },
     { value: "text",         label: t("pgpKeywords.sourceText"),       icon: FileText,    desc: t("pgpKeywords.sourceTextDesc") },
+    { value: "template",     label: "Template",                         icon: Wand2,       desc: "Pull {variables} from a template" },
   ];
 
   const locIncludeFields = [
@@ -723,9 +745,6 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
           <p className="text-muted-foreground text-xs sm:text-sm mt-1">{t("pgpKeywords.pageDescription")}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button size="sm" variant="outline" onClick={() => setAutoWizardOpen(true)}>
-            <Wand2 className="mr-1.5 h-3.5 w-3.5" /> <span className="hidden sm:inline">Auto-</span>{t("pgpKeywords.autoGenerateBtnSuffix")}
-          </Button>
           <Button size="sm" onClick={() => openEditor()}>
             <Plus className="mr-1.5 h-3.5 w-3.5" /> {t("pgpKeywords.addKeywordBtn")}
           </Button>
@@ -826,11 +845,8 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
             {keywords.length === 0 && (
               <>
                 <div className="flex flex-col sm:flex-row items-center gap-2 justify-center mb-4">
-                  <Button onClick={() => setAutoWizardOpen(true)} className="w-full sm:w-auto">
-                    <Wand2 className="mr-2 h-4 w-4" /> {t("pgpKeywords.autoGenerateEasiest")}
-                  </Button>
-                  <Button variant="outline" onClick={() => openEditor()} className="w-full sm:w-auto">
-                    <Plus className="mr-2 h-4 w-4" /> {t("pgpKeywords.addManually")}
+                  <Button onClick={() => openEditor()} className="w-full sm:w-auto">
+                    <Plus className="mr-2 h-4 w-4" /> {t("pgpKeywords.addKeywordBtn")}
                   </Button>
                 </div>
                 <div className="text-left max-w-sm mx-auto space-y-1.5 mt-4">
@@ -1144,6 +1160,99 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
               </div>
             )}
 
+            {/* Template source */}
+            {kwSource === "template" && (() => {
+              const selectedTpl = pgpTemplates.find(x => x.id === tmplId);
+              const extractVars = (tpl: typeof pgpTemplates[number] | undefined): string[] => {
+                if (!tpl) return [];
+                if (Array.isArray(tpl.variables) && tpl.variables.length > 0) {
+                  return [...new Set(tpl.variables.map(v => String(v).replace(/[{}]/g, "").trim()).filter(Boolean))];
+                }
+                const combined = `${tpl.content || ""} ${tpl.seo_title_pattern || ""} ${tpl.seo_description_pattern || ""}`;
+                const matches = combined.match(/\{([a-z0-9_]+)\}/gi) || [];
+                return [...new Set(matches.map(m => m.replace(/[{}]/g, "").toLowerCase()))];
+              };
+              const vars = extractVars(selectedTpl);
+              const existingNames = new Set(keywords.map(k => k.name.toLowerCase()));
+              const bulkCreate = async () => {
+                if (!wsId || !selectedTpl || vars.length === 0) return;
+                setTmplBulkCreating(true);
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) throw new Error("Not signed in");
+                  const toCreate = vars.filter(v => !existingNames.has(v.toLowerCase()));
+                  if (toCreate.length === 0) {
+                    toast({ title: "Nothing to create", description: "All variables already have keyword groups." });
+                    return;
+                  }
+                  const rows = toCreate.map(v => ({
+                    name: v, source: "local", terms: [], term_count: 0, columns: [], delimiter: null,
+                    source_config: { from_template: selectedTpl.id, template_name: selectedTpl.name },
+                    workspace_id: wsId, user_id: user.id,
+                  }));
+                  const { error } = await supabase.from("pgp_keywords").insert(rows as any);
+                  if (error) throw error;
+                  queryClient.invalidateQueries({ queryKey: ["pgp-keywords"] });
+                  toast({ title: `Created ${toCreate.length} keyword group${toCreate.length !== 1 ? "s" : ""}`, description: `From template "${selectedTpl.name}".` });
+                  setEditorOpen(false); resetEditor();
+                } catch (err: any) {
+                  toast({ title: "Bulk create failed", description: err.message, variant: "destructive" });
+                } finally { setTmplBulkCreating(false); }
+              };
+              return (
+                <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+                  <p className="text-xs font-semibold flex items-center gap-1.5"><Wand2 className="h-3.5 w-3.5 text-primary" /> Pull variables from a template</p>
+                  <p className="text-[11px] text-muted-foreground">Pick one of your campaign templates. Every &#123;variable&#125; in that template becomes a keyword group.</p>
+                  <Select value={tmplId || "__none__"} onValueChange={(v) => setTmplId(v === "__none__" ? "" : v)}>
+                    <SelectTrigger className="h-9"><SelectValue placeholder={pgpTemplates.length === 0 ? "No templates yet — create one from Templates" : "Pick a template"} /></SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {pgpTemplates.length === 0
+                        ? <SelectItem value="__none__" disabled>No templates in this workspace</SelectItem>
+                        : pgpTemplates.map(tpl => <SelectItem key={tpl.id} value={tpl.id}>{tpl.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+
+                  {selectedTpl && (
+                    <>
+                      {vars.length === 0 ? (
+                        <p className="text-[11px] text-warning">This template has no &#123;variables&#125;. Add some in the Templates page first.</p>
+                      ) : (
+                        <>
+                          <div className="space-y-1.5">
+                            <Label className="text-[11px] text-muted-foreground">{vars.length} variable{vars.length !== 1 ? "s" : ""} found — click one to use its name for this group:</Label>
+                            <div className="flex flex-wrap gap-1.5">
+                              {vars.map(v => {
+                                const exists = existingNames.has(v.toLowerCase());
+                                return (
+                                  <button
+                                    key={v}
+                                    type="button"
+                                    onClick={() => { setKwName(v); setKwSource("local"); }}
+                                    className={`font-mono text-[11px] px-2 py-1 rounded border transition-colors ${exists ? "bg-muted text-muted-foreground border-border cursor-help" : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"}`}
+                                    title={exists ? "A keyword group with this name already exists" : "Use this variable as this group's name"}
+                                  >
+                                    {`{${v}}`}{exists && " ✓"}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between gap-2 pt-1">
+                            <p className="text-[10.5px] text-muted-foreground">
+                              Or bulk-create empty groups for every variable not yet in your library.
+                            </p>
+                            <Button size="sm" variant="outline" onClick={bulkCreate} disabled={tmplBulkCreating || vars.every(v => existingNames.has(v.toLowerCase()))}>
+                              {tmplBulkCreating ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Creating…</> : <><Plus className="h-3.5 w-3.5 mr-1.5" /> Create all missing</>}
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* File Import (CSV, Excel, TXT, JSON) */}
             {(kwSource === "csv" || kwSource === "text") && (
               <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
@@ -1194,40 +1303,6 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
         </DialogContent>
       </Dialog>
 
-      {/* Auto-Generate Wizard */}
-      <Dialog open={autoWizardOpen} onOpenChange={setAutoWizardOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5 text-primary" /> {t("pgpKeywords.wizardTitle")}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <p className="text-sm text-muted-foreground">{t("pgpKeywords.wizardDesc")}</p>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">{t("pgpKeywords.wizardLabelService")}</Label>
-              <Input placeholder={t("pgpKeywords.wizardPlaceholderService")} value={wizService} onChange={(e) => setWizService(e.target.value)} className="h-11" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">{t("pgpKeywords.wizardLabelLocations")}</Label>
-              <Input placeholder={t("pgpKeywords.wizardPlaceholderLocations")} value={wizLocations} onChange={(e) => setWizLocations(e.target.value)} />
-              <p className="text-[11px] text-muted-foreground">{t("pgpKeywords.wizardLocationsHint")}</p>
-            </div>
-            <div className="bg-muted/50 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
-              <p className="font-medium text-foreground">{t("pgpKeywords.wizardWillCreate")}</p>
-              <ul className="list-disc pl-4 space-y-0.5">
-                <li>{t("pgpKeywords.wizardItem1Pre")} <strong>{t("pgpKeywords.wizardItem1Bold")}</strong> {t("pgpKeywords.wizardItem1Post")}</li>
-                <li>{t("pgpKeywords.wizardItem2Pre")} <strong>{t("pgpKeywords.wizardItem2Bold")}</strong> {t("pgpKeywords.wizardItem2Post")}</li>
-                <li>{t("pgpKeywords.wizardItem3Pre")} <strong>{t("pgpKeywords.wizardItem3Bold")}</strong> {t("pgpKeywords.wizardItem3Post")}</li>
-              </ul>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setAutoWizardOpen(false)}>{t("pgpKeywords.btnCancel")}</Button>
-              <Button onClick={runAutoWizard} disabled={wizGenerating || !wizService.trim()}>
-                {wizGenerating ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> {t("pgpKeywords.wizardGenerating")}</> : <><Wand2 className="h-4 w-4 mr-1.5" /> {t("pgpKeywords.wizardCreateBtn")}</>}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }}>
