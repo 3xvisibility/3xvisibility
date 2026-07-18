@@ -2234,10 +2234,14 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                     ))}
                                   </div>
                                 </ScrollArea>
-                                <div className="p-2 border-t border-border/50 flex justify-end">
-                                  <Button type="button" size="sm" className="h-7 text-[11px]" onClick={doExport} disabled={includedCount === 0}>
+                                <div className="p-2 border-t border-border/50 flex justify-end gap-1.5">
+                                  <Button type="button" variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => doExport("json")} disabled={includedCount === 0}>
                                     <Download className="h-3.5 w-3.5 mr-1.5" />
-                                    Download {baseCsvData.length} row{baseCsvData.length !== 1 ? "s" : ""}
+                                    JSON
+                                  </Button>
+                                  <Button type="button" size="sm" className="h-7 text-[11px]" onClick={() => doExport("csv")} disabled={includedCount === 0}>
+                                    <Download className="h-3.5 w-3.5 mr-1.5" />
+                                    CSV · {baseCsvData.length} row{baseCsvData.length !== 1 ? "s" : ""}
                                   </Button>
                                 </div>
                               </PopoverContent>
