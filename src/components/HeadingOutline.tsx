@@ -112,6 +112,9 @@ interface HeadingOutlineProps {
  * Designed to slot into existing preview/edit dialogs without disrupting layout.
  */
 export function HeadingOutline({ html, title = "Heading Outline", hideWhenEmpty = false, className }: HeadingOutlineProps) {
+  // Hidden per user request — the outline panel is no longer surfaced in previews.
+  return null;
+  // eslint-disable-next-line no-unreachable
   const analysis = useMemo(() => analyzeOutline(html), [html]);
   const { headings, issues, counts } = analysis;
 
