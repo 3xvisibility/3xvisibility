@@ -32,6 +32,10 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [minPop, setMinPop] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [countryOpen, setCountryOpen] = useState(false);
+  const [seedProgress, setSeedProgress] = useState(0);
+  const [seedElapsed, setSeedElapsed] = useState(0);
+  const [seedStage, setSeedStage] = useState<string>("");
+  const [seedResult, setSeedResult] = useState<{ inserted: number; skipped: number } | null>(null);
 
   const seedMutation = useMutation({
     mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string }) => {
