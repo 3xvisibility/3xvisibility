@@ -96,6 +96,10 @@ export function SeoOptimizeDialog({
   const [applyError, setApplyError] = useState<string | null>(null);
   const [retryAttempt, setRetryAttempt] = useState(0);
   const [verifying, setVerifying] = useState(false);
+  const [verifyAttempt, setVerifyAttempt] = useState(0);
+  const VERIFY_MAX_ATTEMPTS = 5;
+  const VERIFY_DELAYS_MS = [1500, 4000, 8000, 15000, 30000];
+
   const [verification, setVerification] = useState<{
     ok: boolean;
     fetchedAt: string;
