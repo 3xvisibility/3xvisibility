@@ -431,6 +431,26 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                 </span>
               </div>
               <div className="flex items-center gap-2">
+                {dataUpdatedAt > 0 && !isLoading && (
+                  <span className="text-[10px] text-muted-foreground tabular-nums hidden sm:inline">
+                    {isFetching ? "Refreshing…" : `Cached · updated ${new Date(dataUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
+                  </span>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 rounded-xl gap-1.5 text-xs"
+                  disabled={isFetching}
+                  onClick={() => {
+                    queryClient.invalidateQueries({ queryKey: ["locations-db", countryFilter, stateFilter, regionFilter] });
+                    queryClient.invalidateQueries({ queryKey: ["locations-db-meta", countryFilter] });
+                    refetch();
+                  }}
+                  title="Refresh from database"
+                >
+                  <RefreshCw className={cn("h-3 w-3", isFetching && "animate-spin")} />
+                  Refresh
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
