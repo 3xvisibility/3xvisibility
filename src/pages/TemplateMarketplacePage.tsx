@@ -14,6 +14,7 @@ import {
   Store, Search, Download, Upload, Eye, Code, Star, Users, FileText,
   Tag, Globe, ShoppingBag, MapPin, Megaphone, Briefcase, GraduationCap,
   Heart, Loader2, Share2, MessageSquare, SlidersHorizontal, ChevronDown, ShieldCheck,
+  RefreshCw, Wrench,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -251,6 +252,50 @@ export default function TemplateMarketplacePage() {
       html: tpl.content && tpl.content.length > 0 ? "ready" : "failed",
     };
   }
+
+  // Per-template retry: reruns the widget-engine conversion for a single
+  // marketplace template. Uses the sync-template-engine edge function which
+  // records a run in template_backfill_runs so admins can inspect progress in
+  // the Template Sync job runner. Tracks the in-flight template id so we can
+  // show a spinner on the specific card that's converting.
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const retryConversionMutation = useMutation({
+    mutationFn: async (tpl: MarketplaceTemplate) => {
+      setRetryingId(tpl.id);
+      const { data, error } = await supabase.functions.invoke("sync-template-engine", {
+        body: {
+          source_marketplace_ids: [tpl.id],
+          template_ids: [tpl.id],
+          trigger_source: "marketplace-card",
+        },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data: any, tpl) => {
+      const converted = data?.converted ?? 0;
+      const failed = data?.failed ?? 0;
+      queryClient.invalidateQueries({ queryKey: ["marketplace-conversion-status"] });
+      if (failed > 0 && converted === 0) {
+        toast({
+          title: "Retry failed",
+          description: `Conversion did not succeed for "${tpl.name}". Open the Job runner for details.`,
+          variant: "destructive",
+        });
+      } else if (converted === 0 && failed === 0) {
+        toast({
+          title: "Nothing to convert",
+          description: `"${tpl.name}" isn't imported yet. Click Import to add it, then retry.`,
+        });
+      } else {
+        toast({ title: "Conversion re-run", description: `"${tpl.name}" reconverted successfully.` });
+      }
+    },
+    onError: (err: Error) => {
+      toast({ title: "Retry failed", description: err.message, variant: "destructive" });
+    },
+    onSettled: () => setRetryingId(null),
+  });
 
   // Fetch ratings for shared templates
   // Aggregate stats only (avg + count per template). Individual ratings are
@@ -544,9 +589,18 @@ export default function TemplateMarketplacePage() {
       {/* Step 1 — choose the target platform. Every template is available on both
           Elementor (WordPress) and Shopify and is re-skinned to match. */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-2">
-          {t("marketplace.choosePlatform") || "Choose your format"}
-        </p>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-medium text-muted-foreground">
+            {t("marketplace.choosePlatform") || "Choose your format"}
+          </p>
+          <a
+            href="/admin"
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            title="Open the Template Sync job runner (admin only)"
+          >
+            <Wrench className="h-3 w-3" /> Job runner
+          </a>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl">
           {([
             { id: "elementor" as const, label: "Elementor", desc: "WordPress / Elementor JSON", icon: FileText },
@@ -679,7 +733,27 @@ export default function TemplateMarketplacePage() {
                       <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                         Conversion status
                       </span>
-                      <Badge variant="secondary" className="text-[9px]">{formatLabel}</Badge>
+                      <div className="flex items-center gap-1">
+                        <Badge variant="secondary" className="text-[9px]">{formatLabel}</Badge>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 px-1.5 text-[9px] gap-1"
+                          title="Rerun Elementor + Shopify conversion for this template"
+                          disabled={retryingId === tpl.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            retryConversionMutation.mutate(tpl);
+                          }}
+                        >
+                          {retryingId === tpl.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3 w-3" />
+                          )}
+                          Retry
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-1">
                       {chip("Elementor", conv.elementor, platformChoice === "elementor")}
