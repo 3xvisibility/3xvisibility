@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { usePersistedSnapshot } from "@/hooks/use-persisted-state";
 import { handleApiError } from "@/lib/handle-api-error";
 import { extractEdgeError } from "@/lib/edge-function-error";
@@ -199,6 +199,86 @@ export function SeoOptimizeDialog({
     matches: { title: boolean; content: boolean; seoTitle: boolean; seoDescription: boolean };
     error?: string;
   } | null>(null);
+
+  // Prior verification runs pulled from the DB for this page — surfaced at the
+  // top of the dialog so users can see when each field was last confirmed live.
+  type PastVerification = {
+    id: string;
+    created_at: string;
+    verified_all: boolean;
+    force_republish: boolean;
+    attempts: number;
+    page_url: string | null;
+    matches: { title?: boolean; content?: boolean; seoTitle?: boolean; seoDescription?: boolean };
+    error: string | null;
+  };
+  const [pastVerifications, setPastVerifications] = useState<PastVerification[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Persist a single verification snapshot to Postgres. Best-effort — a failure
+  // here should never break the Apply/verify flow, so we swallow the error.
+  const persistVerification = async (snapshot: {
+    ok: boolean;
+    attempts: number;
+    live: { title: string; contentText: string; seoTitle?: string | null; seoDescription?: string | null };
+    matches: { title: boolean; content: boolean; seoTitle: boolean; seoDescription: boolean };
+    error?: string;
+  }) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id;
+      if (!uid || !workspaceId) return;
+      await supabase.from("seo_apply_verifications").insert({
+        user_id: uid,
+        workspace_id: workspaceId,
+        website_id: websiteId ?? null,
+        page_id: String(page.id),
+        page_slug: page.slug ?? null,
+        page_url: result?.external_url || page.url || null,
+        page_type: page.type ?? null,
+        expected: {
+          title: page.title || "",
+          seo_title: result?.seo_title || "",
+          seo_description: result?.seo_description || "",
+          content_preview: htmlToText(result?.content || page.content).slice(0, 500),
+        },
+        live: {
+          title: snapshot.live.title,
+          seo_title: snapshot.live.seoTitle ?? null,
+          seo_description: snapshot.live.seoDescription ?? null,
+          content_preview: (snapshot.live.contentText || "").slice(0, 500),
+        },
+        matches: snapshot.matches,
+        attempts: snapshot.attempts,
+        verified_all: snapshot.ok,
+        force_republish: forceRepublish,
+        error: snapshot.error ?? null,
+      });
+    } catch {
+      // silent — history is a nice-to-have
+    }
+  };
+
+  // Load past verification runs when the dialog opens so users can see the
+  // last known state for each field on the live site.
+  useEffect(() => {
+    if (!open || !workspaceId || !page?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("seo_apply_verifications")
+        .select("id, created_at, verified_all, force_republish, attempts, page_url, matches, error")
+        .eq("workspace_id", workspaceId)
+        .eq("page_id", String(page.id))
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (cancelled || error) return;
+      setPastVerifications((data || []) as PastVerification[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, workspaceId, page?.id]);
 
   // Strip HTML → plain text for old-vs-new body preview (design HTML is huge
   // and unreadable in a side-by-side; text-only makes the diff easy to scan).
@@ -483,7 +563,17 @@ export function SeoOptimizeDialog({
 
   // Perform a single verification pass. Returns whether all monitored
   // fields matched, plus the verification snapshot that was stored to state.
-  const runVerifyOnce = async (): Promise<{ ok: boolean; found: boolean; error?: string }> => {
+  const runVerifyOnce = async (): Promise<{
+    ok: boolean;
+    found: boolean;
+    error?: string;
+    snapshot: {
+      ok: boolean;
+      live: { title: string; contentText: string; seoTitle?: string | null; seoDescription?: string | null };
+      matches: { title: boolean; content: boolean; seoTitle: boolean; seoDescription: boolean };
+      error?: string;
+    };
+  }> => {
     const contentType = page.type === "product" ? "products" : "pages";
     const { data, error } = await supabase.functions.invoke("fetch-site-content", {
       body: { website_id: websiteId, content_type: contentType },
@@ -498,14 +588,14 @@ export function SeoOptimizeDialog({
       items.find((i) => i.url && page.url && i.url === page.url);
 
     if (!fresh) {
-      setVerification({
+      const snap = {
         ok: false,
-        fetchedAt: new Date().toISOString(),
         live: { title: "", contentText: "" },
         matches: { title: false, content: false, seoTitle: false, seoDescription: false },
         error: "Could not find this page on the live site after refresh.",
-      });
-      return { ok: false, found: false, error: "not_found" };
+      };
+      setVerification({ ...snap, fetchedAt: new Date().toISOString() });
+      return { ok: false, found: false, error: "not_found", snapshot: snap };
     }
 
     const liveTitle = String(fresh.title || "");
@@ -532,13 +622,13 @@ export function SeoOptimizeDialog({
     };
     const ok = matches.title && matches.content && matches.seoTitle && matches.seoDescription;
 
-    setVerification({
+    const snap = {
       ok,
-      fetchedAt: new Date().toISOString(),
       live: { title: liveTitle, contentText: liveContentText, seoTitle: liveSeoTitle, seoDescription: liveSeoDesc },
       matches,
-    });
-    return { ok, found: true };
+    };
+    setVerification({ ...snap, fetchedAt: new Date().toISOString() });
+    return { ok, found: true, snapshot: snap };
   };
 
   // Re-fetch the page from the connected site until every pushed field is
@@ -551,24 +641,28 @@ export function SeoOptimizeDialog({
 
     let lastOk = false;
     let lastErr: string | undefined;
+    let lastSnapshot: Awaited<ReturnType<typeof runVerifyOnce>>["snapshot"] | null = null;
+    let attemptsUsed = 0;
 
     try {
       for (let i = 0; i < VERIFY_MAX_ATTEMPTS; i++) {
         setVerifyAttempt(i + 1);
+        attemptsUsed = i + 1;
         await new Promise((r) => setTimeout(r, VERIFY_DELAYS_MS[i] ?? 30000));
         try {
-          const { ok } = await runVerifyOnce();
+          const { ok, snapshot } = await runVerifyOnce();
           lastOk = ok;
+          lastSnapshot = snapshot;
           if (ok) break;
         } catch (err: any) {
           lastErr = err?.message || "Verification failed";
-          setVerification({
+          lastSnapshot = {
             ok: false,
-            fetchedAt: new Date().toISOString(),
             live: { title: "", contentText: "" },
             matches: { title: false, content: false, seoTitle: false, seoDescription: false },
             error: lastErr,
-          });
+          };
+          setVerification({ ...lastSnapshot, fetchedAt: new Date().toISOString() });
           // keep retrying — transient fetch errors shouldn't stop auto-verify
         }
       }
@@ -598,6 +692,22 @@ export function SeoOptimizeDialog({
           description: `We re-checked ${VERIFY_MAX_ATTEMPTS}× but the CMS/CDN may still be caching. Click Recheck in a minute.`,
           variant: "destructive",
         });
+      }
+
+      // Save the final verification result so users can review this Apply run later.
+      if (lastSnapshot) {
+        await persistVerification({ ...lastSnapshot, attempts: attemptsUsed });
+        // Refresh the history list (fire-and-forget)
+        supabase
+          .from("seo_apply_verifications")
+          .select("id, created_at, verified_all, force_republish, attempts, page_url, matches, error")
+          .eq("workspace_id", workspaceId!)
+          .eq("page_id", String(page.id))
+          .order("created_at", { ascending: false })
+          .limit(10)
+          .then(({ data }) => {
+            if (data) setPastVerifications(data as PastVerification[]);
+          });
       }
     } finally {
       setVerifying(false);
@@ -1087,6 +1197,91 @@ export function SeoOptimizeDialog({
               </>
             )}
 
+
+            {/* Verification history — surface past Apply-to-site runs saved in the DB */}
+            {pastVerifications.length > 0 && (
+              <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium flex items-center gap-1.5">
+                    <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />
+                    Previous verifications
+                    <Badge variant="secondary" className="h-4 text-[10px] px-1.5">{pastVerifications.length}</Badge>
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 text-[11px]"
+                    onClick={() => setShowHistory((v) => !v)}
+                  >
+                    {showHistory ? "Hide" : "Show"}
+                  </Button>
+                </div>
+                {showHistory && (
+                  <ul className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                    {pastVerifications.map((v) => {
+                      const fields: Array<[string, boolean | undefined]> = [
+                        ["Title", v.matches?.title],
+                        ["Content", v.matches?.content],
+                        ["SEO title", v.matches?.seoTitle],
+                        ["Meta desc", v.matches?.seoDescription],
+                      ];
+                      return (
+                        <li key={v.id} className="rounded border border-border/60 bg-background/60 p-2 text-[11px] space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="flex items-center gap-1.5">
+                              {v.verified_all ? (
+                                <Check className="h-3 w-3 text-emerald-600" />
+                              ) : (
+                                <span className="h-2.5 w-2.5 rounded-full border border-amber-500" />
+                              )}
+                              <span className={v.verified_all ? "text-emerald-600" : "text-amber-600"}>
+                                {v.verified_all ? "All fields matched" : "Partial match"}
+                              </span>
+                              {v.force_republish && (
+                                <Badge variant="outline" className="h-4 text-[9px] px-1">force</Badge>
+                              )}
+                            </span>
+                            <span className="text-muted-foreground text-[10px]">
+                              {new Date(v.created_at).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {fields.map(([label, ok]) => (
+                              <span
+                                key={label}
+                                className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] ${
+                                  ok
+                                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                                    : "bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                                }`}
+                              >
+                                {ok ? "✓" : "•"} {label}
+                              </span>
+                            ))}
+                            <span className="text-muted-foreground text-[10px] ml-auto">
+                              {v.attempts} attempt{v.attempts === 1 ? "" : "s"}
+                            </span>
+                          </div>
+                          {v.page_url && (
+                            <a
+                              href={v.page_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-primary hover:underline inline-flex items-center gap-1 truncate"
+                            >
+                              <ArrowUpRight className="h-2.5 w-2.5" /> {v.page_url}
+                            </a>
+                          )}
+                          {v.error && (
+                            <p className="text-[10px] text-amber-600 dark:text-amber-400">{v.error}</p>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
 
             {/* Live verification — refetch published page and compare */}
             {applied && result.pushed_to_cms && (verifying || verification) && (
