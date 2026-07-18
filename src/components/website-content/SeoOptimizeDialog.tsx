@@ -198,6 +198,18 @@ export function SeoOptimizeDialog({
   const [verifying, setVerifying] = useState(false);
   const [verifyAttempt, setVerifyAttempt] = useState(0);
   const [showVerifyDiff, setShowVerifyDiff] = useState(false);
+  const [showFieldChanges, setShowFieldChanges] = useState(true);
+
+  // Pre-apply live snapshot — captured right before we push to WordPress so we
+  // can show a before/after diff of what actually changed on the live page
+  // after Force republish (title, content, SEO title, meta description).
+  const [preApplySnapshot, setPreApplySnapshot] = useState<{
+    title: string;
+    contentText: string;
+    seoTitle?: string | null;
+    seoDescription?: string | null;
+    fetchedAt: string;
+  } | null>(null);
 
   const VERIFY_MAX_ATTEMPTS = 5;
   const VERIFY_DELAYS_MS = [1500, 4000, 8000, 15000, 30000];
@@ -466,12 +478,53 @@ export function SeoOptimizeDialog({
     }
   };
 
+  // Fetch the current live values from the connected site without touching
+  // the post-apply verification state. Used to snapshot the "before" values
+  // right before we push, so we can diff what actually changed on the live
+  // page after Force republish.
+  const fetchLiveSnapshot = async (): Promise<{
+    title: string;
+    contentText: string;
+    seoTitle?: string | null;
+    seoDescription?: string | null;
+  } | null> => {
+    try {
+      const contentType = page.type === "product" ? "products" : "pages";
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", {
+        body: { website_id: websiteId, content_type: contentType },
+      });
+      if (error || !data) return null;
+      const items: any[] = Array.isArray(data?.items) ? data.items : [];
+      const fresh =
+        items.find((i) => String(i.id) === String(page.id)) ||
+        items.find((i) => i.slug && i.slug === page.slug) ||
+        items.find((i) => i.url && page.url && i.url === page.url);
+      if (!fresh) return null;
+      return {
+        title: String(fresh.title || ""),
+        contentText: htmlToText(fresh.content || ""),
+        seoTitle: fresh.seo_title ?? null,
+        seoDescription: fresh.seo_description ?? null,
+      };
+    } catch {
+      return null;
+    }
+  };
+
   // Phase 2: push the previewed values to the connected site.
   const applyToSite = async () => {
     if (!result) return;
     setApplying(true);
     setApplyError(null);
     try {
+      // Snapshot the live page BEFORE we push so the verification panel can
+      // show which Elementor fields actually changed after Force republish.
+      const before = await fetchLiveSnapshot();
+      if (before) {
+        setPreApplySnapshot({ ...before, fetchedAt: new Date().toISOString() });
+      } else {
+        setPreApplySnapshot(null);
+      }
       const { data, error } = await supabase.functions.invoke("optimize-seo-content", {
         body: {
           website_id: websiteId,
@@ -1483,6 +1536,113 @@ export function SeoOptimizeDialog({
                         </p>
                       </div>
                     )}
+
+                    {/* Field-level before/after — shows exactly which
+                        Elementor-managed fields changed on the live page
+                        after Force republish, with excerpts of each side. */}
+                    {preApplySnapshot && verification && (() => {
+                      const rows: {
+                        key: string;
+                        label: string;
+                        before: string;
+                        after: string;
+                      }[] = [
+                        {
+                          key: "title",
+                          label: "Title",
+                          before: preApplySnapshot.title || "",
+                          after: verification.live.title || "",
+                        },
+                        {
+                          key: "content",
+                          label: "Content",
+                          before: preApplySnapshot.contentText || "",
+                          after: verification.live.contentText || "",
+                        },
+                        {
+                          key: "seoTitle",
+                          label: "SEO title",
+                          before: String(preApplySnapshot.seoTitle || ""),
+                          after: String(verification.live.seoTitle || ""),
+                        },
+                        {
+                          key: "seoDescription",
+                          label: "Meta description",
+                          before: String(preApplySnapshot.seoDescription || ""),
+                          after: String(verification.live.seoDescription || ""),
+                        },
+                      ];
+                      const norm = (s: string) => s.replace(/\s+/g, " ").trim();
+                      const excerpt = (s: string, n = 160) => {
+                        const t = norm(s);
+                        return t.length > n ? t.slice(0, n) + "…" : t;
+                      };
+                      const changedRows = rows.filter((r) => norm(r.before) !== norm(r.after));
+                      const changedCount = changedRows.length;
+                      return (
+                        <div className="rounded border border-border bg-background/60 p-2 mt-1 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                              Changed on live {forceRepublish ? "(after Force republish)" : ""}
+                              <span className={`ml-1.5 font-medium normal-case ${changedCount ? "text-emerald-600" : "text-muted-foreground"}`}>
+                                {changedCount} of {rows.length} field{rows.length === 1 ? "" : "s"}
+                              </span>
+                            </p>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setShowFieldChanges((v) => !v)}
+                              className="h-5 text-[10px] gap-1"
+                            >
+                              {showFieldChanges ? "Hide" : "Show"}
+                            </Button>
+                          </div>
+                          {showFieldChanges && (
+                            <ul className="space-y-2">
+                              {rows.map((r) => {
+                                const changed = norm(r.before) !== norm(r.after);
+                                const beforeEmpty = !norm(r.before);
+                                const afterEmpty = !norm(r.after);
+                                return (
+                                  <li key={r.key} className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className={`inline-block h-2 w-2 rounded-full ${changed ? "bg-emerald-500" : "bg-muted-foreground/40"}`} />
+                                      <span className="text-[11px] font-medium">{r.label}</span>
+                                      <span className={`text-[10px] ${changed ? "text-emerald-600" : "text-muted-foreground"}`}>
+                                        {changed ? "changed" : "unchanged"}
+                                      </span>
+                                    </div>
+                                    {changed && (
+                                      <div className="ml-4 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                        <div className="rounded border border-amber-500/30 bg-amber-500/5 p-1.5">
+                                          <p className="text-[9px] uppercase tracking-wide text-amber-700 dark:text-amber-400 mb-0.5">Before</p>
+                                          <p className="text-[11px] text-muted-foreground break-words">
+                                            {beforeEmpty ? <span className="italic">(empty)</span> : excerpt(r.before)}
+                                          </p>
+                                        </div>
+                                        <div className="rounded border border-emerald-500/30 bg-emerald-500/5 p-1.5">
+                                          <p className="text-[9px] uppercase tracking-wide text-emerald-700 dark:text-emerald-400 mb-0.5">After</p>
+                                          <p className="text-[11px] text-foreground break-words">
+                                            {afterEmpty ? <span className="italic">(empty)</span> : excerpt(r.after)}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                          {preApplySnapshot.fetchedAt && (
+                            <p className="text-[10px] text-muted-foreground">
+                              Before snapshot taken {new Date(preApplySnapshot.fetchedAt).toLocaleTimeString()} · After from live re-fetch.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+
 
                     <div className="flex items-center justify-between gap-2 pt-1">
                       <p className="text-[10px] text-muted-foreground">
