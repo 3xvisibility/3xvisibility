@@ -817,7 +817,10 @@ export function SeoOptimizeDialog({
   // Re-fetch the page from the connected site until every pushed field is
   // confirmed live. Polls with exponential backoff so CDN/CMS caches have
   // time to flush without the user having to click "Recheck" manually.
-  const verifyLive = async () => {
+  const verifyLive = async (): Promise<{
+    ok: boolean;
+    snapshot: Awaited<ReturnType<typeof runVerifyOnce>>["snapshot"] | null;
+  }> => {
     setVerifying(true);
     setVerification(null);
     setVerifyAttempt(0);
