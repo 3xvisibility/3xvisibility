@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Progress } from "@/components/ui/progress";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -244,6 +244,47 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     }
     return result;
   }, [locations, search, minPop]);
+
+  // Infinite scroll: render in chunks of PAGE_SIZE and grow as the user
+  // scrolls near the bottom of the list. Reset when filters/search change.
+  const PAGE_SIZE = 100;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [countryFilter, stateFilter, regionFilter, search, minPop]);
+
+  const visibleLocations = useMemo(
+    () => filteredLocations.slice(0, visibleCount),
+    [filteredLocations, visibleCount],
+  );
+  const hasMore = visibleCount < filteredLocations.length;
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const setSentinel = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (sentinelRef.current) sentinelRef.current = null;
+      sentinelRef.current = node;
+      if (!node || !hasMore) return;
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredLocations.length));
+          }
+        },
+        { root: null, rootMargin: "200px", threshold: 0 },
+      );
+      io.observe(node);
+      // Detach on next sentinel mount
+      (node as any).__io = io;
+    },
+    [hasMore, filteredLocations.length],
+  );
+  useEffect(() => {
+    return () => {
+      const n = sentinelRef.current as any;
+      if (n?.__io) n.__io.disconnect();
+    };
+  }, []);
 
   const toggleLocation = (id: string) => {
     const next = new Set(selectedIds);
@@ -775,7 +816,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             ) : (
               <ScrollArea className="flex-1 min-h-0 max-h-[300px] rounded-xl border border-border">
                 <div className="space-y-0.5 p-1">
-                  {filteredLocations.map((loc: any) => {
+                  {visibleLocations.map((loc: any) => {
                     const isSelected = selectedIds.has(loc.id);
                     return (
                       <button
@@ -808,6 +849,31 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                       </button>
                     );
                   })}
+                  {hasMore && (
+                    <div
+                      ref={setSentinel}
+                      className="flex items-center justify-center gap-2 py-3 text-[10px] text-muted-foreground"
+                    >
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Loading more… ({visibleLocations.length}/{filteredLocations.length})
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-[10px]"
+                        onClick={() =>
+                          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredLocations.length))
+                        }
+                      >
+                        Load more
+                      </Button>
+                    </div>
+                  )}
+                  {!hasMore && filteredLocations.length > PAGE_SIZE && (
+                    <div className="text-center py-2 text-[10px] text-muted-foreground">
+                      Showing all {filteredLocations.length} cities
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
             )}
