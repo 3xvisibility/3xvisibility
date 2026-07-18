@@ -237,7 +237,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             </div>
             <Button
               onClick={async () => {
-                await seedMutation.mutateAsync(countryFilter);
+                await seedMutation.mutateAsync({ countryCode: countryFilter });
                 refetch();
               }}
               disabled={seedMutation.isPending}
