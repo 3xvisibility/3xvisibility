@@ -2037,55 +2037,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             </div>
                           </div>
 
-                          <label className="flex items-start gap-2 cursor-pointer">
-                            <Checkbox
-                              checked={locationKeywordEnabled}
-                              onCheckedChange={(v) => setLocationKeywordEnabled(!!v)}
-                              className="mt-0.5"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-semibold">Auto-build <code className="text-[10px] bg-muted px-1 py-0.5 rounded">{"{keywords}"}</code> from locations</p>
-                              <p className="text-[11px] text-muted-foreground">
-                                Fill each page's keywords using the selected location's city / country / state values.
-                              </p>
-                            </div>
-                          </label>
-                          {locationKeywordEnabled && (
-                            <div className="pl-6 space-y-1.5">
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                <span className="text-[10px] text-muted-foreground">Presets:</span>
-                                {[
-                                  { label: "City, Country", val: "{city}, {country}" },
-                                  { label: "City, State", val: "{city}, {state}" },
-                                  { label: "City only", val: "{city}" },
-                                  { label: "City, State, Country", val: "{city}, {state}, {country}" },
-                                ].map((p) => (
-                                  <button
-                                    key={p.val}
-                                    type="button"
-                                    onClick={() => setLocationKeywordPattern(p.val)}
-                                    className={cn(
-                                      "text-[10px] px-2 py-0.5 rounded-md border transition-colors",
-                                      locationKeywordPattern === p.val
-                                        ? "border-primary bg-primary/10 text-primary"
-                                        : "border-border/60 hover:bg-muted/40"
-                                    )}
-                                  >
-                                    {p.label}
-                                  </button>
-                                ))}
-                              </div>
-                              <Input
-                                value={locationKeywordPattern}
-                                onChange={(e) => setLocationKeywordPattern(e.target.value)}
-                                placeholder="{city}, {country}"
-                                className="h-8 text-xs rounded-lg font-mono"
-                              />
-                              <p className="text-[10px] text-muted-foreground">
-                                Preview: <span className="font-mono text-foreground/80">{fillLocPattern(locationKeywordPattern, mergedLocations[0] || {}) || "—"}</span>
-                              </p>
-                            </div>
-                          )}
+
+
                         </div>
                       )}
 
