@@ -793,7 +793,7 @@ export default function TemplateMarketplacePage() {
                     {isRetrying && (
                       <div className="mb-2 space-y-1" role="status" aria-live="polite">
                         <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-                          <div className="h-full w-1/3 animate-[progress_1.2s_ease-in-out_infinite] bg-primary" />
+                          <div className="h-full w-1/3 animate-progress-indeterminate bg-primary" />
                         </div>
                         <p className="text-[9px] text-muted-foreground">
                           Rebuilding Elementor + Shopify kits… chips refresh when complete.
