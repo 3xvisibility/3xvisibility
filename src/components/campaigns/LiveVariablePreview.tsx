@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Sparkles, ChevronLeft, ChevronRight, Eye, Wand2 } from "lucide-react";
+import { Sparkles, ChevronLeft, ChevronRight, Eye, Wand2, Table as TableIcon, LayoutList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
