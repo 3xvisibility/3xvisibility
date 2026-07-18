@@ -32,18 +32,20 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [minPop, setMinPop] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [countryOpen, setCountryOpen] = useState(false);
+  const [batchSize, setBatchSize] = useState<number>(150);
   const [seedProgress, setSeedProgress] = useState(0);
   const [seedElapsed, setSeedElapsed] = useState(0);
   const [seedStage, setSeedStage] = useState<string>("");
   const [seedResult, setSeedResult] = useState<{ inserted: number; skipped: number } | null>(null);
 
   const seedMutation = useMutation({
-    mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string }) => {
+    mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string; target?: number }) => {
       const body: Record<string, unknown> = {};
       if (opts?.countryCode) body.country_code = opts.countryCode;
       if (opts?.expand) body.expand = true;
       if (opts?.state && opts.state !== "all") body.state = opts.state;
       if (opts?.region && opts.region !== "all") body.region = opts.region;
+      if (opts?.target && opts.target > 0) body.target = opts.target;
       const { data, error } = await supabase.functions.invoke("seed-locations", { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -362,7 +364,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             </div>
             <Button
               onClick={async () => {
-                await seedMutation.mutateAsync({ countryCode: countryFilter });
+                await seedMutation.mutateAsync({ countryCode: countryFilter, target: batchSize });
                 refetch();
               }}
               disabled={seedMutation.isPending}
@@ -451,6 +453,22 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   <RefreshCw className={cn("h-3 w-3", isFetching && "animate-spin")} />
                   Refresh
                 </Button>
+                <div className="flex items-center gap-1" title="How many cities the AI should generate per load">
+                  <span className="text-[10px] text-muted-foreground hidden md:inline">Batch</span>
+                  <Select value={String(batchSize)} onValueChange={(v) => setBatchSize(Number(v))}>
+                    <SelectTrigger className="h-7 w-[80px] rounded-xl text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                      <SelectItem value="150">150</SelectItem>
+                      <SelectItem value="250">250</SelectItem>
+                      <SelectItem value="500">500</SelectItem>
+                      <SelectItem value="1000">1000</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button
                   size="sm"
                   variant="outline"
@@ -462,6 +480,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                       expand: true,
                       state: stateFilter !== "all" ? stateFilter : undefined,
                       region: regionFilter !== "all" ? regionFilter : undefined,
+                      target: batchSize,
                     });
                     refetch();
                   }}
