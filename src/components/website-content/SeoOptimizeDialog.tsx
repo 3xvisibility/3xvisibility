@@ -1760,15 +1760,26 @@ export function SeoOptimizeDialog({
                       <p className="text-[10px] text-muted-foreground">
                         Fetched {new Date(verification.fetchedAt).toLocaleTimeString()}. If fields still show "not detected yet", your CMS/CDN may be caching — wait a moment and click Recheck.
                       </p>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setShowVerifyDiff((v) => !v)}
-                        className="h-6 text-[11px] gap-1 shrink-0"
-                      >
-                        {showVerifyDiff ? "Hide diff" : "Show diff"}
-                      </Button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setShowVerifyDiff((v) => !v)}
+                          className="h-6 text-[11px] gap-1"
+                        >
+                          {showVerifyDiff ? "Hide diff" : "Show diff"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setFullDiffOpen(true)}
+                          className="h-6 text-[11px] gap-1"
+                        >
+                          Open full diff
+                        </Button>
+                      </div>
                     </div>
+
 
                     {showVerifyDiff && (
                       <div className="space-y-3 pt-2 border-t border-border/60">
