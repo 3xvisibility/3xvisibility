@@ -919,9 +919,68 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       hasSample: Object.keys(sampleRow).length > 0,
     };
   }, [templates, selectedTemplate, baseCsvData, customValues]);
-  const { effectiveCsvData, effectiveCsvHeaders } = useMemo(() => {
-    return { effectiveCsvData: baseCsvData, effectiveCsvHeaders: baseCsvHeaders };
-  }, [baseCsvData, baseCsvHeaders]);
+  // Auto-map template variables → keyword-group terms (or smart fallback) so
+  // unmapped {variables} still get real values instead of blocking generation.
+  // - Case/underscore/plural-insensitive match of variable name against keyword group names.
+  // - Terms cycle by row index for diversity.
+  // - Variables with no keyword group and no other source get a smart fallback
+  //   derived from business/niche/service or a humanized version of the variable.
+  const { effectiveCsvData, effectiveCsvHeaders, autoMappedInfo } = useMemo(() => {
+    const rows = baseCsvData;
+    const headers = [...baseCsvHeaders];
+    const normalize = (s: string) => (s || "").toLowerCase().replace(/[\s_\-]+/g, "").replace(/s$/, "");
+    const findGroup = (varName: string) => {
+      const nv = normalize(varName);
+      return keywordGroups.find(g => normalize(g.name) === nv)
+        || keywordGroups.find(g => {
+          const ng = normalize(g.name);
+          return ng && (ng.includes(nv) || nv.includes(ng));
+        });
+    };
+    const humanize = (v: string) =>
+      v.replace(/[_\-]+/g, " ").replace(/\b\w/g, c => c.toUpperCase()).trim();
+    const smartFallback = (v: string): string => {
+      const nv = v.toLowerCase();
+      if (/(business|brand|company|store)/.test(nv) && aiBusiness) return aiBusiness;
+      if (/(niche|industry|category)/.test(nv) && aiNiche) return aiNiche;
+      if (/(service|product|offer)/.test(nv) && aiServiceProduct) return aiServiceProduct;
+      return humanize(v);
+    };
+
+    const fromKeywords: string[] = [];
+    const fromFallback: string[] = [];
+    const augmented = rows.map(r => ({ ...r }));
+
+    for (const v of selectedTemplateVars) {
+      if (headers.includes(v)) continue;
+      if (manualMappings[v] || customValues[v]) continue;
+      const hLower = headers.map(h => h.toLowerCase());
+      if (hLower.includes(v.toLowerCase())) continue;
+
+      const group = findGroup(v);
+      const terms = (group?.terms ?? []).filter(t => typeof t === "string" && t.trim().length > 0);
+      if (terms.length > 0) {
+        for (let i = 0; i < augmented.length; i++) {
+          augmented[i][v] = terms[i % terms.length];
+        }
+        headers.push(v);
+        fromKeywords.push(v);
+      } else if (augmented.length > 0) {
+        const fb = smartFallback(v);
+        for (let i = 0; i < augmented.length; i++) {
+          augmented[i][v] = fb;
+        }
+        headers.push(v);
+        fromFallback.push(v);
+      }
+    }
+
+    return {
+      effectiveCsvData: augmented,
+      effectiveCsvHeaders: headers,
+      autoMappedInfo: { fromKeywords, fromFallback },
+    };
+  }, [baseCsvData, baseCsvHeaders, selectedTemplateVars, manualMappings, customValues, keywordGroups, aiBusiness, aiNiche, aiServiceProduct]);
 
   // Auto-clear FAQ pairs whenever the underlying CSV/data-source signature changes,
   // so users don't accidentally carry mappings from a previous CSV into a new upload.
