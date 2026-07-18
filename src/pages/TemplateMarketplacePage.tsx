@@ -290,10 +290,14 @@ export default function TemplateMarketplacePage() {
   const retryConversionMutation = useMutation({
     mutationFn: async (tpl: MarketplaceTemplate) => {
       setRetryingId(tpl.id);
+      // Marketplace ids are slugs (e.g. "seo-landing"), not UUIDs — send them
+      // only as source_marketplace_ids so the edge function can match on
+      // templates.source_marketplace_id without a UUID cast error.
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tpl.id);
       const { data, error } = await supabase.functions.invoke("sync-template-engine", {
         body: {
           source_marketplace_ids: [tpl.id],
-          template_ids: [tpl.id],
+          ...(isUuid ? { template_ids: [tpl.id] } : {}),
           trigger_source: "marketplace-card",
         },
       });
