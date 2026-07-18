@@ -225,6 +225,7 @@ export function SeoOptimizeDialog({
   const applyToSite = async () => {
     if (!result) return;
     setApplying(true);
+    setApplyError(null);
     try {
       const { data, error } = await supabase.functions.invoke("optimize-seo-content", {
         body: {
