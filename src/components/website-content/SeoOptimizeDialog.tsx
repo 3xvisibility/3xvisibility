@@ -123,6 +123,63 @@ export function SeoOptimizeDialog({
   const oldBodyText = useMemo(() => htmlToText(page.content), [page.content]);
   const newBodyText = useMemo(() => htmlToText(result?.content), [result?.content]);
 
+  // Lightweight word-level diff. Returns segments with a status per token so
+  // the verification panel can highlight what's missing/extra on the live page.
+  const wordDiff = (expected: string, live: string) => {
+    const a = (expected || "").split(/(\s+)/).filter((t) => t.length);
+    const b = (live || "").split(/(\s+)/).filter((t) => t.length);
+    const n = a.length, m = b.length;
+    // LCS table (small strings only; cap tokens to keep it cheap)
+    const cap = 400;
+    const aa = a.slice(0, cap);
+    const bb = b.slice(0, cap);
+    const N = aa.length, M = bb.length;
+    const dp: number[][] = Array.from({ length: N + 1 }, () => new Array(M + 1).fill(0));
+    for (let i = N - 1; i >= 0; i--)
+      for (let j = M - 1; j >= 0; j--)
+        dp[i][j] = aa[i] === bb[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    const expSeg: { t: string; s: "same" | "missing" }[] = [];
+    const liveSeg: { t: string; s: "same" | "extra" }[] = [];
+    let i = 0, j = 0;
+    while (i < N && j < M) {
+      if (aa[i] === bb[j]) { expSeg.push({ t: aa[i], s: "same" }); liveSeg.push({ t: bb[j], s: "same" }); i++; j++; }
+      else if (dp[i + 1][j] >= dp[i][j + 1]) { expSeg.push({ t: aa[i], s: "missing" }); i++; }
+      else { liveSeg.push({ t: bb[j], s: "extra" }); j++; }
+    }
+    while (i < N) { expSeg.push({ t: aa[i++], s: "missing" }); }
+    while (j < M) { liveSeg.push({ t: bb[j++], s: "extra" }); }
+    if (n > cap) expSeg.push({ t: ` …(+${n - cap} more)`, s: "same" });
+    if (m > cap) liveSeg.push({ t: ` …(+${m - cap} more)`, s: "same" });
+    return { expSeg, liveSeg };
+  };
+
+  const DiffText = ({ expected, live }: { expected: string; live: string }) => {
+    const { expSeg, liveSeg } = wordDiff(expected || "", live || "");
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="rounded border border-border bg-background/60 p-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">You pushed</p>
+          <p className="text-[11px] leading-relaxed break-words">
+            {expSeg.map((s, i) => (
+              <span key={i} className={s.s === "missing" ? "bg-amber-500/25 text-amber-800 dark:text-amber-200 rounded px-0.5" : ""}>{s.t}</span>
+            ))}
+            {!expected && <span className="italic text-muted-foreground">(empty)</span>}
+          </p>
+        </div>
+        <div className="rounded border border-border bg-background/60 p-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Live now</p>
+          <p className="text-[11px] leading-relaxed break-words">
+            {liveSeg.map((s, i) => (
+              <span key={i} className={s.s === "extra" ? "bg-sky-500/20 text-sky-800 dark:text-sky-200 rounded px-0.5" : ""}>{s.t}</span>
+            ))}
+            {!live && <span className="italic text-muted-foreground">(empty)</span>}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+
   const handleRollback = async () => {
     setRollingBack(true);
     try {
