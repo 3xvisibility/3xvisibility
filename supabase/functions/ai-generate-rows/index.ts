@@ -62,18 +62,27 @@ Deno.serve(async (req) => {
     const systemPrompt = `You generate realistic dataset rows for a programmatic SEO page generator.
 Each row must contain ONE value for every requested variable. Values must be:
 - Specific, realistic, locally relevant where possible
-- Distinct across rows (no duplicates)
+- DISTINCT ACROSS ROWS for EVERY field — no two rows may share the same value for the same field. This includes headings like hero_title / hero_subtitle / about_title / cta_title / services_title: rewrite each in a completely different phrasing, angle, wording, tone and structure per row.
+- Never copy the sample/default values verbatim — treat samples only as a length/style reference, then invent fresh wording.
 - Concise: match each template field's original word count; never expand descriptions
 - In the requested language
 - Plain text only (no markdown, no quotes, no escapes)
 ${budgetHints ? "\nTEMPLATE SAFE MODE — design integrity is more important than content length. Keep every title/description within the exact listed word and character budget. " + budgetHints + "\n" : ""}Return through the provided tool function, never as free text.`;
 
+    const sampleHint = body.defaultValues && Object.keys(body.defaultValues).length > 0
+      ? `\n\nReference sample values (DO NOT COPY — only use them to gauge tone and length; rewrite every field with fresh, distinct wording per row):\n${Object.entries(body.defaultValues).slice(0, 40).map(([k, v]) => `- ${k}: ${String(v).slice(0, 160)}`).join("\n")}`
+      : "";
+
     const userPrompt = `Generate ${count} unique rows.
 Variables (column names): ${variables.join(", ")}
 
 Context:
-${ctx || "(no extra context — be sensible)"}
+${ctx || "(no extra context — be sensible)"}${sampleHint}
 
+Diversity rules (STRICT):
+- For every field, all ${count} rows must have DIFFERENT values. No repeats, no near-duplicates.
+- Vary sentence openings, verbs, adjectives and structure between rows.
+- Do NOT echo the reference sample values — those are just style/length hints.
 Make every row meaningfully different so each generated page is unique.`;
 
     const tool = {
@@ -105,6 +114,7 @@ Make every row meaningfully different so each generated page is unique.`;
       authToken: extractAuthToken(req),
       promptType: "medium_content",
       model: "google/gemini-2.5-flash",
+      temperature: 0.95,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -112,6 +122,7 @@ Make every row meaningfully different so each generated page is unique.`;
       tools: [tool],
       tool_choice: { type: "function", function: { name: "emit_rows" } },
     });
+
 
     if (!result.success) {
       const statusCode = result.content.includes("429") ? 429 : result.content.includes("402") ? 402 : 500;
