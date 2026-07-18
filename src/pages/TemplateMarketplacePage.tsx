@@ -1116,6 +1116,112 @@ export default function TemplateMarketplacePage() {
         </DialogContent>
       </Dialog>
 
+      {/* Conversion details modal */}
+      <Dialog open={!!detailsCtx} onOpenChange={(v) => !v && setDetailsCtx(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  detailsCtx?.state === "ready"
+                    ? "bg-emerald-500"
+                    : detailsCtx?.state === "failed"
+                    ? "bg-rose-500"
+                    : "bg-amber-500"
+                }`}
+              />
+              {detailsCtx?.platform === "elementor"
+                ? "Elementor"
+                : detailsCtx?.platform === "shopify"
+                ? "Shopify"
+                : "HTML / CSS"}{" "}
+              conversion — {detailsCtx?.tpl.name}
+            </DialogTitle>
+          </DialogHeader>
+          {detailsCtx && (() => {
+            const conv = getConversionStatus(detailsCtx.tpl);
+            const stateLabel =
+              detailsCtx.state === "ready"
+                ? "Ready to publish"
+                : detailsCtx.state === "failed"
+                ? "Conversion failed"
+                : "Pending — converts on import";
+            const fmtDate = (iso: string | null) => {
+              if (!iso) return "—";
+              try {
+                return new Date(iso).toLocaleString();
+              } catch {
+                return iso;
+              }
+            };
+            const item: any = detailsItem;
+            return (
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-muted-foreground">State</div>
+                  <div className="col-span-2 font-medium">{stateLabel}</div>
+                  <div className="text-muted-foreground">Last conversion</div>
+                  <div className="col-span-2">{fmtDate(conv.updatedAt)}</div>
+                  {detailsCtx.platform !== "html" && (
+                    <>
+                      <div className="text-muted-foreground">Last attempt</div>
+                      <div className="col-span-2">
+                        {detailsLoading ? "Loading…" : item ? fmtDate(item.created_at) : "No attempt recorded"}
+                      </div>
+                      {item && (
+                        <>
+                          <div className="text-muted-foreground">Attempts</div>
+                          <div className="col-span-2">{item.attempts ?? 0}</div>
+                          <div className="text-muted-foreground">Result</div>
+                          <div className="col-span-2 capitalize">{item.status}</div>
+                          <div className="text-muted-foreground">Run ID</div>
+                          <div className="col-span-2 font-mono text-xs break-all">{item.run_id}</div>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+                {detailsCtx.platform !== "html" && item?.error && (
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+                      Error message
+                    </div>
+                    <pre className="text-xs bg-muted/50 border border-border rounded-md p-2 whitespace-pre-wrap break-words max-h-48 overflow-auto">
+                      {item.error}
+                    </pre>
+                  </div>
+                )}
+                {detailsCtx.platform === "html" && (
+                  <p className="text-muted-foreground text-xs">
+                    HTML / CSS ships the raw template markup with no conversion step, so it's ready
+                    whenever the template has content.
+                  </p>
+                )}
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => setDetailsCtx(null)}>
+                    Close
+                  </Button>
+                  {detailsCtx.platform !== "html" && (
+                    <Button
+                      onClick={() => {
+                        retryConversionMutation.mutate(detailsCtx.tpl);
+                      }}
+                      disabled={retryingId === detailsCtx.tpl.id}
+                    >
+                      {retryingId === detailsCtx.tpl.id ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Retrying…</>
+                      ) : (
+                        <><RefreshCw className="mr-2 h-4 w-4" /> Retry conversion</>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
       {activePreview && (
         <TemplateWordPressTestDialog
           open={wpTestOpen}
