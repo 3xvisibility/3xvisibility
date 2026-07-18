@@ -291,11 +291,24 @@ export function SeoOptimizeDialog({
         await verifyLive();
       }
     } catch (err: any) {
+      const message = err?.message || String(err);
+      setApplyError(message);
       handleApiError(err, { title: "Apply failed" });
     } finally {
       setApplying(false);
     }
   };
+
+  // Retry-aware wrapper for transient WordPress failures. Uses exponential
+  // backoff on the client too so we don't hammer a struggling host.
+  const retryApply = async () => {
+    const next = retryAttempt + 1;
+    setRetryAttempt(next);
+    const delay = Math.min(1000 * Math.pow(2, next - 1), 8000);
+    await new Promise((r) => setTimeout(r, delay));
+    await applyToSite();
+  };
+
 
   // Re-fetch the page from the connected site and compare it against the
   // values we just pushed, so the user can be sure the changes are live.
