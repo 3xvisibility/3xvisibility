@@ -2011,15 +2011,30 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             {canMergeLocations && " Location fields are merged into every row."}
                           </p>
                         </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-[11px] gap-1.5"
-                          onClick={() => {
-                            const tpl = templates.find((t) => t.id === selectedTemplate) as any;
-                            const includeTitle = !!tpl?.seo_title_pattern;
-                            const headers = includeTitle ? ["seo_title", ...baseCsvHeaders] : [...baseCsvHeaders];
+                        {(() => {
+                          const tpl = templates.find((t) => t.id === selectedTemplate) as any;
+                          const hasTitle = !!tpl?.seo_title_pattern;
+                          const allCols: { key: string; label: string; kind: "seo" | "data" }[] = [
+                            ...(hasTitle ? [{ key: "__seo_title__", label: "seo_title", kind: "seo" as const }] : []),
+                            ...baseCsvHeaders.map((h) => ({ key: h, label: h, kind: "data" as const })),
+                          ];
+                          const isIncluded = (k: string) => !csvExportExcluded.has(k);
+                          const includedCount = allCols.filter((c) => isIncluded(c.key)).length;
+                          const toggle = (k: string) => {
+                            setCsvExportExcluded((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(k)) next.delete(k); else next.add(k);
+                              return next;
+                            });
+                          };
+                          const selectAll = () => setCsvExportExcluded(new Set());
+                          const clearAll = () => setCsvExportExcluded(new Set(allCols.map((c) => c.key)));
+                          const doExport = () => {
+                            const included = allCols.filter((c) => isIncluded(c.key));
+                            if (included.length === 0) {
+                              toast({ title: "Select at least one column", variant: "destructive" as any });
+                              return;
+                            }
                             const escape = (val: unknown) => {
                               const s = val == null ? "" : String(val);
                               return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -2033,11 +2048,12 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                               }
                               return r.replace(/\{[^}]+\}/g, "").trim();
                             };
-                            const lines = [headers.map(escape).join(",")];
+                            const lines = [included.map((c) => escape(c.label)).join(",")];
                             for (const row of baseCsvData) {
-                              const cells: string[] = [];
-                              if (includeTitle) cells.push(escape(resolve(tpl.seo_title_pattern, row as Record<string, string>)));
-                              for (const h of baseCsvHeaders) cells.push(escape((row as Record<string, string>)[h] ?? ""));
+                              const cells = included.map((c) => {
+                                if (c.kind === "seo") return escape(resolve(tpl.seo_title_pattern, row as Record<string, string>));
+                                return escape((row as Record<string, string>)[c.key] ?? "");
+                              });
                               lines.push(cells.join(","));
                             }
                             const csv = "\uFEFF" + lines.join("\r\n");
@@ -2052,12 +2068,64 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             a.click();
                             document.body.removeChild(a);
                             URL.revokeObjectURL(url);
-                            toast({ title: "CSV exported", description: `${baseCsvData.length} row${baseCsvData.length !== 1 ? "s" : ""} downloaded.` });
-                          }}
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          Export CSV
-                        </Button>
+                            toast({ title: "CSV exported", description: `${baseCsvData.length} row${baseCsvData.length !== 1 ? "s" : ""} × ${included.length} column${included.length !== 1 ? "s" : ""}.` });
+                            setCsvExportOpen(false);
+                          };
+                          return (
+                            <Popover open={csvExportOpen} onOpenChange={setCsvExportOpen}>
+                              <PopoverTrigger asChild>
+                                <Button type="button" variant="outline" size="sm" className="h-7 text-[11px] gap-1.5">
+                                  <Download className="h-3.5 w-3.5" />
+                                  Export CSV
+                                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-[9px]">
+                                    {includedCount}/{allCols.length}
+                                  </Badge>
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent align="end" className="w-72 p-0">
+                                <div className="p-3 border-b border-border/50">
+                                  <p className="text-xs font-semibold">Choose columns</p>
+                                  <p className="text-[10px] text-muted-foreground">
+                                    {includedCount} of {allCols.length} selected
+                                  </p>
+                                  <div className="mt-2 flex gap-1">
+                                    <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={selectAll}>
+                                      Select all
+                                    </Button>
+                                    <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={clearAll}>
+                                      Clear
+                                    </Button>
+                                  </div>
+                                </div>
+                                <ScrollArea className="max-h-[240px]">
+                                  <div className="p-2 space-y-0.5">
+                                    {allCols.map((c) => (
+                                      <label
+                                        key={c.key}
+                                        className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/60 cursor-pointer text-[11px]"
+                                      >
+                                        <Checkbox
+                                          checked={isIncluded(c.key)}
+                                          onCheckedChange={() => toggle(c.key)}
+                                        />
+                                        <span className="font-mono truncate flex-1">{c.label}</span>
+                                        {c.kind === "seo" && (
+                                          <Badge variant="outline" className="text-[9px] h-4">resolved</Badge>
+                                        )}
+                                      </label>
+                                    ))}
+                                  </div>
+                                </ScrollArea>
+                                <div className="p-2 border-t border-border/50 flex justify-end">
+                                  <Button type="button" size="sm" className="h-7 text-[11px]" onClick={doExport} disabled={includedCount === 0}>
+                                    <Download className="h-3.5 w-3.5 mr-1.5" />
+                                    Download {baseCsvData.length} row{baseCsvData.length !== 1 ? "s" : ""}
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          );
+                        })()}
                       </div>
                       <ScrollArea className="max-h-[220px] rounded-lg border border-border/50">
                         <table className="w-full text-[11px]">
