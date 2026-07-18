@@ -50,17 +50,49 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
       return data as { inserted?: number; skipped_duplicates?: number };
     },
     onSuccess: (data) => {
+      setSeedProgress(100);
+      setSeedStage("Complete");
+      setSeedResult({ inserted: data?.inserted ?? 0, skipped: data?.skipped_duplicates ?? 0 });
       toast({
         title: "Location database updated",
         description: `Added ${data?.inserted ?? 0} cities${data?.skipped_duplicates ? ` (skipped ${data.skipped_duplicates} duplicates)` : ""}.`,
       });
       queryClient.invalidateQueries({ queryKey: ["locations-db"] });
       queryClient.invalidateQueries({ queryKey: ["locations-db-meta"] });
+      setTimeout(() => { setSeedProgress(0); setSeedStage(""); setSeedResult(null); }, 3500);
     },
     onError: (err: Error) => {
+      setSeedProgress(0);
+      setSeedStage("");
       toast({ title: "Loading failed", description: err.message, variant: "destructive" });
     },
   });
+
+  // Simulated progress + elapsed timer while seeding (AI call, no server events).
+  useEffect(() => {
+    if (!seedMutation.isPending) return;
+    setSeedProgress(5);
+    setSeedElapsed(0);
+    setSeedResult(null);
+    const start = Date.now();
+    const stages = [
+      { at: 0, label: "Preparing request…" },
+      { at: 2, label: "Asking AI for cities…" },
+      { at: 8, label: "Generating city data…" },
+      { at: 18, label: "Deduplicating & saving…" },
+      { at: 30, label: "Finalizing…" },
+    ];
+    const tick = setInterval(() => {
+      const elapsed = (Date.now() - start) / 1000;
+      setSeedElapsed(elapsed);
+      // Asymptotic curve toward 92% over ~35s
+      const pct = Math.min(92, 5 + (1 - Math.exp(-elapsed / 12)) * 87);
+      setSeedProgress(pct);
+      const active = [...stages].reverse().find(s => elapsed >= s.at);
+      if (active) setSeedStage(active.label);
+    }, 300);
+    return () => clearInterval(tick);
+  }, [seedMutation.isPending]);
 
   const { data: locations = [], isLoading, refetch } = useQuery({
     queryKey: ["locations-db", countryFilter, stateFilter, regionFilter],
