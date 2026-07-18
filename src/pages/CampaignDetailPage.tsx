@@ -49,8 +49,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from 
 import {
   ArrowLeft, Play, Pause, RotateCcw, ExternalLink, Eye, AlertTriangle,
   Check, Clock, XCircle, FileText, Layers, RefreshCw, Download, ScrollText, SkipForward, Send,
-  Settings, FolderTree, Image, MapPin, BookOpen, Star, Users, CalendarClock, Code,
+  Settings, FolderTree, Image, MapPin, BookOpen, Star, Users, CalendarClock, Code, ShieldCheck,
 } from "lucide-react";
+import { VerificationHistoryDialog } from "@/components/website-content/VerificationHistoryDialog";
 import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv, exportErrorsCsv, exportDataFile } from "@/lib/export-csv";
 import { ShopifyFieldMappingEditor } from "@/components/websites/ShopifyFieldMappingEditor";
 
@@ -97,6 +98,7 @@ export default function CampaignDetailPage() {
   const [pendingPublishPageId, setPendingPublishPageId] = useState<string | null>(null);
   const [pendingBulkPublishIds, setPendingBulkPublishIds] = useState<string[]>([]);
   const [previewPage, setPreviewPage] = useState<any>(null);
+  const [verifyHistoryOpen, setVerifyHistoryOpen] = useState(false);
   const [overwriteFields, setOverwriteFields] = useState({
     title: true,
     content: true,
@@ -955,6 +957,9 @@ export default function CampaignDetailPage() {
                   <Button size="sm" variant="outline" onClick={() => exportDataFile(pages.map(p => ({ Title: p.title, Slug: p.slug, Status: p.status, URL: p.external_url || "", Error: p.error_message || "" })), "xlsx", `${campaign?.name || "pages"}-export`)}>
                     <Download className="h-3.5 w-3.5 mr-1.5" /> Excel
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => setVerifyHistoryOpen(true)}>
+                    <ShieldCheck className="h-3.5 w-3.5 mr-1.5" /> Verifications
+                  </Button>
                 </div>
               </div>
               <Card className="border-0 shadow-surface">
@@ -1736,6 +1741,13 @@ export default function CampaignDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <VerificationHistoryDialog
+        open={verifyHistoryOpen}
+        onOpenChange={setVerifyHistoryOpen}
+        workspaceId={wsId}
+        title={`SEO Apply — Verifications for ${campaign?.name || "campaign"}`}
+      />
     </div>
   );
 }

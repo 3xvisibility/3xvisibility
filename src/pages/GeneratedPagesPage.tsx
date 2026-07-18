@@ -21,6 +21,7 @@ import BulkBoxSettingsDialog from "@/components/settings/BulkBoxSettingsDialog";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
 import { RepublishDiffDialog, type RepublishSnapshot } from "@/components/generated-pages/RepublishDiffDialog";
+import { VerificationHistoryDialog } from "@/components/website-content/VerificationHistoryDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
@@ -94,6 +95,7 @@ export default function GeneratedPagesPage() {
   // Before/after republish diff: snapshots captured at trigger time, keyed by page id.
   const republishSnapshotsRef = useRef<Record<string, RepublishSnapshot>>({});
   const [diffState, setDiffState] = useState<{ before: RepublishSnapshot; after: RepublishSnapshot } | null>(null);
+  const [verifyHistoryOpen, setVerifyHistoryOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -847,6 +849,9 @@ export default function GeneratedPagesPage() {
               {t("generatedPages.retryQueued", { count: retryableQueuedPages.length })}
             </Button>
           )}
+          <Button variant="outline" size="sm" onClick={() => setVerifyHistoryOpen(true)}>
+            <ShieldCheck className="h-3.5 w-3.5 mr-1.5" /> Verifications
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm"><Download className="h-3.5 w-3.5 mr-1.5" /> Export</Button>
@@ -1604,6 +1609,15 @@ export default function GeneratedPagesPage() {
         before={diffState?.before}
         after={diffState?.after}
       />
+
+      <VerificationHistoryDialog
+        open={verifyHistoryOpen}
+        onOpenChange={setVerifyHistoryOpen}
+        workspaceId={wsId}
+        title="SEO Apply — Verifications for Generated Pages"
+      />
+
+
 
       <BulkBoxSettingsDialog
         open={bulkWidthOpen}
