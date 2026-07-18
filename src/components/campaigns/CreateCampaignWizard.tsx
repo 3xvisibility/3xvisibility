@@ -2128,10 +2128,35 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                               .replace(/[^a-z0-9]+/g, "-")
                               .replace(/^-+|-+$/g, "")
                               .replace(/-{2,}/g, "-");
+                          // Row subset: first-N and per-location filtering
+                          const locFilterKey = mergedLocations.length > 0
+                            ? (mergedLocations[0].city ? "city" : mergedLocations[0].country ? "country" : "")
+                            : "";
+                          const locFilterValues = locFilterKey
+                            ? Array.from(new Set(mergedLocations.map((l) => (l[locFilterKey] || "").trim()).filter(Boolean)))
+                            : [];
+                          const activeLocFilter = new Set(
+                            Array.from(csvExportLocFilter).filter((v) => locFilterValues.includes(v))
+                          );
+                          const filteredRows = (() => {
+                            let rows = baseCsvData as Record<string, string>[];
+                            if (locFilterKey && activeLocFilter.size > 0) {
+                              rows = rows.filter((r) => activeLocFilter.has((r[locFilterKey] || "").trim()));
+                            }
+                            if (csvExportRowMode === "first") {
+                              const n = Math.max(1, Math.min(csvExportRowLimit || 1, rows.length));
+                              rows = rows.slice(0, n);
+                            }
+                            return rows;
+                          })();
                           const doExport = (format: "csv" | "json" = "csv") => {
                             const included = allCols.filter((c) => isIncluded(c.key));
                             if (included.length === 0) {
                               toast({ title: "Select at least one column", variant: "destructive" as any });
+                              return;
+                            }
+                            if (filteredRows.length === 0) {
+                              toast({ title: "No rows match the current filter", variant: "destructive" as any });
                               return;
                             }
                             const escape = (val: unknown) => {
@@ -2157,9 +2182,9 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             let blob: Blob;
                             let filename: string;
                             if (format === "json") {
-                              const rows = baseCsvData.map((row) => {
+                              const rows = filteredRows.map((row) => {
                                 const obj: Record<string, string> = {};
-                                for (const c of included) obj[c.label] = String(cellFor(c, row as Record<string, string>));
+                                for (const c of included) obj[c.label] = String(cellFor(c, row));
                                 return obj;
                               });
                               const payload = {
@@ -2167,6 +2192,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                 campaign: campaignName || null,
                                 template_id: selectedTemplate || null,
                                 row_count: rows.length,
+                                total_available: baseCsvData.length,
+                                filters: {
+                                  row_mode: csvExportRowMode,
+                                  row_limit: csvExportRowMode === "first" ? csvExportRowLimit : null,
+                                  location_key: locFilterKey || null,
+                                  locations: activeLocFilter.size > 0 ? Array.from(activeLocFilter) : null,
+                                },
                                 columns: included.map((c) => ({ name: c.label, kind: c.kind })),
                                 rows,
                               };
@@ -2174,8 +2206,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                               filename = `${slug}-merged-${stamp}.json`;
                             } else {
                               const lines = [included.map((c) => escape(c.label)).join(",")];
-                              for (const row of baseCsvData) {
-                                lines.push(included.map((c) => escape(cellFor(c, row as Record<string, string>))).join(","));
+                              for (const row of filteredRows) {
+                                lines.push(included.map((c) => escape(cellFor(c, row))).join(","));
                               }
                               const csv = "\uFEFF" + lines.join("\r\n");
                               blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -2189,7 +2221,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             a.click();
                             document.body.removeChild(a);
                             URL.revokeObjectURL(url);
-                            toast({ title: `${format.toUpperCase()} exported`, description: `${baseCsvData.length} row${baseCsvData.length !== 1 ? "s" : ""} × ${included.length} column${included.length !== 1 ? "s" : ""}.` });
+                            toast({ title: `${format.toUpperCase()} exported`, description: `${filteredRows.length} of ${baseCsvData.length} row${baseCsvData.length !== 1 ? "s" : ""} × ${included.length} column${included.length !== 1 ? "s" : ""}.` });
                             setCsvExportOpen(false);
                           };
                           return (
