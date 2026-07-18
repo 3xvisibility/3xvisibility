@@ -82,6 +82,8 @@ function getActionDetails(log: AuditLog): string {
       return d.title || d.slug || "";
     case "pages_bulk_published":
       return d.count ? `${d.count} pages` : "";
+    case "force_republish":
+      return (d.page_url as string) || (d.page_title as string) || (d.page_slug as string) || "";
     case "plan_changed":
       return d.from && d.to ? `${d.from} → ${d.to}` : d.plan || "";
     case "subscription_updated":
