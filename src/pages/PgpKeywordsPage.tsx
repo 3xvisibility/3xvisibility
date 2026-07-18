@@ -347,6 +347,8 @@ export default function PgpKeywordsPage() {
         sourceConfig.websiteId = webSiteId;
       } else if (kwSource === "url_scan") {
         sourceConfig.url = scanUrl;
+      } else if (kwSource === "template") {
+        sourceConfig.templateId = tmplId;
       }
       const folderValue = newFolderName.trim() || (kwFolder && kwFolder !== "__new__" && kwFolder !== "__none__" ? kwFolder : null);
       const payload = { name: cleanName, folder: folderValue, source: kwSource, terms: termsArray, delimiter: kwDelimiter || null, columns: columnsArray, term_count: termsArray.length, source_config: sourceConfig, workspace_id: wsId, user_id: user.id };
