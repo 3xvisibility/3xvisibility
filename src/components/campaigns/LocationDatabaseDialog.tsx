@@ -719,9 +719,58 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
               </div>
             </div>
 
+            {isError && errorMessage && (
+              <div
+                className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 space-y-2 animate-in fade-in slide-in-from-top-1"
+                role="alert"
+                aria-live="assertive"
+              >
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold text-destructive">
+                      Couldn't load locations
+                      {failureCount > 1 && (
+                        <span className="ml-1.5 font-normal text-muted-foreground">
+                          · retried {failureCount}×
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{errorMessage.hint}</p>
+                    <details className="mt-1.5">
+                      <summary className="text-[10px] text-muted-foreground cursor-pointer hover:text-foreground">
+                        Technical details
+                      </summary>
+                      <pre className="mt-1 text-[10px] font-mono whitespace-pre-wrap break-all rounded bg-muted/50 p-2 text-muted-foreground">
+                        {errorMessage.raw}
+                      </pre>
+                    </details>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 rounded-lg gap-1.5 text-xs shrink-0"
+                    disabled={isFetching}
+                    onClick={() => {
+                      toast({ title: "Retrying…", description: `Attempt ${failureCount + 1}` });
+                      refetch();
+                    }}
+                  >
+                    <RefreshCw className={cn("h-3 w-3", isFetching && "animate-spin")} />
+                    Retry
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {isLoading ? (
-              <div className="flex items-center justify-center py-8">
+              <div className="flex flex-col items-center justify-center py-8 gap-2">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                {retryAttempt > 1 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    Retry attempt {retryAttempt}…
+                  </span>
+                )}
               </div>
             ) : (
               <ScrollArea className="flex-1 min-h-0 max-h-[300px] rounded-xl border border-border">
