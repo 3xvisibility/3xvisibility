@@ -583,6 +583,19 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     },
   });
 
+  // Load keyword groups for auto-mapping template variables → keyword terms.
+  const { data: keywordGroups = [] } = useQuery({
+    queryKey: ["pgp-keyword-groups-wizard", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("pgp_keywords")
+        .select("name, terms")
+        .eq("workspace_id", wsId!);
+      return (data ?? []) as { name: string; terms: string[] | null }[];
+    },
+  });
+
   // Auto-suggest publish target: Shopify sites & ecommerce campaigns default
   // to "product"; non-ecommerce sites default to "page". Skipped once the
   // user explicitly toggles the radio (tracked via publishAsTouchedRef).
@@ -906,9 +919,68 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       hasSample: Object.keys(sampleRow).length > 0,
     };
   }, [templates, selectedTemplate, baseCsvData, customValues]);
-  const { effectiveCsvData, effectiveCsvHeaders } = useMemo(() => {
-    return { effectiveCsvData: baseCsvData, effectiveCsvHeaders: baseCsvHeaders };
-  }, [baseCsvData, baseCsvHeaders]);
+  // Auto-map template variables → keyword-group terms (or smart fallback) so
+  // unmapped {variables} still get real values instead of blocking generation.
+  // - Case/underscore/plural-insensitive match of variable name against keyword group names.
+  // - Terms cycle by row index for diversity.
+  // - Variables with no keyword group and no other source get a smart fallback
+  //   derived from business/niche/service or a humanized version of the variable.
+  const { effectiveCsvData, effectiveCsvHeaders, autoMappedInfo } = useMemo(() => {
+    const rows = baseCsvData;
+    const headers = [...baseCsvHeaders];
+    const normalize = (s: string) => (s || "").toLowerCase().replace(/[\s_\-]+/g, "").replace(/s$/, "");
+    const findGroup = (varName: string) => {
+      const nv = normalize(varName);
+      return keywordGroups.find(g => normalize(g.name) === nv)
+        || keywordGroups.find(g => {
+          const ng = normalize(g.name);
+          return ng && (ng.includes(nv) || nv.includes(ng));
+        });
+    };
+    const humanize = (v: string) =>
+      v.replace(/[_\-]+/g, " ").replace(/\b\w/g, c => c.toUpperCase()).trim();
+    const smartFallback = (v: string): string => {
+      const nv = v.toLowerCase();
+      if (/(business|brand|company|store)/.test(nv) && aiBusiness) return aiBusiness;
+      if (/(niche|industry|category)/.test(nv) && aiNiche) return aiNiche;
+      if (/(service|product|offer)/.test(nv) && aiServiceProduct) return aiServiceProduct;
+      return humanize(v);
+    };
+
+    const fromKeywords: string[] = [];
+    const fromFallback: string[] = [];
+    const augmented = rows.map(r => ({ ...r }));
+
+    for (const v of selectedTemplateVars) {
+      if (headers.includes(v)) continue;
+      if (manualMappings[v] || customValues[v]) continue;
+      const hLower = headers.map(h => h.toLowerCase());
+      if (hLower.includes(v.toLowerCase())) continue;
+
+      const group = findGroup(v);
+      const terms = (group?.terms ?? []).filter(t => typeof t === "string" && t.trim().length > 0);
+      if (terms.length > 0) {
+        for (let i = 0; i < augmented.length; i++) {
+          augmented[i][v] = terms[i % terms.length];
+        }
+        headers.push(v);
+        fromKeywords.push(v);
+      } else if (augmented.length > 0) {
+        const fb = smartFallback(v);
+        for (let i = 0; i < augmented.length; i++) {
+          augmented[i][v] = fb;
+        }
+        headers.push(v);
+        fromFallback.push(v);
+      }
+    }
+
+    return {
+      effectiveCsvData: augmented,
+      effectiveCsvHeaders: headers,
+      autoMappedInfo: { fromKeywords, fromFallback },
+    };
+  }, [baseCsvData, baseCsvHeaders, selectedTemplateVars, manualMappings, customValues, keywordGroups, aiBusiness, aiNiche, aiServiceProduct]);
 
   // Auto-clear FAQ pairs whenever the underlying CSV/data-source signature changes,
   // so users don't accidentally carry mappings from a previous CSV into a new upload.
@@ -3402,6 +3474,34 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           </div>
                         </div>
                       )}
+
+                      {(autoMappedInfo.fromKeywords.length > 0 || autoMappedInfo.fromFallback.length > 0) && (
+                        <div className="rounded-xl border border-primary/30 bg-primary/[0.04] p-3 flex items-start gap-2.5">
+                          <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <p className="text-xs font-semibold text-primary">
+                              Auto-mapped {autoMappedInfo.fromKeywords.length + autoMappedInfo.fromFallback.length} variable{(autoMappedInfo.fromKeywords.length + autoMappedInfo.fromFallback.length) !== 1 ? "s" : ""}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground leading-snug">
+                              Template &#123;variables&#125; matched with your Keywords Library — terms rotate per row so every page gets a different value.
+                              Missing groups fall back to a smart default so nothing renders as a raw placeholder.
+                            </p>
+                            <div className="flex flex-wrap gap-1 pt-0.5">
+                              {autoMappedInfo.fromKeywords.map(v => (
+                                <code key={`kw-${v}`} className="font-mono text-[10.5px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/25">
+                                  {`{${v}}`} · keywords
+                                </code>
+                              ))}
+                              {autoMappedInfo.fromFallback.map(v => (
+                                <code key={`fb-${v}`} className="font-mono text-[10.5px] bg-amber-500/10 text-amber-600 px-1.5 py-0.5 rounded border border-amber-500/25">
+                                  {`{${v}}`} · fallback
+                                </code>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
 
                       <VariableSourcesPanel
                         dataSource={dataSource as "csv" | "ai" | "website" | "locations"}
