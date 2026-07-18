@@ -104,15 +104,20 @@ export default function TemplateMarketplacePage() {
   const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
   const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const [contentOverrides, setContentOverrides] = useState<Record<string, string>>({});
-  // Top-level platform split: users first choose Elementor (WordPress) or Shopify,
-  // then browse that platform's templates by category. Every template is offered
-  // for both platforms and is re-skinned to match the chosen platform's look.
-  const [platformChoice, setPlatformChoice] = useState<"elementor" | "shopify">("elementor");
-  const skinPlatform: TemplatePlatform = platformChoice === "shopify" ? "shopify" : "wordpress";
+  // Top-level format split: Elementor (WordPress), Shopify, or raw HTML/CSS.
+  // Every marketplace template is available in all three formats — Elementor and
+  // Shopify variants are re-skinned to match the target platform, while HTML/CSS
+  // returns the raw template markup so the client can grab whichever chunk they
+  // need for their own stack.
+  const [platformChoice, setPlatformChoice] = useState<"elementor" | "shopify" | "html">("elementor");
+  const skinPlatform: TemplatePlatform =
+    platformChoice === "shopify" ? "shopify" : platformChoice === "html" ? "generic" : "wordpress";
   const convertForPlatform = (content: string) =>
-    reskinContent(content, skinPlatform, defaultSkinVariant(skinPlatform));
+    reskinContent(content, skinPlatform, skinPlatform === "generic" ? undefined : defaultSkinVariant(skinPlatform));
   const resolveFormat = (_tpl: MarketplaceTemplate): TemplateFormat =>
-    platformChoice === "shopify" ? "shopify" : "elementor";
+    platformChoice === "shopify" ? "shopify" : platformChoice === "html" ? "gutenberg" : "elementor";
+  const formatLabel =
+    platformChoice === "shopify" ? "Shopify" : platformChoice === "html" ? "HTML / CSS" : "Elementor";
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
@@ -384,11 +389,14 @@ export default function TemplateMarketplacePage() {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
       toast({ title: "Template imported!", description: `"${tpl.name}" added to your templates.` });
       setPreviewTemplate(null);
-      // Elementor (WordPress) templates are converted to native Elementor widget
-      // JSON up front so publishing renders 1:1 native widgets/CSS. Shopify uses
-      // its own theme-adapter strategy at publish time, so no JSON seeding there.
-      if (platformChoice === "elementor") {
-        void supabase.functions.invoke("backfill-elementor-catalog", { body: {} }).catch(() => {});
+      // Elementor (WordPress) and Shopify templates are pre-converted server-side
+      // into native Elementor widget JSON + Shopify section Liquid so publishing
+      // renders 1:1 without any HTML-to-widget conversion at publish time. The
+      // backfill endpoint writes BOTH kits for every template in one pass, so we
+      // trigger it whenever the user imports an Elementor or Shopify variant.
+      // HTML/CSS imports skip this (raw markup is used as-is).
+      if (platformChoice === "elementor" || platformChoice === "shopify") {
+        void supabase.functions.invoke("backfill-elementor-catalog", { body: { force: true } }).catch(() => {});
       }
     },
     onError: (err: Error) => {
@@ -493,12 +501,13 @@ export default function TemplateMarketplacePage() {
           Elementor (WordPress) and Shopify and is re-skinned to match. */}
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-2">
-          {t("marketplace.choosePlatform") || "Choose your platform"}
+          {t("marketplace.choosePlatform") || "Choose your format"}
         </p>
-        <div className="grid grid-cols-2 gap-3 max-w-md">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl">
           {([
-            { id: "elementor" as const, label: "Elementor", desc: "WordPress / Elementor pages", icon: FileText },
-            { id: "shopify" as const, label: "Shopify", desc: "Shopify storefront pages", icon: ShoppingBag },
+            { id: "elementor" as const, label: "Elementor", desc: "WordPress / Elementor JSON", icon: FileText },
+            { id: "shopify" as const, label: "Shopify", desc: "Shopify section / Liquid", icon: ShoppingBag },
+            { id: "html" as const, label: "HTML / CSS", desc: "Raw HTML + CSS markup", icon: Code },
           ]).map((p) => {
             const active = platformChoice === p.id;
             return (
@@ -595,7 +604,7 @@ export default function TemplateMarketplacePage() {
 
               <div className="mt-3 pt-3 border-t border-border flex items-center gap-1.5">
                 <Badge variant="secondary" className="text-[10px]">
-                  {resolveFormat(tpl) === "shopify" ? "Shopify" : "Elementor"}
+                  {formatLabel}
                 </Badge>
                 <span className="text-[10px] text-muted-foreground">ready</span>
               </div>
@@ -894,7 +903,7 @@ export default function TemplateMarketplacePage() {
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-medium">Publish format</span>
                     <Badge variant="secondary" className="w-fit">
-                      {resolveFormat(previewTemplate) === "shopify" ? "Shopify" : "Elementor"}
+                      {formatLabel}
                     </Badge>
                   </div>
                 </div>
