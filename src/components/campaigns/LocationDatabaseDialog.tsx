@@ -121,7 +121,9 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     setCacheStats((s) => ({ ...s, entries, rows }));
   };
 
-  const { data: locations = [], isLoading, isFetching, dataUpdatedAt, refetch } = useQuery({
+  const [retryAttempt, setRetryAttempt] = useState(0);
+
+  const { data: locations = [], isLoading, isFetching, dataUpdatedAt, refetch, error, isError, failureCount } = useQuery({
     queryKey: ["locations-db", countryFilter, stateFilter, regionFilter],
     enabled: open,
     // Cache filter results so switching back is instant, and keep prior rows
@@ -130,8 +132,12 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     gcTime: 30 * 60 * 1000,
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
+    // Auto-retry up to 3 times with exponential backoff (1s, 2s, 4s, capped at 8s).
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
     queryFn: async () => {
       setCacheStats((s) => ({ ...s, misses: s.misses + 1 }));
+      setRetryAttempt((n) => n + 1);
       let query = supabase
         .from("locations")
         .select("*")
@@ -143,11 +149,38 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
       if (regionFilter !== "all") query = query.eq("region", regionFilter);
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        const enriched = new Error(
+          `[${error.code ?? "db_error"}] ${error.message}${error.hint ? ` — ${error.hint}` : ""}${error.details ? ` (${error.details})` : ""}`,
+        );
+        (enriched as any).cause = error;
+        throw enriched;
+      }
       queueMicrotask(recomputeCacheSize);
       return data || [];
     },
   });
+
+  const errorMessage = useMemo(() => {
+    if (!error) return null;
+    const raw = error instanceof Error ? error.message : String(error);
+    // Best-effort friendly hint mapping for common failure classes.
+    const lower = raw.toLowerCase();
+    let hint = "Try again in a moment.";
+    if (lower.includes("failed to fetch") || lower.includes("network")) {
+      hint = "You appear to be offline — check your internet connection.";
+    } else if (lower.includes("jwt") || lower.includes("auth") || lower.includes("401")) {
+      hint = "Your session may have expired — reload the page to sign in again.";
+    } else if (lower.includes("permission") || lower.includes("rls") || lower.includes("403")) {
+      hint = "You don't have access to this workspace's locations.";
+    } else if (lower.includes("timeout") || lower.includes("timed out")) {
+      hint = "The database took too long to respond. Try a narrower filter.";
+    } else if (lower.includes("rate") || lower.includes("429")) {
+      hint = "Too many requests — wait a few seconds before retrying.";
+    }
+    return { raw, hint };
+  }, [error]);
+
 
   // Detect cache hits when filters change: if fresh data is already in cache
   // for the new key, queryFn won't fire — count it as a hit.
