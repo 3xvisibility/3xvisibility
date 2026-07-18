@@ -27,6 +27,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+
 import { supabase } from "@/integrations/supabase/client";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
 
