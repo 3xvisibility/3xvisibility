@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import {
   History, UserPlus, Shield, Pencil, Trash2, Clock, Loader2, Filter,
-  Globe, Rocket, FileText, CreditCard, Download, CalendarIcon, Search, X,
+  Globe, Rocket, FileText, CreditCard, Download, CalendarIcon, Search, X, RefreshCw,
 } from "lucide-react";
 import { formatDistanceToNow, format, startOfDay, endOfDay } from "date-fns";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -47,6 +47,7 @@ const actionConfig: Record<string, { icon: React.ReactNode; labelKey: string; co
   page_published:    { icon: <FileText className="h-3.5 w-3.5" />, labelKey: "audit.action.pagePublished",     color: "bg-success/10 text-success" },
   page_deleted:      { icon: <Trash2 className="h-3.5 w-3.5" />,   labelKey: "audit.action.pageDeleted",       color: "bg-destructive/10 text-destructive" },
   pages_bulk_published: { icon: <FileText className="h-3.5 w-3.5" />, labelKey: "audit.action.bulkPublish",    color: "bg-success/10 text-success" },
+  force_republish:   { icon: <RefreshCw className="h-3.5 w-3.5" />, labelKey: "audit.action.forceRepublish",  color: "bg-warning/10 text-warning" },
   // Plan / billing
   plan_changed:      { icon: <CreditCard className="h-3.5 w-3.5" />, labelKey: "audit.action.planChanged",     color: "bg-warning/10 text-warning" },
   subscription_updated: { icon: <CreditCard className="h-3.5 w-3.5" />, labelKey: "audit.action.subscriptionUpdated", color: "bg-primary/10 text-primary" },
@@ -81,6 +82,8 @@ function getActionDetails(log: AuditLog): string {
       return d.title || d.slug || "";
     case "pages_bulk_published":
       return d.count ? `${d.count} pages` : "";
+    case "force_republish":
+      return (d.page_url as string) || (d.page_title as string) || (d.page_slug as string) || "";
     case "plan_changed":
       return d.from && d.to ? `${d.from} → ${d.to}` : d.plan || "";
     case "subscription_updated":

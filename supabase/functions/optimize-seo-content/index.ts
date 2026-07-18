@@ -301,6 +301,58 @@ async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.n
       });
     }
 
+    // Audit trail: log every Force republish so admins can trace who forced a
+    // republish, when, to which page, and with what flags. Fire-and-forget —
+    // failure here must never block the actual publish flow.
+    if (forceRepublish) {
+      (async () => {
+        try {
+          let wsId: string | null = workspace_id || null;
+          if (!wsId) {
+            const { data: ws } = await supabase
+              .from("websites")
+              .select("workspace_id")
+              .eq("id", website_id)
+              .maybeSingle();
+            wsId = ws?.workspace_id ?? null;
+          }
+          if (!wsId) return;
+          const ip =
+            req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+            req.headers.get("cf-connecting-ip") ||
+            null;
+          await supabase.from("audit_logs").insert({
+            workspace_id: wsId,
+            user_id: user.id,
+            action: "force_republish",
+            entity_type: page_type === "product" ? "product" : "page",
+            entity_id: page_external_id ? String(page_external_id) : null,
+            ip_address: ip,
+            details: {
+              website_id,
+              page_url: page_url || null,
+              page_slug: page_slug || null,
+              page_title: page_title || null,
+              page_type: page_type || "page",
+              flags: {
+                force_republish: true,
+                overwrite_design: overwrite_design === true,
+                manual_update: manual_update === true,
+                update_template: update_template === true,
+                skip_push: skip_push === true,
+                has_manual_content: !!manual_content,
+              },
+              optimize_fields: Array.isArray(optimize_fields) ? optimize_fields : null,
+              language: language || null,
+            },
+          });
+        } catch (logErr) {
+          console.error("[AUDIT] force_republish log failed:", logErr);
+        }
+      })();
+    }
+
+
     // ── Manual update mode: skip AI, just push edited content to CMS ──
     if (manual_update) {
       const { data: website } = await supabase
