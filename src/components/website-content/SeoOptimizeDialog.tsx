@@ -96,6 +96,10 @@ export function SeoOptimizeDialog({
   const [applyError, setApplyError] = useState<string | null>(null);
   const [retryAttempt, setRetryAttempt] = useState(0);
   const [verifying, setVerifying] = useState(false);
+  const [verifyAttempt, setVerifyAttempt] = useState(0);
+  const VERIFY_MAX_ATTEMPTS = 5;
+  const VERIFY_DELAYS_MS = [1500, 4000, 8000, 15000, 30000];
+
   const [verification, setVerification] = useState<{
     ok: boolean;
     fetchedAt: string;
@@ -328,105 +332,129 @@ export function SeoOptimizeDialog({
   };
 
 
-  // Re-fetch the page from the connected site and compare it against the
-  // values we just pushed, so the user can be sure the changes are live.
-  const verifyLive = async () => {
-    setVerifying(true);
-    setVerification(null);
-    try {
-      const contentType = page.type === "product" ? "products" : "pages";
-      // Small delay so the CMS has a moment to flush caches before re-reading.
-      await new Promise((r) => setTimeout(r, 1500));
-      const { data, error } = await supabase.functions.invoke("fetch-site-content", {
-        body: { website_id: websiteId, content_type: contentType },
-      });
-      if (error) throw new Error(await extractEdgeError(error, "Verification failed"));
-      if (data?.error && !data.items?.length) throw new Error(data.error);
+  // Perform a single verification pass. Returns whether all monitored
+  // fields matched, plus the verification snapshot that was stored to state.
+  const runVerifyOnce = async (): Promise<{ ok: boolean; found: boolean; error?: string }> => {
+    const contentType = page.type === "product" ? "products" : "pages";
+    const { data, error } = await supabase.functions.invoke("fetch-site-content", {
+      body: { website_id: websiteId, content_type: contentType },
+    });
+    if (error) throw new Error(await extractEdgeError(error, "Verification failed"));
+    if (data?.error && !data.items?.length) throw new Error(data.error);
 
-      const items: any[] = Array.isArray(data?.items) ? data.items : [];
-      const fresh =
-        items.find((i) => String(i.id) === String(page.id)) ||
-        items.find((i) => i.slug && i.slug === page.slug) ||
-        items.find((i) => i.url && page.url && i.url === page.url);
+    const items: any[] = Array.isArray(data?.items) ? data.items : [];
+    const fresh =
+      items.find((i) => String(i.id) === String(page.id)) ||
+      items.find((i) => i.slug && i.slug === page.slug) ||
+      items.find((i) => i.url && page.url && i.url === page.url);
 
-      if (!fresh) {
-        setVerification({
-          ok: false,
-          fetchedAt: new Date().toISOString(),
-          live: { title: "", contentText: "" },
-          matches: { title: false, content: false, seoTitle: false, seoDescription: false },
-          error: "Could not find this page on the live site after refresh.",
-        });
-        return;
-      }
-
-      const liveTitle = String(fresh.title || "");
-      const liveContentText = htmlToText(fresh.content || "");
-      const liveSeoTitle: string | null | undefined = fresh.seo_title;
-      const liveSeoDesc: string | null | undefined = fresh.seo_description;
-
-      const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
-      const contains = (hay: string, needle: string) => {
-        if (!needle) return true;
-        const h = norm(hay);
-        const n = norm(needle);
-        if (!n) return true;
-        // For long bodies, look for a healthy chunk of the pushed text.
-        const probe = n.length > 120 ? n.slice(0, 120) : n;
-        return h.includes(probe);
-      };
-
-      const expectedContentText = htmlToText(result?.content || page.content);
-      const matches = {
-        title: contains(liveTitle, page.title),
-        content: contains(liveContentText, expectedContentText),
-        seoTitle: result?.seo_title ? contains(String(liveSeoTitle || ""), result.seo_title) : true,
-        seoDescription: result?.seo_description ? contains(String(liveSeoDesc || ""), result.seo_description) : true,
-      };
-      const ok = matches.title && matches.content && matches.seoTitle && matches.seoDescription;
-
-      setVerification({
-        ok,
-        fetchedAt: new Date().toISOString(),
-        live: { title: liveTitle, contentText: liveContentText, seoTitle: liveSeoTitle, seoDescription: liveSeoDesc },
-        matches,
-      });
-
-      const liveUrl = result?.external_url || page.url;
-      const confirmed = [
-        matches.title && "title",
-        matches.content && "content",
-        matches.seoTitle && "SEO title",
-        matches.seoDescription && "meta description",
-      ].filter(Boolean) as string[];
-
-      toast({
-        title: ok ? "✓ Verified on live site" : "Live page differs",
-        description: ok
-          ? `Confirmed updated: ${confirmed.join(", ")}${liveUrl ? ` — ${liveUrl}` : ""}`
-          : "We refetched the page but some fields don't match yet — the CMS may still be caching.",
-        variant: ok ? undefined : "destructive",
-        action: liveUrl
-          ? (
-              <ToastAction altText="Open live page" onClick={() => window.open(liveUrl, "_blank", "noopener,noreferrer")}>
-                Open page
-              </ToastAction>
-            )
-          : undefined,
-      });
-
-    } catch (err: any) {
+    if (!fresh) {
       setVerification({
         ok: false,
         fetchedAt: new Date().toISOString(),
         live: { title: "", contentText: "" },
         matches: { title: false, content: false, seoTitle: false, seoDescription: false },
-        error: err?.message || "Verification failed",
+        error: "Could not find this page on the live site after refresh.",
       });
+      return { ok: false, found: false, error: "not_found" };
+    }
+
+    const liveTitle = String(fresh.title || "");
+    const liveContentText = htmlToText(fresh.content || "");
+    const liveSeoTitle: string | null | undefined = fresh.seo_title;
+    const liveSeoDesc: string | null | undefined = fresh.seo_description;
+
+    const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
+    const contains = (hay: string, needle: string) => {
+      if (!needle) return true;
+      const h = norm(hay);
+      const n = norm(needle);
+      if (!n) return true;
+      const probe = n.length > 120 ? n.slice(0, 120) : n;
+      return h.includes(probe);
+    };
+
+    const expectedContentText = htmlToText(result?.content || page.content);
+    const matches = {
+      title: contains(liveTitle, page.title),
+      content: contains(liveContentText, expectedContentText),
+      seoTitle: result?.seo_title ? contains(String(liveSeoTitle || ""), result.seo_title) : true,
+      seoDescription: result?.seo_description ? contains(String(liveSeoDesc || ""), result.seo_description) : true,
+    };
+    const ok = matches.title && matches.content && matches.seoTitle && matches.seoDescription;
+
+    setVerification({
+      ok,
+      fetchedAt: new Date().toISOString(),
+      live: { title: liveTitle, contentText: liveContentText, seoTitle: liveSeoTitle, seoDescription: liveSeoDesc },
+      matches,
+    });
+    return { ok, found: true };
+  };
+
+  // Re-fetch the page from the connected site until every pushed field is
+  // confirmed live. Polls with exponential backoff so CDN/CMS caches have
+  // time to flush without the user having to click "Recheck" manually.
+  const verifyLive = async () => {
+    setVerifying(true);
+    setVerification(null);
+    setVerifyAttempt(0);
+
+    let lastOk = false;
+    let lastErr: string | undefined;
+
+    try {
+      for (let i = 0; i < VERIFY_MAX_ATTEMPTS; i++) {
+        setVerifyAttempt(i + 1);
+        await new Promise((r) => setTimeout(r, VERIFY_DELAYS_MS[i] ?? 30000));
+        try {
+          const { ok } = await runVerifyOnce();
+          lastOk = ok;
+          if (ok) break;
+        } catch (err: any) {
+          lastErr = err?.message || "Verification failed";
+          setVerification({
+            ok: false,
+            fetchedAt: new Date().toISOString(),
+            live: { title: "", contentText: "" },
+            matches: { title: false, content: false, seoTitle: false, seoDescription: false },
+            error: lastErr,
+          });
+          // keep retrying — transient fetch errors shouldn't stop auto-verify
+        }
+      }
+
+      const liveUrl = result?.external_url || page.url;
+      if (lastOk) {
+        const confirmed = [
+          verification?.matches?.title !== false && "title",
+          verification?.matches?.content !== false && "content",
+          verification?.matches?.seoTitle !== false && "SEO title",
+          verification?.matches?.seoDescription !== false && "meta description",
+        ].filter(Boolean) as string[];
+        toast({
+          title: "✓ Verified on live site",
+          description: `Confirmed updated${confirmed.length ? `: ${confirmed.join(", ")}` : ""}${liveUrl ? ` — ${liveUrl}` : ""}`,
+          action: liveUrl
+            ? (
+                <ToastAction altText="Open live page" onClick={() => window.open(liveUrl, "_blank", "noopener,noreferrer")}>
+                  Open page
+                </ToastAction>
+              )
+            : undefined,
+        });
+      } else {
+        toast({
+          title: "Live page still differs",
+          description: `We re-checked ${VERIFY_MAX_ATTEMPTS}× but the CMS/CDN may still be caching. Click Recheck in a minute.`,
+          variant: "destructive",
+        });
+      }
     } finally {
       setVerifying(false);
     }
   };
+
 
 
   // Regenerate SEO from the freshly published body, then push SEO-only back
@@ -944,9 +972,10 @@ export function SeoOptimizeDialog({
 
                 {verifying && (
                   <p className="text-[11px] text-muted-foreground">
-                    Refetching the page from your site to confirm the changes are live…
+                    Auto-verifying live page… attempt {verifyAttempt || 1} of {VERIFY_MAX_ATTEMPTS}. We keep retrying until the CDN/CMS cache clears.
                   </p>
                 )}
+
 
                 {!verifying && verification && (
                   <>
