@@ -3771,23 +3771,34 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
               )}
               {step < totalSteps ? (
                 <Button
-                  onClick={() => {
-                    if (step === 3 && unmappedVars.length > 0) {
-                      toast({
-                        title: `${unmappedVars.length} variable${unmappedVars.length !== 1 ? "s" : ""} still unmapped`,
-                        description: `Missing: ${unmappedVars.slice(0, 5).map(v => `{${v}}`).join(", ")}${unmappedVars.length > 5 ? ` +${unmappedVars.length - 5} more` : ""}. Pages will show raw placeholders for these.`,
-                        variant: "destructive",
-                      });
-                    }
-                    setStep(step + 1);
-                  }}
+                  onClick={() => setStep(step + 1)}
                   disabled={!canProceed()}
+                  title={step === 3 && unmappedVars.length > 0
+                    ? `Blocked: ${unmappedVars.length} unmapped variable${unmappedVars.length !== 1 ? "s" : ""} (${unmappedVars.slice(0, 3).map(v => `{${v}}`).join(", ")}${unmappedVars.length > 3 ? "…" : ""})`
+                    : undefined}
                   className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110"
                 >
                   Continue <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Button>
               ) : (
-                <Button onClick={() => createMutation.mutate()} disabled={!campaignName || createMutation.isPending} className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110">
+                <Button
+                  onClick={() => {
+                    if (unmappedVars.length > 0) {
+                      toast({
+                        title: `Cannot generate — ${unmappedVars.length} unmapped variable${unmappedVars.length !== 1 ? "s" : ""}`,
+                        description: `Go back to the mapping step and resolve: ${unmappedVars.slice(0, 5).map(v => `{${v}}`).join(", ")}${unmappedVars.length > 5 ? ` +${unmappedVars.length - 5} more` : ""}.`,
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    createMutation.mutate();
+                  }}
+                  disabled={!campaignName || createMutation.isPending || unmappedVars.length > 0}
+                  title={unmappedVars.length > 0
+                    ? `Blocked: ${unmappedVars.length} unmapped variable${unmappedVars.length !== 1 ? "s" : ""}`
+                    : undefined}
+                  className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110"
+                >
                   {createMutation.isPending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Creating...</> :
                    scheduleMode !== "now" ? "Schedule Campaign" :
                    publishMode === "published" ? "Generate & Publish" : "Create Campaign"}
