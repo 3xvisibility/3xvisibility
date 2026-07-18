@@ -1851,5 +1851,141 @@ export function SeoOptimizeDialog({
         )}
       </DialogContent>
     </Dialog>
+
+    {/* Full field-by-field diff modal: shows exactly what was pushed vs what
+        the live page returns for every SEO/content field after Apply. */}
+    <Dialog open={fullDiffOpen} onOpenChange={setFullDiffOpen}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-base">
+            Pushed vs Live — field-by-field diff
+          </DialogTitle>
+          <DialogDescription className="text-xs">
+            Compares what you sent to the CMS against what the live page currently returns for each field. Amber = missing on live, sky = extra on live.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+          {!verification && (
+            <p className="text-sm text-muted-foreground italic">
+              No verification data yet — click Apply to site and wait for the auto-verify to run.
+            </p>
+          )}
+          {verification && (() => {
+            const rows: {
+              label: string;
+              pushed: string;
+              live: string;
+              matched: boolean;
+            }[] = [
+              {
+                label: "Title",
+                pushed: page.title || "",
+                live: verification.live.title || "",
+                matched: verification.matches.title,
+              },
+              {
+                label: "Content",
+                pushed: htmlToText(result?.content || page.content),
+                live: verification.live.contentText || "",
+                matched: verification.matches.content,
+              },
+              {
+                label: "SEO title",
+                pushed: result?.seo_title || "",
+                live: String(verification.live.seoTitle || ""),
+                matched: verification.matches.seoTitle,
+              },
+              {
+                label: "Meta description",
+                pushed: result?.seo_description || "",
+                live: String(verification.live.seoDescription || ""),
+                matched: verification.matches.seoDescription,
+              },
+            ].filter((r) => r.pushed || r.live);
+            const changedCount = rows.filter((r) => r.matched).length;
+            return (
+              <>
+                <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground border-b border-border/60 pb-2">
+                  <span className="font-medium text-foreground">
+                    {changedCount} of {rows.length} fields match live
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="inline-block h-2 w-3 rounded bg-amber-500/40" /> Missing on live
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="inline-block h-2 w-3 rounded bg-sky-500/30" /> Extra on live
+                  </span>
+                  <span className="ml-auto text-[10px]">
+                    Live fetched {new Date(verification.fetchedAt).toLocaleTimeString()}
+                  </span>
+                </div>
+                {rows.map((r) => (
+                  <div key={r.label} className="space-y-2 rounded-md border border-border/60 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold">{r.label}</p>
+                      <span
+                        className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
+                          r.matched
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : "bg-amber-500/10 text-amber-600"
+                        }`}
+                      >
+                        {r.matched ? "matches live" : "differs from live"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="rounded border border-sky-500/30 bg-sky-500/5 p-2">
+                        <p className="text-[10px] uppercase tracking-wide text-sky-700 dark:text-sky-400 mb-1 font-medium">
+                          You pushed
+                        </p>
+                        <p className="text-xs text-foreground whitespace-pre-wrap break-words">
+                          {r.pushed || <span className="italic text-muted-foreground">(empty)</span>}
+                        </p>
+                      </div>
+                      <div className="rounded border border-emerald-500/30 bg-emerald-500/5 p-2">
+                        <p className="text-[10px] uppercase tracking-wide text-emerald-700 dark:text-emerald-400 mb-1 font-medium">
+                          Live now
+                        </p>
+                        <p className="text-xs text-foreground whitespace-pre-wrap break-words">
+                          {r.live || <span className="italic text-muted-foreground">(empty)</span>}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="pt-1 border-t border-border/40">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">
+                        Word-level diff
+                      </p>
+                      <DiffText expected={r.pushed} live={r.live} />
+                    </div>
+                  </div>
+                ))}
+              </>
+            );
+          })()}
+        </div>
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/60">
+          <p className="text-[10px] text-muted-foreground">
+            If fields still show empty or old values, wait a few seconds and click Recheck — CDN/Elementor caches can lag briefly.
+          </p>
+          <div className="flex items-center gap-2">
+            {result?.external_url && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs"
+                onClick={() => window.open(result.external_url, "_blank")}
+              >
+                <ArrowUpRight className="h-3.5 w-3.5" /> Open live page
+              </Button>
+            )}
+            <Button size="sm" onClick={() => setFullDiffOpen(false)} className="text-xs">
+              Close
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
+
