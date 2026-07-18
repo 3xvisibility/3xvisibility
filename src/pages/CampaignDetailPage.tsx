@@ -49,8 +49,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from 
 import {
   ArrowLeft, Play, Pause, RotateCcw, ExternalLink, Eye, AlertTriangle,
   Check, Clock, XCircle, FileText, Layers, RefreshCw, Download, ScrollText, SkipForward, Send,
-  Settings, FolderTree, Image, MapPin, BookOpen, Star, Users, CalendarClock, Code,
+  Settings, FolderTree, Image, MapPin, BookOpen, Star, Users, CalendarClock, Code, ShieldCheck,
 } from "lucide-react";
+import { VerificationHistoryDialog } from "@/components/website-content/VerificationHistoryDialog";
 import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv, exportErrorsCsv, exportDataFile } from "@/lib/export-csv";
 import { ShopifyFieldMappingEditor } from "@/components/websites/ShopifyFieldMappingEditor";
 
