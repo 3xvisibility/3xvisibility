@@ -1741,6 +1741,14 @@ export default function CampaignDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <VerificationHistoryDialog
+        open={verifyHistoryOpen}
+        onOpenChange={setVerifyHistoryOpen}
+        workspaceId={wsId}
+        pageIds={pages?.map((p: any) => p.id) || []}
+        title={`SEO Apply — Verifications for ${campaign?.name || "campaign"}`}
+      />
     </div>
   );
 }
