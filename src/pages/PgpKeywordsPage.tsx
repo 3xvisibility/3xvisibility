@@ -707,6 +707,7 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
     website: t("pgpKeywords.sourceWebsite"),
     url_scan: t("pgpKeywords.sourceUrlScan"),
     text: t("pgpKeywords.sourceText"),
+    template: "Template",
   };
 
   const sourceOptions = [
@@ -720,6 +721,7 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
     { value: "website",      label: t("pgpKeywords.sourceWebsite"),    icon: Globe,       desc: t("pgpKeywords.sourceWebsiteDesc") },
     { value: "url_scan",     label: t("pgpKeywords.sourceUrlScan"),    icon: ExternalLink, desc: t("pgpKeywords.sourceUrlScanDesc") },
     { value: "text",         label: t("pgpKeywords.sourceText"),       icon: FileText,    desc: t("pgpKeywords.sourceTextDesc") },
+    { value: "template",     label: "Template",                         icon: Wand2,       desc: "Pull {variables} from a template" },
   ];
 
   const locIncludeFields = [
