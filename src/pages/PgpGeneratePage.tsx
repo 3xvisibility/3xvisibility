@@ -172,7 +172,7 @@ export default function PgpGeneratePage() {
     queryKey: ["pgp-content-groups", wsId],
     enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("templates").select("*").eq("workspace_id", wsId!).order("name");
+      const { data, error } = await supabase.from("templates").select("*").eq("workspace_id", wsId!).order("created_at", { ascending: false });
       if (error) throw error;
       return data as Template[];
     },
