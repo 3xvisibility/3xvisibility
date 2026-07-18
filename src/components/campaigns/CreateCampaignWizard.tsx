@@ -2235,7 +2235,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                   </Badge>
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent align="end" className="w-72 p-0">
+                              <PopoverContent align="end" className="w-80 p-0">
                                 <div className="p-3 border-b border-border/50">
                                   <p className="text-xs font-semibold">Choose columns</p>
                                   <p className="text-[10px] text-muted-foreground">
@@ -2250,7 +2250,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                     </Button>
                                   </div>
                                 </div>
-                                <ScrollArea className="max-h-[240px]">
+                                <ScrollArea className="max-h-[200px]">
                                   <div className="p-2 space-y-0.5">
                                     {allCols.map((c) => (
                                       <label
@@ -2269,14 +2269,100 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                     ))}
                                   </div>
                                 </ScrollArea>
+                                <div className="p-3 border-t border-border/50 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-[11px] font-semibold">Rows</p>
+                                    <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">
+                                      {filteredRows.length}/{baseCsvData.length}
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      type="button"
+                                      variant={csvExportRowMode === "all" ? "secondary" : "ghost"}
+                                      size="sm"
+                                      className="h-6 text-[10px] px-2 flex-1"
+                                      onClick={() => setCsvExportRowMode("all")}
+                                    >
+                                      All
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant={csvExportRowMode === "first" ? "secondary" : "ghost"}
+                                      size="sm"
+                                      className="h-6 text-[10px] px-2 flex-1"
+                                      onClick={() => setCsvExportRowMode("first")}
+                                    >
+                                      First N
+                                    </Button>
+                                    {csvExportRowMode === "first" && (
+                                      <Input
+                                        type="number"
+                                        min={1}
+                                        max={baseCsvData.length || 1}
+                                        value={csvExportRowLimit}
+                                        onChange={(e) => setCsvExportRowLimit(Math.max(1, Number(e.target.value) || 1))}
+                                        className="h-6 w-16 text-[11px] px-2"
+                                      />
+                                    )}
+                                  </div>
+                                  {locFilterKey && locFilterValues.length > 0 && (
+                                    <div className="space-y-1">
+                                      <div className="flex items-center justify-between">
+                                        <p className="text-[10px] text-muted-foreground">
+                                          Filter by <span className="font-mono">{locFilterKey}</span>
+                                          {activeLocFilter.size > 0 && ` · ${activeLocFilter.size} selected`}
+                                        </p>
+                                        {activeLocFilter.size > 0 && (
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-5 text-[10px] px-1.5"
+                                            onClick={() => setCsvExportLocFilter(new Set())}
+                                          >
+                                            Reset
+                                          </Button>
+                                        )}
+                                      </div>
+                                      <ScrollArea className="max-h-[96px] rounded-md border border-border/50">
+                                        <div className="p-1 flex flex-wrap gap-1">
+                                          {locFilterValues.map((v) => {
+                                            const active = activeLocFilter.has(v);
+                                            return (
+                                              <button
+                                                key={v}
+                                                type="button"
+                                                onClick={() => {
+                                                  setCsvExportLocFilter((prev) => {
+                                                    const next = new Set(prev);
+                                                    if (next.has(v)) next.delete(v); else next.add(v);
+                                                    return next;
+                                                  });
+                                                }}
+                                                className={`text-[10px] px-1.5 py-0.5 rounded border transition ${
+                                                  active
+                                                    ? "bg-primary/15 border-primary/50 text-foreground"
+                                                    : "border-border/50 text-muted-foreground hover:bg-muted/60"
+                                                }`}
+                                              >
+                                                {v}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </ScrollArea>
+                                    </div>
+                                  )}
+                                </div>
                                 <div className="p-2 border-t border-border/50 flex justify-end gap-1.5">
-                                  <Button type="button" variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => doExport("json")} disabled={includedCount === 0}>
+                                  <Button type="button" variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => doExport("json")} disabled={includedCount === 0 || filteredRows.length === 0}>
                                     <Download className="h-3.5 w-3.5 mr-1.5" />
                                     JSON
                                   </Button>
-                                  <Button type="button" size="sm" className="h-7 text-[11px]" onClick={() => doExport("csv")} disabled={includedCount === 0}>
+                                  <Button type="button" size="sm" className="h-7 text-[11px]" onClick={() => doExport("csv")} disabled={includedCount === 0 || filteredRows.length === 0}>
                                     <Download className="h-3.5 w-3.5 mr-1.5" />
-                                    CSV · {baseCsvData.length} row{baseCsvData.length !== 1 ? "s" : ""}
+                                    CSV · {filteredRows.length} row{filteredRows.length !== 1 ? "s" : ""}
                                   </Button>
                                 </div>
                               </PopoverContent>
