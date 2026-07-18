@@ -32,18 +32,20 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [minPop, setMinPop] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [countryOpen, setCountryOpen] = useState(false);
+  const [batchSize, setBatchSize] = useState<number>(150);
   const [seedProgress, setSeedProgress] = useState(0);
   const [seedElapsed, setSeedElapsed] = useState(0);
   const [seedStage, setSeedStage] = useState<string>("");
   const [seedResult, setSeedResult] = useState<{ inserted: number; skipped: number } | null>(null);
 
   const seedMutation = useMutation({
-    mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string }) => {
+    mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string; target?: number }) => {
       const body: Record<string, unknown> = {};
       if (opts?.countryCode) body.country_code = opts.countryCode;
       if (opts?.expand) body.expand = true;
       if (opts?.state && opts.state !== "all") body.state = opts.state;
       if (opts?.region && opts.region !== "all") body.region = opts.region;
+      if (opts?.target && opts.target > 0) body.target = opts.target;
       const { data, error } = await supabase.functions.invoke("seed-locations", { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
