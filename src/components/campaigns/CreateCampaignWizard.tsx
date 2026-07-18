@@ -247,7 +247,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     dataSource,
     aiBusiness, aiNiche, aiServiceProduct, aiPageCount, aiGeneratedRows, activePresetId,
     csvRawText, csvHeaders, csvData,
-    locationData,
+    locationData, mergedLocations,
     websiteForPages, websiteContentType, selectedPageIdsArr: Array.from(selectedPageIds), websitePagesSearch,
     selectedTemplate, selectedWebsite,
     manualMappings, customValues, transforms, targetFieldMappings,
