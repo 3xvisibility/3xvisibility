@@ -796,6 +796,25 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const baseCsvData = useMemo(() => {
     if (!canMergeLocations) return rawBaseData;
     const out: Record<string, string>[] = [];
+    if (locationMergeMode === "zip") {
+      // Parallel pairing — one location per row by index. If either side is
+      // shorter, we iterate the maximum length and cycle the shorter list so
+      // every base row still gets a location (5 rows + 3 locations = 5 pages,
+      // locations reused; 3 rows + 5 locations = 5 pages, rows reused).
+      const n = Math.max(rawBaseData.length, mergedLocations.length);
+      for (let i = 0; i < n; i++) {
+        const row = rawBaseData[i % rawBaseData.length];
+        const loc = mergedLocations[i % mergedLocations.length];
+        const merged: Record<string, string> = { ...loc, ...row };
+        if (keywordsFromLocation) {
+          const kw = fillLocPattern(locationKeywordPattern, loc);
+          if (kw) merged.keywords = (row as any).keywords ? `${(row as any).keywords}, ${kw}` : kw;
+        }
+        out.push(merged);
+      }
+      return out;
+    }
+    // Cartesian — every base row × every location.
     for (const row of rawBaseData) {
       for (const loc of mergedLocations) {
         const merged: Record<string, string> = { ...loc, ...row };
@@ -807,7 +826,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       }
     }
     return out;
-  }, [canMergeLocations, rawBaseData, mergedLocations, keywordsFromLocation, locationKeywordPattern]);
+  }, [canMergeLocations, rawBaseData, mergedLocations, keywordsFromLocation, locationKeywordPattern, locationMergeMode]);
   const baseCsvHeaders = useMemo(() => {
     if (!canMergeLocations) return rawBaseHeaders;
     const set = new Set<string>(rawBaseHeaders);
