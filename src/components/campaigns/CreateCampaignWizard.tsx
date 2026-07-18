@@ -3306,6 +3306,12 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         );
                       })()}
 
+                      <VariableSourcesPanel
+                        dataSource={dataSource as "csv" | "ai" | "website" | "locations"}
+                        variableMapping={variableMapping}
+                        sampleRow={effectiveCsvData?.[0] as Record<string, string> | undefined}
+                      />
+
                       <MappingStep
                         csvHeaders={effectiveCsvHeaders}
                         templateVars={selectedTemplateVars}
