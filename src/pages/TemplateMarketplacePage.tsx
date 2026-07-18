@@ -232,23 +232,41 @@ export default function TemplateMarketplacePage() {
     state: "ready" | "failed" | "pending";
   } | null>(null);
 
-  const { data: detailsItem, isLoading: detailsLoading } = useQuery({
+  const { data: detailsHistory = [], isLoading: detailsLoading } = useQuery({
     queryKey: ["conversion-details", detailsCtx?.tpl.id, detailsCtx?.platform],
     enabled: !!detailsCtx && detailsCtx.platform !== "html",
     queryFn: async () => {
       const tpl = detailsCtx!.tpl;
-      const ids = [tpl.id, (tpl as any).source_marketplace_id].filter(Boolean) as string[];
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tpl.id);
+      // Resolve marketplace slug -> real templates.id(s) via source_marketplace_id.
+      const templateIds = new Set<string>();
+      if (isUuid) templateIds.add(tpl.id);
+      const { data: matched } = await supabase
+        .from("templates")
+        .select("id")
+        .eq("source_marketplace_id", tpl.id);
+      for (const r of matched ?? []) templateIds.add((r as any).id);
+      if (templateIds.size === 0) return [];
       const { data, error } = await supabase
         .from("template_backfill_items")
-        .select("status, error, attempts, run_id, created_at, template_name")
-        .in("template_id", ids)
+        .select("id, status, error, attempts, run_id, created_at, template_name, widgets, fields")
+        .in("template_id", Array.from(templateIds))
         .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(20);
       if (error) throw error;
-      return data;
+      const runIds = Array.from(new Set((data ?? []).map((r: any) => r.run_id).filter(Boolean)));
+      let runMap = new Map<string, any>();
+      if (runIds.length) {
+        const { data: runs } = await supabase
+          .from("template_backfill_runs")
+          .select("id, trigger_source, status, started_by")
+          .in("id", runIds);
+        for (const r of runs ?? []) runMap.set((r as any).id, r);
+      }
+      return (data ?? []).map((r: any) => ({ ...r, run: runMap.get(r.run_id) ?? null }));
     },
   });
+
 
   const conversionMap = useMemo(() => {
     const m = new Map<string, { elementor: "ready" | "failed"; shopify: "ready" | "failed"; updatedAt: string | null }>();
