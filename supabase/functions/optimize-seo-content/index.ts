@@ -895,6 +895,46 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
       throw timeoutError(error?.message || "AI generation failed", error?.status || 500, error?.details);
     }
 
+    // Guardrail: if the model echoed the body back byte-for-byte (or only
+    // whitespace-different), issue one stronger rewrite so headings / subheadings
+    // / paragraph text actually change instead of only the meta fields.
+    const normalizeForCompare = (s: string) =>
+      (s || "").replace(/\s+/g, " ").trim();
+    if (
+      includeContent &&
+      result.content &&
+      page_content &&
+      normalizeForCompare(result.content) === normalizeForCompare(page_content)
+    ) {
+      console.warn("[OPTIMIZE] AI returned identical body — retrying with strict rewrite prompt.");
+      try {
+        const strictPrompt = `${userPrompt}
+
+The previous attempt returned the body HTML unchanged. That is INVALID.
+
+You MUST rewrite every visible text node inside the HTML:
+- Every heading (h1-h6) — new wording, same tag/class/attributes.
+- Every paragraph, list item, blockquote — new wording.
+- Every button / link label text — new wording (URLs stay identical).
+- Keep length within ±15% of the original per node.
+- Do NOT change any tag, class, id, style attribute, script, or inline SVG.
+- Do NOT drop or add nodes.
+
+Return the FULL JSON again with the fully rewritten "content".`;
+        const strictTimeoutMs = Math.min(AI_CALL_TIMEOUT_MS, Math.max(8_000, remainingBudgetMs(functionStartedAt, 45_000)));
+        if (strictTimeoutMs >= 8_000) {
+          result = normalizeOptimizationResult(
+            await requestOptimizationDraft(LOVABLE_API_KEY, systemPrompt, strictPrompt, strictTimeoutMs, activeModel),
+            fallbackResult,
+            fields,
+            includeContent,
+          );
+        }
+      } catch (err: any) {
+        console.error("[OPTIMIZE] Strict rewrite retry failed:", err?.status, err?.message);
+      }
+    }
+
     let qualityReport = analyzeSeoQuality({
       title: page_title,
       seoTitle: result.seo_title || effectiveSeoTitle,
