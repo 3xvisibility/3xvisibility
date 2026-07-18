@@ -1994,6 +1994,92 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     );
                   })()}
 
+                  {/* Slug validation — resolves each merged row's slug from the
+                      template's slug_pattern (fallback: seo_title_pattern) and
+                      flags empty and duplicate slugs before publishing. */}
+                  {selectedTemplate && baseCsvData.length > 0 && (() => {
+                    const tpl = templates.find((t) => t.id === selectedTemplate) as any;
+                    const pattern: string = tpl?.slug_pattern || tpl?.seo_title_pattern || "";
+                    if (!pattern) return null;
+                    const slugify = (s: string) =>
+                      s.toLowerCase()
+                        .normalize("NFKD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/^-+|-+$/g, "")
+                        .replace(/-{2,}/g, "-");
+                    const resolve = (row: Record<string, string>) => {
+                      const vars: Record<string, string> = { ...customValues, ...row };
+                      let r = pattern;
+                      for (const [k, v] of Object.entries(vars)) {
+                        const safe = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                        r = r.replace(new RegExp(`\\{${safe}\\}`, "gi"), v || "");
+                      }
+                      return slugify(r.replace(/\{[^}]+\}/g, "").trim());
+                    };
+                    const slugs = baseCsvData.map((row, i) => ({ i, slug: resolve(row as Record<string, string>) }));
+                    const emptyRows = slugs.filter((s) => !s.slug).map((s) => s.i);
+                    const seen = new Map<string, number[]>();
+                    for (const { i, slug } of slugs) {
+                      if (!slug) continue;
+                      const arr = seen.get(slug) || [];
+                      arr.push(i);
+                      seen.set(slug, arr);
+                    }
+                    const duplicates = Array.from(seen.entries()).filter(([, idx]) => idx.length > 1);
+                    const dupRowCount = duplicates.reduce((n, [, idx]) => n + idx.length, 0);
+                    const okCount = slugs.length - emptyRows.length - dupRowCount;
+                    const totalIssues = emptyRows.length + dupRowCount;
+                    return (
+                      <div className={cn(
+                        "rounded-xl border p-3 space-y-2",
+                        totalIssues === 0 ? "border-success/30 bg-success/5" : "border-destructive/40 bg-destructive/5"
+                      )}>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold flex items-center gap-1.5">
+                            {totalIssues === 0 ? (
+                              <><CheckCircle2 className="h-3.5 w-3.5 text-success" /> All slugs valid and unique</>
+                            ) : (
+                              <><AlertCircle className="h-3.5 w-3.5 text-destructive" /> {totalIssues} slug issue{totalIssues !== 1 ? "s" : ""}</>
+                            )}
+                            <Badge variant="outline" className="text-[10px]">{okCount}/{slugs.length}</Badge>
+                          </p>
+                          <p className="text-[11px] text-muted-foreground font-mono truncate" title={pattern}>
+                            Pattern: {pattern}
+                          </p>
+                        </div>
+                        {(emptyRows.length > 0 || duplicates.length > 0) && (
+                          <div className="space-y-1.5">
+                            {emptyRows.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <Badge variant="destructive" className="text-[10px]">Empty × {emptyRows.length}</Badge>
+                                <span className="text-[10px] text-muted-foreground">
+                                  Row{emptyRows.length !== 1 ? "s" : ""} {emptyRows.slice(0, 8).map((i) => i + 1).join(", ")}
+                                  {emptyRows.length > 8 && ` +${emptyRows.length - 8} more`}
+                                </span>
+                              </div>
+                            )}
+                            {duplicates.slice(0, 5).map(([slug, idx]) => (
+                              <div key={slug} className="flex flex-wrap items-center gap-1.5">
+                                <Badge variant="destructive" className="text-[10px]">×{idx.length}</Badge>
+                                <span className="font-mono text-[10px] truncate max-w-[220px]" title={slug}>/{slug}</span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  rows {idx.slice(0, 6).map((i) => i + 1).join(", ")}{idx.length > 6 && ` +${idx.length - 6}`}
+                                </span>
+                              </div>
+                            ))}
+                            {duplicates.length > 5 && (
+                              <p className="text-[10px] text-muted-foreground">+{duplicates.length - 5} more duplicate group{duplicates.length - 5 !== 1 ? "s" : ""}</p>
+                            )}
+                            <p className="text-[10px] text-muted-foreground">
+                              Add a distinguishing variable (e.g. <code className="font-mono">{"{city}"}</code>, <code className="font-mono">{"{keywords}"}</code>) to the slug pattern, or export CSV with the resolved <code className="font-mono">slug</code> column to inspect all rows.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {/* Sample generated pages preview — first rows of the merged dataset
                       (base rows × attached locations) that will drive page generation. */}
                   {baseCsvData.length > 0 && baseCsvHeaders.length > 0 && (
@@ -2014,8 +2100,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         {(() => {
                           const tpl = templates.find((t) => t.id === selectedTemplate) as any;
                           const hasTitle = !!tpl?.seo_title_pattern;
-                          const allCols: { key: string; label: string; kind: "seo" | "data" }[] = [
+                          const slugPattern: string = tpl?.slug_pattern || tpl?.seo_title_pattern || "";
+                          const hasSlug = !!slugPattern;
+                          const allCols: { key: string; label: string; kind: "seo" | "slug" | "data" }[] = [
                             ...(hasTitle ? [{ key: "__seo_title__", label: "seo_title", kind: "seo" as const }] : []),
+                            ...(hasSlug ? [{ key: "__slug__", label: "slug", kind: "slug" as const }] : []),
                             ...baseCsvHeaders.map((h) => ({ key: h, label: h, kind: "data" as const })),
                           ];
                           const isIncluded = (k: string) => !csvExportExcluded.has(k);
@@ -2029,6 +2118,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           };
                           const selectAll = () => setCsvExportExcluded(new Set());
                           const clearAll = () => setCsvExportExcluded(new Set(allCols.map((c) => c.key)));
+                          const slugify = (s: string) =>
+                            s.toLowerCase()
+                              .normalize("NFKD")
+                              .replace(/[\u0300-\u036f]/g, "")
+                              .replace(/[^a-z0-9]+/g, "-")
+                              .replace(/^-+|-+$/g, "")
+                              .replace(/-{2,}/g, "-");
                           const doExport = () => {
                             const included = allCols.filter((c) => isIncluded(c.key));
                             if (included.length === 0) {
@@ -2052,6 +2148,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             for (const row of baseCsvData) {
                               const cells = included.map((c) => {
                                 if (c.kind === "seo") return escape(resolve(tpl.seo_title_pattern, row as Record<string, string>));
+                                if (c.kind === "slug") return escape(slugify(resolve(slugPattern, row as Record<string, string>)));
                                 return escape((row as Record<string, string>)[c.key] ?? "");
                               });
                               lines.push(cells.join(","));
@@ -2109,7 +2206,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                           onCheckedChange={() => toggle(c.key)}
                                         />
                                         <span className="font-mono truncate flex-1">{c.label}</span>
-                                        {c.kind === "seo" && (
+                                        {c.kind !== "data" && (
                                           <Badge variant="outline" className="text-[9px] h-4">resolved</Badge>
                                         )}
                                       </label>
