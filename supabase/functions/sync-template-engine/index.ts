@@ -199,9 +199,20 @@ Deno.serve(async (req) => {
     const widgetTypes: string[] = Array.isArray(body?.widget_types)
       ? body.widget_types.filter((w: unknown) => typeof w === "string" && w.trim()).map((w: string) => w.trim())
       : [];
+    // Per-template retry: reconvert only the specific templates identified by
+    // their templates.id or their marketplace source id.
+    const templateIds: string[] = Array.isArray(body?.template_ids)
+      ? body.template_ids.filter((v: unknown) => typeof v === "string" && v.trim())
+      : [];
+    const marketplaceIds: string[] = Array.isArray(body?.source_marketplace_ids)
+      ? body.source_marketplace_ids.filter((v: unknown) => typeof v === "string" && v.trim())
+      : [];
+    const scopedIds = templateIds.length > 0 || marketplaceIds.length > 0;
     const triggerSource = retryRunId
       ? "retry"
-      : (typeof body?.trigger_source === "string" ? body.trigger_source : "manual");
+      : scopedIds
+        ? "manual:per-template"
+        : (typeof body?.trigger_source === "string" ? body.trigger_source : "manual");
 
 
     // Resolve the calling admin (best-effort, for started_by / notifications).
@@ -235,6 +246,27 @@ Deno.serve(async (req) => {
         if (error) throw new Error(error.message);
         all = (templates ?? []) as any[];
       }
+    } else if (scopedIds) {
+      // Per-template retry: gather rows matching either their own id or the
+      // marketplace source id they were imported from.
+      const collected = new Map<string, any>();
+      if (templateIds.length) {
+        const { data, error } = await supabase
+          .from("templates")
+          .select("id, name, content, schema_type, source_marketplace_id, elementor_data, user_id")
+          .in("id", templateIds);
+        if (error) throw new Error(error.message);
+        for (const t of (data ?? []) as any[]) collected.set(t.id, t);
+      }
+      if (marketplaceIds.length) {
+        const { data, error } = await supabase
+          .from("templates")
+          .select("id, name, content, schema_type, source_marketplace_id, elementor_data, user_id")
+          .in("source_marketplace_id", marketplaceIds);
+        if (error) throw new Error(error.message);
+        for (const t of (data ?? []) as any[]) collected.set(t.id, t);
+      }
+      all = Array.from(collected.values());
     } else {
       const { data: templates, error } = await supabase
         .from("templates")
