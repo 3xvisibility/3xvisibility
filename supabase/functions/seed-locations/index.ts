@@ -1,9 +1,24 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { aiGenerate, deductCreditsForRequest } from "../_shared/ai-service.ts";
+import { deductCreditsForRequest } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const jsonResponse = (payload: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const getErrorMessage = (err: unknown) =>
+  err instanceof Error ? err.message : String(err ?? "Unknown error");
+
+const isAbortLikeError = (err: unknown) => {
+  const name = err && typeof err === "object" && "name" in err ? String((err as { name?: unknown }).name ?? "") : "";
+  const message = getErrorMessage(err).toLowerCase();
+  return name === "AbortError" || message.includes("aborted") || message.includes("aborterror") || message.includes("signal has been aborted");
 };
 
 type CityEntry = {
@@ -289,10 +304,12 @@ async function generateWithAI(
     ? ` EXCLUDE these already-known cities (do not repeat): ${opts.existingCities.slice(0, 200).join(", ")}.`
     : "";
 
-  // Cap per-call target so AI doesn't stall; caller can loop for more.
-  const perCallTarget = Math.min(target, 250);
+  // Keep one edge invocation comfortably below platform/runtime limits. Large
+  // JSON arrays regularly outlive the function window and bubble as
+  // "The signal has been aborted" before our outer handler can recover.
+  const perCallTarget = Math.min(Math.max(target, 1), 100);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 140_000);
+  const timeout = setTimeout(() => controller.abort(), 85_000);
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -317,9 +334,9 @@ async function generateWithAI(
     const parsed = JSON.parse(content) as CityEntry[];
     if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("AI returned no valid city data");
     return parsed;
-  } catch (err: any) {
-    if (err?.name === "AbortError" || String(err?.message || "").includes("aborted")) {
-      throw new Error("AI took too long to respond. Try a smaller batch size (e.g. 100–150).");
+  } catch (err: unknown) {
+    if (isAbortLikeError(err)) {
+      throw new Error("AI took too long to respond. I limited each run to 100 cities; click Load more again or choose a smaller region/state.");
     }
     throw err;
   } finally {
@@ -430,13 +447,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ message: "Seeded successfully", inserted: totalInserted, skipped_duplicates: totalSkipped }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return jsonResponse({
+      message: "Seeded successfully",
+      inserted: totalInserted,
+      skipped_duplicates: totalSkipped,
+      max_batch_per_run: 100,
     });
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  } catch (err: unknown) {
+    const message = getErrorMessage(err);
+    const isTimeout = isAbortLikeError(err) || message.toLowerCase().includes("took too long");
+    return jsonResponse(
+      {
+        success: false,
+        error: isTimeout
+          ? "Location loading timed out before the AI finished. Try Batch 50–100, or filter by state/region and load again."
+          : message,
+        retryable: isTimeout,
+      },
+      isTimeout ? 408 : 500,
+    );
   }
 });
