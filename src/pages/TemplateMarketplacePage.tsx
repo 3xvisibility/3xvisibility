@@ -900,7 +900,7 @@ export default function TemplateMarketplacePage() {
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-medium">Publish format</span>
                     <Badge variant="secondary" className="w-fit">
-                      {resolveFormat(previewTemplate) === "shopify" ? "Shopify" : "Elementor"}
+                      {formatLabel}
                     </Badge>
                   </div>
                 </div>
