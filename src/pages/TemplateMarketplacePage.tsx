@@ -304,6 +304,8 @@ export default function TemplateMarketplacePage() {
       const converted = data?.converted ?? 0;
       const failed = data?.failed ?? 0;
       queryClient.invalidateQueries({ queryKey: ["marketplace-conversion-status"] });
+      queryClient.invalidateQueries({ queryKey: ["conversion-details"] });
+      queryClient.invalidateQueries({ queryKey: ["marketplace-templates"] });
       if (failed > 0 && converted === 0) {
         toast({
           title: "Retry failed",
