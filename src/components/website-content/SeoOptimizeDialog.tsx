@@ -255,6 +255,14 @@ export function SeoOptimizeDialog({
       if (error) throw new Error(await extractEdgeError(error, "Apply failed"));
       if (data?.error) throw new Error(data.error);
 
+      const liveUrl: string | undefined = data.external_url || page.url;
+      const updatedFields = [
+        selectedFields.includes("title") && "title",
+        selectedFields.includes("content") && "content",
+        selectedFields.includes("seo_title") && "SEO title",
+        selectedFields.includes("seo_description") && "meta description",
+      ].filter(Boolean) as string[];
+
       setResult((prev) => prev && {
         ...prev,
         pushed_to_cms: !!data.pushed_to_cms,
@@ -264,12 +272,20 @@ export function SeoOptimizeDialog({
       setApplied(true);
 
       toast({
-        title: data.pushed_to_cms ? "Applied to your site" : "Saved",
+        title: data.pushed_to_cms ? "✓ Applied to your site" : "Saved",
         description: data.pushed_to_cms
-          ? "Existing page updated — same URL, no new page created."
+          ? `Updated ${updatedFields.join(", ") || "page"} on the same URL${liveUrl ? ` — ${liveUrl}` : ""}.`
           : data.push_error || "Changes were saved locally.",
         variant: data.push_error ? "destructive" : undefined,
+        action: data.pushed_to_cms && liveUrl
+          ? (
+              <ToastAction altText="Open live page" onClick={() => window.open(liveUrl, "_blank", "noopener,noreferrer")}>
+                Open page
+              </ToastAction>
+            )
+          : undefined,
       });
+
 
       onOptimized?.();
 
