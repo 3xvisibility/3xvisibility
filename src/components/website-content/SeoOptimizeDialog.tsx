@@ -216,6 +216,7 @@ export function SeoOptimizeDialog({
   const [verifying, setVerifying] = useState(false);
   const [verifyAttempt, setVerifyAttempt] = useState(0);
   const [showVerifyDiff, setShowVerifyDiff] = useState(false);
+  const [fullDiffOpen, setFullDiffOpen] = useState(false);
   const [showFieldChanges, setShowFieldChanges] = useState(true);
 
   // Pre-apply live snapshot — captured right before we push to WordPress so we
