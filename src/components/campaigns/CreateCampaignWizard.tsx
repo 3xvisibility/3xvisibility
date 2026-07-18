@@ -1931,27 +1931,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     ))}
                   </div>
 
-                  {/* Use Keywords Library — pull variables & values from the Keywords page */}
-                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Bookmark className="h-4 w-4 text-primary shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold">Use Keywords Library</p>
-                        <p className="text-[11px] text-muted-foreground">
-                          Pick variables and values directly from your Keywords page — cross-joined into campaign rows.
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setKeywordsLibraryOpen(true)}
-                      className="rounded-lg h-8 text-xs gap-1.5"
-                    >
-                      <Bookmark className="h-3.5 w-3.5" /> Open Library
-                    </Button>
-                  </div>
+
+
 
 
 
@@ -2037,55 +2018,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             </div>
                           </div>
 
-                          <label className="flex items-start gap-2 cursor-pointer">
-                            <Checkbox
-                              checked={locationKeywordEnabled}
-                              onCheckedChange={(v) => setLocationKeywordEnabled(!!v)}
-                              className="mt-0.5"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-semibold">Auto-build <code className="text-[10px] bg-muted px-1 py-0.5 rounded">{"{keywords}"}</code> from locations</p>
-                              <p className="text-[11px] text-muted-foreground">
-                                Fill each page's keywords using the selected location's city / country / state values.
-                              </p>
-                            </div>
-                          </label>
-                          {locationKeywordEnabled && (
-                            <div className="pl-6 space-y-1.5">
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                <span className="text-[10px] text-muted-foreground">Presets:</span>
-                                {[
-                                  { label: "City, Country", val: "{city}, {country}" },
-                                  { label: "City, State", val: "{city}, {state}" },
-                                  { label: "City only", val: "{city}" },
-                                  { label: "City, State, Country", val: "{city}, {state}, {country}" },
-                                ].map((p) => (
-                                  <button
-                                    key={p.val}
-                                    type="button"
-                                    onClick={() => setLocationKeywordPattern(p.val)}
-                                    className={cn(
-                                      "text-[10px] px-2 py-0.5 rounded-md border transition-colors",
-                                      locationKeywordPattern === p.val
-                                        ? "border-primary bg-primary/10 text-primary"
-                                        : "border-border/60 hover:bg-muted/40"
-                                    )}
-                                  >
-                                    {p.label}
-                                  </button>
-                                ))}
-                              </div>
-                              <Input
-                                value={locationKeywordPattern}
-                                onChange={(e) => setLocationKeywordPattern(e.target.value)}
-                                placeholder="{city}, {country}"
-                                className="h-8 text-xs rounded-lg font-mono"
-                              />
-                              <p className="text-[10px] text-muted-foreground">
-                                Preview: <span className="font-mono text-foreground/80">{fillLocPattern(locationKeywordPattern, mergedLocations[0] || {}) || "—"}</span>
-                              </p>
-                            </div>
-                          )}
+
+
                         </div>
                       )}
 
@@ -3475,32 +3409,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         </div>
                       )}
 
-                      {(autoMappedInfo.fromKeywords.length > 0 || autoMappedInfo.fromFallback.length > 0) && (
-                        <div className="rounded-xl border border-primary/30 bg-primary/[0.04] p-3 flex items-start gap-2.5">
-                          <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <p className="text-xs font-semibold text-primary">
-                              Auto-mapped {autoMappedInfo.fromKeywords.length + autoMappedInfo.fromFallback.length} variable{(autoMappedInfo.fromKeywords.length + autoMappedInfo.fromFallback.length) !== 1 ? "s" : ""}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground leading-snug">
-                              Template &#123;variables&#125; matched with your Keywords Library — terms rotate per row so every page gets a different value.
-                              Missing groups fall back to a smart default so nothing renders as a raw placeholder.
-                            </p>
-                            <div className="flex flex-wrap gap-1 pt-0.5">
-                              {autoMappedInfo.fromKeywords.map(v => (
-                                <code key={`kw-${v}`} className="font-mono text-[10.5px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/25">
-                                  {`{${v}}`} · keywords
-                                </code>
-                              ))}
-                              {autoMappedInfo.fromFallback.map(v => (
-                                <code key={`fb-${v}`} className="font-mono text-[10.5px] bg-amber-500/10 text-amber-600 px-1.5 py-0.5 rounded border border-amber-500/25">
-                                  {`{${v}}`} · fallback
-                                </code>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+
+
 
 
                       <VariableSourcesPanel
