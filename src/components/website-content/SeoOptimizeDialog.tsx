@@ -1537,6 +1537,113 @@ export function SeoOptimizeDialog({
                       </div>
                     )}
 
+                    {/* Field-level before/after — shows exactly which
+                        Elementor-managed fields changed on the live page
+                        after Force republish, with excerpts of each side. */}
+                    {preApplySnapshot && verification && (() => {
+                      const rows: {
+                        key: string;
+                        label: string;
+                        before: string;
+                        after: string;
+                      }[] = [
+                        {
+                          key: "title",
+                          label: "Title",
+                          before: preApplySnapshot.title || "",
+                          after: verification.live.title || "",
+                        },
+                        {
+                          key: "content",
+                          label: "Content",
+                          before: preApplySnapshot.contentText || "",
+                          after: verification.live.contentText || "",
+                        },
+                        {
+                          key: "seoTitle",
+                          label: "SEO title",
+                          before: String(preApplySnapshot.seoTitle || ""),
+                          after: String(verification.live.seoTitle || ""),
+                        },
+                        {
+                          key: "seoDescription",
+                          label: "Meta description",
+                          before: String(preApplySnapshot.seoDescription || ""),
+                          after: String(verification.live.seoDescription || ""),
+                        },
+                      ];
+                      const norm = (s: string) => s.replace(/\s+/g, " ").trim();
+                      const excerpt = (s: string, n = 160) => {
+                        const t = norm(s);
+                        return t.length > n ? t.slice(0, n) + "…" : t;
+                      };
+                      const changedRows = rows.filter((r) => norm(r.before) !== norm(r.after));
+                      const changedCount = changedRows.length;
+                      return (
+                        <div className="rounded border border-border bg-background/60 p-2 mt-1 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                              Changed on live {forceRepublish ? "(after Force republish)" : ""}
+                              <span className={`ml-1.5 font-medium normal-case ${changedCount ? "text-emerald-600" : "text-muted-foreground"}`}>
+                                {changedCount} of {rows.length} field{rows.length === 1 ? "" : "s"}
+                              </span>
+                            </p>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setShowFieldChanges((v) => !v)}
+                              className="h-5 text-[10px] gap-1"
+                            >
+                              {showFieldChanges ? "Hide" : "Show"}
+                            </Button>
+                          </div>
+                          {showFieldChanges && (
+                            <ul className="space-y-2">
+                              {rows.map((r) => {
+                                const changed = norm(r.before) !== norm(r.after);
+                                const beforeEmpty = !norm(r.before);
+                                const afterEmpty = !norm(r.after);
+                                return (
+                                  <li key={r.key} className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className={`inline-block h-2 w-2 rounded-full ${changed ? "bg-emerald-500" : "bg-muted-foreground/40"}`} />
+                                      <span className="text-[11px] font-medium">{r.label}</span>
+                                      <span className={`text-[10px] ${changed ? "text-emerald-600" : "text-muted-foreground"}`}>
+                                        {changed ? "changed" : "unchanged"}
+                                      </span>
+                                    </div>
+                                    {changed && (
+                                      <div className="ml-4 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                        <div className="rounded border border-amber-500/30 bg-amber-500/5 p-1.5">
+                                          <p className="text-[9px] uppercase tracking-wide text-amber-700 dark:text-amber-400 mb-0.5">Before</p>
+                                          <p className="text-[11px] text-muted-foreground break-words">
+                                            {beforeEmpty ? <span className="italic">(empty)</span> : excerpt(r.before)}
+                                          </p>
+                                        </div>
+                                        <div className="rounded border border-emerald-500/30 bg-emerald-500/5 p-1.5">
+                                          <p className="text-[9px] uppercase tracking-wide text-emerald-700 dark:text-emerald-400 mb-0.5">After</p>
+                                          <p className="text-[11px] text-foreground break-words">
+                                            {afterEmpty ? <span className="italic">(empty)</span> : excerpt(r.after)}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                          {preApplySnapshot.fetchedAt && (
+                            <p className="text-[10px] text-muted-foreground">
+                              Before snapshot taken {new Date(preApplySnapshot.fetchedAt).toLocaleTimeString()} · After from live re-fetch.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+
+
                     <div className="flex items-center justify-between gap-2 pt-1">
                       <p className="text-[10px] text-muted-foreground">
                         Fetched {new Date(verification.fetchedAt).toLocaleTimeString()}. If fields still show "not detected yet", your CMS/CDN may be caching — wait a moment and click Recheck.
