@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
     const systemPrompt = `You generate realistic dataset rows for a programmatic SEO page generator.
 Each row must contain ONE value for every requested variable. Values must be:
-- Specific, realistic, locally relevant where possible
+- Specific and realistic${body.country ? ", locally relevant where possible" : " — DO NOT invent city, country, region, or any location-based phrasing unless a variable explicitly asks for it"}
 - DISTINCT ACROSS ROWS for EVERY field — no two rows may share the same value for the same field. This includes headings like hero_title / hero_subtitle / about_title / cta_title / services_title: rewrite each in a completely different phrasing, angle, wording, tone and structure per row.
 - Never copy the sample/default values verbatim — treat samples only as a length/style reference, then invent fresh wording.
 - Concise: match each template field's original word count; never expand descriptions
