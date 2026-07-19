@@ -111,6 +111,16 @@ export default function TemplateMarketplacePage() {
   // returns the raw template markup so the client can grab whichever chunk they
   // need for their own stack.
   const [platformChoice, setPlatformChoice] = useState<"elementor" | "shopify" | "html">("elementor");
+  // Auto-run "AI Add Variables" right after a marketplace template is imported,
+  // so users don't have to open the editor and click the button manually.
+  const [autoAddVars, setAutoAddVars] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const v = window.localStorage.getItem("marketplace.autoAddVars");
+    return v === null ? true : v === "1";
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem("marketplace.autoAddVars", autoAddVars ? "1" : "0"); } catch {}
+  }, [autoAddVars]);
   const skinPlatform: TemplatePlatform =
     platformChoice === "shopify" ? "shopify" : platformChoice === "html" ? "generic" : "wordpress";
   const convertForPlatform = (content: string) =>
