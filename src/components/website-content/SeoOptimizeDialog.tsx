@@ -1226,6 +1226,59 @@ export function SeoOptimizeDialog({
           </div>
         </div>
 
+        {/* Per-section regeneration (only when Content Text is enabled) */}
+        {selectedFields.includes("content") && (
+          <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <p className="text-sm font-medium">Regenerate only these sections</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Leave all unchecked to rewrite the whole page. Pick specific sections to keep the rest of the copy untouched.
+                </p>
+              </div>
+              {selectedSections.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-[11px]"
+                  onClick={() => setSelectedSections([])}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {SECTION_OPTIONS.map((s) => (
+                <label
+                  key={s.id}
+                  className={`flex items-start gap-2 rounded-md border p-2 cursor-pointer transition-colors ${
+                    selectedSections.includes(s.id)
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <Checkbox
+                    checked={selectedSections.includes(s.id)}
+                    onCheckedChange={() => toggleSection(s.id)}
+                    className="mt-0.5"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium">{s.label}</p>
+                    <p className="text-[10.5px] text-muted-foreground leading-tight">{s.desc}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+            {selectedSections.length > 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                Only <span className="font-medium text-foreground">{selectedSections.join(", ")}</span> will be rewritten. All other text on the page stays byte-identical.
+              </p>
+            )}
+          </div>
+        )}
+
+
         {/* Optional instruction */}
         <Textarea
           placeholder="Optional: Add specific instructions (e.g., 'Focus on premium product buyers', 'Target keyword: red button')..."
