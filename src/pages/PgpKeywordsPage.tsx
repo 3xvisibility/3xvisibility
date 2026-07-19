@@ -251,9 +251,10 @@ export default function PgpKeywordsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("templates")
-        .select("id, name, variables, content, seo_title_pattern, seo_description_pattern")
+        .select("id, name, variables, content, seo_title_pattern, seo_description_pattern, created_at, updated_at")
         .eq("workspace_id", wsId!)
-        .order("name");
+        .order("updated_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as { id: string; name: string; variables: string[] | null; content: string | null; seo_title_pattern: string | null; seo_description_pattern: string | null }[];
     },
