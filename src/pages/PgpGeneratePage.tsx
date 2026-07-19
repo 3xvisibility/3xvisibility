@@ -1796,7 +1796,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 className="w-full"
                 size="lg"
                 disabled={!selectedGroup}
-                onClick={() => navigate(`${basePath}/campaigns?new=1&template=${selectedTemplate || ""}&group=${selectedGroup || ""}`)}
+                onClick={() => navigate(`${basePath}/campaigns?new=1&template=${selectedGroup?.id || ""}`)}
               >
                 <Play className="h-4 w-4 mr-2" /> Continue in Campaign
               </Button>
