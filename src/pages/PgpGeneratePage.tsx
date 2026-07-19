@@ -224,6 +224,11 @@ export default function PgpGeneratePage() {
 
   const missingKeywords = groupKeywords.filter(k => !k.keyword);
 
+  // Geo variables must come from the Campaign wizard's Location Database,
+  // not AI-fabricated. Skip them in every auto-fill path.
+  const GEO_VAR_NAMES = ["city", "cities", "state", "states", "country", "countries", "zip", "zipcode", "region", "county", "location", "locations", "area"];
+  const isGeoVariable = (name: string) => GEO_VAR_NAMES.includes(name.trim().toLowerCase());
+
   const handleAiKeywordFill = async () => {
     if (!wsId || missingKeywords.length === 0 || !aiKwBusiness.trim()) return;
     setAiKwFilling(true);
