@@ -48,7 +48,7 @@ export default function PgpGeneratePage() {
   const preselectedGroup = searchParams.get("group") || "";
 
   const [selectedGroupId, setSelectedGroupId] = useState(preselectedGroup);
-  const [method, setMethod] = useState<"all" | "sequential" | "random">("all");
+  const [method, setMethod] = useState<"all" | "sequential" | "random">("sequential");
   const [numberOfPages, setNumberOfPages] = useState("");
   const [resumeIndex, setResumeIndex] = useState("0");
   const [selectedWebsite, setSelectedWebsite] = useState("");
@@ -1401,14 +1401,25 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   </TabsList>
 
                   <TabsContent value="generation" className="space-y-4">
+                    {/* Plain-language explainer */}
+                    <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs space-y-1">
+                      <p className="font-semibold text-foreground">How many pages will I get?</p>
+                      <p className="text-muted-foreground leading-relaxed">
+                        Pick a <span className="font-medium text-foreground">Generation Method</span> first, then a number.
+                        <span className="block mt-1">• <span className="font-medium">Sequential</span> (recommended) — 1 page per row, e.g. 12 terms = <span className="font-medium">12 pages</span>.</span>
+                        <span className="block">• <span className="font-medium">Random</span> — same count, values shuffled.</span>
+                        <span className="block">• <span className="font-medium">All Combinations</span> — every mix of every variable. Can produce millions — use only if you really need it.</span>
+                      </p>
+                    </div>
+
                     {/* Method Selection */}
                     <div className="space-y-2">
                       <Label className="text-xs font-semibold">{t("pgpGenerate.generationMethodLabel")}</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {([
-                          { value: "all", label: t("pgpGenerate.methodAll"), desc: t("pgpGenerate.methodAllDesc") },
                           { value: "sequential", label: t("pgpGenerate.methodSequential"), desc: t("pgpGenerate.methodSequentialDesc") },
                           { value: "random", label: t("pgpGenerate.methodRandom"), desc: t("pgpGenerate.methodRandomDesc") },
+                          { value: "all", label: t("pgpGenerate.methodAll"), desc: t("pgpGenerate.methodAllDesc") },
                         ] as const).map(m => (
                           <button
                             key={m.value}
@@ -1432,23 +1443,46 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         <Label className="text-xs">{t("pgpGenerate.numberOfPagesLabel")}</Label>
                         <Input
                           type="number"
-                          placeholder={t("pgpGenerate.maxPlaceholder", { count: maxPages.toLocaleString() })}
+                          placeholder={method === "all" ? `Max: ${maxPages.toLocaleString()} (huge!)` : `Max: ${maxPages.toLocaleString()}`}
                           value={numberOfPages}
                           onChange={(e) => setNumberOfPages(e.target.value)}
                           className="h-9"
                         />
-                        <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.leaveBlankAll", { count: maxPages.toLocaleString() })}</p>
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {[10, 25, 50, 100].filter(n => n <= maxPages || method === "all").map(n => (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => setNumberOfPages(String(n))}
+                              className="px-2 py-0.5 text-[10px] rounded-md border border-border hover:bg-accent"
+                            >
+                              {n} pages
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => setNumberOfPages("")}
+                            className="px-2 py-0.5 text-[10px] rounded-md border border-border hover:bg-accent"
+                          >
+                            All ({maxPages.toLocaleString()})
+                          </button>
+                        </div>
+                        {method === "all" && maxPages > 1000 && (
+                          <p className="text-[10px] text-amber-500">
+                            ⚠ All Combinations produces {maxPages.toLocaleString()} pages. Consider Sequential or set a smaller number.
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">{t("pgpGenerate.resumeIndexLabel")}</Label>
+                        <Label className="text-xs">Start from (optional)</Label>
                         <Input
                           type="number"
-                          placeholder={t("pgpGenerate.resumeIndexPlaceholder")}
+                          placeholder="0"
                           value={resumeIndex}
                           onChange={(e) => setResumeIndex(e.target.value)}
                           className="h-9"
                         />
-                        <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.resumeIndexHint")}</p>
+                        <p className="text-[10px] text-muted-foreground">Skip the first N rows — leave 0 unless resuming.</p>
                       </div>
                     </div>
 
