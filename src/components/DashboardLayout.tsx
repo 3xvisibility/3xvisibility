@@ -5,7 +5,7 @@ import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { useLocation, Link } from "react-router-dom";
-import { Search, Moon, Sun } from "lucide-react";
+import { Search, Moon, Sun, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { NotificationsDropdown } from "@/components/NotificationsDropdown";
