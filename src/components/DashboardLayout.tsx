@@ -5,7 +5,7 @@ import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { useLocation, Link } from "react-router-dom";
-import { Search, Moon, Sun } from "lucide-react";
+import { Search, Moon, Sun, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { NotificationsDropdown } from "@/components/NotificationsDropdown";
@@ -91,6 +91,19 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
               </button>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                title="Restart onboarding tour"
+                onClick={() => {
+                  localStorage.removeItem("onboarding-completed");
+                  window.dispatchEvent(new Event("onboarding:start"));
+                }}
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span className="sr-only">Restart onboarding tour</span>
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"

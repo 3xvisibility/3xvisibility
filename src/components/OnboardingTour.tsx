@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Rocket, FileText, Search, BarChart3, ChevronRight, X, Sparkles } from "lucide-react";
+import { Rocket, FileText, Search, BarChart3, ChevronRight, ChevronLeft, X, Sparkles, Globe, KeyRound, Layers } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface OnboardingStep {
@@ -16,29 +16,50 @@ interface OnboardingStep {
 const steps: OnboardingStep[] = [
   {
     target: '[data-onboarding="search"]',
-    title: "Command Palette",
-    description: "Press ⌘K anytime to quickly search pages, campaigns, templates, or navigate anywhere.",
+    title: "Welcome — quick search",
+    description: "Press Cmd/Ctrl + K anywhere to jump to any page, campaign, or template. This is your fastest way to navigate.",
     icon: <Search className="h-5 w-5" />,
     position: "bottom",
   },
   {
-    target: '[data-onboarding="campaigns"]',
-    title: "Campaigns",
-    description: "Create campaigns to generate hundreds of SEO-optimized pages from your CSV data and templates.",
-    icon: <Rocket className="h-5 w-5" />,
+    target: '[data-onboarding="websites"]',
+    title: "Step 1 — Connect a website",
+    description: "Start by connecting the site you want to publish to: WordPress, Shopify, or PrestaShop. Only takes a minute and it's a one-time setup.",
+    icon: <Globe className="h-5 w-5" />,
     position: "right",
   },
   {
     target: '[data-onboarding="templates"]',
-    title: "Templates",
-    description: "Design reusable page layouts with dynamic variables. Use the visual editor or AI builder.",
+    title: "Step 2 — Build a template",
+    description: "Design a reusable page layout with dynamic {variables} like {city} or {service}. Use AI Site Builder, marketplace, URL import, or write your own HTML.",
     icon: <FileText className="h-5 w-5" />,
     position: "right",
   },
   {
+    target: '[data-onboarding="keywords"]',
+    title: "Step 3 — Add keyword groups",
+    description: "For each {variable} in your template, create a keyword group with the terms to use. Tip: open a template here and click 'Create all missing' to bulk-add every group at once.",
+    icon: <KeyRound className="h-5 w-5" />,
+    position: "right",
+  },
+  {
+    target: '[data-onboarding="campaigns"]',
+    title: "Step 4 — Create a campaign",
+    description: "This is where everything comes together: pick a template, pick a data source (AI/CSV/website), attach locations, and preview the SEO score for every page before generation.",
+    icon: <Rocket className="h-5 w-5" />,
+    position: "right",
+  },
+  {
+    target: '[data-onboarding="generated-pages"]',
+    title: "Step 5 — Review & publish",
+    description: "Once pages are generated, preview them, run SEO Optimize to rewrite title/content, then publish directly to your connected site. Live progress and logs are shown in real time.",
+    icon: <Layers className="h-5 w-5" />,
+    position: "right",
+  },
+  {
     target: '[data-onboarding="analytics"]',
-    title: "Analytics",
-    description: "Track generation success rates, publishing metrics, and SEO scores across all campaigns.",
+    title: "Step 6 — Track performance",
+    description: "Monitor generation success, publish status, SEO scores, and page performance across all your campaigns. That's the full loop — you're ready to go.",
     icon: <BarChart3 className="h-5 w-5" />,
     position: "right",
   },
@@ -55,14 +76,25 @@ export function OnboardingTour() {
 
   useEffect(() => {
     const completed = localStorage.getItem(STORAGE_KEY);
-    if (completed || pathname !== "/dashboard") {
+    // Cross-context trigger: any component can dispatch this event to (re)start the tour.
+    const handleRestart = () => {
+      setCurrentStep(0);
+      setIsActive(true);
+    };
+    window.addEventListener("onboarding:start", handleRestart);
+
+    if (completed || !/\/dashboard(\/|$)/.test(pathname)) {
       setIsActive(false);
-      return;
+      return () => window.removeEventListener("onboarding:start", handleRestart);
     }
 
     const timer = setTimeout(() => setIsActive(true), 1200);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("onboarding:start", handleRestart);
+    };
   }, [pathname]);
+
 
   const measureTarget = useCallback(() => {
     if (!isActive) return;
@@ -235,7 +267,7 @@ export function OnboardingTour() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center justify-between pt-1 gap-2">
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); skip(); }}
@@ -243,17 +275,29 @@ export function OnboardingTour() {
                 >
                   Skip tour
                 </button>
-                <Button size="sm" onClick={(e) => { e.stopPropagation(); next(); }} className="h-8 px-4 text-xs gap-1.5">
-                  {currentStep < steps.length - 1 ? (
-                    <>
-                      Next <ChevronRight className="h-3 w-3" />
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-3 w-3" /> Get started
-                    </>
+                <div className="flex items-center gap-2">
+                  {currentStep > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => { e.stopPropagation(); setCurrentStep((s) => Math.max(0, s - 1)); }}
+                      className="h-8 px-3 text-xs gap-1.5"
+                    >
+                      <ChevronLeft className="h-3 w-3" /> Back
+                    </Button>
                   )}
-                </Button>
+                  <Button size="sm" onClick={(e) => { e.stopPropagation(); next(); }} className="h-8 px-4 text-xs gap-1.5">
+                    {currentStep < steps.length - 1 ? (
+                      <>
+                        Next <ChevronRight className="h-3 w-3" />
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3 w-3" /> Get started
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </motion.div>

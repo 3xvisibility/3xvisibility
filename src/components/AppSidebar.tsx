@@ -99,8 +99,11 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   }, []);
 
   const onboardingMap: Record<string, string> = {
-    "campaigns": "campaigns",
+    "websites": "websites",
     "templates": "templates",
+    "pgp-keywords": "keywords",
+    "campaigns": "campaigns",
+    "pages": "generated-pages",
     "analytics": "analytics",
   };
 
