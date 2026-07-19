@@ -2403,19 +2403,48 @@ Deno.serve(async (req) => {
             }
           }
 
+          // Build a meaningful fallback title from row values.
+          // Skip non-content columns (emails, urls, ids, tracking, workspace, company alone, bare years)
+          // and prefer named vars like title/headline/h1/service/product/city/topic.
+          const NON_CONTENT_KEYS = /^(email|e_mail|mail|phone|tel|mobile|url|link|website|site|id|uid|user_id|user|username|workspace|workspace_id|company|company_name|brand|utm_.*|gclid|fbclid|msclkid|password|pass|token|api_key|secret|zip|zipcode|postal_code|postcode|lat|latitude|lng|longitude|created_at|updated_at|timestamp|date)$/i;
+          const PRIORITY_KEYS = ["title", "page_title", "h1", "headline", "heading", "name", "topic", "keyword", "primary_keyword", "focus_keyword", "service", "service_type", "product", "product_name", "category"];
+          const GEO_KEYS = ["city", "state", "region", "province", "country", "location"];
+          const looksLikeEmail = (v: string) => /\S+@\S+\.\S+/.test(v);
+          const looksLikeUrl = (v: string) => /^https?:\/\//i.test(v);
+          const isBareYear = (v: string) => /^(19|20)\d{2}$/.test(v.trim());
+          const cleanRow: Record<string, string> = {};
+          for (const [k, v] of Object.entries(row)) {
+            const val = (v ?? "").toString().trim();
+            if (!val) continue;
+            if (NON_CONTENT_KEYS.test(k)) continue;
+            if (looksLikeEmail(val) || looksLikeUrl(val)) continue;
+            if (isBareYear(val)) continue;
+            cleanRow[k] = val;
+          }
+          const pickTitleFromRow = (): string => {
+            for (const key of PRIORITY_KEYS) {
+              if (cleanRow[key]) {
+                const geoPart = GEO_KEYS.map(g => cleanRow[g]).filter(Boolean)[0];
+                return geoPart ? `${cleanRow[key]} - ${geoPart}` : cleanRow[key];
+              }
+            }
+            const meaningful = Object.entries(cleanRow)
+              .filter(([k]) => !/^(year|month|day|number|count|qty|price|amount)$/i.test(k))
+              .map(([, v]) => v);
+            if (meaningful.length > 0) return meaningful.slice(0, 2).join(" - ");
+            return "";
+          };
+          const rowFallbackTitle = pickTitleFromRow();
+
           // Auto-repair SEO elements only for free-form generated pages.
-          // IMPORTANT: Marketplace/template-safe pages must stay visually identical
-          // to the selected template. The repair helper injects visible SEO/GEO
-          // paragraphs after the H1, which was the source of the oversized
-          // description under the hero subtitle.
           if (!templateSafeMode && !reuseTemplateContent) {
             const repairKeyword = derivePrimaryKeyword({
-              title: Object.values(row).filter(Boolean).slice(0, 2).join(" "),
-              slug: slugify(Object.values(row).filter(Boolean).slice(0, 2).join(" ")),
+              title: rowFallbackTitle || `Page ${processedCount + 1}`,
+              slug: slugify(rowFallbackTitle || `page-${processedCount + 1}`),
               content: pageContent,
             });
             pageContent = autoRepairContent(pageContent, {
-              title: Object.values(row).filter(Boolean).slice(0, 2).join(" - ") || `Page ${processedCount + 1}`,
+              title: rowFallbackTitle || `Page ${processedCount + 1}`,
               primaryKeyword: repairKeyword,
               language: resolvedLanguage,
             });
@@ -2423,12 +2452,12 @@ Deno.serve(async (req) => {
 
           const h1Match = pageContent.match(/<h1[^>]*>(.*?)<\/h1>/i);
           let pageTitle: string;
-          if (h1Match) {
+          if (h1Match && h1Match[1].replace(/<[^>]*>/g, "").trim()) {
             pageTitle = h1Match[1].replace(/<[^>]*>/g, "").trim();
           } else {
-            const values = Object.values(row).filter(Boolean);
-            pageTitle = values.slice(0, 2).join(" - ") || `Page ${processedCount + 1}`;
+            pageTitle = rowFallbackTitle || `Page ${processedCount + 1}`;
           }
+
 
           // Build slug — use template slug pattern from schema_config if defined
           const tplSchemaConfig = (campaign.templates.schema_config || {}) as Record<string, string>;
