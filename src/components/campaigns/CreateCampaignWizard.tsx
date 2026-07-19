@@ -3424,6 +3424,107 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         setCustomValues={setCustomValues}
                       />
 
+                      {/* Service → placeholder mapping preview */}
+                      {(() => {
+                        const serviceVars = selectedTemplateVars.filter(v =>
+                          /^(service|product|offer)(_?\d+|_?type|_?name)?$/i.test(v)
+                        );
+                        if (serviceVars.length === 0) return null;
+                        const raw = (aiServiceProduct || "").trim();
+                        const services = raw
+                          ? raw.split(/\r?\n|,|;|\||\/{2,}/).map(s => s.trim()).filter(Boolean)
+                          : [];
+                        const resolveService = (v: string, idx: number): { value: string; source: string } => {
+                          if (customValues[v]) return { value: customValues[v], source: "Custom value" };
+                          const col = manualMappings[v];
+                          if (col) return { value: `column: ${col}`, source: "CSV / data source" };
+                          const m = v.match(/(\d+)$/);
+                          if (m) {
+                            const i = parseInt(m[1], 10) - 1;
+                            if (services[i]) return { value: services[i], source: `Business info · service #${i + 1}` };
+                          }
+                          if (services[idx]) return { value: services[idx], source: `Business info · service #${idx + 1}` };
+                          if (services.length === 1) return { value: services[0], source: "Business info · single service" };
+                          return { value: "", source: "— not set —" };
+                        };
+                        const rows = serviceVars.map((v, i) => ({ v, ...resolveService(v, i) }));
+                        const unresolved = rows.filter(r => !r.value).length;
+                        const extraServices = Math.max(0, services.length - serviceVars.length);
+                        return (
+                          <div className="rounded-xl border border-border overflow-hidden">
+                            <div className="px-3.5 py-2 border-b border-border bg-muted/40 flex items-center justify-between gap-2 flex-wrap">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Info className="h-4 w-4 text-primary shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold">Service → placeholder mapping</p>
+                                  <p className="text-[11px] text-muted-foreground truncate">
+                                    Confirm each of your services replaces the correct template section before Generate.
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
+                                  {serviceVars.length} placeholder{serviceVars.length !== 1 ? "s" : ""}
+                                </Badge>
+                                <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
+                                  {services.length} service{services.length !== 1 ? "s" : ""}
+                                </Badge>
+                                {unresolved > 0 && (
+                                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] text-destructive">
+                                    {unresolved} unresolved
+                                  </Badge>
+                                )}
+                                {extraServices > 0 && (
+                                  <Badge variant="outline" className="h-5 px-1.5 text-[10px] text-amber-500">
+                                    +{extraServices} unused
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-[11px]">
+                                <thead className="bg-background border-b border-border">
+                                  <tr>
+                                    <th className="text-left px-2.5 py-1.5 font-medium text-muted-foreground w-16">Slot</th>
+                                    <th className="text-left px-2.5 py-1.5 font-medium">Placeholder</th>
+                                    <th className="text-left px-2.5 py-1.5 font-medium">Will be replaced with</th>
+                                    <th className="text-left px-2.5 py-1.5 font-medium w-44">Source</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {rows.map((r, i) => (
+                                    <tr key={r.v} className="border-b border-border/40 hover:bg-muted/30">
+                                      <td className="px-2.5 py-1.5 text-muted-foreground font-mono">#{i + 1}</td>
+                                      <td className="px-2.5 py-1.5">
+                                        <code className="font-mono text-[10.5px] bg-muted px-1 py-0.5 rounded">{`{${r.v}}`}</code>
+                                      </td>
+                                      <td className="px-2.5 py-1.5">
+                                        {r.value ? (
+                                          <span className="text-foreground font-medium">{r.value}</span>
+                                        ) : (
+                                          <span className="italic text-destructive/80">— add a service or map this variable —</span>
+                                        )}
+                                      </td>
+                                      <td className="px-2.5 py-1.5 text-[10.5px] text-muted-foreground">{r.source}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            {extraServices > 0 && (
+                              <div className="px-3.5 py-2 border-t border-border bg-amber-500/5 text-[11px] text-amber-600 dark:text-amber-400">
+                                Your business info lists {services.length} services but the template only has {serviceVars.length} service slot{serviceVars.length !== 1 ? "s" : ""}. Extra services: {services.slice(serviceVars.length).join(", ")}. Add more <code className="font-mono">{"{service_N}"}</code> placeholders in the template, or they will be used only as SEO context.
+                              </div>
+                            )}
+                            {serviceVars.length > 0 && services.length === 0 && (
+                              <div className="px-3.5 py-2 border-t border-border bg-destructive/5 text-[11px] text-destructive">
+                                Template has {serviceVars.length} service placeholder{serviceVars.length !== 1 ? "s" : ""} but no services entered — fill "Services / products" (comma or newline separated) in Business info above.
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
                       {selectedTemplateVars.length > 0 && effectiveCsvData.length > 0 && (() => {
                         const previewRows = effectiveCsvData.slice(0, 10);
                         const tpl = templates.find(t => t.id === selectedTemplate) as any;
