@@ -309,7 +309,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     (s: any) => {
       if (!s || typeof s !== "object") return;
       try {
-        if (typeof s.step === "number") setStep(s.step);
+        if (typeof s.step === "number") setStep(Math.max(1, Math.min(s.step, 5)));
         if (typeof s.campaignName === "string") setCampaignName(s.campaignName);
         if (typeof s.campaignLanguage === "string") setCampaignLanguage(s.campaignLanguage);
         if (typeof s.campaignCountry === "string") setCampaignCountry(s.campaignCountry);
