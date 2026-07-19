@@ -423,8 +423,21 @@ export default function PgpKeywordsPage() {
     if (importRef.current) importRef.current.value = "";
   };
 
+  // Geo variables must come from the real Location Database via the Campaign
+  // wizard — never from AI-fabricated city/state/country lists.
+  const GEO_VAR_NAMES = ["city", "cities", "state", "states", "country", "countries", "zip", "zipcode", "region", "county", "location", "locations", "area"];
+  const isGeoVariable = (name: string) => GEO_VAR_NAMES.includes(name.trim().toLowerCase());
+
   const generateAiTerms = async () => {
     if (!aiTopic.trim()) return;
+    if (isGeoVariable(kwName)) {
+      toast({
+        title: "Use Locations, not AI",
+        description: "City / state / country terms come from the real Location Database. Switch Source to \"Locations\", or add these variables in the Campaign wizard → Attach Locations.",
+        variant: "destructive",
+      });
+      return;
+    }
     setAiGenerating(true);
     try {
       const result = await callAI({
