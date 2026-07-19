@@ -274,10 +274,6 @@ Return a JSON object where each key is the variable name and the value is an arr
 Example: {"service": ["Plumbing", "HVAC"], "quality": ["Best", "Top-rated"]}
 Only return valid JSON. No markdown fences.`;
 
-Return a JSON object where each key is the variable name and the value is an array of string terms.
-Example: {"city": ["Houston", "Dallas"], "service": ["Plumbing", "HVAC"]}
-Only return valid JSON. No markdown fences.`;
-
       const { data, error } = await supabase.functions.invoke("generate-seo-content", {
         body: { type: "batch_pages", prompt },
       });
