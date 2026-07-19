@@ -178,7 +178,7 @@ Make every row meaningfully different so each generated page is unique.`;
     };
 
     let final = normalized;
-    for (let pass = 0; pass < 2; pass++) {
+    for (let pass = 0; pass < 1; pass++) {
       const dupFields = findDupFields(final);
       if (dupFields.length === 0) break;
       const repairPrompt = `The following fields have duplicate or sample-echoing values across rows: ${dupFields.join(", ")}.
