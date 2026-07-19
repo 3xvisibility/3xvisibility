@@ -830,6 +830,7 @@ YOU MUST naturally include geographic/local relevance signals:
 7. Local credibility — use: trusted locally, local team, area specialists, nearby support, serving customers
 
 CRITICAL INTEGRATION RULE: Do NOT just dump these words randomly. Weave them naturally into engaging, human-readable copy that makes sense for the page topic. Every sentence should read naturally while hitting multiple scoring signals simultaneously.
+${sectionScopeInstruction}
 
 PRIMARY KEYWORD RULE:
 - If a focus keyword is provided, you MUST use that exact phrase as the primary keyword.
