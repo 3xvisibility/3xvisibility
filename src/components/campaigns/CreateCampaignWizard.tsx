@@ -4101,6 +4101,24 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium capitalize">{scheduleMode}</span></div>
                     </div>
                   </div>
+
+                  {missingGeoLocations && (
+                    <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-xs flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                      <div className="space-y-1 flex-1">
+                        <p className="font-semibold text-amber-600 dark:text-amber-400">
+                          Locations required before publishing
+                        </p>
+                        <p className="text-muted-foreground">
+                          Your template uses{" "}
+                          <span className="font-medium text-foreground">
+                            {locationVars.map(v => `{${v}}`).join(", ")}
+                          </span>
+                          . Go back to the Data step and pick <span className="font-medium">Locations</span> as the source, or use <span className="font-medium">Attach Locations</span> to merge real cities from the Location Database.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
