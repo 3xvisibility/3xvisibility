@@ -423,8 +423,21 @@ export default function PgpKeywordsPage() {
     if (importRef.current) importRef.current.value = "";
   };
 
+  // Geo variables must come from the real Location Database via the Campaign
+  // wizard — never from AI-fabricated city/state/country lists.
+  const GEO_VAR_NAMES = ["city", "cities", "state", "states", "country", "countries", "zip", "zipcode", "region", "county", "location", "locations", "area"];
+  const isGeoVariable = (name: string) => GEO_VAR_NAMES.includes(name.trim().toLowerCase());
+
   const generateAiTerms = async () => {
     if (!aiTopic.trim()) return;
+    if (isGeoVariable(kwName)) {
+      toast({
+        title: "Use Locations, not AI",
+        description: "City / state / country terms come from the real Location Database. Switch Source to \"Locations\", or add these variables in the Campaign wizard → Attach Locations.",
+        variant: "destructive",
+      });
+      return;
+    }
     setAiGenerating(true);
     try {
       const result = await callAI({
@@ -677,9 +690,14 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
         columns: [], delimiter: null, source_config: { auto_generated: true, topic: wizService }, workspace_id: wsId, user_id: user.id,
       } as any);
 
+      // Do NOT AI-fabricate city terms. The Campaign wizard pulls real cities
+      // from the Location Database. Create the group empty so the user knows to
+      // attach locations at campaign time.
       await supabase.from("pgp_keywords").insert({
-        name: "city", source: "ai", terms: cityTerms, term_count: cityTerms.length,
-        columns: [], delimiter: null, source_config: { auto_generated: true, topic: wizLocations }, workspace_id: wsId, user_id: user.id,
+        name: "city", source: "location", terms: [], term_count: 0,
+        columns: [], delimiter: null,
+        source_config: { auto_generated: true, note: "Attach real cities via Campaign wizard → Attach Locations" },
+        workspace_id: wsId, user_id: user.id,
       } as any);
 
       const variables = [...new Set((result.template_content || "").match(/\{[^}]+\}/g) || [])];
