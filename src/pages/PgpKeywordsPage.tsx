@@ -718,7 +718,7 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
     { value: "local",        label: t("pgpKeywords.sourceLocal"),      icon: FileText,    desc: t("pgpKeywords.sourceLocalDesc") },
     { value: "csv",          label: t("pgpKeywords.sourceFile"),       icon: Database,    desc: t("pgpKeywords.sourceFileDesc") },
     { value: "ai",           label: t("pgpKeywords.sourceAi"),         icon: Sparkles,    desc: t("pgpKeywords.sourceAiDesc") },
-    { value: "location",     label: t("pgpKeywords.sourceLocation"),   icon: MapPin,      desc: t("pgpKeywords.sourceLocationDesc") },
+    // Location source removed — locations are selected in the Campaign wizard.
     { value: "csv_url",      label: t("pgpKeywords.sourceCsvUrl"),     icon: Link2,       desc: t("pgpKeywords.sourceCsvUrlDesc") },
     { value: "google_sheet", label: t("pgpKeywords.sourceSheet"),      icon: Globe,       desc: t("pgpKeywords.sourceSheetDesc") },
     { value: "rss_feed",     label: t("pgpKeywords.sourceRss"),        icon: Rss,         desc: t("pgpKeywords.sourceRssDesc") },
