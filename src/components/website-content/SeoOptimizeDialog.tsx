@@ -525,6 +525,7 @@ export function SeoOptimizeDialog({
           page_type: page.type,
           workspace_id: workspaceId,
           optimize_fields: selectedFields,
+          content_sections: selectedFields.includes("content") ? selectedSections : [],
           page_seo_title: page.seo_title,
           page_seo_description: page.seo_description || page.excerpt,
           page_seo_keywords: page.seo_keywords || [],
