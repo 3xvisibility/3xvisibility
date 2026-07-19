@@ -2196,7 +2196,7 @@ Deno.serve(async (req) => {
           // "Los Angeles"). Falls back to the per-campaign defaults computed
           // upfront when not enabled.
           let rowAiDefaults = aiVarDefaults;
-          const _aiFillMode = (globalThis as unknown as { __aiFillMode?: string }).__aiFillMode || "per_campaign";
+          const _aiFillMode = (globalThis as unknown as { __aiFillMode?: string }).__aiFillMode || "per_row";
           const _aiFillTargets = (globalThis as unknown as { __aiFillTargets?: string[] }).__aiFillTargets || [];
           const _aiFillCtx = (globalThis as unknown as { __aiFillContext?: { business?: string; niche?: string; service?: string } }).__aiFillContext || {};
           if (_aiFillMode === "per_row" && _aiFillTargets.length > 0 && LOVABLE_API_KEY) {
