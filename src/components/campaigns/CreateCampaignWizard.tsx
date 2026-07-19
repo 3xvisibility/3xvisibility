@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { friendlyError } from "@/lib/friendly-errors";
+import { extractEdgeError } from "@/lib/edge-function-error";
 import { parseUploadedFile } from "@/lib/export-csv";
 import { ALL_COUNTRIES } from "@/lib/countries";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -100,6 +101,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [aiServiceProduct, setAiServiceProduct] = useState("");
   const [aiPageCount, setAiPageCount] = useState(20);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiRowProgress, setAiRowProgress] = useState<{ done: number; total: number } | null>(null);
   const [aiGeneratedRows, setAiGeneratedRows] = useState<Record<string, string>[]>([]);
   const [aiPresets, setAiPresets] = useState<AiPreset[]>(() => readAiPresets());
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
@@ -1113,35 +1115,47 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       }
       const genVars = aiGenVars;
       const genTpl = templates.find((t) => t.id === selectedTemplate) as { content?: string; default_values?: Record<string, string> } | undefined;
-      const { data, error } = await supabase.functions.invoke("ai-generate-rows", {
-        body: {
-          variables: genVars,
-          count: Math.max(1, Math.min(200, aiPageCount)),
-          business: aiBusiness || undefined,
-          niche: aiNiche || undefined,
-          service: aiServiceProduct || undefined,
-          language: campaignLanguage,
-          // Country intentionally omitted — location context is only applied
-          // when the user explicitly attaches Location Database rows.
-          // Template Safe Mode: keep generated content within the template's
-          // original length budget so the layout/design never breaks.
-          templateSafeMode: true,
-          // Exact per-field word/char budgets derived from the template's own
-          // default values, so AI headings/text match the template length 1:1.
-          defaultValues: (Object.keys(templateDefaultValues).length > 0 ? templateDefaultValues : genTpl?.default_values) || undefined,
-          templateContent: genTpl?.content || undefined,
-        },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      const baseRows = Array.isArray(data?.rows) ? data.rows : [];
+      const totalCount = Math.max(1, Math.min(200, aiPageCount));
+      const batchSize = 10;
+      const baseRows: Record<string, string>[] = [];
+      setAiRowProgress({ done: 0, total: totalCount });
+
+      for (let offset = 0; offset < totalCount; offset += batchSize) {
+        const batchCount = Math.min(batchSize, totalCount - offset);
+        const { data, error } = await supabase.functions.invoke("ai-generate-rows", {
+          body: {
+            variables: genVars,
+            count: batchCount,
+            previousRows: baseRows,
+            business: aiBusiness || undefined,
+            niche: aiNiche || undefined,
+            service: aiServiceProduct || undefined,
+            language: campaignLanguage,
+            // Country intentionally omitted — location context is only applied
+            // when the user explicitly attaches Location Database rows.
+            // Template Safe Mode: keep generated content within the template's
+            // original length budget so the layout/design never breaks.
+            templateSafeMode: true,
+            // Exact per-field word/char budgets derived from the template's own
+            // default values, so AI headings/text match the template length 1:1.
+            defaultValues: (Object.keys(templateDefaultValues).length > 0 ? templateDefaultValues : genTpl?.default_values) || undefined,
+            templateContent: genTpl?.content || undefined,
+          },
+        });
+        if (error) throw new Error(await extractEdgeError(error, error.message));
+        if (data?.error) throw new Error(data.error);
+        const batchRows = Array.isArray(data?.rows) ? data.rows : [];
+        if (batchRows.length === 0) throw new Error("AI returned no rows");
+        baseRows.push(...batchRows.slice(0, batchCount));
+        setAiRowProgress({ done: Math.min(baseRows.length, totalCount), total: totalCount });
+      }
       if (baseRows.length === 0) throw new Error("AI returned no rows");
       // Blank out any location-shaped variables so no location-based text
       // sneaks into generated pages unless the user attaches Location data.
       const locBlank: Record<string, string> = {};
       for (const v of locationVars) locBlank[v] = "";
       // Apply the user's fixed contact values to every row.
-      const rows = baseRows.map((r: Record<string, string>) => ({ ...r, ...locBlank, ...fixedValues }));
+      const rows = baseRows.slice(0, totalCount).map((r: Record<string, string>) => ({ ...r, ...locBlank, ...fixedValues }));
       setAiGeneratedRows(rows);
       toast({ title: `Generated ${rows.length} rows`, description: "Edit any cell below before continuing." });
 
@@ -1149,6 +1163,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       toast({ title: "AI generation failed", description: friendlyError(err.message), variant: "destructive" });
     } finally {
       setAiGenerating(false);
+      setAiRowProgress(null);
     }
   };
 
@@ -2940,7 +2955,21 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                 {aiGeneratedRows.length > 0 ? "Regenerate" : "Generate rows"}
                               </Button>
                             </div>
-                            <p className="text-[10px] text-muted-foreground">Max 200 per call. AI uses {campaignLanguage.toUpperCase()} • {campaignCountry}.</p>
+                            <p className="text-[10px] text-muted-foreground">Large requests run in safe batches. AI uses {campaignLanguage.toUpperCase()} • {campaignCountry}.</p>
+                            {aiGenerating && aiRowProgress && (
+                              <div className="rounded-lg border bg-muted/30 p-2 space-y-1.5">
+                                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                                  <span>Generating rows</span>
+                                  <span>{aiRowProgress.done}/{aiRowProgress.total}</span>
+                                </div>
+                                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                  <div
+                                    className="h-full bg-primary transition-all"
+                                    style={{ width: `${Math.max(4, Math.round((aiRowProgress.done / Math.max(1, aiRowProgress.total)) * 100))}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {aiGeneratedRows.length > 0 && (

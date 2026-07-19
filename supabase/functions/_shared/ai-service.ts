@@ -249,16 +249,17 @@ const PROVIDERS: Record<Exclude<AiProvider, "lovable">, ProviderConfig> = {
 
 // ── Timed fetch ──────────────────────────────────────────────────────────────
 // The edge runtime aborts the whole request at a 150s idle timeout, producing a
-// hard 504 / blank screen. We abort the AI call earlier (120s) so the caller can
-// return a friendly, structured error instead.
-async function fetchWithTimeout(url: string, init: RequestInit, ms = 120_000): Promise<Response> {
+// hard 504 / blank screen. Keep each provider attempt short enough that an
+// external-provider failure plus Lovable fallback can still return structured
+// JSON before the platform timeout.
+async function fetchWithTimeout(url: string, init: RequestInit, ms = 55_000): Promise<Response> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
   try {
     return await fetch(url, { ...init, signal: ctrl.signal });
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") {
-      throw new Error("AI request timed out. Please try again with a shorter prompt.");
+      throw new Error("AI request timed out. Please try again with fewer rows or a shorter prompt.");
     }
     throw err;
   } finally {
