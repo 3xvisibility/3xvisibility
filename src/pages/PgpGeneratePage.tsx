@@ -992,6 +992,21 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                           {t("pgpGenerate.keywordsLink")}
                         </Button>
                       </div>
+                      {/* One-click: auto-link existing keyword groups by fuzzy
+                          name-match, then auto-generate the rest with AI using
+                          the template name as context — no manual input. */}
+                      <Button
+                        size="sm"
+                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                        disabled={oneClickLinking}
+                        onClick={handleOneClickAutoLink}
+                      >
+                        {oneClickLinking ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Linking…</>
+                        ) : (
+                          <><Zap className="h-3.5 w-3.5 mr-1.5" /> One-click auto-link keywords</>
+                        )}
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
