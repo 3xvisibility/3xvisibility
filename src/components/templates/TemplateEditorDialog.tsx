@@ -337,6 +337,47 @@ ${contentText}`
     }
   };
 
+  // ── AI Add Variables ────────────────────────────────────────────────
+  // Reads the current template HTML and asks the AI to replace repeated
+  // concrete nouns (city, service, business name, phone, etc.) with
+  // SEO-friendly {snake_case} placeholders — design & structure untouched.
+  const aiAddVariables = async () => {
+    if (!content.trim()) {
+      toast({ title: "Add content first", description: "Write or paste template HTML, then let AI insert variables.", variant: "destructive" });
+      return;
+    }
+    setAiVariablizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-template", {
+        body: {
+          mode: "improve",
+          existingContent: content,
+          instruction:
+            "Rewrite this HTML to be a REUSABLE SEO template. Replace repeated concrete nouns with {snake_case} placeholders using EXACTLY this vocabulary when they fit: {service}, {service_name}, {city}, {state}, {country}, {business_name}, {phone}, {email}, {address}, {price}, {year}, {quality}, {benefit}, {keyword}. " +
+            "Rules: (1) keep the EXACT same HTML tags, classes, ids, inline styles and image URLs — do NOT change design or layout. (2) only swap visible text words and alt attributes. (3) do not add new sections or copy. (4) use each variable at least twice where natural for maximum SEO reach. (5) return ONLY the final HTML, no explanations.",
+        },
+      });
+      if (error) throw new Error(await extractEdgeError(error, "AI failed to add variables"));
+      if (data?.error) throw new Error(data.error);
+      let out = (data.content || "").replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+      if (!out) {
+        toast({ title: "Nothing returned", description: "AI did not return HTML. Try again.", variant: "destructive" });
+        return;
+      }
+      setContent(out);
+      const found = [...new Set((out.match(/\{([a-z_]+)\}/gi) || []))];
+      toast({
+        title: "✨ Variables added!",
+        description: `${found.length} variable(s) inserted. Design & images kept intact.`,
+      });
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiVariablizing(false);
+    }
+  };
+
+
   // ── Images detected inside the template content ──────────────────────
   // Both <img src="..."> and CSS url(...) backgrounds are picked up so the
   // Image tab fully depends on what the Content actually uses.
