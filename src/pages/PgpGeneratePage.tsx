@@ -224,6 +224,11 @@ export default function PgpGeneratePage() {
 
   const missingKeywords = groupKeywords.filter(k => !k.keyword);
 
+  // Geo variables must come from the Campaign wizard's Location Database,
+  // not AI-fabricated. Skip them in every auto-fill path.
+  const GEO_VAR_NAMES = ["city", "cities", "state", "states", "country", "countries", "zip", "zipcode", "region", "county", "location", "locations", "area"];
+  const isGeoVariable = (name: string) => GEO_VAR_NAMES.includes(name.trim().toLowerCase());
+
   const handleAiKeywordFill = async () => {
     if (!wsId || missingKeywords.length === 0 || !aiKwBusiness.trim()) return;
     setAiKwFilling(true);
@@ -231,7 +236,32 @@ export default function PgpGeneratePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error(t("settings.notAuthenticated"));
 
-      const varNames = missingKeywords.map(k => k.name);
+      const allVarNames = missingKeywords.map(k => k.name);
+      const geoVars = allVarNames.filter(isGeoVariable);
+      const varNames = allVarNames.filter(n => !isGeoVariable(n));
+
+      // Create empty placeholder groups for geo vars — user must attach real
+      // locations via the Campaign wizard.
+      const { data: { user: geoUser } } = await supabase.auth.getUser();
+      for (const g of geoVars) {
+        await supabase.from("pgp_keywords").insert({
+          name: g, terms: [], term_count: 0, source: "location",
+          source_config: { note: "Attach real locations via Campaign wizard → Attach Locations" },
+          user_id: geoUser?.id, workspace_id: wsId,
+        } as any);
+      }
+
+      if (varNames.length === 0) {
+        queryClient.invalidateQueries({ queryKey: ["pgp-keywords-full", wsId] });
+        toast({
+          title: "Geo variables skipped",
+          description: `${geoVars.join(", ")} will be filled from real locations in the Campaign wizard.`,
+        });
+        setShowAiKeywordFill(false);
+        setAiKwFilling(false);
+        return;
+      }
+
       const prompt = `Generate keyword data for an SEO page generator tool.
 
 Business/Service: ${aiKwBusiness.trim()}
@@ -241,7 +271,7 @@ For each of these variables, generate ${aiKwCount} realistic, diverse terms that
 ${varNames.map(v => `- {${v}}`).join("\n")}
 
 Return a JSON object where each key is the variable name and the value is an array of string terms.
-Example: {"city": ["Houston", "Dallas"], "service": ["Plumbing", "HVAC"]}
+Example: {"service": ["Plumbing", "HVAC"], "quality": ["Best", "Top-rated"]}
 Only return valid JSON. No markdown fences.`;
 
       const { data, error } = await supabase.functions.invoke("generate-seo-content", {
@@ -298,7 +328,19 @@ Only return valid JSON. No markdown fences.`;
       if (!user) throw new Error(t("settings.notAuthenticated"));
 
       const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-      const targets = missingKeywords.map((k) => k.name);
+      const allTargets = missingKeywords.map((k) => k.name);
+      const geoTargets = allTargets.filter(isGeoVariable);
+      const targets = allTargets.filter((n) => !isGeoVariable(n));
+
+      // Create empty placeholder groups for geo vars — real values come from
+      // the Campaign wizard's Location Database, never from AI.
+      for (const g of geoTargets) {
+        await supabase.from("pgp_keywords").insert({
+          name: g, terms: [], term_count: 0, source: "location",
+          source_config: { note: "Attach real locations via Campaign wizard → Attach Locations" },
+          user_id: user.id, workspace_id: wsId,
+        } as any);
+      }
       const stillMissing: string[] = [];
       let linked = 0;
       let cloned = 0;
