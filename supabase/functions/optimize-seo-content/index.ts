@@ -270,6 +270,7 @@ async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.n
       page_type,
       workspace_id,
       optimize_fields,
+      content_sections,
       language,
       instruction,
       manual_update,
@@ -287,6 +288,9 @@ async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.n
       overwrite_design,
       force_republish,
     } = body;
+    const requestedSections: string[] = Array.isArray(content_sections)
+      ? content_sections.filter((s: unknown): s is string => typeof s === "string" && s.trim().length > 0)
+      : [];
     // Republishing an existing CMS page → preserve its on-site design (Elementor
     // layout, theme blocks, builder structure) by default. Caller can opt out
     // with `overwrite_design: true` (e.g. manual full-rewrite flows). When the
