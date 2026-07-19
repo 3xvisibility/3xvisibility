@@ -843,6 +843,18 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               {selectedGroup && (
                 <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("pgpGenerate.keywordsInGroup")}</p>
+                  {groupKeywords.length === 0 && (
+                    <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-500/10 rounded-lg px-3 py-2">
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="font-semibold">This template has no {"{variables}"} yet.</p>
+                        <p>Open the template editor and click <span className="font-semibold">"AI Add Variables"</span> to insert placeholders like {"{service}"}, {"{city}"}, {"{quality}"}. Then return here.</p>
+                        <Button variant="link" size="sm" className="text-amber-600 h-auto p-0" onClick={() => navigate(`${basePath}/templates`)}>
+                          Open Templates →
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     {groupKeywords.map(gk => (
                       <div key={gk.name} className="flex items-center justify-between py-1">
