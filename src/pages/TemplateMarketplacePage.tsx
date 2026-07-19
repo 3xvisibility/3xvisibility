@@ -111,6 +111,16 @@ export default function TemplateMarketplacePage() {
   // returns the raw template markup so the client can grab whichever chunk they
   // need for their own stack.
   const [platformChoice, setPlatformChoice] = useState<"elementor" | "shopify" | "html">("elementor");
+  // Auto-run "AI Add Variables" right after a marketplace template is imported,
+  // so users don't have to open the editor and click the button manually.
+  const [autoAddVars, setAutoAddVars] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const v = window.localStorage.getItem("marketplace.autoAddVars");
+    return v === null ? true : v === "1";
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem("marketplace.autoAddVars", autoAddVars ? "1" : "0"); } catch {}
+  }, [autoAddVars]);
   const skinPlatform: TemplatePlatform =
     platformChoice === "shopify" ? "shopify" : platformChoice === "html" ? "generic" : "wordpress";
   const convertForPlatform = (content: string) =>
@@ -507,7 +517,7 @@ export default function TemplateMarketplacePage() {
       // Re-skin the HTML to match the chosen platform (Elementor/WordPress vs Shopify)
       // so the imported template looks native to the target platform.
       const content = convertForPlatform(baked);
-      const { error } = await supabase.from("templates").insert({
+      const { data: inserted, error } = await supabase.from("templates").insert({
         name: tpl.name,
         content,
         variables: tpl.variables,
@@ -523,21 +533,52 @@ export default function TemplateMarketplacePage() {
             ? { content_overrides: contentOverrides, image_overrides: imageOverrides }
             : {}),
         },
-      } as any);
+      } as any).select("id, content").single();
       if (error) throw error;
+      return { tpl, insertedId: (inserted as any)?.id as string | undefined, insertedContent: (inserted as any)?.content as string | undefined };
     },
-    onSuccess: (_, tpl) => {
+    onSuccess: async (result, tpl) => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
       toast({ title: "Template imported!", description: `"${tpl.name}" added to your templates.` });
       setPreviewTemplate(null);
-      // Elementor (WordPress) and Shopify templates are pre-converted server-side
-      // into native Elementor widget JSON + Shopify section Liquid so publishing
-      // renders 1:1 without any HTML-to-widget conversion at publish time. The
-      // backfill endpoint writes BOTH kits for every template in one pass, so we
-      // trigger it whenever the user imports an Elementor or Shopify variant.
-      // HTML/CSS imports skip this (raw markup is used as-is).
       if (platformChoice === "elementor" || platformChoice === "shopify") {
         void supabase.functions.invoke("backfill-elementor-catalog", { body: { force: true } }).catch(() => {});
+      }
+      // Auto-run "AI Add Variables" so the freshly imported template already
+      // has SEO-friendly {snake_case} placeholders — no manual editor step.
+      const insertedContent = result?.insertedContent || "";
+      const insertedId = result?.insertedId;
+      const existingVars = new Set((insertedContent.match(/\{([a-z_]+)\}/gi) || []));
+      if (autoAddVars && insertedId && insertedContent && existingVars.size < 3) {
+        toast({ title: "✨ Adding variables…", description: "AI is inserting SEO placeholders into your new template." });
+        try {
+          const { data, error: aiErr } = await supabase.functions.invoke("generate-template", {
+            body: {
+              mode: "improve",
+              existingContent: insertedContent,
+              instruction:
+                "Rewrite this HTML to be a REUSABLE SEO template. Replace repeated concrete nouns with {snake_case} placeholders using EXACTLY this vocabulary when they fit: {service}, {service_name}, {city}, {state}, {country}, {business_name}, {phone}, {email}, {address}, {price}, {year}, {quality}, {benefit}, {keyword}. " +
+                "Rules: (1) keep the EXACT same HTML tags, classes, ids, inline styles and image URLs — do NOT change design or layout. (2) only swap visible text words and alt attributes. (3) do not add new sections or copy. (4) use each variable at least twice where natural for maximum SEO reach. (5) return ONLY the final HTML, no explanations.",
+            },
+          });
+          if (aiErr) throw aiErr;
+          const out = ((data as any)?.content || "").replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+          if (!out) throw new Error("AI returned no HTML");
+          const foundVars = [...new Set((out.match(/\{([a-z_]+)\}/gi) || []))].map((v) => String(v).replace(/[{}]/g, ""));
+          const { error: updErr } = await supabase
+            .from("templates")
+            .update({ content: out, variables: foundVars })
+            .eq("id", insertedId);
+          if (updErr) throw updErr;
+          queryClient.invalidateQueries({ queryKey: ["templates"] });
+          toast({ title: "✨ Variables added!", description: `${foundVars.length} placeholder(s) inserted automatically.` });
+        } catch (e: any) {
+          toast({
+            title: "Auto-add skipped",
+            description: e?.message || "Open the template and click 'AI Add Variables' to insert placeholders.",
+            variant: "destructive",
+          });
+        }
       }
     },
     onError: (err: Error) => {
@@ -678,6 +719,19 @@ export default function TemplateMarketplacePage() {
             );
           })}
         </div>
+        {/* Auto AI Add Variables toggle — runs the same "AI Add Variables" pass
+            used inside the template editor immediately after a marketplace
+            import, so users don't have to open the editor manually. */}
+        <label className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs cursor-pointer select-none hover:bg-muted/50 transition-colors">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-primary"
+            checked={autoAddVars}
+            onChange={(e) => setAutoAddVars(e.target.checked)}
+          />
+          <span className="font-medium">Auto-run “AI Add Variables” after import</span>
+          <span className="text-muted-foreground hidden sm:inline">— inserts SEO {"{placeholders}"} automatically</span>
+        </label>
       </div>
 
 
