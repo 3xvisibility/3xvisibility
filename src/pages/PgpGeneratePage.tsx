@@ -1843,6 +1843,37 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 </p>
               </div>
 
+              {needsLocations && (
+                <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-semibold text-amber-600 dark:text-amber-400">
+                        Locations not attached
+                      </p>
+                      <p className="text-muted-foreground">
+                        Your template uses{" "}
+                        <span className="font-medium text-foreground">
+                          {unfilledGeoVars.map((v) => `{${v}}`).join(", ")}
+                        </span>
+                        , but no real locations are attached. Generating now will leave these placeholders empty. Use the Campaign Wizard to pull real cities/states/countries from the Location Database.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+                    onClick={() =>
+                      navigate(
+                        `${basePath}/campaigns?new=1&template=${selectedGroup?.id || ""}&step=locations`
+                      )
+                    }
+                  >
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" /> Attach Locations in Campaign Wizard
+                  </Button>
+                </div>
+              )}
+
               <Button
                 className="w-full"
                 size="lg"
@@ -1856,10 +1887,21 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 variant="outline"
                 className="w-full"
                 disabled={!selectedGroup || groupKeywords.every(k => !k.keyword)}
-                onClick={handleTestGenerate}
+                onClick={() => {
+                  if (needsLocations) {
+                    toast({
+                      title: "Locations not attached",
+                      description: `${unfilledGeoVars.map((v) => `{${v}}`).join(", ")} will render empty. Attach locations in the Campaign Wizard first.`,
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  handleTestGenerate();
+                }}
               >
                 <Eye className="h-4 w-4 mr-2" /> {t("pgpGenerate.testPreviewBtn")}
               </Button>
+
 
 
               {selectedGroup && (
