@@ -1795,7 +1795,7 @@ Deno.serve(async (req) => {
 
       const aiContext = (((campaign.mapping || {}) as { ai_context?: { business?: string; niche?: string; service?: string } }).ai_context) || {};
       const hasContext = !!(aiContext.business || aiContext.niche || aiContext.service);
-      const aiFillMode = (((campaign.mapping || {}) as { ai_fill_mode?: "per_campaign" | "per_row" }).ai_fill_mode) || "per_campaign";
+      const aiFillMode = (((campaign.mapping || {}) as { ai_fill_mode?: "per_campaign" | "per_row" }).ai_fill_mode) || "per_row";
 
       if (unmapped.length > 0 && LOVABLE_API_KEY && hasContext && aiFillMode === "per_campaign") {
         console.log(`[GENERATE-PAGES] AI fill (per_campaign): ${unmapped.length} variable(s) →`, unmapped.join(", "));
