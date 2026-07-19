@@ -85,6 +85,7 @@ export default function PgpGeneratePage() {
   const [aiKwCustomData, setAiKwCustomData] = useState("");
   const [aiKwCount, setAiKwCount] = useState("10");
   const [aiKwFilling, setAiKwFilling] = useState(false);
+  const [oneClickLinking, setOneClickLinking] = useState(false);
 
   // Brand name
   const [brandSource, setBrandSource] = useState<"website" | "custom">("website");
