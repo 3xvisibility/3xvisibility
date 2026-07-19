@@ -63,6 +63,15 @@ const FIELD_OPTIONS = [
   { id: "content", label: "Content Text", icon: <RefreshCw className="h-3.5 w-3.5" />, desc: "Rewrite text for SEO (keeps design intact)" },
 ];
 
+const SECTION_OPTIONS = [
+  { id: "services", label: "Services", desc: "Service/offering blocks & feature cards" },
+  { id: "faq", label: "FAQ", desc: "Question & answer sections" },
+  { id: "testimonials", label: "Testimonials", desc: "Reviews & customer quotes" },
+  { id: "about", label: "About", desc: "About / who-we-are / company info" },
+  { id: "hero", label: "Hero", desc: "Top banner headline & subtitle" },
+  { id: "cta", label: "CTA", desc: "Call-to-action blocks & buttons" },
+];
+
 /**
  * Explain why a field didn't match on the live page and offer concrete fixes.
  * Runs on the client with only the compared strings + a few UI hints.
@@ -163,6 +172,9 @@ export function SeoOptimizeDialog({
 }: SeoOptimizeDialogProps) {
   const { toast } = useToast();
   const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords", "content"]);
+  // When content rewrite is enabled, restrict rewriting to just these sections.
+  // Empty array = rewrite the whole page (legacy behavior).
+  const [selectedSections, setSelectedSections] = useState<string[]>([]);
   const [instruction, setInstruction] = useState("");
   const [loading, setLoading] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
@@ -452,8 +464,8 @@ export function SeoOptimizeDialog({
   // Persist field selection + instruction per page so users don't lose
   // their tweaks when navigating away.
   const seoSnapshot = useMemo(
-    () => ({ selectedFields, instruction }),
-    [selectedFields, instruction],
+    () => ({ selectedFields, selectedSections, instruction }),
+    [selectedFields, selectedSections, instruction],
   );
   const clearSeoSnapshot = usePersistedSnapshot(
     `seo-optimize-dialog:${page.id}`,
@@ -463,14 +475,23 @@ export function SeoOptimizeDialog({
       if (Array.isArray(s.selectedFields) && s.selectedFields.length) {
         setSelectedFields(s.selectedFields);
       }
+      if (Array.isArray(s.selectedSections)) {
+        setSelectedSections(s.selectedSections.filter((x: any) => typeof x === "string"));
+      }
       if (typeof s.instruction === "string") setInstruction(s.instruction);
     },
-    { version: 2 },
+    { version: 3 },
   );
 
   const toggleField = (field: string) => {
     setSelectedFields((prev) =>
       prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
+    );
+  };
+
+  const toggleSection = (section: string) => {
+    setSelectedSections((prev) =>
+      prev.includes(section) ? prev.filter((s) => s !== section) : [...prev, section]
     );
   };
 
@@ -504,6 +525,7 @@ export function SeoOptimizeDialog({
           page_type: page.type,
           workspace_id: workspaceId,
           optimize_fields: selectedFields,
+          content_sections: selectedFields.includes("content") ? selectedSections : [],
           page_seo_title: page.seo_title,
           page_seo_description: page.seo_description || page.excerpt,
           page_seo_keywords: page.seo_keywords || [],
@@ -1203,6 +1225,59 @@ export function SeoOptimizeDialog({
             ))}
           </div>
         </div>
+
+        {/* Per-section regeneration (only when Content Text is enabled) */}
+        {selectedFields.includes("content") && (
+          <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <p className="text-sm font-medium">Regenerate only these sections</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Leave all unchecked to rewrite the whole page. Pick specific sections to keep the rest of the copy untouched.
+                </p>
+              </div>
+              {selectedSections.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-[11px]"
+                  onClick={() => setSelectedSections([])}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {SECTION_OPTIONS.map((s) => (
+                <label
+                  key={s.id}
+                  className={`flex items-start gap-2 rounded-md border p-2 cursor-pointer transition-colors ${
+                    selectedSections.includes(s.id)
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <Checkbox
+                    checked={selectedSections.includes(s.id)}
+                    onCheckedChange={() => toggleSection(s.id)}
+                    className="mt-0.5"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium">{s.label}</p>
+                    <p className="text-[10.5px] text-muted-foreground leading-tight">{s.desc}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+            {selectedSections.length > 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                Only <span className="font-medium text-foreground">{selectedSections.join(", ")}</span> will be rewritten. All other text on the page stays byte-identical.
+              </p>
+            )}
+          </div>
+        )}
+
 
         {/* Optional instruction */}
         <Textarea

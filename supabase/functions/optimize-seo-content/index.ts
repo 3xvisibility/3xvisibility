@@ -270,6 +270,7 @@ async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.n
       page_type,
       workspace_id,
       optimize_fields,
+      content_sections,
       language,
       instruction,
       manual_update,
@@ -287,6 +288,9 @@ async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.n
       overwrite_design,
       force_republish,
     } = body;
+    const requestedSections: string[] = Array.isArray(content_sections)
+      ? content_sections.filter((s: unknown): s is string => typeof s === "string" && s.trim().length > 0)
+      : [];
     // Republishing an existing CMS page → preserve its on-site design (Elementor
     // layout, theme blocks, builder structure) by default. Caller can opt out
     // with `overwrite_design: true` (e.g. manual full-rewrite flows). When the
@@ -720,6 +724,39 @@ async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.n
       return restored;
     };
 
+    // Per-section scoping: when the caller only wants to rewrite specific sections
+    // (services, faq, testimonials, about, hero, cta), give the AI hard rules to
+    // identify those sections by common markers and leave every other text node
+    // byte-identical.
+    const SECTION_MARKERS: Record<string, string[]> = {
+      services: ["service", "services", "our-services", "offering", "offerings", "features", "what-we-do", "solutions", "products"],
+      faq: ["faq", "faqs", "faq-", "questions", "q-and-a", "qna", "accordion"],
+      testimonials: ["testimonial", "testimonials", "reviews", "review", "quote", "quotes", "customers", "clients-say"],
+      about: ["about", "about-us", "about-", "who-we-are", "company", "our-story", "story", "mission"],
+      hero: ["hero", "hero-", "banner", "top-banner", "masthead", "jumbotron"],
+      cta: ["cta", "call-to-action", "cta-", "get-started", "contact-cta"],
+    };
+    const activeSections = requestedSections.filter((s) => SECTION_MARKERS[s]);
+    const sectionScopeInstruction = activeSections.length > 0 && fields.includes("content")
+      ? `
+
+═══ SECTION-SCOPED REWRITE (STRICT) ═══
+Rewrite ONLY the text inside HTML elements that belong to these page sections: ${activeSections.join(", ").toUpperCase()}.
+Detect target sections by ANY of these signals on an element OR its ancestors:
+${activeSections
+  .map((s) => `- ${s.toUpperCase()}: id/class/data-* attribute contains one of [${SECTION_MARKERS[s].join(", ")}], OR the nearest preceding heading (h1-h4) text is about "${s}" (e.g. "Our ${s}", "${s.charAt(0).toUpperCase() + s.slice(1)}", "Frequently Asked Questions" for faq, "What our customers say" for testimonials).`)
+  .join("\n")}
+
+For every OTHER text node in the HTML (any element NOT inside a matching section):
+- Keep its text byte-identical. Do NOT rewrite it, translate it, shorten it, or "improve" it.
+- Copy it into the output exactly as-is.
+
+Inside matching sections you MUST still obey every design/length rule above.
+If you cannot confidently identify a section marker for a scope, DO NOT invent one — leave the whole page unchanged for that scope rather than rewriting the wrong block.`
+      : "";
+
+
+
 
     const systemPrompt = metadataOnly
       ? `You are an expert SEO metadata optimizer.
@@ -793,6 +830,7 @@ YOU MUST naturally include geographic/local relevance signals:
 7. Local credibility — use: trusted locally, local team, area specialists, nearby support, serving customers
 
 CRITICAL INTEGRATION RULE: Do NOT just dump these words randomly. Weave them naturally into engaging, human-readable copy that makes sense for the page topic. Every sentence should read naturally while hitting multiple scoring signals simultaneously.
+${sectionScopeInstruction}
 
 PRIMARY KEYWORD RULE:
 - If a focus keyword is provided, you MUST use that exact phrase as the primary keyword.
