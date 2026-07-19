@@ -693,10 +693,18 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
   // Geo validation: block Generate/Publish when the template uses location
   // variables but no real Location Database rows have been attached (either as
-  // primary source or merged in from Locations picker).
+  // primary source, merged in from Locations picker, or auto-detected as
+  // CSV columns whose names match the template's geo variables).
+  const csvGeoColumns = useMemo(() => {
+    if (dataSource !== "csv" || csvHeaders.length === 0 || locationVars.length === 0) return [];
+    const headersLower = csvHeaders.map(h => h.toLowerCase().trim());
+    return locationVars.filter(v => headersLower.includes(v.toLowerCase()));
+  }, [dataSource, csvHeaders, locationVars]);
+  const csvHasGeoData = csvGeoColumns.length > 0 && csvData.length > 0;
   const hasAttachedLocations =
     (dataSource === "locations" && locationData.length > 0) ||
-    mergedLocations.length > 0;
+    mergedLocations.length > 0 ||
+    csvHasGeoData;
   const missingGeoLocations = locationVars.length > 0 && !hasAttachedLocations;
   const [aiFixedValues, setAiFixedValues] = useState<Record<string, string>>({});
   // Optional button/link label text shown for a link variable (separate from its URL).
