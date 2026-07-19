@@ -4127,6 +4127,24 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </div>
                     </div>
                   )}
+
+                  {!missingGeoLocations && csvHasGeoData && (
+                    <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3 text-xs flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <div className="space-y-1 flex-1">
+                        <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+                          Locations auto-mapped from CSV
+                        </p>
+                        <p className="text-muted-foreground">
+                          Detected geo columns in your CSV:{" "}
+                          <span className="font-medium text-foreground">
+                            {csvGeoColumns.map(v => `{${v}}`).join(", ")}
+                          </span>
+                          . These will be used directly — no Location Database attach needed.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
