@@ -1783,19 +1783,22 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
         {/* Right: Actions & Preview */}
         <div className="space-y-4">
-          <Card className="shadow-surface">
+          <Card className="shadow-surface border-primary/30">
             <CardContent className="p-5 space-y-3">
+              <div className="rounded-lg bg-primary/10 border border-primary/30 p-3 text-xs space-y-1">
+                <p className="font-semibold text-primary">Pages are generated through Campaigns</p>
+                <p className="text-muted-foreground">
+                  This page is for previewing your template + keyword pairing. Use a Campaign to actually generate pages — it pulls real cities from the Location Database and publishes to your connected site.
+                </p>
+              </div>
+
               <Button
                 className="w-full"
                 size="lg"
-                disabled={!selectedGroup || groupKeywords.length === 0 || missingKeywords.length > 0 || maxPages === 0 || isGenerating}
-                onClick={handleGenerate}
+                disabled={!selectedGroup}
+                onClick={() => navigate(`${basePath}/campaigns?new=1&template=${selectedTemplate || ""}&group=${selectedGroup || ""}`)}
               >
-                {isGenerating ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t("pgpGenerate.generatingBtn")}</>
-                ) : (
-                  <><Play className="h-4 w-4 mr-2" /> {t("pgpGenerate.generateBtn")}</>
-                )}
+                <Play className="h-4 w-4 mr-2" /> Continue in Campaign
               </Button>
 
               <Button
@@ -1806,6 +1809,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               >
                 <Eye className="h-4 w-4 mr-2" /> {t("pgpGenerate.testPreviewBtn")}
               </Button>
+
 
               {selectedGroup && (
                 <div className="rounded-xl border p-3 space-y-2 text-xs">
