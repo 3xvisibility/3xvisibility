@@ -1795,7 +1795,7 @@ Deno.serve(async (req) => {
 
       const aiContext = (((campaign.mapping || {}) as { ai_context?: { business?: string; niche?: string; service?: string } }).ai_context) || {};
       const hasContext = !!(aiContext.business || aiContext.niche || aiContext.service);
-      const aiFillMode = (((campaign.mapping || {}) as { ai_fill_mode?: "per_campaign" | "per_row" }).ai_fill_mode) || "per_campaign";
+      const aiFillMode = (((campaign.mapping || {}) as { ai_fill_mode?: "per_campaign" | "per_row" }).ai_fill_mode) || "per_row";
 
       if (unmapped.length > 0 && LOVABLE_API_KEY && hasContext && aiFillMode === "per_campaign") {
         console.log(`[GENERATE-PAGES] AI fill (per_campaign): ${unmapped.length} variable(s) →`, unmapped.join(", "));
@@ -2196,7 +2196,7 @@ Deno.serve(async (req) => {
           // "Los Angeles"). Falls back to the per-campaign defaults computed
           // upfront when not enabled.
           let rowAiDefaults = aiVarDefaults;
-          const _aiFillMode = (globalThis as unknown as { __aiFillMode?: string }).__aiFillMode || "per_campaign";
+          const _aiFillMode = (globalThis as unknown as { __aiFillMode?: string }).__aiFillMode || "per_row";
           const _aiFillTargets = (globalThis as unknown as { __aiFillTargets?: string[] }).__aiFillTargets || [];
           const _aiFillCtx = (globalThis as unknown as { __aiFillContext?: { business?: string; niche?: string; service?: string } }).__aiFillContext || {};
           if (_aiFillMode === "per_row" && _aiFillTargets.length > 0 && LOVABLE_API_KEY) {

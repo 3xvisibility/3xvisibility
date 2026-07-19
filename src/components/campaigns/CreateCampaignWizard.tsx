@@ -154,7 +154,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     variant_map: import("../websites/ShopifyFieldMappingEditor").ShopifyVariantMap;
     metafields: import("../websites/ShopifyFieldMappingEditor").ShopifyMetafieldMap[];
   }>({ enabled: false, field_map: {}, variant_map: {}, metafields: [] });
-  const [aiFillMode, setAiFillMode] = useState<"per_campaign" | "per_row">("per_campaign");
+  const [aiFillMode, setAiFillMode] = useState<"per_campaign" | "per_row">("per_row");
   // Template Reuse Mode: reuse template title/description/content verbatim and
   // only replace CSV placeholders ({var} or {{var}}) — never rewrite via AI.
   const [reuseTemplateContent, setReuseTemplateContent] = useState(false);
