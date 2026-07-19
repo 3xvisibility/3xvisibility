@@ -690,6 +690,14 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     () => selectedTemplateVars.filter((v) => !contactVars.includes(v) && !locationVars.includes(v)),
     [selectedTemplateVars, contactVars, locationVars]
   );
+
+  // Geo validation: block Generate/Publish when the template uses location
+  // variables but no real Location Database rows have been attached (either as
+  // primary source or merged in from Locations picker).
+  const hasAttachedLocations =
+    (dataSource === "locations" && locationData.length > 0) ||
+    mergedLocations.length > 0;
+  const missingGeoLocations = locationVars.length > 0 && !hasAttachedLocations;
   const [aiFixedValues, setAiFixedValues] = useState<Record<string, string>>({});
   // Optional button/link label text shown for a link variable (separate from its URL).
   const [aiLinkTexts, setAiLinkTexts] = useState<Record<string, string>>({});
