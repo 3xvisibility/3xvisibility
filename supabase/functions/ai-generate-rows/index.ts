@@ -110,49 +110,51 @@ Make every row meaningfully different so each generated page is unique.`;
       },
     };
 
-    const result = await aiGenerate({
-      authToken: extractAuthToken(req),
-      promptType: "medium_content",
-      model: "google/gemini-2.5-flash",
-      temperature: 0.95,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      tools: [tool],
-      tool_choice: { type: "function", function: { name: "emit_rows" } },
-    });
+    // Chunk large requests so each AI call stays well under the 150s edge timeout.
+    const CHUNK = 15;
+    const chunkSizes: number[] = [];
+    for (let i = 0; i < count; i += CHUNK) chunkSizes.push(Math.min(CHUNK, count - i));
 
-
-    if (!result.success) {
-      const statusCode = result.content.includes("429") ? 429 : result.content.includes("402") ? 402 : 500;
-      return new Response(JSON.stringify({ error: result.content }), {
-        status: statusCode,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const allRows: Record<string, string>[] = [];
+    for (const chunkCount of chunkSizes) {
+      const chunkUserPrompt = userPrompt.replace(`Generate ${count} unique rows.`, `Generate ${chunkCount} unique rows.`);
+      const result = await aiGenerate({
+        authToken: extractAuthToken(req),
+        promptType: "medium_content",
+        model: "google/gemini-2.5-flash",
+        temperature: 0.95,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: chunkUserPrompt },
+        ],
+        tools: [tool],
+        tool_choice: { type: "function", function: { name: "emit_rows" } },
       });
+
+      if (!result.success) {
+        const statusCode = result.content.includes("429") ? 429 : result.content.includes("402") ? 402 : 500;
+        return new Response(JSON.stringify({ error: result.content }), {
+          status: statusCode,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let parsed: any;
+      try {
+        parsed = typeof result.content === "string" ? JSON.parse(result.content) : result.content;
+      } catch {
+        continue;
+      }
+      const rows: Record<string, string>[] = Array.isArray(parsed.rows) ? parsed.rows : [];
+      for (const r of rows.slice(0, chunkCount)) {
+        const out: Record<string, string> = {};
+        for (const v of variables) out[v] = String(r?.[v] ?? "").trim();
+        allRows.push(safeMode ? enforceRowBudget(out, budget) : out);
+      }
     }
 
-    // Parse tool call result
-    const args = result.content;
-    let parsed: any;
-    try {
-      parsed = typeof args === "string" ? JSON.parse(args) : args;
-    } catch {
-      return new Response(JSON.stringify({ error: "AI returned invalid rows" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const normalized = allRows.slice(0, count);
 
-    const rows: Record<string, string>[] = Array.isArray(parsed.rows) ? parsed.rows : [];
-
-    // Coerce all values to strings & ensure every variable is present.
-    const normalized = rows.slice(0, count).map((r) => {
-      const out: Record<string, string> = {};
-      for (const v of variables) out[v] = String(r?.[v] ?? "").trim();
-      // Design protection: clamp every field to its template length budget.
-      return safeMode ? enforceRowBudget(out, budget) : out;
-    });
 
     // Diversity repair: for each field, detect rows that share the same value
     // (or match the reference sample) and ask the AI to rewrite ONLY those cells
