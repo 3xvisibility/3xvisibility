@@ -690,6 +690,14 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     () => selectedTemplateVars.filter((v) => !contactVars.includes(v) && !locationVars.includes(v)),
     [selectedTemplateVars, contactVars, locationVars]
   );
+
+  // Geo validation: block Generate/Publish when the template uses location
+  // variables but no real Location Database rows have been attached (either as
+  // primary source or merged in from Locations picker).
+  const hasAttachedLocations =
+    (dataSource === "locations" && locationData.length > 0) ||
+    mergedLocations.length > 0;
+  const missingGeoLocations = locationVars.length > 0 && !hasAttachedLocations;
   const [aiFixedValues, setAiFixedValues] = useState<Record<string, string>>({});
   // Optional button/link label text shown for a link variable (separate from its URL).
   const [aiLinkTexts, setAiLinkTexts] = useState<Record<string, string>>({});
@@ -4093,6 +4101,24 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium capitalize">{scheduleMode}</span></div>
                     </div>
                   </div>
+
+                  {missingGeoLocations && (
+                    <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-xs flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                      <div className="space-y-1 flex-1">
+                        <p className="font-semibold text-amber-600 dark:text-amber-400">
+                          Locations required before publishing
+                        </p>
+                        <p className="text-muted-foreground">
+                          Your template uses{" "}
+                          <span className="font-medium text-foreground">
+                            {locationVars.map(v => `{${v}}`).join(", ")}
+                          </span>
+                          . Go back to the Data step and pick <span className="font-medium">Locations</span> as the source, or use <span className="font-medium">Attach Locations</span> to merge real cities from the Location Database.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -4133,12 +4159,24 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       });
                       return;
                     }
+                    if (missingGeoLocations) {
+                      toast({
+                        title: "Locations required",
+                        description: `Your template uses ${locationVars.map(v => `{${v}}`).join(", ")}. Attach real cities/states/countries from the Location Database before publishing.`,
+                        variant: "destructive",
+                      });
+                      return;
+                    }
                     createMutation.mutate();
                   }}
-                  disabled={!campaignName || createMutation.isPending || unmappedVars.length > 0}
-                  title={unmappedVars.length > 0
-                    ? `Blocked: ${unmappedVars.length} unmapped variable${unmappedVars.length !== 1 ? "s" : ""}`
-                    : undefined}
+                  disabled={!campaignName || createMutation.isPending || unmappedVars.length > 0 || missingGeoLocations}
+                  title={
+                    missingGeoLocations
+                      ? `Blocked: template uses ${locationVars.map(v => `{${v}}`).join(", ")} but no locations are attached`
+                      : unmappedVars.length > 0
+                        ? `Blocked: ${unmappedVars.length} unmapped variable${unmappedVars.length !== 1 ? "s" : ""}`
+                        : undefined
+                  }
                   className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110"
                 >
                   {createMutation.isPending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Creating...</> :
@@ -4146,6 +4184,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                    publishMode === "published" ? "Generate & Publish" : "Create Campaign"}
                 </Button>
               )}
+
             </div>
           </div>
         </DialogContent>
