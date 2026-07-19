@@ -284,6 +284,114 @@ Only return valid JSON. No markdown fences.`;
     }
   };
 
+  // ── One-Click Auto-Link ────────────────────────────────────────────
+  // Zero-input helper: for every missing template variable, either link
+  // an existing keyword group whose name matches (case/underscore/dash
+  // insensitive) or auto-generate a small keyword group with AI using
+  // the template name as context. Removes the manual "type business +
+  // fill" step so users can jump straight to Generate.
+  const handleOneClickAutoLink = async () => {
+    if (!wsId || missingKeywords.length === 0 || oneClickLinking) return;
+    setOneClickLinking(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error(t("settings.notAuthenticated"));
+
+      const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const targets = missingKeywords.map((k) => k.name);
+      const stillMissing: string[] = [];
+      let linked = 0;
+      let cloned = 0;
+
+      // 1) Try to link existing keyword groups by fuzzy-name match.
+      for (const varName of targets) {
+        const key = normalize(varName);
+        const hit = keywords.find((k) => normalize(k.name) === key && k.name !== varName);
+        if (hit && Array.isArray(hit.terms) && hit.terms.length > 0) {
+          const { error } = await supabase.from("pgp_keywords").insert({
+            name: varName,
+            terms: hit.terms,
+            term_count: hit.terms.length,
+            source: "auto-link",
+            user_id: user.id,
+            workspace_id: wsId,
+          } as any);
+          if (!error) { cloned += 1; continue; }
+        }
+        stillMissing.push(varName);
+      }
+
+      // 2) For the rest, auto-generate with AI using the template as context.
+      if (stillMissing.length > 0) {
+        const templateContext =
+          (selectedGroup?.name?.trim()) ||
+          "generic local service business landing pages";
+        const prompt = `Generate keyword data for an SEO page generator tool.
+
+Business/Service context: ${templateContext}
+
+For each of these variables, generate 12 realistic, diverse terms that would be used on landing pages:
+${stillMissing.map((v) => `- {${v}}`).join("\n")}
+
+Return a JSON object where each key is the variable name and the value is an array of string terms.
+Example: {"city": ["Houston", "Dallas"], "service": ["Plumbing", "HVAC"]}
+Only return valid JSON. No markdown fences.`;
+
+        const { data, error } = await supabase.functions.invoke("generate-seo-content", {
+          body: { type: "batch_pages", prompt },
+        });
+        if (error) throw error;
+        if ((data as any)?.error) throw new Error((data as any).error);
+
+        let parsed: Record<string, string[]> = {};
+        try {
+          const raw = typeof (data as any).result === "string"
+            ? (data as any).result
+            : JSON.stringify((data as any).result);
+          parsed = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim());
+        } catch {
+          parsed = {};
+        }
+
+        for (const varName of stillMissing) {
+          const terms = Array.isArray(parsed[varName])
+            ? parsed[varName].map((s) => String(s).trim()).filter(Boolean)
+            : [];
+          if (terms.length === 0) continue;
+          const { error: insErr } = await supabase.from("pgp_keywords").insert({
+            name: varName,
+            terms,
+            term_count: terms.length,
+            source: "auto-ai",
+            user_id: user.id,
+            workspace_id: wsId,
+          } as any);
+          if (!insErr) linked += 1;
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["pgp-keywords-full", wsId] });
+      const total = linked + cloned;
+      if (total === 0) {
+        toast({
+          title: "Nothing linked",
+          description: "Try 'AI Auto-Fill' with a short business description.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "✨ Keyword groups linked!",
+          description: `${cloned ? `${cloned} reused` : ""}${cloned && linked ? " · " : ""}${linked ? `${linked} AI-generated` : ""}. You can now Generate.`,
+        });
+      }
+    } catch (err: any) {
+      toast({ title: "Auto-link failed", description: err.message, variant: "destructive" });
+    } finally {
+      setOneClickLinking(false);
+    }
+  };
+
+
   const handleTestGenerate = async () => {
     if (!selectedGroup || !wsId) return;
     const sampleData: Record<string, string> = {};
