@@ -1157,18 +1157,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   <p className="text-[10px] text-muted-foreground">Comma-separated services/product types the pages should feature.</p>
                 </div>
 
-                <div className="space-y-1.5">
-
-                  <Label className="text-xs font-semibold">{t("pgpGenerate.targetLocationsLabel")}</Label>
-                  <Textarea
-                    placeholder={t("pgpGenerate.targetLocationsPlaceholder")}
-                    value={aiLocations}
-                    onChange={(e) => setAiLocations(e.target.value)}
-                    rows={2}
-                    className="resize-none"
-                  />
-                  <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.locationsHint")}</p>
-                </div>
+                {/* Target locations input removed — set locations in the Campaign wizard. */}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
@@ -1406,17 +1395,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.keywordsHint")}</p>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold">{t("pgpGenerate.targetLocationsLabel")}</Label>
-                      <Textarea
-                        placeholder={t("pgpGenerate.targetLocationsPlaceholderLong")}
-                        value={aiLocations}
-                        onChange={(e) => setAiLocations(e.target.value)}
-                        rows={2}
-                        className="resize-none"
-                      />
-                      <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.locationsHintArea")}</p>
-                    </div>
+                    {/* Target locations input removed — set locations in the Campaign wizard. */}
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
