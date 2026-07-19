@@ -267,7 +267,7 @@ export function OnboardingTour() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center justify-between pt-1 gap-2">
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); skip(); }}
@@ -275,17 +275,29 @@ export function OnboardingTour() {
                 >
                   Skip tour
                 </button>
-                <Button size="sm" onClick={(e) => { e.stopPropagation(); next(); }} className="h-8 px-4 text-xs gap-1.5">
-                  {currentStep < steps.length - 1 ? (
-                    <>
-                      Next <ChevronRight className="h-3 w-3" />
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-3 w-3" /> Get started
-                    </>
+                <div className="flex items-center gap-2">
+                  {currentStep > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => { e.stopPropagation(); setCurrentStep((s) => Math.max(0, s - 1)); }}
+                      className="h-8 px-3 text-xs gap-1.5"
+                    >
+                      <ChevronLeft className="h-3 w-3" /> Back
+                    </Button>
                   )}
-                </Button>
+                  <Button size="sm" onClick={(e) => { e.stopPropagation(); next(); }} className="h-8 px-4 text-xs gap-1.5">
+                    {currentStep < steps.length - 1 ? (
+                      <>
+                        Next <ChevronRight className="h-3 w-3" />
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3 w-3" /> Get started
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </motion.div>
