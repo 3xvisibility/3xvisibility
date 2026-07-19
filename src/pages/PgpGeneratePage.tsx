@@ -19,7 +19,7 @@ import {
 import {
   Play, Eye, FileText, KeyRound, Layers, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Zap, Settings2,
-  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History,
+  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History, MapPin,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
