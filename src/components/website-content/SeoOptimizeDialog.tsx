@@ -63,6 +63,15 @@ const FIELD_OPTIONS = [
   { id: "content", label: "Content Text", icon: <RefreshCw className="h-3.5 w-3.5" />, desc: "Rewrite text for SEO (keeps design intact)" },
 ];
 
+const SECTION_OPTIONS = [
+  { id: "services", label: "Services", desc: "Service/offering blocks & feature cards" },
+  { id: "faq", label: "FAQ", desc: "Question & answer sections" },
+  { id: "testimonials", label: "Testimonials", desc: "Reviews & customer quotes" },
+  { id: "about", label: "About", desc: "About / who-we-are / company info" },
+  { id: "hero", label: "Hero", desc: "Top banner headline & subtitle" },
+  { id: "cta", label: "CTA", desc: "Call-to-action blocks & buttons" },
+];
+
 /**
  * Explain why a field didn't match on the live page and offer concrete fixes.
  * Runs on the client with only the compared strings + a few UI hints.
