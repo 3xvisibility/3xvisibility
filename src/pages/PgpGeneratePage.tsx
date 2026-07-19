@@ -631,7 +631,17 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
       const rows = buildRows();
       if (rows.length === 0) {
-        toast({ title: t("pgpGenerate.toastNoRowsTitle"), variant: "destructive" });
+        let desc = "";
+        if (groupKeywords.length === 0) {
+          desc = "This template has no {variables}. Open the template and click 'AI Add Variables' first, then come back here.";
+        } else if (groupKeywords.every((k) => !k.keyword)) {
+          desc = "None of the template variables are linked to a Keyword group yet. Use 'AI Auto-Fill' above, or create matching keyword groups in Keywords.";
+        } else if (method === "all" && maxPages === 0) {
+          desc = "One or more keyword groups are empty (0 terms). Add terms to every linked keyword.";
+        } else {
+          desc = "Check Number of Pages / Resume Index — the current range produces 0 rows.";
+        }
+        toast({ title: t("pgpGenerate.toastNoRowsTitle"), description: desc, variant: "destructive" });
         setIsGenerating(false);
         return;
       }
