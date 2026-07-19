@@ -1486,6 +1486,69 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       </div>
                     </div>
 
+                    {/* Live generation preview */}
+                    {(() => {
+                      const start = parseInt(resumeIndex) || 0;
+                      const requested = numberOfPages ? parseInt(numberOfPages) || 0 : 0;
+                      const available = Math.max(0, maxPages - start);
+                      const willGenerate = requested > 0 ? Math.min(requested, available) : available;
+                      const counts = groupKeywords.filter(k => k.keyword).map(k => ({ name: k.name, n: k.termCount }));
+                      const methodLabel = method === "all" ? "All Combinations" : method === "random" ? "Random" : "Sequential";
+                      const formula = method === "all"
+                        ? counts.map(c => c.n).join(" × ") + (counts.length > 1 ? ` = ${maxPages.toLocaleString()}` : "")
+                        : `max(${counts.map(c => c.n).join(", ")}) = ${maxPages.toLocaleString()}`;
+                      const tone =
+                        willGenerate === 0 ? "border-destructive/40 bg-destructive/5"
+                        : willGenerate > 1000 ? "border-amber-500/40 bg-amber-500/5"
+                        : "border-primary/40 bg-primary/5";
+                      return (
+                        <div className={`rounded-lg border ${tone} p-3 space-y-2`}>
+                          <div className="flex items-center justify-between gap-3 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="h-4 w-4 text-primary" />
+                              <span className="text-xs font-semibold">Live preview</span>
+                              <Badge variant="outline" className="text-[10px]">{methodLabel}</Badge>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold leading-none">
+                                {willGenerate.toLocaleString()}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">pages will be generated</div>
+                            </div>
+                          </div>
+                          {counts.length > 0 ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {counts.map(c => (
+                                <span key={c.name} className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px]">
+                                  <code className="font-mono">{`{${c.name}}`}</code>
+                                  <span className="text-muted-foreground">×</span>
+                                  <span className="font-semibold">{c.n}</span>
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-muted-foreground">No keyword groups linked yet — link keywords above to see the count.</p>
+                          )}
+                          {counts.length > 0 && (
+                            <p className="text-[10px] text-muted-foreground">
+                              <span className="font-mono">{formula}</span>
+                              {start > 0 && <> · skipping first {start.toLocaleString()} → {available.toLocaleString()} available</>}
+                              {requested > 0 && requested < available && <> · limited to {requested.toLocaleString()}</>}
+                              {requested > available && available > 0 && <> · requested {requested.toLocaleString()} exceeds available, capped at {available.toLocaleString()}</>}
+                            </p>
+                          )}
+                          {willGenerate === 0 && counts.length > 0 && (
+                            <p className="text-[11px] text-destructive">Nothing to generate — reduce "Start from" or add more keyword terms.</p>
+                          )}
+                          {method === "all" && willGenerate > 1000 && (
+                            <p className="text-[11px] text-amber-600">Heads up: this is a lot of pages. Sequential is usually a better fit unless you truly need every combination.</p>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+
+
                     <div className="space-y-1.5">
                       <Label className="text-xs font-semibold">{t("pgpGenerate.brandNameLabel")}</Label>
                       <div className="flex gap-2">
