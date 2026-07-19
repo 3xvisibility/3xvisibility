@@ -18,6 +18,7 @@ import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
 import { GenerationJobDialog } from "@/components/campaigns/GenerationJobDialog";
 import { CreateCampaignWizard } from "@/components/campaigns/CreateCampaignWizard";
 import { CampaignHowItWorks } from "@/components/campaigns/CampaignHowItWorks";
+import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { wsChannel, wsFilter } from "@/lib/realtime-scope";
