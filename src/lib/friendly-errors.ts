@@ -15,6 +15,11 @@ export function friendlyError(message: string): string {
     return "You've made too many requests. Please wait a moment and try again.";
   }
 
+  // Backend / AI timeout
+  if (msg.includes("504") || lower.includes("idle_timeout") || lower.includes("request idle timeout") || lower.includes("ai request timed out")) {
+    return "AI generation took too long. The app now sends rows in smaller safe batches; please retry with fewer rows if this repeats.";
+  }
+
   // WordPress connector / host overload. Some hosts return a full LiteSpeed or
   // Cloudflare HTML error page; never surface that raw markup in the UI.
   if (
