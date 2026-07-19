@@ -1034,11 +1034,24 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         continue;
       }
       const vLower = v.toLowerCase();
+      // UTM/tracking columns should NEVER fuzzy-match to unrelated template
+      // variables (e.g. CSV "utm_source" must not auto-map to template
+      // `{source}`). Only allow exact-name matches for these columns.
+      const isUtmHeader = (h: string) => /^utm[_\-\s]?(source|medium|campaign|term|content|id)$/i.test(h.trim())
+        || /^(gclid|fbclid|msclkid|ad_?campaign_?id|ad_?group_?id)$/i.test(h.trim());
+      const isUtmVar = isUtmHeader(v);
       const exactMatch = headers.find(h => h.toLowerCase() === vLower);
       if (exactMatch) {
         matched.push({ variable: v, column: exactMatch });
+      } else if (isUtmVar) {
+        // UTM-named template variable with no exact CSV column → leave unmapped.
+        matched.push({ variable: v, column: null });
       } else {
-        const fuzzy = headers.find(h => h.toLowerCase().includes(vLower) || vLower.includes(h.toLowerCase()));
+        const fuzzy = headers.find(h => {
+          if (isUtmHeader(h)) return false; // never fuzzy-consume UTM columns
+          const hLower = h.toLowerCase();
+          return hLower.includes(vLower) || vLower.includes(hLower);
+        });
         matched.push({ variable: v, column: fuzzy || null });
       }
     }
