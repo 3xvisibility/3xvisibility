@@ -693,10 +693,18 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
   // Geo validation: block Generate/Publish when the template uses location
   // variables but no real Location Database rows have been attached (either as
-  // primary source or merged in from Locations picker).
+  // primary source, merged in from Locations picker, or auto-detected as
+  // CSV columns whose names match the template's geo variables).
+  const csvGeoColumns = useMemo(() => {
+    if (dataSource !== "csv" || csvHeaders.length === 0 || locationVars.length === 0) return [];
+    const headersLower = csvHeaders.map(h => h.toLowerCase().trim());
+    return locationVars.filter(v => headersLower.includes(v.toLowerCase()));
+  }, [dataSource, csvHeaders, locationVars]);
+  const csvHasGeoData = csvGeoColumns.length > 0 && csvData.length > 0;
   const hasAttachedLocations =
     (dataSource === "locations" && locationData.length > 0) ||
-    mergedLocations.length > 0;
+    mergedLocations.length > 0 ||
+    csvHasGeoData;
   const missingGeoLocations = locationVars.length > 0 && !hasAttachedLocations;
   const [aiFixedValues, setAiFixedValues] = useState<Record<string, string>>({});
   // Optional button/link label text shown for a link variable (separate from its URL).
@@ -4115,6 +4123,24 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             {locationVars.map(v => `{${v}}`).join(", ")}
                           </span>
                           . Go back to the Data step and pick <span className="font-medium">Locations</span> as the source, or use <span className="font-medium">Attach Locations</span> to merge real cities from the Location Database.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {!missingGeoLocations && csvHasGeoData && (
+                    <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3 text-xs flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <div className="space-y-1 flex-1">
+                        <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+                          Locations auto-mapped from CSV
+                        </p>
+                        <p className="text-muted-foreground">
+                          Detected geo columns in your CSV:{" "}
+                          <span className="font-medium text-foreground">
+                            {csvGeoColumns.map(v => `{${v}}`).join(", ")}
+                          </span>
+                          . These will be used directly — no Location Database attach needed.
                         </p>
                       </div>
                     </div>
