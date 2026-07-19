@@ -719,6 +719,19 @@ export default function TemplateMarketplacePage() {
             );
           })}
         </div>
+        {/* Auto AI Add Variables toggle — runs the same "AI Add Variables" pass
+            used inside the template editor immediately after a marketplace
+            import, so users don't have to open the editor manually. */}
+        <label className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs cursor-pointer select-none hover:bg-muted/50 transition-colors">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-primary"
+            checked={autoAddVars}
+            onChange={(e) => setAutoAddVars(e.target.checked)}
+          />
+          <span className="font-medium">Auto-run “AI Add Variables” after import</span>
+          <span className="text-muted-foreground hidden sm:inline">— inserts SEO {"{placeholders}"} automatically</span>
+        </label>
       </div>
 
 
