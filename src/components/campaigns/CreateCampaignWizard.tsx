@@ -4141,12 +4141,24 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       });
                       return;
                     }
+                    if (missingGeoLocations) {
+                      toast({
+                        title: "Locations required",
+                        description: `Your template uses ${locationVars.map(v => `{${v}}`).join(", ")}. Attach real cities/states/countries from the Location Database before publishing.`,
+                        variant: "destructive",
+                      });
+                      return;
+                    }
                     createMutation.mutate();
                   }}
-                  disabled={!campaignName || createMutation.isPending || unmappedVars.length > 0}
-                  title={unmappedVars.length > 0
-                    ? `Blocked: ${unmappedVars.length} unmapped variable${unmappedVars.length !== 1 ? "s" : ""}`
-                    : undefined}
+                  disabled={!campaignName || createMutation.isPending || unmappedVars.length > 0 || missingGeoLocations}
+                  title={
+                    missingGeoLocations
+                      ? `Blocked: template uses ${locationVars.map(v => `{${v}}`).join(", ")} but no locations are attached`
+                      : unmappedVars.length > 0
+                        ? `Blocked: ${unmappedVars.length} unmapped variable${unmappedVars.length !== 1 ? "s" : ""}`
+                        : undefined
+                  }
                   className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110"
                 >
                   {createMutation.isPending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Creating...</> :
@@ -4154,6 +4166,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                    publishMode === "published" ? "Generate & Publish" : "Create Campaign"}
                 </Button>
               )}
+
             </div>
           </div>
         </DialogContent>
