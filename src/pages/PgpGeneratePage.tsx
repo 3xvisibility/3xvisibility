@@ -1584,7 +1584,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               <Button
                 className="w-full"
                 size="lg"
-                disabled={!selectedGroup || missingKeywords.length > 0 || isGenerating}
+                disabled={!selectedGroup || groupKeywords.length === 0 || missingKeywords.length > 0 || maxPages === 0 || isGenerating}
                 onClick={handleGenerate}
               >
                 {isGenerating ? (
