@@ -229,6 +229,15 @@ export default function PgpGeneratePage() {
   const GEO_VAR_NAMES = ["city", "cities", "state", "states", "country", "countries", "zip", "zipcode", "region", "county", "location", "locations", "area"];
   const isGeoVariable = (name: string) => GEO_VAR_NAMES.includes(name.trim().toLowerCase());
 
+  // Geo vars in the template that have no terms attached (empty or missing
+  // keyword group). These MUST be filled from the Campaign wizard's Location
+  // Database, not from this page.
+  const unfilledGeoVars = groupKeywords
+    .filter((gk) => isGeoVariable(gk.name))
+    .filter((gk) => !gk.keyword || (gk.keyword.terms?.length ?? 0) === 0)
+    .map((gk) => gk.name);
+  const needsLocations = unfilledGeoVars.length > 0;
+
   const handleAiKeywordFill = async () => {
     if (!wsId || missingKeywords.length === 0 || !aiKwBusiness.trim()) return;
     setAiKwFilling(true);
