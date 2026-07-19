@@ -95,6 +95,19 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
                 variant="ghost"
                 size="icon"
                 className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                title="Restart onboarding tour"
+                onClick={() => {
+                  localStorage.removeItem("onboarding-completed");
+                  window.dispatchEvent(new Event("onboarding:start"));
+                }}
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span className="sr-only">Restart onboarding tour</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               >
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
