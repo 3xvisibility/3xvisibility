@@ -464,8 +464,8 @@ export function SeoOptimizeDialog({
   // Persist field selection + instruction per page so users don't lose
   // their tweaks when navigating away.
   const seoSnapshot = useMemo(
-    () => ({ selectedFields, instruction }),
-    [selectedFields, instruction],
+    () => ({ selectedFields, selectedSections, instruction }),
+    [selectedFields, selectedSections, instruction],
   );
   const clearSeoSnapshot = usePersistedSnapshot(
     `seo-optimize-dialog:${page.id}`,
@@ -475,14 +475,23 @@ export function SeoOptimizeDialog({
       if (Array.isArray(s.selectedFields) && s.selectedFields.length) {
         setSelectedFields(s.selectedFields);
       }
+      if (Array.isArray(s.selectedSections)) {
+        setSelectedSections(s.selectedSections.filter((x: any) => typeof x === "string"));
+      }
       if (typeof s.instruction === "string") setInstruction(s.instruction);
     },
-    { version: 2 },
+    { version: 3 },
   );
 
   const toggleField = (field: string) => {
     setSelectedFields((prev) =>
       prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
+    );
+  };
+
+  const toggleSection = (section: string) => {
+    setSelectedSections((prev) =>
+      prev.includes(section) ? prev.filter((s) => s !== section) : [...prev, section]
     );
   };
 
