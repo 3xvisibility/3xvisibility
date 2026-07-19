@@ -236,7 +236,32 @@ export default function PgpGeneratePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error(t("settings.notAuthenticated"));
 
-      const varNames = missingKeywords.map(k => k.name);
+      const allVarNames = missingKeywords.map(k => k.name);
+      const geoVars = allVarNames.filter(isGeoVariable);
+      const varNames = allVarNames.filter(n => !isGeoVariable(n));
+
+      // Create empty placeholder groups for geo vars — user must attach real
+      // locations via the Campaign wizard.
+      const { data: { user: geoUser } } = await supabase.auth.getUser();
+      for (const g of geoVars) {
+        await supabase.from("pgp_keywords").insert({
+          name: g, terms: [], term_count: 0, source: "location",
+          source_config: { note: "Attach real locations via Campaign wizard → Attach Locations" },
+          user_id: geoUser?.id, workspace_id: wsId,
+        } as any);
+      }
+
+      if (varNames.length === 0) {
+        queryClient.invalidateQueries({ queryKey: ["pgp-keywords-full", wsId] });
+        toast({
+          title: "Geo variables skipped",
+          description: `${geoVars.join(", ")} will be filled from real locations in the Campaign wizard.`,
+        });
+        setShowAiKeywordFill(false);
+        setAiKwFilling(false);
+        return;
+      }
+
       const prompt = `Generate keyword data for an SEO page generator tool.
 
 Business/Service: ${aiKwBusiness.trim()}
@@ -244,6 +269,10 @@ ${aiKwCustomData.trim() ? `Additional context: ${aiKwCustomData.trim()}` : ""}
 
 For each of these variables, generate ${aiKwCount} realistic, diverse terms that would be used on landing pages:
 ${varNames.map(v => `- {${v}}`).join("\n")}
+
+Return a JSON object where each key is the variable name and the value is an array of string terms.
+Example: {"service": ["Plumbing", "HVAC"], "quality": ["Best", "Top-rated"]}
+Only return valid JSON. No markdown fences.`;
 
 Return a JSON object where each key is the variable name and the value is an array of string terms.
 Example: {"city": ["Houston", "Dallas"], "service": ["Plumbing", "HVAC"]}
