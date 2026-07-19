@@ -18,6 +18,7 @@ import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
 import { GenerationJobDialog } from "@/components/campaigns/GenerationJobDialog";
 import { CreateCampaignWizard } from "@/components/campaigns/CreateCampaignWizard";
 import { CampaignHowItWorks } from "@/components/campaigns/CampaignHowItWorks";
+import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { wsChannel, wsFilter } from "@/lib/realtime-scope";
@@ -319,6 +320,9 @@ export default function CampaignsPage() {
     <div className="space-y-6">
       <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
 
+      {wsId && <LiveGenerationProgress workspaceId={wsId} />}
+
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -550,6 +554,7 @@ export default function CampaignsPage() {
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => navigate(`${basePath}/campaigns/${c.id}`)}><Eye className="h-3.5 w-3.5 mr-2" /> View Details</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setJobDialogCampaign(c)}><Clock className="h-3.5 w-3.5 mr-2" /> View live log</DropdownMenuItem>
                           {c.status === "draft" && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id })}><Play className="h-3.5 w-3.5 mr-2" /> Run Now</DropdownMenuItem>}
                           {canRetryQueuedCampaign(c) && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id, action: getQueuedRetryAction(c) })}><RotateCcw className="h-3.5 w-3.5 mr-2" /> Retry generation</DropdownMenuItem>}
                           {c.status === "processing" && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id, action: "pause" })}><Pause className="h-3.5 w-3.5 mr-2" /> Pause</DropdownMenuItem>}
