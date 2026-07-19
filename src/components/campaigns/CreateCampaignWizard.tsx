@@ -3796,25 +3796,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                 </>
               )}
 
-              {/* UTM Step */}
-              {wizardSteps[step - 1]?.label === "UTM" && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-1"><Target className="h-4 w-4 text-primary" /><Label className="text-sm font-semibold">Google Ads & UTM</Label></div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5"><Label className="text-xs">Ad Campaign ID</Label><Input value={adCampaignId} onChange={e => setAdCampaignId(e.target.value)} placeholder="{ad_campaign_id}" className="rounded-xl h-9 text-sm" /></div>
-                    <div className="space-y-1.5"><Label className="text-xs">Ad Group ID</Label><Input value={adGroupId} onChange={e => setAdGroupId(e.target.value)} placeholder="{ad_group_id}" className="rounded-xl h-9 text-sm" /></div>
-                    <div className="space-y-1.5"><Label className="text-xs">utm_source</Label><Input value={utmSource} onChange={e => setUtmSource(e.target.value)} placeholder="google" className="rounded-xl h-9 text-sm" /></div>
-                    <div className="space-y-1.5"><Label className="text-xs">utm_medium</Label><Input value={utmMedium} onChange={e => setUtmMedium(e.target.value)} placeholder="cpc" className="rounded-xl h-9 text-sm" /></div>
-                    <div className="space-y-1.5"><Label className="text-xs">utm_campaign</Label><Input value={utmCampaign} onChange={e => setUtmCampaign(e.target.value)} placeholder="{campaign_name}" className="rounded-xl h-9 text-sm" /></div>
-                    <div className="space-y-1.5"><Label className="text-xs">utm_term</Label><Input value={utmTerm} onChange={e => setUtmTerm(e.target.value)} placeholder="{keyword}" className="rounded-xl h-9 text-sm" /></div>
-                    <div className="col-span-2 space-y-1.5"><Label className="text-xs">utm_content</Label><Input value={utmContent} onChange={e => setUtmContent(e.target.value)} placeholder="variant_a" className="rounded-xl h-9 text-sm" /></div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Landing Page Directory</Label>
-                    <Input value={seaDirectoryLevels} onChange={e => setSeaDirectoryLevels(e.target.value)} placeholder="e.g. campaign_name, keyword" className="rounded-xl h-9 text-sm" />
-                  </div>
-                </div>
-              )}
+              {/* UTM step removed */}
+
 
               {/* GEO Step */}
               {wizardSteps[step - 1]?.label === "GEO" && (
