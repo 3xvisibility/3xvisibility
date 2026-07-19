@@ -525,6 +525,15 @@ ${contentText}`
                   {aiImproving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                   <span className="hidden sm:inline">{aiImproving ? "Improving…" : "AI Improve"}</span>
                 </button>
+                <button
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors disabled:opacity-50 shrink-0"
+                  disabled={aiVariablizing || !content.trim()}
+                  onClick={aiAddVariables}
+                  title="Let AI insert SEO-friendly {variables} into your template — design & images stay the same."
+                >
+                  {aiVariablizing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Braces className="h-3 w-3" />}
+                  <span className="hidden sm:inline">{aiVariablizing ? "Adding…" : "AI Add Variables"}</span>
+                </button>
                 <DynamicElementsInserter onInsert={(shortcode) => setContent(prev => prev + shortcode)} />
                 {uniqueVars.length > 0 && (
                   <div className="hidden md:flex items-center gap-1.5 overflow-x-auto ml-auto">
