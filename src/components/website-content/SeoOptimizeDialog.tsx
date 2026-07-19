@@ -172,6 +172,9 @@ export function SeoOptimizeDialog({
 }: SeoOptimizeDialogProps) {
   const { toast } = useToast();
   const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords", "content"]);
+  // When content rewrite is enabled, restrict rewriting to just these sections.
+  // Empty array = rewrite the whole page (legacy behavior).
+  const [selectedSections, setSelectedSections] = useState<string[]>([]);
   const [instruction, setInstruction] = useState("");
   const [loading, setLoading] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
