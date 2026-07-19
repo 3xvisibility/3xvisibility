@@ -554,6 +554,7 @@ export default function CampaignsPage() {
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => navigate(`${basePath}/campaigns/${c.id}`)}><Eye className="h-3.5 w-3.5 mr-2" /> View Details</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setJobDialogCampaign(c)}><Clock className="h-3.5 w-3.5 mr-2" /> View live log</DropdownMenuItem>
                           {c.status === "draft" && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id })}><Play className="h-3.5 w-3.5 mr-2" /> Run Now</DropdownMenuItem>}
                           {canRetryQueuedCampaign(c) && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id, action: getQueuedRetryAction(c) })}><RotateCcw className="h-3.5 w-3.5 mr-2" /> Retry generation</DropdownMenuItem>}
                           {c.status === "processing" && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id, action: "pause" })}><Pause className="h-3.5 w-3.5 mr-2" /> Pause</DropdownMenuItem>}
