@@ -553,6 +553,50 @@ ${contentText}`
                 )}
               </div>
 
+              {/* ── Variable Preview Panel ────────────────────────────────
+                  Full list of every {variable} the AI/user has inserted so
+                  users can verify placeholders BEFORE running Campaign
+                  Generate. Shows usage count per variable and a click-to-
+                  copy chip. Collapsible so it never crowds the editor. */}
+              {uniqueVars.length > 0 && (
+                <details open className="border-b bg-muted/10 px-3 sm:px-5 py-2 group">
+                  <summary className="cursor-pointer list-none flex items-center justify-between text-[11px] font-medium text-muted-foreground hover:text-foreground select-none">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Braces className="h-3 w-3" />
+                      Variable preview
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                        {uniqueVars.length} detected
+                      </Badge>
+                    </span>
+                    <span className="text-[10px] text-muted-foreground group-open:hidden">Show</span>
+                    <span className="text-[10px] text-muted-foreground hidden group-open:inline">Hide</span>
+                  </summary>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {uniqueVars.map((v) => {
+                      const clean = v.replace(/[{}]/g, "");
+                      const count = detectedVars.filter((d) => d === v).length;
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => { navigator.clipboard.writeText(`{${clean}}`); toast({ title: "Copied!", description: `{${clean}}` }); }}
+                          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[10px] font-mono hover:bg-primary/10 hover:border-primary/30 transition-colors"
+                          title={`Used ${count}× — click to copy`}
+                        >
+                          <span>{`{${clean}}`}</span>
+                          <span className="text-[9px] text-muted-foreground">×{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-[10px] text-muted-foreground">
+                    These placeholders get filled from your Keyword Groups and Locations at Campaign generation.
+                  </p>
+                </details>
+              )}
+
+
+
               {/* Editor / Builder / Preview area */}
               <div className="flex-1 min-h-[50vh]">
                 {viewMode === "preview" ? (
