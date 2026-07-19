@@ -1054,7 +1054,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       { num: 3, label: "Template", icon: Layers },
     ];
     let nextNum = 4;
-    if (campaignTypes.includes("sea")) steps.push({ num: nextNum++, label: "UTM", icon: Target });
+    // UTM step removed — not needed in tools
     if (campaignTypes.includes("geo")) steps.push({ num: nextNum++, label: "GEO", icon: MapPin });
     steps.push({ num: nextNum++, label: "Review", icon: CheckCircle2 });
     return steps;
