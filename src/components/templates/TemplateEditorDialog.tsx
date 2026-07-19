@@ -98,6 +98,7 @@ export function TemplateEditorDialog({
   const [aiSeoNiche, setAiSeoNiche] = useState("");
   const [aiSeoGenerating, setAiSeoGenerating] = useState(false);
   const [aiImproving, setAiImproving] = useState(false);
+  const [aiVariablizing, setAiVariablizing] = useState(false);
 
   const { toast } = useToast();
 
