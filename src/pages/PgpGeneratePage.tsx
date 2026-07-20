@@ -1025,7 +1025,90 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
     random: <ArrowDown className="h-4 w-4" />,
   };
 
+  // ============= Geo Coverage Validation =============
+  // Inspect the actual rows that will be published and flag mismatched or
+  // missing geo coverage (all rows identical, placeholder defaults like
+  // USA/Angel/New York, or blank geo fields when the template needs them).
+  const geoCoverage = (() => {
+    const geoTemplateVars = groupKeywords
+      .map((k) => k.name.trim().toLowerCase())
+      .filter((n) => GEO_VAR_NAMES.includes(n));
+    if (geoTemplateVars.length === 0) {
+      return { severity: "ok" as const, issues: [] as string[], sampleRows: [] as Record<string, string>[] };
+    }
+
+    let previewRows: Record<string, string>[] = [];
+    try { previewRows = buildRows().slice(0, 200); } catch { previewRows = []; }
+    if (previewRows.length === 0) {
+      return { severity: "ok" as const, issues: [] as string[], sampleRows: [] as Record<string, string>[] };
+    }
+
+    const issues: string[] = [];
+    let severity: "ok" | "warn" | "block" = "ok";
+    const bump = (s: "warn" | "block") => {
+      if (s === "block" || severity === "ok") severity = s;
+    };
+
+    // 1) Missing geo values on rows that need them
+    const missingCounts: Record<string, number> = {};
+    for (const r of previewRows) {
+      for (const v of geoTemplateVars) {
+        const val = (r[v] ?? "").toString().trim();
+        if (!val) missingCounts[v] = (missingCounts[v] || 0) + 1;
+      }
+    }
+    for (const [v, c] of Object.entries(missingCounts)) {
+      if (c > 0) {
+        issues.push(`${c}/${previewRows.length} rows have empty {${v}}`);
+        bump("block");
+      }
+    }
+
+    // 2) Placeholder / demo defaults leaked into rows
+    const placeholderCounts: Record<string, number> = {};
+    for (const r of previewRows) {
+      for (const v of geoTemplateVars) {
+        if (isPlaceholderGeoValue(r[v])) placeholderCounts[v] = (placeholderCounts[v] || 0) + 1;
+      }
+    }
+    for (const [v, c] of Object.entries(placeholderCounts)) {
+      if (c > 0) {
+        issues.push(`${c}/${previewRows.length} rows use a placeholder default for {${v}} (e.g. USA / New York / LA)`);
+        bump("block");
+      }
+    }
+
+    // 3) All rows share identical geo — real Location DB should provide variety
+    //    unless the user only picked a single location.
+    if (previewRows.length > 1 && pickedLocations.length !== 1) {
+      for (const v of geoTemplateVars) {
+        const uniq = new Set(previewRows.map((r) => (r[v] ?? "").toString().trim().toLowerCase()).filter(Boolean));
+        if (uniq.size === 1 && missingCounts[v] === undefined) {
+          issues.push(`All ${previewRows.length} rows share the same {${v}} — attach more locations for real coverage`);
+          bump("warn");
+        }
+      }
+    }
+
+    // 4) Location count mismatch — user attached fewer locations than rows and
+    //    no keyword group provides geo variety.
+    if (pickedLocations.length > 0 && pickedLocations.length < previewRows.length) {
+      const geoHasKeywordSource = geoTemplateVars.some((v) =>
+        groupKeywords.find((g) => g.name.toLowerCase() === v)?.keyword?.terms?.length,
+      );
+      if (!geoHasKeywordSource) {
+        issues.push(
+          `${previewRows.length} rows but only ${pickedLocations.length} location${pickedLocations.length === 1 ? "" : "s"} attached — geo values will repeat`,
+        );
+        bump("warn");
+      }
+    }
+
+    return { severity, issues, sampleRows: previewRows.slice(0, 3) };
+  })();
+
   return (
+
     <div className="space-y-4 sm:space-y-6">
       {/* Header — matches Campaigns page style */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
