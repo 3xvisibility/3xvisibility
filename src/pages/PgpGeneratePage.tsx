@@ -592,10 +592,20 @@ Only return valid JSON. No markdown fences.`;
     const kwData = groupKeywords.filter(k => k.keyword);
 
     const finalize = (rows: Record<string, string>[]): Record<string, string>[] => {
+      // Geo names user explicitly attached in Step 3 — these must win over any
+      // pre-existing keyword-group value so real Location DB data replaces
+      // stale defaults (e.g. "New York", "Canada") coming from auto-generated
+      // keyword groups.
+      const GEO_KEYS = ["city", "cities", "state", "states", "country", "countries", "region", "zip", "zipcode", "location", "locations", "area"];
       return rows.map((r, i) => {
         const injected = buildInjectedForRow(i);
-        // Injected values fill only where the row doesn't already have a value.
-        const merged: Record<string, string> = { ...injected, ...r };
+        // Start with row values, then wipe geo keys if user attached real
+        // locations, then overlay injected (locations + business info win).
+        const base: Record<string, string> = { ...r };
+        if (pickedLocations.length > 0) {
+          for (const k of GEO_KEYS) delete base[k];
+        }
+        const merged: Record<string, string> = { ...base, ...injected };
         if (resolvedBrandName && !merged.brand_name) merged.brand_name = resolvedBrandName;
         return merged;
       });
@@ -885,6 +895,14 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         dripSettings.random_end = scheduleDateEnd;
       }
 
+      // Build ai_context so generate-pages can AI-fill any template variable
+      // that has no keyword group and no injected value.
+      const aiContext = {
+        business: (aiBusinessDesc || resolvedBrandName || aiNiche || "").trim(),
+        niche: (aiNiche || aiCategory || "").trim(),
+        service: (aiTerms || aiKeywords || "").trim(),
+      };
+
       const { data: campaign, error: campErr } = await supabase.from("campaigns").insert({
         name: `PGP: ${selectedGroup.name}`,
         template_id: selectedGroup.id,
@@ -899,6 +917,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         campaign_types: ["seo"],
         scheduled_at: scheduledAt,
         drip_feed_settings: Object.keys(dripSettings).length > 0 ? dripSettings : null,
+        mapping: { ai_fill_mode: "per_row", ai_context: aiContext } as any,
+        language: aiLanguage || null,
       } as any).select("id").single();
 
       if (campErr) throw campErr;
