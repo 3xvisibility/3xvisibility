@@ -1926,7 +1926,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               )}
 
               <Button
-                className="w-full"
+                className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
                 size="lg"
                 disabled={!selectedGroup}
                 onClick={() => {
@@ -1943,12 +1943,12 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   navigate(`${basePath}/campaigns?new=1&template=${selectedGroup?.id || ""}`);
                 }}
               >
-                <Play className="h-4 w-4 mr-2" /> Continue in Campaign
+                <Play className="h-4 w-4" /> Continue in Campaign
               </Button>
 
               <Button
                 variant="outline"
-                className="w-full"
+                className="w-full rounded-xl"
                 disabled={!selectedGroup || groupKeywords.every(k => !k.keyword)}
                 onClick={() => {
                   if (needsLocations) {
