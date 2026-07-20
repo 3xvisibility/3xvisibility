@@ -19,8 +19,9 @@ import {
 import {
   Play, Eye, FileText, KeyRound, Layers, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Zap, Settings2,
-  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History, MapPin,
+  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History, MapPin, ChevronRight,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
