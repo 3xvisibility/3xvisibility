@@ -51,7 +51,23 @@ export default function PgpGeneratePage() {
 
   const [selectedGroupId, setSelectedGroupId] = useState(preselectedGroup);
   const [campaignNameDraft, setCampaignNameDraft] = useState("");
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+
+  // Step 3 — Locations picked from Location Database
+  const [pickedLocations, setPickedLocations] = useState<Array<{ city?: string; state?: string; region?: string; country?: string; zip?: string }>>([]);
+
+  // Step 4 — Business / personal info (variable name -> value). Any of these
+  // whose key matches a template {variable} will replace it during generation.
+  const [businessInfo, setBusinessInfo] = useState<Record<string, string>>({
+    company_name: "",
+    brand_name: "",
+    phone: "",
+    email: "",
+    address: "",
+    website: "",
+  });
+  const [customBizFieldName, setCustomBizFieldName] = useState("");
+  const [customBizFieldValue, setCustomBizFieldValue] = useState("");
   const [method, setMethod] = useState<"all" | "sequential" | "random">("sequential");
   const [numberOfPages, setNumberOfPages] = useState("");
   const [resumeIndex, setResumeIndex] = useState("0");
