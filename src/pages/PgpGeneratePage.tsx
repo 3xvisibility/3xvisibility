@@ -2086,7 +2086,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             </Button>
           ) : (
             <span className="text-[11px] text-muted-foreground">
-              Use <strong>Continue in Campaign</strong> above to finish.
+              Use <strong>Generate Pages</strong> above to finish.
             </span>
           )}
         </div>
