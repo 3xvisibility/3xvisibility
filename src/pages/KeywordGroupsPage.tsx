@@ -226,8 +226,13 @@ export default function KeywordGroupsPage() {
     try {
       const langLabel = LANGUAGES.find(l => l.code === language)?.label || "English";
       const prompt = `Generate 15 concise, real-world search values for the variable "{${varName}}" in a website template. Return one plain value per line, no numbering, no explanations. Language: ${langLabel}.`;
-      const res = await callAI({ system: "You return only plain values, one per line. No markdown, no HTML.", user: prompt, promptType: "keyword_group_terms" });
-      const text = (typeof res === "string" ? res : (res as any)?.text || "") as string;
+      const res = await callAI({
+        messages: [
+          { role: "system", content: "You return only plain values, one per line. No markdown, no HTML." },
+          { role: "user", content: prompt },
+        ],
+      });
+      const text = res?.content || "";
       const terms = text.split("\n").map(l => l.replace(/^[\d.\-*)\s]+/, "").trim()).filter(l => l && l.length < 100);
       setVariables(prev => prev.map(v => v.name === varName ? { ...v, terms: [...new Set([...v.terms, ...terms])] } : v));
       toast({ title: `Added ${terms.length} values`, description: `for {${varName}}` });
