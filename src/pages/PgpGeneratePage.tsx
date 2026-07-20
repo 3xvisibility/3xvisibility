@@ -244,19 +244,24 @@ export default function PgpGeneratePage() {
     return Math.max(...counts);
   }, [groupKeywords, method]);
 
-  const missingKeywords = groupKeywords.filter(k => !k.keyword);
+  // Variables satisfied by Step 4 (business info) — non-empty values only.
+  const injectedBizVarNames = useMemo(
+    () => new Set(Object.entries(businessInfo).filter(([, v]) => (v ?? "").trim() !== "").map(([k]) => k.toLowerCase())),
+    [businessInfo],
+  );
+
+  const missingKeywords = groupKeywords.filter(k => !k.keyword && !injectedBizVarNames.has(k.name.toLowerCase()));
 
   // Geo variables must come from the Campaign wizard's Location Database,
   // not AI-fabricated. Skip them in every auto-fill path.
   const GEO_VAR_NAMES = ["city", "cities", "state", "states", "country", "countries", "zip", "zipcode", "region", "county", "location", "locations", "area"];
   const isGeoVariable = (name: string) => GEO_VAR_NAMES.includes(name.trim().toLowerCase());
 
-  // Geo vars in the template that have no terms attached (empty or missing
-  // keyword group). These MUST be filled from the Campaign wizard's Location
-  // Database, not from this page.
+  // Geo vars in the template that have no terms attached AND no picked locations.
   const unfilledGeoVars = groupKeywords
     .filter((gk) => isGeoVariable(gk.name))
     .filter((gk) => !gk.keyword || (gk.keyword.terms?.length ?? 0) === 0)
+    .filter(() => pickedLocations.length === 0)
     .map((gk) => gk.name);
   const needsLocations = unfilledGeoVars.length > 0;
 
