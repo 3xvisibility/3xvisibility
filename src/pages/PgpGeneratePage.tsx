@@ -19,7 +19,7 @@ import {
 import {
   Play, Eye, FileText, KeyRound, Layers, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Zap, Settings2,
-  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History, MapPin, ChevronRight,
+  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History, MapPin, ChevronRight, Bookmark, Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -2134,31 +2134,105 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 </p>
               </div>
 
-              {/* Variable fill checklist */}
-              {selectedGroup && groupKeywords.length > 0 && (
-                <div className="rounded-lg border border-border/60 bg-background/60 p-3 space-y-2">
-                  <p className="text-xs font-semibold">Variable checklist</p>
-                  <div className="space-y-1">
-                    {groupKeywords.map((gk) => {
-                      const nameLc = gk.name.toLowerCase();
-                      const fromKw = !!gk.keyword && (gk.keyword.terms?.length ?? 0) > 0;
-                      const fromBiz = injectedBizVarNames.has(nameLc);
-                      const fromLoc = pickedLocations.length > 0 && isGeoVariable(gk.name);
-                      const ok = fromKw || fromBiz || fromLoc;
-                      const source = fromKw ? "Keyword group" : fromLoc ? "Locations" : fromBiz ? "Business info" : "Not filled";
-                      return (
-                        <div key={gk.name} className="flex items-center justify-between text-[11px]">
-                          <span className="font-mono">{"{" + gk.name + "}"}</span>
-                          <span className={cn("flex items-center gap-1", ok ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
-                            {ok ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                            {source}
-                          </span>
-                        </div>
-                      );
-                    })}
+              {/* Variable mapping panel — grouped by source */}
+              {selectedGroup && groupKeywords.length > 0 && (() => {
+                type Row = { name: string; example?: string };
+                const kwRows: Row[] = [];
+                const locRows: Row[] = [];
+                const bizRows: Row[] = [];
+                const missRows: Row[] = [];
+                for (const gk of groupKeywords) {
+                  const nameLc = gk.name.toLowerCase();
+                  const fromKw = !!gk.keyword && (gk.keyword.terms?.length ?? 0) > 0;
+                  const fromLoc = pickedLocations.length > 0 && isGeoVariable(gk.name);
+                  const fromBiz = injectedBizVarNames.has(nameLc);
+                  if (fromKw) {
+                    kwRows.push({ name: gk.name, example: gk.keyword?.terms?.[0] });
+                  } else if (fromLoc) {
+                    const first = pickedLocations[0] as any;
+                    const val = first?.[nameLc] || first?.city || first?.state || first?.country;
+                    locRows.push({ name: gk.name, example: val });
+                  } else if (fromBiz) {
+                    bizRows.push({ name: gk.name, example: businessInfo[nameLc] });
+                  } else {
+                    missRows.push({ name: gk.name });
+                  }
+                }
+                const totalFilled = kwRows.length + locRows.length + bizRows.length;
+                const Group = ({
+                  title, icon: Icon, color, rows, empty,
+                }: { title: string; icon: any; color: string; rows: Row[]; empty: string }) => (
+                  <div className="rounded-lg border border-border/60 bg-background/60 p-2.5 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className={cn("flex items-center gap-1.5 font-semibold", color)}>
+                        <Icon className="h-3.5 w-3.5" /> {title}
+                      </span>
+                      <span className="text-muted-foreground">{rows.length} var{rows.length !== 1 ? "s" : ""}</span>
+                    </div>
+                    {rows.length === 0 ? (
+                      <p className="text-[10.5px] text-muted-foreground italic">{empty}</p>
+                    ) : (
+                      <div className="space-y-0.5">
+                        {rows.map((r) => (
+                          <div key={r.name} className="flex items-center justify-between gap-2 text-[11px]">
+                            <span className="font-mono text-foreground">{"{" + r.name + "}"}</span>
+                            <span className="text-muted-foreground truncate max-w-[55%] text-right">
+                              {r.example ? `e.g. ${String(r.example).slice(0, 32)}` : ""}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+                return (
+                  <div className="rounded-xl border border-primary/25 bg-primary/[0.03] p-3 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold">Variable mapping</p>
+                      <span className="text-[10.5px] text-muted-foreground">
+                        {totalFilled}/{groupKeywords.length} filled
+                      </span>
+                    </div>
+                    <p className="text-[10.5px] text-muted-foreground leading-snug">
+                      Shows the source for every &#123;variable&#125; in your template — grouped by Keyword group, Locations, and Business Info.
+                    </p>
+                    <Group
+                      title="From Keyword group"
+                      icon={Bookmark}
+                      color="text-primary"
+                      rows={kwRows}
+                      empty="No keyword-backed variables in this template."
+                    />
+                    <Group
+                      title="From Locations"
+                      icon={MapPin}
+                      color="text-emerald-600 dark:text-emerald-400"
+                      rows={locRows}
+                      empty={pickedLocations.length === 0 ? "No locations attached (Step 3)." : "No geo variables in this template."}
+                    />
+                    <Group
+                      title="From Business Info"
+                      icon={Building2}
+                      color="text-amber-600 dark:text-amber-400"
+                      rows={bizRows}
+                      empty="No business-info variables in this template."
+                    />
+                    {missRows.length > 0 && (
+                      <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-2.5 space-y-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="flex items-center gap-1.5 font-semibold text-destructive">
+                            <XCircle className="h-3.5 w-3.5" /> Not filled
+                          </span>
+                          <span className="text-muted-foreground">{missRows.length} var{missRows.length !== 1 ? "s" : ""}</span>
+                        </div>
+                        <p className="text-[10.5px] text-muted-foreground">
+                          {missRows.map((r) => `{${r.name}}`).join(", ")} — attach a keyword group, locations, or business info.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {needsLocations && (
                 <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs space-y-2">
