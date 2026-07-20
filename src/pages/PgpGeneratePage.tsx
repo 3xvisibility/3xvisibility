@@ -121,6 +121,8 @@ export default function PgpGeneratePage() {
     { at: string; source: string; keywords: number; terms: number; locations: number }[]
   >([]);
 
+  const [showLocationsDialog, setShowLocationsDialog] = useState(false);
+
   const HISTORY_KEY = "pgp-keyword-run-history";
 
   useEffect(() => {
