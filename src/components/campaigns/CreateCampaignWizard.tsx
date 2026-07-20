@@ -411,9 +411,27 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       const raw = sessionStorage.getItem("__campaign_prefill");
       if (!raw) return;
       sessionStorage.removeItem("__campaign_prefill");
-      const p = JSON.parse(raw) as { name?: string; templateId?: string; keywordGroupId?: string };
+      const p = JSON.parse(raw) as {
+        name?: string;
+        templateId?: string;
+        keywordGroupId?: string;
+        csvHeaders?: string[];
+        csvRows?: Record<string, string>[];
+        language?: string;
+        startStep?: number;
+      };
       if (p.name) setCampaignName(p.name);
       if (p.templateId) setSelectedTemplate(p.templateId);
+      if (Array.isArray(p.csvHeaders) && Array.isArray(p.csvRows) && p.csvRows.length > 0) {
+        setDataSource("csv");
+        setCsvHeaders(p.csvHeaders);
+        setCsvData(p.csvRows);
+        const csvText = [p.csvHeaders.join(","), ...p.csvRows.map(r => p.csvHeaders!.map(h => JSON.stringify(r[h] ?? "")).join(","))].join("\n");
+        setCsvRawText(csvText);
+      }
+      if (typeof p.startStep === "number" && p.startStep >= 1 && p.startStep <= 5) {
+        setStep(p.startStep as any);
+      }
     } catch { /* ignore malformed prefill */ }
   }, [open]);
 

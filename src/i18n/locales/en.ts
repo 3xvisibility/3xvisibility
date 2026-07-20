@@ -1826,6 +1826,7 @@ const en: Record<string, string> = {
   "sidebar.performance": "Performance",
   "sidebar.pgpGenerate": "Generate",
   "sidebar.pgpKeywords": "Keywords",
+  "sidebar.keywordGroups": "Keyword Groups",
   "sidebar.pgpSection": "Page Generator Pro",
   "sidebar.pgpTerms": "Terms",
   "sidebar.referral": "Referral",

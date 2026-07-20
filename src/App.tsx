@@ -42,6 +42,7 @@ import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import DataCsvPage from "./pages/DataCsvPage";
 import WebsiteContentPage from "./pages/WebsiteContentPage";
 import PgpKeywordsPage from "./pages/PgpKeywordsPage";
+import KeywordGroupsPage from "./pages/KeywordGroupsPage";
 import PgpGeneratePage from "./pages/PgpGeneratePage";
 import PgpTermsPage from "./pages/PgpTermsPage";
 import ElementorTestPage from "./pages/ElementorTestPage";
@@ -156,6 +157,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="affiliate" element={wrap(<AffiliatePage />)} />
       <Route path="referral" element={wrap(<ReferralPage />)} />
       <Route path="pgp-keywords" element={wrap(<PgpKeywordsPage />)} />
+      <Route path="keyword-groups" element={wrap(<KeywordGroupsPage />)} />
       <Route path="pgp-content" element={<Navigate to="../templates" replace />} />
       <Route path="pgp-generate" element={wrap(<PgpGeneratePage />)} />
       <Route path="pgp-terms" element={wrap(<PgpTermsPage />)} />

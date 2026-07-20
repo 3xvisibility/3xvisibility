@@ -66,6 +66,7 @@ export const websiteNav: NavItem[] = [
 // Everything related to SEO, keywords, ranking & analytics.
 export const seoNav: NavItem[] = [
   { titleKey: "sidebar.pgpKeywords", path: "pgp-keywords", icon: KeyRound },
+  { titleKey: "sidebar.keywordGroups", path: "keyword-groups", icon: Boxes },
   { titleKey: "sidebar.pgpTerms", path: "pgp-terms", icon: Columns3 },
   { titleKey: "sidebar.seoAudit", path: "seo-audit", icon: ClipboardCheck },
   { titleKey: "sidebar.indexing", path: "indexing", icon: SearchIcon, requiredFeature: "indexing" },

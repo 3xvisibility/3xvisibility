@@ -1869,6 +1869,50 @@ export type Database = {
         }
         Relationships: []
       }
+      pgp_keyword_groups: {
+        Row: {
+          created_at: string
+          id: string
+          language: string
+          name: string
+          template_id: string | null
+          updated_at: string
+          user_id: string
+          variables: Json
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          language?: string
+          name: string
+          template_id?: string | null
+          updated_at?: string
+          user_id: string
+          variables?: Json
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: string
+          name?: string
+          template_id?: string | null
+          updated_at?: string
+          user_id?: string
+          variables?: Json
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pgp_keyword_groups_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pgp_keywords: {
         Row: {
           columns: string[] | null
