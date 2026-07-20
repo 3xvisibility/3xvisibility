@@ -19,8 +19,10 @@ import {
 import {
   Play, Eye, FileText, KeyRound, Layers, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Zap, Settings2,
-  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History, MapPin, ChevronRight, Bookmark, Building2,
+  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History, MapPin, ChevronRight, Bookmark, Building2, Download,
 } from "lucide-react";
+import { exportDataFile } from "@/lib/export-csv";
+
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -2439,6 +2441,73 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               >
                 <Eye className="h-4 w-4 mr-2" /> {t("pgpGenerate.testPreviewBtn")}
               </Button>
+
+              {/* Export resolved rows as CSV / JSON / XLSX for pre-publish review */}
+              {selectedGroup && groupKeywords.length > 0 && (() => {
+                const buildExportRows = () => {
+                  const rows = buildRows();
+                  const varNames = groupKeywords.map((g) => g.name);
+                  const GEO_COLS = ["city", "state", "country", "region", "zip"];
+                  const extras = GEO_COLS.filter((k) => !varNames.map((v) => v.toLowerCase()).includes(k));
+                  const cols = ["_row", ...varNames, ...extras, "_source_summary"];
+                  return rows.map((row, i) => {
+                    const out: Record<string, string> = { _row: String(i + 1) };
+                    const srcCounts = { keyword: 0, location: 0, business: 0, ai_fill: 0 };
+                    for (const n of varNames) {
+                      const lc = n.toLowerCase();
+                      const val = row[n] ?? row[lc] ?? "";
+                      out[n] = String(val);
+                      if (pickedLocations.length > 0 && isGeoVariable(n)) srcCounts.location++;
+                      else if (injectedBizVarNames.has(lc)) srcCounts.business++;
+                      else if (String(val).trim() !== "") srcCounts.keyword++;
+                      else srcCounts.ai_fill++;
+                    }
+                    for (const k of extras) out[k] = String(row[k] ?? "");
+                    out._source_summary =
+                      `keyword=${srcCounts.keyword} location=${srcCounts.location} business=${srcCounts.business} ai_fill=${srcCounts.ai_fill}`;
+                    // Ensure column order
+                    const ordered: Record<string, string> = {};
+                    for (const c of cols) ordered[c] = out[c] ?? "";
+                    return ordered;
+                  });
+                };
+                const doExport = (format: "csv" | "json" | "xlsx") => {
+                  const rows = buildExportRows();
+                  if (rows.length === 0) {
+                    toast({ title: "Nothing to export", description: "No rows resolved yet.", variant: "destructive" });
+                    return;
+                  }
+                  const safeName = (campaignNameDraft || "campaign").replace(/[^a-z0-9-_]+/gi, "-").toLowerCase();
+                  exportDataFile(rows, format, `${safeName}-resolved-rows.${format}`);
+                  toast({ title: "Exported", description: `${rows.length} row${rows.length !== 1 ? "s" : ""} exported as ${format.toUpperCase()}.` });
+                };
+                return (
+                  <div className="rounded-xl border border-primary/25 bg-primary/[0.03] p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Download className="h-4 w-4 text-primary" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold">Export resolved rows</p>
+                        <p className="text-[10.5px] text-muted-foreground">
+                          Download the exact per-row variables (city, state, country, region, zip + all template fields) before publishing for review or archival.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => doExport("csv")}>
+                        <Download className="h-3.5 w-3.5" /> CSV
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => doExport("xlsx")}>
+                        <Download className="h-3.5 w-3.5" /> Excel
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => doExport("json")}>
+                        <Download className="h-3.5 w-3.5" /> JSON
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+
 
 
 
