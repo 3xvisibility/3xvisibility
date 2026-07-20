@@ -917,11 +917,14 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-lg sm:text-display">{t("sidebar.campaigns")}</h1>
-        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-          {t("pgpGenerate.pageSubtitle")}
-        </p>
+      {/* Header — matches Campaigns page style */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-display">{t("sidebar.campaigns")}</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {t("pgpGenerate.pageSubtitle")}
+          </p>
+        </div>
       </div>
 
       {/* Readiness check */}
@@ -954,7 +957,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           {/* Keyword Groups overview — hidden on Generate page; manage via Keywords page */}
 
           {/* Campaign name for handoff */}
-          <Card className="shadow-surface border-primary/30 bg-primary/5">
+          <Card className="border-0 shadow-surface overflow-hidden relative">
+            <div className="h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
             <CardContent className="p-5 space-y-2">
               <Label className="text-sm font-semibold flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" /> Campaign name
@@ -964,7 +968,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 value={campaignNameDraft}
                 onChange={(e) => setCampaignNameDraft(e.target.value)}
                 placeholder={selectedGroup ? `e.g. ${selectedGroup.name} — Cities` : "Give this campaign a name"}
-                className="h-11"
+                className="h-11 rounded-xl"
               />
               <p className="text-[11px] text-muted-foreground">
                 Pick your template and keywords here, then click <strong>Continue in Campaign</strong>. Only Locations will be left to choose.
@@ -973,7 +977,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           </Card>
 
           {/* Template Selection */}
-          <Card className="shadow-surface">
+          <Card className="border-0 shadow-surface">
             <CardContent className="p-5 space-y-4">
               <Label className="text-sm font-semibold flex items-center gap-2">
                 <Layers className="h-4 w-4 text-primary" /> Template
@@ -1108,7 +1112,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
           {/* AI Generate (always available) */}
           {!selectedGroup && (
-            <Card className="shadow-surface">
+            <Card className="border-0 shadow-surface">
               <CardContent className="p-5 space-y-4">
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-1">
                   <div className="flex items-center gap-2">
@@ -1458,7 +1462,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
           {/* Generation Settings */}
           {selectedGroup && (
-            <Card className="shadow-surface">
+            <Card className="border-0 shadow-surface">
               <CardContent className="p-5 space-y-5">
                 <Tabs defaultValue="generation" className="space-y-4">
                   <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
@@ -1843,7 +1847,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
           {/* Generation Progress */}
           {genProgress && (
-            <Card className="shadow-surface">
+            <Card className="border-0 shadow-surface">
               <CardContent className="p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold">{t("pgpGenerate.progressTitle")}</span>
@@ -1880,10 +1884,11 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
         {/* Right: Actions & Preview */}
         <div className="space-y-4">
-          <Card className="shadow-surface border-primary/30">
+          <Card className="border-0 shadow-surface overflow-hidden relative">
+            <div className="h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
             <CardContent className="p-5 space-y-3">
-              <div className="rounded-lg bg-primary/10 border border-primary/30 p-3 text-xs space-y-1">
-                <p className="font-semibold text-primary">Pages are generated through Campaigns</p>
+              <div className="rounded-lg bg-muted/50 border border-border/60 p-3 text-xs space-y-1">
+                <p className="font-semibold text-foreground">Pages are generated through Campaigns</p>
                 <p className="text-muted-foreground">
                   This page is for previewing your template + keyword pairing. Use a Campaign to actually generate pages — it pulls real cities from the Location Database and publishes to your connected site.
                 </p>
@@ -1921,7 +1926,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               )}
 
               <Button
-                className="w-full"
+                className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
                 size="lg"
                 disabled={!selectedGroup}
                 onClick={() => {
@@ -1938,12 +1943,12 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   navigate(`${basePath}/campaigns?new=1&template=${selectedGroup?.id || ""}`);
                 }}
               >
-                <Play className="h-4 w-4 mr-2" /> Continue in Campaign
+                <Play className="h-4 w-4" /> Continue in Campaign
               </Button>
 
               <Button
                 variant="outline"
-                className="w-full"
+                className="w-full rounded-xl"
                 disabled={!selectedGroup || groupKeywords.every(k => !k.keyword)}
                 onClick={() => {
                   if (needsLocations) {
@@ -2002,7 +2007,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
           {/* Test Preview */}
           {testPreview && (
-            <Card className="shadow-surface">
+            <Card className="border-0 shadow-surface">
               <CardContent className="p-0">
                 <div className="px-4 py-3 border-b flex items-center justify-between">
                   <p className="text-xs font-semibold">{t("pgpGenerate.testPreviewTitle")}</p>
