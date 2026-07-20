@@ -1010,7 +1010,6 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             <CardContent className="p-5 space-y-2">
               <Label className="text-sm font-semibold flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" /> Campaign name
-                <span className="text-[10px] font-normal text-muted-foreground">(used when you continue in Campaign)</span>
               </Label>
               <Input
                 value={campaignNameDraft}
@@ -1019,7 +1018,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 className="h-11 rounded-xl"
               />
               <p className="text-[11px] text-muted-foreground">
-                Pick your template and keywords here, then click <strong>Continue in Campaign</strong>. Only Locations will be left to choose.
+                Pick your template and keywords, configure AI, then generate pages directly from Step 3.
               </p>
             </CardContent>
           </Card>
@@ -1941,9 +1940,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             <div className="h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
             <CardContent className="p-5 space-y-3">
               <div className="rounded-lg bg-muted/50 border border-border/60 p-3 text-xs space-y-1">
-                <p className="font-semibold text-foreground">Pages are generated through Campaigns</p>
+                <p className="font-semibold text-foreground">Ready to generate</p>
                 <p className="text-muted-foreground">
-                  This page is for previewing your template + keyword pairing. Use a Campaign to actually generate pages — it pulls real cities from the Location Database and publishes to your connected site.
+                  Review your setup below, then click <strong>Generate Pages</strong> to create and publish pages to your connected site.
                 </p>
               </div>
 
@@ -1960,20 +1959,17 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         <span className="font-medium text-foreground">
                           {unfilledGeoVars.map((v) => `{${v}}`).join(", ")}
                         </span>
-                        , but no real locations are attached. Generating now will leave these placeholders empty. Use the Campaign Wizard to pull real cities/states/countries from the Location Database.
+                        . Attach real cities/states/countries from the Location Database in Step 2 (AI Setup) before generating.
                       </p>
                     </div>
                   </div>
                   <Button
                     size="sm"
-                    className="w-full bg-amber-500 hover:bg-amber-600 text-white"
-                    onClick={() =>
-                      navigate(
-                        `${basePath}/campaigns?new=1&template=${selectedGroup?.id || ""}&step=locations`
-                      )
-                    }
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setStep(2)}
                   >
-                    <MapPin className="h-3.5 w-3.5 mr-1.5" /> Attach Locations in Campaign Wizard
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" /> Back to AI Setup
                   </Button>
                 </div>
               )}
@@ -1981,22 +1977,14 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               <Button
                 className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
                 size="lg"
-                disabled={!selectedGroup}
-                onClick={() => {
-                  try {
-                    sessionStorage.setItem(
-                      "__campaign_prefill",
-                      JSON.stringify({
-                        name: campaignNameDraft.trim() || (selectedGroup?.name ? `${selectedGroup.name} — Campaign` : ""),
-                        templateId: selectedGroup?.id || "",
-                        keywordGroupId: selectedGroup?.id || "",
-                      })
-                    );
-                  } catch {}
-                  navigate(`${basePath}/campaigns?new=1&template=${selectedGroup?.id || ""}`);
-                }}
+                disabled={!selectedGroup || isGenerating}
+                onClick={handleGenerate}
               >
-                <Play className="h-4 w-4" /> Continue in Campaign
+                {isGenerating ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
+                ) : (
+                  <><Play className="h-4 w-4" /> Generate Pages</>
+                )}
               </Button>
 
               <Button
@@ -2097,7 +2085,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             </Button>
           ) : (
             <span className="text-[11px] text-muted-foreground">
-              Use <strong>Continue in Campaign</strong> above to finish.
+              Use <strong>Generate Pages</strong> above to finish.
             </span>
           )}
         </div>
