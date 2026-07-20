@@ -1803,6 +1803,7 @@ const de: Record<string, string> = {
   "showcase.importTag": "Importieren",
   "showcase.importTitle": "Intelligente CSV-Verarbeitung",
   "showcase.live": "Live",
+  "sidebar.keywordGroups": "Keyword-Gruppen",
   "sidebar.abTesting": "A/B-Tests",
   "sidebar.account": "Konto",
   "sidebar.admin": "Admin",
