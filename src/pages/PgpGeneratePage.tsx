@@ -19,8 +19,9 @@ import {
 import {
   Play, Eye, FileText, KeyRound, Layers, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Zap, Settings2,
-  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History, MapPin,
+  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History, MapPin, ChevronRight,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +51,7 @@ export default function PgpGeneratePage() {
 
   const [selectedGroupId, setSelectedGroupId] = useState(preselectedGroup);
   const [campaignNameDraft, setCampaignNameDraft] = useState("");
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [method, setMethod] = useState<"all" | "sequential" | "random">("sequential");
   const [numberOfPages, setNumberOfPages] = useState("");
   const [resumeIndex, setResumeIndex] = useState("0");
@@ -951,10 +953,56 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Left: Configuration */}
-        <div className="lg:col-span-2 space-y-4 sm:space-y-5">
-          {/* Keyword Groups overview — hidden on Generate page; manage via Keywords page */}
+      {/* Stepper — matches Campaign wizard style */}
+      {(() => {
+        const wizardSteps = [
+          { num: 1, label: "Name & Template" },
+          { num: 2, label: "AI Setup" },
+          { num: 3, label: "Review & Continue" },
+        ];
+        return (
+          <div className="rounded-2xl border border-border/60 bg-card/60 p-4 sm:p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-sm">
+                <Sparkles className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <p className="text-sm font-bold">{t("campaigns.createCampaign") || "Create Campaign"}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Step {step} of {wizardSteps.length} — {wizardSteps[step - 1]?.label}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              {wizardSteps.map((s) => (
+                <button
+                  key={s.num}
+                  type="button"
+                  onClick={() => { if (s.num < step) setStep(s.num as 1 | 2 | 3); }}
+                  className={cn(
+                    "h-2 flex-1 rounded-full transition-all",
+                    step > s.num ? "bg-primary cursor-pointer" :
+                    step === s.num ? "bg-primary" : "bg-border"
+                  )}
+                />
+              ))}
+            </div>
+            <div className="flex justify-between mt-1.5">
+              {wizardSteps.map((s) => (
+                <span key={s.num} className={cn("text-[10px] font-medium", step >= s.num ? "text-foreground" : "text-muted-foreground/50")}>
+                  {s.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      <div className="max-w-3xl mx-auto w-full">
+        <div className="space-y-4 sm:space-y-5">
+          {/* Step 1: Name & Template */}
+          {step === 1 && (<>
+
 
           {/* Campaign name for handoff */}
           <Card className="border-0 shadow-surface overflow-hidden relative">
@@ -1109,9 +1157,13 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               )}
             </CardContent>
           </Card>
+          </>)}
 
+          {/* Step 2: AI Setup & Generation Settings */}
+          {step === 2 && (<>
           {/* AI Generate (always available) */}
           {!selectedGroup && (
+
             <Card className="border-0 shadow-surface">
               <CardContent className="p-5 space-y-4">
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-1">
@@ -1880,10 +1932,11 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               </CardContent>
             </Card>
           )}
-        </div>
+          </>)}
 
-        {/* Right: Actions & Preview */}
-        <div className="space-y-4">
+          {/* Step 3: Review & Continue */}
+          {step === 3 && (<>
+
           <Card className="border-0 shadow-surface overflow-hidden relative">
             <div className="h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
             <CardContent className="p-5 space-y-3">
@@ -2021,8 +2074,35 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               </CardContent>
             </Card>
           )}
+          </>)}
+        </div>
+
+        {/* Wizard nav footer */}
+        <div className="flex items-center justify-between mt-6 pt-4 border-t">
+          <Button
+            variant="ghost"
+            className="rounded-xl"
+            disabled={step === 1}
+            onClick={() => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s))}
+          >
+            Back
+          </Button>
+          {step < 3 ? (
+            <Button
+              className="rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
+              disabled={step === 1 && !selectedGroup}
+              onClick={() => setStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s))}
+            >
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <span className="text-[11px] text-muted-foreground">
+              Use <strong>Continue in Campaign</strong> above to finish.
+            </span>
+          )}
         </div>
       </div>
+
 
       <AlertDialog open={confirmRegen} onOpenChange={setConfirmRegen}>
         <AlertDialogContent>
