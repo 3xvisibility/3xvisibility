@@ -2218,6 +2218,8 @@ const pt: Record<string, string> = {
   "workspaceSettings.workspaceName": "Nome do espaço de trabalho",
   "workspaceSettings.workspaceRenamed": "Espaço de trabalho renomeado",
   "workspaceSettings.workspaceRenamedDesc": "O nome do espaço de trabalho foi atualizado.",
+  "sidebar.keywordGroups": "Keyword Groups",
+  "sidebar.wpControl": "WordPress Control",
 };
 
 export default pt;
