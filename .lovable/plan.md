@@ -1,43 +1,64 @@
-## Goal
-Extend the boxed content-width system with five capabilities across the Templates and Generated Pages screens, plus the shared editor.
+# Keyword Groups → Campaign flow
 
-## 1. Conflict validation & warnings (shared)
-New helper `src/lib/box-settings-validation.ts`:
-- Rules per breakpoint: `gutter >= 0`, `gutter*2 <= width - 200` (content must keep ≥200px), width within 320–1920, tablet/mobile widths (when set) not larger than desktop.
-- Returns `{ errors, warnings }`. Errors block Save/Apply/Publish; warnings show but allow.
-- Used by the single editor and the bulk dialog. Save button disabled on any error; a warning banner lists issues before publishing.
+Goal: user builds everything (template + variables + terms + language) once in **Keywords**, saves it as a named **Keyword Group**. In **Campaigns** they just pick the group, add Locations + Business Info, and generate.
 
-## 2. Tri-device side-by-side live preview
-Rework the preview in `ContainerWidthControl.tsx` (and reuse in the bulk dialog) to render **three simulated canvases at once** (desktop 1440 / tablet 834 / mobile 390), each showing the boxed content at that breakpoint's width + gutter, with full-width section backgrounds. Replaces the current single-device toggle.
+## 1. New "Keyword Group" bundle
 
-## 3. "Copy from template" (page-level)
-- Add optional `campaignId` prop to `ContainerWidthControl`.
-- When present (page context), show a **Copy from template** button that resolves campaign → `template_id`, fetches the template's `container_width*/gutter_*` values, and populates the form fields (user reviews, then Saves).
-- `GeneratedPagesPage` passes `campaignId={widthPage.campaign_id}`.
+Extend the existing `pgp_keywords` model into a **group bundle** (or add a sibling table `pgp_keyword_groups`) that stores:
 
-## 4. Bulk apply to multiple templates/pages
-New `src/components/settings/BulkBoxSettingsDialog.tsx`:
-- Same responsive form + validation + tri-device preview.
-- Props: `table: "templates" | "generated_pages"`, `ids: string[]`.
-- On Apply, updates all rows with the chosen `container_width`, tablet/mobile widths, and three gutters.
-- Wired into existing selection toolbars:
-  - `GeneratedPagesPage` bulk bar → "Content width…" button.
-  - `TemplatesPage` bulk bar → "Content width…" button. Also add a per-template row action opening the single `ContainerWidthControl` (`table="templates"`) so templates get an individual editor too.
+- `name` (user-given, shown in sidebar list)
+- `template_id` (FK to `templates`)
+- `language` (single language for the whole group)
+- `variables[]` — each with `{ name, terms[] }` covering every non-geo / non-business variable in the template
+- `workspace_id`, `created_at`, `updated_at`
 
-## 5. Republish updated templates after reboxing
-- Extend `rebox-all-templates` to return the list of successfully reboxed template ids.
-- In `TemplatesPage` rebox flow, after success, offer **"Republish affected pages"** (confirm dialog). When chosen: query `generated_pages` joined via `campaigns.template_id` for those templates with `status = 'published'`, then invoke `publish-pages` (retry/republish path) for those page ids — reusing the existing responsive boxing already applied at publish time.
+Locations, city/state/country, brand_name, phone, email, company etc. are **explicitly excluded** — those live only on the Campaign side.
+
+```text
+Keyword Group
+ ├─ Template  (chosen once, latest on top)
+ ├─ Language  (one dropdown, applies to all terms)
+ └─ Variables
+     ├─ {service_type}  → [plumbing, roofing, ...]
+     ├─ {quality}       → [premium, affordable, ...]
+     └─ ... (auto-extracted from template, geo/business skipped)
+```
+
+## 2. Rework the Keywords page into a wizard
+
+`src/pages/PgpKeywordsPage.tsx` becomes a 3-step "Create Keyword Group" flow:
+
+1. **Pick template** — dropdown of workspace templates ordered `updated_at DESC` (latest first), with preview.
+2. **Language + Variables** — one language dropdown at top; auto-extract variables from template HTML; hide geo/business ones; for each remaining variable show a terms editor with AI-generate-terms button that honors the chosen language.
+3. **Name & Save** — text field for group name, "Save Keyword Group" button.
+
+Existing standalone-keyword UI stays reachable, but the primary CTA becomes **"New Keyword Group"**.
+
+## 3. Sidebar submenu
+
+Under the **Keywords** entry in `src/lib/sidebar-nav.ts` / `AppSidebar.tsx`, add a nested list of saved Keyword Groups (by `name`). Clicking one opens it in edit mode of the wizard.
+
+## 4. Campaign wizard changes
+
+`src/components/campaigns/CreateCampaignWizard.tsx`:
+
+- Replace the "Choose template" step with **"Choose Keyword Group"** (dropdown of the current workspace's groups).
+- On selection, prefill: template, language, variables & terms — all read-only in the wizard.
+- Remaining steps stay: **Locations** → **Business Info** → **Review & Generate**.
+- Row assembly reuses `src/lib/campaign-row-merge.ts` — group provides `keywordRow`, Locations override geo, Business Info overlays.
+
+Handoff `sessionStorage` key already used by `PgpGeneratePage` is repurposed to pass `{ keywordGroupId }` instead of `{ templateId }`.
+
+## 5. Data + safeguards
+
+- Migration: `pgp_keyword_groups` table with `GRANT` + RLS scoped to `workspace_id` via `is_workspace_member`.
+- Geo/business variables list is centralized (`GEO_VAR_NAMES` + a new `BUSINESS_VAR_NAMES`) so the Keywords wizard hides them and the Campaign wizard knows to demand them.
+- Existing placeholder-geo safeguard and per-row source trace continue to work unchanged.
 
 ## Technical notes
-- DB columns already exist (`container_width`, `container_width_tablet`, `container_width_mobile`, `gutter_desktop/tablet/mobile`) on both `templates` and `generated_pages`; no migration needed.
-- Engine (`enforceBoxedContentWidth`) already accepts the responsive options object; publish/reconvert/rebox already thread it — no engine change required.
-- Validation clamps mirror server clamps (width 320–1920, gutter 0–200).
-- No new secrets or schema changes.
 
-## Files
-- add `src/lib/box-settings-validation.ts`
-- add `src/components/settings/BulkBoxSettingsDialog.tsx`
-- edit `src/components/settings/ContainerWidthControl.tsx` (tri-device preview, copy-from-template, validation)
-- edit `src/pages/GeneratedPagesPage.tsx` (pass campaignId, bulk button)
-- edit `src/pages/TemplatesPage.tsx` (per-template editor, bulk button, republish-after-rebox)
-- edit `supabase/functions/rebox-all-templates/index.ts` (return reboxed ids)
+- Files touched: `PgpKeywordsPage.tsx` (rewrite), `CreateCampaignWizard.tsx` (template step → group step), `sidebar-nav.ts` + `AppSidebar.tsx` (submenu), `campaign-row-merge.ts` (add `BUSINESS_VAR_NAMES`), new `src/lib/keyword-groups.ts` helpers, new migration.
+- No changes needed to `generated_pages`, publishing, or SEO scoring — the group just becomes the single source of "template + keywords + language" upstream.
+- Backwards compatibility: existing standalone `pgp_keywords` rows keep working; Campaign wizard still accepts a raw template if no group is chosen (fallback path behind a "Use raw template instead" link).
+
+Approve and I'll implement in this order: migration → Keywords wizard → sidebar submenu → Campaign wizard swap → tests.
