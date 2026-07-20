@@ -2040,6 +2040,28 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <LocationDatabaseDialog
+        open={showLocationsDialog}
+        onOpenChange={setShowLocationsDialog}
+        onSelect={(rows) => {
+          const cities = Array.from(
+            new Set(
+              rows
+                .map((r) => (r.city || r.name || r.state || r.country || "").toString().trim())
+                .filter(Boolean),
+            ),
+          );
+          if (cities.length) {
+            setAiLocations(cities.join(", "));
+            toast({
+              title: "Locations added",
+              description: `${cities.length} location${cities.length !== 1 ? "s" : ""} attached to this campaign.`,
+            });
+          }
+          setShowLocationsDialog(false);
+        }}
+      />
     </div>
   );
 }
