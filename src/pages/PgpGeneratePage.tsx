@@ -50,6 +50,7 @@ export default function PgpGeneratePage() {
 
   const [selectedGroupId, setSelectedGroupId] = useState(preselectedGroup);
   const [campaignNameDraft, setCampaignNameDraft] = useState("");
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [method, setMethod] = useState<"all" | "sequential" | "random">("sequential");
   const [numberOfPages, setNumberOfPages] = useState("");
   const [resumeIndex, setResumeIndex] = useState("0");
