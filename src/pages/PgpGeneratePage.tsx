@@ -1112,7 +1112,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
           {/* AI Generate (always available) */}
           {!selectedGroup && (
-            <Card className="shadow-surface">
+            <Card className="border-0 shadow-surface">
               <CardContent className="p-5 space-y-4">
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-1">
                   <div className="flex items-center gap-2">
@@ -1462,7 +1462,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
           {/* Generation Settings */}
           {selectedGroup && (
-            <Card className="shadow-surface">
+            <Card className="border-0 shadow-surface">
               <CardContent className="p-5 space-y-5">
                 <Tabs defaultValue="generation" className="space-y-4">
                   <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
@@ -1847,7 +1847,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
           {/* Generation Progress */}
           {genProgress && (
-            <Card className="shadow-surface">
+            <Card className="border-0 shadow-surface">
               <CardContent className="p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold">{t("pgpGenerate.progressTitle")}</span>
@@ -2006,7 +2006,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
           {/* Test Preview */}
           {testPreview && (
-            <Card className="shadow-surface">
+            <Card className="border-0 shadow-surface">
               <CardContent className="p-0">
                 <div className="px-4 py-3 border-b flex items-center justify-between">
                   <p className="text-xs font-semibold">{t("pgpGenerate.testPreviewTitle")}</p>
