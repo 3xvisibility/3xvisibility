@@ -957,7 +957,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           {/* Keyword Groups overview — hidden on Generate page; manage via Keywords page */}
 
           {/* Campaign name for handoff */}
-          <Card className="shadow-surface border-primary/30 bg-primary/5">
+          <Card className="border-0 shadow-surface overflow-hidden relative">
+            <div className="h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
             <CardContent className="p-5 space-y-2">
               <Label className="text-sm font-semibold flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" /> Campaign name
@@ -967,7 +968,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 value={campaignNameDraft}
                 onChange={(e) => setCampaignNameDraft(e.target.value)}
                 placeholder={selectedGroup ? `e.g. ${selectedGroup.name} — Cities` : "Give this campaign a name"}
-                className="h-11"
+                className="h-11 rounded-xl"
               />
               <p className="text-[11px] text-muted-foreground">
                 Pick your template and keywords here, then click <strong>Continue in Campaign</strong>. Only Locations will be left to choose.
@@ -976,7 +977,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           </Card>
 
           {/* Template Selection */}
-          <Card className="shadow-surface">
+          <Card className="border-0 shadow-surface">
             <CardContent className="p-5 space-y-4">
               <Label className="text-sm font-semibold flex items-center gap-2">
                 <Layers className="h-4 w-4 text-primary" /> Template
