@@ -1037,7 +1037,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 <button
                   key={s.num}
                   type="button"
-                  onClick={() => { if (s.num < step) setStep(s.num as 1 | 2 | 3); }}
+                  onClick={() => { if (s.num < step) setStep(s.num as 1 | 2 | 3 | 4 | 5); }}
                   className={cn(
                     "h-2 flex-1 rounded-full transition-all",
                     step > s.num ? "bg-primary cursor-pointer" :
