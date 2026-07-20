@@ -31,6 +31,7 @@ import { filterDesignVars } from "@/lib/design-vars-filter";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { ExistingSiteOptimizePanel } from "@/components/website-content/ExistingSiteOptimizePanel";
+import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
 
 type Template = Tables<"templates">;
 
@@ -120,6 +121,8 @@ export default function PgpGeneratePage() {
   const [runHistory, setRunHistory] = useState<
     { at: string; source: string; keywords: number; terms: number; locations: number }[]
   >([]);
+
+  const [showLocationsDialog, setShowLocationsDialog] = useState(false);
 
   const HISTORY_KEY = "pgp-keyword-run-history";
 
@@ -915,7 +918,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-lg sm:text-display">{t("pgpGenerate.pageTitle")}</h1>
+        <h1 className="text-lg sm:text-display">{t("sidebar.campaigns")}</h1>
         <p className="text-muted-foreground text-xs sm:text-sm mt-1">
           {t("pgpGenerate.pageSubtitle")}
         </p>
@@ -1344,7 +1347,31 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   <p className="text-[10px] text-muted-foreground">Comma-separated services/product types the pages should feature.</p>
                 </div>
 
-                {/* Target locations input removed — set locations in the Campaign wizard. */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs font-semibold flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-primary" /> Target locations
+                    </Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[11px]"
+                      onClick={() => setShowLocationsDialog(true)}
+                    >
+                      Select from Locations Database
+                    </Button>
+                  </div>
+                  <Textarea
+                    placeholder="e.g. New York, Los Angeles, Chicago… (or leave blank for nationwide)"
+                    value={aiLocations}
+                    onChange={(e) => setAiLocations(e.target.value)}
+                    rows={2}
+                    className="resize-none"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Pick real cities from your Location Database, or type them manually.</p>
+                </div>
+
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
@@ -2014,6 +2041,28 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <LocationDatabaseDialog
+        open={showLocationsDialog}
+        onOpenChange={setShowLocationsDialog}
+        onSelect={(rows) => {
+          const cities = Array.from(
+            new Set(
+              rows
+                .map((r) => (r.city || r.name || r.state || r.country || "").toString().trim())
+                .filter(Boolean),
+            ),
+          );
+          if (cities.length) {
+            setAiLocations(cities.join(", "));
+            toast({
+              title: "Locations added",
+              description: `${cities.length} location${cities.length !== 1 ? "s" : ""} attached to this campaign.`,
+            });
+          }
+          setShowLocationsDialog(false);
+        }}
+      />
     </div>
   );
 }

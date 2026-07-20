@@ -48,7 +48,7 @@ export interface NavGroup {
 
 export const mainNav: NavItem[] = [
   { titleKey: "sidebar.dashboard", path: "dashboard", icon: LayoutDashboard },
-  { titleKey: "sidebar.campaigns", path: "campaigns", icon: Rocket },
+  { titleKey: "sidebar.campaigns", path: "pgp-generate", icon: Rocket },
   { titleKey: "sidebar.aiSiteBuilder", path: "ai-site-builder", icon: Sparkles },
   { titleKey: "sidebar.generatedPages", path: "pages", icon: Layers },
   { titleKey: "sidebar.templates", path: "templates", icon: FileText },
@@ -66,7 +66,6 @@ export const websiteNav: NavItem[] = [
 // Everything related to SEO, keywords, ranking & analytics.
 export const seoNav: NavItem[] = [
   { titleKey: "sidebar.pgpKeywords", path: "pgp-keywords", icon: KeyRound },
-  { titleKey: "sidebar.pgpGenerate", path: "pgp-generate", icon: Zap },
   { titleKey: "sidebar.pgpTerms", path: "pgp-terms", icon: Columns3 },
   { titleKey: "sidebar.seoAudit", path: "seo-audit", icon: ClipboardCheck },
   { titleKey: "sidebar.indexing", path: "indexing", icon: SearchIcon, requiredFeature: "indexing" },
