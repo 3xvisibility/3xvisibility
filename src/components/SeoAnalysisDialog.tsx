@@ -386,6 +386,60 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         newDescription = newDescription.slice(0, 156).trim();
       }
 
+      // ── Preserve already-strong fields: don't overwrite ≥80 factors ──
+      if (titleStrong) newTitle = currentPage.seo_title || currentPage.title;
+      if (descStrong && currentPage.seo_description) newDescription = currentPage.seo_description;
+      if (keywordsStrong && Array.isArray(currentPage.seo_keywords) && currentPage.seo_keywords.length > 0) {
+        newKeywords = normalizeKeywords(currentPage.seo_keywords);
+      }
+      if (contentStrong) newContent = currentPage.content;
+
+      // ── Anti-regression: recompute unified score with new values ──
+      const postUnified = calculateUnifiedSeoScore({
+        title: newTitle,
+        content: newContent,
+        slug: currentPage.slug,
+        seoTitle: newTitle,
+        seoDescription: newDescription,
+        seoKeywords: newKeywords,
+        canonicalUrl: canonicalUrl,
+        url: currentPage.external_url,
+      });
+
+      // Per-factor guard: if any individual factor dropped, revert that field
+      const postFactor = (key: string) =>
+        postUnified.factors.find((f) => f.key === key)?.score ?? 0;
+      if (postFactor("title") < factorScore("title")) newTitle = currentPage.seo_title || currentPage.title;
+      if (postFactor("description") < factorScore("description") && currentPage.seo_description) {
+        newDescription = currentPage.seo_description;
+      }
+      if (postFactor("content") < factorScore("content")) newContent = currentPage.content;
+      if (postFactor("keywords") < factorScore("keywords") && Array.isArray(currentPage.seo_keywords)) {
+        newKeywords = normalizeKeywords(currentPage.seo_keywords);
+      }
+
+      // Final overall-score gate: if total dropped after all guards, abort save
+      const finalUnified = calculateUnifiedSeoScore({
+        title: newTitle,
+        content: newContent,
+        slug: currentPage.slug,
+        seoTitle: newTitle,
+        seoDescription: newDescription,
+        seoKeywords: newKeywords,
+        canonicalUrl: canonicalUrl,
+        url: currentPage.external_url,
+      });
+      if (finalUnified.score < preUnified.score) {
+        setFixing(false);
+        setFixStep("");
+        setFixProgress(0);
+        toast({
+          title: "No improvement found",
+          description: `Kept your current content — new draft scored ${finalUnified.score} vs current ${preUnified.score}. Try again or edit weak factors manually.`,
+        });
+        return;
+      }
+
       setFixStep("Saving updated page...");
       setFixProgress(84);
       const { error: updateErr } = await supabase
