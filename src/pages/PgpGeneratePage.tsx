@@ -917,11 +917,14 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-lg sm:text-display">{t("sidebar.campaigns")}</h1>
-        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-          {t("pgpGenerate.pageSubtitle")}
-        </p>
+      {/* Header — matches Campaigns page style */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-display">{t("sidebar.campaigns")}</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {t("pgpGenerate.pageSubtitle")}
+          </p>
+        </div>
       </div>
 
       {/* Readiness check */}
