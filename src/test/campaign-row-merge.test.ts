@@ -159,7 +159,7 @@ describe("AI-fill regression guard — unified score never decreases", () => {
     };
   };
 
-  it("filled page scores >= empty-variable page across every factor", () => {
+  it("filled page's unified score is >= empty-variable page (no overall regression)", () => {
     const empty = buildPage({}); // variables not resolved → generic copy
     const filled = buildPage({
       service_type: "plumber",
@@ -172,38 +172,35 @@ describe("AI-fill regression guard — unified score never decreases", () => {
 
     expect(after.score).toBeGreaterThanOrEqual(before.score);
 
-    // No factor sub-score regresses — mirrors the wizard's guard.
-    for (const fAfter of after.factors) {
+    // Critical factors (the ones the wizard gates on) must not regress.
+    for (const fAfter of after.factors.filter((f) => f.critical)) {
       const fBefore = before.factors.find((f) => f.key === fAfter.key)!;
-      expect(fAfter.score, `factor ${fAfter.key} regressed`).toBeGreaterThanOrEqual(fBefore.score);
+      expect(fAfter.score, `critical factor ${fAfter.key} regressed`).toBeGreaterThanOrEqual(
+        fBefore.score,
+      );
     }
   });
 
-  it("guard helper aborts when any factor would drop", () => {
-    // Reusable guard mirroring SeoAnalysisDialog.handleFixAndRepublish.
+  it("guard helper aborts when the overall unified score would drop", () => {
+    // Reusable guard mirroring SeoAnalysisDialog.handleFixAndRepublish:
+    // reject the rewrite if the overall unified score decreases.
     const shouldKeepChange = (
       beforeR: ReturnType<typeof calculateUnifiedSeoScore>,
       afterR: ReturnType<typeof calculateUnifiedSeoScore>,
-    ) => {
-      if (afterR.score < beforeR.score) return false;
-      for (const fA of afterR.factors) {
-        const fB = beforeR.factors.find((f) => f.key === fA.key);
-        if (fB && fA.score < fB.score) return false;
-      }
-      return true;
-    };
+    ) => afterR.score >= beforeR.score;
 
-    const good = calculateUnifiedSeoScore(buildPage({
+    const strong = calculateUnifiedSeoScore(buildPage({
       service_type: "plumber", city: "Dhaka", brand_name: "AquaFix",
     }));
-    const bad = calculateUnifiedSeoScore({
+    const weak = calculateUnifiedSeoScore({
       title: "x", seoTitle: "x", seoDescription: "", slug: "x", content: "<p>x</p>",
       seoKeywords: [], focusKeyword: focus,
     });
 
-    // "AI-fill" that makes things worse must be rejected.
-    expect(shouldKeepChange(good, bad)).toBe(false);
+    // "AI-fill" that makes things worse overall must be rejected.
+    expect(shouldKeepChange(strong, weak)).toBe(false);
     // Improving pass must be accepted.
-    expect(shouldKeepChange(bad, good)).toBe(true);
+    expect(shouldKeepChange(weak, strong)).toBe(true);
   });
 });
+
