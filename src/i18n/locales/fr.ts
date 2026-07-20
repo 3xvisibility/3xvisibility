@@ -1804,6 +1804,7 @@ const fr: Record<string, string> = {
   "showcase.importTitle": "Traitement CSV intelligent",
   "showcase.live": "En ligne",
   "sidebar.abTesting": "Tests A/B",
+  "sidebar.keywordGroups": "Groupes de mots-clés",
   "sidebar.account": "Compte",
   "sidebar.admin": "Admin",
   "sidebar.websiteSection": "Site web",
