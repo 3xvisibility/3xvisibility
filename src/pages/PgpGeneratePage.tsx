@@ -1992,7 +1992,136 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           )}
           </>)}
 
-          {/* Step 3: Review & Continue */}
+          {/* Step 3: Locations */}
+          {step === 3 && (<>
+          <Card className="border-0 shadow-surface overflow-hidden relative">
+            <div className="h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <div>
+                  <p className="text-sm font-bold">Attach Locations</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Pick real cities/states/countries. Values fill <code className="text-[10px]">{"{city}"}</code>, <code className="text-[10px]">{"{state}"}</code>, <code className="text-[10px]">{"{country}"}</code>, <code className="text-[10px]">{"{region}"}</code>, <code className="text-[10px]">{"{zip}"}</code> in your template.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full rounded-xl gap-2"
+                onClick={() => setShowLocationsDialog(true)}
+              >
+                <MapPin className="h-4 w-4" />
+                {pickedLocations.length > 0 ? `Change locations (${pickedLocations.length} selected)` : "Select from Location Database"}
+              </Button>
+
+              {pickedLocations.length > 0 && (
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold">{pickedLocations.length} location{pickedLocations.length !== 1 ? "s" : ""} attached</p>
+                    <Button size="sm" variant="ghost" className="h-6 text-[11px]" onClick={() => setPickedLocations([])}>Clear</Button>
+                  </div>
+                  <div className="max-h-40 overflow-auto space-y-1">
+                    {pickedLocations.slice(0, 20).map((loc, i) => (
+                      <div key={i} className="text-[11px] text-muted-foreground flex gap-1 flex-wrap">
+                        {[loc.city, loc.state || loc.region, loc.country].filter(Boolean).join(", ") || "—"}
+                      </div>
+                    ))}
+                    {pickedLocations.length > 20 && <p className="text-[10px] text-muted-foreground">…and {pickedLocations.length - 20} more</p>}
+                  </div>
+                </div>
+              )}
+
+              {pickedLocations.length === 0 && (
+                <p className="text-[11px] text-muted-foreground">
+                  Optional — skip this if your template has no geo variables.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+          </>)}
+
+          {/* Step 4: Business / Personal Info */}
+          {step === 4 && (<>
+          <Card className="border-0 shadow-surface overflow-hidden relative">
+            <div className="h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
+            <CardContent className="p-5 space-y-4">
+              <div>
+                <p className="text-sm font-bold">Personal / Company Info</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Any field whose name matches a template variable (e.g. <code className="text-[10px]">{"{phone}"}</code>, <code className="text-[10px]">{"{company_name}"}</code>) will be replaced with the value you enter here.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { key: "company_name", label: "Company name", ph: "Acme Corp" },
+                  { key: "brand_name", label: "Brand name", ph: "Acme" },
+                  { key: "phone", label: "Phone number", ph: "+1 555 123 4567" },
+                  { key: "email", label: "Email", ph: "hello@acme.com" },
+                  { key: "address", label: "Address", ph: "123 Main St, City" },
+                  { key: "website", label: "Website", ph: "https://acme.com" },
+                ].map((f) => (
+                  <div key={f.key} className="space-y-1">
+                    <Label className="text-xs">{f.label} <span className="text-muted-foreground font-normal">{"{" + f.key + "}"}</span></Label>
+                    <Input
+                      value={businessInfo[f.key] || ""}
+                      onChange={(e) => setBusinessInfo((b) => ({ ...b, [f.key]: e.target.value }))}
+                      placeholder={f.ph}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Custom variable */}
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+                <p className="text-xs font-semibold">Add custom variable</p>
+                <div className="flex gap-2">
+                  <Input
+                    className="flex-1"
+                    placeholder="variable_name (e.g. tagline)"
+                    value={customBizFieldName}
+                    onChange={(e) => setCustomBizFieldName(e.target.value)}
+                  />
+                  <Input
+                    className="flex-1"
+                    placeholder="value"
+                    value={customBizFieldValue}
+                    onChange={(e) => setCustomBizFieldValue(e.target.value)}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const key = customBizFieldName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+                      if (!key || !customBizFieldValue.trim()) return;
+                      setBusinessInfo((b) => ({ ...b, [key]: customBizFieldValue.trim() }));
+                      setCustomBizFieldName("");
+                      setCustomBizFieldValue("");
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+                {Object.entries(businessInfo)
+                  .filter(([k]) => !["company_name", "brand_name", "phone", "email", "address", "website"].includes(k))
+                  .filter(([, v]) => (v ?? "").trim())
+                  .map(([k, v]) => (
+                    <div key={k} className="flex items-center justify-between text-[11px] rounded bg-background/60 px-2 py-1 border">
+                      <span className="font-mono">{"{" + k + "}"} = {v}</span>
+                      <Button
+                        size="sm" variant="ghost" className="h-5 text-[10px]"
+                        onClick={() => setBusinessInfo((b) => { const { [k]: _drop, ...rest } = b; return rest; })}
+                      >Remove</Button>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+          </>)}
+
+          {/* Step 5: Review & Publish */}
           {step === 5 && (<>
 
           <Card className="border-0 shadow-surface overflow-hidden relative">
