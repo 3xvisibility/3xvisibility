@@ -1249,14 +1249,27 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
             {/* Template source */}
             {kwSource === "template" && (() => {
               const selectedTpl = pgpTemplates.find(x => x.id === tmplId);
+              // Geo + business/personal variables are filled by the Campaign wizard (Locations + Business Info),
+              // not by Keyword Groups. Hide them from the mapping preview so users don't create empty groups for them.
+              const BUSINESS_VARS = new Set([
+                "company_name","company","brand_name","brand","business_name",
+                "phone","phone_number","email","address","website","url","owner","author",
+              ]);
+              const isSkipped = (n: string) => {
+                const k = n.trim().toLowerCase();
+                return BUSINESS_VARS.has(k) || GEO_VAR_NAMES.includes(k);
+              };
               const extractVars = (tpl: typeof pgpTemplates[number] | undefined): string[] => {
                 if (!tpl) return [];
+                let names: string[];
                 if (Array.isArray(tpl.variables) && tpl.variables.length > 0) {
-                  return [...new Set(tpl.variables.map(v => String(v).replace(/[{}]/g, "").trim()).filter(Boolean))];
+                  names = [...new Set(tpl.variables.map(v => String(v).replace(/[{}]/g, "").trim()).filter(Boolean))];
+                } else {
+                  const combined = `${tpl.content || ""} ${tpl.seo_title_pattern || ""} ${tpl.seo_description_pattern || ""}`;
+                  const matches = combined.match(/\{([a-z0-9_]+)\}/gi) || [];
+                  names = [...new Set(matches.map(m => m.replace(/[{}]/g, "").toLowerCase()))];
                 }
-                const combined = `${tpl.content || ""} ${tpl.seo_title_pattern || ""} ${tpl.seo_description_pattern || ""}`;
-                const matches = combined.match(/\{([a-z0-9_]+)\}/gi) || [];
-                return [...new Set(matches.map(m => m.replace(/[{}]/g, "").toLowerCase()))];
+                return names.filter(n => !isSkipped(n));
               };
               const vars = extractVars(selectedTpl);
               const existingNames = new Set(keywords.map(k => k.name.toLowerCase()));
