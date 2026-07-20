@@ -952,10 +952,56 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Left: Configuration */}
-        <div className="lg:col-span-2 space-y-4 sm:space-y-5">
-          {/* Keyword Groups overview — hidden on Generate page; manage via Keywords page */}
+      {/* Stepper — matches Campaign wizard style */}
+      {(() => {
+        const wizardSteps = [
+          { num: 1, label: "Name & Template" },
+          { num: 2, label: "AI Setup" },
+          { num: 3, label: "Review & Continue" },
+        ];
+        return (
+          <div className="rounded-2xl border border-border/60 bg-card/60 p-4 sm:p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-sm">
+                <Sparkles className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <p className="text-sm font-bold">{t("campaigns.createCampaign") || "Create Campaign"}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Step {step} of {wizardSteps.length} — {wizardSteps[step - 1]?.label}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              {wizardSteps.map((s) => (
+                <button
+                  key={s.num}
+                  type="button"
+                  onClick={() => { if (s.num < step) setStep(s.num as 1 | 2 | 3); }}
+                  className={cn(
+                    "h-2 flex-1 rounded-full transition-all",
+                    step > s.num ? "bg-primary cursor-pointer" :
+                    step === s.num ? "bg-primary" : "bg-border"
+                  )}
+                />
+              ))}
+            </div>
+            <div className="flex justify-between mt-1.5">
+              {wizardSteps.map((s) => (
+                <span key={s.num} className={cn("text-[10px] font-medium", step >= s.num ? "text-foreground" : "text-muted-foreground/50")}>
+                  {s.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      <div className="max-w-3xl mx-auto w-full">
+        <div className="space-y-4 sm:space-y-5">
+          {/* Step 1: Name & Template */}
+          {step === 1 && (<>
+
 
           {/* Campaign name for handoff */}
           <Card className="border-0 shadow-surface overflow-hidden relative">
