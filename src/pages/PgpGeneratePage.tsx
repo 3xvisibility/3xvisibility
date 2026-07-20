@@ -1897,7 +1897,19 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 className="w-full"
                 size="lg"
                 disabled={!selectedGroup}
-                onClick={() => navigate(`${basePath}/campaigns?new=1&template=${selectedGroup?.id || ""}`)}
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem(
+                      "__campaign_prefill",
+                      JSON.stringify({
+                        name: campaignNameDraft.trim() || (selectedGroup?.name ? `${selectedGroup.name} — Campaign` : ""),
+                        templateId: selectedGroup?.id || "",
+                        keywordGroupId: selectedGroup?.id || "",
+                      })
+                    );
+                  } catch {}
+                  navigate(`${basePath}/campaigns?new=1&template=${selectedGroup?.id || ""}`);
+                }}
               >
                 <Play className="h-4 w-4 mr-2" /> Continue in Campaign
               </Button>
