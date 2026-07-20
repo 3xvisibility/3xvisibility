@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "validate:locales": "tsx scripts/validate-locales.ts",
-    "build": "tsx scripts/validate-locales.ts && vite build",
-    "build:dev": "tsx scripts/validate-locales.ts && vite build --mode development",
+    "build": "tsx scripts/sync-locale-ts.ts && tsx scripts/validate-locales.ts && vite build",
+    "build:dev": "tsx scripts/sync-locale-ts.ts && tsx scripts/validate-locales.ts && vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
