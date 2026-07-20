@@ -1104,7 +1104,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       }
     }
 
-    return { severity, issues, sampleRows: previewRows.slice(0, 3) };
+    return { severity: severity as "ok" | "warn" | "block", issues, sampleRows: previewRows.slice(0, 3) };
   })();
 
   return (
