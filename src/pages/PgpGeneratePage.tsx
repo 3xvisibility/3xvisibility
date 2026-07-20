@@ -1156,9 +1156,13 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               )}
             </CardContent>
           </Card>
+          </>)}
 
+          {/* Step 2: AI Setup & Generation Settings */}
+          {step === 2 && (<>
           {/* AI Generate (always available) */}
           {!selectedGroup && (
+
             <Card className="border-0 shadow-surface">
               <CardContent className="p-5 space-y-4">
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-1">
