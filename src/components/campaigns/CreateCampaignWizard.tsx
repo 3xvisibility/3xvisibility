@@ -29,6 +29,7 @@ import { MappingStep } from "@/components/campaigns/MappingStep";
 import { VariableSourcesPanel } from "@/components/campaigns/VariableSourcesPanel";
 import { LiveVariablePreview } from "@/components/campaigns/LiveVariablePreview";
 import { FillRulesPanel } from "@/components/campaigns/FillRulesPanel";
+import { CsvValidationPanel } from "@/components/campaigns/CsvValidationPanel";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { readAiPresets, saveAiPreset, deleteAiPreset, type AiPreset } from "@/lib/ai-presets";
 import { usePersistedSnapshot } from "@/hooks/use-persisted-state";
@@ -2782,6 +2783,17 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         <input type="file" accept=".csv,.tsv,.txt,.json,.xlsx,.xls,text/csv,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="absolute inset-0 opacity-0 cursor-pointer"
                           onChange={(e) => { const f = e.target.files?.[0]; if (f) processCsvFile(f); }} />
                       </div>
+
+                      {/* Pre-flight CSV validation — preview + missing/extra column warnings */}
+                      {csvFile && csvHeaders.length > 0 && csvData.length > 0 && (
+                        <CsvValidationPanel
+                          csvHeaders={csvHeaders}
+                          csvData={csvData}
+                          templateVars={selectedTemplateVars}
+                          fileName={csvFile.name}
+                        />
+                      )}
+
 
                       {/* Don't have a CSV? Download starter */}
                       {!csvFile && templates.length > 0 && (
