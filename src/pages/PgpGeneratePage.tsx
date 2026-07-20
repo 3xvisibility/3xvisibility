@@ -51,7 +51,23 @@ export default function PgpGeneratePage() {
 
   const [selectedGroupId, setSelectedGroupId] = useState(preselectedGroup);
   const [campaignNameDraft, setCampaignNameDraft] = useState("");
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+
+  // Step 3 — Locations picked from Location Database
+  const [pickedLocations, setPickedLocations] = useState<Array<{ city?: string; state?: string; region?: string; country?: string; zip?: string }>>([]);
+
+  // Step 4 — Business / personal info (variable name -> value). Any of these
+  // whose key matches a template {variable} will replace it during generation.
+  const [businessInfo, setBusinessInfo] = useState<Record<string, string>>({
+    company_name: "",
+    brand_name: "",
+    phone: "",
+    email: "",
+    address: "",
+    website: "",
+  });
+  const [customBizFieldName, setCustomBizFieldName] = useState("");
+  const [customBizFieldValue, setCustomBizFieldValue] = useState("");
   const [method, setMethod] = useState<"all" | "sequential" | "random">("sequential");
   const [numberOfPages, setNumberOfPages] = useState("");
   const [resumeIndex, setResumeIndex] = useState("0");
@@ -228,19 +244,24 @@ export default function PgpGeneratePage() {
     return Math.max(...counts);
   }, [groupKeywords, method]);
 
-  const missingKeywords = groupKeywords.filter(k => !k.keyword);
+  // Variables satisfied by Step 4 (business info) — non-empty values only.
+  const injectedBizVarNames = useMemo(
+    () => new Set(Object.entries(businessInfo).filter(([, v]) => (v ?? "").trim() !== "").map(([k]) => k.toLowerCase())),
+    [businessInfo],
+  );
+
+  const missingKeywords = groupKeywords.filter(k => !k.keyword && !injectedBizVarNames.has(k.name.toLowerCase()));
 
   // Geo variables must come from the Campaign wizard's Location Database,
   // not AI-fabricated. Skip them in every auto-fill path.
   const GEO_VAR_NAMES = ["city", "cities", "state", "states", "country", "countries", "zip", "zipcode", "region", "county", "location", "locations", "area"];
   const isGeoVariable = (name: string) => GEO_VAR_NAMES.includes(name.trim().toLowerCase());
 
-  // Geo vars in the template that have no terms attached (empty or missing
-  // keyword group). These MUST be filled from the Campaign wizard's Location
-  // Database, not from this page.
+  // Geo vars in the template that have no terms attached AND no picked locations.
   const unfilledGeoVars = groupKeywords
     .filter((gk) => isGeoVariable(gk.name))
     .filter((gk) => !gk.keyword || (gk.keyword.terms?.length ?? 0) === 0)
+    .filter(() => pickedLocations.length === 0)
     .map((gk) => gk.name);
   const needsLocations = unfilledGeoVars.length > 0;
 
@@ -543,33 +564,73 @@ Only return valid JSON. No markdown fences.`;
     return site?.name || "";
   }, [brandSource, customBrandName, selectedWebsite, websites]);
 
+  // Injected values from Step 3 (locations) and Step 4 (business info).
+  const buildInjectedForRow = (rowIndex: number): Record<string, string> => {
+    const inject: Record<string, string> = {};
+    // Business/personal info
+    for (const [k, v] of Object.entries(businessInfo)) {
+      if ((v ?? "").trim()) inject[k] = v.trim();
+    }
+    // Locations cycle per row
+    if (pickedLocations.length > 0) {
+      const loc = pickedLocations[rowIndex % pickedLocations.length];
+      const cityVal = (loc.city || "").toString().trim();
+      const stateVal = (loc.state || loc.region || "").toString().trim();
+      const countryVal = (loc.country || "").toString().trim();
+      const regionVal = (loc.region || loc.state || "").toString().trim();
+      const zipVal = (loc.zip || "").toString().trim();
+      if (cityVal) { inject.city = cityVal; inject.cities = cityVal; inject.location = cityVal; }
+      if (stateVal) { inject.state = stateVal; inject.states = stateVal; }
+      if (countryVal) { inject.country = countryVal; inject.countries = countryVal; }
+      if (regionVal) { inject.region = regionVal; }
+      if (zipVal) { inject.zip = zipVal; inject.zipcode = zipVal; }
+    }
+    return inject;
+  };
+
   const buildRows = (): Record<string, string>[] => {
     const kwData = groupKeywords.filter(k => k.keyword);
-    if (kwData.length === 0) return [];
+
+    const finalize = (rows: Record<string, string>[]): Record<string, string>[] => {
+      return rows.map((r, i) => {
+        const injected = buildInjectedForRow(i);
+        // Injected values fill only where the row doesn't already have a value.
+        const merged: Record<string, string> = { ...injected, ...r };
+        if (resolvedBrandName && !merged.brand_name) merged.brand_name = resolvedBrandName;
+        return merged;
+      });
+    };
+
+    // If there are no linked keyword groups but locations/business info exist,
+    // still allow generation — produce N rows driven by locations count.
+    if (kwData.length === 0) {
+      if (pickedLocations.length === 0 && Object.values(businessInfo).every((v) => !(v ?? "").trim())) {
+        return [];
+      }
+      const count = numberOfPages
+        ? parseInt(numberOfPages)
+        : (pickedLocations.length || 1);
+      const rows: Record<string, string>[] = [];
+      for (let i = 0; i < count; i++) rows.push({});
+      return finalize(rows);
+    }
 
     const start = parseInt(resumeIndex) || 0;
 
     if (method === "all") {
-      // Cartesian product
       const rows: Record<string, string>[] = [];
       const termArrays = kwData.map(k => k.keyword!.terms);
       const names = kwData.map(k => k.name);
-
       const generate = (index: number, current: Record<string, string>) => {
-        if (index === termArrays.length) {
-          rows.push({ ...current });
-          return;
-        }
+        if (index === termArrays.length) { rows.push({ ...current }); return; }
         for (const term of termArrays[index]) {
           current[names[index]] = term;
           generate(index + 1, current);
         }
       };
       generate(0, {});
-
       const limit = numberOfPages ? Math.min(parseInt(numberOfPages), rows.length - start) : rows.length - start;
-      const sliced = rows.slice(start, start + limit);
-      return resolvedBrandName ? sliced.map(r => ({ ...r, brand_name: resolvedBrandName })) : sliced;
+      return finalize(rows.slice(start, start + limit));
     }
 
     if (method === "sequential") {
@@ -578,12 +639,10 @@ Only return valid JSON. No markdown fences.`;
       const rows: Record<string, string>[] = [];
       for (let i = start; i < start + limit && i < max; i++) {
         const row: Record<string, string> = {};
-        for (const gk of kwData) {
-          row[gk.name] = gk.keyword!.terms[i % gk.keyword!.terms.length] || "";
-        }
+        for (const gk of kwData) row[gk.name] = gk.keyword!.terms[i % gk.keyword!.terms.length] || "";
         rows.push(row);
       }
-      return resolvedBrandName ? rows.map(r => ({ ...r, brand_name: resolvedBrandName })) : rows;
+      return finalize(rows);
     }
 
     // Random
@@ -591,12 +650,10 @@ Only return valid JSON. No markdown fences.`;
     const rows: Record<string, string>[] = [];
     for (let i = 0; i < count; i++) {
       const row: Record<string, string> = {};
-      for (const gk of kwData) {
-        row[gk.name] = gk.keyword!.terms[Math.floor(Math.random() * gk.keyword!.terms.length)] || "";
-      }
+      for (const gk of kwData) row[gk.name] = gk.keyword!.terms[Math.floor(Math.random() * gk.keyword!.terms.length)] || "";
       rows.push(row);
     }
-    return rows.map(r => resolvedBrandName ? { ...r, brand_name: resolvedBrandName } : r);
+    return finalize(rows);
   };
 
   // Also wrap the other returns above — handled inline via final map
@@ -958,7 +1015,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         const wizardSteps = [
           { num: 1, label: "Name & Template" },
           { num: 2, label: "AI Setup" },
-          { num: 3, label: "Review & Continue" },
+          { num: 3, label: "Locations" },
+          { num: 4, label: "Business Info" },
+          { num: 5, label: "Review & Publish" },
         ];
         return (
           <div className="rounded-2xl border border-border/60 bg-card/60 p-4 sm:p-5">
@@ -978,7 +1037,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 <button
                   key={s.num}
                   type="button"
-                  onClick={() => { if (s.num < step) setStep(s.num as 1 | 2 | 3); }}
+                  onClick={() => { if (s.num < step) setStep(s.num as 1 | 2 | 3 | 4 | 5); }}
                   className={cn(
                     "h-2 flex-1 rounded-full transition-all",
                     step > s.num ? "bg-primary cursor-pointer" :
@@ -1933,8 +1992,137 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           )}
           </>)}
 
-          {/* Step 3: Review & Continue */}
+          {/* Step 3: Locations */}
           {step === 3 && (<>
+          <Card className="border-0 shadow-surface overflow-hidden relative">
+            <div className="h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <div>
+                  <p className="text-sm font-bold">Attach Locations</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Pick real cities/states/countries. Values fill <code className="text-[10px]">{"{city}"}</code>, <code className="text-[10px]">{"{state}"}</code>, <code className="text-[10px]">{"{country}"}</code>, <code className="text-[10px]">{"{region}"}</code>, <code className="text-[10px]">{"{zip}"}</code> in your template.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full rounded-xl gap-2"
+                onClick={() => setShowLocationsDialog(true)}
+              >
+                <MapPin className="h-4 w-4" />
+                {pickedLocations.length > 0 ? `Change locations (${pickedLocations.length} selected)` : "Select from Location Database"}
+              </Button>
+
+              {pickedLocations.length > 0 && (
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold">{pickedLocations.length} location{pickedLocations.length !== 1 ? "s" : ""} attached</p>
+                    <Button size="sm" variant="ghost" className="h-6 text-[11px]" onClick={() => setPickedLocations([])}>Clear</Button>
+                  </div>
+                  <div className="max-h-40 overflow-auto space-y-1">
+                    {pickedLocations.slice(0, 20).map((loc, i) => (
+                      <div key={i} className="text-[11px] text-muted-foreground flex gap-1 flex-wrap">
+                        {[loc.city, loc.state || loc.region, loc.country].filter(Boolean).join(", ") || "—"}
+                      </div>
+                    ))}
+                    {pickedLocations.length > 20 && <p className="text-[10px] text-muted-foreground">…and {pickedLocations.length - 20} more</p>}
+                  </div>
+                </div>
+              )}
+
+              {pickedLocations.length === 0 && (
+                <p className="text-[11px] text-muted-foreground">
+                  Optional — skip this if your template has no geo variables.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+          </>)}
+
+          {/* Step 4: Business / Personal Info */}
+          {step === 4 && (<>
+          <Card className="border-0 shadow-surface overflow-hidden relative">
+            <div className="h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
+            <CardContent className="p-5 space-y-4">
+              <div>
+                <p className="text-sm font-bold">Personal / Company Info</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Any field whose name matches a template variable (e.g. <code className="text-[10px]">{"{phone}"}</code>, <code className="text-[10px]">{"{company_name}"}</code>) will be replaced with the value you enter here.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { key: "company_name", label: "Company name", ph: "Acme Corp" },
+                  { key: "brand_name", label: "Brand name", ph: "Acme" },
+                  { key: "phone", label: "Phone number", ph: "+1 555 123 4567" },
+                  { key: "email", label: "Email", ph: "hello@acme.com" },
+                  { key: "address", label: "Address", ph: "123 Main St, City" },
+                  { key: "website", label: "Website", ph: "https://acme.com" },
+                ].map((f) => (
+                  <div key={f.key} className="space-y-1">
+                    <Label className="text-xs">{f.label} <span className="text-muted-foreground font-normal">{"{" + f.key + "}"}</span></Label>
+                    <Input
+                      value={businessInfo[f.key] || ""}
+                      onChange={(e) => setBusinessInfo((b) => ({ ...b, [f.key]: e.target.value }))}
+                      placeholder={f.ph}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Custom variable */}
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+                <p className="text-xs font-semibold">Add custom variable</p>
+                <div className="flex gap-2">
+                  <Input
+                    className="flex-1"
+                    placeholder="variable_name (e.g. tagline)"
+                    value={customBizFieldName}
+                    onChange={(e) => setCustomBizFieldName(e.target.value)}
+                  />
+                  <Input
+                    className="flex-1"
+                    placeholder="value"
+                    value={customBizFieldValue}
+                    onChange={(e) => setCustomBizFieldValue(e.target.value)}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const key = customBizFieldName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+                      if (!key || !customBizFieldValue.trim()) return;
+                      setBusinessInfo((b) => ({ ...b, [key]: customBizFieldValue.trim() }));
+                      setCustomBizFieldName("");
+                      setCustomBizFieldValue("");
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+                {Object.entries(businessInfo)
+                  .filter(([k]) => !["company_name", "brand_name", "phone", "email", "address", "website"].includes(k))
+                  .filter(([, v]) => (v ?? "").trim())
+                  .map(([k, v]) => (
+                    <div key={k} className="flex items-center justify-between text-[11px] rounded bg-background/60 px-2 py-1 border">
+                      <span className="font-mono">{"{" + k + "}"} = {v}</span>
+                      <Button
+                        size="sm" variant="ghost" className="h-5 text-[10px]"
+                        onClick={() => setBusinessInfo((b) => { const { [k]: _drop, ...rest } = b; return rest; })}
+                      >Remove</Button>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+          </>)}
+
+          {/* Step 5: Review & Publish */}
+          {step === 5 && (<>
 
           <Card className="border-0 shadow-surface overflow-hidden relative">
             <div className="h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
@@ -1945,6 +2133,32 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   Review your setup below, then click <strong>Generate Pages</strong> to create and publish pages to your connected site.
                 </p>
               </div>
+
+              {/* Variable fill checklist */}
+              {selectedGroup && groupKeywords.length > 0 && (
+                <div className="rounded-lg border border-border/60 bg-background/60 p-3 space-y-2">
+                  <p className="text-xs font-semibold">Variable checklist</p>
+                  <div className="space-y-1">
+                    {groupKeywords.map((gk) => {
+                      const nameLc = gk.name.toLowerCase();
+                      const fromKw = !!gk.keyword && (gk.keyword.terms?.length ?? 0) > 0;
+                      const fromBiz = injectedBizVarNames.has(nameLc);
+                      const fromLoc = pickedLocations.length > 0 && isGeoVariable(gk.name);
+                      const ok = fromKw || fromBiz || fromLoc;
+                      const source = fromKw ? "Keyword group" : fromLoc ? "Locations" : fromBiz ? "Business info" : "Not filled";
+                      return (
+                        <div key={gk.name} className="flex items-center justify-between text-[11px]">
+                          <span className="font-mono">{"{" + gk.name + "}"}</span>
+                          <span className={cn("flex items-center gap-1", ok ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
+                            {ok ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                            {source}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {needsLocations && (
                 <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs space-y-2">
@@ -1959,7 +2173,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         <span className="font-medium text-foreground">
                           {unfilledGeoVars.map((v) => `{${v}}`).join(", ")}
                         </span>
-                        . Attach real cities/states/countries from the Location Database in Step 2 (AI Setup) before generating.
+                        . Attach real cities/states/countries in Step 3 before generating.
                       </p>
                     </div>
                   </div>
@@ -1967,23 +2181,32 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     size="sm"
                     variant="outline"
                     className="w-full"
-                    onClick={() => setStep(2)}
+                    onClick={() => setStep(3)}
                   >
-                    <MapPin className="h-3.5 w-3.5 mr-1.5" /> Back to AI Setup
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" /> Go to Locations
                   </Button>
+                </div>
+              )}
+
+              {missingKeywords.length > 0 && (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
+                  <p className="font-semibold text-destructive">Missing values</p>
+                  <p className="text-muted-foreground">
+                    {missingKeywords.map((k) => `{${k.name}}`).join(", ")} — fill via Keywords, Locations, or Business Info.
+                  </p>
                 </div>
               )}
 
               <Button
                 className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
                 size="lg"
-                disabled={!selectedGroup || isGenerating}
+                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0}
                 onClick={handleGenerate}
               >
                 {isGenerating ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Publishing…</>
                 ) : (
-                  <><Play className="h-4 w-4" /> Generate Pages</>
+                  <><Play className="h-4 w-4" /> Generate & Publish Pages</>
                 )}
               </Button>
 
@@ -2071,15 +2294,15 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             variant="ghost"
             className="rounded-xl"
             disabled={step === 1}
-            onClick={() => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s))}
+            onClick={() => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3 | 4 | 5) : s))}
           >
             Back
           </Button>
-          {step < 3 ? (
+          {step < 5 ? (
             <Button
               className="rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
               disabled={step === 1 && !selectedGroup}
-              onClick={() => setStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s))}
+              onClick={() => setStep((s) => (s < 5 ? ((s + 1) as 1 | 2 | 3 | 4 | 5) : s))}
             >
               Next <ChevronRight className="h-4 w-4" />
             </Button>
@@ -2119,18 +2342,20 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         open={showLocationsDialog}
         onOpenChange={setShowLocationsDialog}
         onSelect={(rows) => {
-          const cities = Array.from(
-            new Set(
-              rows
-                .map((r) => (r.city || r.name || r.state || r.country || "").toString().trim())
-                .filter(Boolean),
-            ),
-          );
-          if (cities.length) {
-            setAiLocations(cities.join(", "));
+          const mapped = rows.map((r: any) => ({
+            city: (r.city || r.name || "").toString().trim(),
+            state: (r.state || r.admin1 || "").toString().trim(),
+            region: (r.region || r.admin2 || r.state || "").toString().trim(),
+            country: (r.country || "").toString().trim(),
+            zip: (r.zip || r.postal_code || "").toString().trim(),
+          })).filter((l) => l.city || l.state || l.country);
+          if (mapped.length) {
+            setPickedLocations(mapped);
+            const cityLabels = Array.from(new Set(mapped.map((l) => l.city || l.state || l.country).filter(Boolean)));
+            setAiLocations(cityLabels.join(", "));
             toast({
-              title: "Locations added",
-              description: `${cities.length} location${cities.length !== 1 ? "s" : ""} attached to this campaign.`,
+              title: "Locations attached",
+              description: `${mapped.length} location${mapped.length !== 1 ? "s" : ""} will be used as variables during generation.`,
             });
           }
           setShowLocationsDialog(false);
