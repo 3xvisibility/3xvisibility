@@ -1993,7 +1993,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           </>)}
 
           {/* Step 3: Review & Continue */}
-          {step === 3 && (<>
+          {step === 5 && (<>
 
           <Card className="border-0 shadow-surface overflow-hidden relative">
             <div className="h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
