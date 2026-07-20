@@ -42,6 +42,7 @@ import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import DataCsvPage from "./pages/DataCsvPage";
 import WebsiteContentPage from "./pages/WebsiteContentPage";
 import PgpKeywordsPage from "./pages/PgpKeywordsPage";
+import KeywordGroupsPage from "./pages/KeywordGroupsPage";
 import PgpGeneratePage from "./pages/PgpGeneratePage";
 import PgpTermsPage from "./pages/PgpTermsPage";
 import ElementorTestPage from "./pages/ElementorTestPage";
