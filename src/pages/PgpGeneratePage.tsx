@@ -625,7 +625,15 @@ Only return valid JSON. No markdown fences.`;
         const base: Record<string, string> = { ...r };
         if (pickedLocations.length > 0) {
           for (const k of GEO_KEYS) delete base[k];
+        } else {
+          // Safeguard: with no real Locations attached, strip placeholder
+          // defaults (e.g. "New York", "Canada", "LA") so downstream generation
+          // falls back to AI-fill instead of publishing fake geo data.
+          for (const k of GEO_KEYS) {
+            if (isPlaceholderGeoValue(base[k])) delete base[k];
+          }
         }
+
         const merged: Record<string, string> = { ...base, ...injected };
         if (resolvedBrandName && !merged.brand_name) merged.brand_name = resolvedBrandName;
         return merged;
