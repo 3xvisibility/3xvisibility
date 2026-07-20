@@ -2484,21 +2484,59 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 </div>
               )}
 
-              {missingKeywords.length > 0 && (
-                <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
-                  <p className="font-semibold text-destructive">Missing values</p>
-                  <p className="text-muted-foreground">
-                    {missingKeywords.map((k) => `{${k.name}}`).join(", ")} — fill via Keywords, Locations, or Business Info.
-                  </p>
+              {geoCoverage.issues.length > 0 && (
+                <div
+                  className={`rounded-lg border p-3 text-xs space-y-2 ${
+                    geoCoverage.severity === "block"
+                      ? "border-destructive/50 bg-destructive/10"
+                      : "border-amber-500/50 bg-amber-500/10"
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle
+                      className={`h-4 w-4 shrink-0 mt-0.5 ${
+                        geoCoverage.severity === "block" ? "text-destructive" : "text-amber-500"
+                      }`}
+                    />
+                    <div className="space-y-1 flex-1">
+                      <p
+                        className={`font-semibold ${
+                          geoCoverage.severity === "block"
+                            ? "text-destructive"
+                            : "text-amber-600 dark:text-amber-400"
+                        }`}
+                      >
+                        {geoCoverage.severity === "block"
+                          ? "Geo coverage validation failed — generation blocked"
+                          : "Geo coverage warning"}
+                      </p>
+                      <ul className="text-muted-foreground list-disc list-inside space-y-0.5">
+                        {geoCoverage.issues.map((iss, i) => (
+                          <li key={i}>{iss}</li>
+                        ))}
+                      </ul>
+                      {geoCoverage.severity === "block" && (
+                        <p className="text-muted-foreground pt-1">
+                          Attach real locations in Step 3 — placeholder or empty geo values won&apos;t be published.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {geoCoverage.severity === "block" && (
+                    <Button size="sm" variant="outline" className="w-full" onClick={() => setStep(3)}>
+                      <MapPin className="h-3.5 w-3.5 mr-1.5" /> Fix in Locations
+                    </Button>
+                  )}
                 </div>
               )}
 
               <Button
                 className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
                 size="lg"
-                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0}
+                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0 || geoCoverage.severity === "block"}
                 onClick={handleGenerate}
               >
+
                 {isGenerating ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Publishing…</>
                 ) : (
