@@ -1344,7 +1344,31 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   <p className="text-[10px] text-muted-foreground">Comma-separated services/product types the pages should feature.</p>
                 </div>
 
-                {/* Target locations input removed — set locations in the Campaign wizard. */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs font-semibold flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-primary" /> Target locations
+                    </Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[11px]"
+                      onClick={() => setShowLocationsDialog(true)}
+                    >
+                      Select from Locations Database
+                    </Button>
+                  </div>
+                  <Textarea
+                    placeholder="e.g. New York, Los Angeles, Chicago… (or leave blank for nationwide)"
+                    value={aiLocations}
+                    onChange={(e) => setAiLocations(e.target.value)}
+                    rows={2}
+                    className="resize-none"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Pick real cities from your Location Database, or type them manually.</p>
+                </div>
+
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
