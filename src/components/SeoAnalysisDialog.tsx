@@ -223,11 +223,11 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       canonicalUrl: currentPage.canonical_url,
       url: currentPage.external_url,
     });
-    const factorScore = (id: string) =>
-      preUnified.factors.find((f) => f.id === id)?.score ?? 0;
+    const factorScore = (key: string) =>
+      preUnified.factors.find((f) => f.key === key)?.score ?? 0;
     const STRONG = 80;
     const titleStrong = factorScore("title") >= STRONG;
-    const descStrong = factorScore("description") >= STRONG || factorScore("meta") >= STRONG;
+    const descStrong = factorScore("description") >= STRONG;
     const contentStrong = factorScore("content") >= STRONG;
     const keywordsStrong = factorScore("keywords") >= STRONG;
 
