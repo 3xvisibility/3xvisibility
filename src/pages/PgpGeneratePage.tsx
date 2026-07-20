@@ -2134,6 +2134,32 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 </p>
               </div>
 
+              {/* Variable fill checklist */}
+              {selectedGroup && groupKeywords.length > 0 && (
+                <div className="rounded-lg border border-border/60 bg-background/60 p-3 space-y-2">
+                  <p className="text-xs font-semibold">Variable checklist</p>
+                  <div className="space-y-1">
+                    {groupKeywords.map((gk) => {
+                      const nameLc = gk.name.toLowerCase();
+                      const fromKw = !!gk.keyword && (gk.keyword.terms?.length ?? 0) > 0;
+                      const fromBiz = injectedBizVarNames.has(nameLc);
+                      const fromLoc = pickedLocations.length > 0 && isGeoVariable(gk.name);
+                      const ok = fromKw || fromBiz || fromLoc;
+                      const source = fromKw ? "Keyword group" : fromLoc ? "Locations" : fromBiz ? "Business info" : "Not filled";
+                      return (
+                        <div key={gk.name} className="flex items-center justify-between text-[11px]">
+                          <span className="font-mono">{"{" + gk.name + "}"}</span>
+                          <span className={cn("flex items-center gap-1", ok ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
+                            {ok ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                            {source}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {needsLocations && (
                 <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs space-y-2">
                   <div className="flex items-start gap-2">
@@ -2147,7 +2173,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         <span className="font-medium text-foreground">
                           {unfilledGeoVars.map((v) => `{${v}}`).join(", ")}
                         </span>
-                        . Attach real cities/states/countries from the Location Database in Step 2 (AI Setup) before generating.
+                        . Attach real cities/states/countries in Step 3 before generating.
                       </p>
                     </div>
                   </div>
@@ -2155,23 +2181,32 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     size="sm"
                     variant="outline"
                     className="w-full"
-                    onClick={() => setStep(2)}
+                    onClick={() => setStep(3)}
                   >
-                    <MapPin className="h-3.5 w-3.5 mr-1.5" /> Back to AI Setup
+                    <MapPin className="h-3.5 w-3.5 mr-1.5" /> Go to Locations
                   </Button>
+                </div>
+              )}
+
+              {missingKeywords.length > 0 && (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
+                  <p className="font-semibold text-destructive">Missing values</p>
+                  <p className="text-muted-foreground">
+                    {missingKeywords.map((k) => `{${k.name}}`).join(", ")} — fill via Keywords, Locations, or Business Info.
+                  </p>
                 </div>
               )}
 
               <Button
                 className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
                 size="lg"
-                disabled={!selectedGroup || isGenerating}
+                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0}
                 onClick={handleGenerate}
               >
                 {isGenerating ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Publishing…</>
                 ) : (
-                  <><Play className="h-4 w-4" /> Generate Pages</>
+                  <><Play className="h-4 w-4" /> Generate & Publish Pages</>
                 )}
               </Button>
 
