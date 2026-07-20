@@ -193,6 +193,21 @@ export default function PgpGeneratePage() {
     if (preselectedGroup) setSelectedGroupId(preselectedGroup);
   }, [preselectedGroup]);
 
+  // One-shot prefill from the Keyword Groups page ("Use in Campaign").
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("__campaign_prefill");
+      if (!raw) return;
+      sessionStorage.removeItem("__campaign_prefill");
+      const p = JSON.parse(raw) as { name?: string; templateId?: string; startStep?: number };
+      if (p.name) setCampaignNameDraft(p.name);
+      if (p.templateId) setSelectedGroupId(p.templateId);
+      if (typeof p.startStep === "number" && p.startStep >= 1 && p.startStep <= 5) {
+        setStep(p.startStep as 1 | 2 | 3 | 4 | 5);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   const { data: contentGroups = [], isLoading: loadingGroups } = useQuery({
     queryKey: ["pgp-content-groups", wsId],
     enabled: !!wsId,
