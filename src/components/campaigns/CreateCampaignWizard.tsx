@@ -2784,6 +2784,17 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           onChange={(e) => { const f = e.target.files?.[0]; if (f) processCsvFile(f); }} />
                       </div>
 
+                      {/* Pre-flight CSV validation — preview + missing/extra column warnings */}
+                      {csvFile && csvHeaders.length > 0 && csvData.length > 0 && (
+                        <CsvValidationPanel
+                          csvHeaders={csvHeaders}
+                          csvData={csvData}
+                          templateVars={selectedTemplateVars}
+                          fileName={csvFile.name}
+                        />
+                      )}
+
+
                       {/* Don't have a CSV? Download starter */}
                       {!csvFile && templates.length > 0 && (
                         <div className="rounded-xl border border-dashed border-primary/30 bg-primary/5 p-3 flex items-start gap-3">
