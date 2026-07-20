@@ -29,6 +29,7 @@ import { MappingStep } from "@/components/campaigns/MappingStep";
 import { VariableSourcesPanel } from "@/components/campaigns/VariableSourcesPanel";
 import { LiveVariablePreview } from "@/components/campaigns/LiveVariablePreview";
 import { FillRulesPanel } from "@/components/campaigns/FillRulesPanel";
+import { CsvValidationPanel } from "@/components/campaigns/CsvValidationPanel";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { readAiPresets, saveAiPreset, deleteAiPreset, type AiPreset } from "@/lib/ai-presets";
 import { usePersistedSnapshot } from "@/hooks/use-persisted-state";
