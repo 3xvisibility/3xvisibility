@@ -212,6 +212,25 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     setFixing(true);
     setFixProgress(0);
 
+    // ── Pre-fix baseline: only touch factors that are below 80 ──
+    const preUnified = calculateUnifiedSeoScore({
+      title: currentPage.title,
+      content: currentPage.content,
+      slug: currentPage.slug,
+      seoTitle: currentPage.seo_title,
+      seoDescription: currentPage.seo_description,
+      seoKeywords: currentPage.seo_keywords,
+      canonicalUrl: currentPage.canonical_url,
+      url: currentPage.external_url,
+    });
+    const factorScore = (id: string) =>
+      preUnified.factors.find((f) => f.id === id)?.score ?? 0;
+    const STRONG = 80;
+    const titleStrong = factorScore("title") >= STRONG;
+    const descStrong = factorScore("description") >= STRONG || factorScore("meta") >= STRONG;
+    const contentStrong = factorScore("content") >= STRONG;
+    const keywordsStrong = factorScore("keywords") >= STRONG;
+
     try {
       // Detect language from campaign
       let detectedLanguage: string | null = null;
