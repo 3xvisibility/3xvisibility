@@ -1015,7 +1015,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         const wizardSteps = [
           { num: 1, label: "Name & Template" },
           { num: 2, label: "AI Setup" },
-          { num: 3, label: "Review & Continue" },
+          { num: 3, label: "Locations" },
+          { num: 4, label: "Business Info" },
+          { num: 5, label: "Review & Publish" },
         ];
         return (
           <div className="rounded-2xl border border-border/60 bg-card/60 p-4 sm:p-5">
