@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { logAudit } from "@/lib/audit";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
@@ -61,6 +61,18 @@ export default function CampaignsPage() {
   const { currentWorkspace, basePath } = useWorkspace();
   const wsId = currentWorkspace?.id;
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Auto-open the wizard when arriving with ?new=1 (e.g. from Generate → Continue in Campaign)
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setWizardOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("new");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [linkDialogCampaign, setLinkDialogCampaign] = useState<Campaign | null>(null);
   const [jobDialogCampaign, setJobDialogCampaign] = useState<Campaign | null>(null);
   const [searchQuery, setSearchQuery] = useState("");

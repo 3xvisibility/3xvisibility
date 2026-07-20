@@ -48,6 +48,7 @@ export default function PgpGeneratePage() {
   const preselectedGroup = searchParams.get("group") || "";
 
   const [selectedGroupId, setSelectedGroupId] = useState(preselectedGroup);
+  const [campaignNameDraft, setCampaignNameDraft] = useState("");
   const [method, setMethod] = useState<"all" | "sequential" | "random">("sequential");
   const [numberOfPages, setNumberOfPages] = useState("");
   const [resumeIndex, setResumeIndex] = useState("0");
@@ -949,6 +950,24 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         <div className="lg:col-span-2 space-y-4 sm:space-y-5">
           {/* Keyword Groups overview — hidden on Generate page; manage via Keywords page */}
 
+          {/* Campaign name for handoff */}
+          <Card className="shadow-surface border-primary/30 bg-primary/5">
+            <CardContent className="p-5 space-y-2">
+              <Label className="text-sm font-semibold flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" /> Campaign name
+                <span className="text-[10px] font-normal text-muted-foreground">(used when you continue in Campaign)</span>
+              </Label>
+              <Input
+                value={campaignNameDraft}
+                onChange={(e) => setCampaignNameDraft(e.target.value)}
+                placeholder={selectedGroup ? `e.g. ${selectedGroup.name} — Cities` : "Give this campaign a name"}
+                className="h-11"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Pick your template and keywords here, then click <strong>Continue in Campaign</strong>. Only Locations will be left to choose.
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Template Selection */}
           <Card className="shadow-surface">
@@ -1878,7 +1897,19 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 className="w-full"
                 size="lg"
                 disabled={!selectedGroup}
-                onClick={() => navigate(`${basePath}/campaigns?new=1&template=${selectedGroup?.id || ""}`)}
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem(
+                      "__campaign_prefill",
+                      JSON.stringify({
+                        name: campaignNameDraft.trim() || (selectedGroup?.name ? `${selectedGroup.name} — Campaign` : ""),
+                        templateId: selectedGroup?.id || "",
+                        keywordGroupId: selectedGroup?.id || "",
+                      })
+                    );
+                  } catch {}
+                  navigate(`${basePath}/campaigns?new=1&template=${selectedGroup?.id || ""}`);
+                }}
               >
                 <Play className="h-4 w-4 mr-2" /> Continue in Campaign
               </Button>

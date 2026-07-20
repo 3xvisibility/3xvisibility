@@ -400,6 +400,23 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     { version: 2 },
   );
 
+  // Prefill from PgpGeneratePage "Continue in Campaign" handoff.
+  // Reads a one-shot payload from sessionStorage: { name, templateId, keywordGroupId }
+  // Applied when the wizard opens so name + template are ready and the user only
+  // needs to pick Locations.
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = sessionStorage.getItem("__campaign_prefill");
+      if (!raw) return;
+      sessionStorage.removeItem("__campaign_prefill");
+      const p = JSON.parse(raw) as { name?: string; templateId?: string; keywordGroupId?: string };
+      if (p.name) setCampaignName(p.name);
+      if (p.templateId) setSelectedTemplate(p.templateId);
+    } catch { /* ignore malformed prefill */ }
+  }, [open]);
+
+
 
   // --- Queries ---
   const { data: templates = [] } = useQuery({
