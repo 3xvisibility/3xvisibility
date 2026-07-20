@@ -257,13 +257,34 @@ export default function PgpGeneratePage() {
   const GEO_VAR_NAMES = ["city", "cities", "state", "states", "country", "countries", "zip", "zipcode", "region", "county", "location", "locations", "area"];
   const isGeoVariable = (name: string) => GEO_VAR_NAMES.includes(name.trim().toLowerCase());
 
-  // Geo vars in the template that have no terms attached AND no picked locations.
+  // Placeholder / demo geo values that must never leak into real pages when the
+  // user hasn't attached a Location Database source. These are common defaults
+  // seeded by AI/keyword-generators or example templates.
+  const PLACEHOLDER_GEO_VALUES = new Set([
+    "new york", "new york city", "nyc",
+    "los angeles", "la", "san francisco", "sf",
+    "chicago", "boston", "seattle", "miami", "dallas", "houston", "austin",
+    "canada", "united states", "usa", "u.s.a", "u.s.", "america",
+    "united kingdom", "uk", "england", "london",
+    "california", "texas", "florida",
+    "example city", "example state", "example country", "your city", "your state", "your country",
+  ]);
+  const isPlaceholderGeoValue = (v: unknown) =>
+    typeof v === "string" && PLACEHOLDER_GEO_VALUES.has(v.trim().toLowerCase());
+
+  // A geo variable is considered unfilled when: (a) no locations picked AND
+  // (b) it has no keyword terms, OR every attached term is a known placeholder.
   const unfilledGeoVars = groupKeywords
     .filter((gk) => isGeoVariable(gk.name))
-    .filter((gk) => !gk.keyword || (gk.keyword.terms?.length ?? 0) === 0)
-    .filter(() => pickedLocations.length === 0)
+    .filter((gk) => {
+      if (pickedLocations.length > 0) return false;
+      const terms = gk.keyword?.terms ?? [];
+      if (terms.length === 0) return true;
+      return terms.every((t) => isPlaceholderGeoValue(t));
+    })
     .map((gk) => gk.name);
   const needsLocations = unfilledGeoVars.length > 0;
+
 
   const handleAiKeywordFill = async () => {
     if (!wsId || missingKeywords.length === 0 || !aiKwBusiness.trim()) return;
@@ -604,7 +625,15 @@ Only return valid JSON. No markdown fences.`;
         const base: Record<string, string> = { ...r };
         if (pickedLocations.length > 0) {
           for (const k of GEO_KEYS) delete base[k];
+        } else {
+          // Safeguard: with no real Locations attached, strip placeholder
+          // defaults (e.g. "New York", "Canada", "LA") so downstream generation
+          // falls back to AI-fill instead of publishing fake geo data.
+          for (const k of GEO_KEYS) {
+            if (isPlaceholderGeoValue(base[k])) delete base[k];
+          }
         }
+
         const merged: Record<string, string> = { ...base, ...injected };
         if (resolvedBrandName && !merged.brand_name) merged.brand_name = resolvedBrandName;
         return merged;
