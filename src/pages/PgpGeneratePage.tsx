@@ -1010,7 +1010,6 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             <CardContent className="p-5 space-y-2">
               <Label className="text-sm font-semibold flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" /> Campaign name
-                <span className="text-[10px] font-normal text-muted-foreground">(used when you continue in Campaign)</span>
               </Label>
               <Input
                 value={campaignNameDraft}
@@ -1019,7 +1018,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 className="h-11 rounded-xl"
               />
               <p className="text-[11px] text-muted-foreground">
-                Pick your template and keywords here, then click <strong>Continue in Campaign</strong>. Only Locations will be left to choose.
+                Pick your template and keywords, configure AI, then generate pages directly from Step 3.
               </p>
             </CardContent>
           </Card>
