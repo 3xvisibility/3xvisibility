@@ -2342,18 +2342,20 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         open={showLocationsDialog}
         onOpenChange={setShowLocationsDialog}
         onSelect={(rows) => {
-          const cities = Array.from(
-            new Set(
-              rows
-                .map((r) => (r.city || r.name || r.state || r.country || "").toString().trim())
-                .filter(Boolean),
-            ),
-          );
-          if (cities.length) {
-            setAiLocations(cities.join(", "));
+          const mapped = rows.map((r: any) => ({
+            city: (r.city || r.name || "").toString().trim(),
+            state: (r.state || r.admin1 || "").toString().trim(),
+            region: (r.region || r.admin2 || r.state || "").toString().trim(),
+            country: (r.country || "").toString().trim(),
+            zip: (r.zip || r.postal_code || "").toString().trim(),
+          })).filter((l) => l.city || l.state || l.country);
+          if (mapped.length) {
+            setPickedLocations(mapped);
+            const cityLabels = Array.from(new Set(mapped.map((l) => l.city || l.state || l.country).filter(Boolean)));
+            setAiLocations(cityLabels.join(", "));
             toast({
-              title: "Locations added",
-              description: `${cities.length} location${cities.length !== 1 ? "s" : ""} attached to this campaign.`,
+              title: "Locations attached",
+              description: `${mapped.length} location${mapped.length !== 1 ? "s" : ""} will be used as variables during generation.`,
             });
           }
           setShowLocationsDialog(false);
