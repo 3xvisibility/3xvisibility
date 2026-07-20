@@ -564,33 +564,73 @@ Only return valid JSON. No markdown fences.`;
     return site?.name || "";
   }, [brandSource, customBrandName, selectedWebsite, websites]);
 
+  // Injected values from Step 3 (locations) and Step 4 (business info).
+  const buildInjectedForRow = (rowIndex: number): Record<string, string> => {
+    const inject: Record<string, string> = {};
+    // Business/personal info
+    for (const [k, v] of Object.entries(businessInfo)) {
+      if ((v ?? "").trim()) inject[k] = v.trim();
+    }
+    // Locations cycle per row
+    if (pickedLocations.length > 0) {
+      const loc = pickedLocations[rowIndex % pickedLocations.length];
+      const cityVal = (loc.city || "").toString().trim();
+      const stateVal = (loc.state || loc.region || "").toString().trim();
+      const countryVal = (loc.country || "").toString().trim();
+      const regionVal = (loc.region || loc.state || "").toString().trim();
+      const zipVal = (loc.zip || "").toString().trim();
+      if (cityVal) { inject.city = cityVal; inject.cities = cityVal; inject.location = cityVal; }
+      if (stateVal) { inject.state = stateVal; inject.states = stateVal; }
+      if (countryVal) { inject.country = countryVal; inject.countries = countryVal; }
+      if (regionVal) { inject.region = regionVal; }
+      if (zipVal) { inject.zip = zipVal; inject.zipcode = zipVal; }
+    }
+    return inject;
+  };
+
   const buildRows = (): Record<string, string>[] => {
     const kwData = groupKeywords.filter(k => k.keyword);
-    if (kwData.length === 0) return [];
+
+    const finalize = (rows: Record<string, string>[]): Record<string, string>[] => {
+      return rows.map((r, i) => {
+        const injected = buildInjectedForRow(i);
+        // Injected values fill only where the row doesn't already have a value.
+        const merged: Record<string, string> = { ...injected, ...r };
+        if (resolvedBrandName && !merged.brand_name) merged.brand_name = resolvedBrandName;
+        return merged;
+      });
+    };
+
+    // If there are no linked keyword groups but locations/business info exist,
+    // still allow generation — produce N rows driven by locations count.
+    if (kwData.length === 0) {
+      if (pickedLocations.length === 0 && Object.values(businessInfo).every((v) => !(v ?? "").trim())) {
+        return [];
+      }
+      const count = numberOfPages
+        ? parseInt(numberOfPages)
+        : (pickedLocations.length || 1);
+      const rows: Record<string, string>[] = [];
+      for (let i = 0; i < count; i++) rows.push({});
+      return finalize(rows);
+    }
 
     const start = parseInt(resumeIndex) || 0;
 
     if (method === "all") {
-      // Cartesian product
       const rows: Record<string, string>[] = [];
       const termArrays = kwData.map(k => k.keyword!.terms);
       const names = kwData.map(k => k.name);
-
       const generate = (index: number, current: Record<string, string>) => {
-        if (index === termArrays.length) {
-          rows.push({ ...current });
-          return;
-        }
+        if (index === termArrays.length) { rows.push({ ...current }); return; }
         for (const term of termArrays[index]) {
           current[names[index]] = term;
           generate(index + 1, current);
         }
       };
       generate(0, {});
-
       const limit = numberOfPages ? Math.min(parseInt(numberOfPages), rows.length - start) : rows.length - start;
-      const sliced = rows.slice(start, start + limit);
-      return resolvedBrandName ? sliced.map(r => ({ ...r, brand_name: resolvedBrandName })) : sliced;
+      return finalize(rows.slice(start, start + limit));
     }
 
     if (method === "sequential") {
@@ -599,12 +639,10 @@ Only return valid JSON. No markdown fences.`;
       const rows: Record<string, string>[] = [];
       for (let i = start; i < start + limit && i < max; i++) {
         const row: Record<string, string> = {};
-        for (const gk of kwData) {
-          row[gk.name] = gk.keyword!.terms[i % gk.keyword!.terms.length] || "";
-        }
+        for (const gk of kwData) row[gk.name] = gk.keyword!.terms[i % gk.keyword!.terms.length] || "";
         rows.push(row);
       }
-      return resolvedBrandName ? rows.map(r => ({ ...r, brand_name: resolvedBrandName })) : rows;
+      return finalize(rows);
     }
 
     // Random
@@ -612,12 +650,10 @@ Only return valid JSON. No markdown fences.`;
     const rows: Record<string, string>[] = [];
     for (let i = 0; i < count; i++) {
       const row: Record<string, string> = {};
-      for (const gk of kwData) {
-        row[gk.name] = gk.keyword!.terms[Math.floor(Math.random() * gk.keyword!.terms.length)] || "";
-      }
+      for (const gk of kwData) row[gk.name] = gk.keyword!.terms[Math.floor(Math.random() * gk.keyword!.terms.length)] || "";
       rows.push(row);
     }
-    return rows.map(r => resolvedBrandName ? { ...r, brand_name: resolvedBrandName } : r);
+    return finalize(rows);
   };
 
   // Also wrap the other returns above — handled inline via final map
