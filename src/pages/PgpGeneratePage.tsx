@@ -2254,6 +2254,94 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 );
               })()}
 
+              {/* Per-row variable source trace — first N rows */}
+              {selectedGroup && groupKeywords.length > 0 && (() => {
+                const rows = buildRows();
+                if (rows.length === 0) return null;
+                const MAX_ROWS = 8;
+                const preview = rows.slice(0, MAX_ROWS);
+                const varNames = groupKeywords.map((g) => g.name);
+
+                const sourceFor = (varName: string, value: string) => {
+                  const lc = varName.toLowerCase();
+                  if (pickedLocations.length > 0 && isGeoVariable(varName)) {
+                    return { label: "Locations", icon: MapPin, cls: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 dark:text-emerald-400" };
+                  }
+                  if (injectedBizVarNames.has(lc)) {
+                    return { label: "Business", icon: Building2, cls: "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400" };
+                  }
+                  if ((value ?? "").trim() !== "") {
+                    return { label: "Keyword", icon: Bookmark, cls: "bg-primary/10 text-primary border-primary/30" };
+                  }
+                  return { label: "AI-fill", icon: Sparkles, cls: "bg-purple-500/10 text-purple-600 border-purple-500/30 dark:text-purple-400" };
+                };
+
+                return (
+                  <div className="rounded-xl border border-primary/25 bg-primary/[0.03] overflow-hidden">
+                    <div className="px-3 py-2 flex items-center justify-between gap-2 border-b border-primary/15">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold">Per-row variable source trace</p>
+                        <p className="text-[10.5px] text-muted-foreground truncate">
+                          Preview of the first {preview.length} of {rows.length.toLocaleString()} row{rows.length !== 1 ? "s" : ""} — each cell shows the resolved value and its source.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 text-[10px]">
+                        <Badge variant="outline" className="h-5 gap-1 px-1.5 bg-primary/10 text-primary border-primary/30"><Bookmark className="h-2.5 w-2.5" />Keyword</Badge>
+                        <Badge variant="outline" className="h-5 gap-1 px-1.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/30"><MapPin className="h-2.5 w-2.5" />Loc</Badge>
+                        <Badge variant="outline" className="h-5 gap-1 px-1.5 bg-amber-500/10 text-amber-600 border-amber-500/30"><Building2 className="h-2.5 w-2.5" />Biz</Badge>
+                        <Badge variant="outline" className="h-5 gap-1 px-1.5 bg-purple-500/10 text-purple-600 border-purple-500/30"><Sparkles className="h-2.5 w-2.5" />AI</Badge>
+                      </div>
+                    </div>
+                    <div className="max-h-72 overflow-auto">
+                      <table className="w-full text-[11px]">
+                        <thead className="bg-muted/40 sticky top-0">
+                          <tr>
+                            <th className="text-left font-semibold px-2 py-1.5 w-10">#</th>
+                            {varNames.map((n) => (
+                              <th key={n} className="text-left font-semibold px-2 py-1.5 whitespace-nowrap">
+                                <code className="font-mono text-[10.5px]">{"{" + n + "}"}</code>
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {preview.map((row, i) => (
+                            <tr key={i} className="border-t border-border/50 hover:bg-muted/30">
+                              <td className="px-2 py-1.5 text-muted-foreground font-mono">{i + 1}</td>
+                              {varNames.map((n) => {
+                                const val = row[n] ?? row[n.toLowerCase()] ?? "";
+                                const src = sourceFor(n, val);
+                                const Icon = src.icon;
+                                return (
+                                  <td key={n} className="px-2 py-1.5 align-top">
+                                    <div className="flex flex-col gap-1 min-w-0">
+                                      <Badge variant="outline" className={cn("h-4 gap-1 px-1 text-[9.5px] w-fit", src.cls)}>
+                                        <Icon className="h-2.5 w-2.5" />
+                                        {src.label}
+                                      </Badge>
+                                      <span className={cn("truncate max-w-[180px]", val ? "text-foreground" : "italic text-muted-foreground")}>
+                                        {val ? String(val).slice(0, 40) : "(AI will generate)"}
+                                      </span>
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {rows.length > MAX_ROWS && (
+                      <div className="px-3 py-1.5 text-[10.5px] text-muted-foreground border-t border-primary/15 bg-background/40">
+                        Showing first {MAX_ROWS} rows. Remaining {(rows.length - MAX_ROWS).toLocaleString()} row{rows.length - MAX_ROWS !== 1 ? "s" : ""} follow the same pattern.
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+
+
               {needsLocations && (
                 <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs space-y-2">
                   <div className="flex items-start gap-2">
