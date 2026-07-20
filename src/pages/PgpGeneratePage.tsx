@@ -885,6 +885,15 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       toast({ title: t("pgpGenerate.toastMissingKeywordsTitle"), description: t("pgpGenerate.toastMissingKeywordsDesc", { list: missingKeywords.map(k => k.name).join(", ") }), variant: "destructive" });
       return;
     }
+    if (geoCoverage.severity === "block") {
+      toast({
+        title: "Geo coverage validation failed",
+        description: geoCoverage.issues[0] || "Attach real locations before generating.",
+        variant: "destructive",
+      });
+      return;
+    }
+
 
     setIsGenerating(true);
     setGenProgress({ processed: 0, total: 0, errors: 0 });
@@ -1025,7 +1034,90 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
     random: <ArrowDown className="h-4 w-4" />,
   };
 
+  // ============= Geo Coverage Validation =============
+  // Inspect the actual rows that will be published and flag mismatched or
+  // missing geo coverage (all rows identical, placeholder defaults like
+  // USA/Angel/New York, or blank geo fields when the template needs them).
+  const geoCoverage = (() => {
+    const geoTemplateVars = groupKeywords
+      .map((k) => k.name.trim().toLowerCase())
+      .filter((n) => GEO_VAR_NAMES.includes(n));
+    if (geoTemplateVars.length === 0) {
+      return { severity: "ok" as const, issues: [] as string[], sampleRows: [] as Record<string, string>[] };
+    }
+
+    let previewRows: Record<string, string>[] = [];
+    try { previewRows = buildRows().slice(0, 200); } catch { previewRows = []; }
+    if (previewRows.length === 0) {
+      return { severity: "ok" as const, issues: [] as string[], sampleRows: [] as Record<string, string>[] };
+    }
+
+    const issues: string[] = [];
+    let severity: "ok" | "warn" | "block" = "ok";
+    const bump = (s: "warn" | "block") => {
+      if (s === "block" || severity === "ok") severity = s;
+    };
+
+    // 1) Missing geo values on rows that need them
+    const missingCounts: Record<string, number> = {};
+    for (const r of previewRows) {
+      for (const v of geoTemplateVars) {
+        const val = (r[v] ?? "").toString().trim();
+        if (!val) missingCounts[v] = (missingCounts[v] || 0) + 1;
+      }
+    }
+    for (const [v, c] of Object.entries(missingCounts)) {
+      if (c > 0) {
+        issues.push(`${c}/${previewRows.length} rows have empty {${v}}`);
+        bump("block");
+      }
+    }
+
+    // 2) Placeholder / demo defaults leaked into rows
+    const placeholderCounts: Record<string, number> = {};
+    for (const r of previewRows) {
+      for (const v of geoTemplateVars) {
+        if (isPlaceholderGeoValue(r[v])) placeholderCounts[v] = (placeholderCounts[v] || 0) + 1;
+      }
+    }
+    for (const [v, c] of Object.entries(placeholderCounts)) {
+      if (c > 0) {
+        issues.push(`${c}/${previewRows.length} rows use a placeholder default for {${v}} (e.g. USA / New York / LA)`);
+        bump("block");
+      }
+    }
+
+    // 3) All rows share identical geo — real Location DB should provide variety
+    //    unless the user only picked a single location.
+    if (previewRows.length > 1 && pickedLocations.length !== 1) {
+      for (const v of geoTemplateVars) {
+        const uniq = new Set(previewRows.map((r) => (r[v] ?? "").toString().trim().toLowerCase()).filter(Boolean));
+        if (uniq.size === 1 && missingCounts[v] === undefined) {
+          issues.push(`All ${previewRows.length} rows share the same {${v}} — attach more locations for real coverage`);
+          bump("warn");
+        }
+      }
+    }
+
+    // 4) Location count mismatch — user attached fewer locations than rows and
+    //    no keyword group provides geo variety.
+    if (pickedLocations.length > 0 && pickedLocations.length < previewRows.length) {
+      const geoHasKeywordSource = geoTemplateVars.some((v) =>
+        groupKeywords.find((g) => g.name.toLowerCase() === v)?.keyword?.terms?.length,
+      );
+      if (!geoHasKeywordSource) {
+        issues.push(
+          `${previewRows.length} rows but only ${pickedLocations.length} location${pickedLocations.length === 1 ? "" : "s"} attached — geo values will repeat`,
+        );
+        bump("warn");
+      }
+    }
+
+    return { severity: severity as "ok" | "warn" | "block", issues, sampleRows: previewRows.slice(0, 3) };
+  })();
+
   return (
+
     <div className="space-y-4 sm:space-y-6">
       {/* Header — matches Campaigns page style */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -2401,21 +2493,59 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 </div>
               )}
 
-              {missingKeywords.length > 0 && (
-                <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
-                  <p className="font-semibold text-destructive">Missing values</p>
-                  <p className="text-muted-foreground">
-                    {missingKeywords.map((k) => `{${k.name}}`).join(", ")} — fill via Keywords, Locations, or Business Info.
-                  </p>
+              {geoCoverage.issues.length > 0 && (
+                <div
+                  className={`rounded-lg border p-3 text-xs space-y-2 ${
+                    geoCoverage.severity === "block"
+                      ? "border-destructive/50 bg-destructive/10"
+                      : "border-amber-500/50 bg-amber-500/10"
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle
+                      className={`h-4 w-4 shrink-0 mt-0.5 ${
+                        geoCoverage.severity === "block" ? "text-destructive" : "text-amber-500"
+                      }`}
+                    />
+                    <div className="space-y-1 flex-1">
+                      <p
+                        className={`font-semibold ${
+                          geoCoverage.severity === "block"
+                            ? "text-destructive"
+                            : "text-amber-600 dark:text-amber-400"
+                        }`}
+                      >
+                        {geoCoverage.severity === "block"
+                          ? "Geo coverage validation failed — generation blocked"
+                          : "Geo coverage warning"}
+                      </p>
+                      <ul className="text-muted-foreground list-disc list-inside space-y-0.5">
+                        {geoCoverage.issues.map((iss, i) => (
+                          <li key={i}>{iss}</li>
+                        ))}
+                      </ul>
+                      {geoCoverage.severity === "block" && (
+                        <p className="text-muted-foreground pt-1">
+                          Attach real locations in Step 3 — placeholder or empty geo values won&apos;t be published.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {geoCoverage.severity === "block" && (
+                    <Button size="sm" variant="outline" className="w-full" onClick={() => setStep(3)}>
+                      <MapPin className="h-3.5 w-3.5 mr-1.5" /> Fix in Locations
+                    </Button>
+                  )}
                 </div>
               )}
 
               <Button
                 className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
                 size="lg"
-                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0}
+                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0 || geoCoverage.severity === "block"}
                 onClick={handleGenerate}
               >
+
                 {isGenerating ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Publishing…</>
                 ) : (
