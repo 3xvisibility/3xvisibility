@@ -129,7 +129,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
   return (
     <Routes>
       <Route path="dashboard" element={wrap(<DashboardPage />)} />
-      <Route path="campaigns" element={wrap(<CampaignsPage />)} />
+      <Route path="campaigns" element={<Navigate to="../pgp-generate" replace />} />
       <Route path="ai-site-builder" element={wrap(<AiSiteBuilderPage />)} />
       <Route path="campaigns/:id" element={wrap(<CampaignDetailPage />)} />
       <Route path="templates" element={wrap(<TemplatesPage />)} />
