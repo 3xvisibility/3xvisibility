@@ -2477,7 +2477,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     toast({ title: "Nothing to export", description: "No rows resolved yet.", variant: "destructive" });
                     return;
                   }
-                  const safeName = (campaignName || "campaign").replace(/[^a-z0-9-_]+/gi, "-").toLowerCase();
+                  const safeName = (campaignNameDraft || "campaign").replace(/[^a-z0-9-_]+/gi, "-").toLowerCase();
                   exportDataFile(rows, format, `${safeName}-resolved-rows.${format}`);
                   toast({ title: "Exported", description: `${rows.length} row${rows.length !== 1 ? "s" : ""} exported as ${format.toUpperCase()}.` });
                 };
