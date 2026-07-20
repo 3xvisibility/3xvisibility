@@ -895,6 +895,14 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         dripSettings.random_end = scheduleDateEnd;
       }
 
+      // Build ai_context so generate-pages can AI-fill any template variable
+      // that has no keyword group and no injected value.
+      const aiContext = {
+        business: (aiBusinessDesc || resolvedBrandName || aiNiche || "").trim(),
+        niche: (aiNiche || aiCategory || "").trim(),
+        service: (aiTerms || aiKeywords || "").trim(),
+      };
+
       const { data: campaign, error: campErr } = await supabase.from("campaigns").insert({
         name: `PGP: ${selectedGroup.name}`,
         template_id: selectedGroup.id,
@@ -909,6 +917,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         campaign_types: ["seo"],
         scheduled_at: scheduledAt,
         drip_feed_settings: Object.keys(dripSettings).length > 0 ? dripSettings : null,
+        mapping: { ai_fill_mode: "per_row", ai_context: aiContext } as any,
+        language: aiLanguage || null,
       } as any).select("id").single();
 
       if (campErr) throw campErr;
