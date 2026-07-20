@@ -31,7 +31,7 @@ interface Body {
   previousRows?: Record<string, string>[];
 }
 
-const MAX_ROWS_PER_REQUEST = 10;
+const MAX_ROWS_PER_REQUEST = 5;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -126,7 +126,7 @@ Make every row meaningfully different so each generated page is unique.`;
     const result = await aiGenerate({
       authToken: extractAuthToken(req),
       promptType: "medium_content",
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-2.5-flash-lite",
       temperature: 0.95,
       messages: [
         { role: "system", content: systemPrompt },
