@@ -885,6 +885,15 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       toast({ title: t("pgpGenerate.toastMissingKeywordsTitle"), description: t("pgpGenerate.toastMissingKeywordsDesc", { list: missingKeywords.map(k => k.name).join(", ") }), variant: "destructive" });
       return;
     }
+    if (geoCoverage.severity === "block") {
+      toast({
+        title: "Geo coverage validation failed",
+        description: geoCoverage.issues[0] || "Attach real locations before generating.",
+        variant: "destructive",
+      });
+      return;
+    }
+
 
     setIsGenerating(true);
     setGenProgress({ processed: 0, total: 0, errors: 0 });
