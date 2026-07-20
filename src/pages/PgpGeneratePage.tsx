@@ -2073,8 +2073,35 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               </CardContent>
             </Card>
           )}
+          </>)}
+        </div>
+
+        {/* Wizard nav footer */}
+        <div className="flex items-center justify-between mt-6 pt-4 border-t">
+          <Button
+            variant="ghost"
+            className="rounded-xl"
+            disabled={step === 1}
+            onClick={() => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s))}
+          >
+            Back
+          </Button>
+          {step < 3 ? (
+            <Button
+              className="rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
+              disabled={step === 1 && !selectedGroup}
+              onClick={() => setStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s))}
+            >
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <span className="text-[11px] text-muted-foreground">
+              Use <strong>Continue in Campaign</strong> above to finish.
+            </span>
+          )}
         </div>
       </div>
+
 
       <AlertDialog open={confirmRegen} onOpenChange={setConfirmRegen}>
         <AlertDialogContent>
