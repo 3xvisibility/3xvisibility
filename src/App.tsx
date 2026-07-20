@@ -20,7 +20,7 @@ import AuthPage from "./pages/AuthPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
-import CampaignsPage from "./pages/CampaignsPage";
+
 import AiSiteBuilderPage from "./pages/AiSiteBuilderPage";
 import CampaignDetailPage from "./pages/CampaignDetailPage";
 import TemplatesPage from "./pages/TemplatesPage";
