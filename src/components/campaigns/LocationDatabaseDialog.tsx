@@ -503,6 +503,12 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
           </PopoverContent>
         </Popover>
 
+        <p className="text-[10px] text-muted-foreground flex items-center gap-1.5 -mt-1">
+          <Check className="h-3 w-3 text-primary" />
+          Cities are locked to <span className="font-semibold text-foreground">{countryName}</span>. Change country to pick from another region.
+        </p>
+
+
         {(seedMutation.isPending || seedProgress > 0 || seedResult) && (
           <div
             className={cn(
