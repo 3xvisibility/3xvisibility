@@ -2542,10 +2542,12 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
                 const sourceFor = (varName: string, value: string) => {
                   const lc = varName.toLowerCase();
-                  if (pickedLocations.length > 0 && isGeoVariable(varName)) {
+                  // Classification priority mirrors the mapping panel:
+                  // Locations > Business Info > Keyword group > AI-fill.
+                  if (isGeoVariable(varName)) {
                     return { label: "Locations", icon: MapPin, cls: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 dark:text-emerald-400" };
                   }
-                  if (injectedBizVarNames.has(lc)) {
+                  if (isBusinessVariable(varName) || injectedBizVarNames.has(lc)) {
                     return { label: "Business", icon: Building2, cls: "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400" };
                   }
                   if ((value ?? "").trim() !== "") {
