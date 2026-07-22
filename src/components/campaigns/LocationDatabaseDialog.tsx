@@ -929,8 +929,9 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                 )}
               </div>
             ) : (
-              <ScrollArea className="flex-1 min-h-0 max-h-[300px] rounded-xl border border-border">
+              <div className="flex-1 min-h-[320px] max-h-[55vh] overflow-y-auto overscroll-contain rounded-xl border border-border">
                 <div className="space-y-0.5 p-1">
+
                   {visibleLocations.map((loc: any) => {
                     const isSelected = selectedIds.has(loc.id);
                     return (
