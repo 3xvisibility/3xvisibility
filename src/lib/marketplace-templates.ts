@@ -3385,6 +3385,11 @@ const marginfinderTemplate = () => `<style>
         <span class="mf-eye">— As featured in</span>
         <div class="mf-press-tags"><span class="on">HBR</span><span>FT</span><span>MQ</span><span>INC</span></div>
       </div>
+      <div class="mf-hero-headline">
+        <h1>{hero_title}</h1>
+        <p class="mf-hero-sub">{hero_subtitle}</p>
+        <div class="mf-hero-meta"><span>{hero_stat_1}</span><span>{hero_stat_2}</span><span>{hero_stat_3}</span></div>
+      </div>
       <div class="mf-hero-quote">
         <p>"{press_quote}"</p>
         <div class="who">{press_source}<small>{press_year}</small></div>
