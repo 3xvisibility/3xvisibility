@@ -991,7 +991,8 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                     </div>
                   )}
                 </div>
-              </ScrollArea>
+              </div>
+
             )}
 
             <div className="flex flex-wrap gap-1.5">
