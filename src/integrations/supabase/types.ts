@@ -3312,6 +3312,13 @@ export type Database = {
         Args: { _campaign_id: string; _row_count?: number; _start_row?: number }
         Returns: Json
       }
+      get_location_meta: {
+        Args: { _country_code: string }
+        Returns: {
+          regions: string[]
+          states: string[]
+        }[]
+      }
       get_shopify_access_token: {
         Args: { _website_id: string }
         Returns: string
@@ -3356,6 +3363,8 @@ export type Database = {
           read_ct: number
         }[]
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       template_limit_for_plan: { Args: { _plan: string }; Returns: number }
     }
     Enums: {

@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Progress } from "@/components/ui/progress";
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,24 +53,13 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [seedStage, setSeedStage] = useState<string>("");
   const [seedResult, setSeedResult] = useState<{ inserted: number; skipped: number } | null>(null);
   const [bulkLoaderOpen, setBulkLoaderOpen] = useState(false);
-  const fetchAllLocationPages = async <T,>(buildQuery: (from: number, to: number) => any): Promise<T[]> => {
-    const pageSize = 5000;
-    const rows: T[] = [];
-    for (let from = 0; ; from += pageSize) {
-      const { data, error } = await buildQuery(from, from + pageSize - 1);
-      if (error) {
-        const enriched = new Error(
-          `[${error.code ?? "db_error"}] ${error.message}${error.hint ? ` — ${error.hint}` : ""}${error.details ? ` (${error.details})` : ""}`,
-        );
-        (enriched as any).cause = error;
-        throw enriched;
-      }
-      const page = (data || []) as T[];
-      rows.push(...page);
-      if (page.length < pageSize) break;
-    }
-    return rows;
-  };
+  // Server-side pagination: each page is a small range request; total row
+  // count is returned via PostgREST's estimated head count. Big countries no
+  // longer stream tens of thousands of rows to the browser.
+  const PAGE_SIZE = 100;
+
+  const escapeIlike = (s: string) => s.replace(/([%_,()])/g, "\\$1");
+
 
   const seedMutation = useMutation({
     mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string; target?: number; bulk?: boolean; all?: boolean }) => {
@@ -157,42 +147,111 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
 
   const [retryAttempt, setRetryAttempt] = useState(0);
 
-  const { data: locations = [], isLoading, isFetching, dataUpdatedAt, refetch, error, isError, failureCount } = useQuery({
-    queryKey: ["locations-db", countryFilter, stateFilter, regionFilter],
+  // Debounce search + min-population so we don't fire a request per keystroke.
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 250);
+    return () => clearTimeout(t);
+  }, [search]);
+  const isDebouncing = search.trim() !== debouncedSearch;
+
+  const [debouncedMinPop, setDebouncedMinPop] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedMinPop(minPop.trim()), 250);
+    return () => clearTimeout(t);
+  }, [minPop]);
+
+  // Server-side paginated + filtered listing. Each page is a small
+  // range request (100 rows). Total count comes from PostgREST's exact
+  // count header so the UI still shows "X cities" without holding them all.
+  const listingKey = [
+    "locations-db",
+    countryFilter,
+    stateFilter,
+    regionFilter,
+    debouncedSearch,
+    debouncedMinPop,
+  ] as const;
+
+  const listingQuery = useInfiniteQuery({
+    queryKey: listingKey,
     enabled: open,
-    // Cache filter results so switching back is instant, and keep prior rows
-    // visible while the new filter fetches in the background.
+    initialPageParam: 0,
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
-    // Auto-retry up to 3 times with exponential backoff (1s, 2s, 4s, capped at 8s).
     retry: 3,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
-    queryFn: async () => {
+    queryFn: async ({ pageParam }) => {
       setCacheStats((s) => ({ ...s, misses: s.misses + 1 }));
       setRetryAttempt((n) => n + 1);
-      const data = await fetchAllLocationPages<any>((from, to) => {
-        let query = supabase
-          .from("locations")
-          .select("*")
-          .eq("country_code", countryFilter)
-          .order("population", { ascending: false })
-          .range(from, to);
+      const from = (pageParam as number) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      let q = supabase
+        .from("locations")
+        .select("*", { count: "exact" })
+        .eq("country_code", countryFilter)
+        .order("population", { ascending: false, nullsFirst: false })
+        .order("city", { ascending: true })
+        .range(from, to);
 
-        if (stateFilter !== "all") query = query.eq("state", stateFilter);
-        if (regionFilter !== "all") query = query.eq("region", regionFilter);
-        return query;
-      });
+      if (stateFilter !== "all") q = q.eq("state", stateFilter);
+      if (regionFilter !== "all") q = q.eq("region", regionFilter);
+      if (debouncedMinPop) {
+        const min = parseInt(debouncedMinPop);
+        if (!Number.isNaN(min)) q = q.gte("population", min);
+      }
+      if (debouncedSearch) {
+        const term = escapeIlike(debouncedSearch);
+        // Server-side OR search across the columns users type into. Trigram
+        // indexes on city/state/region/zip keep ILIKE '%q%' fast.
+        q = q.or(
+          [
+            `city.ilike.%${term}%`,
+            `county.ilike.%${term}%`,
+            `state.ilike.%${term}%`,
+            `state_code.ilike.%${term}%`,
+            `region.ilike.%${term}%`,
+            `zip_code.ilike.%${term}%`,
+          ].join(","),
+        );
+      }
+
+      const { data, count, error } = await q;
+      if (error) {
+        const enriched = new Error(
+          `[${error.code ?? "db_error"}] ${error.message}${error.hint ? ` — ${error.hint}` : ""}${error.details ? ` (${error.details})` : ""}`,
+        );
+        (enriched as any).cause = error;
+        throw enriched;
+      }
       queueMicrotask(recomputeCacheSize);
-      return data;
+      return { rows: (data ?? []) as any[], count: count ?? 0, page: pageParam as number };
+    },
+    getNextPageParam: (last) => {
+      const loaded = (last.page + 1) * PAGE_SIZE;
+      return loaded < (last.count ?? 0) ? last.page + 1 : undefined;
     },
   });
+
+  const { isLoading, isFetching, dataUpdatedAt, refetch, error, isError, failureCount, hasNextPage, isFetchingNextPage, fetchNextPage } = listingQuery;
+  const listingData = listingQuery.data;
+  const totalCount = listingData?.pages?.[0]?.count ?? 0;
+  const visibleLocations = useMemo(
+    () => (listingData?.pages ?? []).flatMap((p) => p.rows),
+    [listingData],
+  );
+  // Kept for legacy code paths (export, selectAll, toggleLocation) that used
+  // to read from a fully-loaded list. In server-side mode they act on the
+  // rows currently loaded into view.
+  const locations = visibleLocations;
+  const filteredLocations = visibleLocations;
+  const hasMore = !!hasNextPage;
 
   const errorMessage = useMemo(() => {
     if (!error) return null;
     const raw = error instanceof Error ? error.message : String(error);
-    // Best-effort friendly hint mapping for common failure classes.
     const lower = raw.toLowerCase();
     let hint = "Try again in a moment.";
     if (lower.includes("failed to fetch") || lower.includes("network")) {
@@ -209,21 +268,20 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     return { raw, hint };
   }, [error]);
 
-
-  // Detect cache hits when filters change: if fresh data is already in cache
-  // for the new key, queryFn won't fire — count it as a hit.
+  // Cache-hit counter (fires when a filter combo is already fresh in cache).
   useEffect(() => {
     if (!open) return;
-    const state = queryClient.getQueryState(["locations-db", countryFilter, stateFilter, regionFilter]);
+    const state = queryClient.getQueryState(listingKey as unknown as any[]);
     if (state?.data && state.status === "success" && Date.now() - state.dataUpdatedAt < 5 * 60 * 1000) {
       setCacheStats((s) => ({ ...s, hits: s.hits + 1 }));
     }
     recomputeCacheSize();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countryFilter, stateFilter, regionFilter, open]);
+  }, [countryFilter, stateFilter, regionFilter, debouncedSearch, debouncedMinPop, open]);
 
-
-  const { data: allCountryLocations = [] } = useQuery({
+  // States/regions dropdowns: single RPC round-trip returns distinct values
+  // for the selected country instead of streaming every row.
+  const { data: metaData } = useQuery({
     queryKey: ["locations-db-meta", countryFilter],
     enabled: open,
     staleTime: 10 * 60 * 1000,
@@ -231,91 +289,38 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
     queryFn: async () => {
-      return await fetchAllLocationPages<any>((from, to) =>
-        supabase
-          .from("locations")
-          .select("state, region")
-          .eq("country_code", countryFilter)
-          .range(from, to),
-      );
+      const { data, error } = await supabase.rpc("get_location_meta", { _country_code: countryFilter });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      return {
+        states: (row?.states ?? []) as string[],
+        regions: (row?.regions ?? []) as string[],
+      };
     },
   });
+  const allStates = metaData?.states ?? [];
+  const allRegions = metaData?.regions ?? [];
 
-  const { allStates, allRegions } = useMemo(() => {
-    const states = new Set<string>();
-    const regions = new Set<string>();
-    allCountryLocations.forEach((l: any) => {
-      if (l.state) states.add(l.state);
-      if (l.region) regions.add(l.region);
-    });
-    return {
-      allStates: Array.from(states).sort(),
-      allRegions: Array.from(regions).sort(),
-    };
-  }, [allCountryLocations]);
-
-  // Debounce the search input so filtering a 19k-city list doesn't lag on every keystroke.
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 200);
-    return () => clearTimeout(t);
-  }, [search]);
-  const isDebouncing = search.trim().toLowerCase() !== debouncedSearch;
-
-  const filteredLocations = useMemo(() => {
-    // Enforce country lock defensively — never surface a city from another country.
-    let result = locations.filter((l: any) => !l.country_code || l.country_code === countryFilter);
-    if (debouncedSearch) {
-      const q = debouncedSearch;
-      result = result.filter((l: any) =>
-        l.city?.toLowerCase().includes(q) ||
-        l.county?.toLowerCase().includes(q) ||
-        l.region?.toLowerCase().includes(q) ||
-        l.state?.toLowerCase().includes(q) ||
-        l.state_code?.toLowerCase().includes(q) ||
-        l.zip_code?.includes(q)
-      );
-    }
-    if (minPop) {
-      const min = parseInt(minPop);
-      if (!isNaN(min)) result = result.filter((l: any) => (l.population || 0) >= min);
-    }
-    return result;
-  }, [locations, countryFilter, debouncedSearch, minPop]);
-
-  // Infinite scroll: render in chunks of PAGE_SIZE and grow as the user
-  // scrolls near the bottom of the list. Reset when filters/search change.
-  const PAGE_SIZE = 100;
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [countryFilter, stateFilter, regionFilter, search, minPop]);
-
-  const visibleLocations = useMemo(
-    () => filteredLocations.slice(0, visibleCount),
-    [filteredLocations, visibleCount],
-  );
-  const hasMore = visibleCount < filteredLocations.length;
-
+  // Sentinel-driven infinite scroll: fetch the next server page as the
+  // user nears the bottom of the list.
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const setSentinel = useCallback(
     (node: HTMLDivElement | null) => {
       if (sentinelRef.current) sentinelRef.current = null;
       sentinelRef.current = node;
-      if (!node || !hasMore) return;
+      if (!node || !hasNextPage) return;
       const io = new IntersectionObserver(
         (entries) => {
-          if (entries.some((e) => e.isIntersecting)) {
-            setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredLocations.length));
+          if (entries.some((e) => e.isIntersecting) && !isFetchingNextPage) {
+            fetchNextPage();
           }
         },
         { root: null, rootMargin: "200px", threshold: 0 },
       );
       io.observe(node);
-      // Detach on next sentinel mount
       (node as any).__io = io;
     },
-    [hasMore, filteredLocations.length],
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
   );
   useEffect(() => {
     return () => {
@@ -325,7 +330,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   }, []);
 
   const toggleLocation = (id: string) => {
-    const row: any = filteredLocations.find((l: any) => l.id === id);
+    const row: any = visibleLocations.find((l: any) => l.id === id);
     if (row && row.country_code && row.country_code !== countryFilter) {
       toast({
         title: "City locked to selected country",
@@ -338,6 +343,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     if (next.has(id)) next.delete(id); else next.add(id);
     setSelectedIds(next);
   };
+
 
   const selectAll = () => {
     if (selectedIds.size === filteredLocations.length) {
@@ -471,7 +477,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     setCountryOpen(false);
   };
 
-  const isEmpty = !isLoading && locations.length === 0;
+  const isEmpty = !isLoading && totalCount === 0 && !debouncedSearch && stateFilter === "all" && regionFilter === "all" && !debouncedMinPop;
   const countryName = ALL_COUNTRIES.find(c => c.code === countryFilter)?.name || countryFilter;
 
   return (
@@ -532,7 +538,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
         </p>
 
         {/* Coverage check: warn when the selected country has no cities in the DB. */}
-        {open && !isLoading && !seedMutation.isPending && allCountryLocations.length === 0 && (
+        {open && !isLoading && !seedMutation.isPending && !debouncedSearch && stateFilter === "all" && regionFilter === "all" && !debouncedMinPop && totalCount === 0 && (
           <div
             role="alert"
             className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 flex items-start gap-2"
@@ -733,11 +739,12 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-3">
                 <button type="button" className="text-xs text-primary hover:underline font-medium" onClick={selectAll}>
-                  {selectedIds.size === filteredLocations.length && filteredLocations.length > 0 ? "Deselect all" : "Select all"}
+                  {selectedIds.size === visibleLocations.length && visibleLocations.length > 0 ? "Deselect loaded" : "Select loaded"}
                 </button>
                 <span className="text-xs text-muted-foreground">
-                  {selectedIds.size} / {filteredLocations.length} selected
+                  {selectedIds.size} selected · {visibleLocations.length.toLocaleString()} of {totalCount.toLocaleString()} loaded
                 </span>
+
               </div>
               <div className="flex items-center gap-2">
                 {dataUpdatedAt > 0 && !isLoading && (
@@ -770,7 +777,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   className="h-7 rounded-xl gap-1.5 text-xs"
                   disabled={isFetching}
                   onClick={() => {
-                    queryClient.invalidateQueries({ queryKey: ["locations-db", countryFilter, stateFilter, regionFilter] });
+                    queryClient.invalidateQueries({ queryKey: ["locations-db"] });
                     queryClient.invalidateQueries({ queryKey: ["locations-db-meta", countryFilter] });
                     refetch();
                   }}
@@ -894,8 +901,9 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <Badge variant="outline" className="text-[10px]">
-                  {filteredLocations.length} cities
+                  {totalCount.toLocaleString()} cities
                 </Badge>
+
               </div>
             </div>
 
@@ -994,26 +1002,26 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                       ref={setSentinel}
                       className="flex items-center justify-center gap-2 py-3 text-[10px] text-muted-foreground"
                     >
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Loading more… ({visibleLocations.length}/{filteredLocations.length})
+                      {isFetchingNextPage && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Loading more… ({visibleLocations.length}/{totalCount.toLocaleString()})
                       <Button
                         type="button"
                         size="sm"
                         variant="ghost"
                         className="h-6 px-2 text-[10px]"
-                        onClick={() =>
-                          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredLocations.length))
-                        }
+                        disabled={isFetchingNextPage}
+                        onClick={() => fetchNextPage()}
                       >
                         Load more
                       </Button>
                     </div>
                   )}
-                  {!hasMore && filteredLocations.length > PAGE_SIZE && (
+                  {!hasMore && totalCount > PAGE_SIZE && (
                     <div className="text-center py-2 text-[10px] text-muted-foreground">
-                      Showing all {filteredLocations.length} cities
+                      Showing all {totalCount.toLocaleString()} cities
                     </div>
                   )}
+
                 </div>
               </div>
 
