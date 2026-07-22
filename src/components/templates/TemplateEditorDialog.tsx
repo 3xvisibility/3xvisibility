@@ -393,11 +393,16 @@ ${contentText}`
       ];
       const fixes: { label: string; count: number }[] = [];
       let fixed = out;
+      // Detect matches first so we can warn even when auto-fix is off.
+      const detected: { label: string; count: number }[] = [];
       for (const rule of REVIEWER_TO_BUSINESS) {
         const matches = fixed.match(rule.bad);
         if (matches && matches.length > 0) {
-          fixed = fixed.replace(rule.bad, rule.good);
-          fixes.push({ label: rule.label, count: matches.length });
+          detected.push({ label: rule.label, count: matches.length });
+          if (aiAutoFixReviewer) {
+            fixed = fixed.replace(rule.bad, rule.good);
+            fixes.push({ label: rule.label, count: matches.length });
+          }
         }
       }
       setContent(fixed);
@@ -408,6 +413,14 @@ ${contentText}`
           title: `⚠️ ${totalFixed} reviewer-scoped variable(s) auto-fixed`,
           description: `Site-owner fields were mistakenly mapped as testimonial-scoped. Rewired to Business Info: ${fixes.map(f => `${f.label} (×${f.count})`).join(", ")}. ${found.length} variable(s) total.`,
           duration: 9000,
+        });
+      } else if (detected.length > 0) {
+        const totalDetected = detected.reduce((s, f) => s + f.count, 0);
+        toast({
+          title: `⚠️ ${totalDetected} reviewer-scoped variable(s) detected`,
+          description: `Auto-fix is OFF. Site-owner fields may be mis-scoped: ${detected.map(f => `${f.label} (×${f.count})`).join(", ")}. Turn on "Auto-fix reviewer scope" to rewire them.`,
+          variant: "destructive",
+          duration: 10000,
         });
       } else {
         toast({
