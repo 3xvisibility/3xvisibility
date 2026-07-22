@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, Pencil, Sparkles, Loader2, FolderOpen, ArrowRight, KeyRound } from "lucide-react";
+import { Plus, Trash2, Pencil, Sparkles, Loader2, FolderOpen, ArrowRight, KeyRound, RefreshCw } from "lucide-react";
 import { autoExtractTemplateVariables } from "@/lib/template-variable-extractor";
 import { GEO_VAR_NAMES } from "@/lib/campaign-row-merge";
 
@@ -225,7 +225,7 @@ export default function KeywordGroupsPage() {
     },
   });
 
-  const aiGenerateTerms = async (varName: string) => {
+  const aiGenerateTerms = async (varName: string, mode: "append" | "replace" = "append") => {
     setAiBusy(varName);
     try {
       const langLabel = LANGUAGES.find(l => l.code === language)?.label || "English";
@@ -253,8 +253,13 @@ export default function KeywordGroupsPage() {
       });
       const text = res?.content || "";
       const terms = text.split("\n").map(l => l.replace(/^[\d.\-*)\s]+/, "").trim()).filter(l => l && l.length < 100);
-      setVariables(prev => prev.map(v => v.name === varName ? { ...v, terms: [...new Set([...v.terms, ...terms])] } : v));
-      toast({ title: `Added ${terms.length} values`, description: `for {${varName}}` });
+      setVariables(prev => prev.map(v => v.name === varName
+        ? { ...v, terms: mode === "replace" ? [...new Set(terms)] : [...new Set([...v.terms, ...terms])] }
+        : v));
+      toast({
+        title: mode === "replace" ? `Regenerated ${terms.length} values` : `Added ${terms.length} values`,
+        description: `for {${varName}}`,
+      });
     } catch (err: any) {
       toast({ title: "AI generation failed", description: err?.message, variant: "destructive" });
     } finally {
@@ -451,9 +456,19 @@ export default function KeywordGroupsPage() {
                       <code className="text-sm font-mono px-2 py-0.5 rounded bg-muted">{`{${v.name}}`}</code>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="text-[10px]">{v.terms.length} term{v.terms.length !== 1 ? "s" : ""}</Badge>
-                        <Button size="sm" variant="outline" disabled={aiBusy === v.name} onClick={() => aiGenerateTerms(v.name)}>
+                        <Button size="sm" variant="outline" disabled={aiBusy === v.name} onClick={() => aiGenerateTerms(v.name, "append")}>
                           {aiBusy === v.name ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
                           AI generate
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={aiBusy === v.name}
+                          onClick={() => aiGenerateTerms(v.name, "replace")}
+                          title="Replace existing terms with a fresh AI batch for this variable only"
+                        >
+                          {aiBusy === v.name ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
+                          Regenerate
                         </Button>
                       </div>
                     </div>
