@@ -2913,6 +2913,7 @@ Deno.serve(async (req) => {
               }
               if (overwrite_fields.content) {
                 updates.content = page.content;
+                if ((page as any).variables) updates.variables = (page as any).variables;
               }
               if (overwrite_fields.seo) {
                 updates.seo_title = page.seo_title;
