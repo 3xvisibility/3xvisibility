@@ -1323,7 +1323,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             </Card>
           )}
 
-          {/* Template Selection */}
+          {/* Template Selection — hidden when a Keyword Group is picked (group already selects the template) */}
+          {!selectedKeywordGroupId && (
           <Card className="border-0 shadow-surface">
             <CardContent className="p-5 space-y-4">
               <Label className="text-sm font-semibold flex items-center gap-2">
@@ -1457,7 +1458,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               )}
             </CardContent>
           </Card>
+          )}
           </>)}
+
 
           {/* Step 2: AI Setup & Generation Settings */}
           {step === 2 && (<>
