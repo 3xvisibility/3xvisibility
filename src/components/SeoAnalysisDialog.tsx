@@ -297,12 +297,14 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         setFixProgress(0);
         return;
       }
+      let stagnantPasses = 0;
 
       while (iteration < MAX_ITERATIONS && weakKeys.length > 0) {
         iteration++;
         const baseProgress = 5 + (iteration - 1) * Math.floor(70 / MAX_ITERATIONS);
         setFixStep(`Pass ${iteration}/${MAX_ITERATIONS} — improving: ${weakKeys.join(", ")}`);
         setFixProgress(baseProgress);
+
 
         const iterBefore = scoreOf(working, canonicalUrl);
         const beforeFactor = (k: string) => factorScore(iterBefore, k);
