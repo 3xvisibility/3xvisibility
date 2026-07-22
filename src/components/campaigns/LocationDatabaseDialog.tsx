@@ -777,7 +777,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   className="h-7 rounded-xl gap-1.5 text-xs"
                   disabled={isFetching}
                   onClick={() => {
-                    queryClient.invalidateQueries({ queryKey: ["locations-db", countryFilter, stateFilter, regionFilter] });
+                    queryClient.invalidateQueries({ queryKey: ["locations-db"] });
                     queryClient.invalidateQueries({ queryKey: ["locations-db-meta", countryFilter] });
                     refetch();
                   }}
