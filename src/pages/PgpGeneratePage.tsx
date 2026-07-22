@@ -2448,17 +2448,15 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 const kwRows: Row[] = [];
                 const locRows: Row[] = [];
                 const bizRows: Row[] = [];
+                const aiRows: Row[] = [];
                 const missRows: Row[] = [];
                 for (const gk of groupKeywords) {
                   const nameLc = gk.name.toLowerCase();
                   const isGeo = isGeoVariable(gk.name);
                   const isBiz = isBusinessVariable(gk.name);
+                  const isAiContent = isAiContentVariable(gk.name);
                   const fromKw = !!gk.keyword && (gk.keyword.terms?.length ?? 0) > 0;
-                  // Priority: Locations > Business Info > Keyword group.
-                  // Geo/biz slots are ALWAYS classified by name so users see
-                  // exactly where each field will be sourced from — Step 3
-                  // (locations) and Step 4 (business info) replace any stale
-                  // keyword-group defaults at generation time.
+                  // Priority: Locations > Business Info > AI-content (heading/desc/etc.) > Keyword group.
                   if (isGeo) {
                     const first = pickedLocations[0] as any;
                     const val = first?.[nameLc] || first?.city || first?.state || first?.country;
@@ -2470,13 +2468,15 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       || (nameLc === "email_address" ? businessInfo.email : "")
                       || (nameLc === "url" || nameLc === "site_url" ? businessInfo.website : "");
                     bizRows.push({ name: gk.name, example: bizVal });
+                  } else if (isAiContent) {
+                    aiRows.push({ name: gk.name });
                   } else if (fromKw) {
                     kwRows.push({ name: gk.name, example: gk.keyword?.terms?.[0] });
                   } else {
                     missRows.push({ name: gk.name });
                   }
                 }
-                const totalFilled = kwRows.length + locRows.length + bizRows.length;
+                const totalFilled = kwRows.length + locRows.length + bizRows.length + aiRows.length;
                 const Group = ({
                   title, icon: Icon, color, rows, empty,
                 }: { title: string; icon: any; color: string; rows: Row[]; empty: string }) => (
