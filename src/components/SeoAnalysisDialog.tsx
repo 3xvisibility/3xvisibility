@@ -290,6 +290,19 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       let bestUnified = baselineUnified;
       let bestSnapshot = { ...working };
 
+      const TRACKED_FACTORS: Record<string, string> = {
+        title: "Title",
+        description: "Meta description",
+        keywords: "Keywords",
+        content: "Content",
+      };
+      const seedFactors: Record<string, FactorLive> = {};
+      for (const [key, label] of Object.entries(TRACKED_FACTORS)) {
+        const s = baselineUnified.factors.find((f) => f.key === key)?.score ?? 0;
+        seedFactors[key] = { key, label, baseline: s, current: s, previous: s, lastPass: 0 };
+      }
+      setFactorLive(seedFactors);
+
       let iteration = 0;
       let weakKeys = baselineUnified.factors
         .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
