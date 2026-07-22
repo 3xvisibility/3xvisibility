@@ -3265,7 +3265,231 @@ const refitTemplate = () => `<style>
   </div></section>
 </div>`;
 
+// ── MarginFinder template (modelled 1:1 on marginfinder.app) ────────────────
+const MF_IMG = {
+  hero: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1600&q=80&auto=format&fit=crop",
+  boardroom: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1600&q=80&auto=format&fit=crop",
+  r1: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80&auto=format&fit=crop",
+  r2: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80&auto=format&fit=crop",
+  r3: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80&auto=format&fit=crop",
+};
+
+const marginfinderTemplate = () => `<style>
+.mf{--navy:#0b1c2c;--navy-2:#122a41;--ink:#f5f1e8;--body:#c7cfda;--gold:#c9a24a;--gold-2:#e6c078;--line:rgba(245,241,232,.12);font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--navy);color:var(--body);line-height:1.65;max-width:100%;position:relative}
+.mf :where(*){box-sizing:border-box}
+.mf h1,.mf h2,.mf h3,.mf h4{color:var(--ink);margin:0;line-height:1.1;font-weight:500;letter-spacing:-.02em;font-family:'Georgia','Times New Roman',serif}
+.mf p{margin:0}
+.mf a{color:inherit;text-decoration:none}
+.mf-wrap{max-width:1240px;margin:0 auto;padding:0 1.5rem}
+.mf-sec{padding:clamp(4rem,8vw,7rem) 0}
+.mf-eye{display:inline-block;color:var(--gold);font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;font-weight:600;font-family:'Inter',sans-serif}
+.mf-h{font-size:clamp(2rem,4.5vw,3.6rem)}
+.mf-btn{display:inline-flex;align-items:center;gap:.6rem;background:var(--gold);color:var(--navy);padding:1rem 1.9rem;border-radius:2px;font-weight:600;font-size:.86rem;letter-spacing:.08em;text-transform:uppercase;font-family:'Inter',sans-serif;transition:background .25s,transform .25s;border:none;cursor:pointer}
+.mf-btn:hover{background:var(--gold-2);transform:translateY(-1px)}
+.mf-btn::after{content:'→'}
+/* nav */
+.mf-nav{position:absolute;top:0;left:0;right:0;z-index:5;padding:1.6rem 0}
+.mf-nav .bar{display:flex;align-items:center;justify-content:space-between;gap:2rem}
+.mf-nav .logo{display:flex;align-items:center;gap:.7rem;color:var(--ink);font-weight:600;font-family:'Georgia',serif;font-size:1.15rem}
+.mf-nav .logo .mark{width:22px;height:26px;background:var(--gold);clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%)}
+.mf-nav .links{display:flex;gap:2.2rem;font-size:.74rem;letter-spacing:.22em;text-transform:uppercase;color:var(--body)}
+.mf-nav .links a:hover{color:var(--gold)}
+/* hero split */
+.mf-hero{position:relative;min-height:100vh;display:grid;grid-template-columns:1fr 1fr;background:var(--navy);background-image:linear-gradient(rgba(245,241,232,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(245,241,232,.03) 1px,transparent 1px);background-size:64px 64px}
+.mf-hero-l{padding:8rem 3rem 3rem;display:flex;flex-direction:column;justify-content:space-between}
+.mf-hero-r{position:relative;background:var(--navy-2) center/cover no-repeat}
+.mf-hero-r::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(11,28,44,.75))}
+.mf-press-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:2.5rem}
+.mf-press-tags span{border:1px solid var(--line);padding:.55rem 1rem;font-size:.72rem;letter-spacing:.18em;color:var(--body);font-weight:600}
+.mf-press-tags span.on{border-color:var(--gold);color:var(--gold)}
+.mf-hero-quote{margin-top:auto;padding-top:3rem;border-top:1px solid var(--gold);max-width:520px}
+.mf-hero-quote p{color:var(--ink);font-family:'Georgia',serif;font-style:italic;font-size:clamp(1.15rem,1.8vw,1.6rem);line-height:1.4}
+.mf-hero-quote .who{margin-top:1.5rem;color:var(--gold);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;font-family:'Inter',sans-serif;font-weight:600}
+.mf-hero-quote .who small{color:var(--body);margin-left:1rem;letter-spacing:.14em}
+.mf-hero-card{position:absolute;left:2.5rem;right:2.5rem;bottom:2.5rem;background:var(--navy-2);border:1px solid var(--line);padding:2rem;z-index:2;display:flex;flex-direction:column;gap:1.5rem}
+.mf-hero-card p{color:var(--ink);font-family:'Georgia',serif;font-style:italic;font-size:1.2rem;line-height:1.4}
+.mf-hero-card .row{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding-top:1.3rem;border-top:1px solid var(--line)}
+.mf-hero-card .who b{display:block;color:var(--gold);font-family:'Inter',sans-serif;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase}
+.mf-hero-card .who small{color:var(--body);font-size:.82rem}
+/* section head */
+.mf-head{display:grid;grid-template-columns:.4fr 1fr;gap:3rem;align-items:end;margin-bottom:4rem;padding-bottom:2rem;border-bottom:1px solid var(--line)}
+.mf-head h2{max-width:16ch}
+/* methodology */
+.mf-method{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--line)}
+.mf-step{padding:2.5rem 2rem;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transition:background .3s}
+.mf-step:last-child{border-right:none}
+.mf-step:hover{background:var(--navy-2)}
+.mf-step .n{color:var(--gold);font-family:'Georgia',serif;font-size:.92rem;letter-spacing:.2em;margin-bottom:1.5rem}
+.mf-step h3{font-size:1.4rem;margin-bottom:1rem}
+.mf-step p{color:var(--body);font-size:.95rem}
+/* results */
+.mf-results{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
+.mf-result{display:grid;grid-template-columns:.3fr 1.4fr .6fr;gap:2rem;padding:3rem 0;border-bottom:1px solid var(--line);align-items:center}
+.mf-result .idx{color:var(--gold);font-family:'Georgia',serif;font-size:1.1rem;letter-spacing:.18em}
+.mf-result .quote{font-family:'Georgia',serif;font-style:italic;color:var(--ink);font-size:clamp(1.15rem,1.7vw,1.55rem);line-height:1.4}
+.mf-result .metric{color:var(--gold);font-family:'Inter',sans-serif;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;margin-top:1.2rem;font-weight:600}
+.mf-result .metric small{color:var(--body);margin-left:.8rem}
+.mf-result .who{display:flex;align-items:center;gap:1rem}
+.mf-result .who img{width:56px;height:56px;border-radius:50%;object-fit:cover;filter:grayscale(.4)}
+.mf-result .who b{display:block;color:var(--ink);font-family:'Inter',sans-serif;font-weight:600;font-size:.95rem}
+.mf-result .who small{color:var(--body);font-size:.8rem;display:block;margin-top:.15rem}
+.mf-result .who em{display:block;color:var(--gold);font-style:normal;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;margin-top:.4rem}
+/* trust */
+.mf-trust{background:var(--navy-2);padding:clamp(3rem,6vw,5rem) 0;text-align:center}
+.mf-trust h3{color:var(--gold);font-family:'Georgia',serif;font-size:clamp(3rem,6vw,5rem);letter-spacing:-.03em}
+.mf-trust p{color:var(--ink);max-width:640px;margin:1.5rem auto 0;font-size:1.1rem}
+.mf-trust .sub{color:var(--body);font-size:.82rem;letter-spacing:.18em;text-transform:uppercase;margin-top:2rem}
+/* assessment */
+.mf-cta{display:grid;grid-template-columns:.9fr 1.1fr;gap:4rem;align-items:start}
+.mf-form{background:var(--navy-2);border:1px solid var(--line);padding:clamp(2rem,4vw,3rem)}
+.mf-fg{margin-bottom:1.4rem}
+.mf-form label{display:block;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:.55rem;font-weight:600}
+.mf-form input,.mf-form select,.mf-form textarea{width:100%;padding:.95rem 1rem;background:transparent;border:1px solid var(--line);color:var(--ink);font:inherit;font-size:.95rem}
+.mf-form input:focus,.mf-form select:focus,.mf-form textarea:focus{outline:none;border-color:var(--gold)}
+.mf-form .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.mf-note{color:var(--body);font-size:.78rem;margin-top:1rem;line-height:1.5}
+/* stats bar */
+.mf-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:4rem;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.mf-stat{padding:2rem 1.5rem;text-align:center;border-right:1px solid var(--line)}
+.mf-stat:last-child{border-right:none}
+.mf-stat b{display:block;color:var(--gold);font-family:'Georgia',serif;font-size:clamp(1.8rem,3vw,2.4rem)}
+.mf-stat small{color:var(--body);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;margin-top:.5rem;display:block}
+/* footer */
+.mf-foot{padding:3rem 0;border-top:1px solid var(--line);color:var(--body);font-size:.85rem;display:flex;flex-wrap:wrap;gap:1.5rem;justify-content:space-between;align-items:center}
+.mf-foot .badges{display:flex;flex-wrap:wrap;gap:1.2rem;color:var(--gold);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase}
+@media(max-width:960px){
+  .mf-hero{grid-template-columns:1fr;min-height:auto}
+  .mf-hero-l{padding:6rem 1.5rem 3rem}
+  .mf-hero-r{min-height:60vh}
+  .mf-hero-card{position:relative;left:auto;right:auto;bottom:auto;margin:1.5rem}
+  .mf-method,.mf-stats{grid-template-columns:1fr 1fr}
+  .mf-step{border-right:none;border-bottom:1px solid var(--line)}
+  .mf-result{grid-template-columns:1fr}
+  .mf-head{grid-template-columns:1fr;gap:1rem}
+  .mf-cta{grid-template-columns:1fr}
+  .mf-nav .links{display:none}
+}
+@media(max-width:560px){.mf-method,.mf-stats{grid-template-columns:1fr}.mf-form .grid{grid-template-columns:1fr}}
+</style>
+<div class="mf">
+
+  <nav class="mf-nav"><div class="mf-wrap"><div class="bar">
+    <div class="logo"><div class="mark"></div>{company_name}</div>
+    <div class="links"><a href="#methodology">Methodology</a><a href="#results">Results</a><a href="#industries">Industries</a><a href="#team">Team</a></div>
+    <a href="#assessment" class="mf-btn">{cta_text}</a>
+  </div></div></nav>
+
+  <header class="mf-hero" id="home">
+    <div class="mf-hero-l">
+      <div>
+        <span class="mf-eye">— As featured in</span>
+        <div class="mf-press-tags"><span class="on">HBR</span><span>FT</span><span>MQ</span><span>INC</span></div>
+      </div>
+      <div class="mf-hero-quote">
+        <p>"{press_quote}"</p>
+        <div class="who">{press_source}<small>{press_year}</small></div>
+      </div>
+    </div>
+    <div class="mf-hero-r" style="background-image:url('${MF_IMG.hero}')">
+      <div class="mf-hero-card">
+        <p>"{headline}"</p>
+        <div class="row">
+          <div class="who"><b>{company_name}</b><small>{tagline}</small></div>
+          <a href="#assessment" class="mf-btn">{cta_text}</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="mf-sec" id="methodology"><div class="mf-wrap">
+    <div class="mf-head">
+      <span class="mf-eye">The Methodology</span>
+      <h2 class="mf-h">Four weeks in. Results you can audit.</h2>
+    </div>
+    <div class="mf-method">
+      <div class="mf-step"><div class="n">01</div><h3>{method_1_title}</h3><p>{method_1_desc}</p></div>
+      <div class="mf-step"><div class="n">02</div><h3>{method_2_title}</h3><p>{method_2_desc}</p></div>
+      <div class="mf-step"><div class="n">03</div><h3>{method_3_title}</h3><p>{method_3_desc}</p></div>
+      <div class="mf-step"><div class="n">04</div><h3>{method_4_title}</h3><p>{method_4_desc}</p></div>
+    </div>
+  </div></section>
+
+  <section class="mf-sec" id="results" style="background:var(--navy-2)"><div class="mf-wrap">
+    <div class="mf-head">
+      <span class="mf-eye">Client Results</span>
+      <h2 class="mf-h">Every serious operator already made this call.</h2>
+    </div>
+    <p style="max-width:640px;color:var(--body);margin-bottom:2rem">Named executives. Specific numbers. A fraction of the operations we've rewired — each one a peer who moved before inaction compounded.</p>
+    <div class="mf-results">
+      <div class="mf-result">
+        <div class="idx">Case 01</div>
+        <div>
+          <div class="quote">"{result_1_quote}"</div>
+          <div class="metric">{result_1_metric}<small>· {result_1_context}</small></div>
+        </div>
+        <div class="who"><img src="${MF_IMG.r1}" alt="{result_1_name}"/><div><b>{result_1_name}</b><small>{result_1_role}</small><em>{result_1_scale}</em></div></div>
+      </div>
+      <div class="mf-result">
+        <div class="idx">Case 02</div>
+        <div>
+          <div class="quote">"{result_2_quote}"</div>
+          <div class="metric">{result_2_metric}<small>· {result_2_context}</small></div>
+        </div>
+        <div class="who"><img src="${MF_IMG.r2}" alt="{result_2_name}"/><div><b>{result_2_name}</b><small>{result_2_role}</small><em>{result_2_scale}</em></div></div>
+      </div>
+      <div class="mf-result">
+        <div class="idx">Case 03</div>
+        <div>
+          <div class="quote">"{result_3_quote}"</div>
+          <div class="metric">{result_3_metric}<small>· {result_3_context}</small></div>
+        </div>
+        <div class="who"><img src="${MF_IMG.r3}" alt="{result_3_name}"/><div><b>{result_3_name}</b><small>{result_3_role}</small><em>{result_3_scale}</em></div></div>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="mf-trust"><div class="mf-wrap">
+    <h3>{total_recovered}</h3>
+    <p>Recovered for clients in the last 24 months across operations, supply chain, and organizational design</p>
+    <div class="sub">Across {engagements_count} engagements · Average engagement ROI: {avg_roi}</div>
+  </div></section>
+
+  <section class="mf-sec" id="assessment"><div class="mf-wrap">
+    <div class="mf-head">
+      <span class="mf-eye">Confidential Assessment</span>
+      <h2 class="mf-h">{assessment_title}</h2>
+    </div>
+    <div class="mf-cta">
+      <div>
+        <p style="color:var(--body);font-size:1.05rem;max-width:440px">{assessment_body}</p>
+        <div class="mf-stats">
+          <div class="mf-stat"><b>{engagements_count}</b><small>Engagements</small></div>
+          <div class="mf-stat"><b>{avg_roi}</b><small>Avg ROI</small></div>
+          <div class="mf-stat"><b>{total_recovered}</b><small>Value recovered</small></div>
+          <div class="mf-stat"><b>{time_to_result}</b><small>To first result</small></div>
+        </div>
+      </div>
+      <form class="mf-form" onsubmit="return false">
+        <div class="mf-fg"><label>Company Name *</label><input type="text" placeholder="{company_name}"/></div>
+        <div class="grid">
+          <div class="mf-fg"><label>Annual Revenue *</label><select><option>$10M – $50M</option><option>$50M – $250M</option><option>$250M+</option></select></div>
+          <div class="mf-fg"><label>Preferred Contact</label><select><option>Email</option><option>Phone</option></select></div>
+        </div>
+        <div class="mf-fg"><label>Primary Operational Challenge *</label><textarea rows="3" placeholder="Where do you suspect margin is hiding?"></textarea></div>
+        <div class="mf-fg"><label>Email Address *</label><input type="email" placeholder="{email}"/></div>
+        <button class="mf-btn" style="width:100%;justify-content:center">Request Confidential Assessment</button>
+        <p class="mf-note">All submissions held in strict confidence. No third-party sharing. A partner reviews every intake personally.</p>
+      </form>
+    </div>
+    <div class="mf-foot">
+      <div>{address} · {phone} · {email}</div>
+      <div class="badges"><span>NDA on request</span><span>No-pitch guarantee</span><span>Partner-led</span></div>
+    </div>
+  </div></section>
+</div>`;
+
 // ── Templates ──────────────────────────────────────────────────────────────
+
 const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 1. Local Plumber
   {
