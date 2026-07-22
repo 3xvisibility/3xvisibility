@@ -468,9 +468,15 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         const iterAfter = scoreOf(candidate, canonicalUrl);
         const afterFactor = (k: string) => factorScore(iterAfter, k);
         for (const key of weakKeys) {
-          if (afterFactor(key) > beforeFactor(key)) {
-            (working as any)[key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content"] =
-              (candidate as any)[key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content"];
+          const before = beforeFactor(key);
+          const after = afterFactor(key);
+          // Accept if the factor improved, OR (when still failing) if it stayed equal
+          // but the candidate actually changed — lets deterministic polish take effect
+          // even when the scorer can't measure the delta yet.
+          const fieldName = key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content";
+          const changed = JSON.stringify((candidate as any)[fieldName]) !== JSON.stringify((working as any)[fieldName]);
+          if (after > before || (after >= before && before < STRONG && changed)) {
+            (working as any)[fieldName] = (candidate as any)[fieldName];
           }
         }
 
