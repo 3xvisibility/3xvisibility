@@ -2744,8 +2744,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       const lc = n.toLowerCase();
                       const val = row[n] ?? row[lc] ?? "";
                       out[n] = String(val);
-                      if (pickedLocations.length > 0 && isGeoVariable(n)) srcCounts.location++;
-                      else if (injectedBizVarNames.has(lc)) srcCounts.business++;
+                      if (isGeoVariable(n)) srcCounts.location++;
+                      else if (isBusinessVariable(n) || injectedBizVarNames.has(lc)) srcCounts.business++;
                       else if (String(val).trim() !== "") srcCounts.keyword++;
                       else srcCounts.ai_fill++;
                     }
