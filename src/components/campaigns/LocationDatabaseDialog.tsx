@@ -508,6 +508,35 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
           Cities are locked to <span className="font-semibold text-foreground">{countryName}</span>. Change country to pick from another region.
         </p>
 
+        {/* Coverage check: warn when the selected country has no cities in the DB. */}
+        {open && !isLoading && !seedMutation.isPending && allCountryLocations.length === 0 && (
+          <div
+            role="alert"
+            className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 flex items-start gap-2"
+          >
+            <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <p className="text-xs font-semibold text-destructive">
+                No city coverage for {countryName}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Your Location Database has 0 cities for <span className="font-medium">{countryName}</span>. Load them now so your campaign has real geo data to attach.
+              </p>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="h-7 text-[11px] gap-1.5"
+                disabled={seedMutation.isPending}
+                onClick={() => seedMutation.mutate({ countryCode: countryFilter, bulk: true })}
+              >
+                <Download className="h-3 w-3" />
+                Load ALL {countryName} cities
+              </Button>
+            </div>
+          </div>
+        )}
+
+
 
         {(seedMutation.isPending || seedProgress > 0 || seedResult) && (
           <div
