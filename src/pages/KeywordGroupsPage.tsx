@@ -225,7 +225,7 @@ export default function KeywordGroupsPage() {
     },
   });
 
-  const aiGenerateTerms = async (varName: string) => {
+  const aiGenerateTerms = async (varName: string, mode: "append" | "replace" = "append") => {
     setAiBusy(varName);
     try {
       const langLabel = LANGUAGES.find(l => l.code === language)?.label || "English";
@@ -253,8 +253,13 @@ export default function KeywordGroupsPage() {
       });
       const text = res?.content || "";
       const terms = text.split("\n").map(l => l.replace(/^[\d.\-*)\s]+/, "").trim()).filter(l => l && l.length < 100);
-      setVariables(prev => prev.map(v => v.name === varName ? { ...v, terms: [...new Set([...v.terms, ...terms])] } : v));
-      toast({ title: `Added ${terms.length} values`, description: `for {${varName}}` });
+      setVariables(prev => prev.map(v => v.name === varName
+        ? { ...v, terms: mode === "replace" ? [...new Set(terms)] : [...new Set([...v.terms, ...terms])] }
+        : v));
+      toast({
+        title: mode === "replace" ? `Regenerated ${terms.length} values` : `Added ${terms.length} values`,
+        description: `for {${varName}}`,
+      });
     } catch (err: any) {
       toast({ title: "AI generation failed", description: err?.message, variant: "destructive" });
     } finally {
