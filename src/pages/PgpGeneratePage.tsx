@@ -1088,17 +1088,22 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       }
     }
 
-    // 2) Placeholder / demo defaults leaked into rows
-    const placeholderCounts: Record<string, number> = {};
-    for (const r of previewRows) {
-      for (const v of geoTemplateVars) {
-        if (isPlaceholderGeoValue(r[v])) placeholderCounts[v] = (placeholderCounts[v] || 0) + 1;
+    // 2) Placeholder / demo defaults leaked into rows — only enforced when the
+    //    user has NOT attached real Locations. If they picked real locations
+    //    from the Location Database, city/country names (even "New York" or
+    //    "USA") are trusted and never flagged as placeholders.
+    if (pickedLocations.length === 0) {
+      const placeholderCounts: Record<string, number> = {};
+      for (const r of previewRows) {
+        for (const v of geoTemplateVars) {
+          if (isPlaceholderGeoValue(r[v])) placeholderCounts[v] = (placeholderCounts[v] || 0) + 1;
+        }
       }
-    }
-    for (const [v, c] of Object.entries(placeholderCounts)) {
-      if (c > 0) {
-        issues.push(`${c}/${previewRows.length} rows use a placeholder default for {${v}} (e.g. USA / New York / LA)`);
-        bump("block");
+      for (const [v, c] of Object.entries(placeholderCounts)) {
+        if (c > 0) {
+          issues.push(`${c}/${previewRows.length} rows use a placeholder default for {${v}} (e.g. USA / New York / LA). Attach real locations to unblock.`);
+          bump("block");
+        }
       }
     }
 
