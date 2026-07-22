@@ -366,12 +366,44 @@ ${contentText}`
         toast({ title: "Nothing returned", description: "AI did not return HTML. Try again.", variant: "destructive" });
         return;
       }
-      setContent(out);
-      const found = [...new Set((out.match(/\{([a-z_]+)\}/gi) || []))];
-      toast({
-        title: "✨ Variables added!",
-        description: `${found.length} variable(s) inserted. Design & images kept intact.`,
-      });
+      // ── Post-process: detect & auto-fix reviewer-scoped variables that
+      // should actually be site-owner (Business Info) fields. AI sometimes
+      // maps the reviewed business's own company/address/phone/price/email
+      // into {testimonial_*} — those must be re-scoped to Business Info so
+      // every testimonial refers to the SAME site owner (not a per-reviewer value).
+      const REVIEWER_TO_BUSINESS: Array<{ bad: RegExp; good: string; label: string }> = [
+        { bad: /\{testimonial_(?:company|business|brand|company_name|business_name|brand_name)(?:_\d+)?\}/gi, good: "{business_name}", label: "company → business_name" },
+        { bad: /\{testimonial_address(?:_\d+)?\}/gi, good: "{address}", label: "address" },
+        { bad: /\{testimonial_(?:phone|phone_number|tel|telephone)(?:_\d+)?\}/gi, good: "{phone}", label: "phone" },
+        { bad: /\{testimonial_email(?:_\d+)?\}/gi, good: "{email}", label: "email" },
+        { bad: /\{testimonial_(?:website|url|site)(?:_\d+)?\}/gi, good: "{website}", label: "website" },
+        { bad: /\{testimonial_price(?:_\d+)?\}/gi, good: "{price}", label: "price" },
+        { bad: /\{testimonial_(?:city|state|country|region|zip)(?:_\d+)?\}/gi, good: "{testimonial_location}", label: "reviewer geo → testimonial_location" },
+      ];
+      const fixes: { label: string; count: number }[] = [];
+      let fixed = out;
+      for (const rule of REVIEWER_TO_BUSINESS) {
+        const matches = fixed.match(rule.bad);
+        if (matches && matches.length > 0) {
+          fixed = fixed.replace(rule.bad, rule.good);
+          fixes.push({ label: rule.label, count: matches.length });
+        }
+      }
+      setContent(fixed);
+      const found = [...new Set((fixed.match(/\{([a-z_]+)\}/gi) || []))];
+      if (fixes.length > 0) {
+        const totalFixed = fixes.reduce((s, f) => s + f.count, 0);
+        toast({
+          title: `⚠️ ${totalFixed} reviewer-scoped variable(s) auto-fixed`,
+          description: `Site-owner fields were mistakenly mapped as testimonial-scoped. Rewired to Business Info: ${fixes.map(f => `${f.label} (×${f.count})`).join(", ")}. ${found.length} variable(s) total.`,
+          duration: 9000,
+        });
+      } else {
+        toast({
+          title: "✨ Variables added!",
+          description: `${found.length} variable(s) inserted. Design & images kept intact.`,
+        });
+      }
     } catch (err: any) {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
     } finally {
