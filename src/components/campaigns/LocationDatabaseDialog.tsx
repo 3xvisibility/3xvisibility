@@ -464,7 +464,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
           </DialogDescription>
         </DialogHeader>
 
-        {/* Country selector — searchable combobox */}
+        {/* Country selector — searchable combobox. Cities are auto-locked to the selected country. */}
         <Popover open={countryOpen} onOpenChange={setCountryOpen}>
           <PopoverTrigger asChild>
             <Button
