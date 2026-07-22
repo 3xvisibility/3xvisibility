@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { ALL_COUNTRIES } from "@/lib/countries";
+import { BulkCityLoaderDialog } from "./BulkCityLoaderDialog";
 
 interface LocationDatabaseDialogProps {
   open: boolean;
@@ -50,6 +51,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [seedElapsed, setSeedElapsed] = useState(0);
   const [seedStage, setSeedStage] = useState<string>("");
   const [seedResult, setSeedResult] = useState<{ inserted: number; skipped: number } | null>(null);
+  const [bulkLoaderOpen, setBulkLoaderOpen] = useState(false);
   const fetchAllLocationPages = async <T,>(buildQuery: (from: number, to: number) => any): Promise<T[]> => {
     const pageSize = 5000;
     const rows: T[] = [];
@@ -754,6 +756,16 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                 </Badge>
                 <Button
                   size="sm"
+                  variant="outline"
+                  className="h-7 rounded-xl gap-1.5 text-xs"
+                  onClick={() => setBulkLoaderOpen(true)}
+                  title="Re-run the city loader across one or many countries with retries and a per-country summary"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Re-run loader
+                </Button>
+                <Button
+                  size="sm"
                   variant="ghost"
                   className="h-7 rounded-xl gap-1.5 text-xs"
                   disabled={isFetching}
@@ -1031,6 +1043,15 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
           </div>
         )}
       </DialogContent>
+      <BulkCityLoaderDialog
+        open={bulkLoaderOpen}
+        onOpenChange={setBulkLoaderOpen}
+        initialSelected={[countryFilter]}
+        onCompleted={() => {
+          queryClient.invalidateQueries({ queryKey: ["locations-db"] });
+          queryClient.invalidateQueries({ queryKey: ["locations-db-meta"] });
+        }}
+      />
     </Dialog>
   );
 }
