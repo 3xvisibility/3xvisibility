@@ -636,19 +636,38 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           candidate.content = ensureContent(candidate.content, candidate.title, candidate.keywords[0] || deriveFocusKeyword(candidate));
         }
 
-        // Per-factor guard: accept a field ONLY if its factor score improved.
+        // Per-factor guard. Some factors are interdependent: keyword coverage can
+        // only improve when BOTH seo_keywords and body content move together, and
+        // meta scoring can depend on the active focus keyword. So first accept the
+        // whole candidate when the tracked SEO rank does not regress; otherwise
+        // fall back to field-level acceptance.
         const iterAfter = scoreOf(candidate, canonicalUrl);
         const afterFactor = (k: string) => factorScore(iterAfter, k);
-        for (const key of weakKeys) {
-          const before = beforeFactor(key);
-          const after = afterFactor(key);
-          // Accept if the factor improved, OR (when still failing) if it stayed equal
-          // but the candidate actually changed — lets deterministic polish take effect
-          // even when the scorer can't measure the delta yet.
+        const candidateChanged = trackedKeys.some((key) => {
           const fieldName = key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content";
-          const changed = JSON.stringify((candidate as any)[fieldName]) !== JSON.stringify((working as any)[fieldName]);
-          if (after > before || (after >= before && before < STRONG && changed)) {
-            (working as any)[fieldName] = (candidate as any)[fieldName];
+          return JSON.stringify((candidate as any)[fieldName]) !== JSON.stringify((working as any)[fieldName]);
+        });
+        const candidateRank = rankSnapshot(iterAfter);
+        const beforeRank = rankSnapshot(iterBefore);
+        const noWeakFactorDropped = weakKeys.every((key) => afterFactor(key) >= beforeFactor(key));
+
+        if (candidateChanged && candidateRank >= beforeRank && noWeakFactorDropped) {
+          working.title = candidate.title;
+          working.description = candidate.description;
+          working.keywords = candidate.keywords;
+          working.content = candidate.content;
+        } else {
+          for (const key of weakKeys) {
+            const before = beforeFactor(key);
+            const after = afterFactor(key);
+            // Accept if the factor improved, OR (when still failing) if it stayed equal
+            // but the candidate actually changed — lets deterministic polish take effect
+            // even when the scorer can't measure the delta yet.
+            const fieldName = key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content";
+            const changed = JSON.stringify((candidate as any)[fieldName]) !== JSON.stringify((working as any)[fieldName]);
+            if (after > before || (after >= before && before < STRONG && changed)) {
+              (working as any)[fieldName] = (candidate as any)[fieldName];
+            }
           }
         }
 
