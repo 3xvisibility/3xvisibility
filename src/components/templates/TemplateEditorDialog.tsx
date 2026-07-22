@@ -592,6 +592,19 @@ ${contentText}`
                   {aiVariablizing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Braces className="h-3 w-3" />}
                   <span className="hidden sm:inline">{aiVariablizing ? "Adding…" : "AI Add Variables"}</span>
                 </button>
+                <label
+                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground cursor-pointer shrink-0 select-none"
+                  title="When on, reviewer-scoped variables that should be site-owner fields (e.g. {testimonial_company} → {business_name}) are auto-corrected after AI Add Variables."
+                >
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 accent-primary cursor-pointer"
+                    checked={aiAutoFixReviewer}
+                    onChange={(e) => setAiAutoFixReviewer(e.target.checked)}
+                  />
+                  <span className="hidden sm:inline">Auto-fix reviewer scope</span>
+                  <span className="sm:hidden">Auto-fix</span>
+                </label>
                 <DynamicElementsInserter onInsert={(shortcode) => setContent(prev => prev + shortcode)} />
                 {uniqueVars.length > 0 && (
                   <div className="hidden md:flex items-center gap-1.5 overflow-x-auto ml-auto">
