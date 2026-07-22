@@ -240,10 +240,19 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     };
   }, [allCountryLocations]);
 
+  // Debounce the search input so filtering a 19k-city list doesn't lag on every keystroke.
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 200);
+    return () => clearTimeout(t);
+  }, [search]);
+  const isDebouncing = search.trim().toLowerCase() !== debouncedSearch;
+
   const filteredLocations = useMemo(() => {
-    let result = locations;
-    if (search) {
-      const q = search.toLowerCase();
+    // Enforce country lock defensively — never surface a city from another country.
+    let result = locations.filter((l: any) => !l.country_code || l.country_code === countryFilter);
+    if (debouncedSearch) {
+      const q = debouncedSearch;
       result = result.filter((l: any) =>
         l.city?.toLowerCase().includes(q) ||
         l.county?.toLowerCase().includes(q) ||
@@ -258,7 +267,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
       if (!isNaN(min)) result = result.filter((l: any) => (l.population || 0) >= min);
     }
     return result;
-  }, [locations, search, minPop]);
+  }, [locations, countryFilter, debouncedSearch, minPop]);
 
   // Infinite scroll: render in chunks of PAGE_SIZE and grow as the user
   // scrolls near the bottom of the list. Reset when filters/search change.
@@ -668,9 +677,12 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search city, region, state, zip..."
-                    className="h-8 pl-8 text-xs rounded-xl"
+                    placeholder={`Search cities in ${countryName}...`}
+                    className="h-8 pl-8 pr-8 text-xs rounded-xl"
                   />
+                  {isDebouncing && (
+                    <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground animate-spin" />
+                  )}
                 </div>
               </div>
               <Select value={stateFilter} onValueChange={setStateFilter}>
