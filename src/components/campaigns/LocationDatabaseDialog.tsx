@@ -302,6 +302,15 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   }, []);
 
   const toggleLocation = (id: string) => {
+    const row: any = filteredLocations.find((l: any) => l.id === id);
+    if (row && row.country_code && row.country_code !== countryFilter) {
+      toast({
+        title: "City locked to selected country",
+        description: `That city belongs to ${row.country_code}, not ${countryFilter}. Switch country first.`,
+        variant: "destructive",
+      });
+      return;
+    }
     const next = new Set(selectedIds);
     if (next.has(id)) next.delete(id); else next.add(id);
     setSelectedIds(next);
@@ -311,7 +320,9 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     if (selectedIds.size === filteredLocations.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredLocations.map((l: any) => l.id)));
+      // Only ever select cities whose country_code matches the locked country.
+      const eligible = filteredLocations.filter((l: any) => !l.country_code || l.country_code === countryFilter);
+      setSelectedIds(new Set(eligible.map((l: any) => l.id)));
     }
   };
 
@@ -422,6 +433,13 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   };
 
   const handleCountryChange = (code: string) => {
+    if (code === countryFilter) { setCountryOpen(false); return; }
+    if (selectedIds.size > 0) {
+      const ok = window.confirm(
+        `You have ${selectedIds.size} city selection${selectedIds.size === 1 ? "" : "s"} locked to ${countryName}. Switching country will clear them. Continue?`,
+      );
+      if (!ok) { setCountryOpen(false); return; }
+    }
     setCountryFilter(code);
     setStateFilter("all");
     setRegionFilter("all");
@@ -446,7 +464,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
           </DialogDescription>
         </DialogHeader>
 
-        {/* Country selector — searchable combobox */}
+        {/* Country selector — searchable combobox. Cities are auto-locked to the selected country. */}
         <Popover open={countryOpen} onOpenChange={setCountryOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -484,6 +502,12 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             </Command>
           </PopoverContent>
         </Popover>
+
+        <p className="text-[10px] text-muted-foreground flex items-center gap-1.5 -mt-1">
+          <Check className="h-3 w-3 text-primary" />
+          Cities are locked to <span className="font-semibold text-foreground">{countryName}</span>. Change country to pick from another region.
+        </p>
+
 
         {(seedMutation.isPending || seedProgress > 0 || seedResult) && (
           <div
