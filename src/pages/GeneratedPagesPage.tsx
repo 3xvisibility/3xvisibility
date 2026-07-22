@@ -739,9 +739,14 @@ export default function GeneratedPagesPage() {
     if (sortBy === "oldest") return [...base].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
     if (sortBy === "freshness") return [...base].sort((a, b) => calculateFreshness(b.created_at, b.status).ageDays - calculateFreshness(a.created_at, a.status).ageDays);
     const scoreGetter = (p: GeneratedPage) => {
-      if (sortBy === "seo_asc" || sortBy === "seo_desc") return calculateContentSeoScore(p.title, p.content, p.slug).score;
-      if (sortBy === "sea_asc" || sortBy === "sea_desc") return calculateContentSeaScore(p.title, p.content, p.slug).score;
-      if (sortBy === "geo_asc" || sortBy === "geo_desc") return calculateContentGeoScore(p.title, p.content, p.slug).score;
+      if (sortBy === "seo_asc" || sortBy === "seo_desc") return calculateContentSeoScore(p.title, p.content, p.slug, {
+        url: p.external_url || undefined,
+        description: p.seo_description || undefined,
+        seoTitle: p.seo_title || undefined,
+        seoKeywords: p.seo_keywords || undefined,
+      }).score;
+      if (sortBy === "sea_asc" || sortBy === "sea_desc") return calculateContentSeaScore(p.title, p.content, p.slug, p.external_url || undefined).score;
+      if (sortBy === "geo_asc" || sortBy === "geo_desc") return calculateContentGeoScore(p.title, p.content, p.slug, p.external_url || undefined).score;
       return 0;
     };
     const asc = sortBy.endsWith("_asc");
@@ -1087,7 +1092,16 @@ export default function GeneratedPagesPage() {
                       {page.campaigns?.name && <Badge variant="outline" className="text-[10px]">{page.campaigns.name}</Badge>}
                       <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground truncate max-w-[180px]">{page.slug}</code>
                     </div>
-                    <ScoresBadgeGroup title={page.title} content={page.content} slug={page.slug} size="sm" />
+                    <ScoresBadgeGroup
+                      title={page.title}
+                      content={page.content}
+                      slug={page.slug}
+                      url={page.external_url || undefined}
+                      description={page.seo_description || undefined}
+                      seoTitle={page.seo_title}
+                      seoKeywords={page.seo_keywords}
+                      size="sm"
+                    />
                   </div>
                   {page.status === "failed" && (
                     <Button
@@ -1202,7 +1216,16 @@ export default function GeneratedPagesPage() {
                         <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground truncate block max-w-[120px]">{page.slug}</code>
                       </td>
                       <td className="p-3">
-                        <ScoresBadgeGroup title={page.title} content={page.content} slug={page.slug} size="sm" />
+                        <ScoresBadgeGroup
+                          title={page.title}
+                          content={page.content}
+                          slug={page.slug}
+                          url={page.external_url || undefined}
+                          description={page.seo_description || undefined}
+                          seoTitle={page.seo_title}
+                          seoKeywords={page.seo_keywords}
+                          size="sm"
+                        />
                       </td>
                       <td className="p-3">
                         <div className="flex items-center gap-0.5 justify-end">
