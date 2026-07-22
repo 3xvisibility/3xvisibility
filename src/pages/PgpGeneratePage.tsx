@@ -284,9 +284,10 @@ export default function PgpGeneratePage() {
     if (!selectedGroup) return [];
     const vars = filterDesignVars(selectedGroup.variables || []).map(v => v.replace(/[{}]/g, ""));
     return vars.map(v => {
-      const kw = keywords.find(k => k.name === v);
       const override = keywordOverrides[v];
-      if (kw) return { name: v, keyword: kw, termCount: kw.term_count || 0 };
+      // Keyword Group overrides ALWAYS win — the user explicitly picked this
+      // bundle, so its per-variable terms must replace any stale workspace-level
+      // pgp_keywords row that happens to share the same variable name.
       if (override) {
         return {
           name: v,
@@ -294,6 +295,8 @@ export default function PgpGeneratePage() {
           termCount: override.term_count,
         };
       }
+      const kw = keywords.find(k => k.name === v);
+      if (kw) return { name: v, keyword: kw, termCount: kw.term_count || 0 };
       return { name: v, keyword: null, termCount: 0 };
     });
   }, [selectedGroup, keywords, keywordOverrides]);
