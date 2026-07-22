@@ -1,0 +1,1 @@
+ALTER VIEW public.user_page_counts SET (security_invoker = true);
