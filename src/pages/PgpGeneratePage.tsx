@@ -2431,17 +2431,27 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 const missRows: Row[] = [];
                 for (const gk of groupKeywords) {
                   const nameLc = gk.name.toLowerCase();
+                  const isGeo = isGeoVariable(gk.name);
+                  const isBiz = isBusinessVariable(gk.name);
                   const fromKw = !!gk.keyword && (gk.keyword.terms?.length ?? 0) > 0;
-                  const fromLoc = pickedLocations.length > 0 && isGeoVariable(gk.name);
-                  const fromBiz = injectedBizVarNames.has(nameLc);
-                  if (fromKw) {
-                    kwRows.push({ name: gk.name, example: gk.keyword?.terms?.[0] });
-                  } else if (fromLoc) {
+                  // Priority: Locations > Business Info > Keyword group.
+                  // Geo/biz slots are ALWAYS classified by name so users see
+                  // exactly where each field will be sourced from — Step 3
+                  // (locations) and Step 4 (business info) replace any stale
+                  // keyword-group defaults at generation time.
+                  if (isGeo) {
                     const first = pickedLocations[0] as any;
                     const val = first?.[nameLc] || first?.city || first?.state || first?.country;
                     locRows.push({ name: gk.name, example: val });
-                  } else if (fromBiz) {
-                    bizRows.push({ name: gk.name, example: businessInfo[nameLc] });
+                  } else if (isBiz) {
+                    const bizVal = businessInfo[nameLc]
+                      || (nameLc === "business_name" || nameLc === "brand" ? (businessInfo.company_name || businessInfo.brand_name) : "")
+                      || (nameLc === "phone_number" || nameLc === "tel" || nameLc === "telephone" ? businessInfo.phone : "")
+                      || (nameLc === "email_address" ? businessInfo.email : "")
+                      || (nameLc === "url" || nameLc === "site_url" ? businessInfo.website : "");
+                    bizRows.push({ name: gk.name, example: bizVal });
+                  } else if (fromKw) {
+                    kwRows.push({ name: gk.name, example: gk.keyword?.terms?.[0] });
                   } else {
                     missRows.push({ name: gk.name });
                   }
