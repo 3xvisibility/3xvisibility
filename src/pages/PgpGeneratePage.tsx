@@ -218,6 +218,45 @@ export default function PgpGeneratePage() {
     },
   });
 
+  // Saved Keyword Groups (bundle: template + language + variable terms)
+  const { data: keywordGroups = [] } = useQuery({
+    queryKey: ["pgp-keyword-groups-picker", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pgp_keyword_groups")
+        .select("id, name, template_id, language, variables, updated_at")
+        .eq("workspace_id", wsId!)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        id: string; name: string; template_id: string | null;
+        language: string; variables: Array<{ name: string; terms: string[] }>;
+      }>;
+    },
+  });
+
+  // In-memory keyword overrides sourced from a picked Keyword Group.
+  // Merged into `groupKeywords` so we don't have to persist duplicates in pgp_keywords.
+  const [keywordOverrides, setKeywordOverrides] = useState<Record<string, { terms: string[]; term_count: number }>>({});
+  const [selectedKeywordGroupId, setSelectedKeywordGroupId] = useState<string>("");
+
+  const applyKeywordGroup = (groupId: string) => {
+    setSelectedKeywordGroupId(groupId);
+    if (!groupId) { setKeywordOverrides({}); return; }
+    const g = keywordGroups.find(x => x.id === groupId);
+    if (!g) return;
+    if (g.template_id) setSelectedGroupId(g.template_id);
+    if (!campaignNameDraft.trim()) setCampaignNameDraft(g.name);
+    const overrides: Record<string, { terms: string[]; term_count: number }> = {};
+    for (const v of (g.variables || [])) {
+      const terms = (v.terms || []).filter(Boolean);
+      if (terms.length > 0) overrides[v.name] = { terms, term_count: terms.length };
+    }
+    setKeywordOverrides(overrides);
+    toast({ title: `Applied "${g.name}"`, description: `${Object.keys(overrides).length} variable(s) filled from group.` });
+  };
+
   const { data: keywords = [] } = useQuery({
     queryKey: ["pgp-keywords-full", wsId],
     enabled: !!wsId,
