@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +50,24 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [seedElapsed, setSeedElapsed] = useState(0);
   const [seedStage, setSeedStage] = useState<string>("");
   const [seedResult, setSeedResult] = useState<{ inserted: number; skipped: number } | null>(null);
+  const fetchAllLocationPages = async <T,>(buildQuery: (from: number, to: number) => any): Promise<T[]> => {
+    const pageSize = 5000;
+    const rows: T[] = [];
+    for (let from = 0; ; from += pageSize) {
+      const { data, error } = await buildQuery(from, from + pageSize - 1);
+      if (error) {
+        const enriched = new Error(
+          `[${error.code ?? "db_error"}] ${error.message}${error.hint ? ` — ${error.hint}` : ""}${error.details ? ` (${error.details})` : ""}`,
+        );
+        (enriched as any).cause = error;
+        throw enriched;
+      }
+      const page = (data || []) as T[];
+      rows.push(...page);
+      if (page.length < pageSize) break;
+    }
+    return rows;
+  };
 
   const seedMutation = useMutation({
     mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string; target?: number; bulk?: boolean; all?: boolean }) => {
@@ -153,26 +170,20 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     queryFn: async () => {
       setCacheStats((s) => ({ ...s, misses: s.misses + 1 }));
       setRetryAttempt((n) => n + 1);
-      let query = supabase
-        .from("locations")
-        .select("*")
-        .eq("country_code", countryFilter)
-        .order("population", { ascending: false })
-        .limit(5000);
+      const data = await fetchAllLocationPages<any>((from, to) => {
+        let query = supabase
+          .from("locations")
+          .select("*")
+          .eq("country_code", countryFilter)
+          .order("population", { ascending: false })
+          .range(from, to);
 
-      if (stateFilter !== "all") query = query.eq("state", stateFilter);
-      if (regionFilter !== "all") query = query.eq("region", regionFilter);
-
-      const { data, error } = await query;
-      if (error) {
-        const enriched = new Error(
-          `[${error.code ?? "db_error"}] ${error.message}${error.hint ? ` — ${error.hint}` : ""}${error.details ? ` (${error.details})` : ""}`,
-        );
-        (enriched as any).cause = error;
-        throw enriched;
-      }
+        if (stateFilter !== "all") query = query.eq("state", stateFilter);
+        if (regionFilter !== "all") query = query.eq("region", regionFilter);
+        return query;
+      });
       queueMicrotask(recomputeCacheSize);
-      return data || [];
+      return data;
     },
   });
 
@@ -218,12 +229,13 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("locations")
-        .select("state, region")
-        .eq("country_code", countryFilter);
-      if (error) throw error;
-      return data || [];
+      return await fetchAllLocationPages<any>((from, to) =>
+        supabase
+          .from("locations")
+          .select("state, region")
+          .eq("country_code", countryFilter)
+          .range(from, to),
+      );
     },
   });
 
@@ -589,7 +601,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             <Progress value={seedProgress} className="h-1.5" />
             {seedMutation.isPending && (
               <p className="text-[10px] text-muted-foreground">
-                AI is generating cities — this usually takes 15–45 seconds. Please keep this dialog open.
+                Loading global city data — this can take 15–90 seconds for large countries. Please keep this dialog open.
               </p>
             )}
             {seedResult && (
