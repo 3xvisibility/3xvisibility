@@ -669,11 +669,29 @@ Only return valid JSON. No markdown fences.`;
   // Injected values from Step 3 (locations) and Step 4 (business info).
   const buildInjectedForRow = (rowIndex: number): Record<string, string> => {
     const inject: Record<string, string> = {};
-    // Business/personal info
+    // Business/personal info (direct keys)
     for (const [k, v] of Object.entries(businessInfo)) {
       if ((v ?? "").trim()) inject[k] = v.trim();
     }
-    // Locations cycle per row
+    // Business info aliases so common template variables always resolve.
+    const bizName = (businessInfo.company_name || businessInfo.brand_name || "").trim();
+    if (bizName) {
+      if (!inject.business_name) inject.business_name = bizName;
+      if (!inject.brand) inject.brand = bizName;
+    }
+    const phone = (businessInfo.phone || "").trim();
+    if (phone) {
+      inject.phone_number = phone; inject.tel = phone; inject.telephone = phone;
+    }
+    const emailV = (businessInfo.email || "").trim();
+    if (emailV) inject.email_address = emailV;
+    const siteV = (businessInfo.website || "").trim();
+    if (siteV) { inject.url = siteV; inject.site_url = siteV; }
+    const addr = (businessInfo.address || "").trim();
+    if (addr) { inject.street = addr; inject.street_address = addr; }
+
+    // Locations cycle per row (win over any keyword-group / business defaults
+    // for geographic fields).
     if (pickedLocations.length > 0) {
       const loc = pickedLocations[rowIndex % pickedLocations.length];
       const cityVal = (loc.city || "").toString().trim();
@@ -681,14 +699,36 @@ Only return valid JSON. No markdown fences.`;
       const countryVal = (loc.country || "").toString().trim();
       const regionVal = (loc.region || loc.state || "").toString().trim();
       const zipVal = (loc.zip || "").toString().trim();
+      const locAddress = ((loc as any).address || "").toString().trim();
       if (cityVal) { inject.city = cityVal; inject.cities = cityVal; inject.location = cityVal; }
       if (stateVal) { inject.state = stateVal; inject.states = stateVal; }
       if (countryVal) { inject.country = countryVal; inject.countries = countryVal; }
       if (regionVal) { inject.region = regionVal; }
       if (zipVal) { inject.zip = zipVal; inject.zipcode = zipVal; }
+      if (locAddress) inject.address = locAddress;
     }
     return inject;
   };
+
+  const buildRows = (): Record<string, string>[] => {
+    const kwData = groupKeywords.filter(k => k.keyword);
+
+    const finalize = (rows: Record<string, string>[]): Record<string, string>[] => {
+      // Geo names user explicitly attached in Step 3 — these must win over any
+      // pre-existing keyword-group value so real Location DB data replaces
+      // stale defaults (e.g. "New York", "Canada") coming from auto-generated
+      // keyword groups.
+      const GEO_KEYS = ["city", "cities", "state", "states", "country", "countries", "region", "zip", "zipcode", "location", "locations", "area", "address", "street", "street_address"];
+      // Business-info keys always win over keyword-group values too so a
+      // template's {business_name}/{phone}/{email} always use Step 4 data.
+      const BIZ_KEYS = BUSINESS_VAR_NAMES;
+      return rows.map((r, i) => {
+        const injected = buildInjectedForRow(i);
+        // Start with row values, then wipe geo/biz keys that will be overridden
+        // by injected data so downstream merge is deterministic.
+        const base: Record<string, string> = { ...r };
+        if (pickedLocations.length > 0) {
+          for (const k of GEO_KEYS) delete base[k];
 
   const buildRows = (): Record<string, string>[] => {
     const kwData = groupKeywords.filter(k => k.keyword);
