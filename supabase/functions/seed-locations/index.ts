@@ -367,13 +367,17 @@ function locationKey(row: Pick<CityEntry, "city" | "state" | "state_code" | "cou
 
 async function fetchGeoNamesDirectCities(code: string, countryName: string): Promise<CityEntry[]> {
   const zipUrl = `https://download.geonames.org/export/dump/${code}.zip`;
-  const head = await fetch(zipUrl, { method: "HEAD" });
-  const size = Number(head.headers.get("content-length") || 0);
-
-  // Very large country dumps can exceed edge runtime memory/time. Use the
-  // paginated mirror for those countries instead of failing halfway through.
-  if (head.ok && size > GEONAMES_MAX_DIRECT_ZIP_BYTES) {
-    throw new Error(`GeoNames direct dump is too large (${size} bytes); using paginated mirror.`);
+  // Try to read size; if HEAD is unsupported, proceed anyway.
+  let size = 0;
+  try {
+    const head = await fetch(zipUrl, { method: "HEAD" });
+    size = Number(head.headers.get("content-length") || 0);
+    if (head.ok && size > GEONAMES_MAX_DIRECT_ZIP_BYTES) {
+      throw new Error(`GeoNames direct dump is too large (${size} bytes); using paginated mirror.`);
+    }
+  } catch (err) {
+    // Only rethrow the explicit size guard; ignore other HEAD errors.
+    if (getErrorMessage(err).includes("too large")) throw err;
   }
 
   const res = await fetch(zipUrl);
