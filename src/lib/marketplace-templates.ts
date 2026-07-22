@@ -3302,6 +3302,12 @@ const marginfinderTemplate = () => `<style>
 .mf-press-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:2.5rem}
 .mf-press-tags span{border:1px solid var(--line);padding:.55rem 1rem;font-size:.72rem;letter-spacing:.18em;color:var(--body);font-weight:600}
 .mf-press-tags span.on{border-color:var(--gold);color:var(--gold)}
+.mf-hero-headline{margin-top:2.5rem;max-width:560px}
+.mf-hero-headline h1{font-family:'Georgia',serif;color:var(--ink);font-size:clamp(2rem,3.6vw,3.4rem);line-height:1.05;letter-spacing:-0.02em;margin:0 0 1.1rem}
+.mf-hero-sub{color:var(--body);font-size:clamp(1rem,1.2vw,1.15rem);line-height:1.55;margin:0 0 1.4rem}
+.mf-hero-meta{display:flex;flex-wrap:wrap;gap:.6rem 1.4rem;color:var(--gold);font-family:'Inter',sans-serif;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;font-weight:600}
+.mf-hero-meta span{position:relative;padding-right:1.4rem}
+.mf-hero-meta span+span::before{content:"";position:absolute;left:-.9rem;top:50%;width:4px;height:4px;background:var(--gold);border-radius:50%;transform:translateY(-50%)}
 .mf-hero-quote{margin-top:auto;padding-top:3rem;border-top:1px solid var(--gold);max-width:520px}
 .mf-hero-quote p{color:var(--ink);font-family:'Georgia',serif;font-style:italic;font-size:clamp(1.15rem,1.8vw,1.6rem);line-height:1.4}
 .mf-hero-quote .who{margin-top:1.5rem;color:var(--gold);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;font-family:'Inter',sans-serif;font-weight:600}
@@ -3384,6 +3390,11 @@ const marginfinderTemplate = () => `<style>
       <div>
         <span class="mf-eye">— As featured in</span>
         <div class="mf-press-tags"><span class="on">HBR</span><span>FT</span><span>MQ</span><span>INC</span></div>
+      </div>
+      <div class="mf-hero-headline">
+        <h1>{hero_title}</h1>
+        <p class="mf-hero-sub">{hero_subtitle}</p>
+        <div class="mf-hero-meta"><span>{hero_stat_1}</span><span>{hero_stat_2}</span><span>{hero_stat_3}</span></div>
       </div>
       <div class="mf-hero-quote">
         <p>"{press_quote}"</p>
@@ -4034,6 +4045,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     content: marginfinderTemplate(),
     variables: [
       "{company_name}", "{tagline}", "{headline}", "{sub_headline}", "{cta_text}",
+      "{hero_title}", "{hero_subtitle}", "{hero_stat_1}", "{hero_stat_2}", "{hero_stat_3}",
       "{press_quote}", "{press_source}", "{press_year}",
       "{method_1_title}", "{method_1_desc}", "{method_2_title}", "{method_2_desc}",
       "{method_3_title}", "{method_3_desc}", "{method_4_title}", "{method_4_desc}",
@@ -4060,6 +4072,11 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
       headline: "We find the margin your org chart is hiding.",
       sub_headline: "The operators other consultants call when a turnaround is already overdue.",
       cta_text: "Schedule Assessment",
+      hero_title: "Margin recovery for $10M–$250M+ operators in {city}.",
+      hero_subtitle: "A confidential, partner-led diagnostic that identifies where your business is bleeding EBITDA — and a sequenced roadmap to recover it in 90 days.",
+      hero_stat_1: "$180M+ recovered",
+      hero_stat_2: "34 engagements",
+      hero_stat_3: "14:1 average ROI",
       press_quote: "The operators other consultants call when a turnaround is already overdue.",
       press_source: "Harvard Business Review",
       press_year: "2025",
