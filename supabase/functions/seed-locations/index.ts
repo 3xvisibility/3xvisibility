@@ -282,8 +282,9 @@ const COUNTRY_DATA: Record<string, CityEntry[]> = {
 // 1) GeoNames country dumps: most complete, includes towns/villages, regions,
 //    coordinates, population and timezone. Small/medium country zips are loaded
 //    directly.
-// 2) OpenDataSoft GeoNames mirror: safer fallback for very large country zips.
-// 3) CountriesNow: final fallback when mirrors are temporarily unavailable.
+// 2) GeoNames cities500 compact dump: safer fallback for very large country zips.
+// 3) OpenDataSoft GeoNames mirror: fallback when GeoNames downloads fail.
+// 4) CountriesNow: final fallback when mirrors are temporarily unavailable.
 // ─────────────────────────────────────────────────────────────
 let COUNTRY_NAME_CACHE: Record<string, string> | null = null;
 let GEONAMES_ADMIN1_CACHE: Record<string, string> | null = null;
@@ -419,6 +420,54 @@ async function fetchGeoNamesDirectCities(code: string, countryName: string): Pro
   return rows.sort((a, b) => (b.population || 0) - (a.population || 0) || a.city.localeCompare(b.city));
 }
 
+async function fetchGeoNamesCompactCities(code: string, countryName: string): Promise<CityEntry[]> {
+  const res = await fetch("https://download.geonames.org/export/dump/cities500.zip");
+  if (!res.ok) throw new Error(`GeoNames compact city dump failed (${res.status})`);
+
+  const files = unzipSync(new Uint8Array(await res.arrayBuffer()));
+  const data = files["cities500.txt"];
+  if (!data) throw new Error("GeoNames compact city dump contained no cities500.txt file");
+
+  const [admin1Map, admin2Map] = await Promise.all([loadGeoNamesAdmin1Map(), loadGeoNamesAdmin2Map()]);
+  const rows: CityEntry[] = [];
+  const seen = new Set<string>();
+  const text = strFromU8(data);
+
+  for (const line of text.split("\n")) {
+    if (!line.trim()) continue;
+    const p = line.split("\t");
+    if (p[8] !== code || p[6] !== "P" || !GEONAMES_CITY_FEATURES.has(p[7])) continue;
+
+    const city = (p[1] || p[2] || "").trim();
+    if (!city) continue;
+
+    const stateCode = p[10] || "";
+    const countyCode = p[11] || "";
+    const state = admin1Map[`${code}.${stateCode}`] || stateCode || "";
+    const county = admin2Map[`${code}.${stateCode}.${countyCode}`] || null;
+    const row: CityEntry = {
+      city,
+      county,
+      state,
+      state_code: stateCode,
+      zip_code: null,
+      latitude: Number(p[4]) || 0,
+      longitude: Number(p[5]) || 0,
+      population: Number(p[14]) || 0,
+      timezone: p[17] || "",
+      region: state,
+      country: countryName,
+      country_code: code,
+    };
+    const key = locationKey(row);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    rows.push(row);
+  }
+
+  return rows.sort((a, b) => (b.population || 0) - (a.population || 0) || a.city.localeCompare(b.city));
+}
+
 async function fetchOpenDataSoftCities(code: string, countryName: string): Promise<CityEntry[]> {
   const rows: CityEntry[] = [];
   const seen = new Set<string>();
@@ -501,6 +550,14 @@ async function fetchAllCitiesForCountry(code: string, countryName: string): Prom
     const rows = await fetchGeoNamesDirectCities(code, countryName);
     if (rows.length > 0) return { rows, source: "GeoNames" };
     failures.push("GeoNames returned 0 rows");
+  } catch (err) {
+    failures.push(getErrorMessage(err));
+  }
+
+  try {
+    const rows = await fetchGeoNamesCompactCities(code, countryName);
+    if (rows.length > 0) return { rows, source: "GeoNames cities500" };
+    failures.push("GeoNames cities500 returned 0 rows");
   } catch (err) {
     failures.push(getErrorMessage(err));
   }
