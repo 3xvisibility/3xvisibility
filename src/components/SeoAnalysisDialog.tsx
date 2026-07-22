@@ -60,6 +60,9 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
   const [fixing, setFixing] = useState(false);
   const [fixStep, setFixStep] = useState("");
   const [fixProgress, setFixProgress] = useState(0);
+  type PassEntry = { pass: number; before: number; after: number; delta: number; weak: string[]; status: "running" | "improved" | "stagnant" };
+  const [passHistory, setPassHistory] = useState<PassEntry[]>([]);
+  const [currentIteration, setCurrentIteration] = useState(0);
   const [localPage, setLocalPage] = useState(initialPage);
   const [csvRow, setCsvRow] = useState<Record<string, unknown> | null>(null);
   const [templateContent, setTemplateContent] = useState<string | null>(null);
@@ -211,6 +214,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 
     setFixing(true);
     setFixProgress(0);
+    setPassHistory([]);
+    setCurrentIteration(0);
 
     const STRONG = 80;
     const MAX_ITERATIONS = 8;
@@ -301,13 +306,16 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 
       while (iteration < MAX_ITERATIONS && weakKeys.length > 0) {
         iteration++;
+        setCurrentIteration(iteration);
         const baseProgress = 5 + (iteration - 1) * Math.floor(70 / MAX_ITERATIONS);
         setFixStep(`Pass ${iteration}/${MAX_ITERATIONS} — improving: ${weakKeys.join(", ")}`);
         setFixProgress(baseProgress);
 
-
         const iterBefore = scoreOf(working, canonicalUrl);
         const beforeFactor = (k: string) => factorScore(iterBefore, k);
+        const passStartScore = iterBefore.score;
+        const currentWeak = [...weakKeys];
+        setPassHistory((prev) => [...prev, { pass: iteration, before: passStartScore, after: passStartScore, delta: 0, weak: currentWeak, status: "running" }]);
 
         // Candidate values start from current working copy.
         const candidate = { ...working };
@@ -442,6 +450,16 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         } else {
           stagnantPasses++;
         }
+
+        const passAfter = nowUnified.score;
+        const passDelta = passAfter - passStartScore;
+        setPassHistory((prev) =>
+          prev.map((p) =>
+            p.pass === iteration
+              ? { ...p, after: passAfter, delta: passDelta, status: passDelta > 0 ? "improved" : "stagnant" }
+              : p,
+          ),
+        );
 
         weakKeys = nowUnified.factors
           .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
@@ -964,9 +982,35 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
               )}
             </Button>
             {fixing && (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Progress value={fixProgress} className="h-1.5" />
-                <p className="text-[10px] text-muted-foreground text-center">{fixStep}</p>
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span className="truncate">{fixStep}</span>
+                  {currentIteration > 0 && (
+                    <span className="shrink-0 font-mono">Iteration {currentIteration}/8</span>
+                  )}
+                </div>
+                {passHistory.length > 0 && (
+                  <div className="rounded-md border bg-muted/30 p-2 max-h-40 overflow-y-auto space-y-1">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Pass history</p>
+                    {passHistory.map((p) => (
+                      <div key={p.pass} className="flex items-center justify-between gap-2 text-[11px]">
+                        <span className="font-mono text-muted-foreground shrink-0">#{p.pass}</span>
+                        <span className="flex-1 truncate text-muted-foreground">{p.weak.join(", ") || "—"}</span>
+                        <span className="font-mono tabular-nums">
+                          {p.before} →{" "}
+                          {p.status === "running" ? (
+                            <span className="text-muted-foreground animate-pulse">…</span>
+                          ) : (
+                            <span className={p.delta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
+                              {p.after} ({p.delta > 0 ? "+" : ""}{p.delta})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
