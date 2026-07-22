@@ -57,7 +57,7 @@ import {
   Plus, Upload, ArrowRight, Check, AlertTriangle, Play, Loader2, Eye,
   MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon,
   Settings2, Globe, Database as DatabaseIcon, Sparkles, Wand2, Info,
-  CheckCircle2, XCircle, Lightbulb, ArrowLeft, Bookmark, Trash2, Save, ChevronRight, Download, AlertCircle,
+  CheckCircle2, XCircle, Lightbulb, ArrowLeft, Bookmark, Trash2, Save, ChevronRight, Download, AlertCircle, KeyRound,
 } from "lucide-react";
 
 const LANGUAGES = [
@@ -633,6 +633,60 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       return (data ?? []) as { name: string; terms: string[] | null }[];
     },
   });
+
+  // Real Keyword Groups (template + language + variable terms bundle) —
+  // lets the user pick a whole group here instead of the raw template.
+  const { data: pgpKeywordGroups = [] } = useQuery({
+    queryKey: ["pgp-keyword-groups-picker", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pgp_keyword_groups")
+        .select("id, name, template_id, language, variables, updated_at")
+        .eq("workspace_id", wsId!)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return ((data ?? []) as any[]) as Array<{
+        id: string; name: string; template_id: string | null;
+        language: string; variables: Array<{ name: string; terms: string[] }>;
+      }>;
+    },
+  });
+
+  const [selectedKeywordGroup, setSelectedKeywordGroup] = useState<string>("");
+
+  const applyKeywordGroup = useCallback((groupId: string) => {
+    setSelectedKeywordGroup(groupId);
+    if (!groupId) return;
+    const g = pgpKeywordGroups.find(x => x.id === groupId);
+    if (!g) return;
+    if (g.template_id) setSelectedTemplate(g.template_id);
+    if (g.language) setCampaignLanguage(g.language);
+    const vars = (g.variables || []).filter(v => v.terms && v.terms.length > 0);
+    if (vars.length === 0) {
+      toast({ title: "Group has no terms yet", description: "Add terms in Keyword Groups first.", variant: "destructive" });
+      return;
+    }
+    const MAX_ROWS = 5000;
+    let rows: Record<string, string>[] = [{}];
+    for (const v of vars) {
+      const next: Record<string, string>[] = [];
+      for (const r of rows) {
+        for (const t of v.terms) {
+          next.push({ ...r, [v.name]: t });
+          if (next.length >= MAX_ROWS) break;
+        }
+        if (next.length >= MAX_ROWS) break;
+      }
+      rows = next;
+    }
+    const headers = vars.map(v => v.name);
+    setDataSource("csv");
+    setCsvHeaders(headers);
+    setCsvData(rows);
+    setCsvRawText([headers.join(","), ...rows.map(r => headers.map(h => JSON.stringify(r[h] ?? "")).join(","))].join("\n"));
+    toast({ title: `Applied "${g.name}"`, description: `${rows.length} row${rows.length !== 1 ? "s" : ""} ready. Pick Locations next.` });
+  }, [pgpKeywordGroups, toast]);
 
   // Auto-suggest publish target: Shopify sites & ecommerce campaigns default
   // to "product"; non-ecommerce sites default to "page". Skipped once the
@@ -1875,6 +1929,32 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </Select>
                     </div>
                   </div>
+
+                  {/* Keyword Group picker — one-shot: sets template, language, and cartesian rows */}
+                  {pgpKeywordGroups.length > 0 && (
+                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <KeyRound className="h-4 w-4 text-emerald-600" />
+                        <Label className="text-sm font-semibold">Use a Keyword Group</Label>
+                        <span className="text-[10px] text-muted-foreground ml-auto">optional shortcut</span>
+                      </div>
+                      <Select value={selectedKeywordGroup} onValueChange={applyKeywordGroup}>
+                        <SelectTrigger className="rounded-xl h-10 bg-background">
+                          <SelectValue placeholder="Pick a saved group (template + language + terms)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {pgpKeywordGroups.map(g => (
+                            <SelectItem key={g.id} value={g.id}>
+                              {g.name} · {g.language} · {g.variables?.length || 0} vars
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[11px] text-muted-foreground">
+                        Fills template, language and rows from your saved group. Then just pick Locations + Business Info.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Template selection — moved up so users see required variables before picking data */}
                   <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
