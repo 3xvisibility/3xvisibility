@@ -103,6 +103,8 @@ export default function KeywordGroupsPage() {
   const [language, setLanguage] = useState("en");
   const [variables, setVariables] = useState<GroupVariable[]>([]);
   const [aiBusy, setAiBusy] = useState<string | null>(null);
+  const [businessContext, setBusinessContext] = useState("");
+  const [varHints, setVarHints] = useState<Record<string, string>>({});
 
   const { data: groups = [], isLoading } = useQuery({
     queryKey: ["pgp-keyword-groups", wsId],
@@ -159,6 +161,8 @@ export default function KeywordGroupsPage() {
     setLanguage("en");
     setVariables([]);
     setEditing(null);
+    setBusinessContext("");
+    setVarHints({});
   };
 
   const openCreate = () => {
@@ -225,10 +229,25 @@ export default function KeywordGroupsPage() {
     setAiBusy(varName);
     try {
       const langLabel = LANGUAGES.find(l => l.code === language)?.label || "English";
-      const prompt = `Generate 15 concise, real-world search values for the variable "{${varName}}" in a website template. Return one plain value per line, no numbering, no explanations. Language: ${langLabel}.`;
+      const ctx = businessContext.trim();
+      const hint = (varHints[varName] || "").trim();
+      if (!ctx && !hint) {
+        toast({
+          title: "Add context first",
+          description: "Enter your business/niche above, or a hint for this variable, so AI generates relevant values.",
+          variant: "destructive",
+        });
+        setAiBusy(null);
+        return;
+      }
+      const contextBlock = [
+        ctx ? `Client business / niche: ${ctx}` : "",
+        hint ? `User hint for this variable: ${hint}` : "",
+      ].filter(Boolean).join("\n");
+      const prompt = `${contextBlock}\n\nGenerate 15 concise, real-world values for the variable "{${varName}}" that are directly relevant to the business/niche and hint above. Stay strictly on-topic — do not invent generic or unrelated brands. Return one plain value per line, no numbering, no explanations. Language: ${langLabel}.`;
       const res = await callAI({
         messages: [
-          { role: "system", content: "You return only plain values, one per line. No markdown, no HTML." },
+          { role: "system", content: "You return only plain values, one per line, tightly matched to the user's business context. No markdown, no HTML, no off-topic suggestions." },
           { role: "user", content: prompt },
         ],
       });
@@ -407,6 +426,23 @@ export default function KeywordGroupsPage() {
                   <p className="text-[11px] text-muted-foreground">AI-generated terms will be produced in this language.</p>
                 </div>
 
+                <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3">
+                  <Label className="flex items-center gap-1.5 text-sm">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    Business / niche context <span className="text-[10px] text-muted-foreground font-normal">(used by AI generate)</span>
+                  </Label>
+                  <Textarea
+                    value={businessContext}
+                    onChange={(e) => setBusinessContext(e.target.value)}
+                    placeholder="e.g. Local plumbing company in Dhaka offering emergency repair, pipe installation, and drain cleaning for homes and offices."
+                    rows={3}
+                    className="text-xs"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Describe the client's business, industry, and audience. Every AI generate below will stay strictly on this topic instead of inventing generic values.
+                  </p>
+                </div>
+
                 {variables.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No variables to fill. Go back and pick a different template.</p>
                 ) : variables.map((v, idx) => (
@@ -421,6 +457,12 @@ export default function KeywordGroupsPage() {
                         </Button>
                       </div>
                     </div>
+                    <Input
+                      value={varHints[v.name] || ""}
+                      onChange={(e) => setVarHints(prev => ({ ...prev, [v.name]: e.target.value }))}
+                      placeholder={`Hint for {${v.name}} — e.g. "types of plumbing services" or "budget tiers"`}
+                      className="h-8 text-xs"
+                    />
                     <Textarea
                       value={v.terms.join("\n")}
                       onChange={(e) => {
