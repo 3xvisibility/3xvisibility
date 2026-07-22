@@ -51,6 +51,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [seedElapsed, setSeedElapsed] = useState(0);
   const [seedStage, setSeedStage] = useState<string>("");
   const [seedResult, setSeedResult] = useState<{ inserted: number; skipped: number } | null>(null);
+  const [bulkLoaderOpen, setBulkLoaderOpen] = useState(false);
   const fetchAllLocationPages = async <T,>(buildQuery: (from: number, to: number) => any): Promise<T[]> => {
     const pageSize = 5000;
     const rows: T[] = [];
