@@ -53,24 +53,13 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [seedStage, setSeedStage] = useState<string>("");
   const [seedResult, setSeedResult] = useState<{ inserted: number; skipped: number } | null>(null);
   const [bulkLoaderOpen, setBulkLoaderOpen] = useState(false);
-  const fetchAllLocationPages = async <T,>(buildQuery: (from: number, to: number) => any): Promise<T[]> => {
-    const pageSize = 5000;
-    const rows: T[] = [];
-    for (let from = 0; ; from += pageSize) {
-      const { data, error } = await buildQuery(from, from + pageSize - 1);
-      if (error) {
-        const enriched = new Error(
-          `[${error.code ?? "db_error"}] ${error.message}${error.hint ? ` — ${error.hint}` : ""}${error.details ? ` (${error.details})` : ""}`,
-        );
-        (enriched as any).cause = error;
-        throw enriched;
-      }
-      const page = (data || []) as T[];
-      rows.push(...page);
-      if (page.length < pageSize) break;
-    }
-    return rows;
-  };
+  // Server-side pagination: each page is a small range request; total row
+  // count is returned via PostgREST's estimated head count. Big countries no
+  // longer stream tens of thousands of rows to the browser.
+  const PAGE_SIZE = 100;
+
+  const escapeIlike = (s: string) => s.replace(/([%_,()])/g, "\\$1");
+
 
   const seedMutation = useMutation({
     mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string; target?: number; bulk?: boolean; all?: boolean }) => {
