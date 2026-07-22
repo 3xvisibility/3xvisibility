@@ -60,6 +60,9 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
   const [fixing, setFixing] = useState(false);
   const [fixStep, setFixStep] = useState("");
   const [fixProgress, setFixProgress] = useState(0);
+  type PassEntry = { pass: number; before: number; after: number; delta: number; weak: string[]; status: "running" | "improved" | "stagnant" };
+  const [passHistory, setPassHistory] = useState<PassEntry[]>([]);
+  const [currentIteration, setCurrentIteration] = useState(0);
   const [localPage, setLocalPage] = useState(initialPage);
   const [csvRow, setCsvRow] = useState<Record<string, unknown> | null>(null);
   const [templateContent, setTemplateContent] = useState<string | null>(null);
