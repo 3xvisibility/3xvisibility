@@ -1930,6 +1930,32 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     </div>
                   </div>
 
+                  {/* Keyword Group picker — one-shot: sets template, language, and cartesian rows */}
+                  {pgpKeywordGroups.length > 0 && (
+                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <KeyRound className="h-4 w-4 text-emerald-600" />
+                        <Label className="text-sm font-semibold">Use a Keyword Group</Label>
+                        <span className="text-[10px] text-muted-foreground ml-auto">optional shortcut</span>
+                      </div>
+                      <Select value={selectedKeywordGroup} onValueChange={applyKeywordGroup}>
+                        <SelectTrigger className="rounded-xl h-10 bg-background">
+                          <SelectValue placeholder="Pick a saved group (template + language + terms)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {pgpKeywordGroups.map(g => (
+                            <SelectItem key={g.id} value={g.id}>
+                              {g.name} · {g.language} · {g.variables?.length || 0} vars
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[11px] text-muted-foreground">
+                        Fills template, language and rows from your saved group. Then just pick Locations + Business Info.
+                      </p>
+                    </div>
+                  )}
+
                   {/* Template selection — moved up so users see required variables before picking data */}
                   <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
                     <div className="flex items-center gap-2">
