@@ -57,51 +57,92 @@ Deno.serve(async (req) => {
       const { data: authUsers, error: usersError } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
       if (usersError) throw usersError;
 
-      const { data: profiles } = await serviceClient.from("profiles").select("*");
-      const { data: rolesData } = await serviceClient.from("user_roles").select("user_id, role");
-      const { data: campaigns } = await serviceClient.from("campaigns").select("*");
-      const { data: generatedPages } = await serviceClient.from("generated_pages").select("id, status, campaign_id, created_at, title, user_id");
-      // Exclude sensitive columns (stripe_customer_id, stripe_subscription_id) from client payload.
-      const { data: subscriptions } = await serviceClient.from("subscriptions").select("id, user_id, plan, pages_limit, pages_used, current_period_start, current_period_end, ai_generations_used, ai_generations_limit, workspace_id, billing_cycle, created_at, updated_at");
-      const { data: websites } = await serviceClient.from("websites").select("id, user_id, type, status");
-      const { data: aiCredits } = await serviceClient.from("ai_credits").select("*");
+      // Fetch in parallel; cap heavy tables and use head-counts for totals to avoid OOM.
+      const [
+        profilesRes,
+        rolesRes,
+        campaignsRes,
+        recentPagesRes,
+        subscriptionsRes,
+        websitesRes,
+        aiCreditsRes,
+        totalPagesCountRes,
+        publishedPagesCountRes,
+        failedPagesCountRes,
+        totalCampaignsCountRes,
+        activeCampaignsCountRes,
+        completedCampaignsCountRes,
+        totalWebsitesCountRes,
+        pageCountsPerUserRes,
+      ] = await Promise.all([
+        serviceClient.from("profiles").select("user_id, full_name, company, is_banned, banned_reason"),
+        serviceClient.from("user_roles").select("user_id, role"),
+        serviceClient.from("campaigns").select("id, user_id, name, status, created_at").order("created_at", { ascending: false }).limit(500),
+        serviceClient.from("generated_pages").select("id, status, created_at, title, user_id").order("created_at", { ascending: false }).limit(200),
+        serviceClient.from("subscriptions").select("id, user_id, plan, pages_limit, pages_used, current_period_start, current_period_end, ai_generations_used, ai_generations_limit, workspace_id, billing_cycle, created_at, updated_at"),
+        serviceClient.from("websites").select("id, user_id, type, status"),
+        serviceClient.from("ai_credits").select("user_id, total_credits, used_credits, remaining_credits"),
+        serviceClient.from("generated_pages").select("id", { count: "exact", head: true }),
+        serviceClient.from("generated_pages").select("id", { count: "exact", head: true }).eq("status", "published"),
+        serviceClient.from("generated_pages").select("id", { count: "exact", head: true }).eq("status", "failed"),
+        serviceClient.from("campaigns").select("id", { count: "exact", head: true }),
+        serviceClient.from("campaigns").select("id", { count: "exact", head: true }).in("status", ["processing", "queued"]),
+        serviceClient.from("campaigns").select("id", { count: "exact", head: true }).eq("status", "completed"),
+        serviceClient.from("websites").select("id", { count: "exact", head: true }),
+        serviceClient.from("user_page_counts" as any).select("user_id, pages_count"),
+      ]);
+
+      const profiles = profilesRes.data || [];
+      const rolesData = rolesRes.data || [];
+      const campaigns = campaignsRes.data || [];
+      const recentPages = recentPagesRes.data || [];
+      const subscriptions = subscriptionsRes.data || [];
+      const websites = websitesRes.data || [];
+      const aiCredits = aiCreditsRes.data || [];
+      const pageCountsPerUser: any[] = pageCountsPerUserRes.data || [];
+
+      // Lookup maps
+      const profileByUser = new Map(profiles.map((p: any) => [p.user_id, p]));
+      const subByUser = new Map(subscriptions.map((s: any) => [s.user_id, s]));
+      const creditByUser = new Map(aiCredits.map((c: any) => [c.user_id, c]));
+      const roleByUser = new Map(rolesData.map((r: any) => [r.user_id, r.role]));
+      const campaignsByUser = new Map<string, any[]>();
+      for (const c of campaigns) {
+        const arr = campaignsByUser.get(c.user_id) || [];
+        arr.push(c);
+        campaignsByUser.set(c.user_id, arr);
+      }
+      const websitesCountByUser = new Map<string, number>();
+      for (const w of websites) {
+        websitesCountByUser.set(w.user_id, (websitesCountByUser.get(w.user_id) || 0) + 1);
+      }
+      const pagesCountByUser = new Map<string, number>();
+      for (const row of pageCountsPerUser) {
+        pagesCountByUser.set(row.user_id, Number(row.pages_count) || 0);
+      }
 
       // Build activity feed from recent events
       const activity: { type: string; message: string; timestamp: string; user_email?: string }[] = [];
+      const emailById = new Map((authUsers?.users || []).map((u: any) => [u.id, u.email]));
 
-      // Recent signups (last 50)
       const sortedUsers = [...(authUsers?.users || [])].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 50);
       for (const u of sortedUsers) {
         activity.push({ type: "signup", message: `New user signed up`, timestamp: u.created_at, user_email: u.email });
       }
-
-      // Recent campaigns (last 50)
-      const sortedCampaigns = [...(campaigns || [])].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 50);
-      for (const c of sortedCampaigns) {
-        const cUser = authUsers?.users?.find((u: any) => u.id === c.user_id);
-        activity.push({ type: "campaign", message: `Campaign "${c.name}" created (${c.status})`, timestamp: c.created_at, user_email: cUser?.email });
+      for (const c of campaigns.slice(0, 50)) {
+        activity.push({ type: "campaign", message: `Campaign "${c.name}" created (${c.status})`, timestamp: c.created_at, user_email: emailById.get(c.user_id) });
+      }
+      for (const p of recentPages.slice(0, 50)) {
+        activity.push({ type: "page", message: `Page "${p.title}" generated (${p.status})`, timestamp: p.created_at, user_email: emailById.get(p.user_id) });
       }
 
-      // Recent pages (last 50)
-      const sortedPages = [...(generatedPages || [])].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 50);
-      for (const p of sortedPages) {
-        const pUser = authUsers?.users?.find((u: any) => u.id === p.user_id);
-        activity.push({ type: "page", message: `Page "${p.title}" generated (${p.status})`, timestamp: p.created_at, user_email: pUser?.email });
-      }
-
-      // Sort all activity by timestamp descending, take top 100
       activity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       const recentActivity = activity.slice(0, 100);
-      const users = (authUsers?.users || []).map((u: any) => {
-        const profile = profiles?.find((p: any) => p.user_id === u.id);
-        const sub = subscriptions?.find((s: any) => s.user_id === u.id);
-        const userCampaigns = campaigns?.filter((c: any) => c.user_id === u.id) || [];
-        const userPages = generatedPages?.filter((p: any) =>
-          userCampaigns.some((c: any) => c.id === p.campaign_id)
-        ) || [];
-        const userWebsites = websites?.filter((w: any) => w.user_id === u.id) || [];
-        const credit = aiCredits?.find((c: any) => c.user_id === u.id);
 
+      const users = (authUsers?.users || []).map((u: any) => {
+        const profile: any = profileByUser.get(u.id);
+        const sub: any = subByUser.get(u.id);
+        const credit: any = creditByUser.get(u.id);
         return {
           id: u.id,
           email: u.email,
@@ -113,29 +154,20 @@ Deno.serve(async (req) => {
           pages_used: sub?.pages_used || 0,
           pages_limit: sub?.pages_limit || 0,
           subscription_id: sub?.id || null,
-          campaigns_count: userCampaigns.length,
-          pages_count: userPages.length,
-          websites_count: userWebsites.length,
+          campaigns_count: (campaignsByUser.get(u.id) || []).length,
+          pages_count: pagesCountByUser.get(u.id) || 0,
+          websites_count: websitesCountByUser.get(u.id) || 0,
           is_banned: profile?.is_banned || false,
           banned_reason: profile?.banned_reason || null,
-          role: rolesData?.find((r: any) => r.user_id === u.id)?.role || "user",
+          role: roleByUser.get(u.id) || "user",
           credits_total: credit?.total_credits ?? null,
           credits_used: credit?.used_credits ?? null,
           credits_remaining: credit?.remaining_credits ?? null,
         };
       });
 
-      const totalPages = generatedPages?.length || 0;
-      const publishedPages = generatedPages?.filter((p: any) => p.status === "published").length || 0;
-      const failedPages = generatedPages?.filter((p: any) => p.status === "failed").length || 0;
-      const activeCampaigns = campaigns?.filter((c: any) => c.status === "processing" || c.status === "queued").length || 0;
-      const completedCampaigns = campaigns?.filter((c: any) => c.status === "completed").length || 0;
-
-      // Enrich campaigns with the owning user's email & name so admins can see
-      // at a glance which user is running which campaign.
-      const emailById = new Map((authUsers?.users || []).map((u: any) => [u.id, u.email]));
-      const nameById = new Map((profiles || []).map((p: any) => [p.user_id, p.full_name]));
-      const enrichedCampaigns = (campaigns || []).map((c: any) => ({
+      const nameById = new Map(profiles.map((p: any) => [p.user_id, p.full_name]));
+      const enrichedCampaigns = campaigns.map((c: any) => ({
         ...c,
         user_email: emailById.get(c.user_id) || null,
         user_name: nameById.get(c.user_id) || null,
@@ -145,17 +177,17 @@ Deno.serve(async (req) => {
         JSON.stringify({
           users,
           campaigns: enrichedCampaigns,
-          subscriptions: subscriptions || [],
+          subscriptions,
           activity: recentActivity,
           overview: {
             total_users: users.length,
-            total_campaigns: campaigns?.length || 0,
-            active_campaigns: activeCampaigns,
-            completed_campaigns: completedCampaigns,
-            total_pages: totalPages,
-            published_pages: publishedPages,
-            failed_pages: failedPages,
-            total_websites: websites?.length || 0,
+            total_campaigns: totalCampaignsCountRes.count || 0,
+            active_campaigns: activeCampaignsCountRes.count || 0,
+            completed_campaigns: completedCampaignsCountRes.count || 0,
+            total_pages: totalPagesCountRes.count || 0,
+            published_pages: publishedPagesCountRes.count || 0,
+            failed_pages: failedPagesCountRes.count || 0,
+            total_websites: totalWebsitesCountRes.count || 0,
           },
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
