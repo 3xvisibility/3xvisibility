@@ -218,6 +218,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     setFixProgress(0);
     setPassHistory([]);
     setCurrentIteration(0);
+    setFactorLive({});
 
     const STRONG = 80;
     const MAX_ITERATIONS = 8;
