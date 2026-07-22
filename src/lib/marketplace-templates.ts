@@ -4045,6 +4045,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     content: marginfinderTemplate(),
     variables: [
       "{company_name}", "{tagline}", "{headline}", "{sub_headline}", "{cta_text}",
+      "{hero_title}", "{hero_subtitle}", "{hero_stat_1}", "{hero_stat_2}", "{hero_stat_3}",
       "{press_quote}", "{press_source}", "{press_year}",
       "{method_1_title}", "{method_1_desc}", "{method_2_title}", "{method_2_desc}",
       "{method_3_title}", "{method_3_desc}", "{method_4_title}", "{method_4_desc}",
