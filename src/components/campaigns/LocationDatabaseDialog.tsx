@@ -901,8 +901,9 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <Badge variant="outline" className="text-[10px]">
-                  {filteredLocations.length} cities
+                  {totalCount.toLocaleString()} cities
                 </Badge>
+
               </div>
             </div>
 
