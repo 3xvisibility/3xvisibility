@@ -245,7 +245,8 @@ export default function KeywordGroupsPage() {
         ctx ? `Client business / niche: ${ctx}` : "",
         hint ? `User hint for this variable: ${hint}` : "",
       ].filter(Boolean).join("\n");
-      const prompt = `${contextBlock}\n\nGenerate 15 concise, real-world values for the variable "{${varName}}" that are directly relevant to the business/niche and hint above. Stay strictly on-topic — do not invent generic or unrelated brands. Return one plain value per line, no numbering, no explanations. Language: ${langLabel}.`;
+      const count = Math.max(1, Math.min(500, Number(termsPerVariable) || 15));
+      const prompt = `${contextBlock}\n\nGenerate EXACTLY ${count} concise, real-world, UNIQUE values for the variable "{${varName}}" that are directly relevant to the business/niche and hint above. Stay strictly on-topic — do not invent generic or unrelated brands. Return one plain value per line, no numbering, no explanations. Language: ${langLabel}.`;
       const res = await callAI({
         messages: [
           { role: "system", content: "You return only plain values, one per line, tightly matched to the user's business context. No markdown, no HTML, no off-topic suggestions." },
