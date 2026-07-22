@@ -321,6 +321,25 @@ export default function PgpGeneratePage() {
   ];
   const isBusinessVariable = (name: string) => BUSINESS_VAR_NAMES.includes(name.trim().toLowerCase());
 
+  // AI-content variables — long-form / SEO-copy fields where the AI should
+  // craft unique content per row instead of the user typing terms in Keywords.
+  // Classification is by NAME so it stays stable even before generation.
+  const AI_CONTENT_VAR_NAMES = [
+    "title", "page_title", "seo_title",
+    "subtitle", "sub_title", "sub_headline",
+    "heading", "sub_heading", "subheading", "headline", "hero_title", "hero_subtitle", "hero_heading",
+    "tagline", "slogan",
+    "description", "desc", "meta_description", "seo_description", "short_description", "long_description",
+    "intro", "introduction", "summary", "overview", "about", "about_us",
+    "body", "content", "paragraph", "text", "story",
+    "cta", "cta_text", "cta_title", "cta_description", "call_to_action",
+    "benefit", "benefits", "feature", "features",
+    "faq", "faq_question", "faq_answer", "question", "answer",
+    "testimonial", "testimonials", "review", "reviews",
+    "why_choose_us", "why_us", "value_proposition",
+  ];
+  const isAiContentVariable = (name: string) => AI_CONTENT_VAR_NAMES.includes(name.trim().toLowerCase());
+
   // Variables satisfied by Step 4 (business info) — non-empty values only.
   const injectedBizVarNames = useMemo(
     () => new Set(Object.entries(businessInfo).filter(([, v]) => (v ?? "").trim() !== "").map(([k]) => k.toLowerCase())),
