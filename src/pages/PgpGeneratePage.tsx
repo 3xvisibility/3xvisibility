@@ -309,17 +309,33 @@ export default function PgpGeneratePage() {
     return Math.max(...counts);
   }, [groupKeywords, method]);
 
+  // Business-info variable names always come from Step 4 (Business Info),
+  // never from the Keyword group — classification is by NAME so the mapping
+  // panel is stable even before the user types values.
+  const BUSINESS_VAR_NAMES = [
+    "business_name", "company_name", "brand_name", "brand",
+    "phone", "phone_number", "tel", "telephone",
+    "email", "email_address",
+    "website", "url", "site_url",
+  ];
+  const isBusinessVariable = (name: string) => BUSINESS_VAR_NAMES.includes(name.trim().toLowerCase());
+
   // Variables satisfied by Step 4 (business info) — non-empty values only.
   const injectedBizVarNames = useMemo(
     () => new Set(Object.entries(businessInfo).filter(([, v]) => (v ?? "").trim() !== "").map(([k]) => k.toLowerCase())),
     [businessInfo],
   );
 
-  const missingKeywords = groupKeywords.filter(k => !k.keyword && !injectedBizVarNames.has(k.name.toLowerCase()));
+  const missingKeywords = groupKeywords.filter(k =>
+    !k.keyword && !injectedBizVarNames.has(k.name.toLowerCase()) && !isBusinessVariable(k.name),
+  );
 
   // Geo variables must come from the Campaign wizard's Location Database,
   // not AI-fabricated. Skip them in every auto-fill path.
-  const GEO_VAR_NAMES = ["city", "cities", "state", "states", "country", "countries", "zip", "zipcode", "region", "county", "location", "locations", "area"];
+  // Note: {address} is treated as a location field here so the mapping panel
+  // groups it under "From Locations"; the value can still be supplied via
+  // Business Info if a location doesn't provide one.
+  const GEO_VAR_NAMES = ["city", "cities", "state", "states", "country", "countries", "zip", "zipcode", "region", "county", "location", "locations", "area", "address", "street", "street_address"];
   const isGeoVariable = (name: string) => GEO_VAR_NAMES.includes(name.trim().toLowerCase());
 
   // Placeholder / demo geo values that must never leak into real pages when the
