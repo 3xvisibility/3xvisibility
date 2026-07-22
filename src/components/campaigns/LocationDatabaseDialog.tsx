@@ -477,7 +477,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     setCountryOpen(false);
   };
 
-  const isEmpty = !isLoading && locations.length === 0;
+  const isEmpty = !isLoading && totalCount === 0 && !debouncedSearch && stateFilter === "all" && regionFilter === "all" && !debouncedMinPop;
   const countryName = ALL_COUNTRIES.find(c => c.code === countryFilter)?.name || countryFilter;
 
   return (
