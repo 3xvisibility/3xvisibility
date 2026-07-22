@@ -1018,6 +1018,40 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
                     <span className="shrink-0 font-mono">Iteration {currentIteration}/8</span>
                   )}
                 </div>
+                {Object.keys(factorLive).length > 0 && (
+                  <div className="rounded-md border bg-muted/30 p-2 space-y-1.5">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Live factor scores</p>
+                    {Object.values(factorLive).map((f) => {
+                      const delta = f.current - f.previous;
+                      const totalDelta = f.current - f.baseline;
+                      const pulsing = f.lastPass === currentIteration && delta !== 0;
+                      const barColor = f.current >= 80 ? "bg-emerald-500" : f.current >= 50 ? "bg-amber-500" : "bg-rose-500";
+                      return (
+                        <div key={f.key} className="space-y-0.5">
+                          <div className="flex items-center justify-between gap-2 text-[11px]">
+                            <span className="truncate">{f.label}</span>
+                            <span className="font-mono tabular-nums shrink-0 flex items-center gap-1.5">
+                              <span className={pulsing ? "animate-pulse font-semibold" : ""}>{f.current}</span>
+                              {delta !== 0 && (
+                                <span className={delta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
+                                  ({delta > 0 ? "+" : ""}{delta})
+                                </span>
+                              )}
+                              {totalDelta !== 0 && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  · base {f.baseline}{totalDelta > 0 ? ` (+${totalDelta})` : ` (${totalDelta})`}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <div className="h-1 rounded-full bg-muted overflow-hidden">
+                            <div className={`h-full ${barColor} transition-all duration-500`} style={{ width: `${Math.min(100, f.current)}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 {passHistory.length > 0 && (
                   <div className="rounded-md border bg-muted/30 p-2 max-h-40 overflow-y-auto space-y-1">
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Pass history</p>
