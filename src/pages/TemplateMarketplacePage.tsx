@@ -94,6 +94,8 @@ export default function TemplateMarketplacePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const PER_PAGE = 15;
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedTag, setSelectedTag] = useState<string>("all");
+  const [selectedFormat, setSelectedFormat] = useState<"all" | "elementor" | "shopify" | "html">("all");
   const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
   const [wpTestOpen, setWpTestOpen] = useState(false);
@@ -463,25 +465,52 @@ export default function TemplateMarketplacePage() {
   }, [allTemplates]);
 
 
+  // Unique tags across the active tab's templates (for the tag filter dropdown).
+  const availableTags = useMemo(() => {
+    const source = activeTab === "community" ? communityTemplates : allTemplates;
+    const counts = new Map<string, number>();
+    for (const tpl of source) {
+      for (const tag of tpl.tags || []) {
+        const t = String(tag).toLowerCase().trim();
+        if (!t) continue;
+        counts.set(t, (counts.get(t) || 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [activeTab, allTemplates, communityTemplates]);
+
+  // Native format for a template — used by the format filter.
+  const nativeFormat = (tpl: MarketplaceTemplate): "elementor" | "shopify" | "html" => {
+    if (tpl.platform === "shopify" || tpl.category === "shopify") return "shopify";
+    if (tpl.platform === "generic") return "html";
+    return "elementor";
+  };
+
   const filteredTemplates = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
+    const q = searchQuery.toLowerCase();
     return source.filter((tpl) => {
       const cat = tpl.category && tpl.category !== "wordpress" && tpl.category !== "shopify"
         ? tpl.category
         : "general";
       const matchesCategory = selectedCategory === "all" || cat === selectedCategory;
+      const matchesTag =
+        selectedTag === "all" ||
+        (tpl.tags || []).some((t) => String(t).toLowerCase() === selectedTag);
+      const matchesFormat = selectedFormat === "all" || nativeFormat(tpl) === selectedFormat;
       const matchesSearch =
-        !searchQuery ||
-        (tpl.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (tpl.description || "").toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+        !q ||
+        (tpl.name || "").toLowerCase().includes(q) ||
+        (tpl.description || "").toLowerCase().includes(q);
+      return matchesCategory && matchesTag && matchesFormat && matchesSearch;
     });
-  }, [searchQuery, selectedCategory, activeTab, allTemplates, communityTemplates]);
+  }, [searchQuery, selectedCategory, selectedTag, selectedFormat, activeTab, allTemplates, communityTemplates]);
 
   // Reset to first page whenever filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, activeTab, platformChoice]);
+  }, [searchQuery, selectedCategory, selectedTag, selectedFormat, activeTab, platformChoice]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTemplates.length / PER_PAGE));
   const paginatedTemplates = useMemo(
@@ -746,6 +775,30 @@ export default function TemplateMarketplacePage() {
             className="pl-9"
           />
         </div>
+        <Select value={selectedFormat} onValueChange={(v) => setSelectedFormat(v as typeof selectedFormat)}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Format" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All formats</SelectItem>
+            <SelectItem value="elementor">Elementor</SelectItem>
+            <SelectItem value="shopify">Shopify</SelectItem>
+            <SelectItem value="html">HTML / CSS</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={selectedTag} onValueChange={setSelectedTag}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Tag" />
+          </SelectTrigger>
+          <SelectContent className="max-h-[320px]">
+            <SelectItem value="all">All tags</SelectItem>
+            {availableTags.map(([tag, count]) => (
+              <SelectItem key={tag} value={tag} className="capitalize">
+                {tag} <span className="text-muted-foreground ml-1">({count})</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Category pills */}
