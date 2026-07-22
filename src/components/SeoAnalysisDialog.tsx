@@ -441,11 +441,26 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           }
         }
         if (weakKeys.includes("description")) {
+          // Guarantee focus keyword presence (critical for the "Keyword in meta description" check).
+          const focusKw = (candidate.keywords[0] || "").trim();
+          const hasKw = focusKw
+            ? candidate.description.toLowerCase().includes(focusKw.toLowerCase())
+            : true;
+          if (focusKw && !hasKw) {
+            // Prepend the keyword naturally so it stays in the 120-160 window.
+            const prefix = `${focusKw.charAt(0).toUpperCase()}${focusKw.slice(1)} — `;
+            candidate.description = (prefix + candidate.description).trim();
+          }
           if (candidate.description.length < 120) {
-            const filler = ` Contact our trusted local team today for a free quote — fast, reliable service near you.`;
-            candidate.description = (candidate.description + filler).slice(0, 156).trim();
-          } else if (candidate.description.length > 160) {
-            candidate.description = candidate.description.slice(0, 156).trim();
+            const kwHint = focusKw ? ` Learn more about ${focusKw} and request a free quote today.` : "";
+            const filler = `${kwHint} Trusted local experts — fast, reliable service near you.`;
+            candidate.description = (candidate.description + filler).replace(/\s+/g, " ").trim();
+          }
+          if (candidate.description.length > 160) {
+            candidate.description = candidate.description.slice(0, 157).trim();
+            // Avoid cutting mid-word.
+            const lastSpace = candidate.description.lastIndexOf(" ");
+            if (lastSpace > 130) candidate.description = candidate.description.slice(0, lastSpace).trim();
           }
         }
 
