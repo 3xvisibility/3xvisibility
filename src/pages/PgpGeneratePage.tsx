@@ -1459,6 +1459,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             </CardContent>
           </Card>
           )}
+          </>)}
 
 
           {/* Step 2: AI Setup & Generation Settings */}
