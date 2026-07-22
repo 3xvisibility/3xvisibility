@@ -433,6 +433,13 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   };
 
   const handleCountryChange = (code: string) => {
+    if (code === countryFilter) { setCountryOpen(false); return; }
+    if (selectedIds.size > 0) {
+      const ok = window.confirm(
+        `You have ${selectedIds.size} city selection${selectedIds.size === 1 ? "" : "s"} locked to ${countryName}. Switching country will clear them. Continue?`,
+      );
+      if (!ok) { setCountryOpen(false); return; }
+    }
     setCountryFilter(code);
     setStateFilter("all");
     setRegionFilter("all");
