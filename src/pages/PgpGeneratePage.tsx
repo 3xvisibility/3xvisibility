@@ -309,17 +309,33 @@ export default function PgpGeneratePage() {
     return Math.max(...counts);
   }, [groupKeywords, method]);
 
+  // Business-info variable names always come from Step 4 (Business Info),
+  // never from the Keyword group — classification is by NAME so the mapping
+  // panel is stable even before the user types values.
+  const BUSINESS_VAR_NAMES = [
+    "business_name", "company_name", "brand_name", "brand",
+    "phone", "phone_number", "tel", "telephone",
+    "email", "email_address",
+    "website", "url", "site_url",
+  ];
+  const isBusinessVariable = (name: string) => BUSINESS_VAR_NAMES.includes(name.trim().toLowerCase());
+
   // Variables satisfied by Step 4 (business info) — non-empty values only.
   const injectedBizVarNames = useMemo(
     () => new Set(Object.entries(businessInfo).filter(([, v]) => (v ?? "").trim() !== "").map(([k]) => k.toLowerCase())),
     [businessInfo],
   );
 
-  const missingKeywords = groupKeywords.filter(k => !k.keyword && !injectedBizVarNames.has(k.name.toLowerCase()));
+  const missingKeywords = groupKeywords.filter(k =>
+    !k.keyword && !injectedBizVarNames.has(k.name.toLowerCase()) && !isBusinessVariable(k.name),
+  );
 
   // Geo variables must come from the Campaign wizard's Location Database,
   // not AI-fabricated. Skip them in every auto-fill path.
-  const GEO_VAR_NAMES = ["city", "cities", "state", "states", "country", "countries", "zip", "zipcode", "region", "county", "location", "locations", "area"];
+  // Note: {address} is treated as a location field here so the mapping panel
+  // groups it under "From Locations"; the value can still be supplied via
+  // Business Info if a location doesn't provide one.
+  const GEO_VAR_NAMES = ["city", "cities", "state", "states", "country", "countries", "zip", "zipcode", "region", "county", "location", "locations", "area", "address", "street", "street_address"];
   const isGeoVariable = (name: string) => GEO_VAR_NAMES.includes(name.trim().toLowerCase());
 
   // Placeholder / demo geo values that must never leak into real pages when the
@@ -653,11 +669,29 @@ Only return valid JSON. No markdown fences.`;
   // Injected values from Step 3 (locations) and Step 4 (business info).
   const buildInjectedForRow = (rowIndex: number): Record<string, string> => {
     const inject: Record<string, string> = {};
-    // Business/personal info
+    // Business/personal info (direct keys)
     for (const [k, v] of Object.entries(businessInfo)) {
       if ((v ?? "").trim()) inject[k] = v.trim();
     }
-    // Locations cycle per row
+    // Business info aliases so common template variables always resolve.
+    const bizName = (businessInfo.company_name || businessInfo.brand_name || "").trim();
+    if (bizName) {
+      if (!inject.business_name) inject.business_name = bizName;
+      if (!inject.brand) inject.brand = bizName;
+    }
+    const phone = (businessInfo.phone || "").trim();
+    if (phone) {
+      inject.phone_number = phone; inject.tel = phone; inject.telephone = phone;
+    }
+    const emailV = (businessInfo.email || "").trim();
+    if (emailV) inject.email_address = emailV;
+    const siteV = (businessInfo.website || "").trim();
+    if (siteV) { inject.url = siteV; inject.site_url = siteV; }
+    const addr = (businessInfo.address || "").trim();
+    if (addr) { inject.street = addr; inject.street_address = addr; }
+
+    // Locations cycle per row (win over any keyword-group / business defaults
+    // for geographic fields).
     if (pickedLocations.length > 0) {
       const loc = pickedLocations[rowIndex % pickedLocations.length];
       const cityVal = (loc.city || "").toString().trim();
@@ -665,11 +699,13 @@ Only return valid JSON. No markdown fences.`;
       const countryVal = (loc.country || "").toString().trim();
       const regionVal = (loc.region || loc.state || "").toString().trim();
       const zipVal = (loc.zip || "").toString().trim();
+      const locAddress = ((loc as any).address || "").toString().trim();
       if (cityVal) { inject.city = cityVal; inject.cities = cityVal; inject.location = cityVal; }
       if (stateVal) { inject.state = stateVal; inject.states = stateVal; }
       if (countryVal) { inject.country = countryVal; inject.countries = countryVal; }
       if (regionVal) { inject.region = regionVal; }
       if (zipVal) { inject.zip = zipVal; inject.zipcode = zipVal; }
+      if (locAddress) inject.address = locAddress;
     }
     return inject;
   };
@@ -682,14 +718,21 @@ Only return valid JSON. No markdown fences.`;
       // pre-existing keyword-group value so real Location DB data replaces
       // stale defaults (e.g. "New York", "Canada") coming from auto-generated
       // keyword groups.
-      const GEO_KEYS = ["city", "cities", "state", "states", "country", "countries", "region", "zip", "zipcode", "location", "locations", "area"];
+      const GEO_KEYS = ["city", "cities", "state", "states", "country", "countries", "region", "zip", "zipcode", "location", "locations", "area", "address", "street", "street_address"];
+      // Business-info keys always win over keyword-group values too so a
+      // template's {business_name}/{phone}/{email} always use Step 4 data.
+      const BIZ_KEYS = BUSINESS_VAR_NAMES;
       return rows.map((r, i) => {
         const injected = buildInjectedForRow(i);
-        // Start with row values, then wipe geo keys if user attached real
-        // locations, then overlay injected (locations + business info win).
+        // Start with row values, then wipe geo/biz keys that will be overridden
+        // by injected data so downstream merge is deterministic.
         const base: Record<string, string> = { ...r };
         if (pickedLocations.length > 0) {
           for (const k of GEO_KEYS) delete base[k];
+          for (const k of BIZ_KEYS) {
+            if (injected[k] !== undefined) delete base[k];
+          }
+
         } else {
           // Safeguard: with no real Locations attached, strip placeholder
           // defaults (e.g. "New York", "Canada", "LA") so downstream generation
@@ -2388,17 +2431,27 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 const missRows: Row[] = [];
                 for (const gk of groupKeywords) {
                   const nameLc = gk.name.toLowerCase();
+                  const isGeo = isGeoVariable(gk.name);
+                  const isBiz = isBusinessVariable(gk.name);
                   const fromKw = !!gk.keyword && (gk.keyword.terms?.length ?? 0) > 0;
-                  const fromLoc = pickedLocations.length > 0 && isGeoVariable(gk.name);
-                  const fromBiz = injectedBizVarNames.has(nameLc);
-                  if (fromKw) {
-                    kwRows.push({ name: gk.name, example: gk.keyword?.terms?.[0] });
-                  } else if (fromLoc) {
+                  // Priority: Locations > Business Info > Keyword group.
+                  // Geo/biz slots are ALWAYS classified by name so users see
+                  // exactly where each field will be sourced from — Step 3
+                  // (locations) and Step 4 (business info) replace any stale
+                  // keyword-group defaults at generation time.
+                  if (isGeo) {
                     const first = pickedLocations[0] as any;
                     const val = first?.[nameLc] || first?.city || first?.state || first?.country;
                     locRows.push({ name: gk.name, example: val });
-                  } else if (fromBiz) {
-                    bizRows.push({ name: gk.name, example: businessInfo[nameLc] });
+                  } else if (isBiz) {
+                    const bizVal = businessInfo[nameLc]
+                      || (nameLc === "business_name" || nameLc === "brand" ? (businessInfo.company_name || businessInfo.brand_name) : "")
+                      || (nameLc === "phone_number" || nameLc === "tel" || nameLc === "telephone" ? businessInfo.phone : "")
+                      || (nameLc === "email_address" ? businessInfo.email : "")
+                      || (nameLc === "url" || nameLc === "site_url" ? businessInfo.website : "");
+                    bizRows.push({ name: gk.name, example: bizVal });
+                  } else if (fromKw) {
+                    kwRows.push({ name: gk.name, example: gk.keyword?.terms?.[0] });
                   } else {
                     missRows.push({ name: gk.name });
                   }
@@ -2489,10 +2542,12 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
                 const sourceFor = (varName: string, value: string) => {
                   const lc = varName.toLowerCase();
-                  if (pickedLocations.length > 0 && isGeoVariable(varName)) {
+                  // Classification priority mirrors the mapping panel:
+                  // Locations > Business Info > Keyword group > AI-fill.
+                  if (isGeoVariable(varName)) {
                     return { label: "Locations", icon: MapPin, cls: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 dark:text-emerald-400" };
                   }
-                  if (injectedBizVarNames.has(lc)) {
+                  if (isBusinessVariable(varName) || injectedBizVarNames.has(lc)) {
                     return { label: "Business", icon: Building2, cls: "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400" };
                   }
                   if ((value ?? "").trim() !== "") {
@@ -2689,8 +2744,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       const lc = n.toLowerCase();
                       const val = row[n] ?? row[lc] ?? "";
                       out[n] = String(val);
-                      if (pickedLocations.length > 0 && isGeoVariable(n)) srcCounts.location++;
-                      else if (injectedBizVarNames.has(lc)) srcCounts.business++;
+                      if (isGeoVariable(n)) srcCounts.location++;
+                      else if (isBusinessVariable(n) || injectedBizVarNames.has(lc)) srcCounts.business++;
                       else if (String(val).trim() !== "") srcCounts.keyword++;
                       else srcCounts.ai_fill++;
                     }
