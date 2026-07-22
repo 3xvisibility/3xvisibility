@@ -371,6 +371,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       const hasInternalLink = /<a[^>]*href=["'](?:\/|#|\.\/)[^"']*["'][^>]*>/i.test(content);
       const hasOutboundLink = /<a[^>]*href=["']https?:\/\/[^"']+["'][^>]*>/i.test(content);
       const hasSchema = /application\/ld\+json/i.test(content) || /itemscope/i.test(content) || /itemprop/i.test(content);
+      const hasSeaSignals = /(testimonial|review|trusted|guarantee|warranty|secure|certified|proven|rated|award|recommended|satisfaction|verified|professional|expert|experienced|qualified|licensed|insured|free|discount|offer|deal|plan|package|price|pricing|quote|estimate|starting at|trial|bundle|save|exclusive|special|affordable|value|benefit|solution|call|contact|message|book|reserve|request|order|buy|subscribe|sign up|learn more|schedule|top-rated|\d+\+|\d{1,3}%)/i.test(text);
+      const hasGeoSignals = /(local|nearby|near you|in your area|serving|service area|coverage area|regional|community|neighborhood|district|county|region|town|city|state|location|locally|available in|delivery in|coverage across|throughout|local team|area specialists|call us|contact us|business hours|opening hours|same-day|response time|street|road|avenue|postal|zip)/i.test(text);
       const safeTitle = escapeHtml(ensureTitle(title, focusKeyword));
       const safeFocus = escapeHtml(titleCase(focusKeyword));
       const rawFocus = escapeHtml(focusKeyword);
@@ -399,6 +401,26 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
             </ul>
             <p>For best results, keep this page updated with current offers, service areas, opening hours, customer reviews, and answers to common questions. Moreover, visitors should be able to scan the page quickly and still understand why ${safeFocus} is relevant to their needs.</p>
             <p><a href="#contact">Contact us</a> to request a quote or learn more about ${rawFocus}. You can also review <a href="https://www.google.com/business/" target="_blank" rel="noopener noreferrer">Google Business Profile guidance</a> for useful local business information.</p>
+          </section>
+        `);
+      }
+
+      if (!hasSeaSignals) {
+        supportSections.push(`
+          <section data-sea-support="true">
+            <h2>Clear Benefits, Pricing, and Next Steps</h2>
+            <p>Customers can request a free quote, compare service options, and book a consultation today. Our experienced, professional team explains pricing, packages, and expected results clearly so every visitor knows the value before they contact us.</p>
+            <p>Trusted reviews, practical recommendations, and fast support make it easier to choose with confidence. Contact us now to discuss your goals and find the best solution for your needs.</p>
+          </section>
+        `);
+      }
+
+      if (!hasGeoSignals) {
+        supportSections.push(`
+          <section data-geo-support="true">
+            <h2>Local Service Area and Nearby Support</h2>
+            <p>We provide local support for customers in your city, town, county, region, and surrounding service area. Our nearby team is available during business hours for appointments, same-day response options, and clear coverage information.</p>
+            <p>Call us, contact us, or request directions to learn whether we cover your street, district, state, zip, or postal area. Area specialists are ready to help residents, families, businesses, and community members close by.</p>
           </section>
         `);
       }
