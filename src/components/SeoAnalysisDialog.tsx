@@ -63,6 +63,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
   type PassEntry = { pass: number; before: number; after: number; delta: number; weak: string[]; status: "running" | "improved" | "stagnant" };
   const [passHistory, setPassHistory] = useState<PassEntry[]>([]);
   const [currentIteration, setCurrentIteration] = useState(0);
+  type FactorLive = { key: string; label: string; baseline: number; current: number; previous: number; lastPass: number };
+  const [factorLive, setFactorLive] = useState<Record<string, FactorLive>>({});
   const [localPage, setLocalPage] = useState(initialPage);
   const [csvRow, setCsvRow] = useState<Record<string, unknown> | null>(null);
   const [templateContent, setTemplateContent] = useState<string | null>(null);
