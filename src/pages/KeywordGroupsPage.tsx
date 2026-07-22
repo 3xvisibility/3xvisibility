@@ -229,10 +229,25 @@ export default function KeywordGroupsPage() {
     setAiBusy(varName);
     try {
       const langLabel = LANGUAGES.find(l => l.code === language)?.label || "English";
-      const prompt = `Generate 15 concise, real-world search values for the variable "{${varName}}" in a website template. Return one plain value per line, no numbering, no explanations. Language: ${langLabel}.`;
+      const ctx = businessContext.trim();
+      const hint = (varHints[varName] || "").trim();
+      if (!ctx && !hint) {
+        toast({
+          title: "Add context first",
+          description: "Enter your business/niche above, or a hint for this variable, so AI generates relevant values.",
+          variant: "destructive",
+        });
+        setAiBusy(null);
+        return;
+      }
+      const contextBlock = [
+        ctx ? `Client business / niche: ${ctx}` : "",
+        hint ? `User hint for this variable: ${hint}` : "",
+      ].filter(Boolean).join("\n");
+      const prompt = `${contextBlock}\n\nGenerate 15 concise, real-world values for the variable "{${varName}}" that are directly relevant to the business/niche and hint above. Stay strictly on-topic — do not invent generic or unrelated brands. Return one plain value per line, no numbering, no explanations. Language: ${langLabel}.`;
       const res = await callAI({
         messages: [
-          { role: "system", content: "You return only plain values, one per line. No markdown, no HTML." },
+          { role: "system", content: "You return only plain values, one per line, tightly matched to the user's business context. No markdown, no HTML, no off-topic suggestions." },
           { role: "user", content: prompt },
         ],
       });
