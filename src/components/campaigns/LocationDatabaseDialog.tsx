@@ -538,7 +538,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
         </p>
 
         {/* Coverage check: warn when the selected country has no cities in the DB. */}
-        {open && !isLoading && !seedMutation.isPending && allCountryLocations.length === 0 && (
+        {open && !isLoading && !seedMutation.isPending && !debouncedSearch && stateFilter === "all" && regionFilter === "all" && !debouncedMinPop && totalCount === 0 && (
           <div
             role="alert"
             className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 flex items-start gap-2"
