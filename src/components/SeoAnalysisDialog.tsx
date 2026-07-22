@@ -577,12 +577,19 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       const remainingWeak = bestUnified.factors
         .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
         .map((f) => f.key);
-      toast({
-        title: "SEO issues fixed!",
-        description: `${baselineUnified.score} → ${bestUnified.score} after ${iteration} pass(es).${
-          remainingWeak.length ? ` Still <80: ${remainingWeak.join(", ")}.` : " All targeted factors now ≥80."
-        }${republished ? " Republished." : ""}`,
-      });
+      if (allFactorsPassed) {
+        toast({
+          title: "✓ All SEO factors passed (80+)",
+          description: `Stopped early after ${iteration} pass(es). Score ${baselineUnified.score} → ${bestUnified.score}.${republished ? " Republished." : ""}`,
+        });
+      } else {
+        toast({
+          title: "SEO issues fixed!",
+          description: `${baselineUnified.score} → ${bestUnified.score} after ${iteration} pass(es).${
+            remainingWeak.length ? ` Still <80: ${remainingWeak.join(", ")}${stoppedForStagnation ? " (no more gains possible)" : ""}.` : " All targeted factors now ≥80."
+          }${republished ? " Republished." : ""}`,
+        });
+      }
       onUpdated?.();
     } catch (err: any) {
       toast({ title: "Fix failed", description: friendlyError(err.message), variant: "destructive" });
