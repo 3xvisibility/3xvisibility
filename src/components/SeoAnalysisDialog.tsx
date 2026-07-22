@@ -477,6 +477,18 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           ),
         );
 
+        setFactorLive((prev) => {
+          const next = { ...prev };
+          for (const key of Object.keys(TRACKED_FACTORS)) {
+            const s = nowUnified.factors.find((f) => f.key === key)?.score ?? 0;
+            const existing = next[key];
+            if (existing) {
+              next[key] = { ...existing, previous: existing.current, current: s, lastPass: iteration };
+            }
+          }
+          return next;
+        });
+
         weakKeys = nowUnified.factors
           .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
           .map((f) => f.key);
