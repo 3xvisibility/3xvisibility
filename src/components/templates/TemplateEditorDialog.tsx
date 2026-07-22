@@ -99,6 +99,17 @@ export function TemplateEditorDialog({
   const [aiSeoGenerating, setAiSeoGenerating] = useState(false);
   const [aiImproving, setAiImproving] = useState(false);
   const [aiVariablizing, setAiVariablizing] = useState(false);
+  // Persist the auto-fix toggle so the user's preference sticks across sessions.
+  const [aiAutoFixReviewer, setAiAutoFixReviewer] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const v = window.localStorage.getItem("tmpl.aiAutoFixReviewer");
+    return v === null ? true : v === "1";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("tmpl.aiAutoFixReviewer", aiAutoFixReviewer ? "1" : "0");
+    }
+  }, [aiAutoFixReviewer]);
 
   const { toast } = useToast();
 
