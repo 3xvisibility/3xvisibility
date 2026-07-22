@@ -713,8 +713,8 @@ Deno.serve(async (req) => {
     let body: { country_code?: string; expand?: boolean; state?: string; region?: string; target?: number; bulk?: boolean; all?: boolean } = {};
     try { body = await req.json(); } catch { /* empty body ok */ }
 
-    // ── Bulk mode: pull ALL cities for a country (or every country) from the
-    // free countriesnow.space global database. Much more comprehensive than AI.
+    // ── Bulk mode: pull high-coverage city data for a country (or every country)
+    // from GeoNames first, then fall back to other public city sources.
     if (body.bulk === true) {
       const nameMap = await loadCountryNameMap();
       const codes = body.all
