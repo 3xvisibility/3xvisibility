@@ -53,13 +53,15 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [seedResult, setSeedResult] = useState<{ inserted: number; skipped: number } | null>(null);
 
   const seedMutation = useMutation({
-    mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string; target?: number }) => {
+    mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string; target?: number; bulk?: boolean; all?: boolean }) => {
       const body: Record<string, unknown> = {};
       if (opts?.countryCode) body.country_code = opts.countryCode;
       if (opts?.expand) body.expand = true;
       if (opts?.state && opts.state !== "all") body.state = opts.state;
       if (opts?.region && opts.region !== "all") body.region = opts.region;
       if (opts?.target && opts.target > 0) body.target = opts.target;
+      if (opts?.bulk) body.bulk = true;
+      if (opts?.all) body.all = true;
       const { data, error } = await supabase.functions.invoke("seed-locations", { body });
       if (error) throw new Error(await getFunctionErrorMessage(error));
       if (data?.error) throw new Error(data.error);
