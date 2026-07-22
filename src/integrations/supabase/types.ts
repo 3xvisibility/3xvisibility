@@ -3286,6 +3286,13 @@ export type Database = {
         }
         Relationships: []
       }
+      user_page_counts: {
+        Row: {
+          pages_count: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       campaign_limit_for_plan: { Args: { _plan: string }; Returns: number }
