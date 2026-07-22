@@ -1043,6 +1043,15 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
           </div>
         )}
       </DialogContent>
+      <BulkCityLoaderDialog
+        open={bulkLoaderOpen}
+        onOpenChange={setBulkLoaderOpen}
+        initialSelected={[countryFilter]}
+        onCompleted={() => {
+          queryClient.invalidateQueries({ queryKey: ["locations-db"] });
+          queryClient.invalidateQueries({ queryKey: ["locations-db-meta"] });
+        }}
+      />
     </Dialog>
   );
 }
