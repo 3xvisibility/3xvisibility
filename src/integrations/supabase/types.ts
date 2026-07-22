@@ -984,6 +984,7 @@ export type Database = {
           status: Database["public"]["Enums"]["page_status"]
           title: string
           user_id: string
+          variables: Json | null
           website_id: string | null
           workspace_id: string | null
         }
@@ -1016,6 +1017,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["page_status"]
           title: string
           user_id: string
+          variables?: Json | null
           website_id?: string | null
           workspace_id?: string | null
         }
@@ -1048,6 +1050,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["page_status"]
           title?: string
           user_id?: string
+          variables?: Json | null
           website_id?: string | null
           workspace_id?: string | null
         }

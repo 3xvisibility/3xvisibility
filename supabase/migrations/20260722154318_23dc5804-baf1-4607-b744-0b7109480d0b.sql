@@ -1,0 +1,1 @@
+ALTER TABLE public.generated_pages ADD COLUMN IF NOT EXISTS variables jsonb;
