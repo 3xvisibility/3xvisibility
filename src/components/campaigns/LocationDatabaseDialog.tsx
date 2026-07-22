@@ -704,6 +704,25 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                 </div>
                 <Button
                   size="sm"
+                  className="h-7 rounded-xl gap-1.5 text-xs"
+                  disabled={seedMutation.isPending}
+                  onClick={() => {
+                    seedMutation.mutate(
+                      { countryCode: countryFilter, bulk: true },
+                      { onSuccess: () => void refetch() },
+                    );
+                  }}
+                  title={`Load ALL cities for ${countryName} from the global cities database`}
+                >
+                  {seedMutation.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Globe className="h-3 w-3" />
+                  )}
+                  Load ALL {countryName}
+                </Button>
+                <Button
+                  size="sm"
                   variant="outline"
                   className="h-7 rounded-xl gap-1.5 text-xs"
                   disabled={seedMutation.isPending}
@@ -736,7 +755,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                       ? `Load all in ${stateFilter}`
                       : regionFilter !== "all"
                         ? `Load all in ${regionFilter}`
-                        : "Load more cities"}
+                        : "AI batch"}
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
