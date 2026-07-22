@@ -105,6 +105,7 @@ export default function KeywordGroupsPage() {
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [businessContext, setBusinessContext] = useState("");
   const [varHints, setVarHints] = useState<Record<string, string>>({});
+  const [termsPerVariable, setTermsPerVariable] = useState<number>(15);
 
   const { data: groups = [], isLoading } = useQuery({
     queryKey: ["pgp-keyword-groups", wsId],
