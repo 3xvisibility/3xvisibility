@@ -451,6 +451,16 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           stagnantPasses++;
         }
 
+        const passAfter = nowUnified.score;
+        const passDelta = passAfter - passStartScore;
+        setPassHistory((prev) =>
+          prev.map((p) =>
+            p.pass === iteration
+              ? { ...p, after: passAfter, delta: passDelta, status: passDelta > 0 ? "improved" : "stagnant" }
+              : p,
+          ),
+        );
+
         weakKeys = nowUnified.factors
           .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
           .map((f) => f.key);
