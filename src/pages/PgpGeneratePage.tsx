@@ -284,9 +284,18 @@ export default function PgpGeneratePage() {
     const vars = filterDesignVars(selectedGroup.variables || []).map(v => v.replace(/[{}]/g, ""));
     return vars.map(v => {
       const kw = keywords.find(k => k.name === v);
-      return { name: v, keyword: kw || null, termCount: kw?.term_count || 0 };
+      const override = keywordOverrides[v];
+      if (kw) return { name: v, keyword: kw, termCount: kw.term_count || 0 };
+      if (override) {
+        return {
+          name: v,
+          keyword: { id: `override-${v}`, name: v, terms: override.terms, term_count: override.term_count, delimiter: null, columns: [] } as PgpKeyword,
+          termCount: override.term_count,
+        };
+      }
+      return { name: v, keyword: null, termCount: 0 };
     });
-  }, [selectedGroup, keywords]);
+  }, [selectedGroup, keywords, keywordOverrides]);
 
   const maxPages = useMemo(() => {
     if (groupKeywords.length === 0) return 0;
