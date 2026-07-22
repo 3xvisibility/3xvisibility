@@ -218,6 +218,45 @@ export default function PgpGeneratePage() {
     },
   });
 
+  // Saved Keyword Groups (bundle: template + language + variable terms)
+  const { data: keywordGroups = [] } = useQuery({
+    queryKey: ["pgp-keyword-groups-picker", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pgp_keyword_groups")
+        .select("id, name, template_id, language, variables, updated_at")
+        .eq("workspace_id", wsId!)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return ((data ?? []) as unknown) as Array<{
+        id: string; name: string; template_id: string | null;
+        language: string; variables: Array<{ name: string; terms: string[] }>;
+      }>;
+    },
+  });
+
+  // In-memory keyword overrides sourced from a picked Keyword Group.
+  // Merged into `groupKeywords` so we don't have to persist duplicates in pgp_keywords.
+  const [keywordOverrides, setKeywordOverrides] = useState<Record<string, { terms: string[]; term_count: number }>>({});
+  const [selectedKeywordGroupId, setSelectedKeywordGroupId] = useState<string>("");
+
+  const applyKeywordGroup = (groupId: string) => {
+    setSelectedKeywordGroupId(groupId);
+    if (!groupId) { setKeywordOverrides({}); return; }
+    const g = keywordGroups.find(x => x.id === groupId);
+    if (!g) return;
+    if (g.template_id) setSelectedGroupId(g.template_id);
+    if (!campaignNameDraft.trim()) setCampaignNameDraft(g.name);
+    const overrides: Record<string, { terms: string[]; term_count: number }> = {};
+    for (const v of (g.variables || [])) {
+      const terms = (v.terms || []).filter(Boolean);
+      if (terms.length > 0) overrides[v.name] = { terms, term_count: terms.length };
+    }
+    setKeywordOverrides(overrides);
+    toast({ title: `Applied "${g.name}"`, description: `${Object.keys(overrides).length} variable(s) filled from group.` });
+  };
+
   const { data: keywords = [] } = useQuery({
     queryKey: ["pgp-keywords-full", wsId],
     enabled: !!wsId,
@@ -245,9 +284,18 @@ export default function PgpGeneratePage() {
     const vars = filterDesignVars(selectedGroup.variables || []).map(v => v.replace(/[{}]/g, ""));
     return vars.map(v => {
       const kw = keywords.find(k => k.name === v);
-      return { name: v, keyword: kw || null, termCount: kw?.term_count || 0 };
+      const override = keywordOverrides[v];
+      if (kw) return { name: v, keyword: kw, termCount: kw.term_count || 0 };
+      if (override) {
+        return {
+          name: v,
+          keyword: { id: `override-${v}`, name: v, terms: override.terms, term_count: override.term_count, delimiter: null, columns: [] } as PgpKeyword,
+          termCount: override.term_count,
+        };
+      }
+      return { name: v, keyword: null, termCount: 0 };
     });
-  }, [selectedGroup, keywords]);
+  }, [selectedGroup, keywords, keywordOverrides]);
 
   const maxPages = useMemo(() => {
     if (groupKeywords.length === 0) return 0;
@@ -1245,6 +1293,36 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             </CardContent>
           </Card>
 
+          {/* Keyword Groups — reusable bundles (template + language + terms) */}
+          {keywordGroups.length > 0 && (
+            <Card className="border-0 shadow-surface border-emerald-500/30 bg-emerald-500/5">
+              <CardContent className="p-5 space-y-3">
+                <Label className="text-sm font-semibold flex items-center gap-2">
+                  <KeyRound className="h-4 w-4 text-emerald-600" /> Keyword Group
+                  <span className="text-[10px] text-muted-foreground ml-auto font-normal">shortcut · picks template + terms</span>
+                </Label>
+                <Select value={selectedKeywordGroupId} onValueChange={applyKeywordGroup}>
+                  <SelectTrigger className="h-11 bg-background">
+                    <SelectValue placeholder="Pick a saved Keyword Group..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {keywordGroups.map(g => {
+                      const termTotal = (g.variables || []).reduce((s, v) => s + (v.terms?.length || 0), 0);
+                      return (
+                        <SelectItem key={g.id} value={g.id}>
+                          {g.name} · {g.language} · {g.variables?.length || 0} vars · {termTotal} terms
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  Picking a group auto-selects its template and fills its keyword terms. Then just add Locations + Business Info.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Template Selection */}
           <Card className="border-0 shadow-surface">
             <CardContent className="p-5 space-y-4">
@@ -1265,6 +1343,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   ))}
                 </SelectContent>
               </Select>
+
 
               {selectedGroup && (
                 <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
