@@ -254,7 +254,8 @@ export default function KeywordGroupsPage() {
         ],
       });
       const text = res?.content || "";
-      const terms = text.split("\n").map(l => l.replace(/^[\d.\-*)\s]+/, "").trim()).filter(l => l && l.length < 100);
+      const parsed = text.split("\n").map(l => l.replace(/^[\d.\-*)\s]+/, "").trim()).filter(l => l && l.length < 100);
+      const terms = [...new Set(parsed)].slice(0, count);
       setVariables(prev => prev.map(v => v.name === varName
         ? { ...v, terms: mode === "replace" ? [...new Set(terms)] : [...new Set([...v.terms, ...terms])] }
         : v));
