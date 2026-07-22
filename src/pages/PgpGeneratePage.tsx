@@ -78,6 +78,7 @@ export default function PgpGeneratePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [testPreview, setTestPreview] = useState<string | null>(null);
   const [genProgress, setGenProgress] = useState<{ processed: number; total: number; errors: number } | null>(null);
+  const [sampleRowIndex, setSampleRowIndex] = useState(0);
 
   // Overwrite settings
   const [overwrite, setOverwrite] = useState(false);
