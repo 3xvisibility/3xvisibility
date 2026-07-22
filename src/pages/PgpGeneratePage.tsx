@@ -2535,6 +2535,13 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       rows={bizRows}
                       empty="No business-info variables in this template."
                     />
+                    <Group
+                      title="From AI (auto-written per page)"
+                      icon={Sparkles}
+                      color="text-purple-600 dark:text-purple-400"
+                      rows={aiRows}
+                      empty="No AI-content variables (heading/description/etc.) in this template."
+                    />
                     {missRows.length > 0 && (
                       <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-2.5 space-y-1">
                         <div className="flex items-center justify-between text-[11px]">
