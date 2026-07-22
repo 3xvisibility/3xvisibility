@@ -212,31 +212,38 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     setFixing(true);
     setFixProgress(0);
 
-    // ── Pre-fix baseline: only touch factors that are below 80 ──
-    const preUnified = calculateUnifiedSeoScore({
-      title: currentPage.title,
-      content: currentPage.content,
-      slug: currentPage.slug,
-      seoTitle: currentPage.seo_title,
-      seoDescription: currentPage.seo_description,
-      seoKeywords: currentPage.seo_keywords,
-      canonicalUrl: currentPage.canonical_url,
-      url: currentPage.external_url,
-    });
-    const factorScore = (key: string) =>
-      preUnified.factors.find((f) => f.key === key)?.score ?? 0;
     const STRONG = 80;
-    const titleStrong = factorScore("title") >= STRONG;
-    const descStrong = factorScore("description") >= STRONG;
-    const contentStrong = factorScore("content") >= STRONG;
-    const keywordsStrong = factorScore("keywords") >= STRONG;
+    const MAX_ITERATIONS = 4;
+
+    const scoreOf = (
+      values: {
+        title: string;
+        description: string;
+        keywords: string[];
+        content: string;
+      },
+      canonical: string | null,
+    ) =>
+      calculateUnifiedSeoScore({
+        title: values.title,
+        content: values.content,
+        slug: currentPage.slug,
+        seoTitle: values.title,
+        seoDescription: values.description,
+        seoKeywords: values.keywords,
+        canonicalUrl: canonical,
+        url: currentPage.external_url,
+      });
+
+    const factorScore = (result: ReturnType<typeof calculateUnifiedSeoScore>, key: string) =>
+      result.factors.find((f) => f.key === key)?.score ?? 0;
 
     try {
       // Detect language from campaign
       let detectedLanguage: string | null = null;
       if (currentPage.campaign_id) {
         setFixStep("Detecting language...");
-        setFixProgress(5);
+        setFixProgress(3);
         const { data: campaign } = await supabase
           .from("campaigns")
           .select("language")
@@ -249,196 +256,209 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         if (targetPage.canonical_url) return targetPage.canonical_url;
         if (targetPage.external_url) return targetPage.external_url;
         if (!targetPage.website_id) return null;
-
         const { data: website, error } = await supabase
           .from("websites")
           .select("url")
           .eq("id", targetPage.website_id)
           .maybeSingle();
-
         if (error || !website?.url) return null;
-
         const baseUrl = website.url.replace(/\/+$/, "");
         const slug = targetPage.slug.replace(/^\/+/, "");
         return slug ? `${baseUrl}/${slug}` : baseUrl;
       };
 
-      let newTitle = currentPage.seo_title || currentPage.title;
-      let newDescription = currentPage.seo_description || "";
-      let newKeywords = normalizeKeywords(currentPage.seo_keywords);
-      let newContent = currentPage.content;
-
-      if (currentPage.website_id && currentPage.external_id) {
-        setFixStep("Optimizing original content...");
-        setFixProgress(20);
-
-        const { data: optimizeData, error: optimizeErr } = await supabase.functions.invoke("optimize-seo-content", {
-          body: {
-            website_id: currentPage.website_id,
-            page_external_id: currentPage.external_id,
-            page_title: currentPage.title,
-            page_content: currentPage.content,
-            page_slug: currentPage.slug,
-            page_url: currentPage.external_url,
-            page_type: inferPublishType(currentPage),
-            workspace_id: currentPage.workspace_id,
-            optimize_fields: ["seo_title", "seo_description", "seo_keywords"],
-            page_seo_title: currentPage.seo_title,
-            page_seo_description: currentPage.seo_description,
-            page_seo_keywords: currentPage.seo_keywords || [],
-            language: detectedLanguage,
-          },
-        });
-
-        if (optimizeErr) throw new Error(await extractEdgeError(optimizeErr, "Optimization failed"));
-        if (optimizeData?.error) throw new Error(optimizeData.error);
-
-        const optimized = optimizeData?.result || {};
-        newTitle = typeof optimized.seo_title === "string" && optimized.seo_title.trim().length > 0
-          ? optimized.seo_title.trim()
-          : newTitle;
-        newDescription = typeof optimized.seo_description === "string" && optimized.seo_description.trim().length > 0
-          ? optimized.seo_description.trim()
-          : newDescription;
-        newKeywords = normalizeKeywords(optimized.seo_keywords).length > 0
-          ? normalizeKeywords(optimized.seo_keywords)
-          : newKeywords;
-        newContent = typeof optimized.content === "string" && optimized.content.trim().length > 0
-          ? optimized.content
-          : newContent;
-
-        setFixProgress(70);
-      } else {
-        setFixStep("Optimizing titles...");
-        setFixProgress(10);
-        const { data: titleData, error: titleErr } = await supabase.functions.invoke("ai-seo-assistant", {
-          body: { page_id: currentPage.id, action: "titles" },
-        });
-        if (titleErr) throw titleErr;
-        if (titleData?.error) throw new Error(titleData.error);
-
-        setFixStep("Writing meta descriptions...");
-        setFixProgress(28);
-        const { data: metaData, error: metaErr } = await supabase.functions.invoke("ai-seo-assistant", {
-          body: { page_id: currentPage.id, action: "meta" },
-        });
-        if (metaErr) throw metaErr;
-        if (metaData?.error) throw new Error(metaData.error);
-
-        setFixStep("Researching keywords...");
-        setFixProgress(46);
-        const { data: kwData, error: kwErr } = await supabase.functions.invoke("ai-seo-assistant", {
-          body: { page_id: currentPage.id, action: "keywords" },
-        });
-        if (kwErr) throw kwErr;
-        if (kwData?.error) throw new Error(kwData.error);
-
-        setFixStep("Rewriting original content...");
-        setFixProgress(64);
-        const { data: rewriteData, error: rewriteErr } = await supabase.functions.invoke("ai-seo-assistant", {
-          body: { page_id: currentPage.id, action: "full_rewrite" },
-        });
-        if (rewriteErr) throw rewriteErr;
-        if (rewriteData?.error) throw new Error(rewriteData.error);
-
-        try {
-          const titles = JSON.parse(titleData.result);
-          if (Array.isArray(titles) && titles.length > 0) newTitle = titles[0];
-        } catch {}
-
-        try {
-          const meta = JSON.parse(metaData.result);
-          if (meta?.descriptions?.[0]) newDescription = meta.descriptions[0];
-          if (meta?.suggested_title) newTitle = meta.suggested_title;
-        } catch {}
-
-        try {
-          const kw = JSON.parse(kwData.result);
-          const allKw = [...(kw.primary || []), ...(kw.secondary || []), ...(kw.long_tail || [])];
-          if (allKw.length > 0) newKeywords = allKw.slice(0, 8);
-        } catch {}
-
-        if (rewriteData?.result) {
-          newContent = rewriteData.result;
-        }
-      }
-
       const canonicalUrl = await resolveCanonicalUrl(currentPage);
 
-      // ── Final deterministic polish to guarantee 100% checklist score ──
-      // 1. Ensure SEO title is unique (has separator or differs from page title)
-      const hasSeparator = /[|\-–·•]/.test(newTitle);
-      if (!hasSeparator && newTitle.length <= 50) {
-        newTitle = `${newTitle} | ${(newKeywords[0] || "Trusted Local Service").slice(0, 30)}`;
-        if (newTitle.length > 60) newTitle = newTitle.slice(0, 60).trim();
-      }
-      // 2. Ensure SEO title has an action/offer word for SEA "Action words in title" check
-      const actionWordRegex = /(buy|get|shop|order|book|reserve|request|contact|call|discover|subscribe|free|best|top|new|save|deal|premium)/i;
-      if (!actionWordRegex.test(newTitle)) {
-        const candidate = `Get ${newTitle}`;
-        newTitle = candidate.length <= 60 ? candidate : newTitle;
-      }
-      // 3. Ensure description is in 120-160 char range
-      if (newDescription.length < 120) {
-        const filler = ` Contact our trusted local team today for a free quote — fast, reliable service near you.`;
-        newDescription = (newDescription + filler).slice(0, 156).trim();
-      } else if (newDescription.length > 160) {
-        newDescription = newDescription.slice(0, 156).trim();
+      // Working copy — mutated per iteration, weak factors only.
+      const working = {
+        title: currentPage.seo_title || currentPage.title,
+        description: currentPage.seo_description || "",
+        keywords: normalizeKeywords(currentPage.seo_keywords),
+        content: currentPage.content,
+      };
+
+      const baselineUnified = scoreOf(working, canonicalUrl);
+      let bestUnified = baselineUnified;
+      let bestSnapshot = { ...working };
+
+      let iteration = 0;
+      let weakKeys = baselineUnified.factors
+        .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
+        .map((f) => f.key);
+
+      if (weakKeys.length === 0) {
+        toast({
+          title: "Already optimized",
+          description: "Every factor is already ≥80. Nothing to improve.",
+        });
+        setFixing(false);
+        setFixStep("");
+        setFixProgress(0);
+        return;
       }
 
-      // ── Preserve already-strong fields: don't overwrite ≥80 factors ──
-      if (titleStrong) newTitle = currentPage.seo_title || currentPage.title;
-      if (descStrong && currentPage.seo_description) newDescription = currentPage.seo_description;
-      if (keywordsStrong && Array.isArray(currentPage.seo_keywords) && currentPage.seo_keywords.length > 0) {
-        newKeywords = normalizeKeywords(currentPage.seo_keywords);
-      }
-      if (contentStrong) newContent = currentPage.content;
+      while (iteration < MAX_ITERATIONS && weakKeys.length > 0) {
+        iteration++;
+        const baseProgress = 5 + (iteration - 1) * Math.floor(70 / MAX_ITERATIONS);
+        setFixStep(`Pass ${iteration}/${MAX_ITERATIONS} — improving: ${weakKeys.join(", ")}`);
+        setFixProgress(baseProgress);
 
-      // ── Anti-regression: recompute unified score with new values ──
-      const postUnified = calculateUnifiedSeoScore({
-        title: newTitle,
-        content: newContent,
-        slug: currentPage.slug,
-        seoTitle: newTitle,
-        seoDescription: newDescription,
-        seoKeywords: newKeywords,
-        canonicalUrl: canonicalUrl,
-        url: currentPage.external_url,
-      });
+        const iterBefore = scoreOf(working, canonicalUrl);
+        const beforeFactor = (k: string) => factorScore(iterBefore, k);
 
-      // Per-factor guard: if any individual factor dropped, revert that field
-      const postFactor = (key: string) =>
-        postUnified.factors.find((f) => f.key === key)?.score ?? 0;
-      if (postFactor("title") < factorScore("title")) newTitle = currentPage.seo_title || currentPage.title;
-      if (postFactor("description") < factorScore("description") && currentPage.seo_description) {
-        newDescription = currentPage.seo_description;
-      }
-      if (postFactor("content") < factorScore("content")) newContent = currentPage.content;
-      if (postFactor("keywords") < factorScore("keywords") && Array.isArray(currentPage.seo_keywords)) {
-        newKeywords = normalizeKeywords(currentPage.seo_keywords);
+        // Candidate values start from current working copy.
+        const candidate = { ...working };
+
+        if (currentPage.website_id && currentPage.external_id) {
+          const optimizeFields: string[] = [];
+          if (weakKeys.includes("title")) optimizeFields.push("seo_title");
+          if (weakKeys.includes("description")) optimizeFields.push("seo_description");
+          if (weakKeys.includes("keywords")) optimizeFields.push("seo_keywords");
+          if (weakKeys.includes("content")) optimizeFields.push("content");
+
+          const { data: optimizeData, error: optimizeErr } = await supabase.functions.invoke(
+            "optimize-seo-content",
+            {
+              body: {
+                website_id: currentPage.website_id,
+                page_external_id: currentPage.external_id,
+                page_title: currentPage.title,
+                page_content: working.content,
+                page_slug: currentPage.slug,
+                page_url: currentPage.external_url,
+                page_type: inferPublishType(currentPage),
+                workspace_id: currentPage.workspace_id,
+                optimize_fields: optimizeFields,
+                page_seo_title: working.title,
+                page_seo_description: working.description,
+                page_seo_keywords: working.keywords,
+                language: detectedLanguage,
+                iteration,
+              },
+            },
+          );
+          if (optimizeErr) throw new Error(await extractEdgeError(optimizeErr, "Optimization failed"));
+          if (optimizeData?.error) throw new Error(optimizeData.error);
+
+          const optimized = optimizeData?.result || {};
+          if (weakKeys.includes("title") && typeof optimized.seo_title === "string" && optimized.seo_title.trim()) {
+            candidate.title = optimized.seo_title.trim();
+          }
+          if (weakKeys.includes("description") && typeof optimized.seo_description === "string" && optimized.seo_description.trim()) {
+            candidate.description = optimized.seo_description.trim();
+          }
+          if (weakKeys.includes("keywords") && normalizeKeywords(optimized.seo_keywords).length > 0) {
+            candidate.keywords = normalizeKeywords(optimized.seo_keywords);
+          }
+          if (weakKeys.includes("content") && typeof optimized.content === "string" && optimized.content.trim()) {
+            candidate.content = optimized.content;
+          }
+        } else {
+          if (weakKeys.includes("title")) {
+            const { data: titleData, error: titleErr } = await supabase.functions.invoke("ai-seo-assistant", {
+              body: { page_id: currentPage.id, action: "titles", iteration },
+            });
+            if (titleErr) throw titleErr;
+            if (titleData?.error) throw new Error(titleData.error);
+            try {
+              const titles = JSON.parse(titleData.result);
+              if (Array.isArray(titles) && titles.length > 0) candidate.title = titles[0];
+            } catch {}
+          }
+          if (weakKeys.includes("description")) {
+            const { data: metaData, error: metaErr } = await supabase.functions.invoke("ai-seo-assistant", {
+              body: { page_id: currentPage.id, action: "meta", iteration },
+            });
+            if (metaErr) throw metaErr;
+            if (metaData?.error) throw new Error(metaData.error);
+            try {
+              const meta = JSON.parse(metaData.result);
+              if (meta?.descriptions?.[0]) candidate.description = meta.descriptions[0];
+            } catch {}
+          }
+          if (weakKeys.includes("keywords")) {
+            const { data: kwData, error: kwErr } = await supabase.functions.invoke("ai-seo-assistant", {
+              body: { page_id: currentPage.id, action: "keywords", iteration },
+            });
+            if (kwErr) throw kwErr;
+            if (kwData?.error) throw new Error(kwData.error);
+            try {
+              const kw = JSON.parse(kwData.result);
+              const allKw = [...(kw.primary || []), ...(kw.secondary || []), ...(kw.long_tail || [])];
+              if (allKw.length > 0) candidate.keywords = allKw.slice(0, 8);
+            } catch {}
+          }
+          if (weakKeys.includes("content")) {
+            const { data: rewriteData, error: rewriteErr } = await supabase.functions.invoke("ai-seo-assistant", {
+              body: { page_id: currentPage.id, action: "full_rewrite", iteration },
+            });
+            if (rewriteErr) throw rewriteErr;
+            if (rewriteData?.error) throw new Error(rewriteData.error);
+            if (rewriteData?.result) candidate.content = rewriteData.result;
+          }
+        }
+
+        // Deterministic polish for title / description on the candidate.
+        if (weakKeys.includes("title")) {
+          const hasSeparator = /[|\-–·•]/.test(candidate.title);
+          if (!hasSeparator && candidate.title.length <= 50) {
+            candidate.title = `${candidate.title} | ${(candidate.keywords[0] || "Trusted Local Service").slice(0, 30)}`;
+            if (candidate.title.length > 60) candidate.title = candidate.title.slice(0, 60).trim();
+          }
+          const actionWordRegex = /(buy|get|shop|order|book|reserve|request|contact|call|discover|subscribe|free|best|top|new|save|deal|premium)/i;
+          if (!actionWordRegex.test(candidate.title)) {
+            const c = `Get ${candidate.title}`;
+            candidate.title = c.length <= 60 ? c : candidate.title;
+          }
+        }
+        if (weakKeys.includes("description")) {
+          if (candidate.description.length < 120) {
+            const filler = ` Contact our trusted local team today for a free quote — fast, reliable service near you.`;
+            candidate.description = (candidate.description + filler).slice(0, 156).trim();
+          } else if (candidate.description.length > 160) {
+            candidate.description = candidate.description.slice(0, 156).trim();
+          }
+        }
+
+        // Per-factor guard: accept a field ONLY if its factor score improved.
+        const iterAfter = scoreOf(candidate, canonicalUrl);
+        const afterFactor = (k: string) => factorScore(iterAfter, k);
+        for (const key of weakKeys) {
+          if (afterFactor(key) > beforeFactor(key)) {
+            (working as any)[key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content"] =
+              (candidate as any)[key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content"];
+          }
+        }
+
+        const nowUnified = scoreOf(working, canonicalUrl);
+        if (nowUnified.score > bestUnified.score) {
+          bestUnified = nowUnified;
+          bestSnapshot = { ...working };
+        }
+
+        weakKeys = nowUnified.factors
+          .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
+          .map((f) => f.key);
+
+        if (weakKeys.length === 0) break;
       }
 
-      // Final overall-score gate: if total dropped after all guards, abort save
-      const finalUnified = calculateUnifiedSeoScore({
-        title: newTitle,
-        content: newContent,
-        slug: currentPage.slug,
-        seoTitle: newTitle,
-        seoDescription: newDescription,
-        seoKeywords: newKeywords,
-        canonicalUrl: canonicalUrl,
-        url: currentPage.external_url,
-      });
-      if (finalUnified.score < preUnified.score) {
+      // Use best snapshot ever seen — never regress below baseline.
+      if (bestUnified.score <= baselineUnified.score) {
         setFixing(false);
         setFixStep("");
         setFixProgress(0);
         toast({
           title: "No improvement found",
-          description: `Kept your current content — new draft scored ${finalUnified.score} vs current ${preUnified.score}. Try again or edit weak factors manually.`,
+          description: `Kept your current content — best draft after ${iteration} pass(es) scored ${bestUnified.score} vs current ${baselineUnified.score}.`,
         });
         return;
       }
+
+      const newTitle = bestSnapshot.title;
+      const newDescription = bestSnapshot.description;
+      const newKeywords = bestSnapshot.keywords;
+      const newContent = bestSnapshot.content;
 
       setFixStep("Saving updated page...");
       setFixProgress(84);
@@ -490,11 +510,14 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         canonical_url: canonicalUrl,
       });
 
+      const remainingWeak = bestUnified.factors
+        .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
+        .map((f) => f.key);
       toast({
         title: "SEO issues fixed!",
-        description: republished
-          ? "Original content updated and republished."
-          : "Original content updated. Scores refreshed above.",
+        description: `${baselineUnified.score} → ${bestUnified.score} after ${iteration} pass(es).${
+          remainingWeak.length ? ` Still <80: ${remainingWeak.join(", ")}.` : " All targeted factors now ≥80."
+        }${republished ? " Republished." : ""}`,
       });
       onUpdated?.();
     } catch (err: any) {
@@ -505,6 +528,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       setFixProgress(0);
     }
   };
+
 
   // If the dialog is open but page data is unavailable, render a graceful
   // fallback instead of a blank dialog, so the user always sees a clear state.
