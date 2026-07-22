@@ -423,16 +423,32 @@ export default function KeywordGroupsPage() {
 
             {step === 2 && (
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Language</Label>
-                  <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {LANGUAGES.map(l => <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[11px] text-muted-foreground">AI-generated terms will be produced in this language.</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Language</Label>
+                    <Select value={language} onValueChange={setLanguage}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {LANGUAGES.map(l => <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground">AI-generated terms will be produced in this language.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Terms per variable</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={500}
+                      value={termsPerVariable}
+                      onChange={(e) => setTermsPerVariable(Math.max(1, Math.min(500, parseInt(e.target.value) || 1)))}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      How many values AI generates for each variable. e.g. 5 → exactly 5 terms per variable (enough for 5 pages).
+                    </p>
+                  </div>
                 </div>
+
 
                 <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3">
                   <Label className="flex items-center gap-1.5 text-sm">
