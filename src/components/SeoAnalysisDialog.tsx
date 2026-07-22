@@ -247,6 +247,20 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     const factorScore = (result: ReturnType<typeof calculateUnifiedSeoScore>, key: string) =>
       result.factors.find((f) => f.key === key)?.score ?? 0;
 
+    const legacyScoreOf = (values: { title: string; description: string; keywords: string[]; content: string }) => {
+      const seo = calculateContentSeoScore(values.title, values.content, currentPage.slug, {
+        url: currentPage.external_url || undefined,
+        description: values.description,
+        seoTitle: values.title,
+        seoKeywords: values.keywords,
+      });
+      const sea = calculateContentSeaScore(values.title, values.content, currentPage.slug, currentPage.external_url || undefined);
+      const geo = calculateContentGeoScore(values.title, values.content, currentPage.slug, currentPage.external_url || undefined);
+      const meta = calculateSeoScore(values.title, values.description, values.keywords, currentPage.title);
+      const overall = Math.round((seo.score * 0.4 + meta.score * 0.3 + sea.score * 0.15 + geo.score * 0.15));
+      return { seo: seo.score, sea: sea.score, geo: geo.score, meta: meta.score, overall };
+    };
+
     const plainText = (html: string) => html
       .replace(/<script[\s\S]*?<\/script>/gi, " ")
       .replace(/<style[\s\S]*?<\/style>/gi, " ")
@@ -445,12 +459,39 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       let bestUnified = baselineUnified;
       let bestSnapshot = { ...working };
       const trackedKeys = ["title", "description", "content", "keywords"];
-      const rankSnapshot = (result: ReturnType<typeof calculateUnifiedSeoScore>) => {
+      const rankSnapshot = (result: ReturnType<typeof calculateUnifiedSeoScore>, values: typeof working) => {
+        const legacy = legacyScoreOf(values);
         const passCount = trackedKeys.filter((key) => factorScore(result, key) >= STRONG).length;
         const factorTotal = trackedKeys.reduce((sum, key) => sum + factorScore(result, key), 0);
-        return passCount * 1000 + factorTotal * 10 + result.score;
+        const legacyPassCount = [legacy.seo, legacy.meta, legacy.sea, legacy.geo].filter((score) => score >= STRONG).length;
+        const legacyTotal = legacy.seo + legacy.meta + legacy.sea + legacy.geo;
+        return passCount * 1000 + legacyPassCount * 1000 + factorTotal * 10 + legacyTotal * 10 + result.score + legacy.overall;
       };
-      const baselineRank = rankSnapshot(baselineUnified);
+      const collectWeakKeys = (result: ReturnType<typeof calculateUnifiedSeoScore>, values: typeof working) => {
+        const next = new Set(
+          result.factors
+            .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
+            .map((f) => f.key),
+        );
+        const legacy = legacyScoreOf(values);
+        if (legacy.meta < STRONG) {
+          next.add("title");
+          next.add("description");
+          next.add("keywords");
+        }
+        if (legacy.seo < STRONG) {
+          next.add("title");
+          next.add("description");
+          next.add("keywords");
+          next.add("content");
+        }
+        if (legacy.sea < STRONG || legacy.geo < STRONG) {
+          next.add("title");
+          next.add("content");
+        }
+        return [...next];
+      };
+      const baselineRank = rankSnapshot(baselineUnified, working);
       let bestRank = baselineRank;
 
       const TRACKED_FACTORS: Record<string, string> = {
@@ -467,9 +508,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       setFactorLive(seedFactors);
 
       let iteration = 0;
-      let weakKeys = baselineUnified.factors
-        .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
-        .map((f) => f.key);
+      let weakKeys = collectWeakKeys(baselineUnified, working);
 
       if (weakKeys.length === 0) {
         toast({
@@ -647,8 +686,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           const fieldName = key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content";
           return JSON.stringify((candidate as any)[fieldName]) !== JSON.stringify((working as any)[fieldName]);
         });
-        const candidateRank = rankSnapshot(iterAfter);
-        const beforeRank = rankSnapshot(iterBefore);
+        const candidateRank = rankSnapshot(iterAfter, candidate);
+        const beforeRank = rankSnapshot(iterBefore, working);
         const noWeakFactorDropped = weakKeys.every((key) => afterFactor(key) >= beforeFactor(key));
 
         if (candidateChanged && candidateRank >= beforeRank && noWeakFactorDropped) {
@@ -672,7 +711,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         }
 
         const nowUnified = scoreOf(working, canonicalUrl);
-        const nowRank = rankSnapshot(nowUnified);
+        const nowRank = rankSnapshot(nowUnified, working);
         const improved = nowRank > bestRank || nowUnified.score > bestUnified.score;
         if (improved) {
           bestUnified = nowUnified;
@@ -705,9 +744,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           return next;
         });
 
-        weakKeys = nowUnified.factors
-          .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
-          .map((f) => f.key);
+        weakKeys = collectWeakKeys(nowUnified, working);
 
         if (weakKeys.length === 0) {
           allFactorsPassed = true;
