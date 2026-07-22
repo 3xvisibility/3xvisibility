@@ -319,6 +319,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         return;
       }
       let stagnantPasses = 0;
+      let allFactorsPassed = false;
+      let stoppedForStagnation = false;
 
       while (iteration < MAX_ITERATIONS && weakKeys.length > 0) {
         iteration++;
