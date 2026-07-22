@@ -500,7 +500,9 @@ export default function KeywordGroupsPage() {
                     <Textarea
                       value={v.terms.join("\n")}
                       onChange={(e) => {
-                        const terms = e.target.value.split("\n").map(t => t.trim()).filter(Boolean);
+                        // Preserve raw input (spaces, blank lines, trailing newline) while typing.
+                        // Normalization/trim happens at save time so the cursor never jumps.
+                        const terms = e.target.value.split("\n");
                         setVariables(prev => prev.map((x, i) => i === idx ? { ...x, terms } : x));
                       }}
                       placeholder="One value per line..."
