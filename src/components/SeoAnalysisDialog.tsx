@@ -441,11 +441,26 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           }
         }
         if (weakKeys.includes("description")) {
+          // Guarantee focus keyword presence (critical for the "Keyword in meta description" check).
+          const focusKw = (candidate.keywords[0] || "").trim();
+          const hasKw = focusKw
+            ? candidate.description.toLowerCase().includes(focusKw.toLowerCase())
+            : true;
+          if (focusKw && !hasKw) {
+            // Prepend the keyword naturally so it stays in the 120-160 window.
+            const prefix = `${focusKw.charAt(0).toUpperCase()}${focusKw.slice(1)} — `;
+            candidate.description = (prefix + candidate.description).trim();
+          }
           if (candidate.description.length < 120) {
-            const filler = ` Contact our trusted local team today for a free quote — fast, reliable service near you.`;
-            candidate.description = (candidate.description + filler).slice(0, 156).trim();
-          } else if (candidate.description.length > 160) {
-            candidate.description = candidate.description.slice(0, 156).trim();
+            const kwHint = focusKw ? ` Learn more about ${focusKw} and request a free quote today.` : "";
+            const filler = `${kwHint} Trusted local experts — fast, reliable service near you.`;
+            candidate.description = (candidate.description + filler).replace(/\s+/g, " ").trim();
+          }
+          if (candidate.description.length > 160) {
+            candidate.description = candidate.description.slice(0, 157).trim();
+            // Avoid cutting mid-word.
+            const lastSpace = candidate.description.lastIndexOf(" ");
+            if (lastSpace > 130) candidate.description = candidate.description.slice(0, lastSpace).trim();
           }
         }
 
@@ -453,9 +468,15 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         const iterAfter = scoreOf(candidate, canonicalUrl);
         const afterFactor = (k: string) => factorScore(iterAfter, k);
         for (const key of weakKeys) {
-          if (afterFactor(key) > beforeFactor(key)) {
-            (working as any)[key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content"] =
-              (candidate as any)[key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content"];
+          const before = beforeFactor(key);
+          const after = afterFactor(key);
+          // Accept if the factor improved, OR (when still failing) if it stayed equal
+          // but the candidate actually changed — lets deterministic polish take effect
+          // even when the scorer can't measure the delta yet.
+          const fieldName = key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content";
+          const changed = JSON.stringify((candidate as any)[fieldName]) !== JSON.stringify((working as any)[fieldName]);
+          if (after > before || (after >= before && before < STRONG && changed)) {
+            (working as any)[fieldName] = (candidate as any)[fieldName];
           }
         }
 
