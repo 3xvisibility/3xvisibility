@@ -493,8 +493,15 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
           .map((f) => f.key);
 
-        if (weakKeys.length === 0) break;
-        if (stagnantPasses >= 2) break; // give up if 2 consecutive passes yielded no gain
+        if (weakKeys.length === 0) {
+          allFactorsPassed = true;
+          setFixStep(`✓ All factors reached 80+ after ${iteration} pass(es)`);
+          break;
+        }
+        if (stagnantPasses >= 2) {
+          stoppedForStagnation = true;
+          break;
+        }
       }
 
 
