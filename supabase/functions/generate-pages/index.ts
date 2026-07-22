@@ -2256,6 +2256,50 @@ Deno.serve(async (req) => {
           // Process spintax {option1|option2|option3}
           pageContent = processSpintax(pageContent);
 
+          // Spin Content: paraphrase visible text per page so identical
+          // templates yield materially different HTML across the batch.
+          // Preserves HTML tags, attributes, URLs, numbers, and any tokens
+          // that still look like variables ({...} / {{...}}).
+          if (spinContentFlag && LOVABLE_API_KEY) {
+            try {
+              const seed = `${row.__index ?? processedCount}-${Math.random().toString(36).slice(2, 8)}`;
+              const spinResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  model: "google/gemini-2.5-flash-lite",
+                  temperature: 1.0,
+                  messages: [
+                    {
+                      role: "system",
+                      content:
+                        "You paraphrase HTML pages to produce meaningfully different wording per page while preserving structure. RULES: (1) Return ONLY the rewritten HTML — no markdown fences, no commentary. (2) Keep every HTML tag, attribute, class, id, style, href, src, and inline SVG exactly as-is. (3) Keep numbers, prices, phone numbers, emails, addresses, brand names, and URLs unchanged. (4) Keep any remaining {token} or {{token}} placeholders untouched. (5) Rewrite the natural-language text inside tags with fresh phrasing, synonyms, and slight sentence restructuring. (6) Do not add or remove sections; keep total length within ±15%. (7) Preserve the original language.",
+                    },
+                    {
+                      role: "user",
+                      content: `Variation seed: ${seed}\n\nRewrite this HTML page with fresh wording:\n\n${pageContent}`,
+                    },
+                  ],
+                }),
+              });
+              if (spinResp.ok) {
+                const spinData = await spinResp.json();
+                const spun = spinData?.choices?.[0]?.message?.content?.trim();
+                if (spun && spun.length > pageContent.length * 0.5) {
+                  // Strip any accidental code fences.
+                  pageContent = spun.replace(/^```(?:html)?\s*/i, "").replace(/```\s*$/i, "");
+                }
+              } else {
+                console.warn("[GENERATE-PAGES] spin_content paraphrase skipped:", spinResp.status);
+              }
+            } catch (e) {
+              console.warn("[GENERATE-PAGES] spin_content paraphrase error:", (e as Error).message);
+            }
+          }
+
           // Process dynamic elements {{MAP:}}, {{YOUTUBE:}}, {{IMAGE:}}, {{WEATHER:}}
           pageContent = processDynamicElements(pageContent, allVars);
 
