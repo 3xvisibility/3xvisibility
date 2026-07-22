@@ -775,6 +775,30 @@ export default function TemplateMarketplacePage() {
             className="pl-9"
           />
         </div>
+        <Select value={selectedFormat} onValueChange={(v) => setSelectedFormat(v as typeof selectedFormat)}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Format" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All formats</SelectItem>
+            <SelectItem value="elementor">Elementor</SelectItem>
+            <SelectItem value="shopify">Shopify</SelectItem>
+            <SelectItem value="html">HTML / CSS</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={selectedTag} onValueChange={setSelectedTag}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Tag" />
+          </SelectTrigger>
+          <SelectContent className="max-h-[320px]">
+            <SelectItem value="all">All tags</SelectItem>
+            {availableTags.map(([tag, count]) => (
+              <SelectItem key={tag} value={tag} className="capitalize">
+                {tag} <span className="text-muted-foreground ml-1">({count})</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Category pills */}
