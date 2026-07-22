@@ -1255,9 +1255,25 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
                 "company_name","company","brand_name","brand","business_name",
                 "phone","phone_number","email","address","website","url","owner","author",
               ]);
+              // Long-form / SEO content variables — AI writes these per page at
+              // generation time, so we don't ask the user to type terms for them.
+              const AI_CONTENT_VARS = new Set([
+                "title","page_title","seo_title",
+                "subtitle","sub_title","sub_headline",
+                "heading","sub_heading","subheading","headline","hero_title","hero_subtitle","hero_heading",
+                "tagline","slogan",
+                "description","desc","meta_description","seo_description","short_description","long_description",
+                "intro","introduction","summary","overview","about","about_us",
+                "body","content","paragraph","text","story",
+                "cta","cta_text","cta_title","cta_description","call_to_action",
+                "benefit","benefits","feature","features",
+                "faq","faq_question","faq_answer","question","answer",
+                "testimonial","testimonials","review","reviews",
+                "why_choose_us","why_us","value_proposition",
+              ]);
               const isSkipped = (n: string) => {
                 const k = n.trim().toLowerCase();
-                return BUSINESS_VARS.has(k) || GEO_VAR_NAMES.includes(k);
+                return BUSINESS_VARS.has(k) || GEO_VAR_NAMES.includes(k) || AI_CONTENT_VARS.has(k);
               };
               const extractVars = (tpl: typeof pgpTemplates[number] | undefined): string[] => {
                 if (!tpl) return [];
