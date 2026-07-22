@@ -739,11 +739,12 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-3">
                 <button type="button" className="text-xs text-primary hover:underline font-medium" onClick={selectAll}>
-                  {selectedIds.size === filteredLocations.length && filteredLocations.length > 0 ? "Deselect all" : "Select all"}
+                  {selectedIds.size === visibleLocations.length && visibleLocations.length > 0 ? "Deselect loaded" : "Select loaded"}
                 </button>
                 <span className="text-xs text-muted-foreground">
-                  {selectedIds.size} / {filteredLocations.length} selected
+                  {selectedIds.size} selected · {visibleLocations.length.toLocaleString()} of {totalCount.toLocaleString()} loaded
                 </span>
+
               </div>
               <div className="flex items-center gap-2">
                 {dataUpdatedAt > 0 && !isLoading && (
