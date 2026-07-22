@@ -426,6 +426,23 @@ export default function KeywordGroupsPage() {
                   <p className="text-[11px] text-muted-foreground">AI-generated terms will be produced in this language.</p>
                 </div>
 
+                <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3">
+                  <Label className="flex items-center gap-1.5 text-sm">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    Business / niche context <span className="text-[10px] text-muted-foreground font-normal">(used by AI generate)</span>
+                  </Label>
+                  <Textarea
+                    value={businessContext}
+                    onChange={(e) => setBusinessContext(e.target.value)}
+                    placeholder="e.g. Local plumbing company in Dhaka offering emergency repair, pipe installation, and drain cleaning for homes and offices."
+                    rows={3}
+                    className="text-xs"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Describe the client's business, industry, and audience. Every AI generate below will stay strictly on this topic instead of inventing generic values.
+                  </p>
+                </div>
+
                 {variables.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No variables to fill. Go back and pick a different template.</p>
                 ) : variables.map((v, idx) => (
@@ -440,6 +457,12 @@ export default function KeywordGroupsPage() {
                         </Button>
                       </div>
                     </div>
+                    <Input
+                      value={varHints[v.name] || ""}
+                      onChange={(e) => setVarHints(prev => ({ ...prev, [v.name]: e.target.value }))}
+                      placeholder={`Hint for {${v.name}} — e.g. "types of plumbing services" or "budget tiers"`}
+                      className="h-8 text-xs"
+                    />
                     <Textarea
                       value={v.terms.join("\n")}
                       onChange={(e) => {
