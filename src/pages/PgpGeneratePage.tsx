@@ -2533,6 +2533,128 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 );
               })()}
 
+              {/* Sample row inspector — pick any row to see per-variable source */}
+              {selectedGroup && groupKeywords.length > 0 && (() => {
+                const rows = buildRows();
+                if (rows.length === 0) return null;
+                const safeIdx = Math.min(sampleRowIndex, rows.length - 1);
+                const row = rows[safeIdx] || {};
+                const varNames = groupKeywords.map((g) => g.name);
+
+                const classify = (varName: string, value: string) => {
+                  const lc = varName.toLowerCase();
+                  if (isGeoVariable(varName)) {
+                    return { label: "Locations", from: "Step 3 · Locations Database", icon: MapPin, cls: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 dark:text-emerald-400" };
+                  }
+                  if (isBusinessVariable(varName) || injectedBizVarNames.has(lc)) {
+                    return { label: "Business Info", from: "Step 4 · Business Info", icon: Building2, cls: "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400" };
+                  }
+                  if ((value ?? "").trim() !== "") {
+                    return { label: "Keyword Group", from: `Step 1 · ${selectedGroup?.name ?? "Keyword Group"}`, icon: Bookmark, cls: "bg-primary/10 text-primary border-primary/30" };
+                  }
+                  return { label: "AI-fill", from: "Runtime · AI will generate per row", icon: Sparkles, cls: "bg-purple-500/10 text-purple-600 border-purple-500/30 dark:text-purple-400" };
+                };
+
+                const counts = varNames.reduce<Record<string, number>>((acc, n) => {
+                  const c = classify(n, row[n] ?? row[n.toLowerCase()] ?? "");
+                  acc[c.label] = (acc[c.label] ?? 0) + 1;
+                  return acc;
+                }, {});
+
+                const pickRandom = () => {
+                  if (rows.length <= 1) return;
+                  let i = safeIdx;
+                  while (i === safeIdx) i = Math.floor(Math.random() * rows.length);
+                  setSampleRowIndex(i);
+                };
+
+                return (
+                  <div className="rounded-xl border border-primary/25 bg-primary/[0.03] overflow-hidden">
+                    <div className="px-3.5 py-2.5 border-b border-primary/15 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold flex items-center gap-1.5">
+                            <Eye className="h-3.5 w-3.5 text-primary" /> Sample row preview
+                          </p>
+                          <p className="text-[10.5px] text-muted-foreground">
+                            Pick any row to see exactly which source (Locations / Business Info / Keyword Group / AI) fills each variable.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0 text-[10px]">
+                          {Object.entries(counts).map(([lbl, n]) => (
+                            <Badge key={lbl} variant="outline" className="h-5 px-1.5">
+                              {lbl}: {n}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7"
+                          disabled={safeIdx === 0}
+                          onClick={() => setSampleRowIndex((i) => Math.max(0, i - 1))}
+                        >
+                          <ChevronRight className="h-3.5 w-3.5 rotate-180" />
+                        </Button>
+                        <Select value={String(safeIdx)} onValueChange={(v) => setSampleRowIndex(Number(v))}>
+                          <SelectTrigger className="h-7 text-xs w-52">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {rows.slice(0, 200).map((r, i) => (
+                              <SelectItem key={i} value={String(i)} className="text-xs">
+                                Row {i + 1} — {String(Object.values(r)[0] ?? "").slice(0, 30) || "(empty)"}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7"
+                          disabled={safeIdx >= rows.length - 1}
+                          onClick={() => setSampleRowIndex((i) => Math.min(rows.length - 1, i + 1))}
+                        >
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={pickRandom} disabled={rows.length <= 1}>
+                          <Shuffle className="h-3 w-3 mr-1" /> Random
+                        </Button>
+                        <span className="text-[11px] text-muted-foreground ml-auto tabular-nums">
+                          Row {safeIdx + 1} of {rows.length.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="max-h-80 overflow-auto divide-y divide-border/50">
+                      {varNames.map((n) => {
+                        const val = row[n] ?? row[n.toLowerCase()] ?? "";
+                        const src = classify(n, val);
+                        const Icon = src.icon;
+                        return (
+                          <div key={n} className="px-3.5 py-2 flex items-start gap-3 text-xs hover:bg-muted/40">
+                            <code className="font-mono text-[11px] bg-muted px-1.5 py-0.5 rounded shrink-0 mt-0.5">
+                              {"{" + n + "}"}
+                            </code>
+                            <Badge variant="outline" className={cn("h-5 gap-1 px-1.5 text-[10px] shrink-0 mt-0.5", src.cls)}>
+                              <Icon className="h-2.5 w-2.5" />
+                              {src.label}
+                            </Badge>
+                            <div className="min-w-0 flex-1">
+                              <div className={cn("break-words", val ? "text-foreground" : "italic text-muted-foreground")}>
+                                {val ? String(val) : "(AI will generate at runtime)"}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground mt-0.5">from: {src.from}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Per-row variable source trace — first N rows */}
               {selectedGroup && groupKeywords.length > 0 && (() => {
                 const rows = buildRows();
