@@ -105,6 +105,7 @@ export default function KeywordGroupsPage() {
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [businessContext, setBusinessContext] = useState("");
   const [varHints, setVarHints] = useState<Record<string, string>>({});
+  const [termsPerVariable, setTermsPerVariable] = useState<number>(15);
 
   const { data: groups = [], isLoading } = useQuery({
     queryKey: ["pgp-keyword-groups", wsId],
@@ -244,7 +245,8 @@ export default function KeywordGroupsPage() {
         ctx ? `Client business / niche: ${ctx}` : "",
         hint ? `User hint for this variable: ${hint}` : "",
       ].filter(Boolean).join("\n");
-      const prompt = `${contextBlock}\n\nGenerate 15 concise, real-world values for the variable "{${varName}}" that are directly relevant to the business/niche and hint above. Stay strictly on-topic — do not invent generic or unrelated brands. Return one plain value per line, no numbering, no explanations. Language: ${langLabel}.`;
+      const count = Math.max(1, Math.min(500, Number(termsPerVariable) || 15));
+      const prompt = `${contextBlock}\n\nGenerate EXACTLY ${count} concise, real-world, UNIQUE values for the variable "{${varName}}" that are directly relevant to the business/niche and hint above. Stay strictly on-topic — do not invent generic or unrelated brands. Return one plain value per line, no numbering, no explanations. Language: ${langLabel}.`;
       const res = await callAI({
         messages: [
           { role: "system", content: "You return only plain values, one per line, tightly matched to the user's business context. No markdown, no HTML, no off-topic suggestions." },
@@ -252,7 +254,8 @@ export default function KeywordGroupsPage() {
         ],
       });
       const text = res?.content || "";
-      const terms = text.split("\n").map(l => l.replace(/^[\d.\-*)\s]+/, "").trim()).filter(l => l && l.length < 100);
+      const parsed = text.split("\n").map(l => l.replace(/^[\d.\-*)\s]+/, "").trim()).filter(l => l && l.length < 100);
+      const terms = [...new Set(parsed)].slice(0, count);
       setVariables(prev => prev.map(v => v.name === varName
         ? { ...v, terms: mode === "replace" ? [...new Set(terms)] : [...new Set([...v.terms, ...terms])] }
         : v));
@@ -420,16 +423,32 @@ export default function KeywordGroupsPage() {
 
             {step === 2 && (
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Language</Label>
-                  <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {LANGUAGES.map(l => <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[11px] text-muted-foreground">AI-generated terms will be produced in this language.</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Language</Label>
+                    <Select value={language} onValueChange={setLanguage}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {LANGUAGES.map(l => <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground">AI-generated terms will be produced in this language.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Terms per variable</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={500}
+                      value={termsPerVariable}
+                      onChange={(e) => setTermsPerVariable(Math.max(1, Math.min(500, parseInt(e.target.value) || 1)))}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      How many values AI generates for each variable. e.g. 5 → exactly 5 terms per variable (enough for 5 pages).
+                    </p>
+                  </div>
                 </div>
+
 
                 <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3">
                   <Label className="flex items-center gap-1.5 text-sm">
