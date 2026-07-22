@@ -213,7 +213,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     setFixProgress(0);
 
     const STRONG = 80;
-    const MAX_ITERATIONS = 4;
+    const MAX_ITERATIONS = 8;
+
 
     const scoreOf = (
       values: {
