@@ -161,6 +161,8 @@ export default function KeywordGroupsPage() {
     setLanguage("en");
     setVariables([]);
     setEditing(null);
+    setBusinessContext("");
+    setVarHints({});
   };
 
   const openCreate = () => {
