@@ -306,13 +306,16 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 
       while (iteration < MAX_ITERATIONS && weakKeys.length > 0) {
         iteration++;
+        setCurrentIteration(iteration);
         const baseProgress = 5 + (iteration - 1) * Math.floor(70 / MAX_ITERATIONS);
         setFixStep(`Pass ${iteration}/${MAX_ITERATIONS} — improving: ${weakKeys.join(", ")}`);
         setFixProgress(baseProgress);
 
-
         const iterBefore = scoreOf(working, canonicalUrl);
         const beforeFactor = (k: string) => factorScore(iterBefore, k);
+        const passStartScore = iterBefore.score;
+        const currentWeak = [...weakKeys];
+        setPassHistory((prev) => [...prev, { pass: iteration, before: passStartScore, after: passStartScore, delta: 0, weak: currentWeak, status: "running" }]);
 
         // Candidate values start from current working copy.
         const candidate = { ...working };
