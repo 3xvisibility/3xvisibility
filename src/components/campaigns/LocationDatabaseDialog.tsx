@@ -572,23 +572,39 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                 Load cities for {countryName} to get started.
               </p>
             </div>
-            <Button
-              onClick={() => {
-                seedMutation.mutate(
-                  { countryCode: countryFilter, target: batchSize },
-                  { onSuccess: () => void refetch() },
-                );
-              }}
-              disabled={seedMutation.isPending}
-              className="rounded-xl gap-2"
-            >
-              {seedMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                onClick={() => {
+                  seedMutation.mutate(
+                    { countryCode: countryFilter, bulk: true },
+                    { onSuccess: () => void refetch() },
+                  );
+                }}
+                disabled={seedMutation.isPending}
+                className="rounded-xl gap-2"
+              >
+                {seedMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Globe className="h-4 w-4" />
+                )}
+                {seedMutation.isPending ? "Loading…" : `Load ALL ${countryName} cities (global DB)`}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  seedMutation.mutate(
+                    { countryCode: countryFilter, target: batchSize },
+                    { onSuccess: () => void refetch() },
+                  );
+                }}
+                disabled={seedMutation.isPending}
+                className="rounded-xl gap-2"
+              >
                 <Download className="h-4 w-4" />
-              )}
-              {seedMutation.isPending ? "Loading cities..." : `Load ${countryName} Cities`}
-            </Button>
+                AI batch ({batchSize})
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="flex-1 flex flex-col gap-3 min-h-0">
