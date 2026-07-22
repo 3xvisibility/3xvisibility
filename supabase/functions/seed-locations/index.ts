@@ -438,8 +438,44 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    let body: { country_code?: string; expand?: boolean; state?: string; region?: string; target?: number } = {};
+    let body: { country_code?: string; expand?: boolean; state?: string; region?: string; target?: number; bulk?: boolean; all?: boolean } = {};
     try { body = await req.json(); } catch { /* empty body ok */ }
+
+    // ── Bulk mode: pull ALL cities for a country (or every country) from the
+    // free countriesnow.space global database. Much more comprehensive than AI.
+    if (body.bulk === true) {
+      const nameMap = await loadCountryNameMap();
+      const codes = body.all
+        ? Object.keys(nameMap)
+        : body.country_code
+          ? [body.country_code.toUpperCase()]
+          : [];
+      if (codes.length === 0) {
+        return jsonResponse({ success: false, error: "Provide country_code or all:true for bulk mode." }, 400);
+      }
+      let inserted = 0;
+      let skipped = 0;
+      const failed: string[] = [];
+      for (const code of codes) {
+        const name = nameMap[code];
+        if (!name) { failed.push(code); continue; }
+        try {
+          const r = await bulkSeedCountry(supabase, code, name);
+          inserted += r.inserted;
+          skipped += r.skipped;
+        } catch (e) {
+          console.error("bulk seed failed", code, name, e);
+          failed.push(code);
+        }
+      }
+      return jsonResponse({
+        message: "Bulk seed complete",
+        inserted,
+        skipped_duplicates: skipped,
+        countries_processed: codes.length - failed.length,
+        failed,
+      });
+    }
 
     const expand = body.expand === true || !!body.state || !!body.region;
     const targetCodes = body.country_code
