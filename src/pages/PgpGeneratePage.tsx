@@ -2575,6 +2575,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   if (isBusinessVariable(varName) || injectedBizVarNames.has(lc)) {
                     return { label: "Business Info", from: "Step 4 · Business Info", icon: Building2, cls: "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400" };
                   }
+                  if (isAiContentVariable(varName)) {
+                    return { label: "AI-fill", from: "Runtime · AI writes this per page", icon: Sparkles, cls: "bg-purple-500/10 text-purple-600 border-purple-500/30 dark:text-purple-400" };
+                  }
                   if ((value ?? "").trim() !== "") {
                     return { label: "Keyword Group", from: `Step 1 · ${selectedGroup?.name ?? "Keyword Group"}`, icon: Bookmark, cls: "bg-primary/10 text-primary border-primary/30" };
                   }
