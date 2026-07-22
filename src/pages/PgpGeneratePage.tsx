@@ -1117,6 +1117,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           campaign_id: campaign.id,
           overwrite,
           overwrite_fields: overwrite ? overwriteFields : undefined,
+          spin_content: spinContent,
         },
       });
 
