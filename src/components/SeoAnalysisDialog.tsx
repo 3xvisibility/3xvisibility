@@ -319,6 +319,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         return;
       }
       let stagnantPasses = 0;
+      let allFactorsPassed = false;
+      let stoppedForStagnation = false;
 
       while (iteration < MAX_ITERATIONS && weakKeys.length > 0) {
         iteration++;
@@ -493,8 +495,15 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
           .map((f) => f.key);
 
-        if (weakKeys.length === 0) break;
-        if (stagnantPasses >= 2) break; // give up if 2 consecutive passes yielded no gain
+        if (weakKeys.length === 0) {
+          allFactorsPassed = true;
+          setFixStep(`✓ All factors reached 80+ after ${iteration} pass(es)`);
+          break;
+        }
+        if (stagnantPasses >= 2) {
+          stoppedForStagnation = true;
+          break;
+        }
       }
 
 
@@ -568,12 +577,19 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       const remainingWeak = bestUnified.factors
         .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
         .map((f) => f.key);
-      toast({
-        title: "SEO issues fixed!",
-        description: `${baselineUnified.score} → ${bestUnified.score} after ${iteration} pass(es).${
-          remainingWeak.length ? ` Still <80: ${remainingWeak.join(", ")}.` : " All targeted factors now ≥80."
-        }${republished ? " Republished." : ""}`,
-      });
+      if (allFactorsPassed) {
+        toast({
+          title: "✓ All SEO factors passed (80+)",
+          description: `Stopped early after ${iteration} pass(es). Score ${baselineUnified.score} → ${bestUnified.score}.${republished ? " Republished." : ""}`,
+        });
+      } else {
+        toast({
+          title: "SEO issues fixed!",
+          description: `${baselineUnified.score} → ${bestUnified.score} after ${iteration} pass(es).${
+            remainingWeak.length ? ` Still <80: ${remainingWeak.join(", ")}${stoppedForStagnation ? " (no more gains possible)" : ""}.` : " All targeted factors now ≥80."
+          }${republished ? " Republished." : ""}`,
+        });
+      }
       onUpdated?.();
     } catch (err: any) {
       toast({ title: "Fix failed", description: friendlyError(err.message), variant: "destructive" });
