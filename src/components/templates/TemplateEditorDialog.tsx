@@ -99,6 +99,17 @@ export function TemplateEditorDialog({
   const [aiSeoGenerating, setAiSeoGenerating] = useState(false);
   const [aiImproving, setAiImproving] = useState(false);
   const [aiVariablizing, setAiVariablizing] = useState(false);
+  // Persist the auto-fix toggle so the user's preference sticks across sessions.
+  const [aiAutoFixReviewer, setAiAutoFixReviewer] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const v = window.localStorage.getItem("tmpl.aiAutoFixReviewer");
+    return v === null ? true : v === "1";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("tmpl.aiAutoFixReviewer", aiAutoFixReviewer ? "1" : "0");
+    }
+  }, [aiAutoFixReviewer]);
 
   const { toast } = useToast();
 
@@ -382,11 +393,16 @@ ${contentText}`
       ];
       const fixes: { label: string; count: number }[] = [];
       let fixed = out;
+      // Detect matches first so we can warn even when auto-fix is off.
+      const detected: { label: string; count: number }[] = [];
       for (const rule of REVIEWER_TO_BUSINESS) {
         const matches = fixed.match(rule.bad);
         if (matches && matches.length > 0) {
-          fixed = fixed.replace(rule.bad, rule.good);
-          fixes.push({ label: rule.label, count: matches.length });
+          detected.push({ label: rule.label, count: matches.length });
+          if (aiAutoFixReviewer) {
+            fixed = fixed.replace(rule.bad, rule.good);
+            fixes.push({ label: rule.label, count: matches.length });
+          }
         }
       }
       setContent(fixed);
@@ -397,6 +413,14 @@ ${contentText}`
           title: `⚠️ ${totalFixed} reviewer-scoped variable(s) auto-fixed`,
           description: `Site-owner fields were mistakenly mapped as testimonial-scoped. Rewired to Business Info: ${fixes.map(f => `${f.label} (×${f.count})`).join(", ")}. ${found.length} variable(s) total.`,
           duration: 9000,
+        });
+      } else if (detected.length > 0) {
+        const totalDetected = detected.reduce((s, f) => s + f.count, 0);
+        toast({
+          title: `⚠️ ${totalDetected} reviewer-scoped variable(s) detected`,
+          description: `Auto-fix is OFF. Site-owner fields may be mis-scoped: ${detected.map(f => `${f.label} (×${f.count})`).join(", ")}. Turn on "Auto-fix reviewer scope" to rewire them.`,
+          variant: "destructive",
+          duration: 10000,
         });
       } else {
         toast({
@@ -568,6 +592,19 @@ ${contentText}`
                   {aiVariablizing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Braces className="h-3 w-3" />}
                   <span className="hidden sm:inline">{aiVariablizing ? "Adding…" : "AI Add Variables"}</span>
                 </button>
+                <label
+                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground cursor-pointer shrink-0 select-none"
+                  title="When on, reviewer-scoped variables that should be site-owner fields (e.g. {testimonial_company} → {business_name}) are auto-corrected after AI Add Variables."
+                >
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 accent-primary cursor-pointer"
+                    checked={aiAutoFixReviewer}
+                    onChange={(e) => setAiAutoFixReviewer(e.target.checked)}
+                  />
+                  <span className="hidden sm:inline">Auto-fix reviewer scope</span>
+                  <span className="sm:hidden">Auto-fix</span>
+                </label>
                 <DynamicElementsInserter onInsert={(shortcode) => setContent(prev => prev + shortcode)} />
                 {uniqueVars.length > 0 && (
                   <div className="hidden md:flex items-center gap-1.5 overflow-x-auto ml-auto">
