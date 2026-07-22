@@ -1000,26 +1000,26 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                       ref={setSentinel}
                       className="flex items-center justify-center gap-2 py-3 text-[10px] text-muted-foreground"
                     >
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Loading more… ({visibleLocations.length}/{filteredLocations.length})
+                      {isFetchingNextPage && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Loading more… ({visibleLocations.length}/{totalCount.toLocaleString()})
                       <Button
                         type="button"
                         size="sm"
                         variant="ghost"
                         className="h-6 px-2 text-[10px]"
-                        onClick={() =>
-                          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredLocations.length))
-                        }
+                        disabled={isFetchingNextPage}
+                        onClick={() => fetchNextPage()}
                       >
                         Load more
                       </Button>
                     </div>
                   )}
-                  {!hasMore && filteredLocations.length > PAGE_SIZE && (
+                  {!hasMore && totalCount > PAGE_SIZE && (
                     <div className="text-center py-2 text-[10px] text-muted-foreground">
-                      Showing all {filteredLocations.length} cities
+                      Showing all {totalCount.toLocaleString()} cities
                     </div>
                   )}
+
                 </div>
               </div>
 
