@@ -213,7 +213,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     setFixProgress(0);
 
     const STRONG = 80;
-    const MAX_ITERATIONS = 4;
+    const MAX_ITERATIONS = 8;
+
 
     const scoreOf = (
       values: {
@@ -296,12 +297,14 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         setFixProgress(0);
         return;
       }
+      let stagnantPasses = 0;
 
       while (iteration < MAX_ITERATIONS && weakKeys.length > 0) {
         iteration++;
         const baseProgress = 5 + (iteration - 1) * Math.floor(70 / MAX_ITERATIONS);
         setFixStep(`Pass ${iteration}/${MAX_ITERATIONS} — improving: ${weakKeys.join(", ")}`);
         setFixProgress(baseProgress);
+
 
         const iterBefore = scoreOf(working, canonicalUrl);
         const beforeFactor = (k: string) => factorScore(iterBefore, k);
@@ -431,9 +434,13 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
         }
 
         const nowUnified = scoreOf(working, canonicalUrl);
-        if (nowUnified.score > bestUnified.score) {
+        const improved = nowUnified.score > bestUnified.score;
+        if (improved) {
           bestUnified = nowUnified;
           bestSnapshot = { ...working };
+          stagnantPasses = 0;
+        } else {
+          stagnantPasses++;
         }
 
         weakKeys = nowUnified.factors
@@ -441,7 +448,9 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           .map((f) => f.key);
 
         if (weakKeys.length === 0) break;
+        if (stagnantPasses >= 2) break; // give up if 2 consecutive passes yielded no gain
       }
+
 
       // Use best snapshot ever seen — never regress below baseline.
       if (bestUnified.score <= baselineUnified.score) {
