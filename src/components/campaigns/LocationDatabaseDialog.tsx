@@ -756,6 +756,16 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                 </Badge>
                 <Button
                   size="sm"
+                  variant="outline"
+                  className="h-7 rounded-xl gap-1.5 text-xs"
+                  onClick={() => setBulkLoaderOpen(true)}
+                  title="Re-run the city loader across one or many countries with retries and a per-country summary"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Re-run loader
+                </Button>
+                <Button
+                  size="sm"
                   variant="ghost"
                   className="h-7 rounded-xl gap-1.5 text-xs"
                   disabled={isFetching}
