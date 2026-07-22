@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { strFromU8, unzipSync } from "https://esm.sh/fflate@0.8.2";
 import { deductCreditsForRequest } from "../_shared/ai-service.ts";
 
 const jsonResponse = (payload: Record<string, unknown>, status = 200) =>
@@ -277,11 +278,24 @@ const COUNTRY_DATA: Record<string, CityEntry[]> = {
 };
 
 // ─────────────────────────────────────────────────────────────
-// Bulk global source: countriesnow.space (free, no auth).
-// Returns just city names; we fill in country + code and leave
-// state/lat/lng blank (the table allows empty strings for state).
+// Bulk global sources (free, no auth):
+// 1) GeoNames country dumps: most complete, includes towns/villages, regions,
+//    coordinates, population and timezone. Small/medium country zips are loaded
+//    directly.
+// 2) OpenDataSoft GeoNames mirror: safer fallback for very large country zips.
+// 3) CountriesNow: final fallback when mirrors are temporarily unavailable.
 // ─────────────────────────────────────────────────────────────
 let COUNTRY_NAME_CACHE: Record<string, string> | null = null;
+let GEONAMES_ADMIN1_CACHE: Record<string, string> | null = null;
+let GEONAMES_ADMIN2_CACHE: Record<string, string> | null = null;
+
+const GEONAMES_MAX_DIRECT_ZIP_BYTES = 25 * 1024 * 1024;
+const OPENDATASOFT_PAGE_SIZE = 100;
+const OPENDATASOFT_MAX_ROWS = 30000;
+const GEONAMES_CITY_FEATURES = new Set([
+  "PPL", "PPLA", "PPLA2", "PPLA3", "PPLA4", "PPLC", "PPLF", "PPLG",
+  "PPLL", "PPLQ", "PPLR", "PPLS", "PPLX", "STLMT",
+]);
 
 async function loadCountryNameMap(): Promise<Record<string, string>> {
   if (COUNTRY_NAME_CACHE) return COUNTRY_NAME_CACHE;
@@ -296,49 +310,176 @@ async function loadCountryNameMap(): Promise<Record<string, string>> {
   return map;
 }
 
-async function fetchAllCitiesForCountry(countryName: string): Promise<string[]> {
+async function fetchText(url: string): Promise<string> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Fetch failed (${res.status}) for ${url}`);
+  return await res.text();
+}
+
+async function loadGeoNamesAdmin1Map(): Promise<Record<string, string>> {
+  if (GEONAMES_ADMIN1_CACHE) return GEONAMES_ADMIN1_CACHE;
+  const text = await fetchText("https://download.geonames.org/export/dump/admin1CodesASCII.txt");
+  const map: Record<string, string> = {};
+  for (const line of text.split("\n")) {
+    if (!line.trim()) continue;
+    const parts = line.split("\t");
+    if (parts[0] && parts[1]) map[parts[0]] = parts[1];
+  }
+  GEONAMES_ADMIN1_CACHE = map;
+  return map;
+}
+
+async function loadGeoNamesAdmin2Map(): Promise<Record<string, string>> {
+  if (GEONAMES_ADMIN2_CACHE) return GEONAMES_ADMIN2_CACHE;
+  const text = await fetchText("https://download.geonames.org/export/dump/admin2Codes.txt");
+  const map: Record<string, string> = {};
+  for (const line of text.split("\n")) {
+    if (!line.trim()) continue;
+    const parts = line.split("\t");
+    if (parts[0] && parts[1]) map[parts[0]] = parts[1];
+  }
+  GEONAMES_ADMIN2_CACHE = map;
+  return map;
+}
+
+function normalizeCityName(value: string | null | undefined): string {
+  return String(value || "")
+    .trim()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function locationKey(row: Pick<CityEntry, "city" | "state" | "state_code" | "county" | "country_code">): string {
+  return [
+    normalizeCityName(row.city),
+    normalizeCityName(row.state_code),
+    normalizeCityName(row.state),
+    normalizeCityName(row.county),
+    String(row.country_code || "").toUpperCase(),
+  ].join("|");
+}
+
+async function fetchGeoNamesDirectCities(code: string, countryName: string): Promise<CityEntry[]> {
+  const zipUrl = `https://download.geonames.org/export/dump/${code}.zip`;
+  const head = await fetch(zipUrl, { method: "HEAD" });
+  const size = Number(head.headers.get("content-length") || 0);
+
+  // Very large country dumps can exceed edge runtime memory/time. Use the
+  // paginated mirror for those countries instead of failing halfway through.
+  if (head.ok && size > GEONAMES_MAX_DIRECT_ZIP_BYTES) {
+    throw new Error(`GeoNames direct dump is too large (${size} bytes); using paginated mirror.`);
+  }
+
+  const res = await fetch(zipUrl);
+  if (!res.ok) throw new Error(`GeoNames country dump failed for ${code} (${res.status})`);
+
+  const files = unzipSync(new Uint8Array(await res.arrayBuffer()));
+  const txtName = `${code}.txt`;
+  const data = files[txtName] ?? Object.entries(files).find(([name]) => name.endsWith(".txt") && !name.toLowerCase().includes("readme"))?.[1];
+  if (!data) throw new Error(`GeoNames country dump contained no city file for ${code}`);
+
+  const [admin1Map, admin2Map] = await Promise.all([loadGeoNamesAdmin1Map(), loadGeoNamesAdmin2Map()]);
+  const rows: CityEntry[] = [];
+  const seen = new Set<string>();
+  const text = strFromU8(data);
+
+  for (const line of text.split("\n")) {
+    if (!line.trim()) continue;
+    const p = line.split("\t");
+    if (p[6] !== "P" || !GEONAMES_CITY_FEATURES.has(p[7])) continue;
+
+    const city = (p[1] || p[2] || "").trim();
+    if (!city) continue;
+
+    const stateCode = p[10] || "";
+    const countyCode = p[11] || "";
+    const state = admin1Map[`${code}.${stateCode}`] || stateCode || "";
+    const county = admin2Map[`${code}.${stateCode}.${countyCode}`] || null;
+    const row: CityEntry = {
+      city,
+      county,
+      state,
+      state_code: stateCode,
+      zip_code: null,
+      latitude: Number(p[4]) || 0,
+      longitude: Number(p[5]) || 0,
+      population: Number(p[14]) || 0,
+      timezone: p[17] || "",
+      region: state,
+      country: countryName,
+      country_code: code,
+    };
+    const key = locationKey(row);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    rows.push(row);
+  }
+
+  return rows.sort((a, b) => (b.population || 0) - (a.population || 0) || a.city.localeCompare(b.city));
+}
+
+async function fetchOpenDataSoftCities(code: string, countryName: string): Promise<CityEntry[]> {
+  const rows: CityEntry[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  let total = 0;
+
+  while (offset < OPENDATASOFT_MAX_ROWS) {
+    const params = new URLSearchParams({
+      where: `country_code="${code}"`,
+      order_by: "population desc",
+      limit: String(OPENDATASOFT_PAGE_SIZE),
+      offset: String(offset),
+    });
+    const res = await fetch(`https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/geonames-all-cities-with-a-population-1000/records?${params.toString()}`);
+    if (!res.ok) throw new Error(`OpenDataSoft city mirror failed for ${code} (${res.status})`);
+    const json = await res.json();
+    total = Number(json?.total_count || 0);
+    const page = Array.isArray(json?.results) ? json.results : [];
+    if (page.length === 0) break;
+
+    for (const item of page) {
+      const city = String(item?.name || item?.ascii_name || "").trim();
+      if (!city) continue;
+      const row: CityEntry = {
+        city,
+        county: item?.admin2_code ? String(item.admin2_code) : null,
+        state: item?.admin1_code ? String(item.admin1_code) : "",
+        state_code: item?.admin1_code ? String(item.admin1_code) : "",
+        zip_code: null,
+        latitude: Number(item?.coordinates?.lat) || 0,
+        longitude: Number(item?.coordinates?.lon) || 0,
+        population: Number(item?.population) || 0,
+        timezone: item?.timezone ? String(item.timezone) : "",
+        region: item?.admin1_code ? String(item.admin1_code) : "",
+        country: item?.cou_name_en ? String(item.cou_name_en) : countryName,
+        country_code: code,
+      };
+      const key = locationKey(row);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      rows.push(row);
+    }
+
+    offset += page.length;
+    if (page.length < OPENDATASOFT_PAGE_SIZE || offset >= total) break;
+  }
+
+  return rows.sort((a, b) => (b.population || 0) - (a.population || 0) || a.city.localeCompare(b.city));
+}
+
+async function fetchCountriesNowCities(countryName: string, code: string): Promise<CityEntry[]> {
   const url = `https://countriesnow.space/api/v0.1/countries/cities/q?country=${encodeURIComponent(countryName)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`City fetch failed for ${countryName} (${res.status})`);
   const json = await res.json();
   if (json?.error) throw new Error(`City fetch error for ${countryName}: ${json?.msg || "unknown"}`);
   const arr = (json?.data ?? []) as string[];
-  return arr.filter((c) => typeof c === "string" && c.trim().length > 0);
-}
-
-async function bulkSeedCountry(
-  supabase: ReturnType<typeof createClient>,
-  code: string,
-  countryName: string,
-): Promise<{ inserted: number; skipped: number }> {
-  const cities = await fetchAllCitiesForCountry(countryName);
-
-  // De-dupe against existing rows in this country
-  const existing = new Set<string>();
-  let from = 0;
-  const pageSize = 1000;
-  while (true) {
-    const { data, error } = await supabase
-      .from("locations")
-      .select("city")
-      .eq("country_code", code)
-      .range(from, from + pageSize - 1);
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-    for (const r of data as Array<{ city: string }>) existing.add(r.city.toLowerCase());
-    if (data.length < pageSize) break;
-    from += pageSize;
-  }
-
-  const rows: Array<Record<string, unknown>> = [];
-  const seenBatch = new Set<string>();
-  for (const rawCity of cities) {
-    const city = rawCity.trim();
-    const key = city.toLowerCase();
-    if (existing.has(key) || seenBatch.has(key)) continue;
-    seenBatch.add(key);
-    rows.push({
-      city,
+  return arr
+    .filter((c) => typeof c === "string" && c.trim().length > 0)
+    .map((rawCity) => ({
+      city: rawCity.trim(),
       county: null,
       state: "",
       state_code: "",
@@ -350,17 +491,91 @@ async function bulkSeedCountry(
       population: 0,
       timezone: "",
       region: "",
+    }));
+}
+
+async function fetchAllCitiesForCountry(code: string, countryName: string): Promise<{ rows: CityEntry[]; source: string }> {
+  const failures: string[] = [];
+
+  try {
+    const rows = await fetchGeoNamesDirectCities(code, countryName);
+    if (rows.length > 0) return { rows, source: "GeoNames" };
+    failures.push("GeoNames returned 0 rows");
+  } catch (err) {
+    failures.push(getErrorMessage(err));
+  }
+
+  try {
+    const rows = await fetchOpenDataSoftCities(code, countryName);
+    if (rows.length > 0) return { rows, source: "OpenDataSoft GeoNames mirror" };
+    failures.push("OpenDataSoft returned 0 rows");
+  } catch (err) {
+    failures.push(getErrorMessage(err));
+  }
+
+  const rows = await fetchCountriesNowCities(countryName, code);
+  if (rows.length > 0) return { rows, source: "CountriesNow fallback" };
+  throw new Error(`No city source returned data for ${countryName}. ${failures.join(" | ")}`);
+}
+
+async function bulkSeedCountry(
+  supabase: ReturnType<typeof createClient>,
+  code: string,
+  countryName: string,
+): Promise<{ inserted: number; skipped: number }> {
+  const { rows: cities, source } = await fetchAllCitiesForCountry(code, countryName);
+
+  // De-dupe against existing rows in this country
+  const existing = new Set<string>();
+  let from = 0;
+  const pageSize = 1000;
+  while (true) {
+    const { data, error } = await supabase
+      .from("locations")
+      .select("city,state,state_code,county,country_code")
+      .eq("country_code", code)
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    for (const r of data as Array<Pick<CityEntry, "city" | "state" | "state_code" | "county" | "country_code">>) {
+      existing.add(locationKey({ ...r, country_code: r.country_code || code }));
+    }
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+
+  const rows: Array<Record<string, unknown>> = [];
+  const seenBatch = new Set<string>();
+  for (const entry of cities) {
+    const city = entry.city.trim();
+    const key = locationKey({ ...entry, city, country_code: code });
+    if (existing.has(key) || seenBatch.has(key)) continue;
+    seenBatch.add(key);
+    rows.push({
+      city,
+      county: entry.county || null,
+      state: entry.state || entry.region || "",
+      state_code: entry.state_code || "",
+      zip_code: entry.zip_code || null,
+      country: entry.country || countryName,
+      country_code: code,
+      latitude: Number(entry.latitude) || 0,
+      longitude: Number(entry.longitude) || 0,
+      population: Number(entry.population) || 0,
+      timezone: entry.timezone || "",
+      region: entry.region || entry.state || "",
     });
   }
 
   let inserted = 0;
-  const chunk = 500;
+  const chunk = 1000;
   for (let i = 0; i < rows.length; i += chunk) {
     const batch = rows.slice(i, i + chunk);
     const { error } = await supabase.from("locations").insert(batch);
     if (error) throw error;
     inserted += batch.length;
   }
+  console.log("bulk seed source", { code, countryName, source, source_rows: cities.length, inserted, skipped: cities.length - rows.length });
   return { inserted, skipped: cities.length - rows.length };
 }
 
