@@ -2811,6 +2811,18 @@ Deno.serve(async (req) => {
 
           const adGroupId = (utmSettings as any).ad_group_id || row.ad_group_id || null;
 
+          // Snapshot the fully-resolved variable map used to render this page.
+          // Publishing reads this to substitute any {KEY}/{{KEY}} placeholders
+          // that still live inside the template's Elementor JSON (button
+          // labels, headings, etc.) so the published page matches the preview.
+          const pageVariables: Record<string, string> = {};
+          for (const [k, v] of Object.entries(allVars)) {
+            if (v != null) pageVariables[k] = String(v);
+          }
+          for (const [k, v] of Object.entries(rowAiDefaults || {})) {
+            if (v != null && !pageVariables[k]) pageVariables[k] = String(v);
+          }
+
           batchPages.push({
             campaign_id,
             user_id: user.id,
@@ -2828,6 +2840,7 @@ Deno.serve(async (req) => {
             ad_campaign_id: adCampaignId,
             ad_group_id: adGroupId,
             seo_warnings: seoWarnings,
+            variables: pageVariables,
           });
 
           processedCount++;
@@ -2900,6 +2913,7 @@ Deno.serve(async (req) => {
               }
               if (overwrite_fields.content) {
                 updates.content = page.content;
+                if ((page as any).variables) updates.variables = (page as any).variables;
               }
               if (overwrite_fields.seo) {
                 updates.seo_title = page.seo_title;

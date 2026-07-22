@@ -1788,6 +1788,55 @@ async function handlePublishPages(req: Request): Promise<Response> {
           continue;
         }
 
+        // Interpolate any leftover template placeholders ({KEY} / {{KEY}}) in
+        // the outgoing payload using the resolved variable map captured at
+        // generation time. This is what fixes visible tokens like
+        // `SCHEDULE {SERVICE_NAME}` in button labels that live inside the
+        // template's Elementor JSON (not in `page.content`), so the published
+        // page matches the preview.
+        const pageVars = ((page as any).variables || {}) as Record<string, unknown>;
+        const varEntries = Object.entries(pageVars)
+          .filter(([k, v]) => typeof k === "string" && k.length > 0 && v != null)
+          .map(([k, v]) => [k, String(v)] as [string, string]);
+        if (varEntries.length > 0) {
+          const applyVars = (input: string): string => {
+            let out = input;
+            for (const [k, v] of varEntries) {
+              const safe = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const escaped = v
+                .replace(/\\/g, "\\\\")
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, "\\n")
+                .replace(/\r/g, "\\r")
+                .replace(/\t/g, "\\t");
+              // Double-brace first so inner braces aren't left behind.
+              out = out.replace(new RegExp(`\\{\\{\\s*${safe}\\s*\\}\\}`, "gi"), escaped);
+              out = out.replace(new RegExp(`\\{${safe}\\}`, "gi"), escaped);
+            }
+            return out;
+          };
+          const applyVarsPlain = (input: string): string => {
+            let out = input;
+            for (const [k, v] of varEntries) {
+              const safe = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              out = out.replace(new RegExp(`\\{\\{\\s*${safe}\\s*\\}\\}`, "gi"), v);
+              out = out.replace(new RegExp(`\\{${safe}\\}`, "gi"), v);
+            }
+            return out;
+          };
+          if (typeof (payload as any).elementor_data === "string") {
+            (payload as any).elementor_data = applyVars((payload as any).elementor_data as string);
+          }
+          if (typeof (payload as any).elementor_css === "string") {
+            (payload as any).elementor_css = applyVarsPlain((payload as any).elementor_css as string);
+          }
+          if (typeof payload.content === "string") payload.content = applyVarsPlain(payload.content);
+          if (payload.title) payload.title = applyVarsPlain(payload.title);
+          if (payload.seo_title) payload.seo_title = applyVarsPlain(payload.seo_title);
+          if (payload.seo_description) payload.seo_description = applyVarsPlain(payload.seo_description);
+          if (payload.excerpt) payload.excerpt = applyVarsPlain(payload.excerpt);
+        }
+
         // If page was previously published (has external_id), update instead of creating
         await persistProgress();
         step(page.external_id ? "Updating on store" : "Creating on store", "running");
