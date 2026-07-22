@@ -321,6 +321,25 @@ export default function PgpGeneratePage() {
   ];
   const isBusinessVariable = (name: string) => BUSINESS_VAR_NAMES.includes(name.trim().toLowerCase());
 
+  // AI-content variables — long-form / SEO-copy fields where the AI should
+  // craft unique content per row instead of the user typing terms in Keywords.
+  // Classification is by NAME so it stays stable even before generation.
+  const AI_CONTENT_VAR_NAMES = [
+    "title", "page_title", "seo_title",
+    "subtitle", "sub_title", "sub_headline",
+    "heading", "sub_heading", "subheading", "headline", "hero_title", "hero_subtitle", "hero_heading",
+    "tagline", "slogan",
+    "description", "desc", "meta_description", "seo_description", "short_description", "long_description",
+    "intro", "introduction", "summary", "overview", "about", "about_us",
+    "body", "content", "paragraph", "text", "story",
+    "cta", "cta_text", "cta_title", "cta_description", "call_to_action",
+    "benefit", "benefits", "feature", "features",
+    "faq", "faq_question", "faq_answer", "question", "answer",
+    "testimonial", "testimonials", "review", "reviews",
+    "why_choose_us", "why_us", "value_proposition",
+  ];
+  const isAiContentVariable = (name: string) => AI_CONTENT_VAR_NAMES.includes(name.trim().toLowerCase());
+
   // Variables satisfied by Step 4 (business info) — non-empty values only.
   const injectedBizVarNames = useMemo(
     () => new Set(Object.entries(businessInfo).filter(([, v]) => (v ?? "").trim() !== "").map(([k]) => k.toLowerCase())),
@@ -2429,17 +2448,15 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 const kwRows: Row[] = [];
                 const locRows: Row[] = [];
                 const bizRows: Row[] = [];
+                const aiRows: Row[] = [];
                 const missRows: Row[] = [];
                 for (const gk of groupKeywords) {
                   const nameLc = gk.name.toLowerCase();
                   const isGeo = isGeoVariable(gk.name);
                   const isBiz = isBusinessVariable(gk.name);
+                  const isAiContent = isAiContentVariable(gk.name);
                   const fromKw = !!gk.keyword && (gk.keyword.terms?.length ?? 0) > 0;
-                  // Priority: Locations > Business Info > Keyword group.
-                  // Geo/biz slots are ALWAYS classified by name so users see
-                  // exactly where each field will be sourced from — Step 3
-                  // (locations) and Step 4 (business info) replace any stale
-                  // keyword-group defaults at generation time.
+                  // Priority: Locations > Business Info > AI-content (heading/desc/etc.) > Keyword group.
                   if (isGeo) {
                     const first = pickedLocations[0] as any;
                     const val = first?.[nameLc] || first?.city || first?.state || first?.country;
@@ -2451,13 +2468,15 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       || (nameLc === "email_address" ? businessInfo.email : "")
                       || (nameLc === "url" || nameLc === "site_url" ? businessInfo.website : "");
                     bizRows.push({ name: gk.name, example: bizVal });
+                  } else if (isAiContent) {
+                    aiRows.push({ name: gk.name });
                   } else if (fromKw) {
                     kwRows.push({ name: gk.name, example: gk.keyword?.terms?.[0] });
                   } else {
                     missRows.push({ name: gk.name });
                   }
                 }
-                const totalFilled = kwRows.length + locRows.length + bizRows.length;
+                const totalFilled = kwRows.length + locRows.length + bizRows.length + aiRows.length;
                 const Group = ({
                   title, icon: Icon, color, rows, empty,
                 }: { title: string; icon: any; color: string; rows: Row[]; empty: string }) => (
@@ -2516,6 +2535,13 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       rows={bizRows}
                       empty="No business-info variables in this template."
                     />
+                    <Group
+                      title="From AI (auto-written per page)"
+                      icon={Sparkles}
+                      color="text-purple-600 dark:text-purple-400"
+                      rows={aiRows}
+                      empty="No AI-content variables (heading/description/etc.) in this template."
+                    />
                     {missRows.length > 0 && (
                       <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-2.5 space-y-1">
                         <div className="flex items-center justify-between text-[11px]">
@@ -2548,6 +2574,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   }
                   if (isBusinessVariable(varName) || injectedBizVarNames.has(lc)) {
                     return { label: "Business Info", from: "Step 4 · Business Info", icon: Building2, cls: "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400" };
+                  }
+                  if (isAiContentVariable(varName)) {
+                    return { label: "AI-fill", from: "Runtime · AI writes this per page", icon: Sparkles, cls: "bg-purple-500/10 text-purple-600 border-purple-500/30 dark:text-purple-400" };
                   }
                   if ((value ?? "").trim() !== "") {
                     return { label: "Keyword Group", from: `Step 1 · ${selectedGroup?.name ?? "Keyword Group"}`, icon: Bookmark, cls: "bg-primary/10 text-primary border-primary/30" };
@@ -2672,6 +2701,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   }
                   if (isBusinessVariable(varName) || injectedBizVarNames.has(lc)) {
                     return { label: "Business", icon: Building2, cls: "bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400" };
+                  }
+                  if (isAiContentVariable(varName)) {
+                    return { label: "AI-fill", icon: Sparkles, cls: "bg-purple-500/10 text-purple-600 border-purple-500/30 dark:text-purple-400" };
                   }
                   if ((value ?? "").trim() !== "") {
                     return { label: "Keyword", icon: Bookmark, cls: "bg-primary/10 text-primary border-primary/30" };
