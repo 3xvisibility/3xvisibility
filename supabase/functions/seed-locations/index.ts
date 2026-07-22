@@ -276,6 +276,94 @@ const COUNTRY_DATA: Record<string, CityEntry[]> = {
   BR: BR_CITIES,
 };
 
+// ─────────────────────────────────────────────────────────────
+// Bulk global source: countriesnow.space (free, no auth).
+// Returns just city names; we fill in country + code and leave
+// state/lat/lng blank (the table allows empty strings for state).
+// ─────────────────────────────────────────────────────────────
+let COUNTRY_NAME_CACHE: Record<string, string> | null = null;
+
+async function loadCountryNameMap(): Promise<Record<string, string>> {
+  if (COUNTRY_NAME_CACHE) return COUNTRY_NAME_CACHE;
+  const res = await fetch("https://countriesnow.space/api/v0.1/countries/iso");
+  if (!res.ok) throw new Error(`Country list fetch failed (${res.status})`);
+  const json = await res.json();
+  const map: Record<string, string> = {};
+  for (const row of (json?.data ?? []) as Array<{ name: string; Iso2: string }>) {
+    if (row?.Iso2 && row?.name) map[row.Iso2.toUpperCase()] = row.name;
+  }
+  COUNTRY_NAME_CACHE = map;
+  return map;
+}
+
+async function fetchAllCitiesForCountry(countryName: string): Promise<string[]> {
+  const url = `https://countriesnow.space/api/v0.1/countries/cities/q?country=${encodeURIComponent(countryName)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`City fetch failed for ${countryName} (${res.status})`);
+  const json = await res.json();
+  if (json?.error) throw new Error(`City fetch error for ${countryName}: ${json?.msg || "unknown"}`);
+  const arr = (json?.data ?? []) as string[];
+  return arr.filter((c) => typeof c === "string" && c.trim().length > 0);
+}
+
+async function bulkSeedCountry(
+  supabase: ReturnType<typeof createClient>,
+  code: string,
+  countryName: string,
+): Promise<{ inserted: number; skipped: number }> {
+  const cities = await fetchAllCitiesForCountry(countryName);
+
+  // De-dupe against existing rows in this country
+  const existing = new Set<string>();
+  let from = 0;
+  const pageSize = 1000;
+  while (true) {
+    const { data, error } = await supabase
+      .from("locations")
+      .select("city")
+      .eq("country_code", code)
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    for (const r of data as Array<{ city: string }>) existing.add(r.city.toLowerCase());
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+
+  const rows: Array<Record<string, unknown>> = [];
+  const seenBatch = new Set<string>();
+  for (const rawCity of cities) {
+    const city = rawCity.trim();
+    const key = city.toLowerCase();
+    if (existing.has(key) || seenBatch.has(key)) continue;
+    seenBatch.add(key);
+    rows.push({
+      city,
+      county: null,
+      state: "",
+      state_code: "",
+      zip_code: null,
+      country: countryName,
+      country_code: code,
+      latitude: 0,
+      longitude: 0,
+      population: 0,
+      timezone: "",
+      region: "",
+    });
+  }
+
+  let inserted = 0;
+  const chunk = 500;
+  for (let i = 0; i < rows.length; i += chunk) {
+    const batch = rows.slice(i, i + chunk);
+    const { error } = await supabase.from("locations").insert(batch);
+    if (error) throw error;
+    inserted += batch.length;
+  }
+  return { inserted, skipped: cities.length - rows.length };
+}
+
 async function generateWithAI(
   req: Request,
   code: string,
@@ -350,8 +438,44 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    let body: { country_code?: string; expand?: boolean; state?: string; region?: string; target?: number } = {};
+    let body: { country_code?: string; expand?: boolean; state?: string; region?: string; target?: number; bulk?: boolean; all?: boolean } = {};
     try { body = await req.json(); } catch { /* empty body ok */ }
+
+    // ── Bulk mode: pull ALL cities for a country (or every country) from the
+    // free countriesnow.space global database. Much more comprehensive than AI.
+    if (body.bulk === true) {
+      const nameMap = await loadCountryNameMap();
+      const codes = body.all
+        ? Object.keys(nameMap)
+        : body.country_code
+          ? [body.country_code.toUpperCase()]
+          : [];
+      if (codes.length === 0) {
+        return jsonResponse({ success: false, error: "Provide country_code or all:true for bulk mode." }, 400);
+      }
+      let inserted = 0;
+      let skipped = 0;
+      const failed: string[] = [];
+      for (const code of codes) {
+        const name = nameMap[code];
+        if (!name) { failed.push(code); continue; }
+        try {
+          const r = await bulkSeedCountry(supabase, code, name);
+          inserted += r.inserted;
+          skipped += r.skipped;
+        } catch (e) {
+          console.error("bulk seed failed", code, name, e);
+          failed.push(code);
+        }
+      }
+      return jsonResponse({
+        message: "Bulk seed complete",
+        inserted,
+        skipped_duplicates: skipped,
+        countries_processed: codes.length - failed.length,
+        failed,
+      });
+    }
 
     const expand = body.expand === true || !!body.state || !!body.region;
     const targetCodes = body.country_code

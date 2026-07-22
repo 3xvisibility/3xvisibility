@@ -53,13 +53,15 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [seedResult, setSeedResult] = useState<{ inserted: number; skipped: number } | null>(null);
 
   const seedMutation = useMutation({
-    mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string; target?: number }) => {
+    mutationFn: async (opts?: { countryCode?: string; expand?: boolean; state?: string; region?: string; target?: number; bulk?: boolean; all?: boolean }) => {
       const body: Record<string, unknown> = {};
       if (opts?.countryCode) body.country_code = opts.countryCode;
       if (opts?.expand) body.expand = true;
       if (opts?.state && opts.state !== "all") body.state = opts.state;
       if (opts?.region && opts.region !== "all") body.region = opts.region;
       if (opts?.target && opts.target > 0) body.target = opts.target;
+      if (opts?.bulk) body.bulk = true;
+      if (opts?.all) body.all = true;
       const { data, error } = await supabase.functions.invoke("seed-locations", { body });
       if (error) throw new Error(await getFunctionErrorMessage(error));
       if (data?.error) throw new Error(data.error);
@@ -570,23 +572,39 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                 Load cities for {countryName} to get started.
               </p>
             </div>
-            <Button
-              onClick={() => {
-                seedMutation.mutate(
-                  { countryCode: countryFilter, target: batchSize },
-                  { onSuccess: () => void refetch() },
-                );
-              }}
-              disabled={seedMutation.isPending}
-              className="rounded-xl gap-2"
-            >
-              {seedMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                onClick={() => {
+                  seedMutation.mutate(
+                    { countryCode: countryFilter, bulk: true },
+                    { onSuccess: () => void refetch() },
+                  );
+                }}
+                disabled={seedMutation.isPending}
+                className="rounded-xl gap-2"
+              >
+                {seedMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Globe className="h-4 w-4" />
+                )}
+                {seedMutation.isPending ? "Loading…" : `Load ALL ${countryName} cities (global DB)`}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  seedMutation.mutate(
+                    { countryCode: countryFilter, target: batchSize },
+                    { onSuccess: () => void refetch() },
+                  );
+                }}
+                disabled={seedMutation.isPending}
+                className="rounded-xl gap-2"
+              >
                 <Download className="h-4 w-4" />
-              )}
-              {seedMutation.isPending ? "Loading cities..." : `Load ${countryName} Cities`}
-            </Button>
+                AI batch ({batchSize})
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="flex-1 flex flex-col gap-3 min-h-0">
@@ -686,6 +704,25 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                 </div>
                 <Button
                   size="sm"
+                  className="h-7 rounded-xl gap-1.5 text-xs"
+                  disabled={seedMutation.isPending}
+                  onClick={() => {
+                    seedMutation.mutate(
+                      { countryCode: countryFilter, bulk: true },
+                      { onSuccess: () => void refetch() },
+                    );
+                  }}
+                  title={`Load ALL cities for ${countryName} from the global cities database`}
+                >
+                  {seedMutation.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Globe className="h-3 w-3" />
+                  )}
+                  Load ALL {countryName}
+                </Button>
+                <Button
+                  size="sm"
                   variant="outline"
                   className="h-7 rounded-xl gap-1.5 text-xs"
                   disabled={seedMutation.isPending}
@@ -718,7 +755,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                       ? `Load all in ${stateFilter}`
                       : regionFilter !== "all"
                         ? `Load all in ${regionFilter}`
-                        : "Load more cities"}
+                        : "AI batch"}
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
