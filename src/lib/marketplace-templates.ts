@@ -3302,6 +3302,12 @@ const marginfinderTemplate = () => `<style>
 .mf-press-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:2.5rem}
 .mf-press-tags span{border:1px solid var(--line);padding:.55rem 1rem;font-size:.72rem;letter-spacing:.18em;color:var(--body);font-weight:600}
 .mf-press-tags span.on{border-color:var(--gold);color:var(--gold)}
+.mf-hero-headline{margin-top:2.5rem;max-width:560px}
+.mf-hero-headline h1{font-family:'Georgia',serif;color:var(--ink);font-size:clamp(2rem,3.6vw,3.4rem);line-height:1.05;letter-spacing:-0.02em;margin:0 0 1.1rem}
+.mf-hero-sub{color:var(--body);font-size:clamp(1rem,1.2vw,1.15rem);line-height:1.55;margin:0 0 1.4rem}
+.mf-hero-meta{display:flex;flex-wrap:wrap;gap:.6rem 1.4rem;color:var(--gold);font-family:'Inter',sans-serif;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;font-weight:600}
+.mf-hero-meta span{position:relative;padding-right:1.4rem}
+.mf-hero-meta span+span::before{content:"";position:absolute;left:-.9rem;top:50%;width:4px;height:4px;background:var(--gold);border-radius:50%;transform:translateY(-50%)}
 .mf-hero-quote{margin-top:auto;padding-top:3rem;border-top:1px solid var(--gold);max-width:520px}
 .mf-hero-quote p{color:var(--ink);font-family:'Georgia',serif;font-style:italic;font-size:clamp(1.15rem,1.8vw,1.6rem);line-height:1.4}
 .mf-hero-quote .who{margin-top:1.5rem;color:var(--gold);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;font-family:'Inter',sans-serif;font-weight:600}
