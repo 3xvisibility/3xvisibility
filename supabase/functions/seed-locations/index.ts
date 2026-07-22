@@ -290,9 +290,13 @@ let COUNTRY_NAME_CACHE: Record<string, string> | null = null;
 let GEONAMES_ADMIN1_CACHE: Record<string, string> | null = null;
 let GEONAMES_ADMIN2_CACHE: Record<string, string> | null = null;
 
-const GEONAMES_MAX_DIRECT_ZIP_BYTES = 25 * 1024 * 1024;
+// Raised to 150 MB so full per-country dumps (US ~75MB, RU ~30MB, IN ~15MB,
+// CN ~8MB, etc.) are used — these include EVERY populated place (villages,
+// hamlets, settlements) with no population cutoff.
+const GEONAMES_MAX_DIRECT_ZIP_BYTES = 150 * 1024 * 1024;
 const OPENDATASOFT_PAGE_SIZE = 100;
-const OPENDATASOFT_MAX_ROWS = 30000;
+// Raised so paginated mirror is not truncated for large countries.
+const OPENDATASOFT_MAX_ROWS = 250000;
 const GEONAMES_CITY_FEATURES = new Set([
   "PPL", "PPLA", "PPLA2", "PPLA3", "PPLA4", "PPLC", "PPLF", "PPLG",
   "PPLL", "PPLQ", "PPLR", "PPLS", "PPLX", "STLMT",
@@ -363,13 +367,17 @@ function locationKey(row: Pick<CityEntry, "city" | "state" | "state_code" | "cou
 
 async function fetchGeoNamesDirectCities(code: string, countryName: string): Promise<CityEntry[]> {
   const zipUrl = `https://download.geonames.org/export/dump/${code}.zip`;
-  const head = await fetch(zipUrl, { method: "HEAD" });
-  const size = Number(head.headers.get("content-length") || 0);
-
-  // Very large country dumps can exceed edge runtime memory/time. Use the
-  // paginated mirror for those countries instead of failing halfway through.
-  if (head.ok && size > GEONAMES_MAX_DIRECT_ZIP_BYTES) {
-    throw new Error(`GeoNames direct dump is too large (${size} bytes); using paginated mirror.`);
+  // Try to read size; if HEAD is unsupported, proceed anyway.
+  let size = 0;
+  try {
+    const head = await fetch(zipUrl, { method: "HEAD" });
+    size = Number(head.headers.get("content-length") || 0);
+    if (head.ok && size > GEONAMES_MAX_DIRECT_ZIP_BYTES) {
+      throw new Error(`GeoNames direct dump is too large (${size} bytes); using paginated mirror.`);
+    }
+  } catch (err) {
+    // Only rethrow the explicit size guard; ignore other HEAD errors.
+    if (getErrorMessage(err).includes("too large")) throw err;
   }
 
   const res = await fetch(zipUrl);
