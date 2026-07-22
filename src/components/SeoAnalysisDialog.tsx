@@ -247,6 +247,175 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     const factorScore = (result: ReturnType<typeof calculateUnifiedSeoScore>, key: string) =>
       result.factors.find((f) => f.key === key)?.score ?? 0;
 
+    const legacyScoreOf = (values: { title: string; description: string; keywords: string[]; content: string }) => {
+      const seo = calculateContentSeoScore(values.title, values.content, currentPage.slug, {
+        url: currentPage.external_url || undefined,
+        description: values.description,
+        seoTitle: values.title,
+        seoKeywords: values.keywords,
+      });
+      const sea = calculateContentSeaScore(values.title, values.content, currentPage.slug, currentPage.external_url || undefined);
+      const geo = calculateContentGeoScore(values.title, values.content, currentPage.slug, currentPage.external_url || undefined);
+      const meta = calculateSeoScore(values.title, values.description, values.keywords, currentPage.title);
+      const overall = Math.round((seo.score * 0.4 + meta.score * 0.3 + sea.score * 0.15 + geo.score * 0.15));
+      return { seo: seo.score, sea: sea.score, geo: geo.score, meta: meta.score, overall };
+    };
+
+    const plainText = (html: string) => html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const escapeHtml = (value: string) => value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+    const normalizePhrase = (value: string) => value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+      .replace(/[-_/]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const titleCase = (value: string) => normalizePhrase(value)
+      .split(" ")
+      .filter(Boolean)
+      .map((word) => word.length <= 2 ? word.toUpperCase() : `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+      .join(" ");
+
+    const containsNormalized = (haystack: string, needle: string) => {
+      const text = normalizePhrase(haystack);
+      const phrase = normalizePhrase(needle);
+      return !!phrase && new RegExp(`(?:^|\\s)${phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+")}(?:$|\\s)`, "i").test(text);
+    };
+
+    const deriveFocusKeyword = (values: { title: string; keywords: string[] }) => {
+      const existing = values.keywords.map((keyword) => normalizePhrase(keyword)).filter((keyword) => keyword.length > 1);
+      const slugWords = normalizePhrase(currentPage.slug)
+        .split(" ")
+        .filter((word) => word.length > 1 && !/^\d+$/.test(word));
+      const slugPhrase = slugWords.slice(0, 4).join(" ");
+      const keywordInSlug = existing.find((keyword) => containsNormalized(currentPage.slug, keyword));
+      if (keywordInSlug) return keywordInSlug;
+      if (slugWords.length >= 2) return slugPhrase;
+      const titleWords = normalizePhrase(values.title || currentPage.title)
+        .split(" ")
+        .filter((word) => word.length > 2 && !/^(the|and|for|with|your|our|best|top|new)$/i.test(word));
+      return existing[0] || titleWords.slice(0, 3).join(" ") || "trusted local service";
+    };
+
+    const ensureKeywordList = (values: { title: string; keywords: string[] }) => {
+      const focus = deriveFocusKeyword(values);
+      const next = [
+        focus,
+        ...values.keywords,
+        `${focus} services`,
+        `${focus} experts`,
+        `${focus} quote`,
+      ]
+        .map((keyword) => normalizePhrase(keyword))
+        .filter((keyword) => keyword.length > 1);
+      return Array.from(new Set(next)).slice(0, 8);
+    };
+
+    const ensureTitle = (title: string, focusKeyword: string) => {
+      const focus = titleCase(focusKeyword);
+      let next = (title || currentPage.title || focus).replace(/\s+/g, " ").trim();
+      if (!containsNormalized(next, focusKeyword)) next = `${focus} | ${next}`;
+      if (!/(buy|get|shop|order|book|reserve|request|contact|call|discover|subscribe|free|best|top|new|save|deal|premium)/i.test(next)) {
+        next = next.length <= 56 ? `Get ${next}` : next;
+      }
+      if (next.length < 30) next = `Get ${focus} | Trusted Local Experts`;
+      if (next.length > 60) next = `${focus} | Trusted Local Experts`;
+      if (next.length > 60) next = next.slice(0, 60).replace(/[\s|\-–·•]+$/g, "").trim();
+      return next;
+    };
+
+    const ensureDescription = (description: string, focusKeyword: string) => {
+      const focus = titleCase(focusKeyword);
+      let next = (description || "").replace(/\s+/g, " ").trim();
+      if (!containsNormalized(next, focusKeyword)) {
+        next = `${focus} from trusted local experts with clear pricing, fast support, and proven results. ${next}`.trim();
+      }
+      if (next.length < 120) {
+        next = `${next} Compare options, get helpful answers, and request a free quote today from a reliable team near you.`.replace(/\s+/g, " ").trim();
+      }
+      if (next.length > 160) {
+        const keepFocus = next.slice(0, Math.max(130, next.toLowerCase().indexOf(focusKeyword.toLowerCase()) + focusKeyword.length + 30));
+        next = keepFocus.slice(0, 157).trim();
+        const lastSpace = next.lastIndexOf(" ");
+        if (lastSpace > 120) next = next.slice(0, lastSpace).trim();
+      }
+      if (!containsNormalized(next, focusKeyword)) {
+        next = `${focus} from trusted local experts with clear pricing, fast support, and proven results. Request a free quote today.`;
+      }
+      if (next.length < 120) next = `${next} Get clear guidance, practical service details, and a simple next step today.`;
+      return next.slice(0, 160).trim();
+    };
+
+    const ensureContent = (content: string, title: string, focusKeyword: string) => {
+      const text = plainText(content);
+      const wordCount = text.split(/\s+/).filter(Boolean).length;
+      const hasH1 = /<h1\b/i.test(content);
+      const hasKeywordHeading = /<h[23][^>]*>[\s\S]*?<\/h[23]>/i.test(content) && containsNormalized(
+        Array.from(content.matchAll(/<h[23][^>]*>([\s\S]*?)<\/h[23]>/gi)).map(([, heading]) => plainText(heading)).join(" "),
+        focusKeyword,
+      );
+      const hasInternalLink = /<a[^>]*href=["'](?:\/|#|\.\/)[^"']*["'][^>]*>/i.test(content);
+      const hasOutboundLink = /<a[^>]*href=["']https?:\/\/[^"']+["'][^>]*>/i.test(content);
+      const hasSchema = /application\/ld\+json/i.test(content) || /itemscope/i.test(content) || /itemprop/i.test(content);
+      const safeTitle = escapeHtml(ensureTitle(title, focusKeyword));
+      const safeFocus = escapeHtml(titleCase(focusKeyword));
+      const rawFocus = escapeHtml(focusKeyword);
+
+      const supportSections: string[] = [];
+      if (!hasH1) supportSections.push(`<h1>${safeTitle}</h1>`);
+      if (!containsNormalized(text.slice(0, 600), focusKeyword)) {
+        supportSections.push(`<p>${safeFocus} helps customers compare the right options quickly, understand the service clearly, and choose a reliable next step without confusion.</p>`);
+      }
+      if (!hasKeywordHeading) supportSections.push(`<h2>${safeFocus} Services and Local Support</h2>`);
+
+      if (wordCount < 620 || !hasInternalLink || !hasOutboundLink) {
+        supportSections.push(`
+          <section data-seo-support="true">
+            <h2>Why Choose ${safeFocus}</h2>
+            <p>${safeFocus} should make the decision simple for visitors. A strong page explains what is included, who the service is for, how the process works, and what result the customer can expect. Additionally, it should answer practical questions before someone contacts the business.</p>
+            <p>Our team focuses on clear communication, dependable scheduling, and useful recommendations based on the customer’s goal. Therefore, every visitor can review the details, compare the benefits, and request help with confidence. The page is written to be helpful first, with natural keyword use instead of repeated or artificial wording.</p>
+            <h3>${safeFocus} Process</h3>
+            <p>First, we review the request and confirm the most important details. Next, we explain the available options in plain language. Finally, we guide the customer toward a practical action, whether that means booking a consultation, requesting a quote, or asking a follow-up question.</p>
+            <h3>Helpful Details for Visitors</h3>
+            <ul>
+              <li>Clear service information and realistic expectations.</li>
+              <li>Fast response options for people who need help today.</li>
+              <li>Trusted local experts with practical experience.</li>
+              <li>Simple contact steps so customers know what to do next.</li>
+            </ul>
+            <p>For best results, keep this page updated with current offers, service areas, opening hours, customer reviews, and answers to common questions. Moreover, visitors should be able to scan the page quickly and still understand why ${safeFocus} is relevant to their needs.</p>
+            <p><a href="#contact">Contact us</a> to request a quote or learn more about ${rawFocus}. You can also review <a href="https://www.google.com/business/" target="_blank" rel="noopener noreferrer">Google Business Profile guidance</a> for useful local business information.</p>
+          </section>
+        `);
+      }
+
+      if (!hasSchema) {
+        supportSections.push(`<script type="application/ld+json">${JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Service",
+          name: titleCase(focusKeyword),
+          description: `${titleCase(focusKeyword)} from trusted local experts with clear service details and fast support.`,
+        })}</script>`);
+      }
+
+      if (!supportSections.length) return content;
+      return `${content}\n${supportSections.join("\n")}`;
+    };
+
     try {
       // Detect language from campaign
       let detectedLanguage: string | null = null;
@@ -289,6 +458,41 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       const baselineUnified = scoreOf(working, canonicalUrl);
       let bestUnified = baselineUnified;
       let bestSnapshot = { ...working };
+      const trackedKeys = ["title", "description", "content", "keywords"];
+      const rankSnapshot = (result: ReturnType<typeof calculateUnifiedSeoScore>, values: typeof working) => {
+        const legacy = legacyScoreOf(values);
+        const passCount = trackedKeys.filter((key) => factorScore(result, key) >= STRONG).length;
+        const factorTotal = trackedKeys.reduce((sum, key) => sum + factorScore(result, key), 0);
+        const legacyPassCount = [legacy.seo, legacy.meta, legacy.sea, legacy.geo].filter((score) => score >= STRONG).length;
+        const legacyTotal = legacy.seo + legacy.meta + legacy.sea + legacy.geo;
+        return passCount * 1000 + legacyPassCount * 1000 + factorTotal * 10 + legacyTotal * 10 + result.score + legacy.overall;
+      };
+      const collectWeakKeys = (result: ReturnType<typeof calculateUnifiedSeoScore>, values: typeof working) => {
+        const next = new Set(
+          result.factors
+            .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
+            .map((f) => f.key),
+        );
+        const legacy = legacyScoreOf(values);
+        if (legacy.meta < STRONG) {
+          next.add("title");
+          next.add("description");
+          next.add("keywords");
+        }
+        if (legacy.seo < STRONG) {
+          next.add("title");
+          next.add("description");
+          next.add("keywords");
+          next.add("content");
+        }
+        if (legacy.sea < STRONG || legacy.geo < STRONG) {
+          next.add("title");
+          next.add("content");
+        }
+        return [...next];
+      };
+      const baselineRank = rankSnapshot(baselineUnified, working);
+      let bestRank = baselineRank;
 
       const TRACKED_FACTORS: Record<string, string> = {
         title: "Title",
@@ -304,9 +508,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       setFactorLive(seedFactors);
 
       let iteration = 0;
-      let weakKeys = baselineUnified.factors
-        .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
-        .map((f) => f.key);
+      let weakKeys = collectWeakKeys(baselineUnified, working);
 
       if (weakKeys.length === 0) {
         toast({
@@ -427,8 +629,13 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           }
         }
 
-        // Deterministic polish for title / description on the candidate.
+        // Deterministic polish for keywords/title/description/content so the
+        // score can still move when the AI returns a tied or weak draft.
+        if (weakKeys.includes("keywords") || weakKeys.includes("title") || weakKeys.includes("description") || weakKeys.includes("content")) {
+          candidate.keywords = ensureKeywordList({ title: candidate.title, keywords: candidate.keywords });
+        }
         if (weakKeys.includes("title")) {
+          candidate.title = ensureTitle(candidate.title, candidate.keywords[0] || deriveFocusKeyword(candidate));
           const hasSeparator = /[|\-–·•]/.test(candidate.title);
           if (!hasSeparator && candidate.title.length <= 50) {
             candidate.title = `${candidate.title} | ${(candidate.keywords[0] || "Trusted Local Service").slice(0, 30)}`;
@@ -441,6 +648,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           }
         }
         if (weakKeys.includes("description")) {
+          candidate.description = ensureDescription(candidate.description, candidate.keywords[0] || deriveFocusKeyword(candidate));
           // Guarantee focus keyword presence (critical for the "Keyword in meta description" check).
           const focusKw = (candidate.keywords[0] || "").trim();
           const hasKw = focusKw
@@ -463,28 +671,52 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
             if (lastSpace > 130) candidate.description = candidate.description.slice(0, lastSpace).trim();
           }
         }
+        if (weakKeys.includes("content") || weakKeys.includes("keywords")) {
+          candidate.content = ensureContent(candidate.content, candidate.title, candidate.keywords[0] || deriveFocusKeyword(candidate));
+        }
 
-        // Per-factor guard: accept a field ONLY if its factor score improved.
+        // Per-factor guard. Some factors are interdependent: keyword coverage can
+        // only improve when BOTH seo_keywords and body content move together, and
+        // meta scoring can depend on the active focus keyword. So first accept the
+        // whole candidate when the tracked SEO rank does not regress; otherwise
+        // fall back to field-level acceptance.
         const iterAfter = scoreOf(candidate, canonicalUrl);
         const afterFactor = (k: string) => factorScore(iterAfter, k);
-        for (const key of weakKeys) {
-          const before = beforeFactor(key);
-          const after = afterFactor(key);
-          // Accept if the factor improved, OR (when still failing) if it stayed equal
-          // but the candidate actually changed — lets deterministic polish take effect
-          // even when the scorer can't measure the delta yet.
+        const candidateChanged = trackedKeys.some((key) => {
           const fieldName = key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content";
-          const changed = JSON.stringify((candidate as any)[fieldName]) !== JSON.stringify((working as any)[fieldName]);
-          if (after > before || (after >= before && before < STRONG && changed)) {
-            (working as any)[fieldName] = (candidate as any)[fieldName];
+          return JSON.stringify((candidate as any)[fieldName]) !== JSON.stringify((working as any)[fieldName]);
+        });
+        const candidateRank = rankSnapshot(iterAfter, candidate);
+        const beforeRank = rankSnapshot(iterBefore, working);
+        const noWeakFactorDropped = weakKeys.every((key) => afterFactor(key) >= beforeFactor(key));
+
+        if (candidateChanged && candidateRank >= beforeRank && noWeakFactorDropped) {
+          working.title = candidate.title;
+          working.description = candidate.description;
+          working.keywords = candidate.keywords;
+          working.content = candidate.content;
+        } else {
+          for (const key of weakKeys) {
+            const before = beforeFactor(key);
+            const after = afterFactor(key);
+            // Accept if the factor improved, OR (when still failing) if it stayed equal
+            // but the candidate actually changed — lets deterministic polish take effect
+            // even when the scorer can't measure the delta yet.
+            const fieldName = key === "title" ? "title" : key === "description" ? "description" : key === "keywords" ? "keywords" : "content";
+            const changed = JSON.stringify((candidate as any)[fieldName]) !== JSON.stringify((working as any)[fieldName]);
+            if (after > before || (after >= before && before < STRONG && changed)) {
+              (working as any)[fieldName] = (candidate as any)[fieldName];
+            }
           }
         }
 
         const nowUnified = scoreOf(working, canonicalUrl);
-        const improved = nowUnified.score > bestUnified.score;
+        const nowRank = rankSnapshot(nowUnified, working);
+        const improved = nowRank > bestRank || nowUnified.score > bestUnified.score;
         if (improved) {
           bestUnified = nowUnified;
           bestSnapshot = { ...working };
+          bestRank = Math.max(bestRank, nowRank);
           stagnantPasses = 0;
         } else {
           stagnantPasses++;
@@ -512,9 +744,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           return next;
         });
 
-        weakKeys = nowUnified.factors
-          .filter((f) => ["title", "description", "content", "keywords"].includes(f.key) && f.score < STRONG)
-          .map((f) => f.key);
+        weakKeys = collectWeakKeys(nowUnified, working);
 
         if (weakKeys.length === 0) {
           allFactorsPassed = true;
@@ -529,7 +759,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 
 
       // Use best snapshot ever seen — never regress below baseline.
-      if (bestUnified.score <= baselineUnified.score) {
+      if (bestRank <= baselineRank && bestUnified.score <= baselineUnified.score) {
         setFixing(false);
         setFixStep("");
         setFixProgress(0);
