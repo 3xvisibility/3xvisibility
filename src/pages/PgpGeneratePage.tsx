@@ -729,23 +729,10 @@ Only return valid JSON. No markdown fences.`;
         const base: Record<string, string> = { ...r };
         if (pickedLocations.length > 0) {
           for (const k of GEO_KEYS) delete base[k];
+          for (const k of BIZ_KEYS) {
+            if (injected[k] !== undefined) delete base[k];
+          }
 
-  const buildRows = (): Record<string, string>[] => {
-    const kwData = groupKeywords.filter(k => k.keyword);
-
-    const finalize = (rows: Record<string, string>[]): Record<string, string>[] => {
-      // Geo names user explicitly attached in Step 3 — these must win over any
-      // pre-existing keyword-group value so real Location DB data replaces
-      // stale defaults (e.g. "New York", "Canada") coming from auto-generated
-      // keyword groups.
-      const GEO_KEYS = ["city", "cities", "state", "states", "country", "countries", "region", "zip", "zipcode", "location", "locations", "area"];
-      return rows.map((r, i) => {
-        const injected = buildInjectedForRow(i);
-        // Start with row values, then wipe geo keys if user attached real
-        // locations, then overlay injected (locations + business info win).
-        const base: Record<string, string> = { ...r };
-        if (pickedLocations.length > 0) {
-          for (const k of GEO_KEYS) delete base[k];
         } else {
           // Safeguard: with no real Locations attached, strip placeholder
           // defaults (e.g. "New York", "Canada", "LA") so downstream generation
