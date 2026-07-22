@@ -646,7 +646,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         .eq("workspace_id", wsId!)
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as Array<{
+      return ((data ?? []) as any[]) as Array<{
         id: string; name: string; template_id: string | null;
         language: string; variables: Array<{ name: string; terms: string[] }>;
       }>;
