@@ -677,9 +677,12 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search city, region, state, zip..."
-                    className="h-8 pl-8 text-xs rounded-xl"
+                    placeholder={`Search cities in ${countryName}...`}
+                    className="h-8 pl-8 pr-8 text-xs rounded-xl"
                   />
+                  {isDebouncing && (
+                    <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground animate-spin" />
+                  )}
                 </div>
               </div>
               <Select value={stateFilter} onValueChange={setStateFilter}>
