@@ -94,6 +94,8 @@ export default function TemplateMarketplacePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const PER_PAGE = 15;
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedTag, setSelectedTag] = useState<string>("all");
+  const [selectedFormat, setSelectedFormat] = useState<"all" | "elementor" | "shopify" | "html">("all");
   const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
   const [wpTestOpen, setWpTestOpen] = useState(false);
