@@ -374,11 +374,12 @@ const TOOLS: ToolDoc[] = [
 
 const GROUPS = ["Core", "PGP Suite", "Discovery", "Analytics", "Account"] as const;
 const QUICK_FLOW = [
-  { step: 1, title: "Connect a website", desc: "Sidebar → Websites → Add → enter credentials." },
-  { step: 2, title: "Build or import a template", desc: "Pick a ready design from Templates or the Marketplace." },
-  { step: 3, title: "Add data", desc: "Upload a CSV or generate rows with AI." },
-  { step: 4, title: "Run the campaign", desc: "Map variables and click 'Generate' — pages go straight to your site." },
+  { step: 1, title: "Connect a website", desc: "Sidebar → Websites → Add → WordPress (App Password) or Shopify (OAuth)." },
+  { step: 2, title: "Pick or build a template", desc: "Templates → New (Manual / AI Generate / Scan / Import) or import from the Marketplace. Click 'AI Add Variables' to inject placeholders." },
+  { step: 3, title: "Create a Keyword Group", desc: "Keywords → Keyword Groups → New. Choose the template, language, business/niche context and terms-per-variable." },
+  { step: 4, title: "Generate a Campaign", desc: "From the Keyword Group click 'Generate campaign'. Add Locations + Business Info, pick Zip vs Cross, then Generate — pages publish straight to your site." },
 ];
+
 
 interface Integration {
   name: string;
