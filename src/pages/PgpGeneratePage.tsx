@@ -1273,7 +1273,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               <div className="flex items-center gap-2 text-xs">
                 <div className="h-5 w-5 rounded-full bg-amber-200 dark:bg-amber-700 text-amber-800 dark:text-amber-200 flex items-center justify-center text-[10px] font-bold">!</div>
                 <span className="text-amber-700 dark:text-amber-300">{t("pgpGenerate.noKeywords")}</span>
-                <button className="underline font-semibold text-primary" onClick={() => navigate(`${basePath}/pgp-keywords`)}>{t("pgpGenerate.createKeywords")}</button>
+                <button className="underline font-semibold text-primary" onClick={() => navigate(`${basePath}/keyword-groups`)}>{t("pgpGenerate.createKeywords")}</button>
               </div>
             )}
             {contentGroups.length === 0 && (
@@ -1452,7 +1452,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-500/10 rounded-lg px-3 py-2">
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                         <span>{t("pgpGenerate.defineMissingKeywords")}</span>
-                        <Button variant="link" size="sm" className="text-amber-600 h-auto p-0 ml-auto" onClick={() => navigate(`${basePath}/pgp-keywords`)}>
+                        <Button variant="link" size="sm" className="text-amber-600 h-auto p-0 ml-auto" onClick={() => navigate(`${basePath}/keyword-groups`)}>
                           {t("pgpGenerate.keywordsLink")}
                         </Button>
                       </div>
