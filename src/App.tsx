@@ -156,7 +156,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="seo-audit" element={wrap(<SeoAuditPage />)} />
       <Route path="affiliate" element={wrap(<AffiliatePage />)} />
       <Route path="referral" element={wrap(<ReferralPage />)} />
-      <Route path="pgp-keywords" element={wrap(<PgpKeywordsPage />)} />
+      <Route path="pgp-keywords" element={<Navigate to="../keyword-groups" replace />} />
       <Route path="keyword-groups" element={wrap(<KeywordGroupsPage />)} />
       <Route path="pgp-content" element={<Navigate to="../templates" replace />} />
       <Route path="pgp-generate" element={wrap(<PgpGeneratePage />)} />
