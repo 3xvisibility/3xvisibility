@@ -62,10 +62,18 @@ const statusColors: Record<string, string> = {
 };
 
 const statusBadge: Record<string, { class: string; label: string }> = {
+  queued: { class: "bg-muted text-muted-foreground", label: "Queued" },
   pending: { class: "bg-muted text-muted-foreground", label: "Pending" },
+  generating: { class: "bg-primary/10 text-primary", label: "Generating" },
+  publishing: { class: "bg-primary/10 text-primary", label: "Publishing" },
   published: { class: "bg-primary/10 text-primary", label: "Published" },
   failed: { class: "bg-destructive/10 text-destructive", label: "Failed" },
 };
+
+const PUBLISHABLE_PAGE_STATUSES = new Set(["pending", "failed", "queued", "generating", "publishing", "published"]);
+
+const canPublishExistingPage = (page: { status: string; content?: string | null }) =>
+  Boolean(page.content?.trim()) && PUBLISHABLE_PAGE_STATUSES.has(page.status);
 
 const campaignStatusBadge: Record<string, { class: string; label: string }> = {
   completed: { class: "bg-success/10 text-success border-success/20", label: "Completed" },
@@ -508,7 +516,14 @@ export default function CampaignDetailPage() {
   };
 
   const handleBulkPublish = () => {
-    const ids = [...selectedPageIds];
+    const ids = [...selectedPageIds].filter((pageId) => {
+      const page = pages?.find((p: any) => p.id === pageId);
+      return page ? canPublishExistingPage(page) : false;
+    });
+    if (ids.length === 0) {
+      toast({ title: "No publishable pages selected", description: "Only generated pages with content can be published.", variant: "destructive" });
+      return;
+    }
     if (!campaign?.website_id) {
       setPendingBulkPublishIds(ids);
       setShowWebsiteSelector(true);
@@ -1064,19 +1079,19 @@ export default function CampaignDetailPage() {
                                     </a>
                                   </Button>
                                 )}
-                                {(page.status === "pending" || page.status === "failed") && (
+                                {canPublishExistingPage(page) && page.status !== "published" && (
                                   <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7 text-primary"
-                                    title={page.status === "failed" ? "Retry publish" : "Publish page"}
+                                    title={page.status === "pending" ? "Publish page" : "Retry publish"}
                                     onClick={() => handlePublishPage(page.id)}
                                     disabled={republishMutation.isPending}
                                   >
-                                    {page.status === "failed" ? (
-                                      <RefreshCw className={`h-3.5 w-3.5 ${republishMutation.isPending ? "animate-spin" : ""}`} />
-                                    ) : (
+                                    {page.status === "pending" ? (
                                       <Send className="h-3.5 w-3.5" />
+                                    ) : (
+                                      <RefreshCw className={`h-3.5 w-3.5 ${republishMutation.isPending ? "animate-spin" : ""}`} />
                                     )}
                                   </Button>
                                 )}
@@ -1092,6 +1107,20 @@ export default function CampaignDetailPage() {
                                     <RefreshCw className={`h-3.5 w-3.5 ${republishMutation.isPending ? "animate-spin" : ""}`} />
                                   </Button>
                                 )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                                  title="Delete page"
+                                  onClick={() => {
+                                    if (window.confirm(`Delete “${page.title || page.slug}”? This cannot be undone.`)) {
+                                      bulkDeleteMutation.mutate([page.id]);
+                                    }
+                                  }}
+                                  disabled={bulkDeleteMutation.isPending}
+                                >
+                                  <XCircle className="h-3.5 w-3.5" />
+                                </Button>
                               </div>
                             </td>
                           </tr>

@@ -60,6 +60,12 @@ const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; 
 
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
+const PUBLISHABLE_PAGE_STATUSES = new Set(["pending", "failed", "queued", "generating", "publishing"]);
+
+const canPublishExistingPage = (page?: Pick<GeneratedPage, "status" | "content"> | null) =>
+  Boolean(page?.content?.trim()) && PUBLISHABLE_PAGE_STATUSES.has(page.status);
+
+const publishActionLabel = (status: string) => (status === "pending" ? "Publish" : "Retry publish");
 
 export default function GeneratedPagesPage() {
   const [search, setSearch] = useState("");
@@ -708,7 +714,7 @@ export default function GeneratedPagesPage() {
     setBulkSeoOpen(true);
   };
 
-  const pendingPages = pages.filter((p) => p.status === "pending");
+  const pendingPages = pages.filter(canPublishExistingPage);
   const retryableQueuedPages = pages.filter((p) => p.status === "queued" || p.status === "publishing");
 
   // Unique filters
@@ -1013,7 +1019,7 @@ export default function GeneratedPagesPage() {
             <div className="flex flex-wrap gap-1.5">
               <Button size="sm" className="h-7 text-xs bg-gradient-primary border-0" disabled={bulkPublishMutation.isPending}
                 onClick={() => {
-                  const publishable = [...selectedIds].filter((id) => { const p = pages.find((pg) => pg.id === id); return p?.status === "pending" || p?.status === "failed" || p?.status === "queued" || p?.status === "publishing"; });
+                  const publishable = [...selectedIds].filter((id) => canPublishExistingPage(pages.find((pg) => pg.id === id)));
                   if (!publishable.length) { toast({ title: t("generatedPages.noPublishable"), variant: "destructive" }); return; }
                   handlePublish(publishable, "bulk");
                 }}>
@@ -1122,8 +1128,12 @@ export default function GeneratedPagesPage() {
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuItem onClick={() => setPreviewPage(page)}><Eye className="h-3.5 w-3.5 mr-2" />Preview</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openSeoEditor(page)}><Pencil className="h-3.5 w-3.5 mr-2" />Edit Content</DropdownMenuItem>
-                      {page.status === "pending" && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
-                      {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
+                      {canPublishExistingPage(page) && (
+                        <DropdownMenuItem onClick={() => handlePublish([page.id], page.status === "pending" ? "publish" : "retry")}>
+                          {page.status === "pending" ? <Send className="h-3.5 w-3.5 mr-2" /> : <RefreshCw className="h-3.5 w-3.5 mr-2" />}
+                          {publishActionLabel(page.status)}
+                        </DropdownMenuItem>
+                      )}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setWidthPage(page)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" />Content width</DropdownMenuItem>
@@ -1139,7 +1149,6 @@ export default function GeneratedPagesPage() {
                           Re-check Elementor readiness
                         </DropdownMenuItem>
                       )}
-                      {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                       {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</a></DropdownMenuItem>}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
@@ -1253,8 +1262,12 @@ export default function GeneratedPagesPage() {
                               <Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="h-3.5 w-3.5" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-44">
-                              {page.status === "pending" && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
-                              {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
+                              {canPublishExistingPage(page) && (
+                                <DropdownMenuItem onClick={() => handlePublish([page.id], page.status === "pending" ? "publish" : "retry")}>
+                                  {page.status === "pending" ? <Send className="h-3.5 w-3.5 mr-2" /> : <RefreshCw className="h-3.5 w-3.5 mr-2" />}
+                                  {publishActionLabel(page.status)}
+                                </DropdownMenuItem>
+                              )}
                               {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setWidthPage(page)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" />Content width</DropdownMenuItem>
@@ -1270,7 +1283,6 @@ export default function GeneratedPagesPage() {
                                   Re-check Elementor readiness
                                 </DropdownMenuItem>
                               )}
-                              {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                               {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</a></DropdownMenuItem>}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
