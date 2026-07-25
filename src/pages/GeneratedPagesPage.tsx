@@ -51,8 +51,52 @@ import { useSubscription } from "@/hooks/use-subscription";
 
 type GeneratedPage = Tables<"generated_pages"> & {
   campaigns?: { name: string; publish_type?: string | null; publish_format?: string | null } | null;
-  websites?: { name: string; type?: string | null } | null;
+  websites?: { name: string; type?: string | null; url?: string | null } | null;
 };
+
+/** Normalize a stored page URL into a safe, absolute, openable link. */
+function normalizeUrl(raw?: string | null): string | null {
+  if (!raw) return null;
+  let u = String(raw).trim().replace(/\s+/g, "");
+  if (!u || u === "#" || u.toLowerCase() === "null" || u.toLowerCase() === "undefined") return null;
+  if (u.startsWith("//")) u = `https:${u}`;
+  if (!/^https?:\/\//i.test(u)) {
+    if (/^[a-z][a-z0-9+.-]*:/i.test(u)) return null; // block javascript:, data:, etc.
+    u = `https://${u.replace(/^\/+/, "")}`;
+  }
+  try {
+    return new URL(u).toString();
+  } catch {
+    return null;
+  }
+}
+
+/** Best-effort live URL for a page: stored URL first, then site base + slug. */
+function resolvePageUrl(page: GeneratedPage): string | null {
+  const direct = normalizeUrl(page.external_url);
+  if (direct) return direct;
+  const base = normalizeUrl(page.websites?.url);
+  const isLive = page.status === "published" || page.status === "done";
+  if (base && isLive && page.slug) {
+    try {
+      const url = new URL(base);
+      const basePath = url.pathname.replace(/\/+$/, "");
+      url.pathname = `${basePath}/${String(page.slug).replace(/^\/+/, "")}`;
+      url.search = "";
+      url.hash = "";
+      return url.toString();
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function openPageUrl(url: string) {
+  const win = window.open(url, "_blank", "noopener,noreferrer");
+  if (!win) window.location.href = url;
+}
+
 
 const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; bg: string; labelKey: string }> = {
   queued:     { icon: Clock,         color: "text-muted-foreground", bg: "bg-muted text-muted-foreground border-border", labelKey: "status.queued" },
