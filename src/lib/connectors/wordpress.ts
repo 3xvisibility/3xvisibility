@@ -20,14 +20,43 @@ function stripImagesWithPlaceholderSrc(html: string): string {
   });
 }
 
-function sanitizeWordPressContent(content?: string): string | undefined {
+
+/**
+ * v1 is HTML/CSS-only: the published page must keep the exact CSS + JS the
+ * preview used. WordPress post_content cannot be relied on to keep <link
+ * rel="stylesheet"> tags, so external stylesheets are folded into an
+ * `@import` block inside a real <style> tag (which survives), and scripts are
+ * preserved instead of stripped.
+ */
+function preserveDesignAssets(html: string): string {
+  if (!html) return html;
+  const imports: string[] = [];
+  let out = html.replace(/<link\b[^>]*>/gi, (tag) => {
+    const isSheet = /rel\s*=\s*["']?stylesheet/i.test(tag);
+    const href = tag.match(/href\s*=\s*("([^"]*)"|'([^']*)')/i);
+    const url = href ? (href[2] ?? href[3] ?? "") : "";
+    if (isSheet && url && !/\{[^}]*\}/.test(url)) {
+      imports.push(`@import url("${url.replace(/"/g, "%22")}");`);
+    }
+    return "";
+  });
+  if (imports.length > 0) {
+    out = `<style>\n${[...new Set(imports)].join("\n")}\n</style>\n${out}`;
+  }
+  return out;
+}
+
+function sanitizeWordPressContent(content?: string, keepDesign = true): string | undefined {
   if (typeof content !== "string") return content;
+  if (keepDesign) content = preserveDesignAssets(content);
 
   let sanitized = content
     .replace(/<!--[\s\S]*?-->/g, "")
     .replace(/<meta\b[^>]*>/gi, "")
     .replace(/<link\b[^>]*>/gi, "")
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+    // Keep template JS (it drives reveal/animation states); drop only JSON-LD
+    // blocks, which the CMS owns.
+    .replace(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "");
 
   sanitized = stripImagesWithPlaceholderSrc(sanitized);
 
