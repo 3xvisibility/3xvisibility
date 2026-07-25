@@ -552,7 +552,16 @@ export default function GeneratedPagesPage() {
     );
   };
 
+  // Every publish first asks for the output format (real code / Elementor /
+  // Shopify) so the user controls design fidelity per publish.
   const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
+    if (ids.length === 0) return;
+    setPendingPublishIds(ids);
+    setPendingPublishAction(action);
+    setShowFormatDialog(true);
+  };
+
+  const runPublish = (ids: string[], action: "publish" | "bulk" | "retry", format: PublishFormat) => {
     const pagesWithoutSite = ids.filter((pid) => {
       const p = pages.find((pg) => pg.id === pid);
       return !p?.website_id;
@@ -565,19 +574,21 @@ export default function GeneratedPagesPage() {
       setShowWebsiteSelector(true);
     } else {
       markDirectPagesPublishing(ids);
-      if (action === "retry") retryFailedMutation.mutate({ ids, type: effType });
-      else if (action === "bulk") bulkPublishMutation.mutate({ ids, type: effType });
-      else publishMutation.mutate({ pageIds: ids, type: effType });
+      if (action === "retry") retryFailedMutation.mutate({ ids, type: effType, format });
+      else if (action === "bulk") bulkPublishMutation.mutate({ ids, type: effType, format });
+      else publishMutation.mutate({ pageIds: ids, type: effType, format });
     }
   };
 
   const handleWebsiteSelected = (websiteId: string) => {
     const effType = resolvePublishTypeFor(pendingPublishIds);
+    const format = publishFormat;
     markDirectPagesPublishing(pendingPublishIds);
-    if (pendingPublishAction === "retry") retryFailedMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType });
-    else if (pendingPublishAction === "bulk") bulkPublishMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType });
-    else publishMutation.mutate({ pageIds: pendingPublishIds, type: effType, websiteId });
+    if (pendingPublishAction === "retry") retryFailedMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType, format });
+    else if (pendingPublishAction === "bulk") bulkPublishMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType, format });
+    else publishMutation.mutate({ pageIds: pendingPublishIds, type: effType, websiteId, format });
   };
+
 
 
 
