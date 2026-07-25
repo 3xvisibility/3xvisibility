@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
 import { callAI } from "@/lib/ai-client";
+import { friendlyError } from "@/lib/friendly-errors";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -267,7 +268,7 @@ export default function KeywordGroupsPage() {
         description: `for {${varName}}`,
       });
     } catch (err: any) {
-      toast({ title: "AI generation failed", description: err?.message, variant: "destructive" });
+      toast({ title: "AI generation failed", description: friendlyError(err?.message || String(err)), variant: "destructive" });
     } finally {
       setAiBusy(null);
     }
