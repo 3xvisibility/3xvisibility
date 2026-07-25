@@ -962,7 +962,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
     // HTML/CSS verbatim (design stays 1:1 with the preview).
     const campaignFormatCache = new Map<string, PublishFormat>();
     async function getCampaignPublishFormat(campaignId: string | null | undefined): Promise<PublishFormat> {
-      if (typeof body.publish_format === "string" && PUBLISH_FORMATS.includes(body.publish_format)) {
+      if (typeof body.publish_format === "string" && (PUBLISH_FORMATS as readonly string[]).includes(body.publish_format)) {
         return body.publish_format as PublishFormat;
       }
       if (!campaignId) return "elementor";
@@ -973,7 +973,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         .eq("id", campaignId)
         .maybeSingle();
       const fmt = ((data as any)?.publish_format as string) || "elementor";
-      const out = (PUBLISH_FORMATS.includes(fmt) ? fmt : "elementor") as PublishFormat;
+      const out = ((PUBLISH_FORMATS as readonly string[]).includes(fmt) ? fmt : "elementor") as PublishFormat;
       campaignFormatCache.set(campaignId, out);
       return out;
     }

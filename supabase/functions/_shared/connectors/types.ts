@@ -39,7 +39,7 @@ export interface PagePayload {
    * default), "gutenberg" (native block editor), or "shopify" (routed to the
    * Shopify connector). Controls how `content` is converted at publish time.
    */
-  publish_format?: "elementor" | "gutenberg" | "shopify";
+  publish_format?: "elementor" | "gutenberg" | "shopify" | "html";
   /**
    * Elementor build strategy. "native" maps HTML into Containers/widgets.
    * "exact" embeds the rendered template HTML/CSS in an Elementor HTML widget
