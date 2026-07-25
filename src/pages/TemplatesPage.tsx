@@ -784,13 +784,21 @@ export default function TemplatesPage() {
       }
     }
 
-    // Only fall back to deterministic text extraction when the AI returned NO
-    // usable keywords — otherwise we'd pollute the list with full sentences.
-    const fallbackVariableEntries =
-      suggestedVariableEntries.length > 0
-        ? []
-        : autoExtractTemplateVariables(html, pageTitle, pendingKeywords);
-    const variableEntries = [...suggestedVariableEntries, ...fallbackVariableEntries].slice(0, 16);
+    // Always merge deterministic heading/paragraph extraction WITH the AI's
+    // short-keyword suggestions so main titles, subheadings and paragraphs
+    // also become variables ({headline}, {section_title}, {description}, …).
+    // Dedupe by original text and by variable name so we don't double-replace.
+    const structuralEntries = autoExtractTemplateVariables(html, pageTitle, pendingKeywords);
+    const seenOriginals = new Set(suggestedVariableEntries.map((v) => v.original.trim().toLowerCase()));
+    const seenVarNames = new Set(suggestedVariableEntries.map((v) => v.name));
+    const mergedStructural = structuralEntries.filter((v) => {
+      const key = v.original.trim().toLowerCase();
+      if (!key || seenOriginals.has(key) || seenVarNames.has(v.name)) return false;
+      seenOriginals.add(key);
+      seenVarNames.add(v.name);
+      return true;
+    });
+    const variableEntries = [...suggestedVariableEntries, ...mergedStructural].slice(0, 32);
     html = applyTemplateVariables(html, variableEntries);
 
     const allVars = filterDesignVars([...new Set([...variableEntries.map((v) => v.name), ...pendingKeywords])]);

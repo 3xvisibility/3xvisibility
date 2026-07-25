@@ -569,11 +569,19 @@ Rules:
         }
       }
 
-      // Only fall back to deterministic extraction when AI gave no keywords.
-      const fallbackVars = parsedVars.length > 0
-        ? []
-        : autoExtractTemplateVariables(page.content, page.title);
-      const mergedVars = [...parsedVars, ...fallbackVars].slice(0, 16);
+      // Always merge structural heading/paragraph extraction with AI keywords
+      // so main titles, subheadings and paragraphs also become variables.
+      const structuralVars = autoExtractTemplateVariables(page.content, page.title);
+      const seenOriginals = new Set(parsedVars.map((v: any) => (v.original || "").trim().toLowerCase()));
+      const seenVarNames = new Set(parsedVars.map((v: any) => v.name));
+      const mergedStructural = structuralVars.filter((v) => {
+        const key = v.original.trim().toLowerCase();
+        if (!key || seenOriginals.has(key) || seenVarNames.has(v.name)) return false;
+        seenOriginals.add(key);
+        seenVarNames.add(v.name);
+        return true;
+      });
+      const mergedVars = [...parsedVars, ...mergedStructural].slice(0, 32);
 
       setVariables(mergedVars);
 
