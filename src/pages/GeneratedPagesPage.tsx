@@ -292,15 +292,17 @@ export default function GeneratedPagesPage() {
   });
 
   const publishMutation = useMutation({
-    mutationFn: async ({ pageIds, type, websiteId }: { pageIds: string[]; type: "page" | "product"; websiteId?: string }) => {
+    mutationFn: async ({ pageIds, type, websiteId, format }: { pageIds: string[]; type: "page" | "product"; websiteId?: string; format?: PublishFormat }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
         body: {
           page_ids: pageIds,
           publish_type: type,
           website_id: websiteId,
+          publish_format: format ?? "html",
           elementor_mode: "native",
           overwrite_design: true,
         },
+
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
