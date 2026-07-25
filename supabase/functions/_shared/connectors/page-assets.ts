@@ -143,7 +143,7 @@ export async function bundlePageAssetsToUrls(
 
     // Storage unavailable → keep the original inline markup rather than shipping
     // a page with no styles at all.
-    if ((css && !cssUrl) || (js && !jsUrl)) return { html, cssUrl, jsUrl };
+    if ((css && !cssUrl) || (js && !jsUrl)) return { html, cssUrl, jsUrl, css, js };
 
     const tags: string[] = [];
     if (cssUrl) tags.push(`<link ${ASSET_MARK}="css" rel="stylesheet" href="${cssUrl}" />`);
@@ -153,11 +153,45 @@ export async function bundlePageAssetsToUrls(
       html: `${tags.join("\n")}${tags.length ? "\n" : ""}${split.html.trim()}${trailing}`,
       cssUrl,
       jsUrl,
+      css,
+      js,
     };
   } catch (e) {
     console.error("page-assets: bundling failed", e);
     return { html, cssUrl: null, jsUrl: null };
   }
+}
+
+/**
+ * Inline CSS/JS fallback mode.
+ *
+ * Some WordPress installs (aggressive security plugins, `wp_kses_post()` on
+ * hosts where the connector plugin is missing, or themes that filter
+ * `the_content`) drop the external <link>/<script src> tags entirely. When the
+ * site has the "force inline CSS/JS fallback" setting enabled we additionally
+ * embed the bundle inline — marked with `data-xxxv-asset` so every connector
+ * sanitizer keeps it — so the live page still carries the full design even if
+ * the external tags never make it through.
+ */
+export function applyInlineAssetFallback(bundle: BundledPageAssets): string {
+  const css = (bundle.css || "").trim();
+  const js = (bundle.js || "").trim();
+  if (!css && !js) return bundle.html;
+
+  let html = bundle.html;
+  if (css && !new RegExp(`<style[^>]*${ASSET_MARK}`, "i").test(html)) {
+    html = `<style ${ASSET_MARK}="css-inline">
+${css}
+</style>
+${html}`;
+  }
+  if (js && !new RegExp(`<script[^>]*${ASSET_MARK}="js-inline"`, "i").test(html)) {
+    html = `${html}
+<script ${ASSET_MARK}="js-inline">
+${js}
+</script>`;
+  }
+  return html;
 }
 
 export const PAGE_ASSET_MARK = ASSET_MARK;
