@@ -105,9 +105,12 @@ Deno.serve(async (req) => {
       promptType,
     });
 
-    const status = result.success ? 200 : 500;
+    // Always return 200 so the client can read `success` + `content` from the body.
+    // supabase.functions.invoke() drops the body on non-2xx and reports only
+    // a generic "non-2xx status code" error, which hides useful diagnostics
+    // like "Authentication required" or "AI access disabled".
     return new Response(JSON.stringify(result), {
-      status,
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
