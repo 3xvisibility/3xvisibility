@@ -1093,7 +1093,18 @@ async function handlePublishPages(req: Request): Promise<Response> {
               console.warn("[publish-pages] direct Elementor repair failed", e);
             }
           }
-          if (website.type === "wordpress" && pubType === "page" && !preserveDesign) {
+          const dpFormat = await getCampaignPublishFormat(campaignId);
+          payload.publish_format = dpFormat;
+          if (dpFormat === "html") {
+            // Real code: publish the generated HTML/CSS verbatim (design 1:1).
+            payload.wordpress_fallback_html = true;
+            payload.elementor_data = undefined;
+            payload.elementor_css = undefined;
+            payload.elementor_mode = undefined;
+            step("Publishing real code (HTML/CSS)", "ok", "Generated HTML + CSS published verbatim — design 1:1 with preview");
+          }
+          if (website.type === "wordpress" && pubType === "page" && !preserveDesign && dpFormat === "elementor") {
+
             // No stored native JSON: convert the rendered template HTML into
             // native Elementor containers + widgets so the page is fully
             // editable in Elementor (free) instead of a raw HTML widget.
