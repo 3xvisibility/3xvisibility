@@ -762,38 +762,6 @@ export default function GeneratedPagesPage() {
     onError: (err: Error) => toast({ title: "Re-check failed", description: err.message, variant: "destructive" }),
   });
 
-  const reconvertMutation = useMutation({
-    mutationFn: async (pageId: string) => {
-      const { data, error } = await supabase.functions.invoke("reconvert-template-json", {
-        body: { page_id: pageId },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(typeof data.error === "string" ? data.error : "Reconvert failed");
-      return data as { widgets?: number; fields?: number; sections?: number };
-    },
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
-      toast({
-        title: "Template reconverted",
-        description: `Stored JSON rebuilt: ${res?.widgets ?? 0} widgets · ${res?.fields ?? 0} fields. Re-publish to apply.`,
-      });
-    },
-    onError: (err: Error) => toast({ title: "Reconvert failed", description: err.message, variant: "destructive" }),
-  });
-
-  // One-click: reconvert stored JSON, then immediately republish the page live.
-  const handleRepairAndRepublish = async (pageId: string) => {
-    try {
-      const res = await reconvertMutation.mutateAsync(pageId);
-      toast({
-        title: "Template reconverted",
-        description: `Rebuilt ${res?.widgets ?? 0} widgets · ${res?.fields ?? 0} fields. Republishing…`,
-      });
-      handlePublish([pageId], "publish");
-    } catch {
-      // reconvertMutation.onError already surfaced the failure toast.
-    }
-  };
 
 
 
@@ -1226,9 +1194,6 @@ export default function GeneratedPagesPage() {
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setTranslateOpen(true)}>
                 <Languages className="h-3 w-3 mr-1" />{t("generatedPages.translate")}
               </Button>
-              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setBulkWidthOpen(true)}>
-                <LayoutTemplate className="h-3 w-3 mr-1" />Content width
-              </Button>
               <Button size="sm" variant="outline" className="h-7 text-xs" disabled={fidelityRunning}
                 onClick={async () => {
                   const ids = [...selectedIds].filter((id) => {
@@ -1340,8 +1305,7 @@ export default function GeneratedPagesPage() {
                       size="sm"
                       variant="outline"
                       className="h-8 shrink-0 border-destructive/30 text-destructive hover:bg-destructive/10"
-                      disabled={reconvertMutation.isPending}
-                      onClick={() => page.campaign_id ? handleRepairAndRepublish(page.id) : handlePublish([page.id], "retry")}
+                      onClick={() => handlePublish([page.id], "retry")}
                     >
                       <RefreshCw className="h-3.5 w-3.5 mr-1.5" />Retry
                     </Button>
@@ -1362,9 +1326,6 @@ export default function GeneratedPagesPage() {
                       )}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setWidthPage(page)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" />Content width</DropdownMenuItem>
-                      {page.campaign_id && <DropdownMenuItem onClick={() => reconvertMutation.mutate(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair / Reconvert</DropdownMenuItem>}
-                      {page.campaign_id && <DropdownMenuItem onClick={() => handleRepairAndRepublish(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair &amp; Republish</DropdownMenuItem>}
                       {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
                         <DropdownMenuItem
@@ -1500,8 +1461,7 @@ export default function GeneratedPagesPage() {
                               size="sm"
                               variant="outline"
                               className="h-7 px-2 border-destructive/30 text-destructive hover:bg-destructive/10"
-                              disabled={reconvertMutation.isPending}
-                              onClick={() => page.campaign_id ? handleRepairAndRepublish(page.id) : handlePublish([page.id], "retry")}
+                              onClick={() => handlePublish([page.id], "retry")}
                               title="Retry publish"
                             >
                               <RefreshCw className="h-3 w-3 mr-1" />Retry
@@ -1521,9 +1481,6 @@ export default function GeneratedPagesPage() {
                               )}
                               {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setWidthPage(page)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" />Content width</DropdownMenuItem>
-                              {page.campaign_id && <DropdownMenuItem onClick={() => reconvertMutation.mutate(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair / Reconvert</DropdownMenuItem>}
-                              {page.campaign_id && <DropdownMenuItem onClick={() => handleRepairAndRepublish(page.id)} disabled={reconvertMutation.isPending}><Wrench className="h-3.5 w-3.5 mr-2" />Repair &amp; Republish</DropdownMenuItem>}
                               {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
                               {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
                                 <DropdownMenuItem
