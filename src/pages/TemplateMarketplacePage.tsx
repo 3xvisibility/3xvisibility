@@ -688,46 +688,14 @@ export default function TemplateMarketplacePage() {
             {t("marketplace.subtitle")}
           </p>
         </div>
-        <Button onClick={() => setShareOpen(true)} variant="outline" className="gap-2">
-          <Share2 className="h-4 w-4" /> {t("marketplace.shareTemplate")}
-        </Button>
       </div>
 
-      {/* Tab switcher */}
-      <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant={activeTab === "browse" ? "default" : "outline"}
-          onClick={() => setActiveTab("browse")}
-        >
-          <Store className="h-3.5 w-3.5 mr-1.5" /> {t("marketplace.allTemplates")}
-        </Button>
-        <Button
-          size="sm"
-          variant={activeTab === "community" ? "default" : "outline"}
-          onClick={() => setActiveTab("community")}
-        >
-          <Users className="h-3.5 w-3.5 mr-1.5" /> {t("marketplace.communityShared")}
-          {communityTemplates.length > 0 && (
-            <Badge variant="secondary" className="ml-1.5 text-[10px]">{communityTemplates.length}</Badge>
-          )}
-        </Button>
-      </div>
-
-      {/* Step 1 — choose the target platform. Every template is available on both
-          Elementor (WordPress) and Shopify and is re-skinned to match. */}
-      <div>
+      {/* Step 1 — choose the target platform. Hidden in HTML-only (v1) mode. */}
+      <div className={HTML_ONLY_MODE ? "hidden" : ""}>
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs font-medium text-muted-foreground">
             {t("marketplace.choosePlatform") || "Choose your format"}
           </p>
-          <a
-            href="/admin"
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
-            title="Open the Template Sync job runner (admin only)"
-          >
-            <Wrench className="h-3 w-3" /> Job runner
-          </a>
         </div>
         <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl ${HTML_ONLY_MODE ? "hidden" : ""}`}>
           {([
