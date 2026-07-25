@@ -10,6 +10,8 @@ import { reskinContent, COMMUNITY_TEMPLATES, type TemplatePlatform } from "@/lib
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { PublishLogDialog, type PublishLogResult } from "@/components/campaigns/PublishLogDialog";
 import { PublishResultSummary } from "@/components/generated-pages/PublishResultSummary";
+import { AssetParityResultDialog } from "@/components/generated-pages/AssetParityResultDialog";
+import { useAssetParityRecheck } from "@/hooks/useAssetParityRecheck";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { useParams, useNavigate } from "react-router-dom";
