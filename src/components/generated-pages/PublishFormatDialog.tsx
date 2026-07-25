@@ -53,7 +53,9 @@ interface Props {
   pageCount: number;
   /** Format pre-selected when the dialog opens. */
   defaultFormat?: PublishFormat;
-  onConfirm: (format: PublishFormat) => void;
+  /** Whether "apply to every publish" is currently remembered. */
+  rememberDefault?: boolean;
+  onConfirm: (format: PublishFormat, remember: boolean) => void;
 }
 
 export function PublishFormatDialog({
@@ -61,9 +63,19 @@ export function PublishFormatDialog({
   onOpenChange,
   pageCount,
   defaultFormat = "html",
+  rememberDefault = false,
   onConfirm,
 }: Props) {
   const [format, setFormat] = useState<PublishFormat>(defaultFormat);
+  const [remember, setRemember] = useState(rememberDefault);
+
+  // Re-sync with the caller's current defaults each time the dialog opens.
+  useEffect(() => {
+    if (open) {
+      setFormat(defaultFormat);
+      setRemember(rememberDefault);
+    }
+  }, [open, defaultFormat, rememberDefault]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
