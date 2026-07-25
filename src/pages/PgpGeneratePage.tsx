@@ -1382,9 +1382,61 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         },
       });
 
-      clearInterval(pollInterval);
+      if (genErr) {
+        // Long generations can outlive the HTTP request (gateway timeout /
+        // dropped connection → "Failed to send a request to the Edge Function").
+        // The job keeps running server-side, so keep polling instead of failing.
+        const msg = String((genErr as any)?.message || "");
+        const isTransport = /failed to send a request|failed to fetch|network|aborted|timeout|timed out|load failed/i.test(msg);
+        if (!isTransport) {
+          clearInterval(pollInterval);
+          throw genErr;
+        }
 
-      if (genErr) throw genErr;
+        toast({
+          title: "Still generating…",
+          description: "The request timed out but generation is continuing in the background.",
+        });
+
+        // Wait for the job to reach a terminal state (max ~15 min).
+        const deadline = Date.now() + 15 * 60 * 1000;
+        let settled = false;
+        let noJobTicks = 0;
+        while (Date.now() < deadline) {
+          await new Promise((r) => setTimeout(r, 3000));
+          const { data: job } = await supabase
+            .from("generation_jobs")
+            .select("processed_rows, success_count, error_count, total_rows, status")
+            .eq("campaign_id", campaign.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (!job) {
+            // No job at all → the function never started (real failure).
+            if (++noJobTicks >= 10) { clearInterval(pollInterval); throw genErr; }
+            continue;
+          }
+
+          setGenProgress({
+            processed: job.processed_rows || 0,
+            total: job.total_rows || rows.length,
+            errors: job.error_count || 0,
+          });
+          if (job.status === "completed" || job.status === "failed") { settled = true; break; }
+        }
+        clearInterval(pollInterval);
+        if (!settled) {
+          toast({
+            title: "Generation still running",
+            description: "Open the campaign to follow progress — pages will appear as they finish.",
+          });
+          setTimeout(() => navigate(`${basePath}/campaigns/${campaign.id}`), 1200);
+          return;
+        }
+      } else {
+        clearInterval(pollInterval);
+      }
+
 
       // Final status check
       const { data: finalJob } = await supabase
