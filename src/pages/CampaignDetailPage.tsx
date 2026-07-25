@@ -492,6 +492,52 @@ export default function CampaignDetailPage() {
     },
   });
 
+  /**
+   * One-click: re-push EVERY published page of this campaign to WordPress so the
+   * current CSS/JS asset handling (inline fallback / bundled asset URLs) is applied.
+   */
+  const republishAllAssetsMutation = useMutation({
+    mutationFn: async () => {
+      const pageIds = (pages || [])
+        .filter((p: any) => p.status === "published" || p.external_url)
+        .map((p: any) => p.id as string);
+      if (pageIds.length === 0) throw new Error("This campaign has no published pages yet.");
+
+      const { error: resetErr } = await supabase
+        .from("generated_pages")
+        .update({ status: "pending", error_message: null })
+        .in("id", pageIds);
+      if (resetErr) throw resetErr;
+
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: {
+          page_ids: pageIds,
+          publish_type: ((campaign as any)?.publish_type === "product" ? "product" : "page"),
+          website_id: campaign?.website_id,
+          overwrite_design: true,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return { data, pageIds };
+    },
+    onSuccess: ({ data, pageIds }) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      const ok = data?.published ?? pageIds.length;
+      const failed = data?.failed ?? 0;
+      toast({
+        title: "Republish started",
+        description: `${ok} page${ok !== 1 ? "s" : ""} re-pushed with the current CSS/JS settings${failed ? `, ${failed} failed` : ""}.`,
+      });
+      recordPublishResults(data, pageIds);
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      toast({ title: "Republish failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+
   const bulkPublishMutation = useMutation({
     mutationFn: async ({ pageIds, websiteId }: { pageIds: string[]; websiteId?: string }) => {
       const { error: resetErr } = await supabase
@@ -924,6 +970,36 @@ export default function CampaignDetailPage() {
             </Card>
           ) : (
             <>
+              {(campaign?.websites as { type?: string } | null)?.type === "wordpress" && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold">Changed the CSS/JS asset setting?</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Re-push every published page of this campaign to WordPress so the new asset handling applies live.
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1.5 text-xs"
+                    disabled={republishAllAssetsMutation.isPending}
+                    onClick={() => {
+                      const count = (pages || []).filter((p: any) => p.status === "published" || p.external_url).length;
+                      if (count === 0) {
+                        toast({ title: "Nothing to republish", description: "No published pages in this campaign yet.", variant: "destructive" });
+                        return;
+                      }
+                      if (window.confirm(`Republish all ${count} published page${count !== 1 ? "s" : ""} with the current CSS/JS asset settings?`)) {
+                        republishAllAssetsMutation.mutate();
+                      }
+                    }}
+                  >
+                    <RefreshCw className={`h-3 w-3 ${republishAllAssetsMutation.isPending ? "animate-spin" : ""}`} />
+                    {republishAllAssetsMutation.isPending ? "Republishing…" : "Republish all pages"}
+                  </Button>
+                </div>
+              )}
+
               <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                 <div className="flex items-center gap-2">
                   {selectedPageIds.size > 0 && (
