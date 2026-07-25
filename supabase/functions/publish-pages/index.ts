@@ -2036,7 +2036,8 @@ async function handlePublishPages(req: Request): Promise<Response> {
         fetch(`${supabaseUrl}/functions/v1/html-fidelity-check`, {
           method: "POST",
           headers: { Authorization: authHeader, "Content-Type": "application/json" },
-          body: JSON.stringify({ page_ids: justPublished }),
+          // auto_republish:false breaks the publish → parity → re-publish loop.
+          body: JSON.stringify({ page_ids: justPublished, auto_republish: false }),
         }).catch((e) => console.error("[PUBLISH] Fidelity check dispatch failed:", e));
       }
     } catch (_) { /* non-critical */ }

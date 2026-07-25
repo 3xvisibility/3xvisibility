@@ -96,7 +96,8 @@ export function FidelityBadge({ pageId, pageTitle, isPublished, check, onChecked
             </DialogTitle>
             <DialogDescription>
               {pageTitle ? `${pageTitle} — ` : ""}compares the preview markup with the live published
-              page (text, headings, images, structure, classes and CSS).
+              page (text, headings, images, structure, classes and CSS), and verifies every
+              &lt;style&gt;, &lt;script&gt; and linked CSS/JS asset survived publishing.
             </DialogDescription>
           </DialogHeader>
 
@@ -115,6 +116,27 @@ export function FidelityBadge({ pageId, pageTitle, isPublished, check, onChecked
                   </div>
                 ))}
               </div>
+
+              {(() => {
+                const parity = (check.meta as any)?.asset_parity as
+                  | { ok?: boolean; score?: number; auto_republished?: boolean; counts?: Record<string, number> }
+                  | undefined;
+                if (!parity) return null;
+                return (
+                  <div className={`rounded-lg border p-3 text-xs space-y-1 ${parity.ok ? "border-emerald-500/30 bg-emerald-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+                    <p className="font-medium">
+                      Asset parity: {parity.ok ? "all CSS/JS assets found live" : `issues detected (${pct(parity.score)})`}
+                    </p>
+                    <p className="text-muted-foreground">
+                      Preview styles {parity.counts?.previewStyles ?? 0} · scripts {parity.counts?.previewScripts ?? 0} ·
+                      linked assets fetched {parity.counts?.fetchedAssets ?? 0}
+                    </p>
+                    {parity.auto_republished && (
+                      <p className="text-muted-foreground">Page was automatically re-published to restore missing assets.</p>
+                    )}
+                  </div>
+                );
+              })()}
 
               {check.error_message && (
                 <p className="text-xs text-destructive">{check.error_message}</p>
