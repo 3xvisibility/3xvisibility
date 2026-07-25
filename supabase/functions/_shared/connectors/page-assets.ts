@@ -21,7 +21,11 @@ export interface BundledPageAssets {
   html: string;
   cssUrl: string | null;
   jsUrl: string | null;
+  /** The extracted CSS/JS payloads, kept for the inline fallback mode. */
+  css?: string;
+  js?: string;
 }
+
 
 const ASSET_MARK = "data-xxxv-asset";
 
