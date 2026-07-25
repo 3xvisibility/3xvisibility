@@ -263,9 +263,18 @@ export class WordPressConnector implements CmsConnector {
   private baseUrl: string;
   private headers: HeadersInit;
   private authString: string;
+  /** Per-site companion-plugin compatibility settings (tag whitelist / wpautop). */
+  private pluginSettings: { allowed_tags: string[]; disable_wpautop: boolean };
 
   constructor(config: ConnectorConfig) {
     this.baseUrl = config.base_url.replace(/\/+$/, "");
+    const ps = config.wp_plugin_settings || {};
+    this.pluginSettings = {
+      allowed_tags: Array.isArray(ps.allowed_tags) && ps.allowed_tags.length
+        ? ps.allowed_tags.map((t) => String(t).toLowerCase().trim()).filter(Boolean)
+        : ["style", "link", "script", "svg"],
+      disable_wpautop: ps.disable_wpautop === undefined ? true : !!ps.disable_wpautop,
+    };
 
 
 
@@ -504,6 +513,10 @@ export class WordPressConnector implements CmsConnector {
     if (payload.excerpt) body.excerpt = payload.excerpt;
 
     const meta: Record<string, unknown> = buildSeoMetaRecord(payload);
+    // Per-site plugin compatibility settings — the companion plugin reads these
+    // to decide which tags survive wp_kses_post() and whether wpautop is off.
+    meta._xxxv_allowed_tags = this.pluginSettings.allowed_tags.join(",");
+    meta._xxxv_disable_wpautop = this.pluginSettings.disable_wpautop ? "1" : "0";
 
     // Resolve the WordPress page_template:
     //  1. payload.page_template (auto-detected from site's existing pages)
@@ -631,6 +644,10 @@ export class WordPressConnector implements CmsConnector {
     if (payload.excerpt) body.excerpt = payload.excerpt;
 
     const meta: Record<string, unknown> = buildSeoMetaRecord(payload);
+    // Per-site plugin compatibility settings — the companion plugin reads these
+    // to decide which tags survive wp_kses_post() and whether wpautop is off.
+    meta._xxxv_allowed_tags = this.pluginSettings.allowed_tags.join(",");
+    meta._xxxv_disable_wpautop = this.pluginSettings.disable_wpautop ? "1" : "0";
 
     const resolvedTemplate = preserveDesign
       ? undefined
