@@ -26,6 +26,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
+import { HTML_ONLY_MODE } from "@/lib/publish-format";
 import { PublishFormatDialog, type PublishFormat } from "@/components/generated-pages/PublishFormatDialog";
 
 import { PublishLogDialog, type PublishLogResult, type PublishStep } from "@/components/campaigns/PublishLogDialog";
