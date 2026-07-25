@@ -1075,6 +1075,15 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       });
       return;
     }
+    if (!variableCoverage.ok) {
+      const first = variableCoverage.missing[0];
+      toast({
+        title: "Required variables not filled",
+        description: `{${first.name}} is empty on ${first.rows}/${variableCoverage.rowCount} rows${variableCoverage.missing.length > 1 ? ` (+${variableCoverage.missing.length - 1} more)` : ""}. Fill them in the Review step before generating.`,
+        variant: "destructive",
+      });
+      return;
+    }
 
 
     setIsGenerating(true);
