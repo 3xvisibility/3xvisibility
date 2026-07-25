@@ -245,6 +245,10 @@ export default function PgpGeneratePage() {
   // Manual / AI-filled values for variables that no source covers (Review step).
   const [customVars, setCustomVars] = useState<Record<string, string>>({});
   const [aiFillingMissing, setAiFillingMissing] = useState(false);
+  // Per-row manual fallback values (rowIndex -> { variable: value })
+  const [rowOverrides, setRowOverrides] = useState<Record<number, Record<string, string>>>({});
+  // Which AI fill attempts failed and for which variables ("all" or row index)
+  const [aiFillFailures, setAiFillFailures] = useState<Record<string, { names: string[]; error: string }>>({});
 
 
 
