@@ -412,6 +412,17 @@ export default function CampaignDetailPage() {
     },
   });
 
+  // Post-republish verification: compares the live published page against the
+  // preview markup so missing CSS/JS is visible immediately, not later.
+  const parityRecheck = useAssetParityRecheck();
+  const [lastRecheckIds, setLastRecheckIds] = useState<string[]>([]);
+  const runParityRecheck = (ids: string[]) => {
+    const clean = Array.from(new Set(ids.filter(Boolean)));
+    if (clean.length === 0) return;
+    setLastRecheckIds(clean);
+    void parityRecheck.run(clean);
+  };
+
   const republishMutation = useMutation({
     mutationFn: async ({ pageId, websiteId }: { pageId: string; websiteId?: string }) => {
       const { error: resetError } = await supabase
