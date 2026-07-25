@@ -3089,8 +3089,72 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       <><Wand2 className="h-3.5 w-3.5 mr-1.5" /> Fill all missing with AI</>
                     )}
                   </Button>
+
+                  {aiFillFailures.all && (
+                    <div className="rounded-md border border-border bg-background/60 p-2 space-y-1">
+                      <p className="text-destructive font-medium">
+                        AI fill failed: {aiFillFailures.all.error}
+                      </p>
+                      <p className="text-muted-foreground">
+                        Retry above, or fill the affected rows manually below — only the rows that failed need input.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Manual fallback: fill only the rows that are still missing values */}
+                  <div className="space-y-2">
+                    <p className="font-medium text-foreground">
+                      Manual fallback — {variableCoverage.rowsMissing.length} row(s) need values
+                    </p>
+                    <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+                      {variableCoverage.rowsMissing.slice(0, 50).map((row) => (
+                        <div key={row.index} className="rounded-md border border-border bg-background/60 p-2 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-foreground">Row {row.index + 1}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs"
+                              disabled={aiFillingMissing}
+                              onClick={() => aiFillMissingVars(row.names, row.index)}
+                            >
+                              {aiFillingMissing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Wand2 className="h-3 w-3 mr-1" />}
+                              AI fill this row
+                            </Button>
+                          </div>
+                          {aiFillFailures[String(row.index)] && (
+                            <p className="text-destructive">
+                              AI failed for this row ({aiFillFailures[String(row.index)].error}) — type the values below.
+                            </p>
+                          )}
+                          {row.names.map((name) => (
+                            <div key={name} className="flex items-center gap-2">
+                              <span className="font-mono text-[11px] text-muted-foreground w-40 shrink-0 truncate">{`{${name}}`}</span>
+                              <Input
+                                className="h-7 text-xs"
+                                placeholder={`Value for ${name} on row ${row.index + 1}`}
+                                value={rowOverrides[row.index]?.[name] ?? ""}
+                                onChange={(e) =>
+                                  setRowOverrides((prev) => ({
+                                    ...prev,
+                                    [row.index]: { ...(prev[row.index] ?? {}), [name]: e.target.value },
+                                  }))
+                                }
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                    {variableCoverage.rowsMissing.length > 50 && (
+                      <p className="text-muted-foreground">
+                        Showing first 50 rows. Fill these, then the rest will appear.
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
+
 
               <Button
                 className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
