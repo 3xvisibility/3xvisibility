@@ -411,7 +411,7 @@ export default function GeneratedPagesPage() {
   });
 
   const retryFailedMutation = useMutation({
-    mutationFn: async ({ ids, websiteId, type }: { ids: string[]; websiteId?: string; type?: "page" | "product" }) => {
+    mutationFn: async ({ ids, websiteId, type, format }: { ids: string[]; websiteId?: string; type?: "page" | "product"; format?: PublishFormat }) => {
       const { error: resetErr } = await supabase.from("generated_pages")
         .update({ status: "pending" as any, error_message: null }).in("id", ids);
       if (resetErr) throw resetErr;
@@ -420,9 +420,11 @@ export default function GeneratedPagesPage() {
           page_ids: ids,
           publish_type: type ?? publishType,
           website_id: websiteId,
+          publish_format: format ?? "html",
           elementor_mode: "native",
           overwrite_design: true,
         },
+
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
