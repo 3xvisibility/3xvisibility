@@ -117,8 +117,19 @@ export function TemplatePreview({ html, className = "", debugGrid = false, onGri
 <meta name="viewport" content="width=device-width, initial-scale=1">
 ${embeddedStyles}
 <style>
-  /* Minimal overrides for preview container */
-  body { overflow-x: hidden; }
+  /* Preview readability overrides — ensure imported dark themes
+     don't render text invisible against the preview background. */
+  html, body { background:#ffffff !important; overflow-x: hidden; }
+  body, body * { color: inherit; }
+  body { color:#1a1a2e !important; }
+  h1,h2,h3,h4,h5,h6 { color:#0f172a !important; }
+  p, li, span, a, td, th, div, label { color:#1f2937 !important; }
+  a { color:#2563eb !important; text-decoration: underline; }
+  /* Neutralize full-viewport dark backgrounds from imported hero sections */
+  [style*="background:#0"], [style*="background: #0"],
+  [style*="background-color:#0"], [style*="background-color: #0"] {
+    background:#f8fafc !important;
+  }
   img { max-width: 100%; height: auto; }
 </style>
 </head>
