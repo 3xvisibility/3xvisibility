@@ -486,6 +486,21 @@ async function resolveShopifySectionKit(
 }
 
 
+/**
+ * Best-known origin for a page's template assets: an explicit source URL stored
+ * on the page/variables, otherwise inferred from the HTML itself.
+ */
+function assetBaseFor(page: Record<string, any>): string | null {
+  const vars = (page?.variables && typeof page.variables === "object") ? page.variables as Record<string, unknown> : {};
+  const candidate =
+    (page?.source_url as string | undefined) ||
+    (vars["source_url"] as string | undefined) ||
+    (vars["template_source_url"] as string | undefined) ||
+    (page?.canonical_url as string | undefined) ||
+    null;
+  if (candidate && /^https?:\/\//i.test(candidate)) return candidate;
+  return null;
+}
 
 
 /**
