@@ -48,7 +48,7 @@ export class ShopifyConnector implements CmsConnector {
   }
 
   async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorPage> {
-    const body = { page: { id: externalId, ...this.mapPayload(payload as PagePayload) } };
+    const body = { page: { id: externalId, ...(await this.mapPayload(payload as PagePayload)) } };
     const res = await fetch(`${this.apiBase}/pages/${externalId}.json`, {
       method: "PUT",
       headers: this.headers,
