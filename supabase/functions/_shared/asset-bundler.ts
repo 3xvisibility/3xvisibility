@@ -27,6 +27,7 @@ const ASSET_URL_ATTRS = [
   "data-bg",
   "data-background",
   "data-background-image",
+  "data-original",
 ];
 
 /** Links that must survive `stripHeadTagsForCms` because they carry design. */
