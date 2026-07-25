@@ -1075,6 +1075,15 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       });
       return;
     }
+    if (!variableCoverage.ok) {
+      const first = variableCoverage.missing[0];
+      toast({
+        title: "Required variables not filled",
+        description: `{${first.name}} is empty on ${first.rows}/${variableCoverage.rowCount} rows${variableCoverage.missing.length > 1 ? ` (+${variableCoverage.missing.length - 1} more)` : ""}. Fill them in the Review step before generating.`,
+        variant: "destructive",
+      });
+      return;
+    }
 
 
     setIsGenerating(true);
@@ -1303,6 +1312,37 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
     return { severity: severity as "ok" | "warn" | "block", issues, sampleRows: previewRows.slice(0, 3) };
   })();
+
+  // ============= Required-variable coverage (per row) =============
+  // Every template variable (except AI-written content fields, which the
+  // generator writes itself) must resolve to a non-empty value on EVERY row
+  // before generation can start.
+  const variableCoverage = (() => {
+    const required = groupKeywords
+      .map((k) => k.name)
+      .filter((n) => !isAiContentVariable(n));
+    if (required.length === 0) {
+      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[] };
+    }
+    let previewRows: Record<string, string>[] = [];
+    try { previewRows = buildRows(); } catch { previewRows = []; }
+    if (previewRows.length === 0) {
+      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[] };
+    }
+    const missing: { name: string; rows: number }[] = [];
+    for (const name of required) {
+      const key = name.trim().toLowerCase();
+      let count = 0;
+      for (const r of previewRows) {
+        const val = (r[key] ?? r[name] ?? "").toString().trim();
+        if (!val) count++;
+      }
+      if (count > 0) missing.push({ name, rows: count });
+    }
+    return { ok: missing.length === 0, rowCount: previewRows.length, missing };
+  })();
+
+
 
   return (
 
@@ -2853,10 +2893,46 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 </div>
               )}
 
+              {!variableCoverage.ok && (
+                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-xs space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <div className="space-y-1 flex-1">
+                      <p className="font-semibold text-destructive">
+                        Variable validation failed — generation blocked
+                      </p>
+                      <ul className="text-muted-foreground list-disc list-inside space-y-0.5">
+                        {variableCoverage.missing.map((m) => (
+                          <li key={m.name}>
+                            <span className="font-mono text-foreground">{`{${m.name}}`}</span> is empty on {m.rows}/{variableCoverage.rowCount} row{variableCoverage.rowCount === 1 ? "" : "s"}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-muted-foreground pt-1">
+                        Fill them in the &quot;Not filled&quot; panel above (type a value or use AI fill), or attach keywords / locations / business info.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    disabled={aiFillingMissing}
+                    onClick={() => aiFillMissingVars(variableCoverage.missing.map((m) => m.name))}
+                  >
+                    {aiFillingMissing ? (
+                      <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Filling with AI…</>
+                    ) : (
+                      <><Wand2 className="h-3.5 w-3.5 mr-1.5" /> Fill all missing with AI</>
+                    )}
+                  </Button>
+                </div>
+              )}
+
               <Button
                 className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
                 size="lg"
-                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0 || geoCoverage.severity === "block"}
+                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0 || geoCoverage.severity === "block" || !variableCoverage.ok}
                 onClick={handleGenerate}
               >
 
@@ -2866,6 +2942,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   <><Play className="h-4 w-4" /> Generate & Publish Pages</>
                 )}
               </Button>
+
 
               <Button
                 variant="outline"
