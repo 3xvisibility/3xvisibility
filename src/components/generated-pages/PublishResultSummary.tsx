@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { CheckCircle2, XCircle, ExternalLink, RefreshCw, ListChecks, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { isPublishSuccess, type PublishLogResult } from "@/components/campaigns/PublishLogDialog";
 
 interface PublishResultSummaryProps {
@@ -14,7 +16,8 @@ interface PublishResultSummaryProps {
 
 /**
  * Persistent post-publish summary shown on Campaign / Generated Pages screens:
- * which pages succeeded, which failed, and why.
+ * which pages succeeded, which failed, why — and selective retry of only the
+ * failed rows you pick.
  */
 export function PublishResultSummary({
   results,
@@ -23,12 +26,25 @@ export function PublishResultSummary({
   onDismiss,
   retrying,
 }: PublishResultSummaryProps) {
-  if (!results.length) return null;
-
   const succeeded = results.filter((r) => isPublishSuccess(r.status));
   const failed = results.filter((r) => !isPublishSuccess(r.status));
   const failedIds = failed.map((r) => r.id).filter(Boolean) as string[];
   const allOk = failed.length === 0;
+
+  const [selected, setSelected] = useState<string[]>([]);
+
+  // Pre-select every failed row whenever a new publish run lands.
+  useEffect(() => {
+    setSelected(failedIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [failedIds.join(",")]);
+
+  if (!results.length) return null;
+
+  const toggle = (id: string) =>
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const canRetry = !!onRetryFailed && failedIds.length > 0;
 
   return (
     <Card className={`shadow-surface border ${allOk ? "border-green-500/30" : "border-destructive/30"}`}>
@@ -52,10 +68,27 @@ export function PublishResultSummary({
             <Button size="sm" variant="outline" className="h-7 text-xs" onClick={onViewDetails}>
               <ListChecks className="h-3 w-3 mr-1" />View details
             </Button>
-            {onRetryFailed && failedIds.length > 0 && (
-              <Button size="sm" className="h-7 text-xs" disabled={retrying} onClick={() => onRetryFailed(failedIds)}>
-                <RefreshCw className={`h-3 w-3 mr-1 ${retrying ? "animate-spin" : ""}`} />Retry failed
-              </Button>
+            {canRetry && (
+              <>
+                <Button
+                  size="sm"
+                  className="h-7 text-xs"
+                  disabled={retrying || selected.length === 0}
+                  onClick={() => onRetryFailed!(selected)}
+                >
+                  <RefreshCw className={`h-3 w-3 mr-1 ${retrying ? "animate-spin" : ""}`} />
+                  Retry selected ({selected.length})
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  disabled={retrying}
+                  onClick={() => onRetryFailed!(failedIds)}
+                >
+                  Retry all failed
+                </Button>
+              </>
             )}
             {onDismiss && (
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onDismiss} aria-label="Dismiss">
@@ -65,13 +98,28 @@ export function PublishResultSummary({
           </div>
         </div>
 
+        {canRetry && (
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+            <button className="hover:underline" onClick={() => setSelected(failedIds)}>Select all failed</button>
+            <button className="hover:underline" onClick={() => setSelected([])}>Clear selection</button>
+          </div>
+        )}
+
         <div className="grid gap-1.5 sm:grid-cols-2">
-          {results.slice(0, 8).map((r, i) => {
+          {[...failed, ...succeeded].slice(0, 12).map((r, i) => {
             const ok = isPublishSuccess(r.status);
             const reason = r.error || r.steps?.find((s) => s.status === "error")?.detail;
+            const selectable = !ok && !!r.id && canRetry;
             return (
               <div key={r.id || i} className="flex items-start gap-2 rounded-md border bg-muted/20 px-2 py-1.5 min-w-0">
-                {ok ? (
+                {selectable ? (
+                  <Checkbox
+                    className="mt-0.5"
+                    checked={selected.includes(r.id!)}
+                    onCheckedChange={() => toggle(r.id!)}
+                    aria-label={`Retry ${r.title || r.slug || r.id}`}
+                  />
+                ) : ok ? (
                   <CheckCircle2 className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
                 ) : (
                   <XCircle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
@@ -96,12 +144,23 @@ export function PublishResultSummary({
                     <p className="text-[11px] text-destructive break-words line-clamp-2">{reason || "Failed to publish"}</p>
                   )}
                 </div>
+                {selectable && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-1.5 text-[11px] shrink-0"
+                    disabled={retrying}
+                    onClick={() => onRetryFailed!([r.id!])}
+                  >
+                    <RefreshCw className="h-3 w-3 mr-1" />Retry
+                  </Button>
+                )}
               </div>
             );
           })}
         </div>
-        {results.length > 8 && (
-          <p className="text-[11px] text-muted-foreground">+{results.length - 8} more — open details to see all.</p>
+        {results.length > 12 && (
+          <p className="text-[11px] text-muted-foreground">+{results.length - 12} more — open details to see all.</p>
         )}
       </CardContent>
     </Card>
