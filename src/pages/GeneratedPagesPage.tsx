@@ -813,6 +813,15 @@ export default function GeneratedPagesPage() {
     [filtered, safePage, pageSize]
   );
 
+  // Automatic preview → published HTML/CSS match results for visible pages.
+  const publishedVisibleIds = useMemo(
+    () => paginatedPages.filter((p) => p.status === "published" || p.status === "done").map((p) => p.id),
+    [paginatedPages]
+  );
+  const { data: fidelityChecks, refetch: refetchFidelity } = useFidelityChecks(publishedVisibleIds);
+
+
+
   useEffect(() => { setCurrentPage(1); }, [search, statusFilter, siteFilter, campaignFilter, freshnessFilter, pageSize, sortBy]);
 
   // Sync toolbar Publish-As default to the campaign's `publish_type` when
