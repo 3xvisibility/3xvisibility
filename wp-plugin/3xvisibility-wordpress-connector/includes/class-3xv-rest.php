@@ -97,6 +97,11 @@ class XXXV_REST {
 		if ( ! $post_id ) {
 			return;
 		}
+		// The bundled external script already ran — don't execute the JS twice.
+		$js_url = get_post_meta( $post_id, '_xxxv_template_js_url', true );
+		if ( is_string( $js_url ) && '' !== trim( $js_url ) ) {
+			return;
+		}
 		$js = get_post_meta( $post_id, '_xxxv_template_js', true );
 		if ( ! is_string( $js ) || '' === trim( $js ) ) {
 			return;
