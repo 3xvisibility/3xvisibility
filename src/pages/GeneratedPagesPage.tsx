@@ -26,6 +26,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
+import { PublishFormatDialog, type PublishFormat } from "@/components/generated-pages/PublishFormatDialog";
+
 import { PublishLogDialog, type PublishLogResult, type PublishStep } from "@/components/campaigns/PublishLogDialog";
 import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
