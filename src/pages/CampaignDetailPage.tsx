@@ -492,6 +492,52 @@ export default function CampaignDetailPage() {
     },
   });
 
+  /**
+   * One-click: re-push EVERY published page of this campaign to WordPress so the
+   * current CSS/JS asset handling (inline fallback / bundled asset URLs) is applied.
+   */
+  const republishAllAssetsMutation = useMutation({
+    mutationFn: async () => {
+      const pageIds = (pages || [])
+        .filter((p: any) => p.status === "published" || p.external_url)
+        .map((p: any) => p.id as string);
+      if (pageIds.length === 0) throw new Error("This campaign has no published pages yet.");
+
+      const { error: resetErr } = await supabase
+        .from("generated_pages")
+        .update({ status: "pending", error_message: null })
+        .in("id", pageIds);
+      if (resetErr) throw resetErr;
+
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: {
+          page_ids: pageIds,
+          publish_type: ((campaign as any)?.publish_type === "product" ? "product" : "page"),
+          website_id: campaign?.website_id,
+          overwrite_design: true,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return { data, pageIds };
+    },
+    onSuccess: ({ data, pageIds }) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      const ok = data?.published ?? pageIds.length;
+      const failed = data?.failed ?? 0;
+      toast({
+        title: "Republish started",
+        description: `${ok} page${ok !== 1 ? "s" : ""} re-pushed with the current CSS/JS settings${failed ? `, ${failed} failed` : ""}.`,
+      });
+      recordPublishResults(data, pageIds);
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      toast({ title: "Republish failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+
   const bulkPublishMutation = useMutation({
     mutationFn: async ({ pageIds, websiteId }: { pageIds: string[]; websiteId?: string }) => {
       const { error: resetErr } = await supabase
