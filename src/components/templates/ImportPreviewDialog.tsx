@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, ArrowRight, X, ArrowUp, ArrowDown, Trash2, RotateCcw, AlertCircle, Plus, ListOrdered } from "lucide-react";
+import { validateVariableValue, detectVariableFormat } from "@/lib/variable-format";
+
 
 export interface ImportPreviewVariable {
   name: string;
