@@ -125,7 +125,7 @@ export function autoExtractTemplateVariables(html: string, pageTitle = "", prefe
   const textBlockRe = /<(h1|h2|h3|h4|p|li|figcaption|blockquote|span|a)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi;
   let match: RegExpExecArray | null;
   const counters: Record<string, number> = {};
-  while ((match = textBlockRe.exec(html)) && vars.length < 14) {
+  while ((match = textBlockRe.exec(html)) && vars.length < 30) {
     const tag = match[1].toLowerCase();
     const text = stripTags(match[3]);
     if (!text || text.length < 4 || text.length > 160) continue;
