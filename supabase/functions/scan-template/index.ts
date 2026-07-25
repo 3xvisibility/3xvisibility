@@ -407,12 +407,20 @@ Return a JSON array of the best suggestions only.`,
       }
     }
 
+    // Consistent HTML/CSS/JS shape for every scanned page: merged stylesheet,
+    // sanitized markup, single `.tpl-root` wrapper.
+    const normalized = normalizeTemplateHtml(`${headStyles}\n${bodyContent}`, {
+      baseUrl: formattedUrl,
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
         url: formattedUrl,
         bodyHtml: bodyContent,
         headStyles,
+        normalizedHtml: normalized.html,
+        normalization: { warnings: normalized.warnings, stats: normalized.stats },
         blocks,
         suggestions,
         imageUrls,
