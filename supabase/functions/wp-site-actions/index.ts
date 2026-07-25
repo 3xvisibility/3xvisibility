@@ -17,6 +17,7 @@ function json(body: unknown, status = 200): Response {
 
 type Action =
   | "list"
+  | "assets_status"
   | "assign_menu"
   | "activate_theme"
   | "set_page_template";
