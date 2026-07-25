@@ -1485,17 +1485,17 @@ export default function GeneratedPagesPage() {
 
 
       <Dialog open={!!previewPage} onOpenChange={(open) => !open && setPreviewPage(null)}>
-        <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5 text-primary" />
-              {previewPage?.title}
+        <DialogContent className="w-[96vw] max-w-6xl h-[90vh] max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-3 border-b shrink-0">
+            <DialogTitle className="flex items-center gap-2 pr-8 truncate">
+              <Eye className="h-5 w-5 text-primary shrink-0" />
+              <span className="truncate">{previewPage?.title}</span>
             </DialogTitle>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground truncate">
               <code className="bg-muted px-1.5 py-0.5 rounded">{previewPage?.slug}</code>
             </p>
           </DialogHeader>
-          <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4">
             {previewPage && (previewPage.seo_title || previewPage.seo_description) && (
               <div className="border rounded-lg p-4 bg-muted/30 space-y-2">
                 <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Tag className="h-3 w-3" />SEO Preview</p>
@@ -1510,8 +1510,16 @@ export default function GeneratedPagesPage() {
                 </div>
               </div>
             )}
-            <div className="border rounded-lg p-6 bg-muted/20">
-              <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: previewPage?.content || "" }} />
+            {/* Rendered inside a sandboxed iframe so the page's own CSS
+                (fixed/absolute/viewport-sized layouts) can't escape the dialog
+                and the design stays centered exactly like the live page. */}
+            <div className="border rounded-lg overflow-hidden bg-background">
+              <iframe
+                title="Page preview"
+                sandbox="allow-same-origin"
+                className="w-full h-[70vh] block border-0 bg-background"
+                srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><base target="_blank"><style>html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden;}img,video,iframe,table{max-width:100%;}</style></head><body>${previewPage?.content || ""}</body></html>`}
+              />
             </div>
             {previewPage?.error_message && (
               <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm"><strong>Error:</strong> {previewPage.error_message}</div>
@@ -1519,6 +1527,7 @@ export default function GeneratedPagesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
 
       {/* JSON Payload */}
       <Dialog open={!!jsonPayloadPage} onOpenChange={(open) => !open && setJsonPayloadPage(null)}>
