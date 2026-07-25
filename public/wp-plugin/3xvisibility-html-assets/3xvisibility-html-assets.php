@@ -3,7 +3,7 @@
  * Plugin Name:       3xVisibility HTML Assets
  * Plugin URI:        https://3xvisibility.com
  * Description:       Makes 3xVisibility generated pages render 1:1 on WordPress. WordPress removes &lt;style&gt;, &lt;link&gt; and &lt;script&gt; tags from page content (wp_kses_post), which strips the design of a generated page. This plugin allows those tags for 3xVisibility pages and re-prints the page CSS/JS from post meta on the live page.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Author:            3xVisibility
  * Author URI:        https://3xvisibility.com
  * License:           GPL-2.0+
@@ -15,7 +15,59 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'XXXV_HTML_ASSETS_VERSION', '1.0.0' );
+define( 'XXXV_HTML_ASSETS_VERSION', '1.1.0' );
+define( 'XXXV_HTML_ASSETS_OPTION', 'xxxv_html_assets_settings' );
+
+/**
+ * Per-site settings, controlled from the 3xVisibility app (Websites → plugin
+ * compatibility settings). They are stored in a WP option and mirrored from the
+ * `_xxxv_allowed_tags` / `_xxxv_disable_wpautop` post meta shipped on publish,
+ * so compatibility can be tuned without editing this file.
+ */
+function xxxv_html_assets_settings() {
+	$defaults = array(
+		'allowed_tags'    => array( 'style', 'link', 'script', 'svg' ),
+		'disable_wpautop' => true,
+	);
+	$saved = get_option( XXXV_HTML_ASSETS_OPTION, array() );
+	if ( ! is_array( $saved ) ) {
+		$saved = array();
+	}
+	$tags = isset( $saved['allowed_tags'] ) && is_array( $saved['allowed_tags'] ) && $saved['allowed_tags']
+		? array_values( array_filter( array_map( 'sanitize_key', $saved['allowed_tags'] ) ) )
+		: $defaults['allowed_tags'];
+
+	return array(
+		'allowed_tags'    => $tags,
+		'disable_wpautop' => isset( $saved['disable_wpautop'] ) ? (bool) $saved['disable_wpautop'] : $defaults['disable_wpautop'],
+	);
+}
+
+function xxxv_html_assets_save_settings( $tags, $disable_wpautop ) {
+	update_option(
+		XXXV_HTML_ASSETS_OPTION,
+		array(
+			'allowed_tags'    => array_values( array_filter( array_map( 'sanitize_key', (array) $tags ) ) ),
+			'disable_wpautop' => (bool) $disable_wpautop,
+		)
+	);
+}
+
+/**
+ * Mirror the settings shipped as post meta into the site option so the next
+ * publish already sanitizes content with the requested tag whitelist.
+ */
+function xxxv_html_assets_sync_settings_meta( $meta_id, $post_id, $meta_key, $meta_value ) {
+	if ( '_xxxv_allowed_tags' === $meta_key ) {
+		$current = xxxv_html_assets_settings();
+		xxxv_html_assets_save_settings( explode( ',', (string) $meta_value ), $current['disable_wpautop'] );
+	} elseif ( '_xxxv_disable_wpautop' === $meta_key ) {
+		$current = xxxv_html_assets_settings();
+		xxxv_html_assets_save_settings( $current['allowed_tags'], '1' === (string) $meta_value || true === $meta_value );
+	}
+}
+add_action( 'added_post_meta', 'xxxv_html_assets_sync_settings_meta', 10, 4 );
+add_action( 'updated_post_meta', 'xxxv_html_assets_sync_settings_meta', 10, 4 );
 
 /**
  * 1) Allow design tags inside post content.
@@ -28,6 +80,26 @@ define( 'XXXV_HTML_ASSETS_VERSION', '1.0.0' );
 function xxxv_html_assets_allow_design_tags( $tags, $context ) {
 	if ( 'post' !== $context ) {
 		return $tags;
+	}
+
+	$settings = xxxv_html_assets_settings();
+	$allowed  = $settings['allowed_tags'];
+
+	$generic = array( 'id' => true, 'class' => true, 'style' => true, 'data-xxxv-asset' => true, 'title' => true, 'name' => true );
+	foreach ( $allowed as $extra_tag ) {
+		if ( in_array( $extra_tag, array( 'style', 'link', 'script', 'svg' ), true ) ) {
+			continue;
+		}
+		$tags[ $extra_tag ] = array_merge(
+			isset( $tags[ $extra_tag ] ) ? $tags[ $extra_tag ] : array(),
+			$generic,
+			array(
+				'src' => true, 'href' => true, 'width' => true, 'height' => true, 'loading' => true,
+				'allow' => true, 'allowfullscreen' => true, 'frameborder' => true, 'controls' => true,
+				'autoplay' => true, 'muted' => true, 'loop' => true, 'playsinline' => true,
+				'poster' => true, 'type' => true, 'method' => true, 'action' => true, 'target' => true,
+			)
+		);
 	}
 
 	$tags['style'] = array(
@@ -57,6 +129,16 @@ function xxxv_html_assets_allow_design_tags( $tags, $context ) {
 		'id'              => true,
 		'data-xxxv-asset' => true,
 	);
+
+	foreach ( array( 'style', 'link', 'script' ) as $core_tag ) {
+		if ( ! in_array( $core_tag, $allowed, true ) ) {
+			unset( $tags[ $core_tag ] );
+		}
+	}
+
+	if ( ! in_array( 'svg', $allowed, true ) ) {
+		return $tags;
+	}
 
 	$tags['noscript'] = array();
 	$tags['svg']      = array_merge(
@@ -176,6 +258,8 @@ function xxxv_html_assets_register_meta() {
 		'_xxxv_template_js'      => 'string',
 		'_xxxv_template_css_url' => 'string',
 		'_xxxv_template_js_url'  => 'string',
+		'_xxxv_allowed_tags'     => 'string',
+		'_xxxv_disable_wpautop'  => 'string',
 	);
 
 	foreach ( array( 'page', 'post' ) as $post_type ) {
@@ -285,7 +369,32 @@ function xxxv_html_assets_register_rest() {
 					'design_tags_ok'  => true,
 					'meta_registered' => true,
 					'unfiltered_html' => current_user_can( 'unfiltered_html' ),
+					'settings'        => xxxv_html_assets_settings(),
 				);
+			},
+		)
+	);
+
+	register_rest_route(
+		'xxxv/v1',
+		'/settings',
+		array(
+			'methods'             => 'POST',
+			'permission_callback' => function () {
+				return current_user_can( 'manage_options' ) || current_user_can( 'edit_posts' );
+			},
+			'callback'            => function ( $request ) {
+				$tags    = $request->get_param( 'allowed_tags' );
+				$wpautop = $request->get_param( 'disable_wpautop' );
+				if ( is_string( $tags ) ) {
+					$tags = explode( ',', $tags );
+				}
+				$current = xxxv_html_assets_settings();
+				xxxv_html_assets_save_settings(
+					is_array( $tags ) && $tags ? $tags : $current['allowed_tags'],
+					null === $wpautop ? $current['disable_wpautop'] : ( '1' === (string) $wpautop || true === $wpautop )
+				);
+				return xxxv_html_assets_settings();
 			},
 		)
 	);
@@ -297,7 +406,11 @@ add_action( 'rest_api_init', 'xxxv_html_assets_register_rest' );
  * what turns a flex/grid layout into a broken stack of paragraphs.
  */
 function xxxv_html_assets_disable_wpautop( $content ) {
-	if ( is_singular() && ( false !== strpos( (string) $content, 'data-xxxv' ) || false !== strpos( (string) $content, 'pgp-page' ) || false !== strpos( (string) $content, 'tpl-root' ) ) ) {
+	$settings = xxxv_html_assets_settings();
+	$per_post = is_singular() ? get_post_meta( get_queried_object_id(), '_xxxv_disable_wpautop', true ) : '';
+	$disable  = ( '' === $per_post ) ? $settings['disable_wpautop'] : ( '1' === (string) $per_post );
+
+	if ( $disable && is_singular() && ( false !== strpos( (string) $content, 'data-xxxv' ) || false !== strpos( (string) $content, 'pgp-page' ) || false !== strpos( (string) $content, 'tpl-root' ) ) ) {
 		remove_filter( 'the_content', 'wpautop' );
 	}
 	return $content;
