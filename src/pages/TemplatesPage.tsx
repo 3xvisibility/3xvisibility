@@ -35,6 +35,7 @@ import { htmlToBlocks } from "@/components/templates/TemplateVisualEditor";
 import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilderDialog";
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
 import { TemplatePreviewDialog, type PreviewableTemplate } from "@/components/templates/TemplatePreviewDialog";
+import { ImportPreviewDialog, type ImportPreviewVariable } from "@/components/templates/ImportPreviewDialog";
 import { TemplateCreationPicker, type CreationMethod, type ContentType } from "@/components/templates/TemplateCreationPicker";
 import { TemplateCustomizerDialog } from "@/components/templates/TemplateCustomizerDialog";
 import { downloadStarterCsv } from "@/lib/csv-starter";
