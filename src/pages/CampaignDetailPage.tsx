@@ -211,6 +211,29 @@ export default function CampaignDetailPage() {
     return msg;
   };
 
+  // Keep a per-page publish outcome list (success / failed + reason) so the
+  // campaign screen shows detailed results after a publish run.
+  const recordPublishResults = (data: any, ids?: string[], fallbackError?: string) => {
+    let results: PublishLogResult[] = Array.isArray(data?.results) ? (data.results as PublishLogResult[]) : [];
+    if (!results.length && ids?.length) {
+      results = ids.map((pid) => ({ id: pid, status: fallbackError ? "failed" : "published", error: fallbackError }));
+    }
+    if (!results.length) return;
+    const enriched = results.map((r) => {
+      const page = (pages as any[])?.find((p) => p.id === r.id);
+      return {
+        ...r,
+        title: r.title || page?.title || page?.seo_title || page?.slug,
+        slug: r.slug || page?.slug || undefined,
+        external_url: r.external_url || page?.external_url || undefined,
+        error: r.error || (r.status !== "published" ? page?.error_message || fallbackError || undefined : undefined),
+      };
+    });
+    setPublishSummary(enriched);
+    setPublishLog(enriched);
+  };
+
+
   // Overview stats
   const statusCounts = useMemo(() => {
     const counts = { pending: 0, published: 0, failed: 0 };
