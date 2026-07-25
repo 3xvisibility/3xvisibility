@@ -51,13 +51,27 @@ Deno.serve(async (req) => {
     }
     if (!data) return new Response("Not found", { status: 404, headers: corsHeaders });
 
+    // Content-addressed hash doubles as a strong validator, so a repeat request
+    // for the same version short-circuits to 304 while a new version (new hash /
+    // new ?v= token) always misses every cache layer.
+    const etag = `"${hash}"`;
+    const inm = req.headers.get("if-none-match") || "";
+    if (inm.split(",").some((t) => t.trim() === etag || t.trim() === `W/${etag}`)) {
+      return new Response(null, {
+        status: 304,
+        headers: { ...corsHeaders, ETag: etag, "Cache-Control": "public, max-age=31536000, immutable" },
+      });
+    }
+
     return new Response(req.method === "HEAD" ? null : data.content, {
       status: 200,
       headers: {
         ...corsHeaders,
         "Content-Type": kind === "css" ? "text/css; charset=utf-8" : "text/javascript; charset=utf-8",
-        // Content-addressed → safe to cache forever.
+        // Content-addressed + ?v= versioned → safe to cache forever.
         "Cache-Control": "public, max-age=31536000, immutable",
+        ETag: etag,
+        Vary: "Accept-Encoding",
       },
     });
   } catch (e) {

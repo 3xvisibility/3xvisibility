@@ -33,9 +33,20 @@ async function sha256Hex(input: string): Promise<string> {
     .slice(0, 40);
 }
 
+/**
+ * Cache-busting: the filename is content-addressed AND a `?v=` version token is
+ * appended. Any content change produces a new hash -> new URL, so browsers, CDNs
+ * and CMS caches can never serve a stale stylesheet or script for a page, while
+ * unchanged assets still hit the immutable long-lived cache.
+ */
 function publicAssetUrl(hash: string, kind: "css" | "js"): string {
   const base = (Deno.env.get("SUPABASE_URL") || "").replace(/\/+$/, "");
-  return `${base}/functions/v1/page-asset/${hash}.${kind}`;
+  return `${base}/functions/v1/page-asset/${hash}.${kind}?v=${assetVersion(hash)}`;
+}
+
+/** Short, stable version token derived from the asset content hash. */
+export function assetVersion(hash: string): string {
+  return hash.slice(0, 12);
 }
 
 /** Collect inline CSS/JS from the HTML and remove those inline blocks. */
