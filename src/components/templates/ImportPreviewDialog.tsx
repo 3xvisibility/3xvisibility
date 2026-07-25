@@ -366,10 +366,13 @@ export function ImportPreviewDialog({
                       {generalRows.map((row, idx) => {
                         const dupe = !row.removed && dupeNames.has(row.name);
                         const invalid = !row.removed && !/^[a-z][a-z0-9_]{0,41}$/.test(row.name);
+                        const fmt = !row.removed ? formatIssues.get(row.originalName) : undefined;
+                        const empty = !row.removed && !(row.original || "").trim();
+                        const hasErr = dupe || invalid || !!fmt || empty;
                         return (
                           <li
                             key={`${row.originalName}-${idx}`}
-                            className={`rounded-md border bg-card p-2 space-y-1.5 ${row.removed ? "opacity-50" : ""} ${dupe || invalid ? "border-destructive/60" : ""}`}
+                            className={`rounded-md border bg-card p-2 space-y-1.5 ${row.removed ? "opacity-50" : ""} ${hasErr ? "border-destructive/60" : ""}`}
                           >
                             <div className="flex items-center gap-1">
                               <span className="text-[10px] font-mono text-muted-foreground w-6 text-center shrink-0">#{idx + 1}</span>
@@ -402,7 +405,7 @@ export function ImportPreviewDialog({
                               </div>
                             </div>
                             <div className="text-[11px] text-muted-foreground pl-7 truncate" title={row.original}>
-                              ← {row.original}
+                              ← {row.original || <span className="italic">(empty)</span>}
                             </div>
                             {(dupe || invalid) && (
                               <div className="text-[10px] text-destructive pl-7 flex items-center gap-1">
@@ -410,9 +413,24 @@ export function ImportPreviewDialog({
                                 {dupe ? "Duplicate name" : "Use lowercase_snake_case starting with a letter"}
                               </div>
                             )}
+                            {!dupe && !invalid && empty && (
+                              <div className="text-[10px] text-destructive pl-7 flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                No value mapped — provide a source or remove this variable
+                              </div>
+                            )}
+                            {!dupe && !invalid && !empty && fmt && (
+                              <div className="text-[10px] text-destructive pl-7 flex items-start gap-1">
+                                <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                                <span>
+                                  <span className="font-semibold">Invalid {fmt.expected}:</span> {fmt.reason}
+                                </span>
+                              </div>
+                            )}
                           </li>
                         );
                       })}
+
                     </ul>
                   </div>
                 )}
