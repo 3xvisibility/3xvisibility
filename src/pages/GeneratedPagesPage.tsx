@@ -16,7 +16,6 @@ import {
   RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3,
   MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Wrench, Send as SendIcon, LayoutTemplate, Palette
 } from "lucide-react";
-import ContainerWidthControl from "@/components/settings/ContainerWidthControl";
 import BulkBoxSettingsDialog from "@/components/settings/BulkBoxSettingsDialog";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
@@ -130,7 +129,6 @@ export default function GeneratedPagesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [previewPage, setPreviewPage] = useState<GeneratedPage | null>(null);
   const [seoEditPage, setSeoEditPage] = useState<GeneratedPage | null>(null);
-  const [widthPage, setWidthPage] = useState<GeneratedPage | null>(null);
   const [bulkWidthOpen, setBulkWidthOpen] = useState(false);
   const [seoForm, setSeoForm] = useState({ seo_title: "", seo_description: "", seo_keywords: "" });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -222,22 +220,8 @@ export default function GeneratedPagesPage() {
   };
 
 
-  // Show the persisted per-page publish timeline (validation, media import,
-  // WordPress/Shopify publishing progress + results) in the publish-log dialog.
-  const openPublishStatus = (page: GeneratedPage) => {
-    const steps = (page as unknown as { publish_steps?: PublishStep[] | null }).publish_steps;
-    setPublishLog([{
-      id: page.id,
-      title: page.title,
-      status: page.status,
-      external_url: page.external_url || undefined,
-      error: page.error_message || undefined,
-      steps: Array.isArray(steps) ? steps : undefined,
-    }]);
-  };
-  const hasPublishStatus = (page: GeneratedPage) =>
-    Array.isArray((page as { publish_steps?: unknown }).publish_steps) ||
-    ["published", "failed", "publishing"].includes(page.status);
+
+
 
   // ─── Data Query ────────────────────────────────────────────
   const { data: pages = [], isLoading } = useQuery({
@@ -738,29 +722,6 @@ export default function GeneratedPagesPage() {
     onError: (err: Error) => toast({ title: "Translation failed", description: err.message, variant: "destructive" }),
   });
 
-  const recheckReadinessMutation = useMutation({
-    mutationFn: async (pageId: string) => {
-      const { data, error } = await supabase.functions.invoke("recheck-editor-readiness", {
-        body: { page_id: pageId },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data?.editor_readiness as { status?: string; reason?: string | null } | undefined;
-    },
-    onSuccess: (readiness) => {
-      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
-      if (readiness?.status === "passed") {
-        toast({ title: "Editor ready", description: "The page opens in Edit with Elementor." });
-      } else {
-        toast({
-          title: "Editor check failed",
-          description: readiness?.reason || "The page did not pass the readiness check.",
-          variant: "destructive",
-        });
-      }
-    },
-    onError: (err: Error) => toast({ title: "Re-check failed", description: err.message, variant: "destructive" }),
-  });
 
 
 
@@ -1326,16 +1287,6 @@ export default function GeneratedPagesPage() {
                       )}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
-                      {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
-                      {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
-                        <DropdownMenuItem
-                          disabled={recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id}
-                          onClick={() => recheckReadinessMutation.mutate(page.id)}
-                        >
-                          <ShieldCheck className={`h-3.5 w-3.5 mr-2 ${recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id ? "animate-spin" : ""}`} />
-                          Re-check Elementor readiness
-                        </DropdownMenuItem>
-                      )}
                       {liveUrl && <DropdownMenuItem onClick={() => openPageUrl(liveUrl)}><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</DropdownMenuItem>}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
@@ -1481,16 +1432,6 @@ export default function GeneratedPagesPage() {
                               )}
                               {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
-                              {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
-                              {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
-                                <DropdownMenuItem
-                                  disabled={recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id}
-                                  onClick={() => recheckReadinessMutation.mutate(page.id)}
-                                >
-                                  <ShieldCheck className={`h-3.5 w-3.5 mr-2 ${recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id ? "animate-spin" : ""}`} />
-                                  Re-check Elementor readiness
-                                </DropdownMenuItem>
-                              )}
                               {liveUrl && <DropdownMenuItem onClick={() => openPageUrl(liveUrl)}><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</DropdownMenuItem>}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
@@ -1541,21 +1482,7 @@ export default function GeneratedPagesPage() {
       {/* ─── Dialogs ─────────────────────────────────────────── */}
 
       {/* Preview */}
-      <Dialog open={!!widthPage} onOpenChange={(open) => !open && setWidthPage(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Content width — {widthPage?.title}</DialogTitle>
-          </DialogHeader>
-          {widthPage && (
-            <ContainerWidthControl
-              table="generated_pages"
-              id={widthPage.id}
-              campaignId={widthPage.campaign_id}
-              inheritLabel="Inherit template / workspace default"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+
 
       <Dialog open={!!previewPage} onOpenChange={(open) => !open && setPreviewPage(null)}>
         <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col">
