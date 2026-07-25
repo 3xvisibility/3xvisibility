@@ -569,8 +569,9 @@ export default function TemplateMarketplacePage() {
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
             {t("marketplace.subtitle")}
-          </p>
+        </div>
       </div>
+
 
       {/* Explains the removed community/sharing surface and the supported path instead. */}
       <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-3">
