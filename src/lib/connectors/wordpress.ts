@@ -93,7 +93,7 @@ function sanitizeWordPressContent(content?: string, keepDesign = true): string |
   let sanitized = content
     .replace(/<!--[\s\S]*?-->/g, "")
     .replace(/<meta\b[^>]*>/gi, "")
-    .replace(/<link\b[^>]*>/gi, "")
+    .replace(/<link\b[^>]*>/gi, (tag) => (/data-xxxv-asset/i.test(tag) ? tag : ""))
     // Keep template JS (it drives reveal/animation states); drop only JSON-LD
     // blocks, which the CMS owns.
     .replace(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "");
