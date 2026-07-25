@@ -44,6 +44,13 @@ export interface MissingVariable {
   emptyValue: boolean;
 }
 
+export interface InvalidVariable {
+  name: string;
+  value: string;
+  expected: "url" | "email" | "phone" | "color" | "number" | "text";
+  reason: string;
+}
+
 export interface RenderResult {
   html: string;
   title: string;
@@ -57,7 +64,10 @@ export interface RenderResult {
   warnings: string[];
   /** Placeholders detected during generation that had no data source. */
   missingVariables: MissingVariable[];
+  /** Placeholders whose value failed format validation (bad URL, email, …). */
+  invalidVariables: InvalidVariable[];
 }
+
 
 // ─── Slug normalisation ──────────────────────────────────────────────
 
