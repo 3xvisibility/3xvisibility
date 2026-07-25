@@ -395,40 +395,11 @@ export default function TemplateMarketplacePage() {
   }, [adminTemplates]);
 
 
-  // Convert shared templates to MarketplaceTemplate format
-  const communityTemplates: MarketplaceTemplate[] = useMemo(() => {
-    return sharedTemplates.map((st: any) => {
-      const stat = (ratingStats as any[]).find((r: any) => r.shared_template_id === st.id);
-      const avgRating = stat ? Number(stat.avg_rating) || 0 : 0;
-      const ratingCount = stat ? Number(stat.rating_count) || 0 : 0;
-      return {
-        id: st.id,
-        shared_id: st.id,
-        name: st.description ? st.description.slice(0, 40) : `Template by ${st.author_name || "Anonymous"}`,
-        description: st.description || "",
-        content: st.content,
-        variables: st.variables || [],
-        category: st.category,
-        tags: [],
-        author: st.author_name || "Anonymous",
-        downloads: st.downloads || 0,
-        rating: avgRating,
-        ratingCount: ratingCount,
-        seo_title_pattern: st.seo_title_pattern,
-        seo_description_pattern: st.seo_description_pattern,
-        schema_type: st.schema_type,
-        isShared: true,
-      };
-    });
-  }, [sharedTemplates, ratingStats]);
+  const communityTemplates: MarketplaceTemplate[] = useMemo(() => [], []);
 
-  // Merge built-in + community for "browse" tab.
-  // NOTE: every template is universal — the top-level Elementor/Shopify switch
-  // decides how it is converted, so we no longer inject a separate duplicated
-  // "(Elementor)" copy of each template here.
   const allTemplates = useMemo(() => {
-    return [...importedTemplates, ...COMMUNITY_TEMPLATES, ...communityTemplates];
-  }, [importedTemplates, communityTemplates]);
+    return [...importedTemplates, ...COMMUNITY_TEMPLATES];
+  }, [importedTemplates]);
 
   // Build the category pill list dynamically from whatever templates exist on
   // the active tab. "All" is always first; every category present in the data
