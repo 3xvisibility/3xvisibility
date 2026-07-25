@@ -498,6 +498,7 @@ export default function CampaignDetailPage() {
         description: `${ok} page${ok !== 1 ? "s" : ""} updated with latest field mapping${failed ? `, ${failed} failed` : ""}.`,
       });
       recordPublishResults(data, ids);
+      runParityRecheck(ids);
     },
     onError: (err: Error, ids) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
