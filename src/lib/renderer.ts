@@ -581,5 +581,7 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
     jsonLd,
     warnings,
     missingVariables,
+    invalidVariables,
   };
 }
+
