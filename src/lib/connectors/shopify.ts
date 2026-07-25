@@ -1,5 +1,7 @@
 import type { CmsConnector, ConnectorConfig, ConnectorPage, PagePayload } from "./types";
 import { adaptHtmlForShopifyTheme } from "./shopify-theme-adapter";
+import { bundlePageAssetsToUrls } from "./page-assets";
+
 
 /**
  * Shopify Admin API connector.
@@ -25,8 +27,9 @@ export class ShopifyConnector implements CmsConnector {
   }
 
   async createPage(payload: PagePayload): Promise<ConnectorPage> {
-    const body = { page: this.mapPayload(payload) };
+    const body = { page: await this.mapPayload(payload) };
     const res = await fetch(`${this.apiBase}/pages.json`, {
+
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(body),
@@ -45,7 +48,7 @@ export class ShopifyConnector implements CmsConnector {
   }
 
   async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorPage> {
-    const body = { page: { id: externalId, ...this.mapPayload(payload as PagePayload) } };
+    const body = { page: { id: externalId, ...(await this.mapPayload(payload as PagePayload)) } };
     const res = await fetch(`${this.apiBase}/pages/${externalId}.json`, {
       method: "PUT",
       headers: this.headers,
@@ -88,13 +91,17 @@ export class ShopifyConnector implements CmsConnector {
     }
   }
 
-  private mapPayload(payload: PagePayload): Record<string, unknown> {
+  private async mapPayload(payload: PagePayload): Promise<Record<string, unknown>> {
+    // Bundle the design into external CSS/JS first so Shopify's body_html
+    // sanitization can't drop it — the published page then matches the preview.
+    const bundled = await bundlePageAssetsToUrls(payload.content || "");
     const page: Record<string, unknown> = {
       title: payload.title,
-      body_html: adaptHtmlForShopifyTheme(payload.content || "", "page"),
+      body_html: adaptHtmlForShopifyTheme(bundled.html, "page"),
       handle: payload.slug,
       published: payload.status === "publish",
     };
+
 
     // Shopify SEO via metafields
     if (payload.seo_title) page.metafields_global_title_tag = payload.seo_title;
