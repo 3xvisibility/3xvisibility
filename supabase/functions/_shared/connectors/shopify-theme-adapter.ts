@@ -117,7 +117,7 @@ export function adaptHtmlForShopifyTheme(
   // re-attach them to the wrapped output.
   const bundled: string[] = [];
   out = out.replace(
-    /<link\b[^>]*data-xxxv-asset[^>]*>|<script\b[^>]*data-xxxv-asset[^>]*>[\s\S]*?<\/script>/gi,
+    /<link\b[^>]*data-xxxv-asset[^>]*>|<script\b[^>]*data-xxxv-asset[^>]*>[\s\S]*?<\/script>|<style\b[^>]*data-xxxv-asset[^>]*>[\s\S]*?<\/style>/gi,
     (tag) => {
       bundled.push(tag);
       return "";
@@ -129,7 +129,7 @@ export function adaptHtmlForShopifyTheme(
   out = sanitizeOuterStyles(out);
   out = makeImagesResponsive(out);
 
-  const prefix = bundled.filter((t) => /^<link/i.test(t)).join("\n");
+  const prefix = bundled.filter((t) => /^<(link|style)/i.test(t)).join("\n");
   const suffix = bundled.filter((t) => /^<script/i.test(t)).join("\n");
   const withAssets = (body: string) =>
     [prefix, body, suffix].filter((part) => part && part.trim()).join("\n");
