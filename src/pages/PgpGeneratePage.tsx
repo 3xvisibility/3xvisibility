@@ -79,6 +79,7 @@ export default function PgpGeneratePage() {
   const [testPreview, setTestPreview] = useState<string | null>(null);
   const [genProgress, setGenProgress] = useState<{ processed: number; total: number; errors: number } | null>(null);
   const [sampleRowIndex, setSampleRowIndex] = useState(0);
+  const [showRowLivePreview, setShowRowLivePreview] = useState(true);
 
   // Overwrite settings
   const [overwrite, setOverwrite] = useState(false);
@@ -687,6 +688,74 @@ Only return valid JSON. No markdown fences.`;
       </div>` : "";
     setTestPreview(seoPreviewHeader + rendered);
   };
+
+  /**
+   * Render one built row against the selected template so the user can see the
+   * real page output (including the values typed/AI-filled for missing vars)
+   * before generating. Unresolved placeholders stay visible, highlighted red.
+   */
+  const renderRowHtml = (row: Record<string, string>): string => {
+    if (!selectedGroup) return "";
+    const data: Record<string, string> = {};
+    for (const [k, v] of Object.entries(row)) {
+      if ((v ?? "").toString().trim()) data[k.toLowerCase()] = String(v);
+    }
+    let out = selectedGroup.content || "";
+
+    // Conditionals
+    out = out.replace(
+      /\{\{#if\s+(\w+)\}\}([\s\S]*?)(?:\{\{#else\}\}([\s\S]*?))?\{\{\/if\}\}/gi,
+      (_m: string, varName: string, ifBlock: string, elseBlock?: string) =>
+        (data[varName.toLowerCase()] || "").trim() ? ifBlock : (elseBlock || ""),
+    );
+    // Loops
+    out = out.replace(
+      /\{\{#each\s+(\w+)\}\}([\s\S]*?)\{\{\/each\}\}/gi,
+      (_m: string, varName: string, loopBlock: string) => {
+        const value = data[varName.toLowerCase()];
+        if (!value) return "";
+        return value.split(",").map((s) => s.trim()).filter(Boolean)
+          .map((item, index) =>
+            loopBlock.replace(/\{\{this\}\}/gi, item)
+              .replace(/\{\{@index\}\}/gi, String(index))
+              .replace(/\{\{@number\}\}/gi, String(index + 1)),
+          ).join("\n");
+      },
+    );
+    // Transforms
+    out = out.replace(/\{(\w+):(\w+(?:\(\d+\))?)\}/gi, (m: string, varName: string, transform: string) => {
+      const raw = data[varName.toLowerCase()];
+      if (!raw) return m;
+      const txf = transform.toLowerCase();
+      if (txf === "uppercase") return raw.toUpperCase();
+      if (txf === "lowercase") return raw.toLowerCase();
+      if (txf === "capitalize") return raw.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+      if (txf === "slug") return raw.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      return raw;
+    });
+    // Plain variables
+    out = out.replace(/\{([a-z_][a-z0-9_]*)\}/gi, (m: string, varName: string) => {
+      const val = data[varName.toLowerCase()];
+      if (val) return val;
+      return `<span style="background:#fee2e2;color:#b91c1c;border:1px dashed #ef4444;border-radius:4px;padding:0 4px;font-family:monospace;">{${varName}}</span>`;
+    });
+
+    // SEO snippet header
+    let seoTitle = selectedGroup.seo_title_pattern || "";
+    let seoDesc = selectedGroup.seo_description_pattern || "";
+    const fillPattern = (s: string) =>
+      s.replace(/\{([a-z_][a-z0-9_]*)\}/gi, (m: string, v: string) => data[v.toLowerCase()] || m);
+    seoTitle = fillPattern(seoTitle);
+    seoDesc = fillPattern(seoDesc);
+    const header = (seoTitle || seoDesc)
+      ? `<div style="background:#f0f4f8;border:1px solid #d0d7de;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-family:Arial,sans-serif;">
+          <p style="margin:0 0 4px;font-size:18px;color:#1a0dab;">${seoTitle || "Page Title"}</p>
+          <p style="margin:0;font-size:13px;color:#4d5156;line-height:1.4;">${seoDesc || "Meta description preview…"}</p>
+        </div>`
+      : "";
+    return header + out;
+  };
+
 
   const resolvedBrandName = useMemo(() => {
     if (brandSource === "custom") return customBrandName.trim();
@@ -2722,9 +2791,37 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         );
                       })}
                     </div>
+
+                    {/* Live rendered output for this row */}
+                    <div className="border-t border-primary/15">
+                      <div className="px-3.5 py-2 flex items-center justify-between gap-2">
+                        <p className="text-[11px] font-semibold flex items-center gap-1.5">
+                          <Eye className="h-3.5 w-3.5 text-primary" /> Live page preview — Row {safeIdx + 1}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-[10.5px]"
+                          onClick={() => setShowRowLivePreview((v) => !v)}
+                        >
+                          {showRowLivePreview ? "Hide" : "Show"}
+                        </Button>
+                      </div>
+                      {showRowLivePreview && (
+                        <div className="px-3.5 pb-3 space-y-1.5">
+                          <p className="text-[10px] text-muted-foreground">
+                            Renders the real template with this row&apos;s values — including anything you typed or AI-filled above. Red chips are still unresolved.
+                          </p>
+                          <div className="rounded-lg border border-border bg-background overflow-hidden max-h-[420px] overflow-y-auto">
+                            <TemplatePreview html={renderRowHtml(row)} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
+
 
               {/* Per-row variable source trace — first N rows */}
               {selectedGroup && groupKeywords.length > 0 && (() => {
