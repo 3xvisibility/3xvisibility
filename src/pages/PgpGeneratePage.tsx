@@ -241,6 +241,11 @@ export default function PgpGeneratePage() {
   // Merged into `groupKeywords` so we don't have to persist duplicates in pgp_keywords.
   const [keywordOverrides, setKeywordOverrides] = useState<Record<string, { terms: string[]; term_count: number }>>({});
   const [selectedKeywordGroupId, setSelectedKeywordGroupId] = useState<string>("");
+  // Manual / AI-filled values for variables that no source covers (Review step).
+  const [customVars, setCustomVars] = useState<Record<string, string>>({});
+  const [aiFillingMissing, setAiFillingMissing] = useState(false);
+
+
 
   const applyKeywordGroup = (groupId: string) => {
     setSelectedKeywordGroupId(groupId);
