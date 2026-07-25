@@ -19,6 +19,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { Switch } from "@/components/ui/switch";
 import { EditWebsiteDialog } from "./EditWebsiteDialog";
 import { RetranslateSiteDialog } from "./RetranslateSiteDialog";
+import { WpPluginSettings } from "./WpPluginSettings";
+
 import { ShopifyProductManager } from "./ShopifyProductManager";
 import { extractEdgeError } from "@/lib/edge-function-error";
 import { cn } from "@/lib/utils";
@@ -594,6 +596,14 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
               </div>
             </div>
           )}
+
+          {site.type === "wordpress" && (
+            <WpPluginSettings
+              websiteId={site.id}
+              value={(site as unknown as { wp_plugin_settings?: unknown }).wp_plugin_settings}
+            />
+          )}
+
 
           {/* Publish assets fallback (CMS strips external tags) */}
           <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3">

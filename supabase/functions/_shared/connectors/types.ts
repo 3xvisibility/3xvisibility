@@ -196,6 +196,12 @@ export interface ConnectorConfig {
    * WP REST API, so Elementor metadata/CSS/cache are handled natively.
    */
   connector_api_key?: string;
+  /**
+   * Per-site companion-plugin settings (websites.wp_plugin_settings): which
+   * HTML tags stay whitelisted in post content and whether wpautop is disabled.
+   * Shipped as post meta on every publish so compatibility is tunable per site.
+   */
+  wp_plugin_settings?: { allowed_tags?: string[]; disable_wpautop?: boolean } | null;
 }
 
 export interface CmsConnector {

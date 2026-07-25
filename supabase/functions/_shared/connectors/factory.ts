@@ -15,6 +15,7 @@ export interface WebsiteRecord {
   url: string;
   type: string;
   credentials: Record<string, string> | null;
+  wp_plugin_settings?: { allowed_tags?: string[]; disable_wpautop?: boolean } | null;
 }
 
 function buildConfig(website: WebsiteRecord, creds: Record<string, string>): ConnectorConfig {
@@ -38,6 +39,7 @@ function buildConfig(website: WebsiteRecord, creds: Record<string, string>): Con
     // records may contain unrelated API keys; using them as the connector key
     // causes the plugin to return 401 "Invalid or missing API key".
     connector_api_key: connectorKey?.trim(),
+    wp_plugin_settings: website.wp_plugin_settings ?? null,
   };
 }
 

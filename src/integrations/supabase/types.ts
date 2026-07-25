@@ -3112,6 +3112,7 @@ export type Database = {
           url: string
           user_id: string
           workspace_id: string | null
+          wp_plugin_settings: Json
         }
         Insert: {
           created_at?: string
@@ -3132,6 +3133,7 @@ export type Database = {
           url: string
           user_id: string
           workspace_id?: string | null
+          wp_plugin_settings?: Json
         }
         Update: {
           created_at?: string
@@ -3152,6 +3154,7 @@ export type Database = {
           url?: string
           user_id?: string
           workspace_id?: string | null
+          wp_plugin_settings?: Json
         }
         Relationships: [
           {

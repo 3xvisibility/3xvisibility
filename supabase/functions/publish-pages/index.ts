@@ -1049,7 +1049,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
     if (directPages && Array.isArray(directPages) && website_id) {
       const { data: website } = await supabase
         .from("websites")
-        .select("id, url, type, credentials, workspace_id, inline_assets_fallback")
+        .select("id, url, type, credentials, workspace_id, inline_assets_fallback, wp_plugin_settings")
         .eq("id", website_id)
         .eq("user_id", user.id)
         .maybeSingle();
@@ -1371,7 +1371,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
 
     let pagesQuery = supabase
       .from("generated_pages")
-      .select("*, websites(id, url, type, credentials, inline_assets_fallback)")
+      .select("*, websites(id, url, type, credentials, inline_assets_fallback, wp_plugin_settings)")
       .in("id", currentBatchIds);
     if (!isAdmin) pagesQuery = pagesQuery.eq("user_id", user.id);
     const { data: pages, error: pagesError } = await pagesQuery;
