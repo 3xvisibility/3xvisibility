@@ -1286,7 +1286,7 @@ slug: ${fields.slug}`,
                       <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setWidthTemplate(tpl)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Content width</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setDuplicateTarget(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => rescanMutation.mutate([tpl.id])} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setRescanDialogFor(tpl)} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
 
                       <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -1349,7 +1349,7 @@ slug: ${fields.slug}`,
                             <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setWidthTemplate(tpl)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Content width</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setDuplicateTarget(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => rescanMutation.mutate([tpl.id])} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setRescanDialogFor(tpl)} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
 
                             <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -1412,7 +1412,7 @@ slug: ${fields.slug}`,
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl, "variants-only"); }}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setWidthTemplate(tpl); }}><LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Content width</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setDuplicateTarget(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); rescanMutation.mutate([tpl.id]); }} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setRescanDialogFor(tpl); }} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
 
                         <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
