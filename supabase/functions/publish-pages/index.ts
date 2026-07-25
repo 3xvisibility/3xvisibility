@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { bundlePageAssetsToUrls } from "../_shared/connectors/page-assets.ts";
+import { bundlePageAssetsToUrls, applyInlineAssetFallback } from "../_shared/connectors/page-assets.ts";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
@@ -1049,7 +1049,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
     if (directPages && Array.isArray(directPages) && website_id) {
       const { data: website } = await supabase
         .from("websites")
-        .select("id, url, type, credentials, workspace_id")
+        .select("id, url, type, credentials, workspace_id, inline_assets_fallback")
         .eq("id", website_id)
         .eq("user_id", user.id)
         .maybeSingle();
@@ -1086,7 +1086,11 @@ async function handlePublishPages(req: Request): Promise<Response> {
           // Bundle the page CSS/JS into external files referenced with real
           // <link>/<script src> tags so CMS sanitizers can't strip the design.
           const dpBundle = await bundlePageAssetsToUrls(supabase, cleanedContent, (dp as { workspace_id?: string | null }).workspace_id ?? null);
-          cleanedContent = dpBundle.html;
+          // Per-site setting: also embed the CSS/JS inline (marked so sanitizers
+          // keep it) for installs that strip external <link>/<script src> tags.
+          cleanedContent = (website as { inline_assets_fallback?: boolean }).inline_assets_fallback
+            ? applyInlineAssetFallback(dpBundle)
+            : dpBundle.html;
           // Republish of an already-published page → preserve existing on-site design.
           const isRepublish = !!dp.external_id;
           const preserveDesign = isRepublish && !allowOverwriteDesign;
@@ -1363,7 +1367,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
 
     let pagesQuery = supabase
       .from("generated_pages")
-      .select("*, websites(id, url, type, credentials)")
+      .select("*, websites(id, url, type, credentials, inline_assets_fallback)")
       .in("id", currentBatchIds);
     if (!isAdmin) pagesQuery = pagesQuery.eq("user_id", user.id);
     const { data: pages, error: pagesError } = await pagesQuery;
@@ -1507,7 +1511,9 @@ async function handlePublishPages(req: Request): Promise<Response> {
         }
         let cleanedContent = stripHeadTagsForCms(page.content, assetBaseFor(page));
         const pageBundle = await bundlePageAssetsToUrls(supabase, cleanedContent, (page as { workspace_id?: string | null }).workspace_id ?? null);
-        cleanedContent = pageBundle.html;
+        cleanedContent = (page.websites as { inline_assets_fallback?: boolean } | null)?.inline_assets_fallback
+          ? applyInlineAssetFallback(pageBundle)
+          : pageBundle.html;
         // Republish of an already-published CMS page → preserve existing on-site
         // design. Only metadata (title, slug, SEO meta, canonical) flows through.
         const isRepublish = !!page.external_id;
