@@ -15,7 +15,7 @@ import {
   Store, Search, Download, Upload, Eye, Code, Star, Users, FileText,
   Tag, Globe, ShoppingBag, MapPin, Megaphone, Briefcase, GraduationCap,
   Heart, Loader2, Share2, MessageSquare, SlidersHorizontal, ChevronDown, ShieldCheck,
-  RefreshCw, Wrench,
+  RefreshCw, Wrench, Info,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -572,6 +572,27 @@ export default function TemplateMarketplacePage() {
           </p>
         </div>
       </div>
+
+
+
+      {/* Explains the removed community/sharing surface and the supported path instead. */}
+      <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-3">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+        <div className="text-xs text-muted-foreground leading-relaxed">
+          <span className="font-medium text-foreground">Community sharing is turned off.</span>{" "}
+          Templates are no longer shared, rated, or published to a community library — this
+          workspace only uses the built-in marketplace and your own imports, so every template
+          stays private to your workspace.
+          <div className="mt-1">
+            Instead you can: <span className="text-foreground">Import</span> any marketplace
+            template into your workspace, add your own via{" "}
+            <span className="text-foreground">Templates → Create / Import from URL</span>, or use{" "}
+            <span className="text-foreground">Export</span> on a card to download the HTML/CSS
+            bundle and hand it to a teammate.
+          </div>
+        </div>
+      </div>
+
 
       {/* Step 1 — choose the target platform. Hidden in HTML-only (v1) mode. */}
       <div className={HTML_ONLY_MODE ? "hidden" : ""}>
