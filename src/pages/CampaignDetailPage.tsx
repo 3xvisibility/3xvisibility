@@ -10,6 +10,8 @@ import { reskinContent, COMMUNITY_TEMPLATES, type TemplatePlatform } from "@/lib
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { PublishLogDialog, type PublishLogResult } from "@/components/campaigns/PublishLogDialog";
 import { PublishResultSummary } from "@/components/generated-pages/PublishResultSummary";
+import { AssetParityResultDialog } from "@/components/generated-pages/AssetParityResultDialog";
+import { useAssetParityRecheck } from "@/hooks/useAssetParityRecheck";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { useParams, useNavigate } from "react-router-dom";
@@ -410,6 +412,17 @@ export default function CampaignDetailPage() {
     },
   });
 
+  // Post-republish verification: compares the live published page against the
+  // preview markup so missing CSS/JS is visible immediately, not later.
+  const parityRecheck = useAssetParityRecheck();
+  const [lastRecheckIds, setLastRecheckIds] = useState<string[]>([]);
+  const runParityRecheck = (ids: string[]) => {
+    const clean = Array.from(new Set(ids.filter(Boolean)));
+    if (clean.length === 0) return;
+    setLastRecheckIds(clean);
+    void parityRecheck.run(clean);
+  };
+
   const republishMutation = useMutation({
     mutationFn: async ({ pageId, websiteId }: { pageId: string; websiteId?: string }) => {
       const { error: resetError } = await supabase
@@ -439,7 +452,8 @@ export default function CampaignDetailPage() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
       recordPublishResults(data, [variables.pageId]);
-      toast({ title: "Republish complete", description: "Page updated at the same URL." });
+      toast({ title: "Republish complete", description: "Page updated — verifying CSS/JS on the live URL…" });
+      runParityRecheck([variables.pageId]);
       setShowWebsiteSelector(false);
       setPendingPublishPageId(null);
     },
@@ -484,6 +498,7 @@ export default function CampaignDetailPage() {
         description: `${ok} page${ok !== 1 ? "s" : ""} updated with latest field mapping${failed ? `, ${failed} failed` : ""}.`,
       });
       recordPublishResults(data, ids);
+      runParityRecheck(ids);
     },
     onError: (err: Error, ids) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
@@ -530,6 +545,7 @@ export default function CampaignDetailPage() {
         description: `${ok} page${ok !== 1 ? "s" : ""} re-pushed with the current CSS/JS settings${failed ? `, ${failed} failed` : ""}.`,
       });
       recordPublishResults(data, pageIds);
+      runParityRecheck(pageIds);
     },
     onError: (err: Error) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
@@ -1823,6 +1839,14 @@ export default function CampaignDetailPage() {
         results={publishLog || []}
         onRetryFailed={(ids) => { setPublishLog(null); bulkPublishMutation.mutate({ pageIds: ids }); }}
         retrying={bulkPublishMutation.isPending}
+      />
+      <AssetParityResultDialog
+        open={parityRecheck.open}
+        onOpenChange={parityRecheck.setOpen}
+        running={parityRecheck.running}
+        results={parityRecheck.results}
+        error={parityRecheck.error}
+        onRecheck={() => parityRecheck.run(lastRecheckIds, { delayMs: 0 })}
       />
       <PublishWebsiteSelector
         open={showWebsiteSelector}
