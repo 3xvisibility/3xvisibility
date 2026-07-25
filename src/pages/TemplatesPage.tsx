@@ -895,8 +895,14 @@ export default function TemplatesPage() {
 
     const allVars = filterDesignVars([...new Set([...variableEntries.map((v) => v.name), ...pendingKeywords])]);
     const rawContent = styles ? `${styles}\n${html}` : html;
-    // Every imported template lands in the same HTML/CSS/JS shape.
-    const fullContent = normalizeTemplateHtml(rawContent, { baseUrl: data?.url || null }).html || rawContent;
+    // Every imported template lands in the same HTML/CSS/JS shape. Source JS is
+    // preserved when the page ships any, so the design behaves like the original.
+    const fullContent =
+      normalizeTemplateHtml(rawContent, {
+        baseUrl: data?.url || null,
+        keepScripts: /<script\b/i.test(rawContent),
+      }).html || rawContent;
+
     setSiteDialogOpen(false); setSitePages([]);
     const pendingTemplate = { id: "", name: pageTitle || "Site Template", content: fullContent, variables: allVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: { language: siteLanguage !== "__auto__" ? siteLanguage : undefined }, seo_title_pattern: "", seo_description_pattern: "" } as any as Template;
     // Show the import preview step FIRST — user confirms the extracted variables
