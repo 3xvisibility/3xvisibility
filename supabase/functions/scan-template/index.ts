@@ -90,15 +90,12 @@ function extractBodyContent(html: string): string {
   // Try to extract just the body
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   const content = bodyMatch ? bodyMatch[1] : html;
-  // Keep <style> tags (page builder inline styles like Elementor, Divi, etc.)
-  // Remove script tags, nav, footer
-  const cleaned = content
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<nav[\s\S]*?<\/nav>/gi, "")
-    .replace(/<footer[\s\S]*?<\/footer>/gi, "")
-    .replace(/<!--[\s\S]*?-->/g, "");
-  return neutralizeHiddenStates(cleaned);
+  // Full-fidelity import: keep <style>, <script>, <nav> and <footer> exactly as
+  // the source ships them. Anything we remove here is design the published page
+  // can never get back. Only HTML comments go.
+  return content.replace(/<!--[\s\S]*?-->/g, "");
 }
+
 
 function extractHeadStyles(html: string, baseUrl: string): string {
   const styles: string[] = [];
