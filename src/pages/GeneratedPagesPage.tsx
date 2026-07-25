@@ -222,22 +222,8 @@ export default function GeneratedPagesPage() {
   };
 
 
-  // Show the persisted per-page publish timeline (validation, media import,
-  // WordPress/Shopify publishing progress + results) in the publish-log dialog.
-  const openPublishStatus = (page: GeneratedPage) => {
-    const steps = (page as unknown as { publish_steps?: PublishStep[] | null }).publish_steps;
-    setPublishLog([{
-      id: page.id,
-      title: page.title,
-      status: page.status,
-      external_url: page.external_url || undefined,
-      error: page.error_message || undefined,
-      steps: Array.isArray(steps) ? steps : undefined,
-    }]);
-  };
-  const hasPublishStatus = (page: GeneratedPage) =>
-    Array.isArray((page as { publish_steps?: unknown }).publish_steps) ||
-    ["published", "failed", "publishing"].includes(page.status);
+
+
 
   // ─── Data Query ────────────────────────────────────────────
   const { data: pages = [], isLoading } = useQuery({
