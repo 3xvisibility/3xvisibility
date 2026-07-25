@@ -3137,8 +3137,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         ))}
                       </ul>
                       <p className="text-muted-foreground pt-1">
-                        Fill them in the &quot;Not filled&quot; panel above (type a value or use AI fill), or attach keywords / locations / business info.
+                        Optional: fill them in the &quot;Not filled&quot; panel above (type a value or use AI fill). Generation is not blocked.
                       </p>
+
                     </div>
                   </div>
                   <Button
