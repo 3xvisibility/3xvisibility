@@ -54,6 +54,46 @@ function preserveDesignAssets(html: string): string {
   return out;
 }
 
+/**
+ * Pull the design CSS + JS out of the template HTML so it can also be shipped as
+ * post meta (`_xxxv_template_css` / `_xxxv_template_js`). WordPress runs
+ * `wp_kses_post()` on REST content for users without `unfiltered_html`, which
+ * silently removes <style> and <script>; the connector plugin re-prints these
+ * meta values on the live page, so the published output keeps the preview design.
+ */
+export function extractDesignAssets(html: string): { css: string; js: string } {
+  if (!html) return { css: "", js: "" };
+  const cssParts: string[] = [];
+  const jsParts: string[] = [];
+
+  for (const m of html.matchAll(/<link\b[^>]*>/gi)) {
+    const tag = m[0];
+    if (!/rel\s*=\s*["']?stylesheet/i.test(tag)) continue;
+    const href = tag.match(/href\s*=\s*("([^"]*)"|'([^']*)')/i);
+    const url = href ? (href[2] ?? href[3] ?? "") : "";
+    if (url && !/\{[^}]*\}/.test(url)) cssParts.push(`@import url("${url.replace(/"/g, "%22")}");`);
+  }
+  for (const m of html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)) {
+    if (m[1] && m[1].trim()) cssParts.push(m[1].trim());
+  }
+  for (const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    const attrs = m[1] || "";
+    if (/type\s*=\s*["'][^"']*(ld\+json|application\/json)/i.test(attrs)) continue;
+    if (/\bsrc\s*=/i.test(attrs)) continue;
+    if (m[2] && m[2].trim()) jsParts.push(m[2].trim());
+  }
+
+  // @import rules must come first inside a stylesheet.
+  const imports = cssParts.filter((c) => c.startsWith("@import"));
+  const rules = cssParts.filter((c) => !c.startsWith("@import"));
+  return {
+    css: [...new Set(imports), ...rules].join("\n").trim(),
+    js: jsParts.join("\n;\n").trim(),
+  };
+}
+
+
+
 function sanitizeWordPressContent(content?: string, keepDesign = true): string | undefined {
   if (typeof content !== "string") return content;
   if (keepDesign) content = preserveDesignAssets(content);
