@@ -809,49 +809,104 @@ Only return valid JSON. No markdown fences.`;
       if (zipVal) { inject.zip = zipVal; inject.zipcode = zipVal; }
       if (locAddress) inject.address = locAddress;
     }
+
+    // Per-row manual overrides always win — this is the fallback the user
+    // types in when AI filling fails for a specific row.
+    for (const [k, v] of Object.entries(rowOverrides[rowIndex] ?? {})) {
+      if ((v ?? "").trim()) inject[k.toLowerCase()] = v.trim();
+    }
     return inject;
   };
 
-  /** Ask the AI to propose a value for each still-unfilled template variable. */
-  const aiFillMissingVars = async (names: string[]) => {
+  /**
+   * Ask the AI to propose a value for each still-unfilled template variable.
+   * Retries transient failures, applies whatever came back, and records the
+   * names it could not fill so the user can type them manually instead.
+   *
+   * @param rowIndex when provided, values are stored as a per-row override.
+   */
+  const aiFillMissingVars = async (names: string[], rowIndex?: number) => {
     if (names.length === 0) return;
     setAiFillingMissing(true);
-    try {
-      const context = [
-        businessInfo.company_name || businessInfo.brand_name || resolvedBrandName,
-        aiNiche,
-        aiCategory,
-        pickedLocations[0]?.city,
-        pickedLocations[0]?.country,
-      ].filter(Boolean).join(" · ");
-      const prompt = `You are filling landing-page template variables for this business: ${context || "a local service business"}.
+    const scopeKey = rowIndex === undefined ? "all" : String(rowIndex);
+    let lastError = "";
+    let filled: Record<string, string> = {};
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const context = [
+          businessInfo.company_name || businessInfo.brand_name || resolvedBrandName,
+          aiNiche,
+          aiCategory,
+          rowIndex !== undefined
+            ? pickedLocations[rowIndex % Math.max(pickedLocations.length, 1)]?.city
+            : pickedLocations[0]?.city,
+          pickedLocations[0]?.country,
+        ].filter(Boolean).join(" · ");
+        const prompt = `You are filling landing-page template variables for this business: ${context || "a local service business"}.
 
 Generate one short, realistic, ready-to-publish value for each variable below (no placeholders, no lorem ipsum):
 ${names.map((n) => `- {${n}}`).join("\n")}
 
 Return only valid JSON: an object mapping each variable name to a single string value. No markdown fences.`;
 
-      const { data, error } = await supabase.functions.invoke("generate-seo-content", {
-        body: { type: "batch_pages", prompt },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      const raw = typeof data.result === "string" ? data.result : JSON.stringify(data.result);
-      const parsed = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim());
-      const next: Record<string, string> = {};
-      for (const n of names) {
-        const v = parsed?.[n] ?? parsed?.[n.toLowerCase()];
-        if (v) next[n] = String(Array.isArray(v) ? v[0] : v).trim();
+        const { data, error } = await supabase.functions.invoke("generate-seo-content", {
+          body: { type: "batch_pages", prompt },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        const raw = typeof data.result === "string" ? data.result : JSON.stringify(data.result);
+        const parsed = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim());
+        const next: Record<string, string> = {};
+        for (const n of names) {
+          const v = parsed?.[n] ?? parsed?.[n.toLowerCase()];
+          if (v) next[n] = String(Array.isArray(v) ? v[0] : v).trim();
+        }
+        if (Object.keys(next).length === 0) throw new Error("AI returned no values");
+        filled = next;
+        break;
+      } catch (err: any) {
+        lastError = err?.message || "AI request failed";
+        if (attempt < 3) await new Promise((r) => setTimeout(r, attempt * 800));
       }
-      if (Object.keys(next).length === 0) throw new Error("AI returned no values");
-      setCustomVars((prev) => ({ ...prev, ...next }));
-      toast({ title: "AI filled the missing variables", description: `${Object.keys(next).length} value(s) added. You can edit them before generating.` });
-    } catch (err: any) {
-      toast({ title: "AI fill failed", description: err.message, variant: "destructive" });
-    } finally {
-      setAiFillingMissing(false);
     }
+
+    const failed = names.filter((n) => !filled[n]);
+    if (Object.keys(filled).length > 0) {
+      if (rowIndex === undefined) {
+        setCustomVars((prev) => ({ ...prev, ...filled }));
+      } else {
+        setRowOverrides((prev) => ({ ...prev, [rowIndex]: { ...(prev[rowIndex] ?? {}), ...filled } }));
+      }
+    }
+    setAiFillFailures((prev) => {
+      const next = { ...prev };
+      if (failed.length > 0) next[scopeKey] = { names: failed, error: lastError || "AI could not produce a value" };
+      else delete next[scopeKey];
+      return next;
+    });
+
+    if (Object.keys(filled).length > 0 && failed.length === 0) {
+      toast({
+        title: rowIndex === undefined ? "AI filled the missing variables" : `AI filled row ${rowIndex + 1}`,
+        description: `${Object.keys(filled).length} value(s) added. You can edit them before generating.`,
+      });
+    } else if (Object.keys(filled).length > 0) {
+      toast({
+        title: "Partly filled by AI",
+        description: `${failed.length} variable(s) still need a manual value: ${failed.map((n) => `{${n}}`).join(", ")}`,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "AI fill failed after 3 attempts",
+        description: `${lastError}. Retry, or type the values manually below — generation stays blocked until every row is filled.`,
+        variant: "destructive",
+      });
+    }
+    setAiFillingMissing(false);
   };
+
 
 
 
