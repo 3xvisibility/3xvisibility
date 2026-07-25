@@ -177,6 +177,76 @@ export function replaceVariables(content: string, vars: Record<string, string>, 
   return result;
 }
 
+// ─── Missing-variable detection ─────────────────────────────────────
+
+/** Reserved keywords that look like `{name}` but aren't user variables. */
+const RESERVED_TOKENS = new Set([
+  "this", "index", "number", "if", "else", "each", "endif", "endeach",
+]);
+
+/**
+ * Extract every unique `{name}` / `{name:transform}` placeholder declared in
+ * a template chunk. Skips spintax groups (`{a|b}`) and Handlebars helpers.
+ */
+export function collectTemplatePlaceholders(content: string): string[] {
+  if (!content) return [];
+  const found = new Set<string>();
+  const re = /\{([a-z][a-z0-9_]*)(?::[a-z0-9_()]+)?\}/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(content)) !== null) {
+    const name = m[1].toLowerCase();
+    if (RESERVED_TOKENS.has(name)) continue;
+    found.add(name);
+  }
+  return [...found];
+}
+
+/**
+ * Cross-check the placeholders used by a template against the values that
+ * will be supplied at render time. Returns three buckets so callers can
+ * decide whether to block generation, warn, or auto-repair.
+ */
+export function validateVariableSources(
+  template: Pick<TemplateConfig, "content" | "seo_title_pattern" | "seo_description_pattern" | "schema_config">,
+  vars: Record<string, string>,
+): { missing: string[]; empty: string[]; ok: string[] } {
+  const chunks = [
+    template.content || "",
+    template.seo_title_pattern || "",
+    template.seo_description_pattern || "",
+    ...Object.values(template.schema_config || {}),
+  ];
+  const placeholders = new Set<string>();
+  for (const c of chunks) collectTemplatePlaceholders(c).forEach((p) => placeholders.add(p));
+  const missing: string[] = [];
+  const empty: string[] = [];
+  const ok: string[] = [];
+  const lookup: Record<string, string> = {};
+  for (const [k, v] of Object.entries(vars)) lookup[k.toLowerCase()] = v ?? "";
+  for (const name of placeholders) {
+    if (!(name in lookup)) missing.push(name);
+    else if (!String(lookup[name]).trim()) empty.push(name);
+    else ok.push(name);
+  }
+  return { missing, empty, ok };
+}
+
+/**
+ * Replace any lingering `{name}` tokens with a clearly-visible error marker
+ * so pages never ship with blank text or raw placeholder syntax. The marker
+ * is plain text (not HTML) to stay safe inside attribute values.
+ */
+export function replaceMissingWithMarkers(html: string): { html: string; names: string[] } {
+  const names = new Set<string>();
+  const out = html.replace(/\{([a-z][a-z0-9_]*)(?::[a-z0-9_()]+)?\}/gi, (m, name: string) => {
+    const key = name.toLowerCase();
+    if (RESERVED_TOKENS.has(key)) return m;
+    names.add(key);
+    return `⚠️ [missing: ${key}]`;
+  });
+  return { html: out, names: [...names] };
+}
+
 // ─── Resolve a pattern string (SEO title/desc, OG, slug) ─────────────
 
 export function resolvePattern(pattern: string, vars: Record<string, string>, locale?: string): string {
