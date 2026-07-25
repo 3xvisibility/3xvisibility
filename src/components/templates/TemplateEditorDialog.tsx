@@ -667,6 +667,13 @@ ${contentText}`
                 </details>
               )}
 
+              {/* ── CTA Placement Panel ─────────────────────────────────
+                  Detects <a>/<button> CTAs and lets the user map their
+                  label + href to {cta_label} / {cta_url} variables so
+                  Keyword Group data lands in the correct button position. */}
+              <CtaPlacementPanel content={content} onChange={setContent} />
+
+
 
 
               {/* Editor / Builder / Preview area */}
