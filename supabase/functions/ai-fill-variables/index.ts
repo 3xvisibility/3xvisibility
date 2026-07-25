@@ -27,6 +27,7 @@ async function generateAiVarDefaults(
   variables: string[],
   context: FillContext,
   settings: Required<FillSettings>,
+  authToken?: string,
 ): Promise<Record<string, string>> {
   if (variables.length === 0) return {};
   const langName = resolveLanguageName(settings.language);
@@ -55,8 +56,8 @@ Return ONLY a JSON object, no prose, no code fences. Example:
 {"variable_name": "value in ${langName}", "another": "value in ${langName}"}`;
 
   const result = await aiGenerate({
-      authToken: extractAuthToken(req),
-      promptType: "short_content",
+    authToken,
+    promptType: "short_content",
     model: "google/gemini-2.5-flash-lite",
     messages: [
       { role: "system", content: systemPrompt },
@@ -126,7 +127,7 @@ Deno.serve(async (req) => {
     };
 
     try {
-      const values = await generateAiVarDefaults(variables, ctx, settings);
+      const values = await generateAiVarDefaults(variables, ctx, settings, extractAuthToken(req));
       return new Response(JSON.stringify({ values, count: Object.keys(values).length }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
