@@ -2499,8 +2499,17 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       rows={aiRows}
                       empty="No AI-content variables (heading/description/etc.) in this template."
                     />
+                    {customRows.length > 0 && (
+                      <Group
+                        title="Custom / AI-filled by you"
+                        icon={Wand2}
+                        color="text-sky-600 dark:text-sky-400"
+                        rows={customRows}
+                        empty=""
+                      />
+                    )}
                     {missRows.length > 0 && (
-                      <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-2.5 space-y-1">
+                      <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-2.5 space-y-2">
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="flex items-center gap-1.5 font-semibold text-destructive">
                             <XCircle className="h-3.5 w-3.5" /> Not filled
@@ -2508,8 +2517,44 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                           <span className="text-muted-foreground">{missRows.length} var{missRows.length !== 1 ? "s" : ""}</span>
                         </div>
                         <p className="text-[10.5px] text-muted-foreground">
-                          {missRows.map((r) => `{${r.name}}`).join(", ")} — attach a keyword group, locations, or business info.
+                          Fill these here — type a custom value or let AI write one, so page generation never breaks.
                         </p>
+                        <div className="space-y-1.5">
+                          {missRows.map((r) => (
+                            <div key={r.name} className="flex items-center gap-2">
+                              <span className="font-mono text-[10.5px] text-foreground w-[38%] truncate">{"{" + r.name + "}"}</span>
+                              <Input
+                                className="h-7 text-[11px] flex-1"
+                                value={customVars[r.name] ?? ""}
+                                onChange={(e) => setCustomVars((prev) => ({ ...prev, [r.name]: e.target.value }))}
+                                placeholder={`Custom value for ${r.name}`}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-[10.5px] shrink-0"
+                                disabled={aiFillingMissing}
+                                onClick={() => aiFillMissingVars([r.name])}
+                              >
+                                <Sparkles className="h-3 w-3 mr-1" /> AI
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-7 text-[11px] w-full"
+                          disabled={aiFillingMissing}
+                          onClick={() => aiFillMissingVars(missRows.map((r) => r.name))}
+                        >
+                          {aiFillingMissing ? (
+                            <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Filling with AI…</>
+                          ) : (
+                            <><Wand2 className="h-3 w-3 mr-1" /> Fill all with AI</>
+                          )}
+                        </Button>
                       </div>
                     )}
                   </div>
