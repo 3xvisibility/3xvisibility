@@ -365,15 +365,17 @@ export default function GeneratedPagesPage() {
   });
 
   const bulkPublishMutation = useMutation({
-    mutationFn: async ({ ids, websiteId, type }: { ids: string[]; websiteId?: string; type?: "page" | "product" }) => {
+    mutationFn: async ({ ids, websiteId, type, format }: { ids: string[]; websiteId?: string; type?: "page" | "product"; format?: PublishFormat }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
         body: {
           page_ids: ids,
           publish_type: type ?? publishType,
           website_id: websiteId,
+          publish_format: format ?? "html",
           elementor_mode: "native",
           overwrite_design: true,
         },
+
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
