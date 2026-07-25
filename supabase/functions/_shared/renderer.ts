@@ -132,6 +132,49 @@ export function resolvePattern(pattern: string, vars: Record<string, string>): s
   return replaceVariables(pattern, vars);
 }
 
+const RESERVED_TOKENS = new Set(["this", "index", "number", "if", "else", "each", "endif", "endeach"]);
+
+export function collectTemplatePlaceholders(content: string): string[] {
+  if (!content) return [];
+  const found = new Set<string>();
+  const re = /\{([a-z][a-z0-9_]*)(?::[a-z0-9_()]+)?\}/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(content)) !== null) {
+    const name = m[1].toLowerCase();
+    if (!RESERVED_TOKENS.has(name)) found.add(name);
+  }
+  return [...found];
+}
+
+export function validateVariableSources(
+  template: Pick<TemplateConfig, "content" | "seo_title_pattern" | "seo_description_pattern" | "schema_config">,
+  vars: Record<string, string>,
+): { missing: string[]; empty: string[]; ok: string[] } {
+  const chunks = [template.content || "", template.seo_title_pattern || "", template.seo_description_pattern || "", ...Object.values(template.schema_config || {})];
+  const placeholders = new Set<string>();
+  for (const c of chunks) collectTemplatePlaceholders(c).forEach((p) => placeholders.add(p));
+  const missing: string[] = [], empty: string[] = [], ok: string[] = [];
+  const lookup: Record<string, string> = {};
+  for (const [k, v] of Object.entries(vars)) lookup[k.toLowerCase()] = v ?? "";
+  for (const name of placeholders) {
+    if (!(name in lookup)) missing.push(name);
+    else if (!String(lookup[name]).trim()) empty.push(name);
+    else ok.push(name);
+  }
+  return { missing, empty, ok };
+}
+
+export function replaceMissingWithMarkers(html: string): { html: string; names: string[] } {
+  const names = new Set<string>();
+  const out = html.replace(/\{([a-z][a-z0-9_]*)(?::[a-z0-9_()]+)?\}/gi, (m, name: string) => {
+    const key = name.toLowerCase();
+    if (RESERVED_TOKENS.has(key)) return m;
+    names.add(key);
+    return `⚠️ [missing: ${key}]`;
+  });
+  return { html: out, names: [...names] };
+}
+
 export function buildJsonLd(
   schemaType: string,
   schemaConfig: Record<string, string>,
