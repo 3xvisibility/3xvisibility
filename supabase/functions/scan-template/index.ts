@@ -392,9 +392,13 @@ Return a JSON array of the best suggestions only.`,
     }
 
     // Consistent HTML/CSS/JS shape for every scanned page: merged stylesheet,
-    // sanitized markup, single `.tpl-root` wrapper.
+    // sanitized markup, single `.tpl-root` wrapper. Behaviour JS is preserved
+    // whenever the source actually ships some, so sliders/tabs/menus keep
+    // working after publish; otherwise the normalizer reveals animated content.
+    const hasScripts = /<script\b/i.test(bodyContent) || /<script\b/i.test(headStyles);
     const normalized = normalizeTemplateHtml(`${headStyles}\n${bodyContent}`, {
       baseUrl: formattedUrl,
+      keepScripts: hasScripts,
     });
 
     return new Response(
@@ -405,10 +409,17 @@ Return a JSON array of the best suggestions only.`,
         headStyles,
         normalizedHtml: normalized.html,
         normalization: { warnings: normalized.warnings, stats: normalized.stats },
+        assets: {
+          stylesheets_inlined: inlined.stylesheetsInlined,
+          scripts_inlined: inlined.scriptsInlined,
+          bytes: inlined.bytes,
+          failures: inlined.failures.slice(0, 10),
+        },
         blocks,
         suggestions,
         imageUrls,
       }),
+
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
