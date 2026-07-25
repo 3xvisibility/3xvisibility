@@ -570,6 +570,31 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
             )}
           </div>
 
+          {/* WordPress CSS/JS delivery helper — WP deletes <style>/<link>/<script>
+              from page content (wp_kses_post) unless this plugin is active. */}
+          {site.type === "wordpress" && (
+            <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold">CSS &amp; JS delivery on WordPress</p>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    WordPress removes <code className="text-[10px]">&lt;style&gt;</code>,{" "}
+                    <code className="text-[10px]">&lt;link&gt;</code> and <code className="text-[10px]">&lt;script&gt;</code>{" "}
+                    tags from page content, so a published page keeps its HTML but loses the design.
+                    Install this free 1-file plugin once (Plugins → Add New → Upload Plugin), then
+                    re-publish — the page renders exactly like the preview.
+                  </p>
+                  <Button asChild size="sm" variant="outline" className="h-7 gap-1.5 text-xs">
+                    <a href="/wp-plugin/3xvisibility-html-assets.zip" download>
+                      <Download className="h-3 w-3" /> Download HTML Assets plugin
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Publish assets fallback (CMS strips external tags) */}
           <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3">
             <div className="flex items-start justify-between gap-3">
@@ -589,6 +614,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
               />
             </div>
           </div>
+
 
           {/* Sitemap Section */}
           <div className="mt-4 pt-4 border-t border-border">

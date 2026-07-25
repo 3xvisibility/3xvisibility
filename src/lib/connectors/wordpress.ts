@@ -32,6 +32,9 @@ function preserveDesignAssets(html: string): string {
   if (!html) return html;
   const imports: string[] = [];
   let out = html.replace(/<link\b[^>]*>/gi, (tag) => {
+    // Bundled page assets (data-xxxv-asset) stay as real <link> tags — the
+    // connector plugin whitelists them, so they load the exact preview CSS.
+    if (/data-xxxv-asset/i.test(tag)) return tag;
     const isSheet = /rel\s*=\s*["']?stylesheet/i.test(tag);
     const href = tag.match(/href\s*=\s*("([^"]*)"|'([^']*)')/i);
     const url = href ? (href[2] ?? href[3] ?? "") : "";
@@ -45,6 +48,7 @@ function preserveDesignAssets(html: string): string {
   }
   return out;
 }
+
 
 /**
  * Extract the design CSS + inline JS from template HTML so it can be shipped as
@@ -89,7 +93,7 @@ function sanitizeWordPressContent(content?: string, keepDesign = true): string |
   let sanitized = content
     .replace(/<!--[\s\S]*?-->/g, "")
     .replace(/<meta\b[^>]*>/gi, "")
-    .replace(/<link\b[^>]*>/gi, "")
+    .replace(/<link\b[^>]*>/gi, (tag) => (/data-xxxv-asset/i.test(tag) ? tag : ""))
     // Keep template JS (it drives reveal/animation states); drop only JSON-LD
     // blocks, which the CMS owns.
     .replace(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "");

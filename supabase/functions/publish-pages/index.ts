@@ -1088,7 +1088,11 @@ async function handlePublishPages(req: Request): Promise<Response> {
           const dpBundle = await bundlePageAssetsToUrls(supabase, cleanedContent, (dp as { workspace_id?: string | null }).workspace_id ?? null);
           // Per-site setting: also embed the CSS/JS inline (marked so sanitizers
           // keep it) for installs that strip external <link>/<script src> tags.
-          cleanedContent = (website as { inline_assets_fallback?: boolean }).inline_assets_fallback
+          // WordPress deletes <link>/<style>/<script> from post content via
+          // wp_kses_post() unless the user has `unfiltered_html`, so ALWAYS ship
+          // the inline copy too (marked data-xxxv-asset) alongside the external
+          // bundle URLs — whichever survives renders the design.
+          cleanedContent = ((website as { inline_assets_fallback?: boolean }).inline_assets_fallback || website.type === "wordpress")
             ? applyInlineAssetFallback(dpBundle)
             : dpBundle.html;
           // Republish of an already-published page → preserve existing on-site design.
@@ -1511,7 +1515,10 @@ async function handlePublishPages(req: Request): Promise<Response> {
         }
         let cleanedContent = stripHeadTagsForCms(page.content, assetBaseFor(page));
         const pageBundle = await bundlePageAssetsToUrls(supabase, cleanedContent, (page as { workspace_id?: string | null }).workspace_id ?? null);
-        cleanedContent = (page.websites as { inline_assets_fallback?: boolean } | null)?.inline_assets_fallback
+        // Always inline for WordPress: wp_kses_post() strips external
+        // <link>/<script src> tags for users without `unfiltered_html`.
+        cleanedContent = ((page.websites as { inline_assets_fallback?: boolean } | null)?.inline_assets_fallback
+          || (page.websites as { type?: string } | null)?.type === "wordpress")
           ? applyInlineAssetFallback(pageBundle)
           : pageBundle.html;
         // Republish of an already-published CMS page → preserve existing on-site
