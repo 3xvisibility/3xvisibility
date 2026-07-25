@@ -16,7 +16,6 @@ import {
   RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3,
   MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, ShieldCheck, Wrench, Send as SendIcon, LayoutTemplate, Palette
 } from "lucide-react";
-import ContainerWidthControl from "@/components/settings/ContainerWidthControl";
 import BulkBoxSettingsDialog from "@/components/settings/BulkBoxSettingsDialog";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
@@ -130,7 +129,6 @@ export default function GeneratedPagesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [previewPage, setPreviewPage] = useState<GeneratedPage | null>(null);
   const [seoEditPage, setSeoEditPage] = useState<GeneratedPage | null>(null);
-  const [widthPage, setWidthPage] = useState<GeneratedPage | null>(null);
   const [bulkWidthOpen, setBulkWidthOpen] = useState(false);
   const [seoForm, setSeoForm] = useState({ seo_title: "", seo_description: "", seo_keywords: "" });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
