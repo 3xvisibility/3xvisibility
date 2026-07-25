@@ -2790,9 +2790,37 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         );
                       })}
                     </div>
+
+                    {/* Live rendered output for this row */}
+                    <div className="border-t border-primary/15">
+                      <div className="px-3.5 py-2 flex items-center justify-between gap-2">
+                        <p className="text-[11px] font-semibold flex items-center gap-1.5">
+                          <Eye className="h-3.5 w-3.5 text-primary" /> Live page preview — Row {safeIdx + 1}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-[10.5px]"
+                          onClick={() => setShowRowLivePreview((v) => !v)}
+                        >
+                          {showRowLivePreview ? "Hide" : "Show"}
+                        </Button>
+                      </div>
+                      {showRowLivePreview && (
+                        <div className="px-3.5 pb-3 space-y-1.5">
+                          <p className="text-[10px] text-muted-foreground">
+                            Renders the real template with this row&apos;s values — including anything you typed or AI-filled above. Red chips are still unresolved.
+                          </p>
+                          <div className="rounded-lg border border-border bg-background overflow-hidden max-h-[420px] overflow-y-auto">
+                            <TemplatePreview html={renderRowHtml(row)} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
+
 
               {/* Per-row variable source trace — first N rows */}
               {selectedGroup && groupKeywords.length > 0 && (() => {
