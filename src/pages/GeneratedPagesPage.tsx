@@ -577,11 +577,17 @@ export default function GeneratedPagesPage() {
   };
 
   // Every publish first asks for the output format (real code / Elementor /
-  // Shopify) so the user controls design fidelity per publish.
+  // Shopify) so the user controls design fidelity per publish — unless a format
+  // was remembered, in which case the whole batch reuses it silently.
   const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
     if (ids.length === 0) return;
     setPendingPublishIds(ids);
     setPendingPublishAction(action);
+    if (rememberedFormat) {
+      setPublishFormat(rememberedFormat);
+      runPublish(ids, action, rememberedFormat);
+      return;
+    }
     setShowFormatDialog(true);
   };
 
