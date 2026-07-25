@@ -1518,6 +1518,22 @@ slug: ${fields.slug}`,
         templateName={historyTarget?.name}
       />
 
+      {/* Rescan Variables Dialog (snapshot-scoped) */}
+      <RescanVariablesDialog
+        open={!!rescanDialogFor}
+        onOpenChange={(v) => { if (!v) setRescanDialogFor(null); }}
+        templateId={rescanDialogFor?.id ?? null}
+        templateName={rescanDialogFor?.name}
+        liveContent={rescanDialogFor?.content ?? ""}
+        isRunning={rescanMutation.isPending}
+        onConfirm={(target: RescanTarget) => {
+          if (!rescanDialogFor) return;
+          rescanMutation.mutate({ id: rescanDialogFor.id, target });
+        }}
+      />
+
+
+
       {/* Rename Dialog */}
       <Dialog open={!!renameTarget} onOpenChange={(v) => { if (!v) setRenameTarget(null); }}>
         <DialogContent className="sm:max-w-md">
