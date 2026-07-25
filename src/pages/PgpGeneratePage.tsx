@@ -19,7 +19,7 @@ import {
 import {
   Play, Eye, FileText, KeyRound, Layers, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Zap, Settings2,
-  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History, MapPin, ChevronRight, Bookmark, Building2, Download,
+  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles, RefreshCw, History, MapPin, ChevronRight, Bookmark, Building2, Download, Wand2,
 } from "lucide-react";
 import { exportDataFile } from "@/lib/export-csv";
 
@@ -241,6 +241,11 @@ export default function PgpGeneratePage() {
   // Merged into `groupKeywords` so we don't have to persist duplicates in pgp_keywords.
   const [keywordOverrides, setKeywordOverrides] = useState<Record<string, { terms: string[]; term_count: number }>>({});
   const [selectedKeywordGroupId, setSelectedKeywordGroupId] = useState<string>("");
+  // Manual / AI-filled values for variables that no source covers (Review step).
+  const [customVars, setCustomVars] = useState<Record<string, string>>({});
+  const [aiFillingMissing, setAiFillingMissing] = useState(false);
+
+
 
   const applyKeywordGroup = (groupId: string) => {
     setSelectedKeywordGroupId(groupId);
@@ -692,6 +697,11 @@ Only return valid JSON. No markdown fences.`;
   // Injected values from Step 3 (locations) and Step 4 (business info).
   const buildInjectedForRow = (rowIndex: number): Record<string, string> => {
     const inject: Record<string, string> = {};
+    // Manual / AI-filled custom values for otherwise-missing variables
+    // (lowest priority — real locations/business info still win below).
+    for (const [k, v] of Object.entries(customVars)) {
+      if ((v ?? "").trim()) inject[k.toLowerCase()] = v.trim();
+    }
     // Business/personal info (direct keys)
     for (const [k, v] of Object.entries(businessInfo)) {
       if ((v ?? "").trim()) inject[k] = v.trim();
@@ -732,6 +742,49 @@ Only return valid JSON. No markdown fences.`;
     }
     return inject;
   };
+
+  /** Ask the AI to propose a value for each still-unfilled template variable. */
+  const aiFillMissingVars = async (names: string[]) => {
+    if (names.length === 0) return;
+    setAiFillingMissing(true);
+    try {
+      const context = [
+        businessInfo.company_name || businessInfo.brand_name || resolvedBrandName,
+        aiNiche,
+        aiCategory,
+        pickedLocations[0]?.city,
+        pickedLocations[0]?.country,
+      ].filter(Boolean).join(" · ");
+      const prompt = `You are filling landing-page template variables for this business: ${context || "a local service business"}.
+
+Generate one short, realistic, ready-to-publish value for each variable below (no placeholders, no lorem ipsum):
+${names.map((n) => `- {${n}}`).join("\n")}
+
+Return only valid JSON: an object mapping each variable name to a single string value. No markdown fences.`;
+
+      const { data, error } = await supabase.functions.invoke("generate-seo-content", {
+        body: { type: "batch_pages", prompt },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const raw = typeof data.result === "string" ? data.result : JSON.stringify(data.result);
+      const parsed = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim());
+      const next: Record<string, string> = {};
+      for (const n of names) {
+        const v = parsed?.[n] ?? parsed?.[n.toLowerCase()];
+        if (v) next[n] = String(Array.isArray(v) ? v[0] : v).trim();
+      }
+      if (Object.keys(next).length === 0) throw new Error("AI returned no values");
+      setCustomVars((prev) => ({ ...prev, ...next }));
+      toast({ title: "AI filled the missing variables", description: `${Object.keys(next).length} value(s) added. You can edit them before generating.` });
+    } catch (err: any) {
+      toast({ title: "AI fill failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiFillingMissing(false);
+    }
+  };
+
+
 
   const buildRows = (): Record<string, string>[] => {
     const kwData = groupKeywords.filter(k => k.keyword);
@@ -2350,6 +2403,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 const locRows: Row[] = [];
                 const bizRows: Row[] = [];
                 const aiRows: Row[] = [];
+                const customRows: Row[] = [];
                 const missRows: Row[] = [];
                 for (const gk of groupKeywords) {
                   const nameLc = gk.name.toLowerCase();
@@ -2373,11 +2427,13 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     aiRows.push({ name: gk.name });
                   } else if (fromKw) {
                     kwRows.push({ name: gk.name, example: gk.keyword?.terms?.[0] });
+                  } else if ((customVars[gk.name] ?? "").trim()) {
+                    customRows.push({ name: gk.name, example: customVars[gk.name] });
                   } else {
                     missRows.push({ name: gk.name });
                   }
                 }
-                const totalFilled = kwRows.length + locRows.length + bizRows.length + aiRows.length;
+                const totalFilled = kwRows.length + locRows.length + bizRows.length + aiRows.length + customRows.length;
                 const Group = ({
                   title, icon: Icon, color, rows, empty,
                 }: { title: string; icon: any; color: string; rows: Row[]; empty: string }) => (
@@ -2443,8 +2499,17 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       rows={aiRows}
                       empty="No AI-content variables (heading/description/etc.) in this template."
                     />
+                    {customRows.length > 0 && (
+                      <Group
+                        title="Custom / AI-filled by you"
+                        icon={Wand2}
+                        color="text-sky-600 dark:text-sky-400"
+                        rows={customRows}
+                        empty=""
+                      />
+                    )}
                     {missRows.length > 0 && (
-                      <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-2.5 space-y-1">
+                      <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-2.5 space-y-2">
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="flex items-center gap-1.5 font-semibold text-destructive">
                             <XCircle className="h-3.5 w-3.5" /> Not filled
@@ -2452,8 +2517,44 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                           <span className="text-muted-foreground">{missRows.length} var{missRows.length !== 1 ? "s" : ""}</span>
                         </div>
                         <p className="text-[10.5px] text-muted-foreground">
-                          {missRows.map((r) => `{${r.name}}`).join(", ")} — attach a keyword group, locations, or business info.
+                          Fill these here — type a custom value or let AI write one, so page generation never breaks.
                         </p>
+                        <div className="space-y-1.5">
+                          {missRows.map((r) => (
+                            <div key={r.name} className="flex items-center gap-2">
+                              <span className="font-mono text-[10.5px] text-foreground w-[38%] truncate">{"{" + r.name + "}"}</span>
+                              <Input
+                                className="h-7 text-[11px] flex-1"
+                                value={customVars[r.name] ?? ""}
+                                onChange={(e) => setCustomVars((prev) => ({ ...prev, [r.name]: e.target.value }))}
+                                placeholder={`Custom value for ${r.name}`}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-[10.5px] shrink-0"
+                                disabled={aiFillingMissing}
+                                onClick={() => aiFillMissingVars([r.name])}
+                              >
+                                <Sparkles className="h-3 w-3 mr-1" /> AI
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-7 text-[11px] w-full"
+                          disabled={aiFillingMissing}
+                          onClick={() => aiFillMissingVars(missRows.map((r) => r.name))}
+                        >
+                          {aiFillingMissing ? (
+                            <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Filling with AI…</>
+                          ) : (
+                            <><Wand2 className="h-3 w-3 mr-1" /> Fill all with AI</>
+                          )}
+                        </Button>
                       </div>
                     )}
                   </div>
