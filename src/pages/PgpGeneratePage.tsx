@@ -1245,21 +1245,19 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
     }
     if (geoCoverage.severity === "block") {
       toast({
-        title: "Geo coverage validation failed",
-        description: geoCoverage.issues[0] || "Attach real locations before generating.",
-        variant: "destructive",
+        title: "Geo values incomplete",
+        description: geoCoverage.issues[0] || "Some geo values are placeholders — generating anyway.",
       });
-      return;
     }
+
     if (!variableCoverage.ok) {
       const first = variableCoverage.missing[0];
       toast({
-        title: "Required variables not filled",
-        description: `{${first.name}} is empty on ${first.rows}/${variableCoverage.rowCount} rows${variableCoverage.missing.length > 1 ? ` (+${variableCoverage.missing.length - 1} more)` : ""}. Fill them in the Review step before generating.`,
-        variant: "destructive",
+        title: "Generating with some empty variables",
+        description: `{${first.name}} is empty on ${first.rows}/${variableCoverage.rowCount} rows${variableCoverage.missing.length > 1 ? ` (+${variableCoverage.missing.length - 1} more)` : ""}. Pages will still be created — you can fill these anytime in the Review step.`,
       });
-      return;
     }
+
 
 
     setIsGenerating(true);
@@ -3122,13 +3120,14 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               )}
 
               {!variableCoverage.ok && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-xs space-y-2">
+                <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs space-y-2">
                   <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                     <div className="space-y-1 flex-1">
-                      <p className="font-semibold text-destructive">
-                        Variable validation failed — generation blocked
+                      <p className="font-semibold text-amber-600 dark:text-amber-400">
+                        Some variables are still empty — you can still generate
                       </p>
+
                       <ul className="text-muted-foreground list-disc list-inside space-y-0.5">
                         {variableCoverage.missing.map((m) => (
                           <li key={m.name}>
@@ -3137,8 +3136,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         ))}
                       </ul>
                       <p className="text-muted-foreground pt-1">
-                        Fill them in the &quot;Not filled&quot; panel above (type a value or use AI fill), or attach keywords / locations / business info.
+                        Optional: fill them in the &quot;Not filled&quot; panel above (type a value or use AI fill). Generation is not blocked.
                       </p>
+
                     </div>
                   </div>
                   <Button
@@ -3224,7 +3224,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               <Button
                 className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
                 size="lg"
-                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0 || geoCoverage.severity === "block" || !variableCoverage.ok}
+                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0}
                 onClick={handleGenerate}
               >
 
