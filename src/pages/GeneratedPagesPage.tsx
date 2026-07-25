@@ -576,13 +576,17 @@ export default function GeneratedPagesPage() {
     );
   };
 
-  // Every publish first asks for the output format (real code / Elementor /
-  // Shopify) so the user controls design fidelity per publish — unless a format
-  // was remembered, in which case the whole batch reuses it silently.
+  // v1 ships HTML/CSS only: every publish uses real code so the live page is a
+  // 1:1 copy of the preview. The format dialog is skipped entirely.
   const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
     if (ids.length === 0) return;
     setPendingPublishIds(ids);
     setPendingPublishAction(action);
+    if (HTML_ONLY_MODE) {
+      setPublishFormat("html");
+      runPublish(ids, action, "html");
+      return;
+    }
     if (rememberedFormat) {
       setPublishFormat(rememberedFormat);
       runPublish(ids, action, rememberedFormat);
