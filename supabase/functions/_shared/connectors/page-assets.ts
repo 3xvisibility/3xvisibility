@@ -11,12 +11,10 @@
  * `public.page_assets`, and served publicly by the `page-asset` edge function.
  */
 
-type MinimalClient = {
-  from: (table: string) => {
-    select: (cols: string) => any;
-    upsert: (values: unknown, opts?: unknown) => Promise<{ error: { message: string } | null }>;
-  };
-};
+// Structurally compatible with the Supabase JS client (kept loose so both the
+// service client and test doubles can be passed in).
+// deno-lint-ignore no-explicit-any
+type MinimalClient = { from: (table: string) => any };
 
 export interface BundledPageAssets {
   /** HTML with inline <style>/<script> replaced by external <link>/<script src>. */
