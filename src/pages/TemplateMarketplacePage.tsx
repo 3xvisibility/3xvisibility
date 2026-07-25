@@ -98,11 +98,8 @@ export default function TemplateMarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedTag, setSelectedTag] = useState<string>("all");
   const [selectedFormat, setSelectedFormat] = useState<"all" | "elementor" | "shopify" | "html">("all");
-  const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
   const [wpTestOpen, setWpTestOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
-  const [shareForm, setShareForm] = useState({ templateId: "", description: "", category: "general", authorName: "" });
   const [variablesOpen, setVariablesOpen] = useState(false);
   const [ratingValue, setRatingValue] = useState(5);
   const [reviewText, setReviewText] = useState("");
@@ -197,19 +194,6 @@ export default function TemplateMarketplacePage() {
     },
   });
 
-  // Fetch community shared templates
-  const { data: sharedTemplates = [], isLoading: loadingShared } = useQuery({
-    queryKey: ["shared-templates"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("shared_templates")
-        .select("*")
-        .eq("is_approved", true)
-        .order("downloads", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
 
   // Fetch admin-imported Elementor marketplace templates
   const { data: adminTemplates = [] } = useQuery({
@@ -346,7 +330,7 @@ export default function TemplateMarketplacePage() {
       if (failed > 0 && converted === 0) {
         toast({
           title: "Retry failed",
-          description: `Conversion did not succeed for "${tpl.name}". Open the Job runner for details.`,
+          description: `Conversion did not succeed for "${tpl.name}". Please try again.`,
           variant: "destructive",
         });
       } else if (converted === 0 && failed === 0) {
@@ -364,18 +348,6 @@ export default function TemplateMarketplacePage() {
     onSettled: () => setRetryingId(null),
   });
 
-  // Fetch ratings for shared templates
-  // Aggregate stats only (avg + count per template). Individual ratings are
-  // private to their owner, so we use a SECURITY DEFINER RPC that never exposes
-  // which user rated which template.
-  const { data: ratingStats = [] } = useQuery({
-    queryKey: ["template-rating-stats"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_template_rating_stats");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
 
   const importedTemplates: MarketplaceTemplate[] = useMemo(() => {
     return (adminTemplates as any[]).map((at) => ({
@@ -395,40 +367,10 @@ export default function TemplateMarketplacePage() {
   }, [adminTemplates]);
 
 
-  // Convert shared templates to MarketplaceTemplate format
-  const communityTemplates: MarketplaceTemplate[] = useMemo(() => {
-    return sharedTemplates.map((st: any) => {
-      const stat = (ratingStats as any[]).find((r: any) => r.shared_template_id === st.id);
-      const avgRating = stat ? Number(stat.avg_rating) || 0 : 0;
-      const ratingCount = stat ? Number(stat.rating_count) || 0 : 0;
-      return {
-        id: st.id,
-        shared_id: st.id,
-        name: st.description ? st.description.slice(0, 40) : `Template by ${st.author_name || "Anonymous"}`,
-        description: st.description || "",
-        content: st.content,
-        variables: st.variables || [],
-        category: st.category,
-        tags: [],
-        author: st.author_name || "Anonymous",
-        downloads: st.downloads || 0,
-        rating: avgRating,
-        ratingCount: ratingCount,
-        seo_title_pattern: st.seo_title_pattern,
-        seo_description_pattern: st.seo_description_pattern,
-        schema_type: st.schema_type,
-        isShared: true,
-      };
-    });
-  }, [sharedTemplates, ratingStats]);
 
-  // Merge built-in + community for "browse" tab.
-  // NOTE: every template is universal — the top-level Elementor/Shopify switch
-  // decides how it is converted, so we no longer inject a separate duplicated
-  // "(Elementor)" copy of each template here.
   const allTemplates = useMemo(() => {
-    return [...importedTemplates, ...COMMUNITY_TEMPLATES, ...communityTemplates];
-  }, [importedTemplates, communityTemplates]);
+    return [...importedTemplates, ...COMMUNITY_TEMPLATES];
+  }, [importedTemplates]);
 
   // Build the category pill list dynamically from whatever templates exist on
   // the active tab. "All" is always first; every category present in the data
@@ -437,7 +379,7 @@ export default function TemplateMarketplacePage() {
 
 
   const displayCategories = useMemo(() => {
-    const source = activeTab === "community" ? communityTemplates : allTemplates;
+    const source = allTemplates;
     const counts = new Map<string, number>();
     for (const tpl of source) {
       // Group the literal platform categories under their real content type so
@@ -455,22 +397,13 @@ export default function TemplateMarketplacePage() {
       { id: "all", ...categoryMeta("all"), label: localizedCategoryLabel("all", language), count: source.length },
       ...ids.map((id) => ({ id, ...categoryMeta(id), label: localizedCategoryLabel(id, language), count: counts.get(id) || 0 })),
     ];
-  }, [activeTab, allTemplates, communityTemplates, language]);
+  }, [allTemplates, language]);
 
-  const shareCategories = useMemo(() => {
-    const ids = new Set(Object.keys(CATEGORY_META).filter((id) => id !== "all"));
-    for (const tpl of allTemplates) {
-      if (tpl.category) ids.add(tpl.category);
-    }
-    return Array.from(ids).sort((a, b) =>
-      categoryMeta(a).label.localeCompare(categoryMeta(b).label)
-    );
-  }, [allTemplates]);
 
 
   // Unique tags across the active tab's templates (for the tag filter dropdown).
   const availableTags = useMemo(() => {
-    const source = activeTab === "community" ? communityTemplates : allTemplates;
+    const source = allTemplates;
     const counts = new Map<string, number>();
     for (const tpl of source) {
       for (const tag of tpl.tags || []) {
@@ -481,7 +414,7 @@ export default function TemplateMarketplacePage() {
     }
     return Array.from(counts.entries())
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  }, [activeTab, allTemplates, communityTemplates]);
+  }, [allTemplates]);
 
   // Native format for a template — used by the format filter.
   const nativeFormat = (tpl: MarketplaceTemplate): "elementor" | "shopify" | "html" => {
@@ -491,7 +424,7 @@ export default function TemplateMarketplacePage() {
   };
 
   const filteredTemplates = useMemo(() => {
-    const source = activeTab === "community" ? communityTemplates : allTemplates;
+    const source = allTemplates;
     const q = searchQuery.toLowerCase();
     return source.filter((tpl) => {
       const cat = tpl.category && tpl.category !== "wordpress" && tpl.category !== "shopify"
@@ -508,12 +441,12 @@ export default function TemplateMarketplacePage() {
         (tpl.description || "").toLowerCase().includes(q);
       return matchesCategory && matchesTag && matchesFormat && matchesSearch;
     });
-  }, [searchQuery, selectedCategory, selectedTag, selectedFormat, activeTab, allTemplates, communityTemplates]);
+  }, [searchQuery, selectedCategory, selectedTag, selectedFormat, allTemplates]);
 
   // Reset to first page whenever filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, selectedTag, selectedFormat, activeTab, platformChoice]);
+  }, [searchQuery, selectedCategory, selectedTag, selectedFormat, platformChoice]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTemplates.length / PER_PAGE));
   const paginatedTemplates = useMemo(
@@ -621,57 +554,7 @@ export default function TemplateMarketplacePage() {
     },
   });
 
-  // Share template mutation
-  const shareMutation = useMutation({
-    mutationFn: async (form: typeof shareForm) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      const template = userTemplates.find((t: any) => t.id === form.templateId);
-      if (!template) throw new Error("Template not found");
-      const { error } = await supabase.from("shared_templates").insert({
-        template_id: form.templateId,
-        user_id: user.id,
-        workspace_id: wsId,
-        author_name: form.authorName || "Anonymous",
-        description: form.description,
-        category: form.category,
-        content: (template as any).content,
-        variables: (template as any).variables || [],
-      } as any);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["shared-templates"] });
-      toast({ title: "Template shared!", description: "Your template is now available in the community marketplace." });
-      setShareOpen(false);
-      setShareForm({ templateId: "", description: "", category: "general", authorName: "" });
-    },
-    onError: (err: Error) => {
-      toast({ title: "Share failed", description: err.message, variant: "destructive" });
-    },
-  });
 
-  // Rate template mutation
-  const rateMutation = useMutation({
-    mutationFn: async ({ sharedId, rating, review }: { sharedId: string; rating: number; review: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("template_ratings").upsert({
-        shared_template_id: sharedId,
-        user_id: user.id,
-        rating,
-        review: review || null,
-      } as any, { onConflict: "shared_template_id,user_id" });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["template-rating-stats"] });
-      toast({ title: "Rating submitted!" });
-    },
-    onError: (err: Error) => {
-      toast({ title: "Rating failed", description: err.message, variant: "destructive" });
-    },
-  });
 
   const categoryIcon = (cat: string) => localizedCategoryLabel(cat, language);
 
@@ -1149,54 +1032,6 @@ export default function TemplateMarketplacePage() {
                 </Tabs>
 
 
-                {/* Rating section for shared templates */}
-                {previewTemplate.isShared && previewTemplate.shared_id && (
-                  <div className="p-3 bg-muted/50 rounded-lg space-y-2">
-                    <h4 className="text-xs font-semibold flex items-center gap-1.5">
-                      <MessageSquare className="h-3.5 w-3.5" /> Rate this template
-                    </h4>
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <button
-                            key={s}
-                            onClick={() => setRatingValue(s)}
-                            className="focus:outline-none"
-                          >
-                            <Star
-                              className={`h-5 w-5 transition-colors ${
-                                s <= ratingValue ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"
-                              }`}
-                            />
-                          </button>
-                        ))}
-                      </div>
-                      <Input
-                        placeholder="Optional review..."
-                        value={reviewText}
-                        onChange={(e) => setReviewText(e.target.value)}
-                        className="h-8 text-xs flex-1"
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={rateMutation.isPending}
-                        onClick={() => rateMutation.mutate({
-                          sharedId: previewTemplate.shared_id!,
-                          rating: ratingValue,
-                          review: reviewText,
-                        })}
-                      >
-                        {rateMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Submit"}
-                      </Button>
-                    </div>
-                    {previewTemplate.ratingCount !== undefined && previewTemplate.ratingCount > 0 && (
-                      <p className="text-[10px] text-muted-foreground">
-                        {previewTemplate.ratingCount} rating{previewTemplate.ratingCount !== 1 ? "s" : ""} · avg {previewTemplate.rating}
-                      </p>
-                    )}
-                  </div>
-                )}
 
                 <div className="flex items-center justify-between gap-3 pt-2 border-t border-border mt-2">
                   <div className="flex flex-col gap-1">
@@ -1371,80 +1206,6 @@ export default function TemplateMarketplacePage() {
         />
       )}
 
-      {/* Share Dialog */}
-      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Share2 className="h-5 w-5 text-primary" /> Share Your Template
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Template to Share</Label>
-              <Select value={shareForm.templateId} onValueChange={(v) => setShareForm(f => ({ ...f, templateId: v }))}>
-                <SelectTrigger><SelectValue placeholder="Select a template..." /></SelectTrigger>
-                <SelectContent>
-                  {userTemplates.map((t: any) => (
-                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Your Name</Label>
-              <Input
-                placeholder="Your name or alias"
-                value={shareForm.authorName}
-                onChange={(e) => setShareForm(f => ({ ...f, authorName: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                placeholder="Describe what this template is for..."
-                value={shareForm.description}
-                onChange={(e) => setShareForm(f => ({ ...f, description: e.target.value }))}
-                rows={3}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Select value={shareForm.category} onValueChange={(v) => setShareForm(f => ({ ...f, category: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {shareCategories.map((id) => (
-                      <SelectItem key={id} value={id}>
-                        <span className="flex items-center gap-2">
-                          {localizedCategoryLabel(id, language)}
-                          {id === "prestashop" && (
-                            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5 bg-amber-500/10 text-amber-500 border-amber-500/20">Soon</Badge>
-                          )}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShareOpen(false)}>Cancel</Button>
-              <Button
-                disabled={!shareForm.templateId || !shareForm.description || shareMutation.isPending}
-                onClick={() => shareMutation.mutate(shareForm)}
-              >
-                {shareMutation.isPending ? (
-                  <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Sharing...</>
-                ) : (
-                  <><Share2 className="mr-1.5 h-3.5 w-3.5" /> Share to Marketplace</>
-                )}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
