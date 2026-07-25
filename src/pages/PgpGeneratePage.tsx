@@ -1304,6 +1304,37 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
     return { severity: severity as "ok" | "warn" | "block", issues, sampleRows: previewRows.slice(0, 3) };
   })();
 
+  // ============= Required-variable coverage (per row) =============
+  // Every template variable (except AI-written content fields, which the
+  // generator writes itself) must resolve to a non-empty value on EVERY row
+  // before generation can start.
+  const variableCoverage = (() => {
+    const required = groupKeywords
+      .map((k) => k.name)
+      .filter((n) => !isAiContentVariable(n));
+    if (required.length === 0) {
+      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[] };
+    }
+    let previewRows: Record<string, string>[] = [];
+    try { previewRows = buildRows(); } catch { previewRows = []; }
+    if (previewRows.length === 0) {
+      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[] };
+    }
+    const missing: { name: string; rows: number }[] = [];
+    for (const name of required) {
+      const key = name.trim().toLowerCase();
+      let count = 0;
+      for (const r of previewRows) {
+        const val = (r[key] ?? r[name] ?? "").toString().trim();
+        if (!val) count++;
+      }
+      if (count > 0) missing.push({ name, rows: count });
+    }
+    return { ok: missing.length === 0, rowCount: previewRows.length, missing };
+  })();
+
+
+
   return (
 
     <div className="space-y-4 sm:space-y-6">
