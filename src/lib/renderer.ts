@@ -431,6 +431,7 @@ export function buildOgMeta(opts: {
 export function renderPage(template: TemplateConfig, ctx: RenderContext): RenderResult {
   const warnings: string[] = [];
   const missingVariables: MissingVariable[] = [];
+  const invalidVariables: InvalidVariable[] = [];
   const locale = ctx.locale || "en";
   const allVars: Record<string, string> = { ...ctx.row, ...ctx.extraVars };
   const schemaConfig = template.schema_config || {};
@@ -447,6 +448,23 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
   }
   if (validation.empty.length > 0) {
     warnings.push(`Empty values supplied for: ${validation.empty.join(", ")}`);
+  }
+
+  // 0b) Format validation — CTA URLs, emails, phones must parse correctly.
+  const placeholderNames = [
+    ...collectTemplatePlaceholders(template.content || ""),
+    ...collectTemplatePlaceholders(template.seo_title_pattern || ""),
+    ...collectTemplatePlaceholders(template.seo_description_pattern || ""),
+    ...Object.values(template.schema_config || {}).flatMap((v) => collectTemplatePlaceholders(v)),
+  ];
+  const formatIssues = validateVariableFormats(placeholderNames, allVars);
+  for (const issue of formatIssues) invalidVariables.push(issue);
+  if (formatIssues.length > 0) {
+    warnings.push(
+      `Invalid ${formatIssues.length} variable value(s): ${formatIssues
+        .map((i) => `{${i.name}} — ${i.reason}`)
+        .join("; ")}`,
+    );
   }
 
   // 1) Process conditionals & loops
@@ -471,6 +489,7 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
   if (marked.names.length > 0) {
     warnings.push(`Unresolved variables replaced with [missing: ...] markers: ${marked.names.join(", ")}`);
   }
+
 
   // 5) Extract title from <h1> or row values, then locale-format
   const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/i);
