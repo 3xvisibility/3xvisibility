@@ -11,7 +11,10 @@
  * used both in the Edge Function (Deno) and in Vitest unit tests.
  */
 
+import { validateVariableFormats, type FormatIssue } from "./variable-format";
+
 // ─── Types ───────────────────────────────────────────────────────────
+
 
 export interface TemplateConfig {
   content: string;
