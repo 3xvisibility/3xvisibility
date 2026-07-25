@@ -12,6 +12,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { compareHtml } from "../_shared/html-fidelity.ts";
+import { compareAssetParity, type AssetParityReport } from "../_shared/asset-parity.ts";
 
 const DEFAULT_THRESHOLD = 0.95;
 const FETCH_TIMEOUT_MS = 20_000;
@@ -58,6 +59,7 @@ Deno.serve(async (req) => {
     const pageIds: string[] = Array.isArray(body.page_ids)
       ? body.page_ids.filter((v: unknown) => typeof v === "string").slice(0, 25)
       : [];
+    const autoRepublish = body.auto_republish !== false;
     const threshold = typeof body.threshold === "number" && body.threshold > 0 && body.threshold <= 1
       ? body.threshold
       : DEFAULT_THRESHOLD;
@@ -72,7 +74,7 @@ Deno.serve(async (req) => {
 
     const { data: pages, error: pagesError } = await admin
       .from("generated_pages")
-      .select("id, title, content, external_url, workspace_id, user_id")
+      .select("id, title, content, external_url, workspace_id, user_id, website_id, campaign_id")
       .in("id", pageIds);
     if (pagesError) throw pagesError;
 
@@ -104,9 +106,44 @@ Deno.serve(async (req) => {
       }
 
       try {
-        const live = await fetchPublished(page.external_url);
-        const report = compareHtml(page.content || "", live);
-        const status = report.score >= threshold ? "passed" : "failed";
+        let live = await fetchPublished(page.external_url);
+        let report = compareHtml(page.content || "", live);
+        let parity: AssetParityReport = await compareAssetParity(page.content || "", live, page.external_url);
+        let republished = false;
+
+        // Automatic repair: if design assets are missing on the live page,
+        // re-publish once and re-compare so a transient/sanitized publish
+        // heals itself without user action.
+        if (!parity.ok && autoRepublish && page.website_id) {
+          try {
+            const res = await fetch(`${supabaseUrl}/functions/v1/publish-pages`, {
+              method: "POST",
+              headers: { Authorization: authHeader, "Content-Type": "application/json" },
+              body: JSON.stringify({ page_ids: [page.id], website_id: page.website_id, overwrite_design: true }),
+            });
+            republished = res.ok;
+          } catch (e) {
+            console.error("[PARITY] Re-publish failed:", e);
+          }
+          if (republished) {
+            await new Promise((r) => setTimeout(r, 4000));
+            try {
+              live = await fetchPublished(page.external_url);
+              report = compareHtml(page.content || "", live);
+              parity = await compareAssetParity(page.content || "", live, page.external_url);
+            } catch (e) {
+              console.error("[PARITY] Re-fetch after re-publish failed:", e);
+            }
+          }
+        }
+
+        const parityMismatches = parity.issues.map((i) => ({
+          kind: (i.kind === "link" ? "link" : "css") as "link" | "css",
+          detail: i.detail,
+          hint: i.hint,
+        }));
+        report.mismatches.push(...parityMismatches);
+        const status = report.score >= threshold && parity.ok ? "passed" : "failed";
 
         if (page.workspace_id) {
           await admin.from("page_render_checks").insert({
@@ -119,6 +156,13 @@ Deno.serve(async (req) => {
               content_score: report.contentScore,
               style_score: report.styleScore,
               counts: report.counts,
+              asset_parity: {
+                ok: parity.ok,
+                score: parity.score,
+                issues: parity.issues,
+                counts: parity.counts,
+                auto_republished: republished,
+              },
               url: page.external_url,
               mode: "html-css",
             },
@@ -135,6 +179,8 @@ Deno.serve(async (req) => {
           style_score: report.styleScore,
           structure_score: report.structureScore,
           counts: report.counts,
+          asset_parity: parity,
+          auto_republished: republished,
           mismatches: report.mismatches,
           threshold,
         });
