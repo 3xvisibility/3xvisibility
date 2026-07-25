@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector } from "../_shared/connectors/factory.ts";
 import { aiGenerate, deductCreditsForRequest } from "../_shared/ai-service.ts";
+import { bundleTemplateAssets } from "../_shared/asset-bundler.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,35 +40,16 @@ function parseHtmlBlocks(html: string): ContentBlock[] {
   return blocks;
 }
 
+/**
+ * Make every asset reference absolute (CSS, JS, images, fonts, posters,
+ * multi-candidate `srcset`, inline `style` and `url()`/`@import` inside
+ * `<style>` blocks) so the imported template renders identically wherever it is
+ * previewed or published.
+ */
 function resolveRelativeUrls(html: string, baseUrl: string): string {
-  let origin: string;
-  let basePath: string;
-  try {
-    const u = new URL(baseUrl);
-    origin = u.origin;
-    basePath = baseUrl.replace(/\/[^/]*$/, "/");
-  } catch {
-    return html;
-  }
-
-  // Resolve src, href, srcset, poster, data-src, data-lazy-src attributes
-  return html.replace(
-    /(src|href|srcset|poster|data-src|data-lazy-src|data-original)=["']([^"']+)["']/gi,
-    (full, attr, value) => {
-      // Skip already-absolute, data URIs, anchors, javascript, mail
-      if (/^(https?:|data:|mailto:|javascript:|#|\{)/i.test(value)) return full;
-      let resolved: string;
-      if (value.startsWith("//")) {
-        resolved = "https:" + value;
-      } else if (value.startsWith("/")) {
-        resolved = origin + value;
-      } else {
-        resolved = basePath + value;
-      }
-      return `${attr}="${resolved}"`;
-    }
-  );
+  return bundleTemplateAssets(html, { baseUrl }).html;
 }
+
 
 function extractImageUrls(html: string): string[] {
   const imgs: string[] = [];

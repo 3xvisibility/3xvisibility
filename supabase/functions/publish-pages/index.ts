@@ -5,6 +5,7 @@ import { validateMapping, validateResolved } from "../_shared/shopify-mapping-va
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
 import { buildExactElementorData, htmlToElementor, enforceNativeElementorData, enforceBoxedContentWidth, elementorDataHasHtmlWidget, parityStatsFromData, sectionHeatmapFromData } from "../_shared/connectors/elementor-engine.ts";
 import { PgpConnector } from "../_shared/connectors/pgp-connector.ts";
+import { bundleTemplateAssets, isDesignLinkTag } from "../_shared/asset-bundler.ts";
 
 const PUBLISH_FORMATS = ["elementor", "gutenberg", "shopify", "html"] as const;
 type PublishFormat = (typeof PUBLISH_FORMATS)[number];
@@ -485,21 +486,49 @@ async function resolveShopifySectionKit(
 }
 
 
+/**
+ * Best-known origin for a page's template assets: an explicit source URL stored
+ * on the page/variables, otherwise inferred from the HTML itself.
+ */
+function assetBaseFor(page: Record<string, any>): string | null {
+  const vars = (page?.variables && typeof page.variables === "object") ? page.variables as Record<string, unknown> : {};
+  const candidate =
+    (page?.source_url as string | undefined) ||
+    (vars["source_url"] as string | undefined) ||
+    (vars["template_source_url"] as string | undefined) ||
+    (page?.canonical_url as string | undefined) ||
+    null;
+  if (candidate && /^https?:\/\//i.test(candidate)) return candidate;
+  return null;
+}
 
 
 /**
- * Strip head-level tags (meta, link, script/JSON-LD, style) from generated content
- * before publishing to a CMS that already has its own <head>, header, and footer.
- * Only the body content (inside <div class="pgp-page">) is sent to the CMS.
+ * Prepare generated HTML for a CMS that already owns its <head>, header and
+ * footer.
+ *
+ * v1 is HTML/CSS-only, so the published markup must stay a 1:1 copy of the
+ * preview. Two things are required for that:
+ *  1. every asset URL (CSS, JS, images, fonts, posters, srcset, CSS url()) is
+ *     rewritten to an absolute URL so it still resolves on the published domain,
+ *  2. design-carrying <link> tags (stylesheets, font preloads, preconnects) are
+ *     kept, while CMS-owned metadata (canonical, icons, alternates, meta) is
+ *     stripped.
  */
-function stripHeadTagsForCms(content: string): string {
-  let cleaned = content
+function stripHeadTagsForCms(content: string, baseUrl?: string | null): string {
+  if (!content) return content;
+
+  // 1. Absolutise every asset reference against the template's origin.
+  const bundled = bundleTemplateAssets(content, { baseUrl });
+
+  let cleaned = bundled.html
     // Remove HTML comments (e.g. <!-- Open Graph Meta Tags -->)
     .replace(/<!--[\s\S]*?-->/g, "")
     // Remove <meta ...> tags
     .replace(/<meta\b[^>]*\/?>/gi, "")
-    // Remove <link rel="canonical" ...> tags
-    .replace(/<link\b[^>]*\/?>/gi, "")
+    // Keep stylesheets / font preloads / preconnects; drop canonical, icons,
+    // alternates and other CMS-owned metadata links.
+    .replace(/<link\b[^>]*\/?>/gi, (tag) => (isDesignLinkTag(tag) ? tag : ""))
     // Remove <script type="application/ld+json">...</script> blocks
     .replace(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "")
     // Keep the .pgp-page responsive stylesheet — WordPress themes won't style our content
@@ -510,6 +539,7 @@ function stripHeadTagsForCms(content: string): string {
 
   return cleaned;
 }
+
 
 function shouldUseExactElementorRender(_content: string): boolean {
   // NATIVE EDITABLE MODE (user choice): convert template HTML into native,
@@ -1047,7 +1077,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         };
         try {
           step("Validating page payload", "ok", `${website.type} · ${pubType}`);
-          const cleanedContent = stripHeadTagsForCms(dp.content);
+          const cleanedContent = stripHeadTagsForCms(dp.content, assetBaseFor(dp));
           // Republish of an already-published page → preserve existing on-site design.
           const isRepublish = !!dp.external_id;
           const preserveDesign = isRepublish && !allowOverwriteDesign;
@@ -1466,7 +1496,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           await runWordPressConnectorPreflight(connector, "3xVisibility WordPress Connector");
           finishRunning("ok");
         }
-        const cleanedContent = stripHeadTagsForCms(page.content);
+        const cleanedContent = stripHeadTagsForCms(page.content, assetBaseFor(page));
         // Republish of an already-published CMS page → preserve existing on-site
         // design. Only metadata (title, slug, SEO meta, canonical) flows through.
         const isRepublish = !!page.external_id;
