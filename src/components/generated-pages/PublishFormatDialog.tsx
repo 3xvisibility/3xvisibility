@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Code2, LayoutTemplate, ShoppingBag, Check } from "lucide-react";
 
 export type PublishFormat = "html" | "elementor" | "shopify";
@@ -53,7 +54,9 @@ interface Props {
   pageCount: number;
   /** Format pre-selected when the dialog opens. */
   defaultFormat?: PublishFormat;
-  onConfirm: (format: PublishFormat) => void;
+  /** Whether "apply to every publish" is currently remembered. */
+  rememberDefault?: boolean;
+  onConfirm: (format: PublishFormat, remember: boolean) => void;
 }
 
 export function PublishFormatDialog({
@@ -61,9 +64,19 @@ export function PublishFormatDialog({
   onOpenChange,
   pageCount,
   defaultFormat = "html",
+  rememberDefault = false,
   onConfirm,
 }: Props) {
   const [format, setFormat] = useState<PublishFormat>(defaultFormat);
+  const [remember, setRemember] = useState(rememberDefault);
+
+  // Re-sync with the caller's current defaults each time the dialog opens.
+  useEffect(() => {
+    if (open) {
+      setFormat(defaultFormat);
+      setRemember(rememberDefault);
+    }
+  }, [open, defaultFormat, rememberDefault]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -110,11 +123,24 @@ export function PublishFormatDialog({
           })}
         </div>
 
+        <label className="flex items-start gap-2 rounded-md border border-border/60 bg-muted/30 p-2.5 cursor-pointer">
+          <Checkbox checked={remember} onCheckedChange={(v) => setRemember(v === true)} className="mt-0.5" />
+          <span className="text-xs">
+            <span className="font-medium">Apply this format to every publish</span>
+            <span className="block text-muted-foreground">
+              Uses the same format for all pages in this batch and future publishes without asking again. You can change it
+              anytime from the “Publish format” button.
+            </span>
+          </span>
+        </label>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={() => onConfirm(format)}>Continue</Button>
+          <Button onClick={() => onConfirm(format, remember)}>
+            {pageCount === 1 ? "Continue" : `Publish ${pageCount} pages`}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -100,6 +100,18 @@ export default function GeneratedPagesPage() {
   // Output format asked before every publish: real code (1:1), Elementor, Shopify.
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [publishFormat, setPublishFormat] = useState<PublishFormat>("html");
+  // When the user ticks "apply to every publish", the chosen format is reused
+  // for the whole batch (and later publishes) without re-asking.
+  const [rememberedFormat, setRememberedFormat] = useState<PublishFormat | null>(() => {
+    const saved = typeof window !== "undefined" ? window.localStorage.getItem("pgp:publish-format") : null;
+    return saved === "html" || saved === "elementor" || saved === "shopify" ? saved : null;
+  });
+  const persistRememberedFormat = (format: PublishFormat | null) => {
+    setRememberedFormat(format);
+    if (typeof window === "undefined") return;
+    if (format) window.localStorage.setItem("pgp:publish-format", format);
+    else window.localStorage.removeItem("pgp:publish-format");
+  };
 
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
@@ -565,11 +577,17 @@ export default function GeneratedPagesPage() {
   };
 
   // Every publish first asks for the output format (real code / Elementor /
-  // Shopify) so the user controls design fidelity per publish.
+  // Shopify) so the user controls design fidelity per publish — unless a format
+  // was remembered, in which case the whole batch reuses it silently.
   const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
     if (ids.length === 0) return;
     setPendingPublishIds(ids);
     setPendingPublishAction(action);
+    if (rememberedFormat) {
+      setPublishFormat(rememberedFormat);
+      runPublish(ids, action, rememberedFormat);
+      return;
+    }
     setShowFormatDialog(true);
   };
 
@@ -1035,9 +1053,29 @@ export default function GeneratedPagesPage() {
       {someSelected && (
         <Card className="border-primary/30 bg-primary/5 shadow-surface">
           <CardContent className="p-3 flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <CheckSquare className="h-4 w-4 text-primary" />
               <span className="text-sm font-semibold">{t("generatedPages.selectedCountShort", { count: selectedIds.size })}</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => {
+                  setPendingPublishIds([...selectedIds]);
+                  setPendingPublishAction("bulk");
+                  setShowFormatDialog(true);
+                }}
+              >
+                Publish format:&nbsp;
+                <span className="font-semibold">
+                  {(rememberedFormat ?? publishFormat) === "html"
+                    ? "Real code"
+                    : (rememberedFormat ?? publishFormat) === "elementor"
+                      ? "Elementor"
+                      : "Shopify"}
+                </span>
+                {rememberedFormat && <span className="ml-1 opacity-60">(applied to all)</span>}
+              </Button>
             </div>
             <div className="flex flex-wrap gap-1.5">
               <Button size="sm" className="h-7 text-xs bg-gradient-primary border-0" disabled={bulkPublishMutation.isPending}
@@ -1653,9 +1691,11 @@ export default function GeneratedPagesPage() {
           if (!open) setPendingPublishIds([]);
         }}
         pageCount={pendingPublishIds.length}
-        defaultFormat={publishFormat}
-        onConfirm={(format) => {
+        defaultFormat={rememberedFormat ?? publishFormat}
+        rememberDefault={!!rememberedFormat}
+        onConfirm={(format, remember) => {
           setPublishFormat(format);
+          persistRememberedFormat(remember ? format : null);
           setShowFormatDialog(false);
           runPublish(pendingPublishIds, pendingPublishAction, format);
         }}
