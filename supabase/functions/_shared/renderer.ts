@@ -24,6 +24,12 @@ export interface RenderContext {
   locale?: string;
 }
 
+export interface MissingVariable {
+  name: string;
+  location: "content" | "seo_title" | "seo_description" | "schema";
+  emptyValue: boolean;
+}
+
 export interface RenderResult {
   html: string;
   title: string;
@@ -34,6 +40,7 @@ export interface RenderResult {
   ogTags: string;
   jsonLd: string;
   warnings: string[];
+  missingVariables: MissingVariable[];
 }
 
 // ─── Core functions ──────────────────────────────────────────────────
