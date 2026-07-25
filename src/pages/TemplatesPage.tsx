@@ -648,7 +648,10 @@ export default function TemplatesPage() {
 
 
       if (!data.name || !data.content) throw new Error("Invalid template file.");
-      const normalizedContent = normalizeTemplateHtml(String(data.content)).html || data.content;
+      const importedRaw = String(data.content);
+      const normalizedContent =
+        normalizeTemplateHtml(importedRaw, { keepScripts: /<script\b/i.test(importedRaw) }).html || data.content;
+
       const { error } = await supabase.from("templates").insert({ name: data.name, content: normalizedContent, variables: data.variables || [], user_id: user.id, workspace_id: wsId, seo_title_pattern: data.seo_title_pattern || "", seo_description_pattern: data.seo_description_pattern || "", schema_type: data.schema_type || "WebPage", schema_config: data.schema_config || {} } as any);
       if (error) throw error;
       await refreshTemplates();
@@ -856,12 +859,9 @@ export default function TemplatesPage() {
     const styles = data?.headStyles || "";
     const suggestions: { blockId: string; original: string; variable: string; value: string }[] = data?.suggestions || [];
 
-    // Strip common header/footer/nav elements
-    html = html.replace(/<header[\s\S]*?<\/header>/gi, "");
-    html = html.replace(/<footer[\s\S]*?<\/footer>/gi, "");
-    html = html.replace(/<nav[\s\S]*?<\/nav>/gi, "");
-    html = html.replace(/<!--\s*header\s*-->[\s\S]*?<!--\s*\/header\s*-->/gi, "");
-    html = html.replace(/<!--\s*footer\s*-->[\s\S]*?<!--\s*\/footer\s*-->/gi, "");
+    // Full-fidelity import: header/nav/footer stay in the template so the
+    // published page looks exactly like the source page.
+
 
     // Prefer the AI's curated "best keyword" suggestions. These are clean,
     // business-specific variable names (city, service, product_name, ...).
@@ -898,8 +898,14 @@ export default function TemplatesPage() {
 
     const allVars = filterDesignVars([...new Set([...variableEntries.map((v) => v.name), ...pendingKeywords])]);
     const rawContent = styles ? `${styles}\n${html}` : html;
-    // Every imported template lands in the same HTML/CSS/JS shape.
-    const fullContent = normalizeTemplateHtml(rawContent, { baseUrl: data?.url || null }).html || rawContent;
+    // Every imported template lands in the same HTML/CSS/JS shape. Source JS is
+    // preserved when the page ships any, so the design behaves like the original.
+    const fullContent =
+      normalizeTemplateHtml(rawContent, {
+        baseUrl: data?.url || null,
+        keepScripts: /<script\b/i.test(rawContent),
+      }).html || rawContent;
+
     setSiteDialogOpen(false); setSitePages([]);
     const pendingTemplate = { id: "", name: pageTitle || "Site Template", content: fullContent, variables: allVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: { language: siteLanguage !== "__auto__" ? siteLanguage : undefined }, seo_title_pattern: "", seo_description_pattern: "" } as any as Template;
     // Show the import preview step FIRST — user confirms the extracted variables

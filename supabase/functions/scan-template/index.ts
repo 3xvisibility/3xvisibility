@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector } from "../_shared/connectors/factory.ts";
 import { aiGenerate, deductCreditsForRequest } from "../_shared/ai-service.ts";
 import { bundleTemplateAssets } from "../_shared/asset-bundler.ts";
+import { inlineExternalAssets } from "../_shared/asset-inliner.ts";
 import { normalizeTemplateHtml } from "../_shared/template-normalizer.ts";
 
 const corsHeaders = {
@@ -62,43 +63,17 @@ function extractImageUrls(html: string): string[] {
   return imgs;
 }
 
-/**
- * Many modern landing pages (React/Framer/Rocket builds) ship their content
- * with an "entrance animation" initial state — inline `opacity:0` plus a
- * translate transform — and only reveal it with JS on scroll. When we import
- * such a page statically, every headline/paragraph exists in the HTML but is
- * invisible, so the template looks like design-only with no text.
- * This resets those initial states to a visible one.
- */
-function neutralizeHiddenStates(html: string): string {
-  let out = html.replace(/style=(["'])([^"']*)\1/gi, (full, q, css: string) => {
-    if (!/opacity|visibility|transform/i.test(css)) return full;
-    const fixed = css
-      .replace(/opacity\s*:\s*0(\.0+)?\s*(!important)?/gi, "opacity:1")
-      .replace(/visibility\s*:\s*hidden\s*(!important)?/gi, "visibility:visible")
-      .replace(/transform\s*:\s*[^;]*(translate|scale|rotate)[^;]*/gi, "transform:none");
-    return `style=${q}${fixed}${q}`;
-  });
-  // Utility classes that hide content until an observer adds a "visible" class.
-  out = out.replace(/\bopacity-0\b/g, "opacity-100").replace(/\binvisible\b/g, "visible");
-  // Safety net stylesheet in case a class-based animation still hides content.
-  out += `\n<style>[data-aos],[class*="fade-"],[class*="reveal"],[class*="animate-"]{opacity:1 !important;visibility:visible !important;transform:none !important;}</style>`;
-  return out;
-}
 
 function extractBodyContent(html: string): string {
   // Try to extract just the body
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   const content = bodyMatch ? bodyMatch[1] : html;
-  // Keep <style> tags (page builder inline styles like Elementor, Divi, etc.)
-  // Remove script tags, nav, footer
-  const cleaned = content
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<nav[\s\S]*?<\/nav>/gi, "")
-    .replace(/<footer[\s\S]*?<\/footer>/gi, "")
-    .replace(/<!--[\s\S]*?-->/g, "");
-  return neutralizeHiddenStates(cleaned);
+  // Full-fidelity import: keep <style>, <script>, <nav> and <footer> exactly as
+  // the source ships them. Anything we remove here is design the published page
+  // can never get back. Only HTML comments go.
+  return content.replace(/<!--[\s\S]*?-->/g, "");
 }
+
 
 function extractHeadStyles(html: string, baseUrl: string): string {
   const styles: string[] = [];
@@ -306,10 +281,19 @@ Deno.serve(async (req) => {
 
     // Resolve all relative URLs to absolute before any processing
     const resolvedHtml = resolveRelativeUrls(rawHtml, formattedUrl);
-    const bodyContent = extractBodyContent(resolvedHtml);
-    const headStyles = extractHeadStyles(resolvedHtml, formattedUrl);
+    // Fetch the real bytes of every external stylesheet/script so the imported
+    // template carries the complete design (colors, fonts, layout, behaviour)
+    // instead of links that break once the page is published elsewhere.
+    const inlined = await inlineExternalAssets(resolvedHtml, { baseUrl: formattedUrl });
+    console.log(
+      `Inlined ${inlined.stylesheetsInlined} stylesheet(s) and ${inlined.scriptsInlined} script(s) (${inlined.bytes} bytes) from ${formattedUrl}; ${inlined.failures.length} failed`,
+    );
+    const selfContainedHtml = inlined.html;
+    const bodyContent = extractBodyContent(selfContainedHtml);
+    const headStyles = extractHeadStyles(selfContainedHtml, formattedUrl);
     const blocks = parseHtmlBlocks(bodyContent);
     const imageUrls = extractImageUrls(bodyContent);
+
 
     // Use AI to suggest variables
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -409,9 +393,13 @@ Return a JSON array of the best suggestions only.`,
     }
 
     // Consistent HTML/CSS/JS shape for every scanned page: merged stylesheet,
-    // sanitized markup, single `.tpl-root` wrapper.
+    // sanitized markup, single `.tpl-root` wrapper. Behaviour JS is preserved
+    // whenever the source actually ships some, so sliders/tabs/menus keep
+    // working after publish; otherwise the normalizer reveals animated content.
+    const hasScripts = /<script\b/i.test(bodyContent) || /<script\b/i.test(headStyles);
     const normalized = normalizeTemplateHtml(`${headStyles}\n${bodyContent}`, {
       baseUrl: formattedUrl,
+      keepScripts: hasScripts,
     });
 
     return new Response(
@@ -422,10 +410,17 @@ Return a JSON array of the best suggestions only.`,
         headStyles,
         normalizedHtml: normalized.html,
         normalization: { warnings: normalized.warnings, stats: normalized.stats },
+        assets: {
+          stylesheets_inlined: inlined.stylesheetsInlined,
+          scripts_inlined: inlined.scriptsInlined,
+          bytes: inlined.bytes,
+          failures: inlined.failures.slice(0, 10),
+        },
         blocks,
         suggestions,
         imageUrls,
       }),
+
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
