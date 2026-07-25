@@ -1840,6 +1840,14 @@ export default function CampaignDetailPage() {
         onRetryFailed={(ids) => { setPublishLog(null); bulkPublishMutation.mutate({ pageIds: ids }); }}
         retrying={bulkPublishMutation.isPending}
       />
+      <AssetParityResultDialog
+        open={parityRecheck.open}
+        onOpenChange={parityRecheck.setOpen}
+        running={parityRecheck.running}
+        results={parityRecheck.results}
+        error={parityRecheck.error}
+        onRecheck={() => parityRecheck.run(lastRecheckIds, { delayMs: 0 })}
+      />
       <PublishWebsiteSelector
         open={showWebsiteSelector}
         onOpenChange={(open) => {
