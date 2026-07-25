@@ -30,6 +30,13 @@ export interface MissingVariable {
   emptyValue: boolean;
 }
 
+export interface InvalidVariable {
+  name: string;
+  value: string;
+  expected: "url" | "email" | "phone" | "color" | "number" | "text";
+  reason: string;
+}
+
 export interface RenderResult {
   html: string;
   title: string;
@@ -41,7 +48,11 @@ export interface RenderResult {
   jsonLd: string;
   warnings: string[];
   missingVariables: MissingVariable[];
+  invalidVariables: InvalidVariable[];
 }
+
+import { validateVariableFormats } from "./variable-format.ts";
+
 
 // ─── Core functions ──────────────────────────────────────────────────
 
@@ -263,6 +274,7 @@ export function buildOgMeta(opts: { title: string; description: string; url?: st
 export function renderPage(template: TemplateConfig, ctx: RenderContext): RenderResult {
   const warnings: string[] = [];
   const missingVariables: MissingVariable[] = [];
+  const invalidVariables: InvalidVariable[] = [];
   const locale = ctx.locale || "en";
   const allVars: Record<string, string> = { ...ctx.row, ...ctx.extraVars };
   const schemaConfig = template.schema_config || {};
@@ -277,12 +289,24 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
   if (validation.missing.length > 0) warnings.push(`Missing data source for: ${validation.missing.join(", ")}`);
   if (validation.empty.length > 0) warnings.push(`Empty values supplied for: ${validation.empty.join(", ")}`);
 
+  // Format validation — CTA URLs, emails, phones, colours must parse.
+  const placeholderNames = [
+    ...collectTemplatePlaceholders(template.content || ""),
+    ...collectTemplatePlaceholders(template.seo_title_pattern || ""),
+    ...collectTemplatePlaceholders(template.seo_description_pattern || ""),
+    ...Object.values(template.schema_config || {}).flatMap((v) => collectTemplatePlaceholders(v)),
+  ];
+  const formatIssues = validateVariableFormats(placeholderNames, allVars);
+  for (const issue of formatIssues) invalidVariables.push(issue);
+  if (formatIssues.length > 0) {
+    warnings.push(`Invalid ${formatIssues.length} variable value(s): ${formatIssues.map((i) => `{${i.name}} — ${i.reason}`).join("; ")}`);
+  }
+
   let html = processConditionals(template.content, allVars);
   html = processLoops(html, allVars);
   html = replaceVariables(html, allVars, locale);
   html = processSpintax(html);
 
-  // Replace lingering placeholders with a visible [missing: name] marker.
   const marked = replaceMissingWithMarkers(html);
   html = marked.html;
   for (const name of marked.names) {
@@ -314,5 +338,6 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
   const twitterCard = schemaConfig._twitterCard || "summary_large_image";
   const ogTags = buildOgMeta({ title: ogTitle, description: ogDesc, url: canonicalUrl || undefined, imageUrl: ogImage, twitterCard });
   const jsonLd = buildJsonLd(template.schema_type || "WebPage", schemaConfig, allVars, title, seoDescription, ctx.campaignType, ctx.extraVars, ctx.row);
-  return { html, title, slug, seoTitle, seoDescription, canonicalUrl, ogTags, jsonLd, warnings, missingVariables };
+  return { html, title, slug, seoTitle, seoDescription, canonicalUrl, ogTags, jsonLd, warnings, missingVariables, invalidVariables };
 }
+

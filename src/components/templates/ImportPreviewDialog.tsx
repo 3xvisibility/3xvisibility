@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, ArrowRight, X, ArrowUp, ArrowDown, Trash2, RotateCcw, AlertCircle, Plus, ListOrdered } from "lucide-react";
+import { validateVariableValue, detectVariableFormat } from "@/lib/variable-format";
+
 
 export interface ImportPreviewVariable {
   name: string;
@@ -172,6 +174,25 @@ export function ImportPreviewDialog({
     [generalRows],
   );
 
+  /**
+   * Map of variable name → format-issue reason for rows whose sample value
+   * (the extracted `original` text) doesn't match the format expected for
+   * the variable name — e.g. `{cta_url}` mapped onto "Learn more".
+   */
+  const formatIssues = useMemo(() => {
+    const map = new Map<string, { reason: string; expected: string }>();
+    for (const r of rows) {
+      if (r.removed || !r.name) continue;
+      if (!/^[a-z][a-z0-9_]{0,41}$/.test(r.name)) continue;
+      const expected = detectVariableFormat(r.name);
+      if (expected === "text") continue;
+      const issue = validateVariableValue(r.name, r.original || "");
+      if (issue) map.set(r.originalName, { reason: issue.reason, expected });
+    }
+    return map;
+  }, [rows]);
+
+
   const highlightedHtml = useMemo(() => {
     if (!editedContent) return "";
     const cleaned = editedContent
@@ -287,7 +308,8 @@ export function ImportPreviewDialog({
   };
 
   const activeCount = rows.filter((r) => !r.removed).length;
-  const hasErrors = dupeNames.size > 0 || invalidNames.size > 0;
+  const hasErrors = dupeNames.size > 0 || invalidNames.size > 0 || formatIssues.size > 0;
+
 
   const handleContinue = () => {
     if (hasErrors) return;
@@ -345,10 +367,13 @@ export function ImportPreviewDialog({
                       {generalRows.map((row, idx) => {
                         const dupe = !row.removed && dupeNames.has(row.name);
                         const invalid = !row.removed && !/^[a-z][a-z0-9_]{0,41}$/.test(row.name);
+                        const fmt = !row.removed ? formatIssues.get(row.originalName) : undefined;
+                        const empty = !row.removed && !(row.original || "").trim();
+                        const hasErr = dupe || invalid || !!fmt || empty;
                         return (
                           <li
                             key={`${row.originalName}-${idx}`}
-                            className={`rounded-md border bg-card p-2 space-y-1.5 ${row.removed ? "opacity-50" : ""} ${dupe || invalid ? "border-destructive/60" : ""}`}
+                            className={`rounded-md border bg-card p-2 space-y-1.5 ${row.removed ? "opacity-50" : ""} ${hasErr ? "border-destructive/60" : ""}`}
                           >
                             <div className="flex items-center gap-1">
                               <span className="text-[10px] font-mono text-muted-foreground w-6 text-center shrink-0">#{idx + 1}</span>
@@ -381,7 +406,7 @@ export function ImportPreviewDialog({
                               </div>
                             </div>
                             <div className="text-[11px] text-muted-foreground pl-7 truncate" title={row.original}>
-                              ← {row.original}
+                              ← {row.original || <span className="italic">(empty)</span>}
                             </div>
                             {(dupe || invalid) && (
                               <div className="text-[10px] text-destructive pl-7 flex items-center gap-1">
@@ -389,9 +414,24 @@ export function ImportPreviewDialog({
                                 {dupe ? "Duplicate name" : "Use lowercase_snake_case starting with a letter"}
                               </div>
                             )}
+                            {!dupe && !invalid && empty && (
+                              <div className="text-[10px] text-destructive pl-7 flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                No value mapped — provide a source or remove this variable
+                              </div>
+                            )}
+                            {!dupe && !invalid && !empty && fmt && (
+                              <div className="text-[10px] text-destructive pl-7 flex items-start gap-1">
+                                <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                                <span>
+                                  <span className="font-semibold">Invalid {fmt.expected}:</span> {fmt.reason}
+                                </span>
+                              </div>
+                            )}
                           </li>
                         );
                       })}
+
                     </ul>
                   </div>
                 )}
@@ -502,9 +542,10 @@ export function ImportPreviewDialog({
         <div className="flex items-center justify-between gap-2 px-5 py-3 border-t bg-card shrink-0">
           <p className="text-[11px] text-muted-foreground">
             {hasErrors
-              ? "Fix duplicate or invalid variable names before continuing."
+              ? `Fix ${dupeNames.size + invalidNames.size + formatIssues.size} error(s): duplicate names, invalid names, or values that don't match the variable format (e.g. {cta_url}).`
               : "Order here becomes the default order in CSVs and Keyword Groups."}
           </p>
+
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={onCancel}>
               <X className="h-3.5 w-3.5 mr-1.5" /> Discard

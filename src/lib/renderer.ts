@@ -11,7 +11,10 @@
  * used both in the Edge Function (Deno) and in Vitest unit tests.
  */
 
+import { validateVariableFormats, type FormatIssue } from "./variable-format";
+
 // ─── Types ───────────────────────────────────────────────────────────
+
 
 export interface TemplateConfig {
   content: string;
@@ -44,6 +47,13 @@ export interface MissingVariable {
   emptyValue: boolean;
 }
 
+export interface InvalidVariable {
+  name: string;
+  value: string;
+  expected: "url" | "email" | "phone" | "color" | "number" | "text";
+  reason: string;
+}
+
 export interface RenderResult {
   html: string;
   title: string;
@@ -57,7 +67,10 @@ export interface RenderResult {
   warnings: string[];
   /** Placeholders detected during generation that had no data source. */
   missingVariables: MissingVariable[];
+  /** Placeholders whose value failed format validation (bad URL, email, …). */
+  invalidVariables: InvalidVariable[];
 }
+
 
 // ─── Slug normalisation ──────────────────────────────────────────────
 
@@ -421,6 +434,7 @@ export function buildOgMeta(opts: {
 export function renderPage(template: TemplateConfig, ctx: RenderContext): RenderResult {
   const warnings: string[] = [];
   const missingVariables: MissingVariable[] = [];
+  const invalidVariables: InvalidVariable[] = [];
   const locale = ctx.locale || "en";
   const allVars: Record<string, string> = { ...ctx.row, ...ctx.extraVars };
   const schemaConfig = template.schema_config || {};
@@ -437,6 +451,23 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
   }
   if (validation.empty.length > 0) {
     warnings.push(`Empty values supplied for: ${validation.empty.join(", ")}`);
+  }
+
+  // 0b) Format validation — CTA URLs, emails, phones must parse correctly.
+  const placeholderNames = [
+    ...collectTemplatePlaceholders(template.content || ""),
+    ...collectTemplatePlaceholders(template.seo_title_pattern || ""),
+    ...collectTemplatePlaceholders(template.seo_description_pattern || ""),
+    ...Object.values(template.schema_config || {}).flatMap((v) => collectTemplatePlaceholders(v)),
+  ];
+  const formatIssues = validateVariableFormats(placeholderNames, allVars);
+  for (const issue of formatIssues) invalidVariables.push(issue);
+  if (formatIssues.length > 0) {
+    warnings.push(
+      `Invalid ${formatIssues.length} variable value(s): ${formatIssues
+        .map((i) => `{${i.name}} — ${i.reason}`)
+        .join("; ")}`,
+    );
   }
 
   // 1) Process conditionals & loops
@@ -461,6 +492,7 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
   if (marked.names.length > 0) {
     warnings.push(`Unresolved variables replaced with [missing: ...] markers: ${marked.names.join(", ")}`);
   }
+
 
   // 5) Extract title from <h1> or row values, then locale-format
   const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/i);
@@ -549,5 +581,7 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
     jsonLd,
     warnings,
     missingVariables,
+    invalidVariables,
   };
 }
+
