@@ -1382,12 +1382,24 @@ slug: ${fields.slug}`,
         <ImportPreviewDialog
           open={!!importPreview}
           onCancel={() => setImportPreview(null)}
-          onContinue={() => {
+          onContinue={(edited) => {
             const p = importPreview;
             setImportPreview(null);
-            setEditingTemplate(p.pendingTemplate);
+            // Merge the user's edits (renames, reorderings, removals) back into
+            // the pending template before the full editor opens.
+            const editedNames = edited.variables.map((v) => v.name);
+            const extras = (p.pendingTemplate.variables || []).filter(
+              (name: string) => !editedNames.includes(name) &&
+                !p.variables.some((v) => v.name === name),
+            );
+            const nextTemplate = {
+              ...p.pendingTemplate,
+              content: edited.fullContent,
+              variables: [...editedNames, ...extras],
+            } as Template;
+            setEditingTemplate(nextTemplate);
             setEditorOpen(true);
-            const n = p.variables.length;
+            const n = edited.variables.length;
             toast({ title: `Page imported${n ? ` — ${n} variable${n > 1 ? "s" : ""} ready` : ""}` });
           }}
           pageTitle={importPreview.pageTitle}
