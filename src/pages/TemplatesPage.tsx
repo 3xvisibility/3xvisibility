@@ -18,7 +18,7 @@ import {
   Search as SearchIcon, Pencil, MoreVertical, LayoutGrid, List,
   ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet, Link2,
   ChevronLeft, ChevronRight, Loader2, MonitorSmartphone, ShoppingBag, Briefcase,
-  Wand2, Eye, AlertTriangle, Crown, Palette, History, Columns, LayoutTemplate, RefreshCw,
+  Wand2, Eye, AlertTriangle, Crown, Palette, History, Columns, LayoutTemplate, RefreshCw, ScanSearch,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
@@ -475,6 +475,60 @@ export default function TemplatesPage() {
     },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
+
+  /**
+   * Re-run the expanded auto-extractor against one or more existing templates
+   * so older imports pick up the newly supported variable families
+   * (list_N_item_M, subheading, cta_label, cta_url, quote, caption, …).
+   * Only NEW placeholders are added — existing {variables} are preserved so
+   * campaigns that reference them keep rendering.
+   */
+  const rescanMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (!wsId || ids.length === 0) return { updated: 0, added: 0, skipped: 0 };
+      const targets = templates.filter((t) => ids.includes(t.id));
+      let updated = 0;
+      let addedTotal = 0;
+      let skipped = 0;
+      for (const tpl of targets) {
+        const original = tpl.content || "";
+        if (!original.trim()) { skipped += 1; continue; }
+        const existing = new Set(
+          (original.match(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g) || []).map((s) => s.slice(1, -1).toLowerCase()),
+        );
+        const candidates = autoExtractTemplateVariables(original, tpl.name || "", []);
+        // Keep only extracted vars whose NAME isn't already used and whose
+        // ORIGINAL text still exists literally in the current HTML.
+        const additions = candidates.filter((c) => {
+          if (existing.has(c.name.toLowerCase())) return false;
+          if (!c.original || !original.includes(c.original)) return false;
+          return true;
+        });
+        if (additions.length === 0) { skipped += 1; continue; }
+        const nextContent = applyTemplateVariables(original, additions);
+        if (nextContent === original) { skipped += 1; continue; }
+        const variables = filterDesignVars([...new Set(nextContent.match(/\{[^}]+\}/g) || [])]);
+        const { error } = await supabase
+          .from("templates")
+          .update({ content: nextContent, variables } as any)
+          .eq("id", tpl.id);
+        if (error) throw error;
+        await recordVersionById(tpl.id, `Rescan added ${additions.length} variable(s)`);
+        updated += 1;
+        addedTotal += additions.length;
+      }
+      return { updated, added: addedTotal, skipped };
+    },
+    onSuccess: async (res) => {
+      await refreshTemplates();
+      toast({
+        title: "Variable rescan complete",
+        description: `Updated ${res.updated} template(s), added ${res.added} new variable(s)${res.skipped ? `, ${res.skipped} unchanged` : ""}.`,
+      });
+    },
+    onError: (err: Error) => toast({ title: "Rescan failed", description: err.message, variant: "destructive" }),
+  });
+
 
   // Re-import a marketplace template at its current latest version. We always
   // create a NEW snapshot row — never mutate the existing one — so previously
@@ -1127,9 +1181,14 @@ slug: ${fields.slug}`,
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <Button variant="outline" size="sm" onClick={() => rescanMutation.mutate([...selectedIds])} disabled={rescanMutation.isPending}>
+            {rescanMutation.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <ScanSearch className="h-3.5 w-3.5 mr-1.5" />}
+            Rescan variables
+          </Button>
           <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
             <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete
           </Button>
+
           <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Clear</Button>
         </div>
       )}
@@ -1190,7 +1249,9 @@ slug: ${fields.slug}`,
                       <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setWidthTemplate(tpl)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Content width</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setDuplicateTarget(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => rescanMutation.mutate([tpl.id])} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
+
                       <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive" onClick={() => checkAndDelete(tpl.id)}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
                     </DropdownMenuContent>
@@ -1251,7 +1312,9 @@ slug: ${fields.slug}`,
                             <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setWidthTemplate(tpl)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Content width</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setDuplicateTarget(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => rescanMutation.mutate([tpl.id])} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
+
                             <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive" onClick={() => checkAndDelete(tpl.id)}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
                           </DropdownMenuContent>
@@ -1312,7 +1375,9 @@ slug: ${fields.slug}`,
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl, "variants-only"); }}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setWidthTemplate(tpl); }}><LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Content width</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setDuplicateTarget(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); rescanMutation.mutate([tpl.id]); }} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
+
                         <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" onClick={() => checkAndDelete(tpl.id)}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
                       </DropdownMenuContent>
