@@ -19,6 +19,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { Switch } from "@/components/ui/switch";
 import { EditWebsiteDialog } from "./EditWebsiteDialog";
 import { RetranslateSiteDialog } from "./RetranslateSiteDialog";
+import { WpPluginSettings } from "./WpPluginSettings";
+
 import { ShopifyProductManager } from "./ShopifyProductManager";
 import { extractEdgeError } from "@/lib/edge-function-error";
 import { cn } from "@/lib/utils";
