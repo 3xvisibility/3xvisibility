@@ -1325,7 +1325,17 @@ export default function GeneratedPagesPage() {
                           seoKeywords={page.seo_keywords}
                           size="sm"
                         />
+                        <div className="mt-1">
+                          <FidelityBadge
+                            pageId={page.id}
+                            pageTitle={displayTitle}
+                            isPublished={page.status === "published" || page.status === "done"}
+                            check={fidelityChecks?.get(page.id)}
+                            onChecked={() => refetchFidelity()}
+                          />
+                        </div>
                       </td>
+
                       <td className="p-3">
                         <div className="flex items-center gap-0.5 justify-end">
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openSeoEditor(page)} title="Edit Content">
