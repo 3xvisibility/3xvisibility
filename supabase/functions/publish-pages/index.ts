@@ -6,6 +6,9 @@ import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connec
 import { buildExactElementorData, htmlToElementor, enforceNativeElementorData, enforceBoxedContentWidth, elementorDataHasHtmlWidget, parityStatsFromData, sectionHeatmapFromData } from "../_shared/connectors/elementor-engine.ts";
 import { PgpConnector } from "../_shared/connectors/pgp-connector.ts";
 
+const PUBLISH_FORMATS = ["elementor", "gutenberg", "shopify", "html"] as const;
+type PublishFormat = (typeof PUBLISH_FORMATS)[number];
+
 type EditorReadiness = NonNullable<import("../_shared/connectors/types.ts").ConnectorResult["editor_readiness"]>;
 
 /**
@@ -951,11 +954,16 @@ async function handlePublishPages(req: Request): Promise<Response> {
       return out;
     }
 
-    // Per-campaign publish format cache (elementor | gutenberg | shopify).
-    const campaignFormatCache = new Map<string, "elementor" | "gutenberg" | "shopify">();
-    async function getCampaignPublishFormat(campaignId: string | null | undefined): Promise<"elementor" | "gutenberg" | "shopify"> {
-      if (typeof body.publish_format === "string" && ["elementor", "gutenberg", "shopify"].includes(body.publish_format)) {
-        return body.publish_format as "elementor" | "gutenberg" | "shopify";
+    // Supported publish formats. "html" publishes the raw generated HTML/CSS
+    // verbatim (design stays 1:1 with the preview), "elementor" converts to
+    // native Elementor widgets, "shopify" ships a native theme section, and
+    // "gutenberg" ships native block markup.
+    // Per-campaign publish format cache. "html" publishes the raw generated
+    // HTML/CSS verbatim (design stays 1:1 with the preview).
+    const campaignFormatCache = new Map<string, PublishFormat>();
+    async function getCampaignPublishFormat(campaignId: string | null | undefined): Promise<PublishFormat> {
+      if (typeof body.publish_format === "string" && (PUBLISH_FORMATS as readonly string[]).includes(body.publish_format)) {
+        return body.publish_format as PublishFormat;
       }
       if (!campaignId) return "elementor";
       if (campaignFormatCache.has(campaignId)) return campaignFormatCache.get(campaignId)!;
@@ -965,7 +973,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         .eq("id", campaignId)
         .maybeSingle();
       const fmt = ((data as any)?.publish_format as string) || "elementor";
-      const out = (["elementor", "gutenberg", "shopify"].includes(fmt) ? fmt : "elementor") as "elementor" | "gutenberg" | "shopify";
+      const out = ((PUBLISH_FORMATS as readonly string[]).includes(fmt) ? fmt : "elementor") as PublishFormat;
       campaignFormatCache.set(campaignId, out);
       return out;
     }
@@ -1740,7 +1748,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         // images on the Shopify CDN, editable in the theme customizer). Falls
         // back to body_html inside the connector if the theme isn't writable.
         if (
-          resolvedPublishType === "page" && !preserveDesign &&
+          resolvedPublishType === "page" && !preserveDesign && publishFormat !== "html" &&
           (page.websites as { type?: string })?.type === "shopify"
         ) {
           step("Loading Shopify section template", "running");

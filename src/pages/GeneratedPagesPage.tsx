@@ -26,6 +26,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
+import { PublishFormatDialog, type PublishFormat } from "@/components/generated-pages/PublishFormatDialog";
+
 import { PublishLogDialog, type PublishLogResult, type PublishStep } from "@/components/campaigns/PublishLogDialog";
 import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
@@ -95,6 +97,10 @@ export default function GeneratedPagesPage() {
   const [fidelityPage, setFidelityPage] = useState<GeneratedPage | null>(null);
   const [seoAnalysisPage, setSeoAnalysisPage] = useState<GeneratedPage | null>(null);
   const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
+  // Output format asked before every publish: real code (1:1), Elementor, Shopify.
+  const [showFormatDialog, setShowFormatDialog] = useState(false);
+  const [publishFormat, setPublishFormat] = useState<PublishFormat>("html");
+
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
   const [publishLog, setPublishLog] = useState<PublishLogResult[] | null>(null);
@@ -286,15 +292,17 @@ export default function GeneratedPagesPage() {
   });
 
   const publishMutation = useMutation({
-    mutationFn: async ({ pageIds, type, websiteId }: { pageIds: string[]; type: "page" | "product"; websiteId?: string }) => {
+    mutationFn: async ({ pageIds, type, websiteId, format }: { pageIds: string[]; type: "page" | "product"; websiteId?: string; format?: PublishFormat }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
         body: {
           page_ids: pageIds,
           publish_type: type,
           website_id: websiteId,
+          publish_format: format ?? "html",
           elementor_mode: "native",
           overwrite_design: true,
         },
+
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -357,15 +365,17 @@ export default function GeneratedPagesPage() {
   });
 
   const bulkPublishMutation = useMutation({
-    mutationFn: async ({ ids, websiteId, type }: { ids: string[]; websiteId?: string; type?: "page" | "product" }) => {
+    mutationFn: async ({ ids, websiteId, type, format }: { ids: string[]; websiteId?: string; type?: "page" | "product"; format?: PublishFormat }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
         body: {
           page_ids: ids,
           publish_type: type ?? publishType,
           website_id: websiteId,
+          publish_format: format ?? "html",
           elementor_mode: "native",
           overwrite_design: true,
         },
+
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -401,7 +411,7 @@ export default function GeneratedPagesPage() {
   });
 
   const retryFailedMutation = useMutation({
-    mutationFn: async ({ ids, websiteId, type }: { ids: string[]; websiteId?: string; type?: "page" | "product" }) => {
+    mutationFn: async ({ ids, websiteId, type, format }: { ids: string[]; websiteId?: string; type?: "page" | "product"; format?: PublishFormat }) => {
       const { error: resetErr } = await supabase.from("generated_pages")
         .update({ status: "pending" as any, error_message: null }).in("id", ids);
       if (resetErr) throw resetErr;
@@ -410,9 +420,11 @@ export default function GeneratedPagesPage() {
           page_ids: ids,
           publish_type: type ?? publishType,
           website_id: websiteId,
+          publish_format: format ?? "html",
           elementor_mode: "native",
           overwrite_design: true,
         },
+
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -552,7 +564,16 @@ export default function GeneratedPagesPage() {
     );
   };
 
+  // Every publish first asks for the output format (real code / Elementor /
+  // Shopify) so the user controls design fidelity per publish.
   const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
+    if (ids.length === 0) return;
+    setPendingPublishIds(ids);
+    setPendingPublishAction(action);
+    setShowFormatDialog(true);
+  };
+
+  const runPublish = (ids: string[], action: "publish" | "bulk" | "retry", format: PublishFormat) => {
     const pagesWithoutSite = ids.filter((pid) => {
       const p = pages.find((pg) => pg.id === pid);
       return !p?.website_id;
@@ -565,19 +586,21 @@ export default function GeneratedPagesPage() {
       setShowWebsiteSelector(true);
     } else {
       markDirectPagesPublishing(ids);
-      if (action === "retry") retryFailedMutation.mutate({ ids, type: effType });
-      else if (action === "bulk") bulkPublishMutation.mutate({ ids, type: effType });
-      else publishMutation.mutate({ pageIds: ids, type: effType });
+      if (action === "retry") retryFailedMutation.mutate({ ids, type: effType, format });
+      else if (action === "bulk") bulkPublishMutation.mutate({ ids, type: effType, format });
+      else publishMutation.mutate({ pageIds: ids, type: effType, format });
     }
   };
 
   const handleWebsiteSelected = (websiteId: string) => {
     const effType = resolvePublishTypeFor(pendingPublishIds);
+    const format = publishFormat;
     markDirectPagesPublishing(pendingPublishIds);
-    if (pendingPublishAction === "retry") retryFailedMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType });
-    else if (pendingPublishAction === "bulk") bulkPublishMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType });
-    else publishMutation.mutate({ pageIds: pendingPublishIds, type: effType, websiteId });
+    if (pendingPublishAction === "retry") retryFailedMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType, format });
+    else if (pendingPublishAction === "bulk") bulkPublishMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType, format });
+    else publishMutation.mutate({ pageIds: pendingPublishIds, type: effType, websiteId, format });
   };
+
 
 
 
@@ -1623,7 +1646,22 @@ export default function GeneratedPagesPage() {
         campaignTitles={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.title) : undefined}
         campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined}
         onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })} />
+      <PublishFormatDialog
+        open={showFormatDialog}
+        onOpenChange={(open) => {
+          setShowFormatDialog(open);
+          if (!open) setPendingPublishIds([]);
+        }}
+        pageCount={pendingPublishIds.length}
+        defaultFormat={publishFormat}
+        onConfirm={(format) => {
+          setPublishFormat(format);
+          setShowFormatDialog(false);
+          runPublish(pendingPublishIds, pendingPublishAction, format);
+        }}
+      />
       <PublishWebsiteSelector
+
         open={showWebsiteSelector}
         onOpenChange={(open) => {
           setShowWebsiteSelector(open);
