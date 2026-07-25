@@ -2403,6 +2403,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 const locRows: Row[] = [];
                 const bizRows: Row[] = [];
                 const aiRows: Row[] = [];
+                const customRows: Row[] = [];
                 const missRows: Row[] = [];
                 for (const gk of groupKeywords) {
                   const nameLc = gk.name.toLowerCase();
