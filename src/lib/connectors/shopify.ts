@@ -1,6 +1,6 @@
 import type { CmsConnector, ConnectorConfig, ConnectorPage, PagePayload } from "./types";
 import { adaptHtmlForShopifyTheme } from "./shopify-theme-adapter";
-import { bundlePageAssetsToUrls } from "./page-assets";
+import { bundlePageAssetsToUrls, applyInlineAssetFallback } from "./page-assets";
 
 
 /**
@@ -13,6 +13,7 @@ export class ShopifyConnector implements CmsConnector {
   readonly type = "shopify";
   private shopDomain: string;
   private headers: HeadersInit;
+  private inlineAssetFallback: boolean;
 
   constructor(config: ConnectorConfig) {
     this.shopDomain = (config.shop_domain || config.base_url).replace(/\/+$/, "").replace(/^https?:\/\//, "");
@@ -20,6 +21,7 @@ export class ShopifyConnector implements CmsConnector {
       "Content-Type": "application/json",
       "X-Shopify-Access-Token": config.access_token || config.api_key || "",
     };
+    this.inlineAssetFallback = !!config.inline_assets_fallback;
   }
 
   private get apiBase() {
@@ -95,9 +97,10 @@ export class ShopifyConnector implements CmsConnector {
     // Bundle the design into external CSS/JS first so Shopify's body_html
     // sanitization can't drop it — the published page then matches the preview.
     const bundled = await bundlePageAssetsToUrls(payload.content || "");
+    const bundledHtml = this.inlineAssetFallback ? applyInlineAssetFallback(bundled) : bundled.html;
     const page: Record<string, unknown> = {
       title: payload.title,
-      body_html: adaptHtmlForShopifyTheme(bundled.html, "page"),
+      body_html: adaptHtmlForShopifyTheme(bundledHtml, "page"),
       handle: payload.slug,
       published: payload.status === "publish",
     };

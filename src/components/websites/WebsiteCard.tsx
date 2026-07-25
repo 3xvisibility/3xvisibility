@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
+import { Switch } from "@/components/ui/switch";
 import { EditWebsiteDialog } from "./EditWebsiteDialog";
 import { RetranslateSiteDialog } from "./RetranslateSiteDialog";
 import { ShopifyProductManager } from "./ShopifyProductManager";
@@ -44,6 +45,32 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
   const queryClient = useQueryClient();
 
   const isShopify = site.type === "shopify";
+  const inlineFallback = !!(site as unknown as { inline_assets_fallback?: boolean }).inline_assets_fallback;
+
+  // Per-site publish setting: force the page CSS/JS inline in addition to the
+  // bundled external <link>/<script src> tags, for CMS installs that strip them.
+  const inlineFallbackMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const { error } = await supabase
+        .from("websites")
+        .update({ inline_assets_fallback: enabled } as never)
+        .eq("id", site.id);
+      if (error) throw error;
+      return enabled;
+    },
+    onSuccess: (enabled) => {
+      queryClient.invalidateQueries({ queryKey: ["websites"] });
+      toast({
+        title: enabled ? "Inline CSS/JS fallback on" : "Inline CSS/JS fallback off",
+        description: enabled
+          ? "Published pages will also embed the design CSS and JS inline."
+          : "Published pages will rely on the external CSS/JS files only.",
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Could not save setting", description: err.message, variant: "destructive" });
+    },
+  });
 
   // Check shopify_connections for active token
   const { data: shopifyConn } = useQuery({
@@ -541,6 +568,26 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                 </Button>
               </>
             )}
+          </div>
+
+          {/* Publish assets fallback (CMS strips external tags) */}
+          <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-0.5">
+                <p className="text-xs font-semibold">Force inline CSS/JS fallback</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Also embed the page CSS and JS inline when publishing — use this if{" "}
+                  {site.type === "shopify" ? "the theme" : "WordPress"} strips the external{" "}
+                  <code className="text-[10px]">&lt;link&gt;</code>/<code className="text-[10px]">&lt;script src&gt;</code> tags.
+                </p>
+              </div>
+              <Switch
+                checked={inlineFallback}
+                disabled={inlineFallbackMutation.isPending}
+                onCheckedChange={(v) => inlineFallbackMutation.mutate(v)}
+                aria-label="Force inline CSS and JS fallback during publish"
+              />
+            </div>
           </div>
 
           {/* Sitemap Section */}

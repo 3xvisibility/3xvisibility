@@ -15,6 +15,28 @@ export interface BundledPageAssets {
   html: string;
   cssUrl: string | null;
   jsUrl: string | null;
+  /** Extracted payloads, kept for the inline fallback mode. */
+  css?: string;
+  js?: string;
+}
+
+/**
+ * Inline CSS/JS fallback: additionally embed the bundle inline (marked with
+ * `data-xxxv-asset` so connector sanitizers keep it) for CMS installs that strip
+ * external <link>/<script src> tags from page content.
+ */
+export function applyInlineAssetFallback(bundle: BundledPageAssets): string {
+  const css = (bundle.css || "").trim();
+  const js = (bundle.js || "").trim();
+  if (!css && !js) return bundle.html;
+  let html = bundle.html;
+  if (css && !new RegExp(`<style[^>]*${PAGE_ASSET_MARK}`, "i").test(html)) {
+    html = `<style ${PAGE_ASSET_MARK}="css-inline">\n${css}\n</style>\n${html}`;
+  }
+  if (js && !new RegExp(`<script[^>]*${PAGE_ASSET_MARK}="js-inline"`, "i").test(html)) {
+    html = `${html}\n<script ${PAGE_ASSET_MARK}="js-inline">\n${js}\n</script>`;
+  }
+  return html;
 }
 
 async function sha256Hex(input: string): Promise<string> {
@@ -110,12 +132,12 @@ export async function bundlePageAssetsToUrls(
     ]);
 
     // Storage unavailable → keep the inline markup rather than an unstyled page.
-    if ((css && !cssUrl) || (js && !jsUrl)) return { html, cssUrl, jsUrl };
+    if ((css && !cssUrl) || (js && !jsUrl)) return { html, cssUrl, jsUrl, css, js };
 
     const link = cssUrl ? `<link ${PAGE_ASSET_MARK}="css" rel="stylesheet" href="${cssUrl}" />\n` : "";
     const trailing = jsUrl ? `\n<script ${PAGE_ASSET_MARK}="js" src="${jsUrl}" defer></script>` : "";
 
-    return { html: `${link}${split.html.trim()}${trailing}`, cssUrl, jsUrl };
+    return { html: `${link}${split.html.trim()}${trailing}`, cssUrl, jsUrl, css, js };
   } catch (e) {
     console.error("page-assets: bundling failed", e);
     return { html, cssUrl: null, jsUrl: null };

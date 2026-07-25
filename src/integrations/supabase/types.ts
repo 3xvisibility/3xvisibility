@@ -3099,6 +3099,7 @@ export type Database = {
           google_indexing_enabled: boolean | null
           google_service_account: Json | null
           id: string
+          inline_assets_fallback: boolean
           language: string | null
           language_locked: boolean
           last_sync: string | null
@@ -3118,6 +3119,7 @@ export type Database = {
           google_indexing_enabled?: boolean | null
           google_service_account?: Json | null
           id?: string
+          inline_assets_fallback?: boolean
           language?: string | null
           language_locked?: boolean
           last_sync?: string | null
@@ -3137,6 +3139,7 @@ export type Database = {
           google_indexing_enabled?: boolean | null
           google_service_account?: Json | null
           id?: string
+          inline_assets_fallback?: boolean
           language?: string | null
           language_locked?: boolean
           last_sync?: string | null
