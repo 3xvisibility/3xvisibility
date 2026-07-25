@@ -1978,6 +1978,23 @@ async function handlePublishPages(req: Request): Promise<Response> {
       }).catch((e) => console.error("[PUBLISH] Self-chain failed:", e));
     }
 
+    // Automatic preview → published HTML/CSS match check. Fire-and-forget so
+    // publishing is never blocked; results land in `page_render_checks` and
+    // surface as a Fidelity badge in the Generated Pages list.
+    try {
+      const justPublished = results
+        .filter((r) => r.status === "published" && (r as { id?: string }).id)
+        .map((r) => (r as { id: string }).id);
+      if (justPublished.length > 0) {
+        fetch(`${supabaseUrl}/functions/v1/html-fidelity-check`, {
+          method: "POST",
+          headers: { Authorization: authHeader, "Content-Type": "application/json" },
+          body: JSON.stringify({ page_ids: justPublished }),
+        }).catch((e) => console.error("[PUBLISH] Fidelity check dispatch failed:", e));
+      }
+    } catch (_) { /* non-critical */ }
+
+
     const allResults = remainingIds.length > 0 ? results : [...priorResults, ...results];
     const published = allResults.filter((r) => r.status === "published").length;
     const failed = allResults.filter((r) => r.status === "failed").length;
