@@ -35,6 +35,15 @@ export interface RenderContext {
   locale?: string;
 }
 
+export interface MissingVariable {
+  /** The `{name}` token that could not be resolved to a data source. */
+  name: string;
+  /** Where the problem was detected: template body, SEO patterns, or JSON-LD. */
+  location: "content" | "seo_title" | "seo_description" | "schema";
+  /** True when the variable key exists in the row but is empty/whitespace. */
+  emptyValue: boolean;
+}
+
 export interface RenderResult {
   html: string;
   title: string;
@@ -46,6 +55,8 @@ export interface RenderResult {
   jsonLd: string;
   /** Any per-row warnings/errors */
   warnings: string[];
+  /** Placeholders detected during generation that had no data source. */
+  missingVariables: MissingVariable[];
 }
 
 // ─── Slug normalisation ──────────────────────────────────────────────
@@ -164,6 +175,76 @@ export function replaceVariables(content: string, vars: Record<string, string>, 
   }
 
   return result;
+}
+
+// ─── Missing-variable detection ─────────────────────────────────────
+
+/** Reserved keywords that look like `{name}` but aren't user variables. */
+const RESERVED_TOKENS = new Set([
+  "this", "index", "number", "if", "else", "each", "endif", "endeach",
+]);
+
+/**
+ * Extract every unique `{name}` / `{name:transform}` placeholder declared in
+ * a template chunk. Skips spintax groups (`{a|b}`) and Handlebars helpers.
+ */
+export function collectTemplatePlaceholders(content: string): string[] {
+  if (!content) return [];
+  const found = new Set<string>();
+  const re = /\{([a-z][a-z0-9_]*)(?::[a-z0-9_()]+)?\}/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(content)) !== null) {
+    const name = m[1].toLowerCase();
+    if (RESERVED_TOKENS.has(name)) continue;
+    found.add(name);
+  }
+  return [...found];
+}
+
+/**
+ * Cross-check the placeholders used by a template against the values that
+ * will be supplied at render time. Returns three buckets so callers can
+ * decide whether to block generation, warn, or auto-repair.
+ */
+export function validateVariableSources(
+  template: Pick<TemplateConfig, "content" | "seo_title_pattern" | "seo_description_pattern" | "schema_config">,
+  vars: Record<string, string>,
+): { missing: string[]; empty: string[]; ok: string[] } {
+  const chunks = [
+    template.content || "",
+    template.seo_title_pattern || "",
+    template.seo_description_pattern || "",
+    ...Object.values(template.schema_config || {}),
+  ];
+  const placeholders = new Set<string>();
+  for (const c of chunks) collectTemplatePlaceholders(c).forEach((p) => placeholders.add(p));
+  const missing: string[] = [];
+  const empty: string[] = [];
+  const ok: string[] = [];
+  const lookup: Record<string, string> = {};
+  for (const [k, v] of Object.entries(vars)) lookup[k.toLowerCase()] = v ?? "";
+  for (const name of placeholders) {
+    if (!(name in lookup)) missing.push(name);
+    else if (!String(lookup[name]).trim()) empty.push(name);
+    else ok.push(name);
+  }
+  return { missing, empty, ok };
+}
+
+/**
+ * Replace any lingering `{name}` tokens with a clearly-visible error marker
+ * so pages never ship with blank text or raw placeholder syntax. The marker
+ * is plain text (not HTML) to stay safe inside attribute values.
+ */
+export function replaceMissingWithMarkers(html: string): { html: string; names: string[] } {
+  const names = new Set<string>();
+  const out = html.replace(/\{([a-z][a-z0-9_]*)(?::[a-z0-9_()]+)?\}/gi, (m, name: string) => {
+    const key = name.toLowerCase();
+    if (RESERVED_TOKENS.has(key)) return m;
+    names.add(key);
+    return `⚠️ [missing: ${key}]`;
+  });
+  return { html: out, names: [...names] };
 }
 
 // ─── Resolve a pattern string (SEO title/desc, OG, slug) ─────────────
@@ -339,9 +420,24 @@ export function buildOgMeta(opts: {
 
 export function renderPage(template: TemplateConfig, ctx: RenderContext): RenderResult {
   const warnings: string[] = [];
+  const missingVariables: MissingVariable[] = [];
   const locale = ctx.locale || "en";
   const allVars: Record<string, string> = { ...ctx.row, ...ctx.extraVars };
   const schemaConfig = template.schema_config || {};
+
+  // 0) Pre-flight validation — every declared placeholder must have a source.
+  const validation = validateVariableSources(
+    { content: template.content, seo_title_pattern: template.seo_title_pattern, seo_description_pattern: template.seo_description_pattern, schema_config: template.schema_config },
+    allVars,
+  );
+  for (const name of validation.missing) missingVariables.push({ name, location: "content", emptyValue: false });
+  for (const name of validation.empty) missingVariables.push({ name, location: "content", emptyValue: true });
+  if (validation.missing.length > 0) {
+    warnings.push(`Missing data source for: ${validation.missing.join(", ")}`);
+  }
+  if (validation.empty.length > 0) {
+    warnings.push(`Empty values supplied for: ${validation.empty.join(", ")}`);
+  }
 
   // 1) Process conditionals & loops
   let html = processConditionals(template.content, allVars);
@@ -353,11 +449,17 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
   // 3) Process spintax
   html = processSpintax(html);
 
-  // 4) Warn about unresolved placeholders
-  const unresolved = html.match(/\{[a-z_]+\}/gi);
-  if (unresolved) {
-    const unique = [...new Set(unresolved)];
-    warnings.push(`Unresolved variables: ${unique.join(", ")}`);
+  // 4) Replace any lingering placeholders with a visible error marker so
+  //    pages never ship with blank text. Track the names for reporting.
+  const marked = replaceMissingWithMarkers(html);
+  html = marked.html;
+  for (const name of marked.names) {
+    if (!missingVariables.some((m) => m.name === name)) {
+      missingVariables.push({ name, location: "content", emptyValue: false });
+    }
+  }
+  if (marked.names.length > 0) {
+    warnings.push(`Unresolved variables replaced with [missing: ...] markers: ${marked.names.join(", ")}`);
   }
 
   // 5) Extract title from <h1> or row values, then locale-format
@@ -446,5 +548,6 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
     ogTags,
     jsonLd,
     warnings,
+    missingVariables,
   };
 }

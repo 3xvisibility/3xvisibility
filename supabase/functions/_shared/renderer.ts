@@ -24,6 +24,12 @@ export interface RenderContext {
   locale?: string;
 }
 
+export interface MissingVariable {
+  name: string;
+  location: "content" | "seo_title" | "seo_description" | "schema";
+  emptyValue: boolean;
+}
+
 export interface RenderResult {
   html: string;
   title: string;
@@ -34,6 +40,7 @@ export interface RenderResult {
   ogTags: string;
   jsonLd: string;
   warnings: string[];
+  missingVariables: MissingVariable[];
 }
 
 // ─── Core functions ──────────────────────────────────────────────────
@@ -125,6 +132,49 @@ export function resolvePattern(pattern: string, vars: Record<string, string>): s
   return replaceVariables(pattern, vars);
 }
 
+const RESERVED_TOKENS = new Set(["this", "index", "number", "if", "else", "each", "endif", "endeach"]);
+
+export function collectTemplatePlaceholders(content: string): string[] {
+  if (!content) return [];
+  const found = new Set<string>();
+  const re = /\{([a-z][a-z0-9_]*)(?::[a-z0-9_()]+)?\}/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(content)) !== null) {
+    const name = m[1].toLowerCase();
+    if (!RESERVED_TOKENS.has(name)) found.add(name);
+  }
+  return [...found];
+}
+
+export function validateVariableSources(
+  template: Pick<TemplateConfig, "content" | "seo_title_pattern" | "seo_description_pattern" | "schema_config">,
+  vars: Record<string, string>,
+): { missing: string[]; empty: string[]; ok: string[] } {
+  const chunks = [template.content || "", template.seo_title_pattern || "", template.seo_description_pattern || "", ...Object.values(template.schema_config || {})];
+  const placeholders = new Set<string>();
+  for (const c of chunks) collectTemplatePlaceholders(c).forEach((p) => placeholders.add(p));
+  const missing: string[] = [], empty: string[] = [], ok: string[] = [];
+  const lookup: Record<string, string> = {};
+  for (const [k, v] of Object.entries(vars)) lookup[k.toLowerCase()] = v ?? "";
+  for (const name of placeholders) {
+    if (!(name in lookup)) missing.push(name);
+    else if (!String(lookup[name]).trim()) empty.push(name);
+    else ok.push(name);
+  }
+  return { missing, empty, ok };
+}
+
+export function replaceMissingWithMarkers(html: string): { html: string; names: string[] } {
+  const names = new Set<string>();
+  const out = html.replace(/\{([a-z][a-z0-9_]*)(?::[a-z0-9_()]+)?\}/gi, (m, name: string) => {
+    const key = name.toLowerCase();
+    if (RESERVED_TOKENS.has(key)) return m;
+    names.add(key);
+    return `⚠️ [missing: ${key}]`;
+  });
+  return { html: out, names: [...names] };
+}
+
 export function buildJsonLd(
   schemaType: string,
   schemaConfig: Record<string, string>,
@@ -212,21 +262,41 @@ export function buildOgMeta(opts: { title: string; description: string; url?: st
 
 export function renderPage(template: TemplateConfig, ctx: RenderContext): RenderResult {
   const warnings: string[] = [];
+  const missingVariables: MissingVariable[] = [];
   const locale = ctx.locale || "en";
   const allVars: Record<string, string> = { ...ctx.row, ...ctx.extraVars };
   const schemaConfig = template.schema_config || {};
+
+  // Pre-flight validation — flag declared placeholders with no data source.
+  const validation = validateVariableSources(
+    { content: template.content, seo_title_pattern: template.seo_title_pattern, seo_description_pattern: template.seo_description_pattern, schema_config: template.schema_config },
+    allVars,
+  );
+  for (const name of validation.missing) missingVariables.push({ name, location: "content", emptyValue: false });
+  for (const name of validation.empty) missingVariables.push({ name, location: "content", emptyValue: true });
+  if (validation.missing.length > 0) warnings.push(`Missing data source for: ${validation.missing.join(", ")}`);
+  if (validation.empty.length > 0) warnings.push(`Empty values supplied for: ${validation.empty.join(", ")}`);
+
   let html = processConditionals(template.content, allVars);
   html = processLoops(html, allVars);
   html = replaceVariables(html, allVars, locale);
   html = processSpintax(html);
-  const unresolved = html.match(/\{[a-z_]+\}/gi);
-  if (unresolved) warnings.push(`Unresolved variables: ${[...new Set(unresolved)].join(", ")}`);
+
+  // Replace lingering placeholders with a visible [missing: name] marker.
+  const marked = replaceMissingWithMarkers(html);
+  html = marked.html;
+  for (const name of marked.names) {
+    if (!missingVariables.some((m) => m.name === name)) {
+      missingVariables.push({ name, location: "content", emptyValue: false });
+    }
+  }
+  if (marked.names.length > 0) warnings.push(`Unresolved variables replaced with [missing: ...] markers: ${marked.names.join(", ")}`);
+
   const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/i);
   let title = h1Match ? h1Match[1].replace(/<[^>]*>/g, "").trim() : (Object.values(ctx.row).filter(Boolean).slice(0, 2).join(" - ") || `Page ${(ctx.rowIndex ?? 0) + 1}`);
-  // Apply locale-aware title casing for the H1-derived title
   title = titleCaseLocale(title, locale);
   const slugPattern = schemaConfig._slugPattern || "";
-  let slug = slugPattern
+  const slug = slugPattern
     ? (slugify(resolvePattern(slugPattern, allVars), locale) || slugify(title, locale))
     : (slugify(title, locale) || `page-${(ctx.rowIndex ?? 0) + 1}`);
   const tplTitle = template.seo_title_pattern || "";
@@ -237,12 +307,12 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
   if (seoDescription.length > 160) warnings.push(`SEO description exceeds 160 chars (${seoDescription.length})`);
   if (seoDescription.length < 50 && seoDescription.length > 0) warnings.push(`SEO description too short (${seoDescription.length} chars)`);
   const canonicalPattern = schemaConfig._canonicalUrl || "";
-  let canonicalUrl: string | null = canonicalPattern ? resolvePattern(canonicalPattern, { ...allVars, slug }) : (ctx.website?.url ? `${ctx.website.url.replace(/\/+$/, "")}/${slug}` : null);
+  const canonicalUrl: string | null = canonicalPattern ? resolvePattern(canonicalPattern, { ...allVars, slug }) : (ctx.website?.url ? `${ctx.website.url.replace(/\/+$/, "")}/${slug}` : null);
   const ogTitle = schemaConfig._ogTitle ? resolvePattern(schemaConfig._ogTitle, allVars) : seoTitle;
   const ogDesc = schemaConfig._ogDescription ? resolvePattern(schemaConfig._ogDescription, allVars) : seoDescription;
   const ogImage = schemaConfig._ogImage ? resolvePattern(schemaConfig._ogImage, { ...allVars, slug }) : undefined;
   const twitterCard = schemaConfig._twitterCard || "summary_large_image";
   const ogTags = buildOgMeta({ title: ogTitle, description: ogDesc, url: canonicalUrl || undefined, imageUrl: ogImage, twitterCard });
   const jsonLd = buildJsonLd(template.schema_type || "WebPage", schemaConfig, allVars, title, seoDescription, ctx.campaignType, ctx.extraVars, ctx.row);
-  return { html, title, slug, seoTitle, seoDescription, canonicalUrl, ogTags, jsonLd, warnings };
+  return { html, title, slug, seoTitle, seoDescription, canonicalUrl, ogTags, jsonLd, warnings, missingVariables };
 }

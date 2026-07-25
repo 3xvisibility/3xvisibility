@@ -55,6 +55,27 @@ export function TestPagePreviewDialog({ open, onOpenChange, result }: TestPagePr
           </div>
         </DialogHeader>
 
+        {result.missingVariables && result.missingVariables.length > 0 && (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
+              <XCircle className="h-4 w-4" />
+              {result.missingVariables.length} variable{result.missingVariables.length > 1 ? "s" : ""} missing a data source
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              These placeholders were declared in the template but no value was supplied. Each occurrence has been replaced with a visible
+              <code className="mx-1 px-1 rounded bg-muted font-mono text-[10px]">⚠️ [missing: name]</code>
+              marker so the page never ships with blank text. Fix by mapping the variable in the previous step or providing a default value.
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {result.missingVariables.map((mv) => (
+                <Badge key={`${mv.name}-${mv.emptyValue}`} variant="destructive" className="text-[10px] font-mono">
+                  {"{"}{mv.name}{"}"} {mv.emptyValue ? "· empty value" : "· no source"}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         {result.warnings.length > 0 && (
           <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 space-y-1">
             {result.warnings.map((w, i) => (
