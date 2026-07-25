@@ -1518,26 +1518,26 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       .map((k) => k.name)
       .filter((n) => !isAiContentVariable(n));
     if (required.length === 0) {
-      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[], rowsMissing: [] as { index: number; names: string[] }[] };
+      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number; rowIndexes: number[] }[], rowsMissing: [] as { index: number; names: string[] }[] };
     }
     let previewRows: Record<string, string>[] = [];
     try { previewRows = buildRows(); } catch { previewRows = []; }
     if (previewRows.length === 0) {
-      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[], rowsMissing: [] as { index: number; names: string[] }[] };
+      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number; rowIndexes: number[] }[], rowsMissing: [] as { index: number; names: string[] }[] };
     }
-    const missing: { name: string; rows: number }[] = [];
+    const missing: { name: string; rows: number; rowIndexes: number[] }[] = [];
     const perRow = new Map<number, string[]>();
     for (const name of required) {
       const key = name.trim().toLowerCase();
-      let count = 0;
+      const rowIndexes: number[] = [];
       previewRows.forEach((r, idx) => {
         const val = (r[key] ?? r[name] ?? "").toString().trim();
         if (!val) {
-          count++;
+          rowIndexes.push(idx);
           perRow.set(idx, [...(perRow.get(idx) ?? []), name]);
         }
       });
-      if (count > 0) missing.push({ name, rows: count });
+      if (rowIndexes.length > 0) missing.push({ name, rows: rowIndexes.length, rowIndexes });
     }
     const rowsMissing = Array.from(perRow.entries())
       .sort((a, b) => a[0] - b[0])
@@ -3150,15 +3150,53 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         Some variables are still empty — you can still generate
                       </p>
 
-                      <ul className="text-muted-foreground list-disc list-inside space-y-0.5">
+                      <p className="text-muted-foreground">
+                        <span className="font-semibold text-foreground">{variableCoverage.missing.length}</span> variable(s) empty across{" "}
+                        <span className="font-semibold text-foreground">{variableCoverage.rowsMissing.length}</span> of {variableCoverage.rowCount} row(s).
+                      </p>
+
+                      <div className="space-y-1.5 pt-1">
                         {variableCoverage.missing.map((m) => (
-                          <li key={m.name}>
-                            <span className="font-mono text-foreground">{`{${m.name}}`}</span> is empty on {m.rows}/{variableCoverage.rowCount} row{variableCoverage.rowCount === 1 ? "" : "s"}
-                          </li>
+                          <div
+                            key={m.name}
+                            className="rounded-md border border-amber-500/40 bg-background/70 px-2 py-1.5 space-y-1"
+                          >
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-mono text-[11px] rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5">
+                                {`{${m.name}}`}
+                              </span>
+                              <span className="text-[11px] text-destructive font-medium">
+                                empty on {m.rows}/{variableCoverage.rowCount} row{variableCoverage.rowCount === 1 ? "" : "s"}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2 text-[11px] ml-auto"
+                                disabled={aiFillingMissing}
+                                onClick={() => aiFillMissingVars([m.name])}
+                              >
+                                <Wand2 className="h-3 w-3 mr-1" /> AI fill
+                              </Button>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span className="text-[10px] text-muted-foreground">Rows:</span>
+                              {m.rowIndexes.slice(0, 25).map((idx) => (
+                                <span
+                                  key={idx}
+                                  className="text-[10px] rounded border border-destructive/40 bg-destructive/10 text-destructive px-1.5 py-0.5 font-mono"
+                                >
+                                  #{idx + 1}
+                                </span>
+                              ))}
+                              {m.rowIndexes.length > 25 && (
+                                <span className="text-[10px] text-muted-foreground">+{m.rowIndexes.length - 25} more</span>
+                              )}
+                            </div>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                       <p className="text-muted-foreground pt-1">
-                        Optional: fill them in the &quot;Not filled&quot; panel above (type a value or use AI fill). Generation is not blocked.
+                        Fill them below (type a value or use AI fill). Generation is not blocked.
                       </p>
 
                     </div>
@@ -3197,7 +3235,20 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       {variableCoverage.rowsMissing.slice(0, 50).map((row) => (
                         <div key={row.index} className="rounded-md border border-border bg-background/60 p-2 space-y-2">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium text-foreground">Row {row.index + 1}</span>
+                            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                              <span className="font-medium text-foreground">Row {row.index + 1}</span>
+                              <span className="text-[10px] rounded bg-destructive/10 text-destructive border border-destructive/30 px-1.5 py-0.5">
+                                {row.names.length} missing
+                              </span>
+                              {row.names.slice(0, 4).map((n) => (
+                                <span key={n} className="text-[10px] font-mono rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 px-1.5 py-0.5">
+                                  {`{${n}}`}
+                                </span>
+                              ))}
+                              {row.names.length > 4 && (
+                                <span className="text-[10px] text-muted-foreground">+{row.names.length - 4}</span>
+                              )}
+                            </div>
                             <Button
                               size="sm"
                               variant="ghost"
@@ -3218,7 +3269,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                             <div key={name} className="flex items-center gap-2">
                               <span className="font-mono text-[11px] text-muted-foreground w-40 shrink-0 truncate">{`{${name}}`}</span>
                               <Input
-                                className="h-7 text-xs"
+                                className={`h-7 text-xs ${(rowOverrides[row.index]?.[name] ?? "").trim() ? "" : "border-destructive/60 bg-destructive/5"}`}
                                 placeholder={`Value for ${name} on row ${row.index + 1}`}
                                 value={rowOverrides[row.index]?.[name] ?? ""}
                                 onChange={(e) =>
@@ -3253,6 +3304,15 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     toast({
                       title: "Location values missing",
                       description: `No location data for: ${unfilledGeoVars.slice(0, 5).join(", ")}. Pages will generate without them.`,
+                    });
+                  } else if (!variableCoverage.ok) {
+                    toast({
+                      title: `${variableCoverage.missing.length} variable(s) empty on ${variableCoverage.rowsMissing.length} row(s)`,
+                      description: variableCoverage.missing
+                        .slice(0, 4)
+                        .map((m) => `{${m.name}} → rows ${m.rowIndexes.slice(0, 6).map((i) => i + 1).join(", ")}${m.rowIndexes.length > 6 ? "…" : ""}`)
+                        .join(" | "),
+                      variant: "destructive",
                     });
                   } else if (missingKeywords.length > 0) {
                     toast({
