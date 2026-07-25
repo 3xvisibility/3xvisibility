@@ -1190,6 +1190,14 @@ export default function GeneratedPagesPage() {
                       seoKeywords={page.seo_keywords}
                       size="sm"
                     />
+                    <FidelityBadge
+                      pageId={page.id}
+                      pageTitle={displayTitle}
+                      isPublished={page.status === "published" || page.status === "done"}
+                      check={fidelityChecks?.get(page.id)}
+                      onChecked={() => refetchFidelity()}
+                    />
+
                   </div>
                   {page.status === "failed" && (
                     <Button
