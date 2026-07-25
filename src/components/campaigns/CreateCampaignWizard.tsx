@@ -190,7 +190,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // generate-pages, publish-pages, and republish flows so behavior stays
   // identical everywhere.
   const [publishAs, setPublishAs] = useState<"page" | "product">("page");
-  const [publishFormat, setPublishFormat] = useState<"elementor" | "gutenberg" | "shopify">("elementor");
+  const [publishFormat, setPublishFormat] = useState<"html" | "elementor" | "gutenberg" | "shopify">("html");
   const publishFormatTouchedRef = useRef(false);
   const [designMode, setDesignMode] = useState<"replicate" | "fresh">("fresh");
   const designModeTouchedRef = useRef(false);
@@ -4053,6 +4053,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         onValueChange={v => { publishFormatTouchedRef.current = true; setPublishFormat(v as any); }}
                         className="flex flex-wrap gap-3"
                       >
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="html" id="w-fmt-html" /><Label htmlFor="w-fmt-html" className="text-xs cursor-pointer">Real code (HTML/CSS) <span className="opacity-60">(Default)</span></Label></div>
                         <div className="flex items-center space-x-1.5"><RadioGroupItem value="elementor" id="w-fmt-elementor" /><Label htmlFor="w-fmt-elementor" className="text-xs cursor-pointer">Elementor</Label></div>
                         <div className="flex items-center space-x-1.5"><RadioGroupItem value="gutenberg" id="w-fmt-gutenberg" /><Label htmlFor="w-fmt-gutenberg" className="text-xs cursor-pointer">Gutenberg <span className="opacity-60">(Beta)</span></Label></div>
                         <div className="flex items-center space-x-1.5"><RadioGroupItem value="shopify" id="w-fmt-shopify" /><Label htmlFor="w-fmt-shopify" className="text-xs cursor-pointer">Shopify</Label></div>
