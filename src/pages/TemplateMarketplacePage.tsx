@@ -98,7 +98,6 @@ export default function TemplateMarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedTag, setSelectedTag] = useState<string>("all");
   const [selectedFormat, setSelectedFormat] = useState<"all" | "elementor" | "shopify" | "html">("all");
-  const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
   const [wpTestOpen, setWpTestOpen] = useState(false);
   const [variablesOpen, setVariablesOpen] = useState(false);
@@ -195,19 +194,6 @@ export default function TemplateMarketplacePage() {
     },
   });
 
-  // Fetch community shared templates
-  const { data: sharedTemplates = [], isLoading: loadingShared } = useQuery({
-    queryKey: ["shared-templates"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("shared_templates")
-        .select("*")
-        .eq("is_approved", true)
-        .order("downloads", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
 
   // Fetch admin-imported Elementor marketplace templates
   const { data: adminTemplates = [] } = useQuery({
@@ -362,18 +348,6 @@ export default function TemplateMarketplacePage() {
     onSettled: () => setRetryingId(null),
   });
 
-  // Fetch ratings for shared templates
-  // Aggregate stats only (avg + count per template). Individual ratings are
-  // private to their owner, so we use a SECURITY DEFINER RPC that never exposes
-  // which user rated which template.
-  const { data: ratingStats = [] } = useQuery({
-    queryKey: ["template-rating-stats"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_template_rating_stats");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
 
   const importedTemplates: MarketplaceTemplate[] = useMemo(() => {
     return (adminTemplates as any[]).map((at) => ({
@@ -393,7 +367,6 @@ export default function TemplateMarketplacePage() {
   }, [adminTemplates]);
 
 
-  const communityTemplates: MarketplaceTemplate[] = useMemo(() => [], []);
 
   const allTemplates = useMemo(() => {
     return [...importedTemplates, ...COMMUNITY_TEMPLATES];
@@ -406,7 +379,7 @@ export default function TemplateMarketplacePage() {
 
 
   const displayCategories = useMemo(() => {
-    const source = activeTab === "community" ? communityTemplates : allTemplates;
+    const source = allTemplates;
     const counts = new Map<string, number>();
     for (const tpl of source) {
       // Group the literal platform categories under their real content type so
@@ -424,7 +397,7 @@ export default function TemplateMarketplacePage() {
       { id: "all", ...categoryMeta("all"), label: localizedCategoryLabel("all", language), count: source.length },
       ...ids.map((id) => ({ id, ...categoryMeta(id), label: localizedCategoryLabel(id, language), count: counts.get(id) || 0 })),
     ];
-  }, [activeTab, allTemplates, communityTemplates, language]);
+  }, [allTemplates, language]);
 
   const shareCategories = useMemo(() => {
     const ids = new Set(Object.keys(CATEGORY_META).filter((id) => id !== "all"));
@@ -439,7 +412,7 @@ export default function TemplateMarketplacePage() {
 
   // Unique tags across the active tab's templates (for the tag filter dropdown).
   const availableTags = useMemo(() => {
-    const source = activeTab === "community" ? communityTemplates : allTemplates;
+    const source = allTemplates;
     const counts = new Map<string, number>();
     for (const tpl of source) {
       for (const tag of tpl.tags || []) {
@@ -450,7 +423,7 @@ export default function TemplateMarketplacePage() {
     }
     return Array.from(counts.entries())
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  }, [activeTab, allTemplates, communityTemplates]);
+  }, [allTemplates]);
 
   // Native format for a template — used by the format filter.
   const nativeFormat = (tpl: MarketplaceTemplate): "elementor" | "shopify" | "html" => {
@@ -460,7 +433,7 @@ export default function TemplateMarketplacePage() {
   };
 
   const filteredTemplates = useMemo(() => {
-    const source = activeTab === "community" ? communityTemplates : allTemplates;
+    const source = allTemplates;
     const q = searchQuery.toLowerCase();
     return source.filter((tpl) => {
       const cat = tpl.category && tpl.category !== "wordpress" && tpl.category !== "shopify"
@@ -477,12 +450,12 @@ export default function TemplateMarketplacePage() {
         (tpl.description || "").toLowerCase().includes(q);
       return matchesCategory && matchesTag && matchesFormat && matchesSearch;
     });
-  }, [searchQuery, selectedCategory, selectedTag, selectedFormat, activeTab, allTemplates, communityTemplates]);
+  }, [searchQuery, selectedCategory, selectedTag, selectedFormat, allTemplates]);
 
   // Reset to first page whenever filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, selectedTag, selectedFormat, activeTab, platformChoice]);
+  }, [searchQuery, selectedCategory, selectedTag, selectedFormat, platformChoice]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTemplates.length / PER_PAGE));
   const paginatedTemplates = useMemo(
@@ -591,27 +564,6 @@ export default function TemplateMarketplacePage() {
   });
 
 
-  // Rate template mutation
-  const rateMutation = useMutation({
-    mutationFn: async ({ sharedId, rating, review }: { sharedId: string; rating: number; review: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("template_ratings").upsert({
-        shared_template_id: sharedId,
-        user_id: user.id,
-        rating,
-        review: review || null,
-      } as any, { onConflict: "shared_template_id,user_id" });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["template-rating-stats"] });
-      toast({ title: "Rating submitted!" });
-    },
-    onError: (err: Error) => {
-      toast({ title: "Rating failed", description: err.message, variant: "destructive" });
-    },
-  });
 
   const categoryIcon = (cat: string) => localizedCategoryLabel(cat, language);
 
@@ -1089,54 +1041,6 @@ export default function TemplateMarketplacePage() {
                 </Tabs>
 
 
-                {/* Rating section for shared templates */}
-                {previewTemplate.isShared && previewTemplate.shared_id && (
-                  <div className="p-3 bg-muted/50 rounded-lg space-y-2">
-                    <h4 className="text-xs font-semibold flex items-center gap-1.5">
-                      <MessageSquare className="h-3.5 w-3.5" /> Rate this template
-                    </h4>
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <button
-                            key={s}
-                            onClick={() => setRatingValue(s)}
-                            className="focus:outline-none"
-                          >
-                            <Star
-                              className={`h-5 w-5 transition-colors ${
-                                s <= ratingValue ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"
-                              }`}
-                            />
-                          </button>
-                        ))}
-                      </div>
-                      <Input
-                        placeholder="Optional review..."
-                        value={reviewText}
-                        onChange={(e) => setReviewText(e.target.value)}
-                        className="h-8 text-xs flex-1"
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={rateMutation.isPending}
-                        onClick={() => rateMutation.mutate({
-                          sharedId: previewTemplate.shared_id!,
-                          rating: ratingValue,
-                          review: reviewText,
-                        })}
-                      >
-                        {rateMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Submit"}
-                      </Button>
-                    </div>
-                    {previewTemplate.ratingCount !== undefined && previewTemplate.ratingCount > 0 && (
-                      <p className="text-[10px] text-muted-foreground">
-                        {previewTemplate.ratingCount} rating{previewTemplate.ratingCount !== 1 ? "s" : ""} · avg {previewTemplate.rating}
-                      </p>
-                    )}
-                  </div>
-                )}
 
                 <div className="flex items-center justify-between gap-3 pt-2 border-t border-border mt-2">
                   <div className="flex flex-col gap-1">
