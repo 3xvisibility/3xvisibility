@@ -8,6 +8,8 @@ import { SeoImprovementWorkflow } from "@/components/campaigns/SeoImprovementWor
 import { StartGenerationDialog, type GenerationOptions } from "@/components/campaigns/StartGenerationDialog";
 import { reskinContent, COMMUNITY_TEMPLATES, type TemplatePlatform } from "@/lib/marketplace-templates";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
+import { PublishLogDialog, type PublishLogResult } from "@/components/campaigns/PublishLogDialog";
+import { PublishResultSummary } from "@/components/generated-pages/PublishResultSummary";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { useParams, useNavigate } from "react-router-dom";
@@ -106,6 +108,8 @@ export default function CampaignDetailPage() {
   const [pendingPublishPageId, setPendingPublishPageId] = useState<string | null>(null);
   const [pendingBulkPublishIds, setPendingBulkPublishIds] = useState<string[]>([]);
   const [previewPage, setPreviewPage] = useState<any>(null);
+  const [publishLog, setPublishLog] = useState<PublishLogResult[] | null>(null);
+  const [publishSummary, setPublishSummary] = useState<PublishLogResult[] | null>(null);
   const [verifyHistoryOpen, setVerifyHistoryOpen] = useState(false);
   const [overwriteFields, setOverwriteFields] = useState({
     title: true,
@@ -206,6 +210,29 @@ export default function CampaignDetailPage() {
     }
     return msg;
   };
+
+  // Keep a per-page publish outcome list (success / failed + reason) so the
+  // campaign screen shows detailed results after a publish run.
+  const recordPublishResults = (data: any, ids?: string[], fallbackError?: string) => {
+    let results: PublishLogResult[] = Array.isArray(data?.results) ? (data.results as PublishLogResult[]) : [];
+    if (!results.length && ids?.length) {
+      results = ids.map((pid) => ({ id: pid, status: fallbackError ? "failed" : "published", error: fallbackError }));
+    }
+    if (!results.length) return;
+    const enriched = results.map((r) => {
+      const page = (pages as any[])?.find((p) => p.id === r.id);
+      return {
+        ...r,
+        title: r.title || page?.title || page?.seo_title || page?.slug,
+        slug: r.slug || page?.slug || undefined,
+        external_url: r.external_url || page?.external_url || undefined,
+        error: r.error || (r.status !== "published" ? page?.error_message || fallbackError || undefined : undefined),
+      };
+    });
+    setPublishSummary(enriched);
+    setPublishLog(enriched);
+  };
+
 
   // Overview stats
   const statusCounts = useMemo(() => {
@@ -409,14 +436,16 @@ export default function CampaignDetailPage() {
       }
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      recordPublishResults(data, [variables.pageId]);
       toast({ title: "Republish complete", description: "Page updated at the same URL." });
       setShowWebsiteSelector(false);
       setPendingPublishPageId(null);
     },
-    onError: (err: Error) => {
+    onError: (err: Error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      recordPublishResults(null, variables?.pageId ? [variables.pageId] : undefined, err.message);
       toast({ title: "Republish failed", description: err.message, variant: "destructive" });
     },
   });
@@ -454,9 +483,11 @@ export default function CampaignDetailPage() {
         title: "Republish complete",
         description: `${ok} page${ok !== 1 ? "s" : ""} updated with latest field mapping${failed ? `, ${failed} failed` : ""}.`,
       });
+      recordPublishResults(data, ids);
     },
-    onError: (err: Error) => {
+    onError: (err: Error, ids) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      recordPublishResults(null, ids, err.message);
       toast({ title: "Republish failed", description: err.message, variant: "destructive" });
     },
   });
@@ -497,9 +528,11 @@ export default function CampaignDetailPage() {
         description: `${ok} page${ok !== 1 ? "s" : ""} published${failed ? `, ${failed} failed` : ""}.`,
       });
       if (wsId) logAudit(wsId, "pages_bulk_published", "page", null, { count: pageIds.length, published: ok });
+      recordPublishResults(data, pageIds);
     },
-    onError: (err: Error) => {
+    onError: (err: Error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      recordPublishResults(null, variables?.pageIds, err.message);
       setPendingBulkPublishIds([]);
       toast({ title: "Publish failed", description: err.message, variant: "destructive" });
     },
@@ -591,6 +624,16 @@ export default function CampaignDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* Post-publish summary: which pages succeeded / failed and why */}
+      {publishSummary && publishSummary.length > 0 && (
+        <PublishResultSummary
+          results={publishSummary}
+          onViewDetails={() => setPublishLog(publishSummary)}
+          onRetryFailed={(ids) => bulkPublishMutation.mutate({ pageIds: ids })}
+          onDismiss={() => setPublishSummary(null)}
+          retrying={bulkPublishMutation.isPending}
+        />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-start gap-3 min-w-0">
@@ -1698,6 +1741,13 @@ export default function CampaignDetailPage() {
         }}
       />
 
+      <PublishLogDialog
+        open={!!publishLog}
+        onOpenChange={(open) => { if (!open) setPublishLog(null); }}
+        results={publishLog || []}
+        onRetryFailed={(ids) => { setPublishLog(null); bulkPublishMutation.mutate({ pageIds: ids }); }}
+        retrying={bulkPublishMutation.isPending}
+      />
       <PublishWebsiteSelector
         open={showWebsiteSelector}
         onOpenChange={(open) => {

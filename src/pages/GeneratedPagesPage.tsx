@@ -30,6 +30,8 @@ import { HTML_ONLY_MODE } from "@/lib/publish-format";
 import { PublishFormatDialog, type PublishFormat } from "@/components/generated-pages/PublishFormatDialog";
 
 import { PublishLogDialog, type PublishLogResult, type PublishStep } from "@/components/campaigns/PublishLogDialog";
+import { PublishResultSummary } from "@/components/generated-pages/PublishResultSummary";
+
 import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -164,6 +166,9 @@ export default function GeneratedPagesPage() {
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
   const [publishLog, setPublishLog] = useState<PublishLogResult[] | null>(null);
+  // Persistent summary of the last publish run (success/failed per page).
+  const [publishSummary, setPublishSummary] = useState<PublishLogResult[] | null>(null);
+
   // Before/after republish diff: snapshots captured at trigger time, keyed by page id.
   const republishSnapshotsRef = useRef<Record<string, RepublishSnapshot>>({});
   const [diffState, setDiffState] = useState<{ before: RepublishSnapshot; after: RepublishSnapshot } | null>(null);
@@ -187,6 +192,35 @@ export default function GeneratedPagesPage() {
     }
     return msg;
   };
+
+  // Normalize edge-function publish results and keep a persistent summary
+  // so the screen shows exactly which pages succeeded / failed and why.
+  const recordPublishResults = (data: any, ids?: string[], fallbackError?: string) => {
+    let results: PublishLogResult[] = Array.isArray(data?.results)
+      ? (data.results as PublishLogResult[])
+      : [];
+    if (!results.length && ids?.length) {
+      results = ids.map((id) => ({
+        id,
+        status: fallbackError ? "failed" : "published",
+        error: fallbackError,
+      }));
+    }
+    if (!results.length) return;
+    const enriched = results.map((r) => {
+      const page = pages.find((p) => p.id === r.id);
+      return {
+        ...r,
+        title: r.title || page?.title || page?.seo_title || page?.slug,
+        slug: r.slug || page?.slug || undefined,
+        external_url: r.external_url || page?.external_url || undefined,
+        error: r.error || (r.status !== "published" ? page?.error_message || fallbackError || undefined : undefined),
+      };
+    });
+    setPublishSummary(enriched);
+    setPublishLog(enriched);
+  };
+
 
   // Show the persisted per-page publish timeline (validation, media import,
   // WordPress/Shopify publishing progress + results) in the publish-log dialog.
@@ -374,12 +408,17 @@ export default function GeneratedPagesPage() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       toast({ title: "Publishing complete", description: `${data.published} published, ${data.failed} failed.` });
-      if (Array.isArray(data?.results) && data.results.length) setPublishLog((data.results as PublishLogResult[]).map((r) => ({ ...r, title: r.title || pages.find((p) => p.id === r.id)?.title })));
+      recordPublishResults(data, variables?.pageIds);
       if (wsId) logAudit(wsId, "page_published", "page", variables.pageIds[0], { count: variables.pageIds.length });
       setShowWebsiteSelector(false);
       setPendingPublishIds([]);
     },
-    onError: (err: Error) => toast({ title: "Publishing failed", description: err.message, variant: "destructive" }),
+    onError: (err: Error, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      recordPublishResults(null, variables?.pageIds, err.message);
+      toast({ title: "Publishing failed", description: err.message, variant: "destructive" });
+    },
+
   });
 
   const seoSaveMutation = useMutation({
@@ -448,12 +487,17 @@ export default function GeneratedPagesPage() {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       setSelectedIds(new Set());
       toast({ title: "Bulk publish complete", description: `${data.published} published, ${data.failed} failed.` });
-      if (Array.isArray(data?.results) && data.results.length) setPublishLog((data.results as PublishLogResult[]).map((r) => ({ ...r, title: r.title || pages.find((p) => p.id === r.id)?.title })));
+      recordPublishResults(data, ids);
       if (wsId) logAudit(wsId, "pages_bulk_published", "page", null, { count: ids.length, published: data.published });
       setShowWebsiteSelector(false);
       setPendingPublishIds([]);
     },
-    onError: (err: Error) => toast({ title: "Bulk publish failed", description: err.message, variant: "destructive" }),
+    onError: (err: Error, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      recordPublishResults(null, variables?.ids, err.message);
+      toast({ title: "Bulk publish failed", description: err.message, variant: "destructive" });
+    },
+
   });
 
   const bulkStatusMutation = useMutation({
@@ -497,14 +541,16 @@ export default function GeneratedPagesPage() {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       setSelectedIds(new Set());
       toast({ title: "Retry complete", description: `${data.published} published, ${data.failed} failed.` });
-      if (Array.isArray(data?.results) && data.results.length) setPublishLog((data.results as PublishLogResult[]).map((r) => ({ ...r, title: r.title || pages.find((p) => p.id === r.id)?.title })));
+      recordPublishResults(data);
       setShowWebsiteSelector(false);
       setPendingPublishIds([]);
     },
-    onError: (err: Error) => {
+    onError: (err: Error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      recordPublishResults(null, variables?.ids, err.message);
       toast({ title: "Retry failed", description: err.message, variant: "destructive" });
     },
+
   });
 
   // Auto-republish job: convert ALL previously published pages to the new
@@ -1005,6 +1051,19 @@ export default function GeneratedPagesPage() {
 
       {/* Live progress card (only renders when active jobs exist) */}
       {wsId && <LiveGenerationProgress workspaceId={wsId} />}
+
+      {/* Post-publish summary: which pages succeeded / failed and why */}
+      {publishSummary && publishSummary.length > 0 && (
+        <PublishResultSummary
+          results={publishSummary}
+          onViewDetails={() => setPublishLog(publishSummary)}
+          onRetryFailed={(ids) => handlePublish(ids, "retry")}
+          onDismiss={() => setPublishSummary(null)}
+          retrying={retryFailedMutation.isPending}
+        />
+      )}
+
+
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
@@ -1846,7 +1905,10 @@ export default function GeneratedPagesPage() {
         open={!!publishLog}
         onOpenChange={(open) => { if (!open) setPublishLog(null); }}
         results={publishLog || []}
+        onRetryFailed={(ids) => { setPublishLog(null); handlePublish(ids, "retry"); }}
+        retrying={retryFailedMutation.isPending}
       />
+
       <RepublishDiffDialog
         open={!!diffState}
         onOpenChange={(open) => { if (!open) setDiffState(null); }}
