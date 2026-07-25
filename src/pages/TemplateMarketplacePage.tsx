@@ -575,11 +575,7 @@ export default function TemplateMarketplacePage() {
 
       {/* Step 1 — choose the target platform. Hidden in HTML-only (v1) mode. */}
       <div className={HTML_ONLY_MODE ? "hidden" : ""}>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("marketplace.choosePlatform") || "Choose your format"}
-          </p>
-        </div>
+        <p className="mb-2 text-xs font-medium text-muted-foreground">Choose your format</p>
         <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl ${HTML_ONLY_MODE ? "hidden" : ""}`}>
           {([
             { id: "elementor" as const, label: "Elementor", desc: "WordPress / Elementor JSON", icon: FileText },
@@ -633,7 +629,7 @@ export default function TemplateMarketplacePage() {
           />
         </div>
         <Select value={selectedFormat} onValueChange={(v) => setSelectedFormat(v as typeof selectedFormat)}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className={`w-full sm:w-[180px] ${HTML_ONLY_MODE ? "hidden" : ""}`}>
             <SelectValue placeholder="Format" />
           </SelectTrigger>
           <SelectContent>
@@ -748,15 +744,15 @@ export default function TemplateMarketplacePage() {
                   <div className="mt-3 pt-3 border-t border-border">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                        Conversion status
+                        {HTML_ONLY_MODE ? "Output format" : "Conversion status"}
                       </span>
                       <div className="flex items-center gap-1">
-                        <Badge variant="secondary" className="text-[9px]">{formatLabel}</Badge>
+                        {!HTML_ONLY_MODE && <Badge variant="secondary" className="text-[9px]">{formatLabel}</Badge>}
                         <Button
                           size="sm"
                           variant="ghost"
                           className="h-5 px-1.5 text-[9px] gap-1"
-                          title={isRetrying ? "Conversion running…" : "Rerun Elementor + Shopify conversion for this template"}
+                          title={isRetrying ? "Rebuilding…" : HTML_ONLY_MODE ? "Rebuild the HTML/CSS bundle for this template" : "Rerun Elementor + Shopify conversion for this template"}
                           disabled={isRetrying}
                           aria-busy={isRetrying}
                           onClick={(e) => {
@@ -778,7 +774,7 @@ export default function TemplateMarketplacePage() {
                           <div className="h-full w-1/3 animate-progress-indeterminate bg-primary" />
                         </div>
                         <p className="text-[9px] text-muted-foreground">
-                          Rebuilding Elementor + Shopify kits… chips refresh when complete.
+                          {HTML_ONLY_MODE ? "Rebuilding the HTML/CSS bundle… status refreshes when complete." : "Rebuilding Elementor + Shopify kits… chips refresh when complete."}
                         </p>
                       </div>
                     )}
