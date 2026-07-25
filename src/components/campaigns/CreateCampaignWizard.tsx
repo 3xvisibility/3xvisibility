@@ -838,6 +838,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // Seed the publish format from the template's saved choice (from marketplace),
   // unless the user has already changed it manually.
   useEffect(() => {
+    if (HTML_ONLY_MODE) return; // v1: always publish real HTML/CSS
     if (!selectedTemplate || publishFormatTouchedRef.current) return;
     const tpl = templates.find(t => t.id === selectedTemplate) as { schema_config?: { publish_format?: string } } | undefined;
     const fmt = tpl?.schema_config?.publish_format;
