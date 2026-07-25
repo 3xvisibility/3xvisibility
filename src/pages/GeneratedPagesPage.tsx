@@ -543,10 +543,12 @@ export default function GeneratedPagesPage() {
       setShowWebsiteSelector(false);
       setPendingPublishIds([]);
     },
-    onError: (err: Error) => {
+    onError: (err: Error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      recordPublishResults(null, variables?.ids, err.message);
       toast({ title: "Retry failed", description: err.message, variant: "destructive" });
     },
+
   });
 
   // Auto-republish job: convert ALL previously published pages to the new
