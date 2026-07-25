@@ -40,7 +40,10 @@ function preserveDesignAssets(html: string): string {
   if (!html) return html;
   const imports: string[] = [];
   let out = html.replace(/<link\b[^>]*>/gi, (tag) => {
+    // Bundled page assets (data-xxxv-asset) stay as real <link> tags.
+    if (/data-xxxv-asset/i.test(tag)) return tag;
     const isSheet = /rel\s*=\s*["']?stylesheet/i.test(tag);
+
     const href = tag.match(/href\s*=\s*("([^"]*)"|'([^']*)')/i);
     const url = href ? (href[2] ?? href[3] ?? "") : "";
     if (isSheet && url && !/\{[^}]*\}/.test(url)) {
