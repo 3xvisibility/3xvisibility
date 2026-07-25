@@ -484,7 +484,9 @@ export default function TemplateMarketplacePage() {
       // Normalize marketplace HTML into the shared HTML/CSS/JS structure so it
       // saves and publishes exactly like imported / URL-scanned templates.
       const platformContent = convertForPlatform(baked);
-      const content = normalizeTemplateHtml(platformContent).html || platformContent;
+      const content =
+        normalizeTemplateHtml(platformContent, { keepScripts: /<script\b/i.test(platformContent) }).html ||
+        platformContent;
       const { data: inserted, error } = await supabase.from("templates").insert({
         name: tpl.name,
         content,
