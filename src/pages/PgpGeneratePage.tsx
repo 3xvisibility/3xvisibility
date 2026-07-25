@@ -80,6 +80,9 @@ export default function PgpGeneratePage() {
   const [genProgress, setGenProgress] = useState<{ processed: number; total: number; errors: number } | null>(null);
   const [genStartedAt, setGenStartedAt] = useState<number | null>(null);
   const [genStage, setGenStage] = useState<string | null>(null);
+  const [genCampaignId, setGenCampaignId] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const cancelRequestedRef = useRef(false);
   const [nowTick, setNowTick] = useState(Date.now());
 
   // 1s ticker while a job is running, so elapsed time / ETA stay live.
@@ -1296,6 +1299,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
 
 
+    cancelRequestedRef.current = false;
+    setCancelling(false);
+    setGenCampaignId(null);
     setIsGenerating(true);
     setGenStartedAt(Date.now());
     setGenStage("Preparing rows…");
@@ -1366,6 +1372,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       } as any).select("id").single();
 
       if (campErr) throw campErr;
+      setGenCampaignId(campaign.id);
 
       // Start polling for progress
       const pollInterval = setInterval(async () => {
@@ -1377,6 +1384,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
+          if (cancelRequestedRef.current) { clearInterval(pollInterval); return; }
           if (job) {
             setGenStage(
               job.status === "completed" ? "Finishing up…"
@@ -1444,6 +1452,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             total: job.total_rows || rows.length,
             errors: job.error_count || 0,
           });
+          if (cancelRequestedRef.current) { settled = true; break; }
           if (job.status === "completed" || job.status === "failed") { settled = true; break; }
         }
         clearInterval(pollInterval);
@@ -1459,6 +1468,14 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         clearInterval(pollInterval);
       }
 
+
+      if (cancelRequestedRef.current) {
+        setGenStage("Cancelled");
+        setGenStartedAt(null);
+        toast({ title: "Generation cancelled", description: "Pages already created are kept — open the campaign to review." });
+        setTimeout(() => navigate(`${basePath}/campaigns/${campaign.id}`), 1200);
+        return;
+      }
 
       // Final status check
       const { data: finalJob } = await supabase
@@ -1489,6 +1506,29 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       toast({ title: t("pgpGenerate.toastGenFailedTitle"), description: err.message, variant: "destructive" });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  /** Ask the server to stop the running job and stop client-side polling. */
+  const cancelGeneration = async () => {
+    cancelRequestedRef.current = true;
+    setCancelling(true);
+    setGenStage("Cancelling…");
+    try {
+      if (genCampaignId) {
+        await supabase.functions.invoke("generate-pages", {
+          body: { action: "pause", campaign_id: genCampaignId },
+        });
+        await supabase.from("campaigns").update({ status: "paused" as any }).eq("id", genCampaignId);
+      }
+      toast({
+        title: "Cancelling generation",
+        description: "The job will stop after the current page finishes.",
+      });
+    } catch (err: any) {
+      toast({ title: "Could not cancel", description: err?.message || "Try again.", variant: "destructive" });
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -2542,9 +2582,23 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               <CardContent className="p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold">{t("pgpGenerate.progressTitle")}</span>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {genProgress.processed}/{genProgress.total}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {genProgress.processed}/{genProgress.total}
+                    </span>
+                    {(isGenerating || aiGenerating) && !cancelRequestedRef.current && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="h-7 px-2.5 text-xs"
+                        onClick={cancelGeneration}
+                        disabled={cancelling}
+                      >
+                        {cancelling ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <XCircle className="h-3.5 w-3.5 mr-1.5" />}
+                        {cancelling ? "Cancelling…" : "Cancel"}
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <Progress value={genProgress.total > 0 ? (genProgress.processed / genProgress.total) * 100 : 0} className="h-2" />
                 <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
