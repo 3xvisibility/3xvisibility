@@ -1326,16 +1326,6 @@ export default function GeneratedPagesPage() {
                       )}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
-                      {hasPublishStatus(page) && <DropdownMenuItem onClick={() => openPublishStatus(page)}><Activity className="h-3.5 w-3.5 mr-2" />Publish status</DropdownMenuItem>}
-                      {page.status === "published" && page.external_id && page.websites?.type === "wordpress" && (
-                        <DropdownMenuItem
-                          disabled={recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id}
-                          onClick={() => recheckReadinessMutation.mutate(page.id)}
-                        >
-                          <ShieldCheck className={`h-3.5 w-3.5 mr-2 ${recheckReadinessMutation.isPending && recheckReadinessMutation.variables === page.id ? "animate-spin" : ""}`} />
-                          Re-check Elementor readiness
-                        </DropdownMenuItem>
-                      )}
                       {liveUrl && <DropdownMenuItem onClick={() => openPageUrl(liveUrl)}><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</DropdownMenuItem>}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
