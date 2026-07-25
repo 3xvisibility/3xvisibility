@@ -79,17 +79,42 @@ function extractImageUrls(html: string): string[] {
   return imgs;
 }
 
+/**
+ * Many modern landing pages (React/Framer/Rocket builds) ship their content
+ * with an "entrance animation" initial state — inline `opacity:0` plus a
+ * translate transform — and only reveal it with JS on scroll. When we import
+ * such a page statically, every headline/paragraph exists in the HTML but is
+ * invisible, so the template looks like design-only with no text.
+ * This resets those initial states to a visible one.
+ */
+function neutralizeHiddenStates(html: string): string {
+  let out = html.replace(/style=(["'])([^"']*)\1/gi, (full, q, css: string) => {
+    if (!/opacity|visibility|transform/i.test(css)) return full;
+    const fixed = css
+      .replace(/opacity\s*:\s*0(\.0+)?\s*(!important)?/gi, "opacity:1")
+      .replace(/visibility\s*:\s*hidden\s*(!important)?/gi, "visibility:visible")
+      .replace(/transform\s*:\s*[^;]*(translate|scale|rotate)[^;]*/gi, "transform:none");
+    return `style=${q}${fixed}${q}`;
+  });
+  // Utility classes that hide content until an observer adds a "visible" class.
+  out = out.replace(/\bopacity-0\b/g, "opacity-100").replace(/\binvisible\b/g, "visible");
+  // Safety net stylesheet in case a class-based animation still hides content.
+  out += `\n<style>[data-aos],[class*="fade-"],[class*="reveal"],[class*="animate-"]{opacity:1 !important;visibility:visible !important;transform:none !important;}</style>`;
+  return out;
+}
+
 function extractBodyContent(html: string): string {
   // Try to extract just the body
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   const content = bodyMatch ? bodyMatch[1] : html;
   // Keep <style> tags (page builder inline styles like Elementor, Divi, etc.)
   // Remove script tags, nav, footer
-  return content
+  const cleaned = content
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<nav[\s\S]*?<\/nav>/gi, "")
     .replace(/<footer[\s\S]*?<\/footer>/gi, "")
     .replace(/<!--[\s\S]*?-->/g, "");
+  return neutralizeHiddenStates(cleaned);
 }
 
 function extractHeadStyles(html: string, baseUrl: string): string {

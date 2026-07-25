@@ -131,6 +131,15 @@ ${embeddedStyles}
     background:#f8fafc !important;
   }
   img { max-width: 100%; height: auto; }
+  /* Reveal content hidden by scroll/entrance animations — the imported page
+     relies on JS to fade elements in, which never runs inside the preview. */
+  [style*="opacity:0"], [style*="opacity: 0"], [style*="visibility:hidden"], [style*="visibility: hidden"],
+  .opacity-0, .invisible, [data-aos], [class*="fade-"], [class*="reveal"], [class*="animate-"] {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    animation: none !important;
+  }
 </style>
 </head>
 <body>${styled}</body>
