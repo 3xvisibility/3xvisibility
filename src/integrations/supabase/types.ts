@@ -1620,6 +1620,33 @@ export type Database = {
           },
         ]
       }
+      page_assets: {
+        Row: {
+          content: string
+          created_at: string
+          hash: string
+          id: string
+          kind: string
+          workspace_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          hash: string
+          id?: string
+          kind: string
+          workspace_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          hash?: string
+          id?: string
+          kind?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       page_improvements: {
         Row: {
           action: string
