@@ -2433,7 +2433,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     missRows.push({ name: gk.name });
                   }
                 }
-                const totalFilled = kwRows.length + locRows.length + bizRows.length + aiRows.length;
+                const totalFilled = kwRows.length + locRows.length + bizRows.length + aiRows.length + customRows.length;
                 const Group = ({
                   title, icon: Icon, color, rows, empty,
                 }: { title: string; icon: any; color: string; rows: Row[]; empty: string }) => (
