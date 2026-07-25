@@ -436,14 +436,16 @@ export default function CampaignDetailPage() {
       }
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      recordPublishResults(data, [variables.pageId]);
       toast({ title: "Republish complete", description: "Page updated at the same URL." });
       setShowWebsiteSelector(false);
       setPendingPublishPageId(null);
     },
-    onError: (err: Error) => {
+    onError: (err: Error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      recordPublishResults(null, variables?.pageId ? [variables.pageId] : undefined, err.message);
       toast({ title: "Republish failed", description: err.message, variant: "destructive" });
     },
   });
@@ -481,9 +483,11 @@ export default function CampaignDetailPage() {
         title: "Republish complete",
         description: `${ok} page${ok !== 1 ? "s" : ""} updated with latest field mapping${failed ? `, ${failed} failed` : ""}.`,
       });
+      recordPublishResults(data, ids);
     },
-    onError: (err: Error) => {
+    onError: (err: Error, ids) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      recordPublishResults(null, ids, err.message);
       toast({ title: "Republish failed", description: err.message, variant: "destructive" });
     },
   });
@@ -524,9 +528,11 @@ export default function CampaignDetailPage() {
         description: `${ok} page${ok !== 1 ? "s" : ""} published${failed ? `, ${failed} failed` : ""}.`,
       });
       if (wsId) logAudit(wsId, "pages_bulk_published", "page", null, { count: pageIds.length, published: ok });
+      recordPublishResults(data, pageIds);
     },
-    onError: (err: Error) => {
+    onError: (err: Error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      recordPublishResults(null, variables?.pageIds, err.message);
       setPendingBulkPublishIds([]);
       toast({ title: "Publish failed", description: err.message, variant: "destructive" });
     },
