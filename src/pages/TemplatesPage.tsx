@@ -41,6 +41,8 @@ import { TemplateCustomizerDialog } from "@/components/templates/TemplateCustomi
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { TemplateVersionBadge } from "@/components/templates/TemplateVersionBadge";
 import { TemplateVersionHistoryDialog } from "@/components/templates/TemplateVersionHistoryDialog";
+import { RescanVariablesDialog, type RescanTarget } from "@/components/templates/RescanVariablesDialog";
+
 import { recordVersionById, recordVersionForLatest } from "@/lib/template-version-history";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
@@ -88,6 +90,8 @@ export default function TemplatesPage() {
   const [duplicateTarget, setDuplicateTarget] = useState<Template | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [historyTarget, setHistoryTarget] = useState<Template | null>(null);
+  const [rescanDialogFor, setRescanDialogFor] = useState<Template | null>(null);
+
 
   // AI Regenerate Design state
   const [regenTarget, setRegenTarget] = useState<Template | null>(null);
@@ -484,29 +488,55 @@ export default function TemplatesPage() {
    * campaigns that reference them keep rendering.
    */
   const rescanMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      if (!wsId || ids.length === 0) return { updated: 0, added: 0, skipped: 0 };
-      const targets = templates.filter((t) => ids.includes(t.id));
-      let updated = 0;
-      let addedTotal = 0;
-      let skipped = 0;
-      for (const tpl of targets) {
-        const original = tpl.content || "";
-        if (!original.trim()) { skipped += 1; continue; }
+    mutationFn: async (payload: string[] | { id: string; target: RescanTarget }) => {
+      if (!wsId) return { updated: 0, added: 0, skipped: 0 };
+
+      // Shared per-source rescan: returns updated content + additions count,
+      // never mutating any HTML aside from the exact snapshot passed in.
+      const rescanOne = (sourceContent: string) => {
+        const original = sourceContent || "";
+        if (!original.trim()) return { additions: [] as ReturnType<typeof autoExtractTemplateVariables>, nextContent: original };
         const existing = new Set(
           (original.match(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g) || []).map((s) => s.slice(1, -1).toLowerCase()),
         );
-        const candidates = autoExtractTemplateVariables(original, tpl.name || "", []);
-        // Keep only extracted vars whose NAME isn't already used and whose
-        // ORIGINAL text still exists literally in the current HTML.
+        const candidates = autoExtractTemplateVariables(original, "", []);
         const additions = candidates.filter((c) => {
           if (existing.has(c.name.toLowerCase())) return false;
           if (!c.original || !original.includes(c.original)) return false;
           return true;
         });
-        if (additions.length === 0) { skipped += 1; continue; }
-        const nextContent = applyTemplateVariables(original, additions);
-        if (nextContent === original) { skipped += 1; continue; }
+        if (additions.length === 0) return { additions, nextContent: original };
+        return { additions, nextContent: applyTemplateVariables(original, additions) };
+      };
+
+      // Single-version rescan: only touches the chosen template_versions row.
+      if (!Array.isArray(payload)) {
+        const { id, target } = payload;
+        if (target.kind === "version") {
+          const { additions, nextContent } = rescanOne(target.content);
+          if (additions.length === 0 || nextContent === target.content) {
+            return { updated: 0, added: 0, skipped: 1, versionOnly: true };
+          }
+          const variables = filterDesignVars([...new Set(nextContent.match(/\{[^}]+\}/g) || [])]);
+          const { error } = await supabase
+            .from("template_versions")
+            .update({ content: nextContent, variables } as never)
+            .eq("id", target.versionId);
+          if (error) throw error;
+          return { updated: 1, added: additions.length, skipped: 0, versionOnly: true, versionNumber: target.versionNumber };
+        }
+        // Live-only path via dialog — funnel through the batch code below.
+        payload = [id];
+      }
+
+      const ids = payload;
+      const targets = templates.filter((t) => ids.includes(t.id));
+      let updated = 0;
+      let addedTotal = 0;
+      let skipped = 0;
+      for (const tpl of targets) {
+        const { additions, nextContent } = rescanOne(tpl.content || "");
+        if (additions.length === 0 || nextContent === (tpl.content || "")) { skipped += 1; continue; }
         const variables = filterDesignVars([...new Set(nextContent.match(/\{[^}]+\}/g) || [])]);
         const { error } = await supabase
           .from("templates")
@@ -517,17 +547,24 @@ export default function TemplatesPage() {
         updated += 1;
         addedTotal += additions.length;
       }
-      return { updated, added: addedTotal, skipped };
+      return { updated, added: addedTotal, skipped, versionOnly: false };
     },
-    onSuccess: async (res) => {
+    onSuccess: async (res: any) => {
       await refreshTemplates();
+      setRescanDialogFor(null);
       toast({
         title: "Variable rescan complete",
-        description: `Updated ${res.updated} template(s), added ${res.added} new variable(s)${res.skipped ? `, ${res.skipped} unchanged` : ""}.`,
+        description: res.versionOnly
+          ? (res.updated
+              ? `Version ${res.versionNumber} updated with ${res.added} new variable(s). Other versions untouched.`
+              : "Selected version already up to date.")
+          : `Updated ${res.updated} template(s), added ${res.added} new variable(s)${res.skipped ? `, ${res.skipped} unchanged` : ""}.`,
       });
     },
     onError: (err: Error) => toast({ title: "Rescan failed", description: err.message, variant: "destructive" }),
   });
+
+
 
 
   // Re-import a marketplace template at its current latest version. We always
@@ -1249,7 +1286,7 @@ slug: ${fields.slug}`,
                       <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setWidthTemplate(tpl)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Content width</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setDuplicateTarget(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => rescanMutation.mutate([tpl.id])} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setRescanDialogFor(tpl)} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
 
                       <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -1312,7 +1349,7 @@ slug: ${fields.slug}`,
                             <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setWidthTemplate(tpl)}><LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Content width</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setDuplicateTarget(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => rescanMutation.mutate([tpl.id])} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setRescanDialogFor(tpl)} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
 
                             <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -1375,7 +1412,7 @@ slug: ${fields.slug}`,
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl, "variants-only"); }}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setWidthTemplate(tpl); }}><LayoutTemplate className="h-3.5 w-3.5 mr-2" /> Content width</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setDuplicateTarget(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); rescanMutation.mutate([tpl.id]); }} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setRescanDialogFor(tpl); }} disabled={rescanMutation.isPending}><ScanSearch className="h-3.5 w-3.5 mr-2" /> Rescan variables</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
 
                         <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -1480,6 +1517,22 @@ slug: ${fields.slug}`,
         templateId={historyTarget?.id ?? null}
         templateName={historyTarget?.name}
       />
+
+      {/* Rescan Variables Dialog (snapshot-scoped) */}
+      <RescanVariablesDialog
+        open={!!rescanDialogFor}
+        onOpenChange={(v) => { if (!v) setRescanDialogFor(null); }}
+        templateId={rescanDialogFor?.id ?? null}
+        templateName={rescanDialogFor?.name}
+        liveContent={rescanDialogFor?.content ?? ""}
+        isRunning={rescanMutation.isPending}
+        onConfirm={(target: RescanTarget) => {
+          if (!rescanDialogFor) return;
+          rescanMutation.mutate({ id: rescanDialogFor.id, target });
+        }}
+      />
+
+
 
       {/* Rename Dialog */}
       <Dialog open={!!renameTarget} onOpenChange={(v) => { if (!v) setRenameTarget(null); }}>
