@@ -586,7 +586,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                     re-publish — the page renders exactly like the preview.
                   </p>
                   <Button asChild size="sm" variant="outline" className="h-7 gap-1.5 text-xs">
-                    <a href="/3xvisibility-html-assets.zip" download>
+                    <a href="/wp-plugin/3xvisibility-html-assets.zip" download>
                       <Download className="h-3 w-3" /> Download HTML Assets plugin
                     </a>
                   </Button>
