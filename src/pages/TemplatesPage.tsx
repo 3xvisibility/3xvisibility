@@ -1378,6 +1378,24 @@ slug: ${fields.slug}`,
         } : undefined}
       />
 
+      {importPreview && (
+        <ImportPreviewDialog
+          open={!!importPreview}
+          onCancel={() => setImportPreview(null)}
+          onContinue={() => {
+            const p = importPreview;
+            setImportPreview(null);
+            setEditingTemplate(p.pendingTemplate);
+            setEditorOpen(true);
+            const n = p.variables.length;
+            toast({ title: `Page imported${n ? ` — ${n} variable${n > 1 ? "s" : ""} ready` : ""}` });
+          }}
+          pageTitle={importPreview.pageTitle}
+          fullContent={importPreview.fullContent}
+          variables={importPreview.variables}
+        />
+      )}
+
       {/* Version History Dialog */}
       <TemplateVersionHistoryDialog
         open={!!historyTarget}
