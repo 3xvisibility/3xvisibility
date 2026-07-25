@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -249,6 +249,54 @@ export default function PgpGeneratePage() {
   const [rowOverrides, setRowOverrides] = useState<Record<number, Record<string, string>>>({});
   // Which AI fill attempts failed and for which variables ("all" or row index)
   const [aiFillFailures, setAiFillFailures] = useState<Record<string, { names: string[]; error: string }>>({});
+
+  // ---- Persist manual / AI-filled variable values across visits ----------
+  // Scoped per (template group + keyword group) so switching sources doesn't
+  // leak values from another setup.
+  const varDraftKey = `pgp:varDraft:${selectedGroupId || "none"}:${selectedKeywordGroupId || "none"}`;
+  const varDraftLoadedFor = useRef<string>("");
+  useEffect(() => {
+    if (varDraftLoadedFor.current === varDraftKey) return;
+    varDraftLoadedFor.current = varDraftKey;
+    try {
+      const raw = localStorage.getItem(varDraftKey);
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          customVars?: Record<string, string>;
+          rowOverrides?: Record<number, Record<string, string>>;
+        };
+        setCustomVars(saved.customVars ?? {});
+        setRowOverrides(saved.rowOverrides ?? {});
+      } else {
+        setCustomVars({});
+        setRowOverrides({});
+      }
+    } catch {
+      /* ignore corrupt drafts */
+    }
+  }, [varDraftKey]);
+
+  useEffect(() => {
+    if (varDraftLoadedFor.current !== varDraftKey) return;
+    try {
+      const hasData = Object.keys(customVars).length > 0 || Object.keys(rowOverrides).length > 0;
+      if (hasData) {
+        localStorage.setItem(varDraftKey, JSON.stringify({ customVars, rowOverrides, savedAt: Date.now() }));
+      } else {
+        localStorage.removeItem(varDraftKey);
+      }
+    } catch {
+      /* storage full / unavailable — drafts are best-effort */
+    }
+  }, [customVars, rowOverrides, varDraftKey]);
+
+  const clearVariableDraft = () => {
+    setCustomVars({});
+    setRowOverrides({});
+    setAiFillFailures({});
+    try { localStorage.removeItem(varDraftKey); } catch { /* noop */ }
+    toast({ title: "Saved variable values cleared" });
+  };
 
 
 
@@ -2730,8 +2778,25 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                             <><Wand2 className="h-3 w-3 mr-1" /> Fill all with AI</>
                           )}
                         </Button>
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <span className="text-[11px] text-muted-foreground">
+                            Your typed / AI-filled values are saved automatically for this template + keyword group.
+                          </span>
+                          {(Object.keys(customVars).length > 0 || Object.keys(rowOverrides).length > 0) && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 text-[11px] shrink-0"
+                              onClick={clearVariableDraft}
+                            >
+                              Clear saved values
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     )}
+
                   </div>
                 );
               })()}
