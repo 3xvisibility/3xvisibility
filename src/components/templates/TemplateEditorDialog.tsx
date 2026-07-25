@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { DynamicElementsInserter } from "@/components/templates/DynamicElementsInserter";
+import { CtaPlacementPanel } from "@/components/templates/CtaPlacementPanel";
 
 
 import { SeoScoreBadge } from "@/components/SeoScoreBadge";
@@ -665,6 +666,13 @@ ${contentText}`
                   </p>
                 </details>
               )}
+
+              {/* ── CTA Placement Panel ─────────────────────────────────
+                  Detects <a>/<button> CTAs and lets the user map their
+                  label + href to {cta_label} / {cta_url} variables so
+                  Keyword Group data lands in the correct button position. */}
+              <CtaPlacementPanel content={content} onChange={setContent} />
+
 
 
 
