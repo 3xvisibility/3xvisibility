@@ -1,3 +1,4 @@
+import { HTML_ONLY_MODE } from "@/lib/publish-format";
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { friendlyError } from "@/lib/friendly-errors";
@@ -838,6 +839,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // Seed the publish format from the template's saved choice (from marketplace),
   // unless the user has already changed it manually.
   useEffect(() => {
+    if (HTML_ONLY_MODE) return; // v1: always publish real HTML/CSS
     if (!selectedTemplate || publishFormatTouchedRef.current) return;
     const tpl = templates.find(t => t.id === selectedTemplate) as { schema_config?: { publish_format?: string } } | undefined;
     const fmt = tpl?.schema_config?.publish_format;
@@ -4048,17 +4050,23 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Publish Format</Label>
-                      <RadioGroup
-                        value={publishFormat}
-                        onValueChange={v => { publishFormatTouchedRef.current = true; setPublishFormat(v as any); }}
-                        className="flex flex-wrap gap-3"
-                      >
-                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="html" id="w-fmt-html" /><Label htmlFor="w-fmt-html" className="text-xs cursor-pointer">Real code (HTML/CSS) <span className="opacity-60">(Default)</span></Label></div>
-                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="elementor" id="w-fmt-elementor" /><Label htmlFor="w-fmt-elementor" className="text-xs cursor-pointer">Elementor</Label></div>
-                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="gutenberg" id="w-fmt-gutenberg" /><Label htmlFor="w-fmt-gutenberg" className="text-xs cursor-pointer">Gutenberg <span className="opacity-60">(Beta)</span></Label></div>
-                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="shopify" id="w-fmt-shopify" /><Label htmlFor="w-fmt-shopify" className="text-xs cursor-pointer">Shopify</Label></div>
-                      </RadioGroup>
-                      <p className="text-[10px] text-muted-foreground">Controls how the page is built when published. WordPress supports Elementor &amp; Gutenberg; Shopify uses its native sections.</p>
+                      {HTML_ONLY_MODE ? (
+                        <p className="text-xs">
+                          Real code (HTML / CSS)
+                          <span className="ml-1 text-[10px] text-muted-foreground">— design stays 1:1 with the preview</span>
+                        </p>
+                      ) : (
+                        <RadioGroup
+                          value={publishFormat}
+                          onValueChange={v => { publishFormatTouchedRef.current = true; setPublishFormat(v as any); }}
+                          className="flex flex-wrap gap-3"
+                        >
+                          <div className="flex items-center space-x-1.5"><RadioGroupItem value="html" id="w-fmt-html" /><Label htmlFor="w-fmt-html" className="text-xs cursor-pointer">Real code (HTML/CSS) <span className="opacity-60">(Default)</span></Label></div>
+                          <div className="flex items-center space-x-1.5"><RadioGroupItem value="elementor" id="w-fmt-elementor" /><Label htmlFor="w-fmt-elementor" className="text-xs cursor-pointer">Elementor</Label></div>
+                          <div className="flex items-center space-x-1.5"><RadioGroupItem value="gutenberg" id="w-fmt-gutenberg" /><Label htmlFor="w-fmt-gutenberg" className="text-xs cursor-pointer">Gutenberg <span className="opacity-60">(Beta)</span></Label></div>
+                          <div className="flex items-center space-x-1.5"><RadioGroupItem value="shopify" id="w-fmt-shopify" /><Label htmlFor="w-fmt-shopify" className="text-xs cursor-pointer">Shopify</Label></div>
+                        </RadioGroup>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Design Fidelity</Label>

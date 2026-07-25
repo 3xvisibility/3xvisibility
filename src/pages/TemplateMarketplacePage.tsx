@@ -31,6 +31,7 @@ import { TemplateWordPressTestDialog } from "@/components/templates/TemplateWord
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
+import { HTML_ONLY_MODE } from "@/lib/publish-format";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, reskinContent, defaultSkinVariant, type MarketplaceTemplate, type TemplateFormat, type TemplatePlatform } from "@/lib/marketplace-templates";
 
 import { useTranslatedTemplate } from "@/hooks/use-translated-template";
@@ -112,7 +113,7 @@ export default function TemplateMarketplacePage() {
   // Shopify variants are re-skinned to match the target platform, while HTML/CSS
   // returns the raw template markup so the client can grab whichever chunk they
   // need for their own stack.
-  const [platformChoice, setPlatformChoice] = useState<"elementor" | "shopify" | "html">("elementor");
+  const [platformChoice, setPlatformChoice] = useState<"elementor" | "shopify" | "html">(HTML_ONLY_MODE ? "html" : "elementor");
   // Auto-run "AI Add Variables" right after a marketplace template is imported,
   // so users don't have to open the editor and click the button manually.
   const [autoAddVars, setAutoAddVars] = useState<boolean>(() => {
@@ -127,8 +128,9 @@ export default function TemplateMarketplacePage() {
     platformChoice === "shopify" ? "shopify" : platformChoice === "html" ? "generic" : "wordpress";
   const convertForPlatform = (content: string) =>
     reskinContent(content, skinPlatform, skinPlatform === "generic" ? undefined : defaultSkinVariant(skinPlatform));
-  const resolveFormat = (_tpl: MarketplaceTemplate): TemplateFormat =>
-    platformChoice === "shopify" ? "shopify" : platformChoice === "html" ? "gutenberg" : "elementor";
+  // v1 keeps everything as real HTML/CSS so published pages match the preview 1:1.
+  const resolveFormat = (_tpl: MarketplaceTemplate): TemplateFormat | "html" =>
+    HTML_ONLY_MODE ? "html" : platformChoice === "shopify" ? "shopify" : platformChoice === "html" ? "gutenberg" : "elementor";
   const formatLabel =
     platformChoice === "shopify" ? "Shopify" : platformChoice === "html" ? "HTML / CSS" : "Elementor";
   const { toast } = useToast();
@@ -723,7 +725,7 @@ export default function TemplateMarketplacePage() {
             <Wrench className="h-3 w-3" /> Job runner
           </a>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl">
+        <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl ${HTML_ONLY_MODE ? "hidden" : ""}`}>
           {([
             { id: "elementor" as const, label: "Elementor", desc: "WordPress / Elementor JSON", icon: FileText },
             { id: "shopify" as const, label: "Shopify", desc: "Shopify section / Liquid", icon: ShoppingBag },
@@ -781,8 +783,8 @@ export default function TemplateMarketplacePage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All formats</SelectItem>
-            <SelectItem value="elementor">Elementor</SelectItem>
-            <SelectItem value="shopify">Shopify</SelectItem>
+            {!HTML_ONLY_MODE && <SelectItem value="elementor">Elementor</SelectItem>}
+            {!HTML_ONLY_MODE && <SelectItem value="shopify">Shopify</SelectItem>}
             <SelectItem value="html">HTML / CSS</SelectItem>
           </SelectContent>
         </Select>
@@ -926,8 +928,8 @@ export default function TemplateMarketplacePage() {
                       </div>
                     )}
                     <div className={`flex flex-wrap items-center gap-1 ${isRetrying ? "opacity-60" : ""}`}>
-                      {chip("Elementor", conv.elementor, platformChoice === "elementor", "elementor")}
-                      {chip("Shopify", conv.shopify, platformChoice === "shopify", "shopify")}
+                      {!HTML_ONLY_MODE && chip("Elementor", conv.elementor, platformChoice === "elementor", "elementor")}
+                      {!HTML_ONLY_MODE && chip("Shopify", conv.shopify, platformChoice === "shopify", "shopify")}
                       {chip("HTML / CSS", conv.html, platformChoice === "html", "html")}
                     </div>
                   </div>

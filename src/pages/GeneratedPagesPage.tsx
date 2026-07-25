@@ -26,6 +26,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
+import { HTML_ONLY_MODE } from "@/lib/publish-format";
 import { PublishFormatDialog, type PublishFormat } from "@/components/generated-pages/PublishFormatDialog";
 
 import { PublishLogDialog, type PublishLogResult, type PublishStep } from "@/components/campaigns/PublishLogDialog";
@@ -576,13 +577,17 @@ export default function GeneratedPagesPage() {
     );
   };
 
-  // Every publish first asks for the output format (real code / Elementor /
-  // Shopify) so the user controls design fidelity per publish — unless a format
-  // was remembered, in which case the whole batch reuses it silently.
+  // v1 ships HTML/CSS only: every publish uses real code so the live page is a
+  // 1:1 copy of the preview. The format dialog is skipped entirely.
   const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
     if (ids.length === 0) return;
     setPendingPublishIds(ids);
     setPendingPublishAction(action);
+    if (HTML_ONLY_MODE) {
+      setPublishFormat("html");
+      runPublish(ids, action, "html");
+      return;
+    }
     if (rememberedFormat) {
       setPublishFormat(rememberedFormat);
       runPublish(ids, action, rememberedFormat);
@@ -1056,26 +1061,30 @@ export default function GeneratedPagesPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <CheckSquare className="h-4 w-4 text-primary" />
               <span className="text-sm font-semibold">{t("generatedPages.selectedCountShort", { count: selectedIds.size })}</span>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 text-xs"
-                onClick={() => {
-                  setPendingPublishIds([...selectedIds]);
-                  setPendingPublishAction("bulk");
-                  setShowFormatDialog(true);
-                }}
-              >
-                Publish format:&nbsp;
-                <span className="font-semibold">
-                  {(rememberedFormat ?? publishFormat) === "html"
-                    ? "Real code"
-                    : (rememberedFormat ?? publishFormat) === "elementor"
-                      ? "Elementor"
-                      : "Shopify"}
-                </span>
-                {rememberedFormat && <span className="ml-1 opacity-60">(applied to all)</span>}
-              </Button>
+              {HTML_ONLY_MODE ? (
+                <Badge variant="secondary" className="text-[10px]">Publishes as real code (HTML/CSS)</Badge>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    setPendingPublishIds([...selectedIds]);
+                    setPendingPublishAction("bulk");
+                    setShowFormatDialog(true);
+                  }}
+                >
+                  Publish format:&nbsp;
+                  <span className="font-semibold">
+                    {(rememberedFormat ?? publishFormat) === "html"
+                      ? "Real code"
+                      : (rememberedFormat ?? publishFormat) === "elementor"
+                        ? "Elementor"
+                        : "Shopify"}
+                  </span>
+                  {rememberedFormat && <span className="ml-1 opacity-60">(applied to all)</span>}
+                </Button>
+              )}
             </div>
             <div className="flex flex-wrap gap-1.5">
               <Button size="sm" className="h-7 text-xs bg-gradient-primary border-0" disabled={bulkPublishMutation.isPending}
