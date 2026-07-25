@@ -137,7 +137,12 @@ Deno.serve(async (req) => {
           }
         }
 
-        report.mismatches.push(...parity.issues);
+        const parityMismatches = parity.issues.map((i) => ({
+          kind: (i.kind === "link" ? "link" : "css") as "link" | "css",
+          detail: i.detail,
+          hint: i.hint,
+        }));
+        report.mismatches.push(...parityMismatches);
         const status = report.score >= threshold && parity.ok ? "passed" : "failed";
 
         if (page.workspace_id) {
