@@ -143,7 +143,9 @@ export function normalizeTemplateHtml(
   html = html.replace(/\son[a-z]+\s*=\s*(["'])[\s\S]*?\1/gi, () => { dropped++; return ""; });
 
   // 7. Reveal animation-hidden content and normalise whitespace.
-  html = neutralizeHiddenStates(html).replace(/\n{3,}/g, "\n\n").trim();
+  //    When the source JS is kept, the site's own reveal logic runs, so forcing
+  //    the visible state would actually change the intended design.
+  html = (options.keepScripts ? html : neutralizeHiddenStates(html)).replace(/\n{3,}/g, "\n\n").trim();
 
   // 8. Single predictable wrapper (never double-wrap an already-normalized doc).
   const already = html.match(WRAPPER_STRIP_RE);
@@ -152,15 +154,17 @@ export function normalizeTemplateHtml(
   const needsWrapper = !/<div\s+class=["']tpl-root["']/i.test(body);
   // Drop any previously injected reveal rule so repeat normalization is stable.
   const cleanedCss = cssParts.map((c) => c.split(REVEAL_CSS).join("").trim()).filter(Boolean);
-  const css = dedupe([...cleanedCss, REVEAL_CSS]);
+  const css = dedupe(options.keepScripts ? cleanedCss : [...cleanedCss, REVEAL_CSS]);
   const js = dedupe(jsParts);
 
   const out = [
     links.join("\n"),
     css ? `<style data-tpl-css>\n${css}\n</style>` : "",
     needsWrapper ? `<div class="${wrapperClass}">\n${body}\n</div>` : body,
+    externalScripts.join("\n"),
     js ? `<script data-tpl-js>\n${js}\n</script>` : "",
   ].filter(Boolean).join("\n");
+
 
   if (!body) warnings.push("template body is empty after normalization");
 
