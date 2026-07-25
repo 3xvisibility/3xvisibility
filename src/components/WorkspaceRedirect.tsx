@@ -1,13 +1,18 @@
 import { useEffect, useRef } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 /**
  * Redirects legacy routes (e.g. /dashboard) to the workspace-prefixed version
  * (e.g. /w/my-workspace/dashboard).
+ *
+ * The full legacy pathname is preserved, so deep links that carry an id
+ * (e.g. /campaigns/<uuid>) land on the real detail page instead of falling
+ * back to the section root (which redirects to the Generate wizard).
  */
 export function WorkspaceRedirect({ path }: { path: string }) {
   const { currentWorkspace, workspaces, isLoading, refetch } = useWorkspace();
+  const location = useLocation();
   const retriedRef = useRef(false);
 
   const hasWorkspace = !!(currentWorkspace || workspaces[0]);
