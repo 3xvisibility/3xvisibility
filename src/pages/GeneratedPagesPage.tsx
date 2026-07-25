@@ -1475,7 +1475,7 @@ export default function GeneratedPagesPage() {
                                   Re-check Elementor readiness
                                 </DropdownMenuItem>
                               )}
-                              {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</a></DropdownMenuItem>}
+                              {liveUrl && <DropdownMenuItem onClick={() => openPageUrl(liveUrl)}><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</DropdownMenuItem>}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
                             </DropdownMenuContent>
