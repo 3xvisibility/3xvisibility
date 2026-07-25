@@ -297,7 +297,7 @@ add_action( 'rest_api_init', 'xxxv_html_assets_register_rest' );
  * what turns a flex/grid layout into a broken stack of paragraphs.
  */
 function xxxv_html_assets_disable_wpautop( $content ) {
-	if ( is_singular() && false !== strpos( (string) $content, 'data-xxxv' ) ) {
+	if ( is_singular() && ( false !== strpos( (string) $content, 'data-xxxv' ) || false !== strpos( (string) $content, 'pgp-page' ) || false !== strpos( (string) $content, 'tpl-root' ) ) ) {
 		remove_filter( 'the_content', 'wpautop' );
 	}
 	return $content;
