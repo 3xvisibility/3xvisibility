@@ -411,7 +411,12 @@ export default function GeneratedPagesPage() {
       setShowWebsiteSelector(false);
       setPendingPublishIds([]);
     },
-    onError: (err: Error) => toast({ title: "Publishing failed", description: err.message, variant: "destructive" }),
+    onError: (err: Error, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      recordPublishResults(null, variables?.pageIds, err.message);
+      toast({ title: "Publishing failed", description: err.message, variant: "destructive" });
+    },
+
   });
 
   const seoSaveMutation = useMutation({
