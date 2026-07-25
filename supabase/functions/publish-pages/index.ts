@@ -951,11 +951,12 @@ async function handlePublishPages(req: Request): Promise<Response> {
       return out;
     }
 
-    // Per-campaign publish format cache (elementor | gutenberg | shopify).
-    const campaignFormatCache = new Map<string, "elementor" | "gutenberg" | "shopify">();
-    async function getCampaignPublishFormat(campaignId: string | null | undefined): Promise<"elementor" | "gutenberg" | "shopify"> {
-      if (typeof body.publish_format === "string" && ["elementor", "gutenberg", "shopify"].includes(body.publish_format)) {
-        return body.publish_format as "elementor" | "gutenberg" | "shopify";
+    // Per-campaign publish format cache. "html" publishes the raw generated
+    // HTML/CSS verbatim (design stays 1:1 with the preview).
+    const campaignFormatCache = new Map<string, PublishFormat>();
+    async function getCampaignPublishFormat(campaignId: string | null | undefined): Promise<PublishFormat> {
+      if (typeof body.publish_format === "string" && PUBLISH_FORMATS.includes(body.publish_format)) {
+        return body.publish_format as PublishFormat;
       }
       if (!campaignId) return "elementor";
       if (campaignFormatCache.has(campaignId)) return campaignFormatCache.get(campaignId)!;
@@ -965,7 +966,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         .eq("id", campaignId)
         .maybeSingle();
       const fmt = ((data as any)?.publish_format as string) || "elementor";
-      const out = (["elementor", "gutenberg", "shopify"].includes(fmt) ? fmt : "elementor") as "elementor" | "gutenberg" | "shopify";
+      const out = (PUBLISH_FORMATS.includes(fmt) ? fmt : "elementor") as PublishFormat;
       campaignFormatCache.set(campaignId, out);
       return out;
     }
