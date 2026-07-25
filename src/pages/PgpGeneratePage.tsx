@@ -250,6 +250,54 @@ export default function PgpGeneratePage() {
   // Which AI fill attempts failed and for which variables ("all" or row index)
   const [aiFillFailures, setAiFillFailures] = useState<Record<string, { names: string[]; error: string }>>({});
 
+  // ---- Persist manual / AI-filled variable values across visits ----------
+  // Scoped per (template group + keyword group) so switching sources doesn't
+  // leak values from another setup.
+  const varDraftKey = `pgp:varDraft:${selectedGroupId || "none"}:${selectedKeywordGroupId || "none"}`;
+  const varDraftLoadedFor = useRef<string>("");
+  useEffect(() => {
+    if (varDraftLoadedFor.current === varDraftKey) return;
+    varDraftLoadedFor.current = varDraftKey;
+    try {
+      const raw = localStorage.getItem(varDraftKey);
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          customVars?: Record<string, string>;
+          rowOverrides?: Record<number, Record<string, string>>;
+        };
+        setCustomVars(saved.customVars ?? {});
+        setRowOverrides(saved.rowOverrides ?? {});
+      } else {
+        setCustomVars({});
+        setRowOverrides({});
+      }
+    } catch {
+      /* ignore corrupt drafts */
+    }
+  }, [varDraftKey]);
+
+  useEffect(() => {
+    if (varDraftLoadedFor.current !== varDraftKey) return;
+    try {
+      const hasData = Object.keys(customVars).length > 0 || Object.keys(rowOverrides).length > 0;
+      if (hasData) {
+        localStorage.setItem(varDraftKey, JSON.stringify({ customVars, rowOverrides, savedAt: Date.now() }));
+      } else {
+        localStorage.removeItem(varDraftKey);
+      }
+    } catch {
+      /* storage full / unavailable — drafts are best-effort */
+    }
+  }, [customVars, rowOverrides, varDraftKey]);
+
+  const clearVariableDraft = () => {
+    setCustomVars({});
+    setRowOverrides({});
+    setAiFillFailures({});
+    try { localStorage.removeItem(varDraftKey); } catch { /* noop */ }
+    toast({ title: "Saved variable values cleared" });
+  };
+
 
 
   const applyKeywordGroup = (groupId: string) => {
