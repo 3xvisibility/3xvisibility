@@ -399,15 +399,6 @@ export default function TemplateMarketplacePage() {
     ];
   }, [allTemplates, language]);
 
-  const shareCategories = useMemo(() => {
-    const ids = new Set(Object.keys(CATEGORY_META).filter((id) => id !== "all"));
-    for (const tpl of allTemplates) {
-      if (tpl.category) ids.add(tpl.category);
-    }
-    return Array.from(ids).sort((a, b) =>
-      categoryMeta(a).label.localeCompare(categoryMeta(b).label)
-    );
-  }, [allTemplates]);
 
 
   // Unique tags across the active tab's templates (for the tag filter dropdown).
