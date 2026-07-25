@@ -97,6 +97,10 @@ export default function GeneratedPagesPage() {
   const [fidelityPage, setFidelityPage] = useState<GeneratedPage | null>(null);
   const [seoAnalysisPage, setSeoAnalysisPage] = useState<GeneratedPage | null>(null);
   const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
+  // Output format asked before every publish: real code (1:1), Elementor, Shopify.
+  const [showFormatDialog, setShowFormatDialog] = useState(false);
+  const [publishFormat, setPublishFormat] = useState<PublishFormat>("html");
+
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
   const [publishLog, setPublishLog] = useState<PublishLogResult[] | null>(null);
