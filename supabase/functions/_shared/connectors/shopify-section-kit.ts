@@ -130,6 +130,7 @@ export function buildShopifySectionKit(
 ): ShopifySectionKit {
   const sectionId = opts.sectionId || "lov-kit-template";
   const css = extractCss(masterHtml);
+  const assetTags = extractBundledAssetTags(masterHtml);
   let body = stripNonBody(masterHtml);
 
   const placeholders = buildPlaceholderMap(fields);
@@ -180,9 +181,11 @@ export function buildShopifySectionKit(
   };
 
   const sectionLiquid = [
+    assetTags.filter((t) => /^<link/i.test(t)).join("\n"),
     `<div class="lov-kit-wrapper" id="shopify-section-{{ section.id }}">`,
     body,
     `</div>`,
+    assetTags.filter((t) => /^<script/i.test(t)).join("\n"),
     css ? `{% stylesheet %}\n${css}\n{% endstylesheet %}` : "",
     `{% schema %}\n${JSON.stringify(schema, null, 2)}\n{% endschema %}`,
   ].filter(Boolean).join("\n");
