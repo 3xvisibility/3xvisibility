@@ -738,29 +738,6 @@ export default function GeneratedPagesPage() {
     onError: (err: Error) => toast({ title: "Translation failed", description: err.message, variant: "destructive" }),
   });
 
-  const recheckReadinessMutation = useMutation({
-    mutationFn: async (pageId: string) => {
-      const { data, error } = await supabase.functions.invoke("recheck-editor-readiness", {
-        body: { page_id: pageId },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data?.editor_readiness as { status?: string; reason?: string | null } | undefined;
-    },
-    onSuccess: (readiness) => {
-      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
-      if (readiness?.status === "passed") {
-        toast({ title: "Editor ready", description: "The page opens in Edit with Elementor." });
-      } else {
-        toast({
-          title: "Editor check failed",
-          description: readiness?.reason || "The page did not pass the readiness check.",
-          variant: "destructive",
-        });
-      }
-    },
-    onError: (err: Error) => toast({ title: "Re-check failed", description: err.message, variant: "destructive" }),
-  });
 
 
 
