@@ -51,8 +51,52 @@ import { useSubscription } from "@/hooks/use-subscription";
 
 type GeneratedPage = Tables<"generated_pages"> & {
   campaigns?: { name: string; publish_type?: string | null; publish_format?: string | null } | null;
-  websites?: { name: string; type?: string | null } | null;
+  websites?: { name: string; type?: string | null; url?: string | null } | null;
 };
+
+/** Normalize a stored page URL into a safe, absolute, openable link. */
+function normalizeUrl(raw?: string | null): string | null {
+  if (!raw) return null;
+  let u = String(raw).trim().replace(/\s+/g, "");
+  if (!u || u === "#" || u.toLowerCase() === "null" || u.toLowerCase() === "undefined") return null;
+  if (u.startsWith("//")) u = `https:${u}`;
+  if (!/^https?:\/\//i.test(u)) {
+    if (/^[a-z][a-z0-9+.-]*:/i.test(u)) return null; // block javascript:, data:, etc.
+    u = `https://${u.replace(/^\/+/, "")}`;
+  }
+  try {
+    return new URL(u).toString();
+  } catch {
+    return null;
+  }
+}
+
+/** Best-effort live URL for a page: stored URL first, then site base + slug. */
+function resolvePageUrl(page: GeneratedPage): string | null {
+  const direct = normalizeUrl(page.external_url);
+  if (direct) return direct;
+  const base = normalizeUrl(page.websites?.url);
+  const isLive = page.status === "published" || page.status === "done";
+  if (base && isLive && page.slug) {
+    try {
+      const url = new URL(base);
+      const basePath = url.pathname.replace(/\/+$/, "");
+      url.pathname = `${basePath}/${String(page.slug).replace(/^\/+/, "")}`;
+      url.search = "";
+      url.hash = "";
+      return url.toString();
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function openPageUrl(url: string) {
+  const win = window.open(url, "_blank", "noopener,noreferrer");
+  if (!win) window.location.href = url;
+}
+
 
 const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; bg: string; labelKey: string }> = {
   queued:     { icon: Clock,         color: "text-muted-foreground", bg: "bg-muted text-muted-foreground border-border", labelKey: "status.queued" },
@@ -168,7 +212,7 @@ export default function GeneratedPagesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
-        .select("*, campaigns(name, publish_type, publish_format), websites(name, type)")
+        .select("*, campaigns(name, publish_type, publish_format), websites(name, type, url)")
         .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -1188,13 +1232,23 @@ export default function GeneratedPagesPage() {
               const displayTitle = page.title?.trim() || page.seo_title?.trim() || page.slug;
               const isSelected = selectedIds.has(page.id);
               const cfg = STATUS_CONFIG[page.status] || STATUS_CONFIG.pending;
+              const liveUrl = resolvePageUrl(page);
               return (
                 <div key={page.id} className={`p-4 flex items-start gap-3 ${isSelected ? "bg-primary/5" : "hover:bg-muted/30"} transition-colors`}>
                   <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(page.id)} className="mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0 space-y-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-medium text-sm truncate">{displayTitle}</span>
+                      <button
+                        type="button"
+                        className="font-medium text-sm truncate text-left hover:text-primary hover:underline"
+                        title={liveUrl ? `Open ${liveUrl}` : "Open preview"}
+                        onClick={() => (liveUrl ? openPageUrl(liveUrl) : setPreviewPage(page))}
+                      >
+                        {displayTitle}
+                      </button>
+                      {liveUrl && <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />}
                     </div>
+
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant="outline" className={`text-[10px] ${cfg.bg} inline-flex items-center gap-1`}>
                         <cfg.icon className={`h-2.5 w-2.5 ${page.status === "generating" || page.status === "publishing" ? "animate-spin" : ""}`} />
@@ -1262,7 +1316,7 @@ export default function GeneratedPagesPage() {
                           Re-check Elementor readiness
                         </DropdownMenuItem>
                       )}
-                      {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</a></DropdownMenuItem>}
+                      {liveUrl && <DropdownMenuItem onClick={() => openPageUrl(liveUrl)}><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</DropdownMenuItem>}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
                     </DropdownMenuContent>
@@ -1295,19 +1349,34 @@ export default function GeneratedPagesPage() {
                   const isSelected = selectedIds.has(page.id);
                   const cfg = STATUS_CONFIG[page.status] || STATUS_CONFIG.pending;
                   const freshness = calculateFreshness(page.created_at, page.status);
+                  const liveUrl = resolvePageUrl(page);
                   return (
                     <tr key={page.id} className={`border-b last:border-0 ${isSelected ? "bg-primary/5" : "hover:bg-muted/20"} transition-colors`}>
                       <td className="p-3"><Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(page.id)} /></td>
                       <td className="p-3">
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-medium truncate max-w-[300px]">{displayTitle}</span>
-                            {page.external_url && (
-                              <a href={page.external_url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary shrink-0">
+                            <button
+                              type="button"
+                              className="font-medium truncate max-w-[300px] text-left hover:text-primary hover:underline"
+                              title={liveUrl ? `Open ${liveUrl}` : "Open preview"}
+                              onClick={() => (liveUrl ? openPageUrl(liveUrl) : setPreviewPage(page))}
+                            >
+                              {displayTitle}
+                            </button>
+                            {liveUrl && (
+                              <a
+                                href={liveUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-muted-foreground hover:text-primary shrink-0"
+                                onClick={(e) => { e.preventDefault(); openPageUrl(liveUrl); }}
+                              >
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             )}
                           </div>
+
                           {page.websites?.name && (
                             <span className="text-[10px] text-muted-foreground">{page.websites.name}</span>
                           )}
@@ -1406,7 +1475,7 @@ export default function GeneratedPagesPage() {
                                   Re-check Elementor readiness
                                 </DropdownMenuItem>
                               )}
-                              {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</a></DropdownMenuItem>}
+                              {liveUrl && <DropdownMenuItem onClick={() => openPageUrl(liveUrl)}><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</DropdownMenuItem>}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
                             </DropdownMenuContent>
