@@ -545,6 +545,7 @@ export default function CampaignDetailPage() {
         description: `${ok} page${ok !== 1 ? "s" : ""} re-pushed with the current CSS/JS settings${failed ? `, ${failed} failed` : ""}.`,
       });
       recordPublishResults(data, pageIds);
+      runParityRecheck(pageIds);
     },
     onError: (err: Error) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
