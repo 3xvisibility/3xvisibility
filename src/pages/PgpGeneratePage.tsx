@@ -743,6 +743,49 @@ Only return valid JSON. No markdown fences.`;
     return inject;
   };
 
+  /** Ask the AI to propose a value for each still-unfilled template variable. */
+  const aiFillMissingVars = async (names: string[]) => {
+    if (names.length === 0) return;
+    setAiFillingMissing(true);
+    try {
+      const context = [
+        businessInfo.company_name || businessInfo.brand_name || resolvedBrandName,
+        aiNiche,
+        aiCategory,
+        pickedLocations[0]?.city,
+        pickedLocations[0]?.country,
+      ].filter(Boolean).join(" · ");
+      const prompt = `You are filling landing-page template variables for this business: ${context || "a local service business"}.
+
+Generate one short, realistic, ready-to-publish value for each variable below (no placeholders, no lorem ipsum):
+${names.map((n) => `- {${n}}`).join("\n")}
+
+Return only valid JSON: an object mapping each variable name to a single string value. No markdown fences.`;
+
+      const { data, error } = await supabase.functions.invoke("generate-seo-content", {
+        body: { type: "batch_pages", prompt },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const raw = typeof data.result === "string" ? data.result : JSON.stringify(data.result);
+      const parsed = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim());
+      const next: Record<string, string> = {};
+      for (const n of names) {
+        const v = parsed?.[n] ?? parsed?.[n.toLowerCase()];
+        if (v) next[n] = String(Array.isArray(v) ? v[0] : v).trim();
+      }
+      if (Object.keys(next).length === 0) throw new Error("AI returned no values");
+      setCustomVars((prev) => ({ ...prev, ...next }));
+      toast({ title: "AI filled the missing variables", description: `${Object.keys(next).length} value(s) added. You can edit them before generating.` });
+    } catch (err: any) {
+      toast({ title: "AI fill failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiFillingMissing(false);
+    }
+  };
+
+
+
   const buildRows = (): Record<string, string>[] => {
     const kwData = groupKeywords.filter(k => k.keyword);
 
