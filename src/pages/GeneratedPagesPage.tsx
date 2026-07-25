@@ -39,6 +39,9 @@ import { calculateSeoScore } from "@/lib/seo-score";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
 import { calculateFreshness } from "@/lib/content-freshness";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
+import { useFidelityChecks, runFidelityCheck } from "@/hooks/useFidelityChecks";
+import { FidelityBadge } from "@/components/generated-pages/FidelityBadge";
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -813,6 +816,17 @@ export default function GeneratedPagesPage() {
     [filtered, safePage, pageSize]
   );
 
+  // Automatic preview → published HTML/CSS match results for visible pages.
+  const publishedVisibleIds = useMemo(
+    () => paginatedPages.filter((p) => p.status === "published" || p.status === "done").map((p) => p.id),
+    [paginatedPages]
+  );
+  const { data: fidelityChecks, refetch: refetchFidelity } = useFidelityChecks(publishedVisibleIds);
+  const [fidelityRunning, setFidelityRunning] = useState(false);
+
+
+
+
   useEffect(() => { setCurrentPage(1); }, [search, statusFilter, siteFilter, campaignFilter, freshnessFilter, pageSize, sortBy]);
 
   // Sync toolbar Publish-As default to the campaign's `publish_type` when
@@ -1112,6 +1126,27 @@ export default function GeneratedPagesPage() {
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setBulkWidthOpen(true)}>
                 <LayoutTemplate className="h-3 w-3 mr-1" />Content width
               </Button>
+              <Button size="sm" variant="outline" className="h-7 text-xs" disabled={fidelityRunning}
+                onClick={async () => {
+                  const ids = [...selectedIds].filter((id) => {
+                    const s = pages.find((p) => p.id === id)?.status;
+                    return s === "published" || s === "done";
+                  });
+                  if (!ids.length) { toast({ title: "Select published pages first", variant: "destructive" }); return; }
+                  setFidelityRunning(true);
+                  try {
+                    const data = await runFidelityCheck(ids);
+                    const rows = (data?.results || []) as Array<{ status?: string }>;
+                    const passed = rows.filter((r) => r.status === "passed").length;
+                    toast({ title: `Design match: ${passed}/${rows.length} pages identical to preview` });
+                    refetchFidelity();
+                  } catch (e) {
+                    toast({ title: "Fidelity check failed", description: e instanceof Error ? e.message : "Unknown error", variant: "destructive" });
+                  } finally { setFidelityRunning(false); }
+                }}>
+                <ScanEye className="h-3 w-3 mr-1" />{fidelityRunning ? "Checking..." : "Design match"}
+              </Button>
+
               <Select onValueChange={(status) => bulkStatusMutation.mutate({ ids: [...selectedIds], status })}>
                 <SelectTrigger className="h-7 w-[100px] text-xs"><SelectValue placeholder={t("generatedPages.setStatus")} /></SelectTrigger>
                 <SelectContent>
@@ -1178,6 +1213,14 @@ export default function GeneratedPagesPage() {
                       seoKeywords={page.seo_keywords}
                       size="sm"
                     />
+                    <FidelityBadge
+                      pageId={page.id}
+                      pageTitle={displayTitle}
+                      isPublished={page.status === "published" || page.status === "done"}
+                      check={fidelityChecks?.get(page.id)}
+                      onChecked={() => refetchFidelity()}
+                    />
+
                   </div>
                   {page.status === "failed" && (
                     <Button
@@ -1305,7 +1348,17 @@ export default function GeneratedPagesPage() {
                           seoKeywords={page.seo_keywords}
                           size="sm"
                         />
+                        <div className="mt-1">
+                          <FidelityBadge
+                            pageId={page.id}
+                            pageTitle={displayTitle}
+                            isPublished={page.status === "published" || page.status === "done"}
+                            check={fidelityChecks?.get(page.id)}
+                            onChecked={() => refetchFidelity()}
+                          />
+                        </div>
                       </td>
+
                       <td className="p-3">
                         <div className="flex items-center gap-0.5 justify-end">
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openSeoEditor(page)} title="Edit Content">
