@@ -39,7 +39,7 @@ import { calculateSeoScore } from "@/lib/seo-score";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
 import { calculateFreshness } from "@/lib/content-freshness";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
-import { useFidelityChecks } from "@/hooks/useFidelityChecks";
+import { useFidelityChecks, runFidelityCheck } from "@/hooks/useFidelityChecks";
 import { FidelityBadge } from "@/components/generated-pages/FidelityBadge";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
