@@ -245,6 +245,10 @@ export default function PgpGeneratePage() {
   // Manual / AI-filled values for variables that no source covers (Review step).
   const [customVars, setCustomVars] = useState<Record<string, string>>({});
   const [aiFillingMissing, setAiFillingMissing] = useState(false);
+  // Per-row manual fallback values (rowIndex -> { variable: value })
+  const [rowOverrides, setRowOverrides] = useState<Record<number, Record<string, string>>>({});
+  // Which AI fill attempts failed and for which variables ("all" or row index)
+  const [aiFillFailures, setAiFillFailures] = useState<Record<string, { names: string[]; error: string }>>({});
 
 
 
@@ -809,49 +813,104 @@ Only return valid JSON. No markdown fences.`;
       if (zipVal) { inject.zip = zipVal; inject.zipcode = zipVal; }
       if (locAddress) inject.address = locAddress;
     }
+
+    // Per-row manual overrides always win — this is the fallback the user
+    // types in when AI filling fails for a specific row.
+    for (const [k, v] of Object.entries(rowOverrides[rowIndex] ?? {})) {
+      if ((v ?? "").trim()) inject[k.toLowerCase()] = v.trim();
+    }
     return inject;
   };
 
-  /** Ask the AI to propose a value for each still-unfilled template variable. */
-  const aiFillMissingVars = async (names: string[]) => {
+  /**
+   * Ask the AI to propose a value for each still-unfilled template variable.
+   * Retries transient failures, applies whatever came back, and records the
+   * names it could not fill so the user can type them manually instead.
+   *
+   * @param rowIndex when provided, values are stored as a per-row override.
+   */
+  const aiFillMissingVars = async (names: string[], rowIndex?: number) => {
     if (names.length === 0) return;
     setAiFillingMissing(true);
-    try {
-      const context = [
-        businessInfo.company_name || businessInfo.brand_name || resolvedBrandName,
-        aiNiche,
-        aiCategory,
-        pickedLocations[0]?.city,
-        pickedLocations[0]?.country,
-      ].filter(Boolean).join(" · ");
-      const prompt = `You are filling landing-page template variables for this business: ${context || "a local service business"}.
+    const scopeKey = rowIndex === undefined ? "all" : String(rowIndex);
+    let lastError = "";
+    let filled: Record<string, string> = {};
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const context = [
+          businessInfo.company_name || businessInfo.brand_name || resolvedBrandName,
+          aiNiche,
+          aiCategory,
+          rowIndex !== undefined
+            ? pickedLocations[rowIndex % Math.max(pickedLocations.length, 1)]?.city
+            : pickedLocations[0]?.city,
+          pickedLocations[0]?.country,
+        ].filter(Boolean).join(" · ");
+        const prompt = `You are filling landing-page template variables for this business: ${context || "a local service business"}.
 
 Generate one short, realistic, ready-to-publish value for each variable below (no placeholders, no lorem ipsum):
 ${names.map((n) => `- {${n}}`).join("\n")}
 
 Return only valid JSON: an object mapping each variable name to a single string value. No markdown fences.`;
 
-      const { data, error } = await supabase.functions.invoke("generate-seo-content", {
-        body: { type: "batch_pages", prompt },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      const raw = typeof data.result === "string" ? data.result : JSON.stringify(data.result);
-      const parsed = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim());
-      const next: Record<string, string> = {};
-      for (const n of names) {
-        const v = parsed?.[n] ?? parsed?.[n.toLowerCase()];
-        if (v) next[n] = String(Array.isArray(v) ? v[0] : v).trim();
+        const { data, error } = await supabase.functions.invoke("generate-seo-content", {
+          body: { type: "batch_pages", prompt },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        const raw = typeof data.result === "string" ? data.result : JSON.stringify(data.result);
+        const parsed = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim());
+        const next: Record<string, string> = {};
+        for (const n of names) {
+          const v = parsed?.[n] ?? parsed?.[n.toLowerCase()];
+          if (v) next[n] = String(Array.isArray(v) ? v[0] : v).trim();
+        }
+        if (Object.keys(next).length === 0) throw new Error("AI returned no values");
+        filled = next;
+        break;
+      } catch (err: any) {
+        lastError = err?.message || "AI request failed";
+        if (attempt < 3) await new Promise((r) => setTimeout(r, attempt * 800));
       }
-      if (Object.keys(next).length === 0) throw new Error("AI returned no values");
-      setCustomVars((prev) => ({ ...prev, ...next }));
-      toast({ title: "AI filled the missing variables", description: `${Object.keys(next).length} value(s) added. You can edit them before generating.` });
-    } catch (err: any) {
-      toast({ title: "AI fill failed", description: err.message, variant: "destructive" });
-    } finally {
-      setAiFillingMissing(false);
     }
+
+    const failed = names.filter((n) => !filled[n]);
+    if (Object.keys(filled).length > 0) {
+      if (rowIndex === undefined) {
+        setCustomVars((prev) => ({ ...prev, ...filled }));
+      } else {
+        setRowOverrides((prev) => ({ ...prev, [rowIndex]: { ...(prev[rowIndex] ?? {}), ...filled } }));
+      }
+    }
+    setAiFillFailures((prev) => {
+      const next = { ...prev };
+      if (failed.length > 0) next[scopeKey] = { names: failed, error: lastError || "AI could not produce a value" };
+      else delete next[scopeKey];
+      return next;
+    });
+
+    if (Object.keys(filled).length > 0 && failed.length === 0) {
+      toast({
+        title: rowIndex === undefined ? "AI filled the missing variables" : `AI filled row ${rowIndex + 1}`,
+        description: `${Object.keys(filled).length} value(s) added. You can edit them before generating.`,
+      });
+    } else if (Object.keys(filled).length > 0) {
+      toast({
+        title: "Partly filled by AI",
+        description: `${failed.length} variable(s) still need a manual value: ${failed.map((n) => `{${n}}`).join(", ")}`,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "AI fill failed after 3 attempts",
+        description: `${lastError}. Retry, or type the values manually below — generation stays blocked until every row is filled.`,
+        variant: "destructive",
+      });
+    }
+    setAiFillingMissing(false);
   };
+
 
 
 
@@ -1391,24 +1450,31 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       .map((k) => k.name)
       .filter((n) => !isAiContentVariable(n));
     if (required.length === 0) {
-      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[] };
+      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[], rowsMissing: [] as { index: number; names: string[] }[] };
     }
     let previewRows: Record<string, string>[] = [];
     try { previewRows = buildRows(); } catch { previewRows = []; }
     if (previewRows.length === 0) {
-      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[] };
+      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[], rowsMissing: [] as { index: number; names: string[] }[] };
     }
     const missing: { name: string; rows: number }[] = [];
+    const perRow = new Map<number, string[]>();
     for (const name of required) {
       const key = name.trim().toLowerCase();
       let count = 0;
-      for (const r of previewRows) {
+      previewRows.forEach((r, idx) => {
         const val = (r[key] ?? r[name] ?? "").toString().trim();
-        if (!val) count++;
-      }
+        if (!val) {
+          count++;
+          perRow.set(idx, [...(perRow.get(idx) ?? []), name]);
+        }
+      });
       if (count > 0) missing.push({ name, rows: count });
     }
-    return { ok: missing.length === 0, rowCount: previewRows.length, missing };
+    const rowsMissing = Array.from(perRow.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([index, names]) => ({ index, names }));
+    return { ok: missing.length === 0, rowCount: previewRows.length, missing, rowsMissing };
   })();
 
 
@@ -3023,8 +3089,72 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       <><Wand2 className="h-3.5 w-3.5 mr-1.5" /> Fill all missing with AI</>
                     )}
                   </Button>
+
+                  {aiFillFailures.all && (
+                    <div className="rounded-md border border-border bg-background/60 p-2 space-y-1">
+                      <p className="text-destructive font-medium">
+                        AI fill failed: {aiFillFailures.all.error}
+                      </p>
+                      <p className="text-muted-foreground">
+                        Retry above, or fill the affected rows manually below — only the rows that failed need input.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Manual fallback: fill only the rows that are still missing values */}
+                  <div className="space-y-2">
+                    <p className="font-medium text-foreground">
+                      Manual fallback — {variableCoverage.rowsMissing.length} row(s) need values
+                    </p>
+                    <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+                      {variableCoverage.rowsMissing.slice(0, 50).map((row) => (
+                        <div key={row.index} className="rounded-md border border-border bg-background/60 p-2 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-foreground">Row {row.index + 1}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs"
+                              disabled={aiFillingMissing}
+                              onClick={() => aiFillMissingVars(row.names, row.index)}
+                            >
+                              {aiFillingMissing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Wand2 className="h-3 w-3 mr-1" />}
+                              AI fill this row
+                            </Button>
+                          </div>
+                          {aiFillFailures[String(row.index)] && (
+                            <p className="text-destructive">
+                              AI failed for this row ({aiFillFailures[String(row.index)].error}) — type the values below.
+                            </p>
+                          )}
+                          {row.names.map((name) => (
+                            <div key={name} className="flex items-center gap-2">
+                              <span className="font-mono text-[11px] text-muted-foreground w-40 shrink-0 truncate">{`{${name}}`}</span>
+                              <Input
+                                className="h-7 text-xs"
+                                placeholder={`Value for ${name} on row ${row.index + 1}`}
+                                value={rowOverrides[row.index]?.[name] ?? ""}
+                                onChange={(e) =>
+                                  setRowOverrides((prev) => ({
+                                    ...prev,
+                                    [row.index]: { ...(prev[row.index] ?? {}), [name]: e.target.value },
+                                  }))
+                                }
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                    {variableCoverage.rowsMissing.length > 50 && (
+                      <p className="text-muted-foreground">
+                        Showing first 50 rows. Fill these, then the rest will appear.
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
+
 
               <Button
                 className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
