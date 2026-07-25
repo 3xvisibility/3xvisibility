@@ -53,14 +53,27 @@ function extractCss(html: string): string {
   return blocks.join("\n");
 }
 
+/**
+ * Collect bundled asset tags (data-xxxv-asset <link>/<script src>) so they can be
+ * re-emitted inside the section liquid — Shopify must keep loading the page's
+ * external CSS/JS for the live output to match the preview.
+ */
+function extractBundledAssetTags(html: string): string[] {
+  return html.match(
+    /<link\b[^>]*data-xxxv-asset[^>]*>|<script\b[^>]*data-xxxv-asset[^>]*>[\s\S]*?<\/script>/gi,
+  ) || [];
+}
+
 /** Remove <style>/<script>/<head> noise, leaving renderable body markup. */
 function stripNonBody(html: string): string {
   return html
+    .replace(/<link\b[^>]*data-xxxv-asset[^>]*>/gi, "")
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/<\/?(html|head|body)\b[^>]*>/gi, "")
     .trim();
 }
+
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
