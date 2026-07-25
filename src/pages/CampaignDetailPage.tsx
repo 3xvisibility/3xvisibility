@@ -624,6 +624,16 @@ export default function CampaignDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* Post-publish summary: which pages succeeded / failed and why */}
+      {publishSummary && publishSummary.length > 0 && (
+        <PublishResultSummary
+          results={publishSummary}
+          onViewDetails={() => setPublishLog(publishSummary)}
+          onRetryFailed={(ids) => bulkPublishMutation.mutate({ pageIds: ids })}
+          onDismiss={() => setPublishSummary(null)}
+          retrying={bulkPublishMutation.isPending}
+        />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-start gap-3 min-w-0">
@@ -1731,6 +1741,13 @@ export default function CampaignDetailPage() {
         }}
       />
 
+      <PublishLogDialog
+        open={!!publishLog}
+        onOpenChange={(open) => { if (!open) setPublishLog(null); }}
+        results={publishLog || []}
+        onRetryFailed={(ids) => { setPublishLog(null); bulkPublishMutation.mutate({ pageIds: ids }); }}
+        retrying={bulkPublishMutation.isPending}
+      />
       <PublishWebsiteSelector
         open={showWebsiteSelector}
         onOpenChange={(open) => {
