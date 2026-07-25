@@ -548,5 +548,6 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
     ogTags,
     jsonLd,
     warnings,
+    missingVariables,
   };
 }
