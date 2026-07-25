@@ -960,8 +960,13 @@ async function handlePublishPages(req: Request): Promise<Response> {
     // "gutenberg" ships native block markup.
     // Per-campaign publish format cache. "html" publishes the raw generated
     // HTML/CSS verbatim (design stays 1:1 with the preview).
+    // v1 output lock: the product ships HTML/CSS only, so every publish uses the
+    // raw generated markup regardless of legacy campaign settings. Flip this to
+    // false when Elementor/Shopify output is re-enabled.
+    const HTML_ONLY_MODE = true;
     const campaignFormatCache = new Map<string, PublishFormat>();
     async function getCampaignPublishFormat(campaignId: string | null | undefined): Promise<PublishFormat> {
+      if (HTML_ONLY_MODE) return "html";
       if (typeof body.publish_format === "string" && (PUBLISH_FORMATS as readonly string[]).includes(body.publish_format)) {
         return body.publish_format as PublishFormat;
       }
