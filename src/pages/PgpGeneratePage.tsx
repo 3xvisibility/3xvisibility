@@ -1261,9 +1261,10 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
   const handleGenerate = async () => {
     if (!selectedGroup || !wsId) return;
     if (missingKeywords.length > 0) {
-      toast({ title: t("pgpGenerate.toastMissingKeywordsTitle"), description: t("pgpGenerate.toastMissingKeywordsDesc", { list: missingKeywords.map(k => k.name).join(", ") }), variant: "destructive" });
-      return;
+      // Warn only — manual/AI-filled values are applied at build time.
+      toast({ title: t("pgpGenerate.toastMissingKeywordsTitle"), description: t("pgpGenerate.toastMissingKeywordsDesc", { list: missingKeywords.map(k => k.name).join(", ") }) });
     }
+
     if (geoCoverage.severity === "block") {
       toast({
         title: "Geo values incomplete",
