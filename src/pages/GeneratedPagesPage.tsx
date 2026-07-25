@@ -822,6 +822,8 @@ export default function GeneratedPagesPage() {
     [paginatedPages]
   );
   const { data: fidelityChecks, refetch: refetchFidelity } = useFidelityChecks(publishedVisibleIds);
+  const [fidelityRunning, setFidelityRunning] = useState(false);
+
 
 
 
