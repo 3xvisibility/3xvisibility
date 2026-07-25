@@ -1232,13 +1232,23 @@ export default function GeneratedPagesPage() {
               const displayTitle = page.title?.trim() || page.seo_title?.trim() || page.slug;
               const isSelected = selectedIds.has(page.id);
               const cfg = STATUS_CONFIG[page.status] || STATUS_CONFIG.pending;
+              const liveUrl = resolvePageUrl(page);
               return (
                 <div key={page.id} className={`p-4 flex items-start gap-3 ${isSelected ? "bg-primary/5" : "hover:bg-muted/30"} transition-colors`}>
                   <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(page.id)} className="mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0 space-y-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-medium text-sm truncate">{displayTitle}</span>
+                      <button
+                        type="button"
+                        className="font-medium text-sm truncate text-left hover:text-primary hover:underline"
+                        title={liveUrl ? `Open ${liveUrl}` : "Open preview"}
+                        onClick={() => (liveUrl ? openPageUrl(liveUrl) : setPreviewPage(page))}
+                      >
+                        {displayTitle}
+                      </button>
+                      {liveUrl && <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />}
                     </div>
+
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant="outline" className={`text-[10px] ${cfg.bg} inline-flex items-center gap-1`}>
                         <cfg.icon className={`h-2.5 w-2.5 ${page.status === "generating" || page.status === "publishing" ? "animate-spin" : ""}`} />
