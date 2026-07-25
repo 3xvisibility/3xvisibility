@@ -270,6 +270,7 @@ class XXXV_REST {
 			'cache_clear'               => true,
 			'compressed_payloads'       => true,
 			'template_library_import'   => true,
+			'html_css_js_meta_delivery' => true,
 		);
 
 		return rest_ensure_response(
