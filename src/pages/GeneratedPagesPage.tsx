@@ -1377,7 +1377,6 @@ export default function GeneratedPagesPage() {
                             )}
                           </div>
 
-                          </div>
                           {page.websites?.name && (
                             <span className="text-[10px] text-muted-foreground">{page.websites.name}</span>
                           )}
