@@ -209,6 +209,14 @@ export class WordPressConnector implements CmsConnector {
     if (payload.seo_title) meta._yoast_wpseo_title = payload.seo_title;
     if (payload.seo_description) meta._yoast_wpseo_metadesc = payload.seo_description;
     if (payload.canonical_url) meta._yoast_wpseo_canonical = payload.canonical_url;
+    // Ship template CSS/JS as meta as well: WordPress strips <style>/<script>
+    // from REST content for users without `unfiltered_html`, and the connector
+    // plugin re-prints these meta values so live output matches the preview.
+    if (typeof body.content === "string") {
+      const design = extractDesignAssets(body.content);
+      if (design.css) meta._xxxv_template_css = design.css;
+      if (design.js) meta._xxxv_template_js = design.js;
+    }
     if (Object.keys(meta).length > 0) body.meta = meta;
 
     // WordPress Template Compatibility Engine: convert HTML into a native,
