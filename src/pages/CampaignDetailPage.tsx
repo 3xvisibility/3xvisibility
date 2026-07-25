@@ -452,7 +452,8 @@ export default function CampaignDetailPage() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
       recordPublishResults(data, [variables.pageId]);
-      toast({ title: "Republish complete", description: "Page updated at the same URL." });
+      toast({ title: "Republish complete", description: "Page updated — verifying CSS/JS on the live URL…" });
+      runParityRecheck([variables.pageId]);
       setShowWebsiteSelector(false);
       setPendingPublishPageId(null);
     },
