@@ -280,10 +280,19 @@ Deno.serve(async (req) => {
 
     // Resolve all relative URLs to absolute before any processing
     const resolvedHtml = resolveRelativeUrls(rawHtml, formattedUrl);
-    const bodyContent = extractBodyContent(resolvedHtml);
-    const headStyles = extractHeadStyles(resolvedHtml, formattedUrl);
+    // Fetch the real bytes of every external stylesheet/script so the imported
+    // template carries the complete design (colors, fonts, layout, behaviour)
+    // instead of links that break once the page is published elsewhere.
+    const inlined = await inlineExternalAssets(resolvedHtml, { baseUrl: formattedUrl });
+    console.log(
+      `Inlined ${inlined.stylesheetsInlined} stylesheet(s) and ${inlined.scriptsInlined} script(s) (${inlined.bytes} bytes) from ${formattedUrl}; ${inlined.failures.length} failed`,
+    );
+    const selfContainedHtml = inlined.html;
+    const bodyContent = extractBodyContent(selfContainedHtml);
+    const headStyles = extractHeadStyles(selfContainedHtml, formattedUrl);
     const blocks = parseHtmlBlocks(bodyContent);
     const imageUrls = extractImageUrls(bodyContent);
+
 
     // Use AI to suggest variables
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
