@@ -30,6 +30,8 @@ import { HTML_ONLY_MODE } from "@/lib/publish-format";
 import { PublishFormatDialog, type PublishFormat } from "@/components/generated-pages/PublishFormatDialog";
 
 import { PublishLogDialog, type PublishLogResult, type PublishStep } from "@/components/campaigns/PublishLogDialog";
+import { PublishResultSummary } from "@/components/generated-pages/PublishResultSummary";
+
 import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
