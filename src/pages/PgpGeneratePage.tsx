@@ -692,6 +692,11 @@ Only return valid JSON. No markdown fences.`;
   // Injected values from Step 3 (locations) and Step 4 (business info).
   const buildInjectedForRow = (rowIndex: number): Record<string, string> => {
     const inject: Record<string, string> = {};
+    // Manual / AI-filled custom values for otherwise-missing variables
+    // (lowest priority — real locations/business info still win below).
+    for (const [k, v] of Object.entries(customVars)) {
+      if ((v ?? "").trim()) inject[k.toLowerCase()] = v.trim();
+    }
     // Business/personal info (direct keys)
     for (const [k, v] of Object.entries(businessInfo)) {
       if ((v ?? "").trim()) inject[k] = v.trim();
