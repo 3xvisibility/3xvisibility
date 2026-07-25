@@ -523,8 +523,11 @@ function stripHeadTagsForCms(content: string, baseUrl?: string | null): string {
   // 1. Normalize every template into the same HTML/CSS/JS shape (absolute
   //    assets, merged stylesheet, sanitized markup, single .tpl-root wrapper)
   //    so the published page is byte-for-byte the structure of the preview.
-  const normalized = normalizeTemplateHtml(content, { baseUrl });
+  //    Behaviour JS from the source design is carried over — dropping it here
+  //    would publish a static shell of an interactive template.
+  const normalized = normalizeTemplateHtml(content, { baseUrl, keepScripts: /<script\b/i.test(content) });
   const bundled = { html: normalized.html || bundleTemplateAssets(content, { baseUrl }).html };
+
 
   let cleaned = bundled.html
     // Remove HTML comments (e.g. <!-- Open Graph Meta Tags -->)
