@@ -595,6 +595,14 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
             </div>
           )}
 
+          {site.type === "wordpress" && (
+            <WpPluginSettings
+              websiteId={site.id}
+              value={(site as unknown as { wp_plugin_settings?: unknown }).wp_plugin_settings}
+            />
+          )}
+
+
           {/* Publish assets fallback (CMS strips external tags) */}
           <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3">
             <div className="flex items-start justify-between gap-3">
