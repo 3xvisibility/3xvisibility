@@ -1541,21 +1541,7 @@ export default function GeneratedPagesPage() {
       {/* ─── Dialogs ─────────────────────────────────────────── */}
 
       {/* Preview */}
-      <Dialog open={!!widthPage} onOpenChange={(open) => !open && setWidthPage(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Content width — {widthPage?.title}</DialogTitle>
-          </DialogHeader>
-          {widthPage && (
-            <ContainerWidthControl
-              table="generated_pages"
-              id={widthPage.id}
-              campaignId={widthPage.campaign_id}
-              inheritLabel="Inherit template / workspace default"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+
 
       <Dialog open={!!previewPage} onOpenChange={(open) => !open && setPreviewPage(null)}>
         <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col">
