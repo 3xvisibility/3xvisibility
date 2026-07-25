@@ -3225,7 +3225,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               <Button
                 className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
                 size="lg"
-                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0 || geoCoverage.severity === "block" || !variableCoverage.ok}
+                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0}
                 onClick={handleGenerate}
               >
 
