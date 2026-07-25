@@ -970,6 +970,36 @@ export default function CampaignDetailPage() {
             </Card>
           ) : (
             <>
+              {(campaign?.websites as { type?: string } | null)?.type === "wordpress" && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold">Changed the CSS/JS asset setting?</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Re-push every published page of this campaign to WordPress so the new asset handling applies live.
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1.5 text-xs"
+                    disabled={republishAllAssetsMutation.isPending}
+                    onClick={() => {
+                      const count = (pages || []).filter((p: any) => p.status === "published" || p.external_url).length;
+                      if (count === 0) {
+                        toast({ title: "Nothing to republish", description: "No published pages in this campaign yet.", variant: "destructive" });
+                        return;
+                      }
+                      if (window.confirm(`Republish all ${count} published page${count !== 1 ? "s" : ""} with the current CSS/JS asset settings?`)) {
+                        republishAllAssetsMutation.mutate();
+                      }
+                    }}
+                  >
+                    <RefreshCw className={`h-3 w-3 ${republishAllAssetsMutation.isPending ? "animate-spin" : ""}`} />
+                    {republishAllAssetsMutation.isPending ? "Republishing…" : "Republish all pages"}
+                  </Button>
+                </div>
+              )}
+
               <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                 <div className="flex items-center gap-2">
                   {selectedPageIds.size > 0 && (
