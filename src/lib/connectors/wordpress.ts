@@ -46,6 +46,42 @@ function preserveDesignAssets(html: string): string {
   return out;
 }
 
+/**
+ * Extract the design CSS + inline JS from template HTML so it can be shipped as
+ * post meta (`_xxxv_template_css` / `_xxxv_template_js`) alongside the body.
+ */
+export function extractDesignAssets(html: string): { css: string; js: string } {
+  if (!html) return { css: "", js: "" };
+  const cssParts: string[] = [];
+  const jsParts: string[] = [];
+
+  for (const m of html.matchAll(/<link\b[^>]*>/gi)) {
+    const tag = m[0];
+    if (!/rel\s*=\s*["']?stylesheet/i.test(tag)) continue;
+    const href = tag.match(/href\s*=\s*("([^"]*)"|'([^']*)')/i);
+    const url = href ? (href[2] ?? href[3] ?? "") : "";
+    if (url && !/\{[^}]*\}/.test(url)) cssParts.push(`@import url("${url.replace(/"/g, "%22")}");`);
+  }
+  for (const m of html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)) {
+    if (m[1]?.trim()) cssParts.push(m[1].trim());
+  }
+  for (const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    const attrs = m[1] || "";
+    if (/type\s*=\s*["'][^"']*(ld\+json|application\/json)/i.test(attrs)) continue;
+    if (/\bsrc\s*=/i.test(attrs)) continue;
+    if (m[2]?.trim()) jsParts.push(m[2].trim());
+  }
+
+  const imports = cssParts.filter((c) => c.startsWith("@import"));
+  const rules = cssParts.filter((c) => !c.startsWith("@import"));
+  return {
+    css: [...new Set(imports), ...rules].join("\n").trim(),
+    js: jsParts.join("\n;\n").trim(),
+  };
+}
+
+
+
 function sanitizeWordPressContent(content?: string, keepDesign = true): string | undefined {
   if (typeof content !== "string") return content;
   if (keepDesign) content = preserveDesignAssets(content);
@@ -209,6 +245,14 @@ export class WordPressConnector implements CmsConnector {
     if (payload.seo_title) meta._yoast_wpseo_title = payload.seo_title;
     if (payload.seo_description) meta._yoast_wpseo_metadesc = payload.seo_description;
     if (payload.canonical_url) meta._yoast_wpseo_canonical = payload.canonical_url;
+    // Ship template CSS/JS as meta as well: WordPress strips <style>/<script>
+    // from REST content for users without `unfiltered_html`, and the connector
+    // plugin re-prints these meta values so live output matches the preview.
+    if (typeof body.content === "string") {
+      const design = extractDesignAssets(body.content);
+      if (design.css) meta._xxxv_template_css = design.css;
+      if (design.js) meta._xxxv_template_js = design.js;
+    }
     if (Object.keys(meta).length > 0) body.meta = meta;
 
     // WordPress Template Compatibility Engine: convert HTML into a native,

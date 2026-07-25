@@ -25,7 +25,56 @@ class XXXV_REST {
 
 	public function __construct() {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		// HTML/CSS v1 publishing: the SaaS ships the template CSS/JS as post meta
+		// because wp_kses_post() strips <style>/<script> from REST content for
+		// users without `unfiltered_html`. Registering the meta lets the core
+		// /wp/v2/pages endpoint accept it, and the plugin re-prints it live.
+		add_action( 'init', array( $this, 'register_design_meta' ) );
+		add_action( 'wp_footer', array( $this, 'print_template_js' ), PHP_INT_MAX );
 	}
+
+	/**
+	 * Expose the connector design meta to the REST API.
+	 */
+	public function register_design_meta() {
+		$can_edit = function () {
+			return current_user_can( 'edit_posts' );
+		};
+		foreach ( array( '_xxxv_template_css', '_xxxv_template_js' ) as $key ) {
+			register_post_meta(
+				'page',
+				$key,
+				array(
+					'type'              => 'string',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'default'           => '',
+					'sanitize_callback' => null,
+					'auth_callback'     => $can_edit,
+				)
+			);
+		}
+	}
+
+	/**
+	 * Print the template's inline JS on the live page (footer), so animations and
+	 * reveal states behave exactly like the SaaS preview.
+	 */
+	public function print_template_js() {
+		if ( ! is_singular( 'page' ) ) {
+			return;
+		}
+		$post_id = get_queried_object_id();
+		if ( ! $post_id ) {
+			return;
+		}
+		$js = get_post_meta( $post_id, '_xxxv_template_js', true );
+		if ( ! is_string( $js ) || '' === trim( $js ) ) {
+			return;
+		}
+		echo "\n<script id=\"xxxv-template-js-" . esc_attr( (string) $post_id ) . "\">\n" . $js . "\n</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- template JS must stay raw inside <script>.
+	}
+
 
 	public function register_routes() {
 		$auth = array( 'XXXV_Auth', 'check' );
@@ -221,6 +270,7 @@ class XXXV_REST {
 			'cache_clear'               => true,
 			'compressed_payloads'       => true,
 			'template_library_import'   => true,
+			'html_css_js_meta_delivery' => true,
 		);
 
 		return rest_ensure_response(
