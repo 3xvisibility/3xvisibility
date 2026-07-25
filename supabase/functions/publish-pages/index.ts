@@ -6,6 +6,7 @@ import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connec
 import { buildExactElementorData, htmlToElementor, enforceNativeElementorData, enforceBoxedContentWidth, elementorDataHasHtmlWidget, parityStatsFromData, sectionHeatmapFromData } from "../_shared/connectors/elementor-engine.ts";
 import { PgpConnector } from "../_shared/connectors/pgp-connector.ts";
 import { bundleTemplateAssets, isDesignLinkTag } from "../_shared/asset-bundler.ts";
+import { normalizeTemplateHtml } from "../_shared/template-normalizer.ts";
 
 const PUBLISH_FORMATS = ["elementor", "gutenberg", "shopify", "html"] as const;
 type PublishFormat = (typeof PUBLISH_FORMATS)[number];
@@ -518,8 +519,11 @@ function assetBaseFor(page: Record<string, any>): string | null {
 function stripHeadTagsForCms(content: string, baseUrl?: string | null): string {
   if (!content) return content;
 
-  // 1. Absolutise every asset reference against the template's origin.
-  const bundled = bundleTemplateAssets(content, { baseUrl });
+  // 1. Normalize every template into the same HTML/CSS/JS shape (absolute
+  //    assets, merged stylesheet, sanitized markup, single .tpl-root wrapper)
+  //    so the published page is byte-for-byte the structure of the preview.
+  const normalized = normalizeTemplateHtml(content, { baseUrl });
+  const bundled = { html: normalized.html || bundleTemplateAssets(content, { baseUrl }).html };
 
   let cleaned = bundled.html
     // Remove HTML comments (e.g. <!-- Open Graph Meta Tags -->)
