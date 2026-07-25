@@ -30,6 +30,13 @@ export interface MissingVariable {
   emptyValue: boolean;
 }
 
+export interface InvalidVariable {
+  name: string;
+  value: string;
+  expected: "url" | "email" | "phone" | "color" | "number" | "text";
+  reason: string;
+}
+
 export interface RenderResult {
   html: string;
   title: string;
@@ -41,7 +48,11 @@ export interface RenderResult {
   jsonLd: string;
   warnings: string[];
   missingVariables: MissingVariable[];
+  invalidVariables: InvalidVariable[];
 }
+
+import { validateVariableFormats } from "./variable-format.ts";
+
 
 // ─── Core functions ──────────────────────────────────────────────────
 
