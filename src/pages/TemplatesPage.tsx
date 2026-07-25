@@ -65,6 +65,7 @@ export default function TemplatesPage() {
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<PreviewableTemplate | null>(null);
   const [previewTemplateRow, setPreviewTemplateRow] = useState<Template | null>(null);
+  const [importPreview, setImportPreview] = useState<{ pageTitle: string; fullContent: string; variables: ImportPreviewVariable[]; pendingTemplate: Template } | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pendingKeywords, setPendingKeywords] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
