@@ -163,6 +163,17 @@ Deno.serve(async (req) => {
       return json({ error: "Site actions are only available for WordPress sites." }, 400);
     }
 
+    // Plugin presence check works with plain Application Password credentials,
+    // so run it before the companion-plugin connector guard below.
+    if (action === "assets_status") {
+      let creds: Record<string, string> = (website.credentials as Record<string, string>) || {};
+      try {
+        creds = await decryptCredentials(creds);
+      } catch { /* legacy plaintext credentials */ }
+      const result = await checkHtmlAssetsPlugin(website.url as string, creds);
+      return json({ success: true, ...result });
+    }
+
     const connector = await createConnector(website as WebsiteRecord);
     if (!(connector instanceof PgpConnector)) {
       return json({
