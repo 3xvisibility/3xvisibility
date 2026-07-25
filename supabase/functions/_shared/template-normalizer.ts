@@ -123,17 +123,21 @@ export function normalizeTemplateHtml(
   // 5. Scripts: drop trackers + JSON-LD always; keep behaviour JS only on request.
   const scriptBlocks = collect(html, /<script\b[^>]*>[\s\S]*?<\/script>|<script\b[^>]*\/>/gi);
   const jsParts: string[] = [];
+  // External `<script src>` tags must stay standalone tags — nesting them
+  // inside the merged inline block would silently disable them.
+  const externalScripts: string[] = [];
   for (const block of scriptBlocks) {
     const isTracker = TRACKER_RE.test(block);
     const isJsonLd = /type\s*=\s*["']application\/ld\+json["']/i.test(block);
     if (isTracker || isJsonLd || !options.keepScripts) { dropped++; continue; }
-    if (/\bsrc\s*=/.test(block)) { jsParts.push(block); continue; }
+    if (/\bsrc\s*=/.test(block)) { externalScripts.push(block.trim()); continue; }
     jsParts.push(block.replace(/^<script\b[^>]*>/i, "").replace(/<\/script>$/i, ""));
   }
   html = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>|<script\b[^>]*\/>/gi, "");
   if (!options.keepScripts && scriptBlocks.length) {
     warnings.push(`${scriptBlocks.length} script block(s) removed (HTML/CSS-only mode)`);
   }
+
 
   // 6. Inline event handlers are never safe to carry over.
   html = html.replace(/\son[a-z]+\s*=\s*(["'])[\s\S]*?\1/gi, () => { dropped++; return ""; });
