@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { normalizeTemplateHtml } from "@/lib/template-normalizer";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -547,7 +548,10 @@ export default function TemplateMarketplacePage() {
         : tpl.content;
       // Re-skin the HTML to match the chosen platform (Elementor/WordPress vs Shopify)
       // so the imported template looks native to the target platform.
-      const content = convertForPlatform(baked);
+      // Normalize marketplace HTML into the shared HTML/CSS/JS structure so it
+      // saves and publishes exactly like imported / URL-scanned templates.
+      const platformContent = convertForPlatform(baked);
+      const content = normalizeTemplateHtml(platformContent).html || platformContent;
       const { data: inserted, error } = await supabase.from("templates").insert({
         name: tpl.name,
         content,
