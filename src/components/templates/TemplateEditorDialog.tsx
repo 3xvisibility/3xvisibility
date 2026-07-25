@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { DynamicElementsInserter } from "@/components/templates/DynamicElementsInserter";
+import { CtaPlacementPanel } from "@/components/templates/CtaPlacementPanel";
 
 
 import { SeoScoreBadge } from "@/components/SeoScoreBadge";
