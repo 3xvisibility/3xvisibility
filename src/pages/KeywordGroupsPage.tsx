@@ -253,6 +253,9 @@ export default function KeywordGroupsPage() {
           { role: "user", content: prompt },
         ],
       });
+      if (!res?.success) {
+        throw new Error(res?.content || "AI generation failed");
+      }
       const text = res?.content || "";
       const parsed = text.split("\n").map(l => l.replace(/^[\d.\-*)\s]+/, "").trim()).filter(l => l && l.length < 100);
       const terms = [...new Set(parsed)].slice(0, count);

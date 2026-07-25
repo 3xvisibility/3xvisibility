@@ -82,9 +82,19 @@ export async function callAI(opts: CallAIOptions): Promise<AiResponse> {
 
     if (error) {
       invalidateCredits();
+      // supabase.functions.invoke swallows the response body on non-2xx.
+      // Attach any structured body the function returned (e.g. { content }).
+      const ctxAny = (error as any)?.context;
+      let bodyMsg = "";
+      try {
+        if (ctxAny && typeof ctxAny.json === "function") {
+          const j = await ctxAny.json();
+          bodyMsg = j?.content || j?.message || j?.error || "";
+        }
+      } catch { /* ignore */ }
       return {
         success: false,
-        content: error.message || "AI request failed",
+        content: bodyMsg || error.message || "AI request failed",
       };
     }
 
