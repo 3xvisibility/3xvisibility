@@ -121,7 +121,7 @@ export default function WebsiteContentPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("websites")
-        .select("id, user_id, name, url, type, status, last_sync, created_at, updated_at, google_indexing_enabled, workspace_id, language, language_locked, shop_details")
+        .select("id, user_id, name, url, type, status, last_sync, created_at, updated_at, google_indexing_enabled, workspace_id, language, language_locked, shop_details, inline_assets_fallback")
         .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
