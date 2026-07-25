@@ -100,6 +100,18 @@ export default function GeneratedPagesPage() {
   // Output format asked before every publish: real code (1:1), Elementor, Shopify.
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [publishFormat, setPublishFormat] = useState<PublishFormat>("html");
+  // When the user ticks "apply to every publish", the chosen format is reused
+  // for the whole batch (and later publishes) without re-asking.
+  const [rememberedFormat, setRememberedFormat] = useState<PublishFormat | null>(() => {
+    const saved = typeof window !== "undefined" ? window.localStorage.getItem("pgp:publish-format") : null;
+    return saved === "html" || saved === "elementor" || saved === "shopify" ? saved : null;
+  });
+  const persistRememberedFormat = (format: PublishFormat | null) => {
+    setRememberedFormat(format);
+    if (typeof window === "undefined") return;
+    if (format) window.localStorage.setItem("pgp:publish-format", format);
+    else window.localStorage.removeItem("pgp:publish-format");
+  };
 
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
