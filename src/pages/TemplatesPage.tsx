@@ -806,10 +806,13 @@ export default function TemplatesPage() {
     const allVars = filterDesignVars([...new Set([...variableEntries.map((v) => v.name), ...pendingKeywords])]);
     const fullContent = styles ? `<!-- STYLES -->\n${styles}\n<!-- /STYLES -->\n${html}` : html;
     setSiteDialogOpen(false); setSitePages([]);
-    setEditingTemplate({ id: "", name: pageTitle || "Site Template", content: fullContent, variables: allVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: { language: siteLanguage !== "__auto__" ? siteLanguage : undefined }, seo_title_pattern: "", seo_description_pattern: "" } as any);
-    setEditorOpen(true);
-    const varMsg = allVars.length > 0 ? ` — ${allVars.length} keywords detected: {${allVars.join("}, {")}}` : "";
-    toast({ title: `Page imported as template${varMsg}` });
+    const pendingTemplate = { id: "", name: pageTitle || "Site Template", content: fullContent, variables: allVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: { language: siteLanguage !== "__auto__" ? siteLanguage : undefined }, seo_title_pattern: "", seo_description_pattern: "" } as any as Template;
+    // Show the import preview step FIRST — user confirms the extracted variables
+    // and mapped placeholders before entering the full editor.
+    const previewVars: ImportPreviewVariable[] = variableEntries
+      .filter((v) => allVars.includes(v.name))
+      .map((v) => ({ name: v.name, original: v.original }));
+    setImportPreview({ pageTitle: pageTitle || "Site Template", fullContent, variables: previewVars, pendingTemplate });
   };
 
   // Translate SEO patterns into the chosen language while keeping {placeholders}
