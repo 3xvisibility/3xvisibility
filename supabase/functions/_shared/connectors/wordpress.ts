@@ -511,6 +511,11 @@ export class WordPressConnector implements CmsConnector {
       // plugin and avoids brittle direct `_elementor_data` REST writes. It is not
       // Elementor-editable, but live rendering remains stable and full-width.
       body.content = adapted;
+      // Ship CSS/JS as meta too — WordPress may strip <style>/<script> from the
+      // body, and the connector plugin re-prints these on the live page.
+      const design = extractDesignAssets(adapted);
+      if (design.css) meta._xxxv_template_css = design.css;
+      if (design.js) meta._xxxv_template_js = design.js;
     } else if (!payload.product_data && format === "gutenberg") {
       // Gutenberg path: wrap the asset-imported template HTML in block markup so
       // images render from the WP Media Library and the design matches 1:1.
@@ -616,6 +621,11 @@ export class WordPressConnector implements CmsConnector {
     let elementorApplied = false;
     if (!preserveDesign && !payload.product_data && format === "html" && typeof payload.content === "string") {
       body.content = sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content, "page", await this.themeAssets())) || "<p></p>";
+      // Ship CSS/JS as meta too — WordPress may strip <style>/<script> from the
+      // body, and the connector plugin re-prints these on the live page.
+      const design = extractDesignAssets(body.content as string);
+      if (design.css) meta._xxxv_template_css = design.css;
+      if (design.js) meta._xxxv_template_js = design.js;
       // The live page may previously have been built with Elementor. Elementor's
       // frontend renders from `_elementor_data` and ignores `post_content` when
       // `_elementor_edit_mode = builder`. Clear those meta values so the newly
