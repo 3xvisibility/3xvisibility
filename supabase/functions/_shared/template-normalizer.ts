@@ -144,13 +144,15 @@ export function normalizeTemplateHtml(
   // 8. Single predictable wrapper (never double-wrap an already-normalized doc).
   const already = html.match(WRAPPER_STRIP_RE);
   const body = already ? already[1].trim() : html;
+  // Never nest wrappers when the markup already went through the normalizer.
+  const needsWrapper = !/<div\s+class=["']tpl-root["']/i.test(body);
   const css = dedupe([...cssParts, REVEAL_CSS]);
   const js = dedupe(jsParts);
 
   const out = [
     links.join("\n"),
     css ? `<style data-tpl-css>\n${css}\n</style>` : "",
-    `<div class="${wrapperClass}">\n${body}\n</div>`,
+    needsWrapper ? `<div class="${wrapperClass}">\n${body}\n</div>` : body,
     js ? `<script data-tpl-js>\n${js}\n</script>` : "",
   ].filter(Boolean).join("\n");
 
