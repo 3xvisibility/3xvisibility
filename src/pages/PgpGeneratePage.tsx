@@ -2426,6 +2426,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     aiRows.push({ name: gk.name });
                   } else if (fromKw) {
                     kwRows.push({ name: gk.name, example: gk.keyword?.terms?.[0] });
+                  } else if ((customVars[gk.name] ?? "").trim()) {
+                    customRows.push({ name: gk.name, example: customVars[gk.name] });
                   } else {
                     missRows.push({ name: gk.name });
                   }
