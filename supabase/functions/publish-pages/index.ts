@@ -965,15 +965,15 @@ async function handlePublishPages(req: Request): Promise<Response> {
       if (typeof body.publish_format === "string" && (PUBLISH_FORMATS as readonly string[]).includes(body.publish_format)) {
         return body.publish_format as PublishFormat;
       }
-      if (!campaignId) return "elementor";
+      if (!campaignId) return "html";
       if (campaignFormatCache.has(campaignId)) return campaignFormatCache.get(campaignId)!;
       const { data } = await supabase
         .from("campaigns")
         .select("publish_format")
         .eq("id", campaignId)
         .maybeSingle();
-      const fmt = ((data as any)?.publish_format as string) || "elementor";
-      const out = ((PUBLISH_FORMATS as readonly string[]).includes(fmt) ? fmt : "elementor") as PublishFormat;
+      const fmt = ((data as any)?.publish_format as string) || "html";
+      const out = ((PUBLISH_FORMATS as readonly string[]).includes(fmt) ? fmt : "html") as PublishFormat;
       campaignFormatCache.set(campaignId, out);
       return out;
     }
@@ -1093,7 +1093,18 @@ async function handlePublishPages(req: Request): Promise<Response> {
               console.warn("[publish-pages] direct Elementor repair failed", e);
             }
           }
-          if (website.type === "wordpress" && pubType === "page" && !preserveDesign) {
+          const dpFormat = await getCampaignPublishFormat(campaignId);
+          payload.publish_format = dpFormat;
+          if (dpFormat === "html") {
+            // Real code: publish the generated HTML/CSS verbatim (design 1:1).
+            payload.wordpress_fallback_html = true;
+            payload.elementor_data = undefined;
+            payload.elementor_css = undefined;
+            payload.elementor_mode = undefined;
+            step("Publishing real code (HTML/CSS)", "ok", "Generated HTML + CSS published verbatim — design 1:1 with preview");
+          }
+          if (website.type === "wordpress" && pubType === "page" && !preserveDesign && dpFormat === "elementor") {
+
             // No stored native JSON: convert the rendered template HTML into
             // native Elementor containers + widgets so the page is fully
             // editable in Elementor (free) instead of a raw HTML widget.
@@ -1613,6 +1624,16 @@ async function handlePublishPages(req: Request): Promise<Response> {
         );
 
         payload.publish_format = publishFormat;
+        // Real code format: no Elementor/Gutenberg conversion at all — the exact
+        // generated HTML/CSS goes into the page body so design stays 1:1.
+        if (publishFormat === "html") {
+          payload.wordpress_fallback_html = true;
+          payload.elementor_data = undefined;
+          payload.elementor_css = undefined;
+          payload.elementor_mode = undefined;
+          step("Publishing real code (HTML/CSS)", "ok", "Generated HTML + CSS published verbatim — design 1:1 with preview");
+        }
+
 
         // WordPress page publishes: in Elementor format, ALWAYS use the stored
         // Elementor catalog template (editable JSON with new content applied +

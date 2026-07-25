@@ -318,11 +318,35 @@ export class PgpConnector implements CmsConnector {
     payload: Partial<PagePayload>,
     postId?: number,
   ): Promise<ConnectorResult> {
-    const format = payload.publish_format === "gutenberg" ? "gutenberg" : "elementor";
+    const requested = payload.publish_format;
+    const format = payload.wordpress_fallback_html || requested === "html"
+      ? "html"
+      : requested === "gutenberg"
+        ? "gutenberg"
+        : "elementor";
     const status = payload.status === "draft" ? "draft" : "publish";
     const title = payload.title || payload.seo_title || "Generated Page";
     const slug = payload.slug;
     const meta = this.buildMeta(payload);
+
+    // Real code (HTML/CSS): publish the generated markup verbatim so the live
+    // page matches the preview 1:1. Prefer the standard WordPress REST path
+    // (full HTML body, no kses block filtering); when only the plugin key is
+    // available, ship the HTML inside a core/html block.
+    if (format === "html") {
+      if (this.standardFallback && payload.content) {
+        return this.publishViaStandardFallback(payload, postId);
+      }
+      const res = await this.call<PublishResponse>("/publish/gutenberg", "POST", {
+        title,
+        slug,
+        status,
+        post_id: postId,
+        content: `<!-- wp:html -->\n${payload.content || ""}\n<!-- /wp:html -->`,
+        meta,
+      });
+      return { external_id: String(res.post_id), url: res.url };
+    }
 
     if (format === "gutenberg") {
       const res = await this.call<PublishResponse>("/publish/gutenberg", "POST", {
@@ -335,6 +359,7 @@ export class PgpConnector implements CmsConnector {
       });
       return { external_id: String(res.post_id), url: res.url };
     }
+
 
     // Elementor: send the stored master JSON. Exact-render pages can contain a
     // full HTML/CSS document, so compress large payload fields before sending to
