@@ -122,16 +122,60 @@ export function autoExtractTemplateVariables(html: string, pageTitle = "", prefe
     if (candidate && html.includes(candidate)) add(clean, candidate);
   }
 
-  const textBlockRe = /<(h1|h2|h3|h4|p|li|figcaption|blockquote|span|a)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi;
+  // 1) Capture CTA buttons / links first so short action text gets a meaningful name.
+  const ctaRe = /<(a|button)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
+  let ctaMatch: RegExpExecArray | null;
+  let ctaIdx = 0;
+  while ((ctaMatch = ctaRe.exec(html)) && vars.length < 40) {
+    const attrs = ctaMatch[2] || "";
+    const text = stripTags(ctaMatch[3]);
+    if (!text || text.length < 2 || text.length > 60) continue;
+    const looksLikeCta =
+      /\b(btn|button|cta|action|hero__cta|primary|get-started|book|buy|contact|subscribe|signup)\b/i.test(attrs) ||
+      /^(get started|book now|buy now|contact us|subscribe|sign up|sign in|learn more|read more|start free|try free|request (a )?(quote|demo)|schedule|call now|shop now)$/i.test(text);
+    if (!looksLikeCta) continue;
+    ctaIdx += 1;
+    add(ctaIdx === 1 ? "cta_label" : `cta_label_${ctaIdx}`, text);
+  }
+
+  // 2) Capture list items grouped by their parent <ul>/<ol> so each list becomes
+  //    its own variable family (list_1_item_1, list_1_item_2, ...).
+  const listRe = /<(ul|ol)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+  let listMatch: RegExpExecArray | null;
+  let listIdx = 0;
+  while ((listMatch = listRe.exec(html)) && vars.length < 60) {
+    listIdx += 1;
+    const items = Array.from(listMatch[2].matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/gi));
+    let itemIdx = 0;
+    for (const it of items) {
+      const text = stripTags(it[1]);
+      if (!text || text.length < 3 || text.length > 200) continue;
+      if (GENERIC_TEXT.test(text)) continue;
+      itemIdx += 1;
+      add(`list_${listIdx}_item_${itemIdx}`, text);
+      if (vars.length >= 60) break;
+    }
+  }
+
+  // 3) Headings, paragraphs and remaining inline text.
+  const textBlockRe = /<(h1|h2|h3|h4|h5|h6|p|figcaption|blockquote|span)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi;
   let match: RegExpExecArray | null;
   const counters: Record<string, number> = {};
-  while ((match = textBlockRe.exec(html)) && vars.length < 30) {
+  while ((match = textBlockRe.exec(html)) && vars.length < 60) {
     const tag = match[1].toLowerCase();
     const text = stripTags(match[3]);
-    if (!text || text.length < 4 || text.length > 160) continue;
+    if (!text || text.length < 4 || text.length > 220) continue;
     if (GENERIC_TEXT.test(text)) continue;
     counters[tag] = (counters[tag] || 0) + 1;
-    const base = tag === "h1" ? "headline" : tag === "h2" ? "section_title" : tag === "h3" || tag === "h4" ? "card_title" : tag === "p" ? "description" : "text";
+    const base =
+      tag === "h1" ? "headline" :
+      tag === "h2" ? "subheading" :
+      tag === "h3" ? "section_title" :
+      tag === "h4" || tag === "h5" || tag === "h6" ? "card_title" :
+      tag === "p" ? "description" :
+      tag === "blockquote" ? "quote" :
+      tag === "figcaption" ? "caption" :
+      "text";
     add(counters[tag] === 1 ? base : `${base}_${counters[tag]}`, text);
   }
 
