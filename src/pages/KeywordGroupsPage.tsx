@@ -267,7 +267,7 @@ export default function KeywordGroupsPage() {
         description: `for {${varName}}`,
       });
     } catch (err: any) {
-      toast({ title: "AI generation failed", description: err?.message, variant: "destructive" });
+      toast({ title: "AI generation failed", description: friendlyError(err?.message || String(err)), variant: "destructive" });
     } finally {
       setAiBusy(null);
     }
