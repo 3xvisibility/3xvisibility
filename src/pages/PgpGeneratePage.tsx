@@ -3121,13 +3121,14 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               )}
 
               {!variableCoverage.ok && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-xs space-y-2">
+                <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs space-y-2">
                   <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                     <div className="space-y-1 flex-1">
-                      <p className="font-semibold text-destructive">
-                        Variable validation failed — generation blocked
+                      <p className="font-semibold text-amber-600 dark:text-amber-400">
+                        Some variables are still empty — you can still generate
                       </p>
+
                       <ul className="text-muted-foreground list-disc list-inside space-y-0.5">
                         {variableCoverage.missing.map((m) => (
                           <li key={m.name}>
