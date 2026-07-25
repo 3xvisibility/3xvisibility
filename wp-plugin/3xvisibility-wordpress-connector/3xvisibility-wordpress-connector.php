@@ -3,7 +3,7 @@
  * Plugin Name:       3xVisibility WordPress Connector
  * Plugin URI:        https://3xvisibility.com
  * Description:        Secure companion plugin that bridges your 3xVisibility account and WordPress — publishing native Elementor (Free) & Gutenberg pages, uploading media, regenerating Elementor CSS, clearing caches, and detecting builders/themes/global styles so programmatic pages behave exactly like pages built manually inside WordPress.
- * Version:           1.6.5
+ * Version:           1.6.6
  * Author:            3xVisibility
  * Author URI:        https://3xvisibility.com
  * License:           GPL-2.0+
