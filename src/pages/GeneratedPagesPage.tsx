@@ -1646,7 +1646,22 @@ export default function GeneratedPagesPage() {
         campaignTitles={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.title) : undefined}
         campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined}
         onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })} />
+      <PublishFormatDialog
+        open={showFormatDialog}
+        onOpenChange={(open) => {
+          setShowFormatDialog(open);
+          if (!open) setPendingPublishIds([]);
+        }}
+        pageCount={pendingPublishIds.length}
+        defaultFormat={publishFormat}
+        onConfirm={(format) => {
+          setPublishFormat(format);
+          setShowFormatDialog(false);
+          runPublish(pendingPublishIds, pendingPublishAction, format);
+        }}
+      />
       <PublishWebsiteSelector
+
         open={showWebsiteSelector}
         onOpenChange={(open) => {
           setShowWebsiteSelector(open);
