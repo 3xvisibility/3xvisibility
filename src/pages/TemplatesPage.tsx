@@ -648,7 +648,10 @@ export default function TemplatesPage() {
 
 
       if (!data.name || !data.content) throw new Error("Invalid template file.");
-      const normalizedContent = normalizeTemplateHtml(String(data.content)).html || data.content;
+      const importedRaw = String(data.content);
+      const normalizedContent =
+        normalizeTemplateHtml(importedRaw, { keepScripts: /<script\b/i.test(importedRaw) }).html || data.content;
+
       const { error } = await supabase.from("templates").insert({ name: data.name, content: normalizedContent, variables: data.variables || [], user_id: user.id, workspace_id: wsId, seo_title_pattern: data.seo_title_pattern || "", seo_description_pattern: data.seo_description_pattern || "", schema_type: data.schema_type || "WebPage", schema_config: data.schema_config || {} } as any);
       if (error) throw error;
       await refreshTemplates();
