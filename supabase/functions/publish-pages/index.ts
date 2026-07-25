@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { bundlePageAssetsToUrls } from "../_shared/connectors/page-assets.ts";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
@@ -1081,7 +1082,11 @@ async function handlePublishPages(req: Request): Promise<Response> {
         };
         try {
           step("Validating page payload", "ok", `${website.type} · ${pubType}`);
-          const cleanedContent = stripHeadTagsForCms(dp.content, assetBaseFor(dp));
+          let cleanedContent = stripHeadTagsForCms(dp.content, assetBaseFor(dp));
+          // Bundle the page CSS/JS into external files referenced with real
+          // <link>/<script src> tags so CMS sanitizers can't strip the design.
+          const dpBundle = await bundlePageAssetsToUrls(supabase, cleanedContent, (dp as { workspace_id?: string | null }).workspace_id ?? null);
+          cleanedContent = dpBundle.html;
           // Republish of an already-published page → preserve existing on-site design.
           const isRepublish = !!dp.external_id;
           const preserveDesign = isRepublish && !allowOverwriteDesign;
@@ -1500,7 +1505,9 @@ async function handlePublishPages(req: Request): Promise<Response> {
           await runWordPressConnectorPreflight(connector, "3xVisibility WordPress Connector");
           finishRunning("ok");
         }
-        const cleanedContent = stripHeadTagsForCms(page.content, assetBaseFor(page));
+        let cleanedContent = stripHeadTagsForCms(page.content, assetBaseFor(page));
+        const pageBundle = await bundlePageAssetsToUrls(supabase, cleanedContent, (page as { workspace_id?: string | null }).workspace_id ?? null);
+        cleanedContent = pageBundle.html;
         // Republish of an already-published CMS page → preserve existing on-site
         // design. Only metadata (title, slug, SEO meta, canonical) flows through.
         const isRepublish = !!page.external_id;
