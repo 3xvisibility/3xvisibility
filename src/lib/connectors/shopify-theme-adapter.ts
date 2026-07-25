@@ -75,12 +75,34 @@ export function adaptHtmlForShopifyTheme(
 ): string {
   if (!html || typeof html !== "string") return html;
   let out = html;
+
+  // v1 HTML/CSS publishing bundles the page design into external CSS/JS files
+  // referenced with data-xxxv-asset tags. Pull them out before the adapter strips
+  // <link>/<script>, then re-attach them so the live page keeps the design.
+  const bundled: string[] = [];
+  out = out.replace(
+    /<link\b[^>]*data-xxxv-asset[^>]*>|<script\b[^>]*data-xxxv-asset[^>]*>[\s\S]*?<\/script>/gi,
+    (tag) => {
+      bundled.push(tag);
+      return "";
+    },
+  );
+
   out = stripDocumentChrome(out);
   out = trimRootStyleBlocks(out);
   out = sanitizeOuterStyles(out);
   out = makeImagesResponsive(out);
-  if (/class="[^"]*\bshopify-themed-content\b[^"]*"/.test(out)) return injectThemeAssets(out, assets);
+
+  const prefix = bundled.filter((t) => /^<link/i.test(t)).join("\n");
+  const suffix = bundled.filter((t) => /^<script/i.test(t)).join("\n");
+  const withAssets = (body: string) =>
+    [prefix, body, suffix].filter((part) => part && part.trim()).join("\n");
+
+  if (/class="[^"]*\bshopify-themed-content\b[^"]*"/.test(out)) {
+    return injectThemeAssets(withAssets(out), assets);
+  }
   const productClass = kind === "product" ? " product__description" : "";
   const wrapped = `<div class="page-width rte shopify-themed-content${productClass}">\n${out}\n</div>`;
-  return injectThemeAssets(wrapped, assets);
+  return injectThemeAssets(withAssets(wrapped), assets);
 }
+
