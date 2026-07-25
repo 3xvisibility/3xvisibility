@@ -191,6 +191,35 @@ export default function GeneratedPagesPage() {
     return msg;
   };
 
+  // Normalize edge-function publish results and keep a persistent summary
+  // so the screen shows exactly which pages succeeded / failed and why.
+  const recordPublishResults = (data: any, ids?: string[], fallbackError?: string) => {
+    let results: PublishLogResult[] = Array.isArray(data?.results)
+      ? (data.results as PublishLogResult[])
+      : [];
+    if (!results.length && ids?.length) {
+      results = ids.map((id) => ({
+        id,
+        status: fallbackError ? "failed" : "published",
+        error: fallbackError,
+      }));
+    }
+    if (!results.length) return;
+    const enriched = results.map((r) => {
+      const page = pages.find((p) => p.id === r.id);
+      return {
+        ...r,
+        title: r.title || page?.title || page?.seo_title || page?.slug,
+        slug: r.slug || page?.slug || undefined,
+        external_url: r.external_url || page?.external_url || undefined,
+        error: r.error || (r.status !== "published" ? page?.error_message || fallbackError || undefined : undefined),
+      };
+    });
+    setPublishSummary(enriched);
+    setPublishLog(enriched);
+  };
+
+
   // Show the persisted per-page publish timeline (validation, media import,
   // WordPress/Shopify publishing progress + results) in the publish-log dialog.
   const openPublishStatus = (page: GeneratedPage) => {
