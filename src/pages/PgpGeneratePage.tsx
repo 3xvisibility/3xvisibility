@@ -1245,12 +1245,11 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
     }
     if (geoCoverage.severity === "block") {
       toast({
-        title: "Geo coverage validation failed",
-        description: geoCoverage.issues[0] || "Attach real locations before generating.",
-        variant: "destructive",
+        title: "Geo values incomplete",
+        description: geoCoverage.issues[0] || "Some geo values are placeholders — generating anyway.",
       });
-      return;
     }
+
     if (!variableCoverage.ok) {
       const first = variableCoverage.missing[0];
       toast({
