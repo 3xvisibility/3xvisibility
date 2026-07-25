@@ -165,11 +165,14 @@ export function normalizeTemplateHtml(
 
   const scriptBlocks = collect(html, /<script\b[^>]*>[\s\S]*?<\/script>|<script\b[^>]*\/>/gi);
   const jsParts: string[] = [];
+  // External `<script src>` tags must stay standalone — nesting them inside the
+  // merged inline block would silently disable them.
+  const externalScripts: string[] = [];
   for (const block of scriptBlocks) {
     const isTracker = TRACKER_RE.test(block);
     const isJsonLd = /type\s*=\s*["']application\/ld\+json["']/i.test(block);
     if (isTracker || isJsonLd || !options.keepScripts) { dropped++; continue; }
-    if (/\bsrc\s*=/.test(block)) { jsParts.push(block); continue; }
+    if (/\bsrc\s*=/.test(block)) { externalScripts.push(block.trim()); continue; }
     jsParts.push(block.replace(/^<script\b[^>]*>/i, "").replace(/<\/script>$/i, ""));
   }
   html = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>|<script\b[^>]*\/>/gi, "");
@@ -178,7 +181,9 @@ export function normalizeTemplateHtml(
   }
 
   html = html.replace(/\son[a-z]+\s*=\s*(["'])[\s\S]*?\1/gi, () => { dropped++; return ""; });
-  html = neutralizeHiddenStates(html).replace(/\n{3,}/g, "\n\n").trim();
+  // With the source JS kept, the site's own reveal logic runs — forcing the
+  // visible state would change the intended design.
+  html = (options.keepScripts ? html : neutralizeHiddenStates(html)).replace(/\n{3,}/g, "\n\n").trim();
 
   const already = html.match(WRAPPER_STRIP_RE);
   const body = already ? already[1].trim() : html;
@@ -186,15 +191,17 @@ export function normalizeTemplateHtml(
   const needsWrapper = !/<div\s+class=["']tpl-root["']/i.test(body);
   // Drop any previously injected reveal rule so repeat normalization is stable.
   const cleanedCss = cssParts.map((c) => c.split(REVEAL_CSS).join("").trim()).filter(Boolean);
-  const css = dedupe([...cleanedCss, REVEAL_CSS]);
+  const css = dedupe(options.keepScripts ? cleanedCss : [...cleanedCss, REVEAL_CSS]);
   const js = dedupe(jsParts);
 
   const out = [
     links.join("\n"),
     css ? `<style data-tpl-css>\n${css}\n</style>` : "",
     needsWrapper ? `<div class="${wrapperClass}">\n${body}\n</div>` : body,
+    externalScripts.join("\n"),
     js ? `<script data-tpl-js>\n${js}\n</script>` : "",
   ].filter(Boolean).join("\n");
+
 
   if (!body) warnings.push("template body is empty after normalization");
 
