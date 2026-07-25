@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
+import { normalizeTemplateHtml } from "@/lib/template-normalizer";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -647,7 +648,8 @@ export default function TemplatesPage() {
 
 
       if (!data.name || !data.content) throw new Error("Invalid template file.");
-      const { error } = await supabase.from("templates").insert({ name: data.name, content: data.content, variables: data.variables || [], user_id: user.id, workspace_id: wsId, seo_title_pattern: data.seo_title_pattern || "", seo_description_pattern: data.seo_description_pattern || "", schema_type: data.schema_type || "WebPage", schema_config: data.schema_config || {} } as any);
+      const normalizedContent = normalizeTemplateHtml(String(data.content)).html || data.content;
+      const { error } = await supabase.from("templates").insert({ name: data.name, content: normalizedContent, variables: data.variables || [], user_id: user.id, workspace_id: wsId, seo_title_pattern: data.seo_title_pattern || "", seo_description_pattern: data.seo_description_pattern || "", schema_type: data.schema_type || "WebPage", schema_config: data.schema_config || {} } as any);
       if (error) throw error;
       await refreshTemplates();
       toast({ title: "Template imported" });
@@ -895,7 +897,9 @@ export default function TemplatesPage() {
     html = applyTemplateVariables(html, variableEntries);
 
     const allVars = filterDesignVars([...new Set([...variableEntries.map((v) => v.name), ...pendingKeywords])]);
-    const fullContent = styles ? `<!-- STYLES -->\n${styles}\n<!-- /STYLES -->\n${html}` : html;
+    const rawContent = styles ? `${styles}\n${html}` : html;
+    // Every imported template lands in the same HTML/CSS/JS shape.
+    const fullContent = normalizeTemplateHtml(rawContent, { baseUrl: data?.url || null }).html || rawContent;
     setSiteDialogOpen(false); setSitePages([]);
     const pendingTemplate = { id: "", name: pageTitle || "Site Template", content: fullContent, variables: allVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: { language: siteLanguage !== "__auto__" ? siteLanguage : undefined }, seo_title_pattern: "", seo_description_pattern: "" } as any as Template;
     // Show the import preview step FIRST — user confirms the extracted variables

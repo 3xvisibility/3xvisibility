@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector } from "../_shared/connectors/factory.ts";
 import { aiGenerate, deductCreditsForRequest } from "../_shared/ai-service.ts";
 import { bundleTemplateAssets } from "../_shared/asset-bundler.ts";
+import { normalizeTemplateHtml } from "../_shared/template-normalizer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -407,12 +408,20 @@ Return a JSON array of the best suggestions only.`,
       }
     }
 
+    // Consistent HTML/CSS/JS shape for every scanned page: merged stylesheet,
+    // sanitized markup, single `.tpl-root` wrapper.
+    const normalized = normalizeTemplateHtml(`${headStyles}\n${bodyContent}`, {
+      baseUrl: formattedUrl,
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
         url: formattedUrl,
         bodyHtml: bodyContent,
         headStyles,
+        normalizedHtml: normalized.html,
+        normalization: { warnings: normalized.warnings, stats: normalized.stats },
         blocks,
         suggestions,
         imageUrls,
