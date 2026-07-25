@@ -1349,18 +1349,34 @@ export default function GeneratedPagesPage() {
                   const isSelected = selectedIds.has(page.id);
                   const cfg = STATUS_CONFIG[page.status] || STATUS_CONFIG.pending;
                   const freshness = calculateFreshness(page.created_at, page.status);
+                  const liveUrl = resolvePageUrl(page);
                   return (
                     <tr key={page.id} className={`border-b last:border-0 ${isSelected ? "bg-primary/5" : "hover:bg-muted/20"} transition-colors`}>
                       <td className="p-3"><Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(page.id)} /></td>
                       <td className="p-3">
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-medium truncate max-w-[300px]">{displayTitle}</span>
-                            {page.external_url && (
-                              <a href={page.external_url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary shrink-0">
+                            <button
+                              type="button"
+                              className="font-medium truncate max-w-[300px] text-left hover:text-primary hover:underline"
+                              title={liveUrl ? `Open ${liveUrl}` : "Open preview"}
+                              onClick={() => (liveUrl ? openPageUrl(liveUrl) : setPreviewPage(page))}
+                            >
+                              {displayTitle}
+                            </button>
+                            {liveUrl && (
+                              <a
+                                href={liveUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-muted-foreground hover:text-primary shrink-0"
+                                onClick={(e) => { e.preventDefault(); openPageUrl(liveUrl); }}
+                              >
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             )}
+                          </div>
+
                           </div>
                           {page.websites?.name && (
                             <span className="text-[10px] text-muted-foreground">{page.websites.name}</span>
