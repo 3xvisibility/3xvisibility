@@ -1671,9 +1671,11 @@ export default function GeneratedPagesPage() {
           if (!open) setPendingPublishIds([]);
         }}
         pageCount={pendingPublishIds.length}
-        defaultFormat={publishFormat}
-        onConfirm={(format) => {
+        defaultFormat={rememberedFormat ?? publishFormat}
+        rememberDefault={!!rememberedFormat}
+        onConfirm={(format, remember) => {
           setPublishFormat(format);
+          persistRememberedFormat(remember ? format : null);
           setShowFormatDialog(false);
           runPublish(pendingPublishIds, pendingPublishAction, format);
         }}
