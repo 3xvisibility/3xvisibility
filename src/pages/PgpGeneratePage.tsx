@@ -1401,6 +1401,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         // Wait for the job to reach a terminal state (max ~15 min).
         const deadline = Date.now() + 15 * 60 * 1000;
         let settled = false;
+        let noJobTicks = 0;
         while (Date.now() < deadline) {
           await new Promise((r) => setTimeout(r, 3000));
           const { data: job } = await supabase
@@ -1410,7 +1411,12 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
-          if (!job) continue;
+          if (!job) {
+            // No job at all → the function never started (real failure).
+            if (++noJobTicks >= 10) { clearInterval(pollInterval); throw genErr; }
+            continue;
+          }
+
           setGenProgress({
             processed: job.processed_rows || 0,
             total: job.total_rows || rows.length,
