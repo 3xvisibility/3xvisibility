@@ -91,13 +91,17 @@ export class ShopifyConnector implements CmsConnector {
     }
   }
 
-  private mapPayload(payload: PagePayload): Record<string, unknown> {
+  private async mapPayload(payload: PagePayload): Promise<Record<string, unknown>> {
+    // Bundle the design into external CSS/JS first so Shopify's body_html
+    // sanitization can't drop it — the published page then matches the preview.
+    const bundled = await bundlePageAssetsToUrls(payload.content || "");
     const page: Record<string, unknown> = {
       title: payload.title,
-      body_html: adaptHtmlForShopifyTheme(payload.content || "", "page"),
+      body_html: adaptHtmlForShopifyTheme(bundled.html, "page"),
       handle: payload.slug,
       published: payload.status === "publish",
     };
+
 
     // Shopify SEO via metafields
     if (payload.seo_title) page.metafields_global_title_tag = payload.seo_title;
