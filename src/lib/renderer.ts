@@ -420,9 +420,24 @@ export function buildOgMeta(opts: {
 
 export function renderPage(template: TemplateConfig, ctx: RenderContext): RenderResult {
   const warnings: string[] = [];
+  const missingVariables: MissingVariable[] = [];
   const locale = ctx.locale || "en";
   const allVars: Record<string, string> = { ...ctx.row, ...ctx.extraVars };
   const schemaConfig = template.schema_config || {};
+
+  // 0) Pre-flight validation — every declared placeholder must have a source.
+  const validation = validateVariableSources(
+    { content: template.content, seo_title_pattern: template.seo_title_pattern, seo_description_pattern: template.seo_description_pattern, schema_config: template.schema_config },
+    allVars,
+  );
+  for (const name of validation.missing) missingVariables.push({ name, location: "content", emptyValue: false });
+  for (const name of validation.empty) missingVariables.push({ name, location: "content", emptyValue: true });
+  if (validation.missing.length > 0) {
+    warnings.push(`Missing data source for: ${validation.missing.join(", ")}`);
+  }
+  if (validation.empty.length > 0) {
+    warnings.push(`Empty values supplied for: ${validation.empty.join(", ")}`);
+  }
 
   // 1) Process conditionals & loops
   let html = processConditionals(template.content, allVars);
@@ -434,11 +449,17 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
   // 3) Process spintax
   html = processSpintax(html);
 
-  // 4) Warn about unresolved placeholders
-  const unresolved = html.match(/\{[a-z_]+\}/gi);
-  if (unresolved) {
-    const unique = [...new Set(unresolved)];
-    warnings.push(`Unresolved variables: ${unique.join(", ")}`);
+  // 4) Replace any lingering placeholders with a visible error marker so
+  //    pages never ship with blank text. Track the names for reporting.
+  const marked = replaceMissingWithMarkers(html);
+  html = marked.html;
+  for (const name of marked.names) {
+    if (!missingVariables.some((m) => m.name === name)) {
+      missingVariables.push({ name, location: "content", emptyValue: false });
+    }
+  }
+  if (marked.names.length > 0) {
+    warnings.push(`Unresolved variables replaced with [missing: ...] markers: ${marked.names.join(", ")}`);
   }
 
   // 5) Extract title from <h1> or row values, then locale-format
