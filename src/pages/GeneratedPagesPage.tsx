@@ -1905,7 +1905,10 @@ export default function GeneratedPagesPage() {
         open={!!publishLog}
         onOpenChange={(open) => { if (!open) setPublishLog(null); }}
         results={publishLog || []}
+        onRetryFailed={(ids) => { setPublishLog(null); handlePublish(ids, "retry"); }}
+        retrying={retryFailedMutation.isPending}
       />
+
       <RepublishDiffDialog
         open={!!diffState}
         onOpenChange={(open) => { if (!open) setDiffState(null); }}
