@@ -41,6 +41,8 @@ import { TemplateCustomizerDialog } from "@/components/templates/TemplateCustomi
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { TemplateVersionBadge } from "@/components/templates/TemplateVersionBadge";
 import { TemplateVersionHistoryDialog } from "@/components/templates/TemplateVersionHistoryDialog";
+import { RescanVariablesDialog, type RescanTarget } from "@/components/templates/RescanVariablesDialog";
+
 import { recordVersionById, recordVersionForLatest } from "@/lib/template-version-history";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
