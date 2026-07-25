@@ -488,18 +488,31 @@ async function resolveShopifySectionKit(
 
 
 /**
- * Strip head-level tags (meta, link, script/JSON-LD, style) from generated content
- * before publishing to a CMS that already has its own <head>, header, and footer.
- * Only the body content (inside <div class="pgp-page">) is sent to the CMS.
+ * Prepare generated HTML for a CMS that already owns its <head>, header and
+ * footer.
+ *
+ * v1 is HTML/CSS-only, so the published markup must stay a 1:1 copy of the
+ * preview. Two things are required for that:
+ *  1. every asset URL (CSS, JS, images, fonts, posters, srcset, CSS url()) is
+ *     rewritten to an absolute URL so it still resolves on the published domain,
+ *  2. design-carrying <link> tags (stylesheets, font preloads, preconnects) are
+ *     kept, while CMS-owned metadata (canonical, icons, alternates, meta) is
+ *     stripped.
  */
-function stripHeadTagsForCms(content: string): string {
-  let cleaned = content
+function stripHeadTagsForCms(content: string, baseUrl?: string | null): string {
+  if (!content) return content;
+
+  // 1. Absolutise every asset reference against the template's origin.
+  const bundled = bundleTemplateAssets(content, { baseUrl });
+
+  let cleaned = bundled.html
     // Remove HTML comments (e.g. <!-- Open Graph Meta Tags -->)
     .replace(/<!--[\s\S]*?-->/g, "")
     // Remove <meta ...> tags
     .replace(/<meta\b[^>]*\/?>/gi, "")
-    // Remove <link rel="canonical" ...> tags
-    .replace(/<link\b[^>]*\/?>/gi, "")
+    // Keep stylesheets / font preloads / preconnects; drop canonical, icons,
+    // alternates and other CMS-owned metadata links.
+    .replace(/<link\b[^>]*\/?>/gi, (tag) => (isDesignLinkTag(tag) ? tag : ""))
     // Remove <script type="application/ld+json">...</script> blocks
     .replace(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "")
     // Keep the .pgp-page responsive stylesheet — WordPress themes won't style our content
@@ -510,6 +523,7 @@ function stripHeadTagsForCms(content: string): string {
 
   return cleaned;
 }
+
 
 function shouldUseExactElementorRender(_content: string): boolean {
   // NATIVE EDITABLE MODE (user choice): convert template HTML into native,
