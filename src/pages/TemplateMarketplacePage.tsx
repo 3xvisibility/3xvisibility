@@ -621,35 +621,6 @@ export default function TemplateMarketplacePage() {
     },
   });
 
-  // Share template mutation
-  const shareMutation = useMutation({
-    mutationFn: async (form: typeof shareForm) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      const template = userTemplates.find((t: any) => t.id === form.templateId);
-      if (!template) throw new Error("Template not found");
-      const { error } = await supabase.from("shared_templates").insert({
-        template_id: form.templateId,
-        user_id: user.id,
-        workspace_id: wsId,
-        author_name: form.authorName || "Anonymous",
-        description: form.description,
-        category: form.category,
-        content: (template as any).content,
-        variables: (template as any).variables || [],
-      } as any);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["shared-templates"] });
-      toast({ title: "Template shared!", description: "Your template is now available in the community marketplace." });
-      setShareOpen(false);
-      setShareForm({ templateId: "", description: "", category: "general", authorName: "" });
-    },
-    onError: (err: Error) => {
-      toast({ title: "Share failed", description: err.message, variant: "destructive" });
-    },
-  });
 
   // Rate template mutation
   const rateMutation = useMutation({
