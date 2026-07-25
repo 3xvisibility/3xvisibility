@@ -308,7 +308,8 @@ export function ImportPreviewDialog({
   };
 
   const activeCount = rows.filter((r) => !r.removed).length;
-  const hasErrors = dupeNames.size > 0 || invalidNames.size > 0;
+  const hasErrors = dupeNames.size > 0 || invalidNames.size > 0 || formatIssues.size > 0;
+
 
   const handleContinue = () => {
     if (hasErrors) return;
