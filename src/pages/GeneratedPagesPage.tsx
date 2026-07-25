@@ -490,7 +490,12 @@ export default function GeneratedPagesPage() {
       setShowWebsiteSelector(false);
       setPendingPublishIds([]);
     },
-    onError: (err: Error) => toast({ title: "Bulk publish failed", description: err.message, variant: "destructive" }),
+    onError: (err: Error, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      recordPublishResults(null, variables?.ids, err.message);
+      toast({ title: "Bulk publish failed", description: err.message, variant: "destructive" });
+    },
+
   });
 
   const bulkStatusMutation = useMutation({
