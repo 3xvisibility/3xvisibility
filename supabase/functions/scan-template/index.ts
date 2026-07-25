@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector } from "../_shared/connectors/factory.ts";
 import { aiGenerate, deductCreditsForRequest } from "../_shared/ai-service.ts";
 import { bundleTemplateAssets } from "../_shared/asset-bundler.ts";
+import { normalizeTemplateHtml } from "../_shared/template-normalizer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
