@@ -1450,24 +1450,31 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       .map((k) => k.name)
       .filter((n) => !isAiContentVariable(n));
     if (required.length === 0) {
-      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[] };
+      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[], rowsMissing: [] as { index: number; names: string[] }[] };
     }
     let previewRows: Record<string, string>[] = [];
     try { previewRows = buildRows(); } catch { previewRows = []; }
     if (previewRows.length === 0) {
-      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[] };
+      return { ok: true, rowCount: 0, missing: [] as { name: string; rows: number }[], rowsMissing: [] as { index: number; names: string[] }[] };
     }
     const missing: { name: string; rows: number }[] = [];
+    const perRow = new Map<number, string[]>();
     for (const name of required) {
       const key = name.trim().toLowerCase();
       let count = 0;
-      for (const r of previewRows) {
+      previewRows.forEach((r, idx) => {
         const val = (r[key] ?? r[name] ?? "").toString().trim();
-        if (!val) count++;
-      }
+        if (!val) {
+          count++;
+          perRow.set(idx, [...(perRow.get(idx) ?? []), name]);
+        }
+      });
       if (count > 0) missing.push({ name, rows: count });
     }
-    return { ok: missing.length === 0, rowCount: previewRows.length, missing };
+    const rowsMissing = Array.from(perRow.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([index, names]) => ({ index, names }));
+    return { ok: missing.length === 0, rowCount: previewRows.length, missing, rowsMissing };
   })();
 
 
