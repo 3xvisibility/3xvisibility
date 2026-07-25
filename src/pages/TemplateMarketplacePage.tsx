@@ -101,8 +101,6 @@ export default function TemplateMarketplacePage() {
   const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
   const [wpTestOpen, setWpTestOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
-  const [shareForm, setShareForm] = useState({ templateId: "", description: "", category: "general", authorName: "" });
   const [variablesOpen, setVariablesOpen] = useState(false);
   const [ratingValue, setRatingValue] = useState(5);
   const [reviewText, setReviewText] = useState("");
@@ -346,7 +344,7 @@ export default function TemplateMarketplacePage() {
       if (failed > 0 && converted === 0) {
         toast({
           title: "Retry failed",
-          description: `Conversion did not succeed for "${tpl.name}". Open the Job runner for details.`,
+          description: `Conversion did not succeed for "${tpl.name}". Please try again.`,
           variant: "destructive",
         });
       } else if (converted === 0 && failed === 0) {
