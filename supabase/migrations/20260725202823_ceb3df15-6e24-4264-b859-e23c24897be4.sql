@@ -1,0 +1,1 @@
+ALTER TABLE public.campaigns ALTER COLUMN publish_format SET DEFAULT 'html';
