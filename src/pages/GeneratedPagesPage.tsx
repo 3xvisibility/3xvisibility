@@ -1050,6 +1050,19 @@ export default function GeneratedPagesPage() {
       {/* Live progress card (only renders when active jobs exist) */}
       {wsId && <LiveGenerationProgress workspaceId={wsId} />}
 
+      {/* Post-publish summary: which pages succeeded / failed and why */}
+      {publishSummary && publishSummary.length > 0 && (
+        <PublishResultSummary
+          results={publishSummary}
+          onViewDetails={() => setPublishLog(publishSummary)}
+          onRetryFailed={(ids) => handlePublish(ids, "retry")}
+          onDismiss={() => setPublishSummary(null)}
+          retrying={retryFailedMutation.isPending}
+        />
+      )}
+
+
+
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         {[
