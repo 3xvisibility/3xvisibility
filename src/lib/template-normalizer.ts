@@ -184,7 +184,9 @@ export function normalizeTemplateHtml(
   const body = already ? already[1].trim() : html;
   // Never nest wrappers when the markup already went through the normalizer.
   const needsWrapper = !/<div\s+class=["']tpl-root["']/i.test(body);
-  const css = dedupe([...cssParts, REVEAL_CSS]);
+  // Drop any previously injected reveal rule so repeat normalization is stable.
+  const cleanedCss = cssParts.map((c) => c.split(REVEAL_CSS).join("").trim()).filter(Boolean);
+  const css = dedupe([...cleanedCss, REVEAL_CSS]);
   const js = dedupe(jsParts);
 
   const out = [
