@@ -476,6 +476,60 @@ export default function TemplatesPage() {
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
+  /**
+   * Re-run the expanded auto-extractor against one or more existing templates
+   * so older imports pick up the newly supported variable families
+   * (list_N_item_M, subheading, cta_label, cta_url, quote, caption, …).
+   * Only NEW placeholders are added — existing {variables} are preserved so
+   * campaigns that reference them keep rendering.
+   */
+  const rescanMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (!wsId || ids.length === 0) return { updated: 0, added: 0, skipped: 0 };
+      const targets = templates.filter((t) => ids.includes(t.id));
+      let updated = 0;
+      let addedTotal = 0;
+      let skipped = 0;
+      for (const tpl of targets) {
+        const original = tpl.content || "";
+        if (!original.trim()) { skipped += 1; continue; }
+        const existing = new Set(
+          (original.match(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g) || []).map((s) => s.slice(1, -1).toLowerCase()),
+        );
+        const candidates = autoExtractTemplateVariables(original, tpl.name || "", []);
+        // Keep only extracted vars whose NAME isn't already used and whose
+        // ORIGINAL text still exists literally in the current HTML.
+        const additions = candidates.filter((c) => {
+          if (existing.has(c.name.toLowerCase())) return false;
+          if (!c.original || !original.includes(c.original)) return false;
+          return true;
+        });
+        if (additions.length === 0) { skipped += 1; continue; }
+        const nextContent = applyTemplateVariables(original, additions);
+        if (nextContent === original) { skipped += 1; continue; }
+        const variables = filterDesignVars([...new Set(nextContent.match(/\{[^}]+\}/g) || [])]);
+        const { error } = await supabase
+          .from("templates")
+          .update({ content: nextContent, variables } as any)
+          .eq("id", tpl.id);
+        if (error) throw error;
+        await recordVersionById(tpl.id, `Rescan added ${additions.length} variable(s)`);
+        updated += 1;
+        addedTotal += additions.length;
+      }
+      return { updated, added: addedTotal, skipped };
+    },
+    onSuccess: async (res) => {
+      await refreshTemplates();
+      toast({
+        title: "Variable rescan complete",
+        description: `Updated ${res.updated} template(s), added ${res.added} new variable(s)${res.skipped ? `, ${res.skipped} unchanged` : ""}.`,
+      });
+    },
+    onError: (err: Error) => toast({ title: "Rescan failed", description: err.message, variant: "destructive" }),
+  });
+
+
   // Re-import a marketplace template at its current latest version. We always
   // create a NEW snapshot row — never mutate the existing one — so previously
   // generated campaigns remain locked to the version they were built against.
