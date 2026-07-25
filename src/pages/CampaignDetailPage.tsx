@@ -8,6 +8,8 @@ import { SeoImprovementWorkflow } from "@/components/campaigns/SeoImprovementWor
 import { StartGenerationDialog, type GenerationOptions } from "@/components/campaigns/StartGenerationDialog";
 import { reskinContent, COMMUNITY_TEMPLATES, type TemplatePlatform } from "@/lib/marketplace-templates";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
+import { PublishLogDialog, type PublishLogResult } from "@/components/campaigns/PublishLogDialog";
+import { PublishResultSummary } from "@/components/generated-pages/PublishResultSummary";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { useParams, useNavigate } from "react-router-dom";
@@ -106,6 +108,8 @@ export default function CampaignDetailPage() {
   const [pendingPublishPageId, setPendingPublishPageId] = useState<string | null>(null);
   const [pendingBulkPublishIds, setPendingBulkPublishIds] = useState<string[]>([]);
   const [previewPage, setPreviewPage] = useState<any>(null);
+  const [publishLog, setPublishLog] = useState<PublishLogResult[] | null>(null);
+  const [publishSummary, setPublishSummary] = useState<PublishLogResult[] | null>(null);
   const [verifyHistoryOpen, setVerifyHistoryOpen] = useState(false);
   const [overwriteFields, setOverwriteFields] = useState({
     title: true,
