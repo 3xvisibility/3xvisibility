@@ -76,14 +76,39 @@ class XXXV_REST {
 
 		$css_url = get_post_meta( $post_id, '_xxxv_template_css_url', true );
 		if ( is_string( $css_url ) && '' !== trim( $css_url ) && wp_http_validate_url( $css_url ) ) {
-			wp_enqueue_style( 'xxxv-template-' . $post_id, esc_url_raw( $css_url ), array(), null );
+			// Handle is versioned too, so a re-published page never reuses a
+			// previously registered (stale) stylesheet handle from an object cache.
+			$ver = $this->asset_version( $css_url );
+			wp_enqueue_style( 'xxxv-template-' . $post_id . '-' . $ver, esc_url_raw( $css_url ), array(), $ver );
 		}
 
 		$js_url = get_post_meta( $post_id, '_xxxv_template_js_url', true );
 		if ( is_string( $js_url ) && '' !== trim( $js_url ) && wp_http_validate_url( $js_url ) ) {
-			wp_enqueue_script( 'xxxv-template-' . $post_id, esc_url_raw( $js_url ), array(), null, true );
+			$ver = $this->asset_version( $js_url );
+			wp_enqueue_script( 'xxxv-template-' . $post_id . '-' . $ver, esc_url_raw( $js_url ), array(), $ver, true );
 		}
 	}
+
+	/**
+	 * Cache-busting version token for a bundled asset URL: the `?v=` query value
+	 * emitted by the publisher, falling back to the content hash in the filename.
+	 */
+	private function asset_version( $url ) {
+		$query = wp_parse_url( $url, PHP_URL_QUERY );
+		if ( $query ) {
+			$args = array();
+			wp_parse_str( $query, $args );
+			if ( ! empty( $args['v'] ) && preg_match( '/^[A-Za-z0-9._-]{4,64}$/', $args['v'] ) ) {
+				return $args['v'];
+			}
+		}
+		$file = basename( (string) wp_parse_url( $url, PHP_URL_PATH ) );
+		if ( preg_match( '/^([a-f0-9]{8,64})\./i', $file, $m ) ) {
+			return substr( strtolower( $m[1] ), 0, 12 );
+		}
+		return (string) time();
+	}
+
 
 	/**
 	 * Print the template's inline JS on the live page (footer), so animations and
