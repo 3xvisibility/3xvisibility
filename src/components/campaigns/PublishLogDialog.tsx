@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, Copy, RefreshCw } from "lucide-react";
 import {
   Dialog,
@@ -10,6 +10,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 
 export interface PublishStep {
@@ -58,6 +59,16 @@ export function PublishLogDialog({ open, onOpenChange, results, onRetryFailed, r
   const failed = useMemo(() => results.filter((r) => !isPublishSuccess(r.status)), [results]);
   const visible = filter === "success" ? succeeded : filter === "failed" ? failed : results;
   const failedIds = failed.map((r) => r.id).filter(Boolean) as string[];
+  const [selected, setSelected] = useState<string[]>([]);
+  const canRetry = !!onRetryFailed && failedIds.length > 0;
+
+  useEffect(() => {
+    setSelected(failedIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [failedIds.join(",")]);
+
+  const toggle = (id: string) =>
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const copyReport = async () => {
     const lines = results.map((r, i) => {
@@ -118,10 +129,21 @@ export function PublishLogDialog({ open, onOpenChange, results, onRetryFailed, r
             <Button size="sm" variant="outline" className="h-7 text-xs" onClick={copyReport}>
               <Copy className="h-3 w-3 mr-1" />Copy report
             </Button>
-            {onRetryFailed && failedIds.length > 0 && (
-              <Button size="sm" className="h-7 text-xs" disabled={retrying} onClick={() => onRetryFailed(failedIds)}>
-                <RefreshCw className={`h-3 w-3 mr-1 ${retrying ? "animate-spin" : ""}`} />Retry failed
-              </Button>
+            {canRetry && (
+              <>
+                <Button
+                  size="sm"
+                  className="h-7 text-xs"
+                  disabled={retrying || selected.length === 0}
+                  onClick={() => onRetryFailed!(selected)}
+                >
+                  <RefreshCw className={`h-3 w-3 mr-1 ${retrying ? "animate-spin" : ""}`} />
+                  Retry selected ({selected.length})
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs" disabled={retrying} onClick={() => onRetryFailed!(failedIds)}>
+                  Retry all failed
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -137,6 +159,13 @@ export function PublishLogDialog({ open, onOpenChange, results, onRetryFailed, r
                 <div key={r.id || i} className={`rounded-lg border p-3 space-y-2 ${ok ? "" : "border-destructive/30"}`}>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
+                      {!ok && r.id && canRetry && (
+                        <Checkbox
+                          checked={selected.includes(r.id)}
+                          onCheckedChange={() => toggle(r.id!)}
+                          aria-label={`Retry ${r.title || r.slug || r.id}`}
+                        />
+                      )}
                       {ok ? (
                         <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
                       ) : (
@@ -144,9 +173,16 @@ export function PublishLogDialog({ open, onOpenChange, results, onRetryFailed, r
                       )}
                       <span className="text-sm font-medium truncate">{r.title || r.slug || r.id || `Page ${i + 1}`}</span>
                     </div>
-                    <Badge variant={ok ? "default" : "destructive"} className="shrink-0">
-                      {ok ? "Success" : r.status || "failed"}
-                    </Badge>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant={ok ? "default" : "destructive"}>
+                        {ok ? "Success" : r.status || "failed"}
+                      </Badge>
+                      {!ok && r.id && canRetry && (
+                        <Button size="sm" variant="outline" className="h-7 text-xs" disabled={retrying} onClick={() => onRetryFailed!([r.id!])}>
+                          <RefreshCw className="h-3 w-3 mr-1" />Retry
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   {r.steps && r.steps.length > 0 && (
