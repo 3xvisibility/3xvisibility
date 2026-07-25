@@ -76,6 +76,33 @@ export function TestPagePreviewDialog({ open, onOpenChange, result }: TestPagePr
           </div>
         )}
 
+        {result.invalidVariables && result.invalidVariables.length > 0 && (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
+              <XCircle className="h-4 w-4" />
+              {result.invalidVariables.length} variable value{result.invalidVariables.length > 1 ? "s" : ""} failed format validation
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              These values were supplied but don't match the expected format for their variable name (CTA URLs must be valid links,
+              emails must be well-formed, etc.). Fix the source data before publishing.
+            </p>
+            <ul className="space-y-1">
+              {result.invalidVariables.map((iv) => (
+                <li key={`${iv.name}-${iv.value}`} className="flex items-start gap-2 text-[11px]">
+                  <XCircle className="h-3 w-3 mt-0.5 shrink-0 text-destructive" />
+                  <span>
+                    <code className="px-1 py-0.5 rounded bg-muted font-mono">{"{"}{iv.name}{"}"}</code>
+                    <span className="mx-1 text-muted-foreground">expects {iv.expected}:</span>
+                    <span className="text-destructive font-medium">{iv.reason}</span>
+                    <span className="ml-1 text-muted-foreground">— got <code className="px-1 rounded bg-muted font-mono">{iv.value.slice(0, 80)}{iv.value.length > 80 ? "…" : ""}</code></span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+
         {result.warnings.length > 0 && (
           <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 space-y-1">
             {result.warnings.map((w, i) => (
