@@ -542,9 +542,10 @@ export function ImportPreviewDialog({
         <div className="flex items-center justify-between gap-2 px-5 py-3 border-t bg-card shrink-0">
           <p className="text-[11px] text-muted-foreground">
             {hasErrors
-              ? "Fix duplicate or invalid variable names before continuing."
+              ? `Fix ${dupeNames.size + invalidNames.size + formatIssues.size} error(s): duplicate names, invalid names, or values that don't match the variable format (e.g. {cta_url}).`
               : "Order here becomes the default order in CSVs and Keyword Groups."}
           </p>
+
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={onCancel}>
               <X className="h-3.5 w-3.5 mr-1.5" /> Discard
