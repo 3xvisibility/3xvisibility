@@ -31,6 +31,9 @@ class XXXV_REST {
 		// /wp/v2/pages endpoint accept it, and the plugin re-prints it live.
 		add_action( 'init', array( $this, 'register_design_meta' ) );
 		add_action( 'wp_footer', array( $this, 'print_template_js' ), PHP_INT_MAX );
+		// Preferred delivery: the SaaS bundles the page CSS/JS into external files
+		// and sends their URLs, which we enqueue as real <link>/<script src> tags.
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_bundled_assets' ) );
 	}
 
 	/**
@@ -40,7 +43,7 @@ class XXXV_REST {
 		$can_edit = function () {
 			return current_user_can( 'edit_posts' );
 		};
-		foreach ( array( '_xxxv_template_css', '_xxxv_template_js' ) as $key ) {
+		foreach ( array( '_xxxv_template_css', '_xxxv_template_js', '_xxxv_template_css_url', '_xxxv_template_js_url' ) as $key ) {
 			register_post_meta(
 				'page',
 				$key,
@@ -53,6 +56,32 @@ class XXXV_REST {
 					'auth_callback'     => $can_edit,
 				)
 			);
+		}
+	}
+
+	/**
+	 * Enqueue the externally bundled template CSS/JS for the current page.
+	 *
+	 * These are real files served from a stable URL, so the published page keeps
+	 * the exact design even though wp_kses_post() removes inline <style>/<script>.
+	 */
+	public function enqueue_bundled_assets() {
+		if ( ! is_singular( 'page' ) ) {
+			return;
+		}
+		$post_id = get_queried_object_id();
+		if ( ! $post_id ) {
+			return;
+		}
+
+		$css_url = get_post_meta( $post_id, '_xxxv_template_css_url', true );
+		if ( is_string( $css_url ) && '' !== trim( $css_url ) && wp_http_validate_url( $css_url ) ) {
+			wp_enqueue_style( 'xxxv-template-' . $post_id, esc_url_raw( $css_url ), array(), null );
+		}
+
+		$js_url = get_post_meta( $post_id, '_xxxv_template_js_url', true );
+		if ( is_string( $js_url ) && '' !== trim( $js_url ) && wp_http_validate_url( $js_url ) ) {
+			wp_enqueue_script( 'xxxv-template-' . $post_id, esc_url_raw( $js_url ), array(), null, true );
 		}
 	}
 
@@ -271,6 +300,7 @@ class XXXV_REST {
 			'compressed_payloads'       => true,
 			'template_library_import'   => true,
 			'html_css_js_meta_delivery' => true,
+			'bundled_asset_urls'        => true,
 		);
 
 		return rest_ensure_response(
