@@ -5,6 +5,7 @@ import { validateMapping, validateResolved } from "../_shared/shopify-mapping-va
 import { buildElementorFromCatalog, extractTemplateCss } from "../_shared/connectors/elementor-catalog.ts";
 import { buildExactElementorData, htmlToElementor, enforceNativeElementorData, enforceBoxedContentWidth, elementorDataHasHtmlWidget, parityStatsFromData, sectionHeatmapFromData } from "../_shared/connectors/elementor-engine.ts";
 import { PgpConnector } from "../_shared/connectors/pgp-connector.ts";
+import { bundleTemplateAssets, isDesignLinkTag } from "../_shared/asset-bundler.ts";
 
 const PUBLISH_FORMATS = ["elementor", "gutenberg", "shopify", "html"] as const;
 type PublishFormat = (typeof PUBLISH_FORMATS)[number];
@@ -1061,7 +1062,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
         };
         try {
           step("Validating page payload", "ok", `${website.type} · ${pubType}`);
-          const cleanedContent = stripHeadTagsForCms(dp.content);
+          const cleanedContent = stripHeadTagsForCms(dp.content, assetBaseFor(dp));
           // Republish of an already-published page → preserve existing on-site design.
           const isRepublish = !!dp.external_id;
           const preserveDesign = isRepublish && !allowOverwriteDesign;
@@ -1480,7 +1481,7 @@ async function handlePublishPages(req: Request): Promise<Response> {
           await runWordPressConnectorPreflight(connector, "3xVisibility WordPress Connector");
           finishRunning("ok");
         }
-        const cleanedContent = stripHeadTagsForCms(page.content);
+        const cleanedContent = stripHeadTagsForCms(page.content, assetBaseFor(page));
         // Republish of an already-published CMS page → preserve existing on-site
         // design. Only metadata (title, slug, SEO meta, canonical) flows through.
         const isRepublish = !!page.external_id;
