@@ -35,6 +35,15 @@ export interface RenderContext {
   locale?: string;
 }
 
+export interface MissingVariable {
+  /** The `{name}` token that could not be resolved to a data source. */
+  name: string;
+  /** Where the problem was detected: template body, SEO patterns, or JSON-LD. */
+  location: "content" | "seo_title" | "seo_description" | "schema";
+  /** True when the variable key exists in the row but is empty/whitespace. */
+  emptyValue: boolean;
+}
+
 export interface RenderResult {
   html: string;
   title: string;
@@ -46,6 +55,8 @@ export interface RenderResult {
   jsonLd: string;
   /** Any per-row warnings/errors */
   warnings: string[];
+  /** Placeholders detected during generation that had no data source. */
+  missingVariables: MissingVariable[];
 }
 
 // ─── Slug normalisation ──────────────────────────────────────────────
