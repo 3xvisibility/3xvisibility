@@ -2778,8 +2778,25 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                             <><Wand2 className="h-3 w-3 mr-1" /> Fill all with AI</>
                           )}
                         </Button>
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <span className="text-[11px] text-muted-foreground">
+                            Your typed / AI-filled values are saved automatically for this template + keyword group.
+                          </span>
+                          {(Object.keys(customVars).length > 0 || Object.keys(rowOverrides).length > 0) && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 text-[11px] shrink-0"
+                              onClick={clearVariableDraft}
+                            >
+                              Clear saved values
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     )}
+
                   </div>
                 );
               })()}
