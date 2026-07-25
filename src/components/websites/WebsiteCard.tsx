@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { EditWebsiteDialog } from "./EditWebsiteDialog";
 import { RetranslateSiteDialog } from "./RetranslateSiteDialog";
 import { WpPluginSettings } from "./WpPluginSettings";
+import { WpPluginStatus } from "./WpPluginStatus";
 
 import { ShopifyProductManager } from "./ShopifyProductManager";
 import { extractEdgeError } from "@/lib/edge-function-error";
@@ -573,29 +574,9 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           </div>
 
           {/* WordPress CSS/JS delivery helper — WP deletes <style>/<link>/<script>
-              from page content (wp_kses_post) unless this plugin is active. */}
-          {site.type === "wordpress" && (
-            <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
-                <div className="space-y-1.5">
-                  <p className="text-xs font-semibold">CSS &amp; JS delivery on WordPress</p>
-                  <p className="text-[11px] leading-relaxed text-muted-foreground">
-                    WordPress removes <code className="text-[10px]">&lt;style&gt;</code>,{" "}
-                    <code className="text-[10px]">&lt;link&gt;</code> and <code className="text-[10px]">&lt;script&gt;</code>{" "}
-                    tags from page content, so a published page keeps its HTML but loses the design.
-                    Install this free 1-file plugin once (Plugins → Add New → Upload Plugin), then
-                    re-publish — the page renders exactly like the preview.
-                  </p>
-                  <Button asChild size="sm" variant="outline" className="h-7 gap-1.5 text-xs">
-                    <a href="/wp-plugin/3xvisibility-html-assets.zip" download>
-                      <Download className="h-3 w-3" /> Download HTML Assets plugin
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+              from page content (wp_kses_post) unless this plugin is active.
+              The status card auto-verifies installation on the live site. */}
+          {site.type === "wordpress" && <WpPluginStatus websiteId={site.id} />}
 
           {site.type === "wordpress" && (
             <WpPluginSettings

@@ -1,6 +1,83 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import { PgpConnector } from "../_shared/connectors/pgp-connector.ts";
+import { decryptCredentials } from "../_shared/crypto.ts";
+
+/**
+ * Probe `/wp-json/xxxv/v1/assets-status` on a connected WordPress site to see
+ * whether the "3xVisibility HTML Assets" companion plugin is installed and
+ * active. Without it WordPress strips <style>/<link>/<script> from published
+ * page content and the design breaks.
+ */
+async function checkHtmlAssetsPlugin(
+  siteUrl: string,
+  creds: Record<string, string>,
+): Promise<Record<string, unknown>> {
+  const base = String(siteUrl || "").replace(/\/+$/, "");
+  const endpoint = `${base}/wp-json/xxxv/v1/assets-status`;
+  const username = creds.username || "";
+  const password = creds.app_password || creds.password || creds.jwt_token || "";
+
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (username && password) {
+    headers.Authorization = `Basic ${btoa(`${username}:${password}`)}`;
+  } else if (creds.jwt_token) {
+    headers.Authorization = `Bearer ${creds.jwt_token}`;
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(endpoint, { headers });
+  } catch (e) {
+    return {
+      installed: false,
+      status: "unreachable",
+      message: `Could not reach ${base}: ${(e as Error).message}`,
+    };
+  }
+
+  const text = await res.text();
+  let payload: Record<string, unknown> | null = null;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    payload = null;
+  }
+
+  if (res.ok && payload && payload.plugin === "3xvisibility-html-assets") {
+    return {
+      installed: true,
+      status: "installed",
+      version: payload.version ?? null,
+      unfiltered_html: payload.unfiltered_html ?? null,
+      settings: payload.settings ?? null,
+      message: `HTML Assets plugin v${payload.version ?? "?"} is active.`,
+    };
+  }
+
+  const code = payload?.code as string | undefined;
+  if (res.status === 404 || code === "rest_no_route" || code === "rest_no_route_found") {
+    return {
+      installed: false,
+      status: "missing",
+      message:
+        "The HTML Assets plugin is not installed or not activated on this site. Published pages will lose their CSS/JS.",
+    };
+  }
+  if (res.status === 401 || res.status === 403) {
+    return {
+      installed: false,
+      status: "unauthorized",
+      message:
+        "WordPress rejected the credentials while checking the plugin. Reconnect the site with a valid Application Password.",
+    };
+  }
+  return {
+    installed: false,
+    status: "unknown",
+    message: `Plugin check returned HTTP ${res.status}. ${text.slice(0, 180)}`,
+  };
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +94,7 @@ function json(body: unknown, status = 200): Response {
 
 type Action =
   | "list"
+  | "assets_status"
   | "assign_menu"
   | "activate_theme"
   | "set_page_template";
@@ -83,6 +161,17 @@ Deno.serve(async (req) => {
 
     if (website.type !== "wordpress") {
       return json({ error: "Site actions are only available for WordPress sites." }, 400);
+    }
+
+    // Plugin presence check works with plain Application Password credentials,
+    // so run it before the companion-plugin connector guard below.
+    if (action === "assets_status") {
+      let creds: Record<string, string> = (website.credentials as Record<string, string>) || {};
+      try {
+        creds = await decryptCredentials(creds);
+      } catch { /* legacy plaintext credentials */ }
+      const result = await checkHtmlAssetsPlugin(website.url as string, creds);
+      return json({ success: true, ...result });
     }
 
     const connector = await createConnector(website as WebsiteRecord);
