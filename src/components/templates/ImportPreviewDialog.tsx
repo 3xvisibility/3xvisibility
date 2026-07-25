@@ -174,6 +174,25 @@ export function ImportPreviewDialog({
     [generalRows],
   );
 
+  /**
+   * Map of variable name → format-issue reason for rows whose sample value
+   * (the extracted `original` text) doesn't match the format expected for
+   * the variable name — e.g. `{cta_url}` mapped onto "Learn more".
+   */
+  const formatIssues = useMemo(() => {
+    const map = new Map<string, { reason: string; expected: string }>();
+    for (const r of rows) {
+      if (r.removed || !r.name) continue;
+      if (!/^[a-z][a-z0-9_]{0,41}$/.test(r.name)) continue;
+      const expected = detectVariableFormat(r.name);
+      if (expected === "text") continue;
+      const issue = validateVariableValue(r.name, r.original || "");
+      if (issue) map.set(r.originalName, { reason: issue.reason, expected });
+    }
+    return map;
+  }, [rows]);
+
+
   const highlightedHtml = useMemo(() => {
     if (!editedContent) return "";
     const cleaned = editedContent
