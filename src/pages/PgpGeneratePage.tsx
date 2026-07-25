@@ -78,6 +78,16 @@ export default function PgpGeneratePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [testPreview, setTestPreview] = useState<string | null>(null);
   const [genProgress, setGenProgress] = useState<{ processed: number; total: number; errors: number } | null>(null);
+  const [genStartedAt, setGenStartedAt] = useState<number | null>(null);
+  const [genStage, setGenStage] = useState<string | null>(null);
+  const [nowTick, setNowTick] = useState(Date.now());
+
+  // 1s ticker while a job is running, so elapsed time / ETA stay live.
+  useEffect(() => {
+    if (!genStartedAt) return;
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [genStartedAt]);
   const [sampleRowIndex, setSampleRowIndex] = useState(0);
   const [showRowLivePreview, setShowRowLivePreview] = useState(true);
 
@@ -1153,6 +1163,8 @@ Return only valid JSON: an object mapping each variable name to a single string 
       return;
     }
     setAiGenerating(true);
+    setGenStartedAt(Date.now());
+    setGenStage("Asking AI for page content…");
     setGenProgress({ processed: 0, total: 0, errors: 0 });
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -1248,6 +1260,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       if (pagesErr) throw pagesErr;
 
       setGenProgress({ processed: pages.length, total: pages.length, errors: 0 });
+      setGenStage("Completed");
+      setGenStartedAt(null);
       toast({ title: t("pgpGenerate.toastAiCompleteTitle"), description: t("pgpGenerate.toastAiCompleteDesc", { count: pages.length }) });
 
       setTimeout(() => navigate(`${basePath}/campaigns/${campaign.id}`), 1500);
@@ -1283,6 +1297,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
 
     setIsGenerating(true);
+    setGenStartedAt(Date.now());
+    setGenStage("Preparing rows…");
     setGenProgress({ processed: 0, total: 0, errors: 0 });
 
     try {
@@ -1307,6 +1323,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       }
 
       setGenProgress({ processed: 0, total: rows.length, errors: 0 });
+      setGenStage("Creating campaign…");
 
       // Build schedule config
       let scheduledAt: string | null = null;
@@ -1361,6 +1378,11 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             .limit(1)
             .maybeSingle();
           if (job) {
+            setGenStage(
+              job.status === "completed" ? "Finishing up…"
+              : job.status === "failed" ? "Job failed"
+              : "Generating & saving pages…",
+            );
             setGenProgress({
               processed: job.processed_rows || 0,
               total: job.total_rows || rows.length,
@@ -1451,6 +1473,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       const finalErrors = finalJob?.error_count || 0;
 
       setGenProgress({ processed: finalSuccess + finalErrors, total: finalJob?.total_rows || rows.length, errors: finalErrors });
+      setGenStage("Completed");
+      setGenStartedAt(null);
       toast({
         title: finalErrors > 0 ? t("pgpGenerate.toastGenWithErrorsTitle") : t("pgpGenerate.toastGenCompleteTitle"),
         description: finalErrors > 0 ? t("pgpGenerate.toastGenWithErrorsDesc", { success: finalSuccess, errors: finalErrors }) : t("pgpGenerate.toastGenCompleteDesc", { success: finalSuccess }),
@@ -2523,6 +2547,30 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   </span>
                 </div>
                 <Progress value={genProgress.total > 0 ? (genProgress.processed / genProgress.total) * 100 : 0} className="h-2" />
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+                    {genStartedAt && <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />}
+                    {genStage || (genProgress.processed >= genProgress.total && genProgress.total > 0 ? "Completed" : "Working…")}
+                  </span>
+                  <span className="tabular-nums">
+                    {(() => {
+                      const pct = genProgress.total > 0 ? Math.round((genProgress.processed / genProgress.total) * 100) : 0;
+                      const fmt = (ms: number) => {
+                        const s = Math.max(0, Math.round(ms / 1000));
+                        const m = Math.floor(s / 60);
+                        return m > 0 ? `${m}m ${s % 60}s` : `${s}s`;
+                      };
+                      if (!genStartedAt) return `${pct}%`;
+                      const elapsed = nowTick - genStartedAt;
+                      if (genProgress.processed > 0 && genProgress.total > 0 && genProgress.processed < genProgress.total) {
+                        const perRow = elapsed / genProgress.processed;
+                        const eta = perRow * (genProgress.total - genProgress.processed);
+                        return `${pct}% · elapsed ${fmt(elapsed)} · ETA ~${fmt(eta)}`;
+                      }
+                      return `${pct}% · elapsed ${fmt(elapsed)} · ETA calculating…`;
+                    })()}
+                  </span>
+                </div>
                 {genProgress.errors > 0 && (
                   <p className="text-xs text-destructive">{t("pgpGenerate.progressErrors", { count: genProgress.errors })}</p>
                 )}
