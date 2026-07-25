@@ -93,6 +93,25 @@ export function extractDesignAssets(html: string): { css: string; js: string } {
 }
 
 
+/**
+ * Read the bundled external asset URLs (data-xxxv-asset <link>/<script src>) out
+ * of the published HTML so they can also travel as post meta. WordPress strips
+ * these tags from REST content via `wp_kses_post()`; the connector plugin
+ * re-enqueues them from meta on the live page.
+ */
+export function extractBundledAssetUrls(html: string): { cssUrl?: string; jsUrl?: string } {
+  if (!html) return {};
+  const css = html.match(/<link\b[^>]*data-xxxv-asset[^>]*>/i)?.[0];
+  const js = html.match(/<script\b[^>]*data-xxxv-asset[^>]*>/i)?.[0];
+  const url = (tag?: string, attr = "href") => {
+    if (!tag) return undefined;
+    const m = tag.match(new RegExp(attr + '\\s*=\\s*("([^"]*)"|\'([^\']*)\')', "i"));
+    const v = m ? (m[2] ?? m[3] ?? "") : "";
+    return v.trim() || undefined;
+  };
+  return { cssUrl: url(css, "href"), jsUrl: url(js, "src") };
+}
+
 
 function sanitizeWordPressContent(content?: string, keepDesign = true): string | undefined {
   if (typeof content !== "string") return content;
@@ -101,7 +120,8 @@ function sanitizeWordPressContent(content?: string, keepDesign = true): string |
   let sanitized = content
     .replace(/<!--[\s\S]*?-->/g, "")
     .replace(/<meta\b[^>]*>/gi, "")
-    .replace(/<link\b[^>]*>/gi, "")
+    // Keep bundled design assets (data-xxxv-asset) — they carry the page CSS.
+    .replace(/<link\b[^>]*>/gi, (tag) => (/data-xxxv-asset/i.test(tag) ? tag : ""))
     // Keep template JS (it drives reveal/animation states); drop only JSON-LD
     // blocks, which the CMS owns.
     .replace(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "");
@@ -516,6 +536,11 @@ export class WordPressConnector implements CmsConnector {
       const design = extractDesignAssets(adapted);
       if (design.css) meta._xxxv_template_css = design.css;
       if (design.js) meta._xxxv_template_js = design.js;
+      // Bundled external asset URLs (preferred): the plugin enqueues real
+      // <link>/<script src> tags so nothing depends on inline markup surviving.
+      const bundled = extractBundledAssetUrls(adapted);
+      if (bundled.cssUrl) meta._xxxv_template_css_url = bundled.cssUrl;
+      if (bundled.jsUrl) meta._xxxv_template_js_url = bundled.jsUrl;
     } else if (!payload.product_data && format === "gutenberg") {
       // Gutenberg path: wrap the asset-imported template HTML in block markup so
       // images render from the WP Media Library and the design matches 1:1.
@@ -626,6 +651,9 @@ export class WordPressConnector implements CmsConnector {
       const design = extractDesignAssets(body.content as string);
       if (design.css) meta._xxxv_template_css = design.css;
       if (design.js) meta._xxxv_template_js = design.js;
+      const bundled = extractBundledAssetUrls(body.content as string);
+      if (bundled.cssUrl) meta._xxxv_template_css_url = bundled.cssUrl;
+      if (bundled.jsUrl) meta._xxxv_template_js_url = bundled.jsUrl;
       // The live page may previously have been built with Elementor. Elementor's
       // frontend renders from `_elementor_data` and ignores `post_content` when
       // `_elementor_edit_mode = builder`. Clear those meta values so the newly
