@@ -1613,6 +1613,16 @@ async function handlePublishPages(req: Request): Promise<Response> {
         );
 
         payload.publish_format = publishFormat;
+        // Real code format: no Elementor/Gutenberg conversion at all — the exact
+        // generated HTML/CSS goes into the page body so design stays 1:1.
+        if (publishFormat === "html") {
+          payload.wordpress_fallback_html = true;
+          payload.elementor_data = undefined;
+          payload.elementor_css = undefined;
+          payload.elementor_mode = undefined;
+          step("Publishing real code (HTML/CSS)", "ok", "Generated HTML + CSS published verbatim — design 1:1 with preview");
+        }
+
 
         // WordPress page publishes: in Elementor format, ALWAYS use the stored
         // Elementor catalog template (editable JSON with new content applied +
