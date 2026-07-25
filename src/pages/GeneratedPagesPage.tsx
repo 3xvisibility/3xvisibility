@@ -1053,9 +1053,29 @@ export default function GeneratedPagesPage() {
       {someSelected && (
         <Card className="border-primary/30 bg-primary/5 shadow-surface">
           <CardContent className="p-3 flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <CheckSquare className="h-4 w-4 text-primary" />
               <span className="text-sm font-semibold">{t("generatedPages.selectedCountShort", { count: selectedIds.size })}</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => {
+                  setPendingPublishIds([...selectedIds]);
+                  setPendingPublishAction("bulk");
+                  setShowFormatDialog(true);
+                }}
+              >
+                Publish format:&nbsp;
+                <span className="font-semibold">
+                  {(rememberedFormat ?? publishFormat) === "html"
+                    ? "Real code"
+                    : (rememberedFormat ?? publishFormat) === "elementor"
+                      ? "Elementor"
+                      : "Shopify"}
+                </span>
+                {rememberedFormat && <span className="ml-1 opacity-60">(applied to all)</span>}
+              </Button>
             </div>
             <div className="flex flex-wrap gap-1.5">
               <Button size="sm" className="h-7 text-xs bg-gradient-primary border-0" disabled={bulkPublishMutation.isPending}
