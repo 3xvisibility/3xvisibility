@@ -47,6 +47,8 @@ export interface ConnectorConfig {
   api_secret?: string;
   access_token?: string;
   shop_domain?: string;
+  /** Force inline CSS/JS fallback during publish (site setting). */
+  inline_assets_fallback?: boolean;
 }
 
 export interface CmsConnector {
