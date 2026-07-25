@@ -407,8 +407,26 @@ export default function PgpGeneratePage() {
     [businessInfo],
   );
 
+  // Variables the user filled manually / via AI in the Review step (global
+  // customVars or any per-row override) also count as satisfied.
+  const manuallyFilledVarNames = useMemo(() => {
+    const set = new Set<string>();
+    for (const [k, v] of Object.entries(customVars)) {
+      if ((v ?? "").trim() !== "") set.add(k.toLowerCase());
+    }
+    for (const row of Object.values(rowOverrides)) {
+      for (const [k, v] of Object.entries(row ?? {})) {
+        if ((v ?? "").trim() !== "") set.add(k.toLowerCase());
+      }
+    }
+    return set;
+  }, [customVars, rowOverrides]);
+
   const missingKeywords = groupKeywords.filter(k =>
-    !k.keyword && !injectedBizVarNames.has(k.name.toLowerCase()) && !isBusinessVariable(k.name),
+    !k.keyword
+    && !injectedBizVarNames.has(k.name.toLowerCase())
+    && !manuallyFilledVarNames.has(k.name.toLowerCase())
+    && !isBusinessVariable(k.name),
   );
 
   // Geo variables must come from the Campaign wizard's Location Database,
@@ -440,6 +458,9 @@ export default function PgpGeneratePage() {
     .filter((gk) => isGeoVariable(gk.name))
     .filter((gk) => {
       if (pickedLocations.length > 0) return false;
+      // Manually filled (or business-info supplied) geo values are valid too.
+      if (manuallyFilledVarNames.has(gk.name.toLowerCase())) return false;
+      if (injectedBizVarNames.has(gk.name.toLowerCase())) return false;
       const terms = gk.keyword?.terms ?? [];
       if (terms.length === 0) return true;
       return terms.every((t) => isPlaceholderGeoValue(t));
@@ -3224,8 +3245,22 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               <Button
                 className="w-full rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
                 size="lg"
-                disabled={!selectedGroup || isGenerating || needsLocations || missingKeywords.length > 0}
-                onClick={handleGenerate}
+                disabled={!selectedGroup || isGenerating}
+                onClick={() => {
+                  // Never hard-block the click: warn about gaps but let the user proceed.
+                  if (needsLocations) {
+                    toast({
+                      title: "Location values missing",
+                      description: `No location data for: ${unfilledGeoVars.slice(0, 5).join(", ")}. Pages will generate without them.`,
+                    });
+                  } else if (missingKeywords.length > 0) {
+                    toast({
+                      title: `${missingKeywords.length} variable(s) still empty`,
+                      description: missingKeywords.slice(0, 5).map((k) => `{${k.name}}`).join(", "),
+                    });
+                  }
+                  handleGenerate();
+                }}
               >
 
                 {isGenerating ? (
