@@ -60,7 +60,7 @@ function extractCss(html: string): string {
  */
 function extractBundledAssetTags(html: string): string[] {
   return html.match(
-    /<link\b[^>]*data-xxxv-asset[^>]*>|<script\b[^>]*data-xxxv-asset[^>]*>[\s\S]*?<\/script>/gi,
+    /<link\b[^>]*data-xxxv-asset[^>]*>|<script\b[^>]*data-xxxv-asset[^>]*>[\s\S]*?<\/script>|<style\b[^>]*data-xxxv-asset[^>]*>[\s\S]*?<\/style>/gi,
   ) || [];
 }
 
@@ -68,6 +68,7 @@ function extractBundledAssetTags(html: string): string[] {
 function stripNonBody(html: string): string {
   return html
     .replace(/<link\b[^>]*data-xxxv-asset[^>]*>/gi, "")
+    .replace(/<style\b[^>]*data-xxxv-asset[^>]*>[\s\S]*?<\/style>/gi, "")
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/<\/?(html|head|body)\b[^>]*>/gi, "")
@@ -181,7 +182,7 @@ export function buildShopifySectionKit(
   };
 
   const sectionLiquid = [
-    assetTags.filter((t) => /^<link/i.test(t)).join("\n"),
+    assetTags.filter((t) => /^<(link|style)/i.test(t)).join("\n"),
     `<div class="lov-kit-wrapper" id="shopify-section-{{ section.id }}">`,
     body,
     `</div>`,
