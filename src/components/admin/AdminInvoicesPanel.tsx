@@ -34,9 +34,13 @@ import {
 import { toast } from "sonner";
 import {
   downloadInvoicePdf,
+  downloadInvoicesZip,
+  downloadMergedInvoicePdf,
   formatInvoiceMoney,
   type InvoiceRecord,
 } from "@/lib/invoice-pdf";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FileArchive, FilePlus2 } from "lucide-react";
 import { InvoiceDetailsDialog } from "./InvoiceDetailsDialog";
 
 const statusTone = (status: string) => {
