@@ -65,12 +65,21 @@ Deno.serve(async (req) => {
     const loadState = async () => {
       const { data: settings } = await sb
         .from("system_settings")
-        .select("ai_provider")
+        .select("ai_provider, ai_provider_design, ai_provider_content")
         .eq("id", "global")
         .maybeSingle();
       const { data: rows } = await sb.from("ai_provider_keys").select("*");
       const byProvider = new Map((rows || []).map((r: any) => [r.provider, r]));
       const active = (settings?.ai_provider || "lovable").toLowerCase();
+      const norm = (v: any) => {
+        const s = String(v || "").toLowerCase().trim();
+        return PROVIDERS[s] ? s : null;
+      };
+      const routing = {
+        design: norm((settings as any)?.ai_provider_design) || active,
+        content: norm((settings as any)?.ai_provider_content) || active,
+        split_enabled: !!(norm((settings as any)?.ai_provider_design) || norm((settings as any)?.ai_provider_content)),
+      };
 
       const providers = Object.entries(PROVIDERS).map(([id, info]) => {
         const row: any = byProvider.get(id);
@@ -90,10 +99,11 @@ Deno.serve(async (req) => {
         };
       });
 
-      return { active_provider: active, providers };
+      return { active_provider: active, routing, providers };
     };
 
     if (req.method === "GET") return json(await loadState());
+
 
     if (req.method === "POST") {
       const body = await req.json().catch(() => ({}));
