@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CheckCircle2, ExternalLink, KeyRound, Sparkles, Trash2 } from "lucide-react";
+import { CheckCircle2, ExternalLink, FileText, KeyRound, Palette, Sparkles, Split, Trash2 } from "lucide-react";
 
 interface ProviderRow {
   id: string;
