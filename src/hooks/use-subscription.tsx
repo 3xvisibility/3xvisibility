@@ -163,7 +163,7 @@ export function useSubscription(): SubscriptionData {
       // the three independent reads don't run as a serial waterfall.
       const subQuery = supabase
         .from("subscriptions")
-        .select("plan, pages_used, pages_limit, ai_generations_used, ai_generations_limit, current_period_end")
+        .select("plan, pages_used, pages_limit, ai_generations_used, ai_generations_limit, current_period_end, status, trial_end, cancel_at_period_end")
         .eq("user_id", user.id);
       if (wsId) subQuery.eq("workspace_id", wsId);
 
