@@ -38,6 +38,7 @@ import { PaymentMethods } from "@/components/billing/PaymentMethods";
 import { MyInvoicesCard } from "@/components/billing/MyInvoicesCard";
 import { TrialStatusWidget } from "@/components/billing/TrialStatusWidget";
 import { DowngradePlanDialog } from "@/components/billing/DowngradePlanDialog";
+import { CheckoutConfirmDialog } from "@/components/billing/CheckoutConfirmDialog";
 
 
 import { logAudit } from "@/lib/audit";
@@ -147,8 +148,9 @@ function getFeatureList(name: PlanName, t: (key: string, vars?: Record<string, s
 }
 
 export default function BillingPage() {
-  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, resetDate, isLoading: subLoading } = useSubscription();
+  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, resetDate, status: subStatus, isTrialing, isLoading: subLoading } = useSubscription();
   const [downgradeTarget, setDowngradeTarget] = useState<PlanName | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<PlanName | null>(null);
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -278,7 +280,7 @@ export default function BillingPage() {
       setDowngradeTarget(name);
       return;
     }
-    handleCheckout(name);
+    setConfirmTarget(name);
   };
 
   const refreshSubscription = async () => {
@@ -601,6 +603,27 @@ export default function BillingPage() {
           targetPlan={downgradeTarget}
           periodEnd={resetDate}
           onDowngraded={refreshSubscription}
+        />
+      )}
+
+      {confirmTarget && (
+        <CheckoutConfirmDialog
+          open={!!confirmTarget}
+          onOpenChange={(o) => !o && setConfirmTarget(null)}
+          currentPlan={activePlan}
+          targetPlan={confirmTarget}
+          monthlyPrice={(() => {
+            const base = planConfigs.find((p) => p.name === confirmTarget)?.monthlyPrice ?? 0;
+            return isYearly ? Math.round(base * (1 - YEARLY_DISCOUNT)) : base;
+          })()}
+          isYearly={isYearly}
+          trialEligible={activePlan === "free" && subStatus !== "canceled" && !isTrialing}
+          loading={loadingPlan === confirmTarget}
+          onConfirm={async () => {
+            const target = confirmTarget;
+            await handleCheckout(target);
+            setConfirmTarget(null);
+          }}
         />
       )}
     </div>
