@@ -645,6 +645,7 @@ Generate the ${pageName || "landing"} page JSON now.`;
   const result = await aiGenerate({
     authToken,
     promptType: "full_page",
+    taskCategory: "design",
     model: "google/gemini-2.5-flash",
     messages: [
       { role: "system", content: system },
