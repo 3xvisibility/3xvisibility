@@ -74,6 +74,7 @@ export function ImportPreviewDialog({
   pageTitle,
   fullContent,
   variables,
+  sourceUrl,
 }: ImportPreviewDialogProps) {
   const [rows, setRows] = useState<EditableVar[]>([]);
 
