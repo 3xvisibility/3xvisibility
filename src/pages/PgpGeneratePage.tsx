@@ -1415,9 +1415,12 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       if (genErr) {
         // Long generations can outlive the HTTP request (gateway timeout /
         // dropped connection → "Failed to send a request to the Edge Function").
-        // The job keeps running server-side, so keep polling instead of failing.
+        // The same is true when the serverless worker is recycled mid-run and
+        // the gateway answers with a non-2xx status: the job row still exists
+        // and the remaining rows can be resumed. So treat both as recoverable
+        // and keep following the job instead of failing the whole run.
         const msg = String((genErr as any)?.message || "");
-        const isTransport = /failed to send a request|failed to fetch|network|aborted|timeout|timed out|load failed/i.test(msg);
+        const isTransport = /failed to send a request|failed to fetch|network|aborted|timeout|timed out|load failed|non-2xx|worker|boot|shutdown|502|503|504|546/i.test(msg);
         if (!isTransport) {
           clearInterval(pollInterval);
           throw genErr;
@@ -1425,8 +1428,15 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
         toast({
           title: "Still generating…",
-          description: "The request timed out but generation is continuing in the background.",
+          description: "The connection dropped but generation continues in the background.",
         });
+
+        // Ask the server to pick up where it left off (idempotent — it skips
+        // rows that already produced a page).
+        supabase.functions
+          .invoke("generate-pages", { body: { campaign_id: campaign.id, action: "resume" } })
+          .catch(() => {});
+
 
         // Wait for the job to reach a terminal state (max ~15 min).
         const deadline = Date.now() + 15 * 60 * 1000;
