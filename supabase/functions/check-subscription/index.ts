@@ -138,22 +138,32 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found customer", { customerId });
 
+    // Fetch ALL subscriptions (not just "active") so trialing / past_due
+    // customers keep their paid entitlement instead of being reset to free.
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
-      status: "active",
-      limit: 1,
+      status: "all",
+      limit: 10,
     });
 
-    const hasActiveSub = subscriptions.data.length > 0;
+    const ENTITLED = ["active", "trialing", "past_due"];
+    const entitledSub =
+      subscriptions.data.find((s) => ENTITLED.includes(s.status)) ?? null;
+
+    const hasActiveSub = Boolean(entitledSub);
     let productId: string | null = null;
     let priceId: string | null = null;
     let subscriptionEnd: string | null = null;
     let planName = "free";
     let billingCycle = "monthly";
+    let subStatus: string = entitledSub?.status ?? "canceled";
+    let trialEnd: string | null = null;
+    let cancelAtPeriodEnd = false;
+    let subscriptionId: string | null = null;
 
-    if (hasActiveSub) {
-      const sub = subscriptions.data[0];
-      const rawPeriodEnd = sub.current_period_end;
+    if (entitledSub) {
+      const sub = entitledSub;
+      const rawPeriodEnd = (sub as any).current_period_end;
       logStep("Raw period end value", { rawPeriodEnd, type: typeof rawPeriodEnd });
 
       try {
@@ -167,12 +177,17 @@ serve(async (req) => {
         logStep("Failed to parse period end", { error: e instanceof Error ? e.message : String(e) });
       }
 
+      const rawTrialEnd = Number((sub as any).trial_end ?? 0);
+      if (rawTrialEnd > 0) trialEnd = new Date(rawTrialEnd * 1000).toISOString();
+      cancelAtPeriodEnd = Boolean(sub.cancel_at_period_end);
+      subscriptionId = sub.id;
+
       productId = String(sub.items.data[0]?.price?.product ?? "");
       priceId = sub.items.data[0]?.price?.id ?? null;
       planName = PRODUCT_TO_PLAN[productId] || "free";
       const interval = sub.items.data[0]?.price?.recurring?.interval ?? "month";
       billingCycle = interval === "year" ? "yearly" : "monthly";
-      logStep("Active subscription", { productId, priceId, subscriptionEnd, planName, billingCycle });
+      logStep("Entitled subscription", { productId, priceId, subscriptionEnd, planName, billingCycle, status: subStatus, trialEnd });
     }
 
     // Sync to database
@@ -184,8 +199,10 @@ serve(async (req) => {
       customerId,
       subscriptionEnd,
       subscriptionEnd ? new Date(new Date(subscriptionEnd).getTime() - 30 * 24 * 60 * 60 * 1000).toISOString() : null,
-      billingCycle
+      billingCycle,
+      { status: subStatus, trialEnd, cancelAtPeriodEnd, priceId, subscriptionId }
     );
+
 
     // Affiliate commission is granted ONLY for active yearly subscriptions (5% of the yearly price).
     if (hasActiveSub && billingCycle === "yearly" && planName !== "free") {
@@ -203,7 +220,12 @@ serve(async (req) => {
       subscription_end: subscriptionEnd,
       plan: planName,
       billing_cycle: billingCycle,
+      status: subStatus,
+      trialing: subStatus === "trialing",
+      trial_end: trialEnd,
+      cancel_at_period_end: cancelAtPeriodEnd,
     }), {
+
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
@@ -236,6 +258,14 @@ serve(async (req) => {
   }
 });
 
+interface SubExtras {
+  status?: string;
+  trialEnd?: string | null;
+  cancelAtPeriodEnd?: boolean;
+  priceId?: string | null;
+  subscriptionId?: string | null;
+}
+
 async function upsertSubscription(
   supabase: any,
   userId: string,
@@ -245,12 +275,27 @@ async function upsertSubscription(
   periodEnd: string | null,
   periodStart: string | null,
   billingCycle: string = "monthly",
+  extras: SubExtras = {},
 ) {
   const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
 
   // Keep ai_credits (the source of truth the UI reads from) in sync with the plan.
   await syncAiCredits(supabase, userId, limits.ai_generations_limit);
 
+  const base: any = {
+    plan,
+    pages_limit: limits.pages_limit,
+    ai_generations_limit: limits.ai_generations_limit,
+    stripe_customer_id: stripeCustomerId,
+    current_period_end: periodEnd,
+    current_period_start: periodStart,
+    billing_cycle: billingCycle,
+    status: extras.status ?? (plan === "free" ? "canceled" : "active"),
+    trial_end: extras.trialEnd ?? null,
+    cancel_at_period_end: Boolean(extras.cancelAtPeriodEnd),
+  };
+  if (extras.priceId !== undefined) base.stripe_price_id = extras.priceId;
+  if (extras.subscriptionId !== undefined) base.stripe_subscription_id = extras.subscriptionId;
 
   // First try to find by user_id alone (trigger may have created without workspace_id)
   const { data: existing } = await supabase
@@ -260,17 +305,7 @@ async function upsertSubscription(
     .maybeSingle();
 
   if (existing) {
-    // Update plan, limits, and set workspace_id if missing
-    const updateData: any = {
-      plan,
-      pages_limit: limits.pages_limit,
-      ai_generations_limit: limits.ai_generations_limit,
-      stripe_customer_id: stripeCustomerId,
-      current_period_end: periodEnd,
-      current_period_start: periodStart,
-      billing_cycle: billingCycle,
-      updated_at: new Date().toISOString(),
-    };
+    const updateData: any = { ...base, updated_at: new Date().toISOString() };
     // Backfill workspace_id if it was missing
     if (!existing.workspace_id && workspaceId) {
       updateData.workspace_id = workspaceId;
@@ -280,25 +315,16 @@ async function upsertSubscription(
       .update(updateData)
       .eq("id", existing.id);
     if (error) logStep("Failed to update subscription", { error: error.message });
-    else logStep("Updated subscription row", { id: existing.id, plan });
+    else logStep("Updated subscription row", { id: existing.id, plan, status: base.status });
   } else {
-    // Insert new subscription row
-    const insertData: any = {
-      user_id: userId,
-      plan,
-      pages_limit: limits.pages_limit,
-      ai_generations_limit: limits.ai_generations_limit,
-      stripe_customer_id: stripeCustomerId,
-      current_period_end: periodEnd,
-      current_period_start: periodStart,
-      billing_cycle: billingCycle,
-    };
+    const insertData: any = { user_id: userId, ...base };
     if (workspaceId) insertData.workspace_id = workspaceId;
     const { error } = await supabase.from("subscriptions").insert(insertData);
     if (error) logStep("Failed to insert subscription", { error: error.message });
-    else logStep("Inserted new subscription row", { plan });
+    else logStep("Inserted new subscription row", { plan, status: base.status });
   }
 }
+
 
 // Sync the ai_credits table (the UI's source of truth for AI limits) to the
 // allowance for the user's current plan. Preserves already-used credits so an

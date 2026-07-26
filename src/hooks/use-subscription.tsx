@@ -26,7 +26,18 @@ export interface SubscriptionData {
   sitesRemaining: number;
   /** ISO date string for the next usage reset / billing period end. */
   resetDate: string | null;
+  /** Raw Stripe subscription status (active, trialing, past_due, canceled…). */
+  status: string;
+  /** True while the subscription is inside its free-trial window. */
+  isTrialing: boolean;
+  /** ISO date the trial ends, when trialing. */
+  trialEnd: string | null;
+  /** Days left in the trial (0 when not trialing). */
+  trialDaysLeft: number;
+  /** True when the subscription will not renew at period end. */
+  cancelAtPeriodEnd: boolean;
 }
+
 
 // ── Shared singletons across ALL useSubscription instances ────────────────
 // The hook is mounted by ~19 components, often several on the same page. If
@@ -152,7 +163,7 @@ export function useSubscription(): SubscriptionData {
       // the three independent reads don't run as a serial waterfall.
       const subQuery = supabase
         .from("subscriptions")
-        .select("plan, pages_used, pages_limit, ai_generations_used, ai_generations_limit, current_period_end")
+        .select("plan, pages_used, pages_limit, ai_generations_used, ai_generations_limit, current_period_end, status, trial_end, cancel_at_period_end")
         .eq("user_id", user.id);
       if (wsId) subQuery.eq("workspace_id", wsId);
 
@@ -219,6 +230,17 @@ export function useSubscription(): SubscriptionData {
   const resetDate =
     (data?.current_period_end as string | undefined) ??
     new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString();
+
+  // Trial / lifecycle state synced from Stripe by the webhook + check-subscription.
+  const status = (data?.status as string | undefined) ?? "active";
+  const trialEnd = (data?.trial_end as string | undefined) ?? null;
+  const isTrialing =
+    status === "trialing" && !!trialEnd && new Date(trialEnd).getTime() > Date.now();
+  const trialDaysLeft = isTrialing
+    ? Math.max(0, Math.ceil((new Date(trialEnd!).getTime() - Date.now()) / 86_400_000))
+    : 0;
+  const cancelAtPeriodEnd = Boolean(data?.cancel_at_period_end);
+
 
   // Publish a snapshot so non-React code (e.g. handleApiError) can show page counts
   useEffect(() => {
@@ -305,5 +327,11 @@ export function useSubscription(): SubscriptionData {
     aiRemaining: Math.max(0, aiLimit - aiUsed),
     sitesRemaining: sitesLimit === -1 ? Infinity : Math.max(0, sitesLimit - sitesConnected),
     resetDate,
+    status,
+    isTrialing,
+    trialEnd,
+    trialDaysLeft,
+    cancelAtPeriodEnd,
+
   };
 }

@@ -2642,6 +2642,7 @@ export type Database = {
           ai_generations_limit: number
           ai_generations_used: number
           billing_cycle: string
+          cancel_at_period_end: boolean
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
@@ -2649,8 +2650,11 @@ export type Database = {
           pages_limit: number
           pages_used: number
           plan: string
+          status: string
           stripe_customer_id: string | null
+          stripe_price_id: string | null
           stripe_subscription_id: string | null
+          trial_end: string | null
           updated_at: string
           user_id: string
           workspace_id: string | null
@@ -2659,6 +2663,7 @@ export type Database = {
           ai_generations_limit?: number
           ai_generations_used?: number
           billing_cycle?: string
+          cancel_at_period_end?: boolean
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -2666,8 +2671,11 @@ export type Database = {
           pages_limit?: number
           pages_used?: number
           plan?: string
+          status?: string
           stripe_customer_id?: string | null
+          stripe_price_id?: string | null
           stripe_subscription_id?: string | null
+          trial_end?: string | null
           updated_at?: string
           user_id: string
           workspace_id?: string | null
@@ -2676,6 +2684,7 @@ export type Database = {
           ai_generations_limit?: number
           ai_generations_used?: number
           billing_cycle?: string
+          cancel_at_period_end?: boolean
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -2683,8 +2692,11 @@ export type Database = {
           pages_limit?: number
           pages_used?: number
           plan?: string
+          status?: string
           stripe_customer_id?: string | null
+          stripe_price_id?: string | null
           stripe_subscription_id?: string | null
+          trial_end?: string | null
           updated_at?: string
           user_id?: string
           workspace_id?: string | null
