@@ -156,6 +156,45 @@ export function AdminInvoicesPanel() {
     toast.success(`Exported ${filtered.length} invoices`);
   };
 
+  const chosen = filtered.filter((i) => checked.has(i.id));
+  const bulkTargets = chosen.length > 0 ? chosen : filtered;
+  const allVisibleChecked = filtered.length > 0 && filtered.every((i) => checked.has(i.id));
+
+  const toggleAll = (value: boolean) => {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      filtered.forEach((i) => (value ? next.add(i.id) : next.delete(i.id)));
+      return next;
+    });
+  };
+
+  const toggleOne = (id: string, value: boolean) => {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (value) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const runBulk = async (mode: "zip" | "merged") => {
+    if (bulkTargets.length === 0) return;
+    setBulkBusy(true);
+    try {
+      if (mode === "zip") await downloadInvoicesZip(bulkTargets);
+      else downloadMergedInvoicePdf(bulkTargets);
+      toast.success(
+        `${bulkTargets.length} invoice${bulkTargets.length > 1 ? "s" : ""} downloaded`,
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Bulk download failed");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 gap-3">
