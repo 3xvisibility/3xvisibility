@@ -104,21 +104,6 @@ Deno.serve(async (req) => {
       .single();
     if (updErr) return json({ error: updErr.message }, 500);
 
-    // ---- audit trail ----
-    await service.from("audit_logs").insert({
-      user_id: user.id,
-      action: "invoice.manual_status_change",
-      resource_type: "invoice",
-      resource_id: invoiceId,
-      metadata: {
-        invoice_number: invoice.invoice_number,
-        previous_status: invoice.status,
-        new_status: status,
-        amount_refunded: amountRefunded,
-        reason,
-      },
-    }).catch?.(() => {});
-
     // ---- notify the customer (same channels as the Stripe-driven flow) ----
     if (notify) {
       const label = STATUS_LABEL[status] ?? status;
