@@ -24,6 +24,7 @@ import {
   Crown,
   Loader2,
   ExternalLink,
+  Gift,
 } from "lucide-react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
@@ -432,6 +433,11 @@ export default function BillingPage() {
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">{t("billing.pagesCountMonth", { count: features.pagesLimit.toLocaleString() })}</p>
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-success/10 border border-success/20 px-2.5 py-1 text-[11px] font-semibold text-success">
+                  <Gift className="h-3 w-3" />
+                  1 month free trial — first subscription only
+                </div>
+
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
                 <Separator />
