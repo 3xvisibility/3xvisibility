@@ -36,6 +36,8 @@ import { CheckoutSuccessOverlay } from "@/components/billing/CheckoutSuccessOver
 import { CheckoutCanceledOverlay } from "@/components/billing/CheckoutCanceledOverlay";
 import { PaymentMethods } from "@/components/billing/PaymentMethods";
 import { MyInvoicesCard } from "@/components/billing/MyInvoicesCard";
+import { TrialStatusWidget } from "@/components/billing/TrialStatusWidget";
+
 import { logAudit } from "@/lib/audit";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
