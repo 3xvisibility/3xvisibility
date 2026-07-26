@@ -402,7 +402,7 @@ export function MarketplaceCatalogPanel() {
         open={addOpen}
         onOpenChange={(o) => {
           setAddOpen(o);
-          if (!o) setStep("edit");
+          if (!o) { setStep("edit"); setEditingId(null); }
         }}
       >
         <DialogContent className="max-w-4xl">
