@@ -327,5 +327,11 @@ export function useSubscription(): SubscriptionData {
     aiRemaining: Math.max(0, aiLimit - aiUsed),
     sitesRemaining: sitesLimit === -1 ? Infinity : Math.max(0, sitesLimit - sitesConnected),
     resetDate,
+    status,
+    isTrialing,
+    trialEnd,
+    trialDaysLeft,
+    cancelAtPeriodEnd,
+
   };
 }
