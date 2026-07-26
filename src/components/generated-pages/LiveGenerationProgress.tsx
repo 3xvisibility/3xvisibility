@@ -3,6 +3,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Loader2, Activity, CheckCircle2, AlertCircle, Pause, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { wsChannel } from "@/lib/realtime-scope";
@@ -27,6 +37,13 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
   const { toast } = useToast();
   const [tick, setTick] = useState(0);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [confirmJob, setConfirmJob] = useState<{
+    id: string;
+    campaign_id: string | null;
+    name: string;
+    done: number;
+    total: number;
+  } | null>(null);
 
   const cancelMutation = useMutation({
     mutationFn: async (job: { id: string; campaign_id: string | null }) => {
@@ -147,7 +164,7 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
                       variant="ghost"
                       className="h-6 px-2 text-[11px] gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
                       disabled={cancellingId === job.id}
-                      onClick={() => cancelMutation.mutate({ id: job.id, campaign_id: job.campaign_id })}
+                      onClick={() => setConfirmJob({ id: job.id, campaign_id: job.campaign_id, name: job.campaigns?.name || "Campaign", done, total })}
                     >
                       <XCircle className="h-3 w-3" />
                       {cancellingId === job.id ? "Cancelling…" : "Cancel"}
@@ -164,6 +181,33 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
             );
           })}
         </div>
+
+        <AlertDialog open={!!confirmJob} onOpenChange={(open) => !open && setConfirmJob(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Stop this generation job?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {confirmJob
+                  ? `"${confirmJob.name}" has generated ${confirmJob.done} of ${confirmJob.total} pages. Cancelling stops the job and returns the campaign to draft. Already generated pages are kept, and you can restart generation later.`
+                  : ""}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep generating</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  if (confirmJob) {
+                    cancelMutation.mutate({ id: confirmJob.id, campaign_id: confirmJob.campaign_id });
+                  }
+                  setConfirmJob(null);
+                }}
+              >
+                Yes, cancel job
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
