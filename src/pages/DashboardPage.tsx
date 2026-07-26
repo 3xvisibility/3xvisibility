@@ -47,6 +47,8 @@ import { PendingInvitationsBanner } from "@/components/workspace/PendingInvitati
 import { useLanguage } from "@/i18n/LanguageContext";
 import { AiCreditsWidget } from "@/components/dashboard/AiCreditsWidget";
 import { PagesUsageWidget } from "@/components/dashboard/PagesUsageWidget";
+import { TrialStatusWidget } from "@/components/billing/TrialStatusWidget";
+
 
 
 
