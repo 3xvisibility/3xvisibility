@@ -18,13 +18,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Trash2, Pencil, Sparkles, Loader2, FolderOpen, ArrowRight, KeyRound, RefreshCw } from "lucide-react";
 import { autoExtractTemplateVariables } from "@/lib/template-variable-extractor";
-import { GEO_VAR_NAMES } from "@/lib/campaign-row-merge";
+import { GEO_VAR_NAMES, BUSINESS_VAR_NAMES } from "@/lib/campaign-row-merge";
 
-const BUSINESS_VAR_NAMES = new Set([
-  "company_name", "company", "brand_name", "brand",
-  "phone", "phone_number", "email", "address", "website", "url",
-  "owner", "author",
-]);
+const BUSINESS_VARS = new Set<string>(BUSINESS_VAR_NAMES as readonly string[]);
 
 const LANGUAGES = [
   { code: "en", label: "English" },
