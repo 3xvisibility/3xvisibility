@@ -27,6 +27,13 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
   const { toast } = useToast();
   const [tick, setTick] = useState(0);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [confirmJob, setConfirmJob] = useState<{
+    id: string;
+    campaign_id: string | null;
+    name: string;
+    done: number;
+    total: number;
+  } | null>(null);
 
   const cancelMutation = useMutation({
     mutationFn: async (job: { id: string; campaign_id: string | null }) => {
