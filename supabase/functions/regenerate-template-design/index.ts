@@ -72,6 +72,7 @@ Generate the <style> block now.`;
     ],
     authToken,
     promptType: "template_scan",
+    taskCategory: "design",
   });
 
   if (!result.success) {

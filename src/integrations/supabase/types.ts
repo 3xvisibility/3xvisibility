@@ -2726,6 +2726,8 @@ export type Database = {
       system_settings: {
         Row: {
           ai_provider: string
+          ai_provider_content: string | null
+          ai_provider_design: string | null
           feature_flags: Json
           id: string
           maintenance_message: string | null
@@ -2735,6 +2737,8 @@ export type Database = {
         }
         Insert: {
           ai_provider?: string
+          ai_provider_content?: string | null
+          ai_provider_design?: string | null
           feature_flags?: Json
           id?: string
           maintenance_message?: string | null
@@ -2744,6 +2748,8 @@ export type Database = {
         }
         Update: {
           ai_provider?: string
+          ai_provider_content?: string | null
+          ai_provider_design?: string | null
           feature_flags?: Json
           id?: string
           maintenance_message?: string | null

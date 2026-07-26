@@ -108,6 +108,7 @@ ${source}`;
         ],
         authToken: req.headers.get("Authorization")?.replace(/^Bearer\s+/i, ""),
         promptType: "rewrite",
+        taskCategory: "design",
         // Credits were already gated/deducted above via deductCreditsForRequest.
         // Without this, aiGenerate would deduct a SECOND time and low-credit users
         // would fail the second deduction → 500 → generic "non-2xx" error toast.
