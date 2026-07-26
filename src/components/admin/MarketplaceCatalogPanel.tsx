@@ -271,15 +271,27 @@ export function MarketplaceCatalogPanel() {
         </TabsContent>
       </Tabs>
 
-      {/* Add dialog */}
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-2xl">
+      {/* Add dialog — step 1: details, step 2: render preview */}
+      <Dialog
+        open={addOpen}
+        onOpenChange={(o) => {
+          setAddOpen(o);
+          if (!o) setStep("edit");
+        }}
+      >
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Add marketplace template</DialogTitle>
+            <DialogTitle>
+              {step === "edit" ? "Add marketplace template" : `Preview — ${form.name || "Untitled"}`}
+            </DialogTitle>
             <DialogDescription>
-              Paste the full HTML (with inline CSS/JS). Variables like {"{{city}}"} are detected automatically.
+              {step === "edit"
+                ? <>Paste the full HTML (with inline CSS/JS). Variables like {"{{city}}"} are detected automatically.</>
+                : "This is exactly how the template renders. Go back to edit, or save it to the Marketplace."}
             </DialogDescription>
           </DialogHeader>
+
+          {step === "edit" ? (
           <div className="space-y-3">
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -329,6 +341,15 @@ export function MarketplaceCatalogPanel() {
               </p>
             </div>
           </div>
+          ) : (
+            <TemplatePreview
+              html={form.html}
+              device={previewDevice}
+              onDeviceChange={setPreviewDevice}
+              variables={extractVariables(form.html)}
+            />
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
             <Button
