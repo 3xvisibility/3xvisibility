@@ -142,6 +142,16 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
                     <span className="tabular-nums text-muted-foreground">
                       {done}/{total} • {pct}%
                     </span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-[11px] gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      disabled={cancellingId === job.id}
+                      onClick={() => cancelMutation.mutate({ id: job.id, campaign_id: job.campaign_id })}
+                    >
+                      <XCircle className="h-3 w-3" />
+                      {cancellingId === job.id ? "Cancelling…" : "Cancel"}
+                    </Button>
                   </div>
                 </div>
                 <Progress value={pct} className="h-1.5" />
