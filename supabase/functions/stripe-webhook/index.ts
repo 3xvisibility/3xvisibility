@@ -362,18 +362,136 @@ serve(async (req) => {
       }
 
       // ---- refunds keep the invoice in sync ----
-      case "charge.refunded": {
-        const charge = event.data.object as Stripe.Charge;
+      case "charge.refunded":
+      case "charge.refund.updated":
+      case "refund.created":
+      case "refund.updated": {
+        let chargeId: string | null = null;
+        let paymentIntentId: string | null = null;
+        let amountRefunded: number | null = null;
+        let chargeAmount: number | null = null;
+
+        if (event.type === "charge.refunded") {
+          const charge = event.data.object as Stripe.Charge;
+          chargeId = charge.id;
+          paymentIntentId =
+            typeof charge.payment_intent === "string" ? charge.payment_intent : null;
+          amountRefunded = charge.amount_refunded;
+          chargeAmount = charge.amount;
+        } else {
+          const refund = event.data.object as Stripe.Refund;
+          chargeId = typeof refund.charge === "string" ? refund.charge : refund.charge?.id ?? null;
+          paymentIntentId =
+            typeof refund.payment_intent === "string" ? refund.payment_intent : null;
+          // Re-read the charge so the totals stay authoritative.
+          if (chargeId) {
+            try {
+              const charge = await stripe.charges.retrieve(chargeId);
+              amountRefunded = charge.amount_refunded;
+              chargeAmount = charge.amount;
+            } catch (err) {
+              log("charge_lookup_error", {
+                chargeId,
+                error: err instanceof Error ? err.message : String(err),
+              });
+            }
+          }
+        }
+
+        const target = await findInvoice({ chargeId, paymentIntentId });
+        if (!target) {
+          log("invoice_not_found_for_refund", { chargeId, paymentIntentId });
+          break;
+        }
+
+        const refundedTotal = amountRefunded ?? target.amount_refunded ?? 0;
+        const total = chargeAmount ?? target.amount_total ?? 0;
+        const fullyRefunded = total > 0 && refundedTotal >= total;
+
         await supabase
           .from("invoices")
           .update({
-            amount_refunded: charge.amount_refunded,
-            status: charge.amount_refunded >= charge.amount ? "refunded" : "partially_refunded",
+            amount_refunded: refundedTotal,
+            status:
+              refundedTotal <= 0
+                ? target.status
+                : fullyRefunded
+                  ? "refunded"
+                  : "partially_refunded",
+            refunded_at: refundedTotal > 0 ? new Date().toISOString() : null,
           })
-          .eq("stripe_charge_id", charge.id);
-        log("invoice_refund_synced", { charge: charge.id });
+          .eq("id", target.id);
+
+        log("invoice_refund_synced", {
+          invoice: target.invoice_number,
+          refunded: refundedTotal,
+          fullyRefunded,
+        });
         break;
       }
+
+      // ---- chargebacks / disputes void the invoice ----
+      case "charge.dispute.created":
+      case "charge.dispute.updated":
+      case "charge.dispute.funds_withdrawn":
+      case "charge.dispute.funds_reinstated":
+      case "charge.dispute.closed": {
+        const dispute = event.data.object as Stripe.Dispute;
+        const chargeId =
+          typeof dispute.charge === "string" ? dispute.charge : dispute.charge?.id ?? null;
+        const paymentIntentId =
+          typeof dispute.payment_intent === "string" ? dispute.payment_intent : null;
+
+        const target = await findInvoice({ chargeId, paymentIntentId });
+        if (!target) {
+          log("invoice_not_found_for_dispute", { chargeId, paymentIntentId });
+          break;
+        }
+
+        // Dispute won -> the payment stands; lost/closed against us -> voided.
+        const won = dispute.status === "won";
+        const lost = dispute.status === "lost";
+        const nextStatus = won
+          ? (target.amount_refunded ?? 0) > 0
+            ? target.status
+            : "paid"
+          : lost
+            ? "voided"
+            : "disputed";
+
+        await supabase
+          .from("invoices")
+          .update({
+            dispute_status: dispute.status,
+            dispute_reason: dispute.reason ?? null,
+            disputed_amount: dispute.amount ?? 0,
+            disputed_at: new Date(dispute.created * 1000).toISOString(),
+            status: nextStatus,
+            voided_at: lost ? new Date().toISOString() : null,
+          })
+          .eq("id", target.id);
+
+        await sendEmail("admin-payment-received", undefined, `dsp-${dispute.id}-${dispute.status}`, {
+          email: target.customer_email ?? undefined,
+          name: target.customer_name ?? undefined,
+          userId: target.user_id ?? undefined,
+          customerId: target.stripe_customer_id ?? undefined,
+          planName: `Chargeback ${dispute.status} — ${dispute.reason ?? "unknown reason"}`,
+          amount: ((dispute.amount ?? 0) / 100).toFixed(2),
+          currency: dispute.currency ?? target.currency,
+          invoiceNumber: target.invoice_number,
+          paidAt: new Date().toISOString(),
+          origin: APP_ORIGIN,
+        });
+
+        log("invoice_dispute_synced", {
+          invoice: target.invoice_number,
+          disputeStatus: dispute.status,
+          nextStatus,
+        });
+        break;
+      }
+
 
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
