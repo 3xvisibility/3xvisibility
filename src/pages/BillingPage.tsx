@@ -280,7 +280,7 @@ export default function BillingPage() {
       setDowngradeTarget(name);
       return;
     }
-    handleCheckout(name);
+    setConfirmTarget(name);
   };
 
   const refreshSubscription = async () => {
