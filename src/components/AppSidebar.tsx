@@ -201,14 +201,17 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             <ul className="mt-0.5 ml-5 space-y-0.5 border-l border-border/60 pl-2">
               {keywordGroups.map((g) => (
                 <li key={g.id}>
-                  <NavLink
+                  <Link
                     to={`${fullPath}?group=${g.id}`}
                     aria-label={g.name}
-                    className="block truncate rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                    activeClassName="text-primary font-medium"
+                    className={`block truncate rounded-md px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-foreground ${
+                      pathname === fullPath && searchStr === `?group=${g.id}`
+                        ? "text-primary font-medium"
+                        : "text-muted-foreground"
+                    }`}
                   >
                     {g.name}
-                  </NavLink>
+                  </Link>
                 </li>
               ))}
             </ul>
