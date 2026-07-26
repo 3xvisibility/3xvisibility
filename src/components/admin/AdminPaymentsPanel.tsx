@@ -35,6 +35,7 @@ import {
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AdminInvoicesPanel } from "./AdminInvoicesPanel";
 
 interface PaymentItem {
   id: string;
