@@ -1296,19 +1296,31 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Handle resume — update campaign and resume paused job
+    // Handle resume — only restart resumable work. Never move a terminal
+    // campaign back to processing, because client watchdog retries can arrive
+    // after all rows were already generated.
     let existingJobId: string | null = null;
     if (action === "resume") {
-      await supabase.from("campaigns").update({ is_paused: false, status: "processing" }).eq("id", campaign_id).eq("user_id", user.id);
-      const { data: pausedJob } = await supabase
+      await supabase
+        .from("campaigns")
+        .update({ is_paused: false, status: "processing" })
+        .eq("id", campaign_id)
+        .eq("user_id", user.id)
+        .in("status", ["queued", "paused"]);
+
+      const { data: resumableJob } = await supabase
         .from("generation_jobs")
-        .select("id")
+        .select("id, status")
         .eq("campaign_id", campaign_id)
-        .eq("status", "paused")
+        .in("status", ["paused", "pending", "running"])
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
-      if (pausedJob) {
-        existingJobId = pausedJob.id;
-        await updateJob(supabase, pausedJob.id, { status: "running" });
+      if (resumableJob) {
+        existingJobId = resumableJob.id;
+        if (resumableJob.status !== "running") {
+          await updateJob(supabase, resumableJob.id, { status: "running" });
+        }
       }
       await logEvent(supabase, campaign_id, user.id, "resumed", "Generation resumed by user");
     }
@@ -1316,7 +1328,7 @@ Deno.serve(async (req) => {
     // Fetch campaign
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
-      .select("id, name, user_id, workspace_id, website_id, campaign_type, publish_mode, max_rows, scheduled_at, processed_rows, failed_rows, current_batch, is_paused, geo_settings, utm_settings, mapping, language, ai_max_lines, ai_max_words, generation_method, directory_structure, template_id, templates(content, variables, seo_title_pattern, seo_description_pattern, schema_type, schema_config, updated_at)")
+        .select("id, name, user_id, workspace_id, website_id, campaign_type, publish_mode, max_rows, scheduled_at, processed_rows, failed_rows, current_batch, is_paused, geo_settings, utm_settings, mapping, language, ai_max_lines, ai_max_words, generation_method, directory_structure, template_id, generation_completed_at, templates(content, variables, seo_title_pattern, seo_description_pattern, schema_type, schema_config, updated_at)")
       .eq("id", campaign_id)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -1471,7 +1483,45 @@ Deno.serve(async (req) => {
     }
 
     if (startIndex >= maxRowsLimit) {
-      return new Response(JSON.stringify({ success: true, message: "All pages already generated" }), {
+      const completedAt = new Date().toISOString();
+      const finalFailedCount = campaign.failed_rows || 0;
+      const finalSuccessCount = Math.max(0, maxRowsLimit - finalFailedCount);
+      const finalStatus = finalFailedCount === maxRowsLimit ? "failed" : "completed";
+
+      await supabase.from("campaigns").update({
+        status: finalStatus,
+        processed_rows: maxRowsLimit,
+        failed_rows: finalFailedCount,
+        generation_completed_at: campaign.generation_completed_at || completedAt,
+        is_paused: false,
+      }).eq("id", campaign_id).eq("user_id", user.id);
+
+      const { data: latestJob } = await supabase
+        .from("generation_jobs")
+        .select("id")
+        .eq("campaign_id", campaign_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const finalJobId = existingJobId || latestJob?.id;
+      if (finalJobId) {
+        await updateJob(supabase, finalJobId, {
+          status: finalStatus,
+          processed_rows: maxRowsLimit,
+          success_count: finalSuccessCount,
+          error_count: finalFailedCount,
+          completed_at: completedAt,
+        });
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        generated: finalSuccessCount,
+        failed: finalFailedCount,
+        total: maxRowsLimit,
+        job_id: finalJobId,
+        message: "All pages already generated",
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -2044,15 +2094,16 @@ Deno.serve(async (req) => {
         // Auto-trigger a resume call so the next invocation picks up where we left off
         try {
           const resumeUrl = `${supabaseUrl}/functions/v1/generate-pages`;
-          fetch(resumeUrl, {
-            method: "POST",
-            headers: {
+          triggerBackgroundFunction(
+            resumeUrl,
+            {
               Authorization: authHeader,
               "Content-Type": "application/json",
               "x-service-role-key": supabaseServiceKey,
             },
-            body: JSON.stringify({ campaign_id, action: "resume" }),
-          }).catch(() => {});
+            { campaign_id, action: "resume" },
+            "generate-pages resume",
+          );
         } catch { /* ignore */ }
 
         return new Response(JSON.stringify({
