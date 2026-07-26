@@ -147,7 +147,7 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
                       variant="ghost"
                       className="h-6 px-2 text-[11px] gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
                       disabled={cancellingId === job.id}
-                      onClick={() => cancelMutation.mutate({ id: job.id, campaign_id: job.campaign_id })}
+                      onClick={() => setConfirmJob({ id: job.id, campaign_id: job.campaign_id, name: job.campaigns?.name || "Campaign", done, total })}
                     >
                       <XCircle className="h-3 w-3" />
                       {cancellingId === job.id ? "Cancelling…" : "Cancel"}
