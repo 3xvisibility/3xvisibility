@@ -42,7 +42,10 @@ interface TrialStatusWidgetProps {
  */
 export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusWidgetProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [portalLoading, setPortalLoading] = useState(false);
   const {
+
     plan,
     isLoading,
     isTrialing,
