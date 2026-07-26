@@ -34,9 +34,13 @@ import {
 import { toast } from "sonner";
 import {
   downloadInvoicePdf,
+  downloadInvoicesZip,
+  downloadMergedInvoicePdf,
   formatInvoiceMoney,
   type InvoiceRecord,
 } from "@/lib/invoice-pdf";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FileArchive, FilePlus2 } from "lucide-react";
 import { InvoiceDetailsDialog } from "./InvoiceDetailsDialog";
 
 const statusTone = (status: string) => {
@@ -60,6 +64,8 @@ export function AdminInvoicesPanel() {
   const [range, setRange] = useState("all");
   const [plan, setPlan] = useState("all");
   const [selected, setSelected] = useState<InvoiceRecord | null>(null);
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const invoicesQuery = useQuery({
     queryKey: ["admin-invoices"],
@@ -155,6 +161,45 @@ export function AdminInvoicesPanel() {
     URL.revokeObjectURL(url);
     toast.success(`Exported ${filtered.length} invoices`);
   };
+
+  const chosen = filtered.filter((i) => checked.has(i.id));
+  const bulkTargets = chosen.length > 0 ? chosen : filtered;
+  const allVisibleChecked = filtered.length > 0 && filtered.every((i) => checked.has(i.id));
+
+  const toggleAll = (value: boolean) => {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      filtered.forEach((i) => (value ? next.add(i.id) : next.delete(i.id)));
+      return next;
+    });
+  };
+
+  const toggleOne = (id: string, value: boolean) => {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (value) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const runBulk = async (mode: "zip" | "merged") => {
+    if (bulkTargets.length === 0) return;
+    setBulkBusy(true);
+    try {
+      if (mode === "zip") await downloadInvoicesZip(bulkTargets);
+      else downloadMergedInvoicePdf(bulkTargets);
+      toast.success(
+        `${bulkTargets.length} invoice${bulkTargets.length > 1 ? "s" : ""} downloaded`,
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Bulk download failed");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+
 
   return (
     <Card>
@@ -264,6 +309,47 @@ export function AdminInvoicesPanel() {
           </span>
         </div>
 
+        {/* Bulk download bar */}
+        {filtered.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+            <span className="text-xs text-muted-foreground">
+              {chosen.length > 0
+                ? `${chosen.length} selected`
+                : `No selection — actions apply to all ${filtered.length} filtered invoices`}
+            </span>
+            <div className="ml-auto flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={bulkBusy}
+                onClick={() => runBulk("zip")}
+              >
+                {bulkBusy ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                ) : (
+                  <FileArchive className="h-3.5 w-3.5 mr-1" />
+                )}
+                Download ZIP ({bulkTargets.length})
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={bulkBusy}
+                onClick={() => runBulk("merged")}
+              >
+                <FilePlus2 className="h-3.5 w-3.5 mr-1" /> Merged PDF ({bulkTargets.length})
+              </Button>
+              {chosen.length > 0 && (
+                <Button size="sm" variant="ghost" onClick={() => setChecked(new Set())}>
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+
+
         {invoicesQuery.isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-10 w-full" />
@@ -281,6 +367,13 @@ export function AdminInvoicesPanel() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[40px]">
+                    <Checkbox
+                      checked={allVisibleChecked}
+                      onCheckedChange={(v) => toggleAll(!!v)}
+                      aria-label="Select all invoices"
+                    />
+                  </TableHead>
                   <TableHead>Invoice</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Customer</TableHead>
@@ -297,6 +390,13 @@ export function AdminInvoicesPanel() {
                     className="cursor-pointer"
                     onClick={() => setSelected(inv)}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={checked.has(inv.id)}
+                        onCheckedChange={(v) => toggleOne(inv.id, !!v)}
+                        aria-label={`Select ${inv.invoice_number}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(inv.issued_at).toLocaleDateString("en-US", {
