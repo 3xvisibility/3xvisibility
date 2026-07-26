@@ -59,7 +59,7 @@ interface TemplateRow {
 
 function isSkippedVar(name: string): boolean {
   const n = name.trim().toLowerCase();
-  if (BUSINESS_VAR_NAMES.has(n)) return true;
+  if (BUSINESS_VARS.has(n)) return true;
   return (GEO_VAR_NAMES as readonly string[]).includes(n);
 }
 
