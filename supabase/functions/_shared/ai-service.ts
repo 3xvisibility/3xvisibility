@@ -35,6 +35,8 @@ export interface AiGenerateOptions {
   authToken?: string;            // JWT token — used to resolve userId if not provided
   promptType?: string;           // maps to CREDIT_COSTS (e.g. "seo_optimization")
   skipCredits?: boolean;         // explicitly skip credit check (e.g. internal/system calls)
+  taskCategory?: "design" | "content"; // routes to the admin-configured provider for design vs content work
+
 }
 
 // ── Credit costs (mirrors ai-credits edge function) ──────────────────────────
