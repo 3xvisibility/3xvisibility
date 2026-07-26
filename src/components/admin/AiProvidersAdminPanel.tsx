@@ -120,6 +120,72 @@ export default function AiProvidersAdminPanel() {
         </CardContent>
       </Card>
 
+      <Card className="shadow-surface">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Split className="h-4 w-4 text-primary" />
+            Split routing — design vs content
+          </CardTitle>
+          <CardDescription>
+            Send design work (template scan, layout, styling, site builder) to one platform and
+            content work (SEO text, AI fill, rewrites, translations) to another. This splits usage
+            and credits across two AI accounts instead of one.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium flex items-center gap-1.5">
+                <Palette className="h-3.5 w-3.5 text-muted-foreground" /> Design tasks
+              </label>
+              <Select
+                value={designProvider}
+                onValueChange={(v) => setRouting((r) => ({ ...r, design: v }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="inherit">Follow active provider</SelectItem>
+                  {providers.map((p) => (
+                    <SelectItem key={p.id} value={p.id} disabled={!p.has_key}>
+                      {p.name}{!p.has_key ? " (no key)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" /> Content &amp; SEO tasks
+              </label>
+              <Select
+                value={contentProvider}
+                onValueChange={(v) => setRouting((r) => ({ ...r, content: v }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="inherit">Follow active provider</SelectItem>
+                  {providers.map((p) => (
+                    <SelectItem key={p.id} value={p.id} disabled={!p.has_key}>
+                      {p.name}{!p.has_key ? " (no key)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            disabled={mutate.isPending}
+            onClick={() =>
+              mutate.mutate({ action: "set-routing", design: designProvider, content: contentProvider })
+            }
+          >
+            Save routing
+          </Button>
+        </CardContent>
+      </Card>
+
+
       <div className="grid gap-4 lg:grid-cols-2">
         {providers.map((p) => {
           const draft = drafts[p.id] || { key: "", model: "" };
