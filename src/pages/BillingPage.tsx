@@ -465,7 +465,7 @@ export default function BillingPage() {
                   }`}
                   variant={btn.variant}
                   disabled={btn.disabled || isLoading}
-                  onClick={() => !btn.disabled && handleCheckout(config.name)}
+                  onClick={() => !btn.disabled && handlePlanClick(config.name)}
                 >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
