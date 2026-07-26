@@ -2115,15 +2115,16 @@ Deno.serve(async (req) => {
         rowNo++;
         // Stage tracer — lets us see exactly where a row dies if the worker is
         // killed (CPU/memory limits produce NO error, just a silent shutdown).
+        let probeLen = 0;
         const stage = (name: string) =>
-          console.log(`[GEN-ROW ${batchesCompleted}.${rowNo}] ${name} (+${Date.now() - startTime}ms, len=${(pageContentLenProbe ?? 0)})`);
-        let pageContentLenProbe: number | undefined;
+          console.log(`[GEN-ROW ${batchesCompleted}.${rowNo}] ${name} (+${Date.now() - startTime}ms, len=${probeLen})`);
         try {
           // Reset per-row record of clamped field values for the length gate.
           appliedFieldValues = {};
           let pageContent = templateContent;
-          pageContentLenProbe = pageContent.length;
+          probeLen = pageContent.length;
           stage("start");
+
 
 
           // Build combined vars for conditionals/loops
