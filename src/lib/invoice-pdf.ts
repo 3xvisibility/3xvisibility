@@ -34,6 +34,9 @@ export interface InvoiceRecord {
   disputed_at?: string | null;
   refunded_at?: string | null;
   voided_at?: string | null;
+  manual_status_reason?: string | null;
+  manual_status_by?: string | null;
+  manual_status_at?: string | null;
 }
 
 export const formatInvoiceMoney = (cents: number, currency: string) =>

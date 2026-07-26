@@ -30,6 +30,7 @@ import {
   RefreshCw,
   Search,
   Sheet,
+  SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -42,6 +43,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileArchive, FilePlus2 } from "lucide-react";
 import { InvoiceDetailsDialog } from "./InvoiceDetailsDialog";
+import { ManualInvoiceStatusDialog } from "./ManualInvoiceStatusDialog";
 
 const statusTone = (status: string) => {
   if (status === "paid") return "bg-green-500/15 text-green-500 border-green-500/30";
@@ -67,6 +69,7 @@ export function AdminInvoicesPanel() {
   const [range, setRange] = useState("all");
   const [plan, setPlan] = useState("all");
   const [selected, setSelected] = useState<InvoiceRecord | null>(null);
+  const [adjusting, setAdjusting] = useState<InvoiceRecord | null>(null);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
 
@@ -439,6 +442,14 @@ export function AdminInvoicesPanel() {
                       </Button>
                       <Button
                         size="sm"
+                        variant="ghost"
+                        onClick={() => setAdjusting(inv)}
+                        title="Manually mark refunded or voided"
+                      >
+                        <SlidersHorizontal className="h-3.5 w-3.5 mr-1" /> Adjust
+                      </Button>
+                      <Button
+                        size="sm"
                         variant="outline"
                         onClick={() => {
                           try {
@@ -472,6 +483,13 @@ export function AdminInvoicesPanel() {
           </div>
         )}
       </CardContent>
+
+      <ManualInvoiceStatusDialog
+        invoice={adjusting}
+        open={!!adjusting}
+        onOpenChange={(o) => !o && setAdjusting(null)}
+        onUpdated={() => invoicesQuery.refetch()}
+      />
 
       <InvoiceDetailsDialog
         invoice={selected}
