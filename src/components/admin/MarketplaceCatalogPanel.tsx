@@ -38,7 +38,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { SharedTemplatesModerationPanel } from "@/components/admin/SharedTemplatesModerationPanel";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
-import { ArrowLeft, Eye, Loader2, Monitor, Plus, Search, Smartphone, Store, Tablet, Trash2, Package } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Monitor, Pencil, Plus, Search, Smartphone, Store, Tablet, Trash2, Package } from "lucide-react";
 
 type PreviewDevice = "desktop" | "tablet" | "mobile";
 
@@ -137,18 +137,34 @@ export function MarketplaceCatalogPanel() {
   const [search, setSearch] = useState("");
   const [builtinSearch, setBuiltinSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<MarketplaceRow | null>(null);
   const [step, setStep] = useState<"edit" | "preview">("edit");
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
   const [previewRow, setPreviewRow] = useState<MarketplaceRow | null>(null);
 
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    category: "business",
-    source_url: "",
-    html: "",
-  });
+  const emptyForm = { name: "", description: "", category: "business", source_url: "", html: "" };
+  const [form, setForm] = useState(emptyForm);
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setStep("edit");
+    setAddOpen(true);
+  };
+
+  const openEdit = (r: MarketplaceRow) => {
+    setEditingId(r.id);
+    setForm({
+      name: r.name,
+      description: r.description || "",
+      category: r.category || "business",
+      source_url: r.source_url || "",
+      html: r.preview_html || "",
+    });
+    setStep("edit");
+    setAddOpen(true);
+  };
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["admin-marketplace-templates"],
@@ -162,31 +178,49 @@ export function MarketplaceCatalogPanel() {
     },
   });
 
-  const addMutation = useMutation({
+  const saveMutation = useMutation({
     mutationFn: async () => {
-      const { data: userRes } = await supabase.auth.getUser();
-      const { error } = await supabase.from("marketplace_templates").insert({
+      const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
         category: form.category.trim() || "business",
         preview_html: form.html,
         variables: extractVariables(form.html),
         source_url: form.source_url.trim() || null,
-        created_by: userRes?.user?.id ?? null,
-      });
+      };
+
+      if (editingId) {
+        const { error } = await supabase
+          .from("marketplace_templates")
+          .update({ ...payload, updated_at: new Date().toISOString() })
+          .eq("id", editingId);
+        if (error) throw error;
+        return "updated" as const;
+      }
+
+      const { data: userRes } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("marketplace_templates")
+        .insert({ ...payload, created_by: userRes?.user?.id ?? null });
       if (error) throw error;
+      return "created" as const;
     },
-    onSuccess: () => {
-      toast({ title: "Template added", description: "It is now live on the Marketplace page." });
+    onSuccess: (mode) => {
+      toast({
+        title: mode === "updated" ? "Template updated" : "Template added",
+        description: "Changes are live on the Marketplace page.",
+      });
       setAddOpen(false);
       setStep("edit");
-      setForm({ name: "", description: "", category: "business", source_url: "", html: "" });
+      setEditingId(null);
+      setForm(emptyForm);
       qc.invalidateQueries({ queryKey: ["admin-marketplace-templates"] });
       qc.invalidateQueries({ queryKey: ["marketplace-admin-templates"] });
     },
     onError: (e: Error) =>
-      toast({ title: "Could not add template", description: e.message, variant: "destructive" }),
+      toast({ title: "Could not save template", description: e.message, variant: "destructive" }),
   });
+
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -254,7 +288,7 @@ export function MarketplaceCatalogPanel() {
                 className="pl-8 w-full sm:w-64"
               />
             </div>
-            <Button onClick={() => setAddOpen(true)}>
+            <Button onClick={openCreate}>
               <Plus className="h-4 w-4 mr-1" /> Add template
             </Button>
           </div>
@@ -268,7 +302,7 @@ export function MarketplaceCatalogPanel() {
               <CardContent className="py-14 text-center text-muted-foreground space-y-3">
                 <Package className="h-8 w-8 mx-auto opacity-50" />
                 <p>No custom marketplace templates yet.</p>
-                <Button variant="outline" onClick={() => setAddOpen(true)}>
+                <Button variant="outline" onClick={openCreate}>
                   <Plus className="h-4 w-4 mr-1" /> Add your first template
                 </Button>
               </CardContent>
@@ -301,12 +335,21 @@ export function MarketplaceCatalogPanel() {
                       </Button>
                       <Button
                         size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        onClick={() => openEdit(r)}
+                      >
+                        <Pencil className="h-4 w-4 mr-1" /> Edit
+                      </Button>
+                      <Button
+                        size="sm"
                         variant="ghost"
                         className="text-destructive hover:text-destructive shrink-0"
                         onClick={() => setToDelete(r)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
+
                     </CardContent>
                   </Card>
                 ))}
@@ -359,14 +402,17 @@ export function MarketplaceCatalogPanel() {
         open={addOpen}
         onOpenChange={(o) => {
           setAddOpen(o);
-          if (!o) setStep("edit");
+          if (!o) { setStep("edit"); setEditingId(null); }
         }}
       >
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>
-              {step === "edit" ? "Add marketplace template" : `Preview — ${form.name || "Untitled"}`}
+              {step === "edit"
+                ? editingId ? "Edit marketplace template" : "Add marketplace template"
+                : `Preview — ${form.name || "Untitled"}`}
             </DialogTitle>
+
             <DialogDescription>
               {step === "edit"
                 ? <>Paste the full HTML (with inline CSS/JS). Variables like {"{{city}}"} are detected automatically.</>
@@ -450,11 +496,12 @@ export function MarketplaceCatalogPanel() {
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back to edit
                 </Button>
                 <Button
-                  disabled={!form.name.trim() || !form.html.trim() || addMutation.isPending}
-                  onClick={() => addMutation.mutate()}
+                  disabled={!form.name.trim() || !form.html.trim() || saveMutation.isPending}
+                  onClick={() => saveMutation.mutate()}
                 >
-                  {addMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-                  Save template
+                  {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                  {editingId ? "Save changes" : "Save template"}
+
                 </Button>
               </>
             )}
