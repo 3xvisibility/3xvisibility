@@ -37,6 +37,7 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [tick, setTick] = useState(0);
+  const [alsoDelete, setAlsoDelete] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [confirmJob, setConfirmJob] = useState<{
     id: string;
