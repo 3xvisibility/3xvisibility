@@ -1365,6 +1365,9 @@ export type Database = {
           invoice_pdf_url: string | null
           issued_at: string
           line_items: Json
+          manual_status_at: string | null
+          manual_status_by: string | null
+          manual_status_reason: string | null
           plan: string | null
           receipt_url: string | null
           refunded_at: string | null
@@ -1396,6 +1399,9 @@ export type Database = {
           invoice_pdf_url?: string | null
           issued_at?: string
           line_items?: Json
+          manual_status_at?: string | null
+          manual_status_by?: string | null
+          manual_status_reason?: string | null
           plan?: string | null
           receipt_url?: string | null
           refunded_at?: string | null
@@ -1427,6 +1433,9 @@ export type Database = {
           invoice_pdf_url?: string | null
           issued_at?: string
           line_items?: Json
+          manual_status_at?: string | null
+          manual_status_by?: string | null
+          manual_status_reason?: string | null
           plan?: string | null
           receipt_url?: string | null
           refunded_at?: string | null
