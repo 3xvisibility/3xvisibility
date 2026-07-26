@@ -823,8 +823,47 @@ serve(async (req) => {
         break;
       }
 
+      // ---- subscription / trial lifecycle ----
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const subId =
+          typeof session.subscription === "string"
+            ? session.subscription
+            : session.subscription?.id;
+        if (session.mode !== "subscription" || !subId) {
+          log("event_ignored", { type: event.type, reason: "not_subscription" });
+          break;
+        }
+        const sub = await stripe.subscriptions.retrieve(subId);
+        await syncSubscriptionRow(stripe, sub as Stripe.Subscription);
+        break;
+      }
+
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+      case "customer.subscription.paused":
+      case "customer.subscription.resumed": {
+        const sub = event.data.object as Stripe.Subscription;
+        await syncSubscriptionRow(stripe, sub);
+        break;
+      }
+
+      case "customer.subscription.trial_will_end": {
+        const sub = event.data.object as Stripe.Subscription;
+        const synced = await syncSubscriptionRow(stripe, sub);
+        log("trial_will_end", {
+          subscriptionId: sub.id,
+          trialEnd: toIso((sub as any).trial_end),
+          userId: synced?.userId,
+        });
+        break;
+      }
+
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
+        // Downgrade the app-side plan to free before sending the email.
+        await syncSubscriptionRow(stripe, sub);
+
         const customerId =
           typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
         let email: string | undefined;
