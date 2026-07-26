@@ -3788,6 +3788,16 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           setShowLocationsDialog(false);
         }}
       />
+
+      <AiDraftReviewDialog
+        open={aiDraftOpen}
+        onOpenChange={setAiDraftOpen}
+        title={aiDraftRowIndex === undefined ? "AI fill draft — review before generating" : `AI fill draft — row ${aiDraftRowIndex + 1}`}
+        description="These values are a draft only. Nothing is generated or published yet — edit anything, then apply."
+        fields={aiDraftFields}
+        applyLabel="Apply values"
+        onApply={applyAiDraft}
+      />
     </div>
   );
 }
