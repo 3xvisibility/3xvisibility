@@ -74,7 +74,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search: searchStr } = useLocation();
   const { pagesUsed, pagesLimit, canUseFeature } = useSubscription();
   const { appName, logoUrl, isWhitelabeled } = useBranding();
   const { basePath, currentWorkspace } = useWorkspace();
