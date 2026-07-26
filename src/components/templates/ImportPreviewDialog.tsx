@@ -631,7 +631,8 @@ export function ImportPreviewDialog({
               />
 
               {!previewReady && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 backdrop-blur-sm">
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-[2px] pointer-events-none">
+
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                   <div className="w-56 space-y-2">
                     <Progress value={previewProgress} className="h-1.5" />
