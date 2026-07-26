@@ -96,6 +96,8 @@ export default function AiProvidersAdminPanel() {
   }
 
   const providers = data?.providers || [];
+  const designProvider = routing.design ?? data?.routing?.design ?? "inherit";
+  const contentProvider = routing.content ?? data?.routing?.content ?? "inherit";
 
   return (
     <div className="space-y-4">
