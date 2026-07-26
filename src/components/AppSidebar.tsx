@@ -76,7 +76,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const { pathname } = useLocation();
   const { pagesUsed, pagesLimit, canUseFeature } = useSubscription();
   const { appName, logoUrl, isWhitelabeled } = useBranding();
-  const { basePath } = useWorkspace();
+  const { basePath, currentWorkspace } = useWorkspace();
 
   // Whether any nav item in a group matches the current route.
   const isGroupActive = (items: NavItem[]) => computeGroupActive(pathname, basePath, items);
