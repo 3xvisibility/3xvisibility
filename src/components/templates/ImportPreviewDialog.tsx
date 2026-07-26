@@ -235,58 +235,67 @@ export function ImportPreviewDialog({
   const [previewReady, setPreviewReady] = useState(false);
   const [previewProgress, setPreviewProgress] = useState(0);
   const [previewStage, setPreviewStage] = useState("Preparing preview…");
+  const timersRef = useRef<number[]>([]);
 
-  // Reset whenever the rendered document changes.
+  const clearTimers = () => {
+    timersRef.current.forEach((t) => window.clearInterval(t));
+    timersRef.current = [];
+  };
+
+  const finishPreview = () => {
+    clearTimers();
+    setPreviewProgress(100);
+    setPreviewStage("Ready");
+    setPreviewReady(true);
+  };
+
+  // Reset + watch assets whenever the rendered document changes.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !highlightedHtml) return;
+    clearTimers();
     setPreviewReady(false);
-    setPreviewProgress(8);
+    setPreviewProgress(10);
     setPreviewStage("Preparing preview…");
-  }, [open, highlightedHtml]);
-
-  // Creep the bar forward while the document is still parsing/fetching.
-  useEffect(() => {
-    if (previewReady || !open) return;
-    const id = window.setInterval(() => {
-      setPreviewProgress((p) => (p < 85 ? p + Math.max(1, (85 - p) * 0.08) : p));
-    }, 180);
-    return () => window.clearInterval(id);
-  }, [previewReady, open]);
-
-  const handleIframeLoad = () => {
-    const doc = iframeRef.current?.contentDocument;
-    if (!doc) {
-      setPreviewProgress(100);
-      setPreviewReady(true);
-      return;
-    }
-    setPreviewStage("Loading styles & images…");
 
     const start = Date.now();
     const tick = window.setInterval(() => {
-      const sheets = Array.from(doc.querySelectorAll("link[rel~=stylesheet]")) as HTMLLinkElement[];
-      const imgs = Array.from(doc.images);
-      const total = sheets.length + imgs.length;
-      const doneSheets = sheets.filter((l) => {
-        try { return !!l.sheet || l.dataset.failed === "1"; } catch { return true; }
-      }).length;
-      const doneImgs = imgs.filter((i) => i.complete).length;
-      const done = doneSheets + doneImgs;
-      const pct = total === 0 ? 100 : 40 + Math.round((done / total) * 60);
-      setPreviewProgress((p) => Math.max(p, pct));
-      setPreviewStage(
-        total === 0 ? "Rendering…" : `Loading assets ${done}/${total}…`,
-      );
+      const elapsed = Date.now() - start;
+      let doc: Document | null = null;
+      try { doc = iframeRef.current?.contentDocument ?? null; } catch { doc = null; }
 
-      const timedOut = Date.now() - start > 8000;
-      if (done >= total || timedOut) {
-        window.clearInterval(tick);
-        setPreviewProgress(100);
-        setPreviewStage("Ready");
-        window.setTimeout(() => setPreviewReady(true), 150);
+      if (doc && doc.readyState !== "loading") {
+        const sheets = Array.from(doc.querySelectorAll("link[rel~=stylesheet]")) as HTMLLinkElement[];
+        const imgs = Array.from(doc.images);
+        const total = sheets.length + imgs.length;
+        const doneSheets = sheets.filter((l) => {
+          try { return l.sheet !== null; } catch { return true; }
+        }).length;
+        const doneImgs = imgs.filter((i) => i.complete).length;
+        const done = doneSheets + doneImgs;
+        if (total === 0 || done >= total) {
+          finishPreview();
+          return;
+        }
+        setPreviewProgress(Math.min(96, 40 + Math.round((done / total) * 56)));
+        setPreviewStage(`Loading assets ${done}/${total}…`);
+      } else {
+        setPreviewProgress((p) => Math.min(38, p + 6));
       }
-    }, 200);
+
+      // Hard stop — never leave the user staring at a spinner.
+      if (elapsed > 4000) finishPreview();
+    }, 150);
+    timersRef.current.push(tick);
+
+    return clearTimers;
+  }, [open, highlightedHtml]);
+
+  const handleIframeLoad = () => {
+    setPreviewStage("Loading styles & images…");
+    setPreviewProgress((p) => Math.max(p, 45));
   };
+
+
 
 
   // ------- Mutations against `rows` (source of truth) -------
