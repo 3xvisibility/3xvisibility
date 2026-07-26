@@ -918,6 +918,16 @@ export function PageEditDialog({
           </div>
         </div>
       </DialogContent>
+
+      <AiDraftReviewDialog
+        open={draftOpen}
+        onOpenChange={setDraftOpen}
+        title="AI SEO draft — review before publishing"
+        description="This is a draft only. Nothing has been saved or pushed to your live site. Edit anything, then apply it to the editor."
+        fields={draftFields}
+        applyLabel="Apply to editor"
+        onApply={applyDraft}
+      />
     </Dialog>
   );
 }
