@@ -20,6 +20,8 @@ interface ImportPreviewDialogProps {
   pageTitle: string;
   fullContent: string;
   variables: ImportPreviewVariable[];
+  /** Source page URL — used as <base href> so relative CSS/images resolve. */
+  sourceUrl?: string | null;
 }
 
 interface EditableVar extends ImportPreviewVariable {
