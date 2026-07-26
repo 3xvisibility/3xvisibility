@@ -35,6 +35,7 @@ import {
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AdminInvoicesPanel } from "./AdminInvoicesPanel";
 
 interface PaymentItem {
   id: string;
@@ -245,6 +246,9 @@ export function AdminPaymentsPanel() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Auto-generated invoices */}
+      <AdminInvoicesPanel />
 
       {/* Transactions */}
       <Card>
