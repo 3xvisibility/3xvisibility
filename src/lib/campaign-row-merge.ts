@@ -36,8 +36,25 @@ export const PLACEHOLDER_GEO_VALUES = new Set<string>([
   "your city", "your state", "your country",
 ]);
 
+/**
+ * Business / contact variables. These are NEVER part of a Keyword Group —
+ * they are collected in the Campaign wizard's "Business Info" step.
+ */
+export const BUSINESS_VAR_NAMES = [
+  "company_name", "company", "business_name",
+  "brand_name", "brand",
+  "phone", "phone_number", "telephone", "mobile",
+  "email", "email_address",
+  "address", "street", "postcode",
+  "website", "url", "site_url",
+  "owner", "author", "contact", "contact_name",
+] as const;
+
 export const isGeoVariable = (name: string): boolean =>
   GEO_VAR_NAMES.includes(name.trim().toLowerCase() as (typeof GEO_VAR_NAMES)[number]);
+
+export const isBusinessVariable = (name: string): boolean =>
+  (BUSINESS_VAR_NAMES as readonly string[]).includes(name.trim().toLowerCase());
 
 export const isPlaceholderGeoValue = (v: unknown): boolean =>
   typeof v === "string" && PLACEHOLDER_GEO_VALUES.has(v.trim().toLowerCase());

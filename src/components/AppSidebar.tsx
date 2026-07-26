@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import logo3x from "@/assets/logo-3x.png";
 import {
   LayoutDashboard,
@@ -54,7 +55,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useBranding } from "@/contexts/BrandingContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import type { FeatureKey } from "@/lib/plan-features";
 import { getMinimumPlanFor, PLAN_FEATURES } from "@/lib/plan-features";
@@ -73,10 +74,10 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search: searchStr } = useLocation();
   const { pagesUsed, pagesLimit, canUseFeature } = useSubscription();
   const { appName, logoUrl, isWhitelabeled } = useBranding();
-  const { basePath } = useWorkspace();
+  const { basePath, currentWorkspace } = useWorkspace();
 
   // Whether any nav item in a group matches the current route.
   const isGroupActive = (items: NavItem[]) => computeGroupActive(pathname, basePath, items);
@@ -97,6 +98,21 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     }
     checkAdmin();
   }, []);
+  const { data: keywordGroups = [] } = useQuery({
+    queryKey: ["sidebar-keyword-groups", currentWorkspace?.id],
+    enabled: !!currentWorkspace?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pgp_keyword_groups")
+        .select("id, name")
+        .eq("workspace_id", currentWorkspace!.id)
+        .order("updated_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data || []) as { id: string; name: string }[];
+    },
+  });
+
 
   const onboardingMap: Record<string, string> = {
     "websites": "websites",
@@ -179,6 +195,27 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             </NavLink>
 
           </SidebarMenuButton>
+
+          {/* Saved Keyword Groups appear as a nested list under the Keywords entry. */}
+          {item.path === "keyword-groups" && !collapsed && keywordGroups.length > 0 && (
+            <ul className="mt-0.5 ml-5 space-y-0.5 border-l border-border/60 pl-2">
+              {keywordGroups.map((g) => (
+                <li key={g.id}>
+                  <Link
+                    to={`${fullPath}?group=${g.id}`}
+                    aria-label={g.name}
+                    className={`block truncate rounded-md px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-foreground ${
+                      pathname === fullPath && searchStr === `?group=${g.id}`
+                        ? "text-primary font-medium"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {g.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </SidebarMenuItem>
       );
     });
