@@ -335,12 +335,21 @@ export function MarketplaceCatalogPanel() {
                       </Button>
                       <Button
                         size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        onClick={() => openEdit(r)}
+                      >
+                        <Pencil className="h-4 w-4 mr-1" /> Edit
+                      </Button>
+                      <Button
+                        size="sm"
                         variant="ghost"
                         className="text-destructive hover:text-destructive shrink-0"
                         onClick={() => setToDelete(r)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
+
                     </CardContent>
                   </Card>
                 ))}
