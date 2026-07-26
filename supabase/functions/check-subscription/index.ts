@@ -220,7 +220,12 @@ serve(async (req) => {
       subscription_end: subscriptionEnd,
       plan: planName,
       billing_cycle: billingCycle,
+      status: subStatus,
+      trialing: subStatus === "trialing",
+      trial_end: trialEnd,
+      cancel_at_period_end: cancelAtPeriodEnd,
     }), {
+
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
