@@ -130,7 +130,30 @@ export function InvoiceDetailsDialog({ invoice, open, onOpenChange }: Props) {
               </div>
             )}
 
+            {/* Manual admin adjustment */}
+            {invoice.manual_status_reason && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-1">
+                <p className="text-[11px] uppercase text-amber-600 font-medium">
+                  Manual admin adjustment
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2 text-sm">
+                  <Field label="Reason" value={invoice.manual_status_reason} />
+                  <Field
+                    label="Applied"
+                    value={
+                      invoice.manual_status_at
+                        ? new Date(invoice.manual_status_at).toLocaleString()
+                        : null
+                    }
+                  />
+                  <Field label="Admin user ID" value={invoice.manual_status_by} mono />
+                </div>
+              </div>
+            )}
+
             <Separator />
+
+
 
 
             {/* Customer + dates */}
