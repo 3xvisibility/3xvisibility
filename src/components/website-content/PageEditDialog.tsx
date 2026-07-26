@@ -154,6 +154,10 @@ export function PageEditDialog({
   const [optimizing, setOptimizing] = useState(false);
   const [seoResult, setSeoResult] = useState<PageEditorSeoResult | null>(initialSeoResult);
 
+  // AI draft / preview state (review before anything is published)
+  const [draftOpen, setDraftOpen] = useState(false);
+  const [draftFields, setDraftFields] = useState<AiDraftField[]>([]);
+
   // Rollback state
   const [rollingBack, setRollingBack] = useState(false);
   const [lastVersion, setLastVersion] = useState<{ id: string; created_at: string } | null>(null);
