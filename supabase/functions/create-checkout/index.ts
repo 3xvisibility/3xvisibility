@@ -41,19 +41,35 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
+    // First-time subscribers get 1 extra month free (30-day trial).
+    // Anyone who already had (or has) a subscription is not eligible again.
+    let eligibleForTrial = true;
+    if (customerId) {
+      const prior = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "all",
+        limit: 1,
+      });
+      eligibleForTrial = prior.data.length === 0;
+    }
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
+      ...(eligibleForTrial
+        ? { subscription_data: { trial_period_days: 30 } }
+        : {}),
       success_url: `${origin}/billing?success=true`,
       cancel_url: `${origin}/billing?canceled=true`,
     });
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ url: session.url, trial: eligibleForTrial }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
+
   } catch (error) {
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
