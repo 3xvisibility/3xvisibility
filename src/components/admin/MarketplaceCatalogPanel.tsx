@@ -138,6 +138,9 @@ export function MarketplaceCatalogPanel() {
   const [builtinSearch, setBuiltinSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [toDelete, setToDelete] = useState<MarketplaceRow | null>(null);
+  const [step, setStep] = useState<"edit" | "preview">("edit");
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
+  const [previewRow, setPreviewRow] = useState<MarketplaceRow | null>(null);
 
   const [form, setForm] = useState({
     name: "",
