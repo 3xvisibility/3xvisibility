@@ -20,6 +20,8 @@ interface ImportPreviewDialogProps {
   pageTitle: string;
   fullContent: string;
   variables: ImportPreviewVariable[];
+  /** Source page URL — used as <base href> so relative CSS/images resolve. */
+  sourceUrl?: string | null;
 }
 
 interface EditableVar extends ImportPreviewVariable {
@@ -72,6 +74,7 @@ export function ImportPreviewDialog({
   pageTitle,
   fullContent,
   variables,
+  sourceUrl,
 }: ImportPreviewDialogProps) {
   const [rows, setRows] = useState<EditableVar[]>([]);
 
@@ -203,8 +206,29 @@ export function ImportPreviewDialog({
       (_m, name) =>
         `<span style="background:#22c55e33;color:#22c55e;border:1px solid #22c55e66;padding:0 4px;border-radius:4px;font-weight:600;font-family:ui-monospace,monospace;font-size:0.9em;">{${name}}</span>`,
     );
-    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base target="_blank"></head><body style="margin:0;background:#fff;color:#111;">${injected}</body></html>`;
-  }, [editedContent]);
+    // Resolve relative asset/stylesheet URLs (Shopify & most themes ship
+    // `/assets/...` paths) against the imported page's origin, otherwise the
+    // preview renders blank/unstyled inside srcDoc.
+    let baseTag = `<base target="_blank">`;
+    if (sourceUrl) {
+      try {
+        baseTag = `<base href="${new URL(sourceUrl).href}" target="_blank">`;
+      } catch { /* ignore invalid url */ }
+    }
+    // Themes fade content in with JS (scripts don't run in the sandbox), so
+    // force hidden/animated elements visible.
+    const revealCss = `
+      html,body{margin:0;background:#fff;color:#111;}
+      img,video,svg{max-width:100%;height:auto;}
+      [style*="opacity:0"],[style*="opacity: 0"],[style*="visibility:hidden"],[style*="visibility: hidden"],
+      .opacity-0,.invisible,[data-aos],[class*="fade-"],[class*="reveal"],[class*="scroll-trigger"],[class*="animate--"]{
+        opacity:1 !important;visibility:visible !important;transform:none !important;animation:none !important;
+      }
+      body{overflow-x:hidden;}
+    `;
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${baseTag}<style>${revealCss}</style></head><body>${injected}</body></html>`;
+  }, [editedContent, sourceUrl]);
+
 
   // ------- Mutations against `rows` (source of truth) -------
 

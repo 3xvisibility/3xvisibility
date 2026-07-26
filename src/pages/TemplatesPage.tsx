@@ -68,7 +68,7 @@ export default function TemplatesPage() {
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<PreviewableTemplate | null>(null);
   const [previewTemplateRow, setPreviewTemplateRow] = useState<Template | null>(null);
-  const [importPreview, setImportPreview] = useState<{ pageTitle: string; fullContent: string; variables: ImportPreviewVariable[]; pendingTemplate: Template } | null>(null);
+  const [importPreview, setImportPreview] = useState<{ pageTitle: string; fullContent: string; variables: ImportPreviewVariable[]; pendingTemplate: Template; sourceUrl?: string | null } | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pendingKeywords, setPendingKeywords] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -913,7 +913,7 @@ export default function TemplatesPage() {
     const previewVars: ImportPreviewVariable[] = variableEntries
       .filter((v) => allVars.includes(v.name))
       .map((v) => ({ name: v.name, original: v.original }));
-    setImportPreview({ pageTitle: pageTitle || "Site Template", fullContent, variables: previewVars, pendingTemplate });
+    setImportPreview({ pageTitle: pageTitle || "Site Template", fullContent, variables: previewVars, pendingTemplate, sourceUrl: data?.url || null });
   };
 
   // Translate SEO patterns into the chosen language while keeping {placeholders}
@@ -1517,6 +1517,7 @@ slug: ${fields.slug}`,
           pageTitle={importPreview.pageTitle}
           fullContent={importPreview.fullContent}
           variables={importPreview.variables}
+          sourceUrl={importPreview.sourceUrl}
         />
       )}
 
