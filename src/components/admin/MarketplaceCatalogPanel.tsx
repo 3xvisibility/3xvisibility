@@ -484,11 +484,12 @@ export function MarketplaceCatalogPanel() {
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back to edit
                 </Button>
                 <Button
-                  disabled={!form.name.trim() || !form.html.trim() || addMutation.isPending}
-                  onClick={() => addMutation.mutate()}
+                  disabled={!form.name.trim() || !form.html.trim() || saveMutation.isPending}
+                  onClick={() => saveMutation.mutate()}
                 >
-                  {addMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-                  Save template
+                  {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                  {editingId ? "Save changes" : "Save template"}
+
                 </Button>
               </>
             )}
