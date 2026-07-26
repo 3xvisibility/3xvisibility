@@ -24,6 +24,7 @@ import {
   Crown,
   Loader2,
   ExternalLink,
+  Gift,
 } from "lucide-react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
