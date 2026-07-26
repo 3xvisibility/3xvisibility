@@ -370,29 +370,71 @@ export function getActiveProvider(): AiProvider {
 }
 
 /**
- * Resolve the SINGLE global AI provider that every user shares.
- *
- * The admin picks this in Admin → System Settings, which writes
- * `system_settings.ai_provider` (id = 'global'). That choice is the source of
- * truth for ALL users and ALL prompts. We fall back to the AI_PROVIDER env
- * secret, then to "lovable", only when the DB value is missing/unreachable.
+ * Task categories. Admins can route DESIGN work (template scan, layout,
+ * styling, site builder) to one provider and CONTENT work (SEO text, AI fill,
+ * rewrites, translations) to another — so usage/credits are split across two
+ * AI platforms.
  */
-export async function getGlobalProvider(): Promise<AiProvider> {
+export type AiTaskCategory = "design" | "content";
+
+const DESIGN_PROMPT_TYPES = new Set([
+  "template_scan",
+  "template_design",
+  "template_variables",
+  "design",
+  "design_generate",
+  "layout",
+  "site_builder",
+  "theme",
+  "css_fix",
+]);
+
+export function inferTaskCategory(promptType?: string): AiTaskCategory {
+  const p = (promptType || "").toLowerCase();
+  if (!p) return "content";
+  if (DESIGN_PROMPT_TYPES.has(p)) return "design";
+  if (p.includes("design") || p.includes("template") || p.includes("layout") || p.includes("css")) {
+    return "design";
+  }
+  return "content";
+}
+
+/**
+ * Resolve the global AI provider for a task category.
+ *
+ * `system_settings.ai_provider_design` / `ai_provider_content` (id = 'global')
+ * win when set; otherwise we fall back to the single `ai_provider` value, then
+ * the AI_PROVIDER env secret, then "lovable".
+ */
+export async function getGlobalProvider(category?: AiTaskCategory): Promise<AiProvider> {
   const sb = getServiceClient();
   if (!sb) return getActiveProvider();
   try {
     const { data } = await sb
       .from("system_settings")
-      .select("ai_provider")
+      .select("ai_provider, ai_provider_design, ai_provider_content")
       .eq("id", "global")
       .maybeSingle();
-    const raw = (data?.ai_provider || "").toLowerCase().trim();
-    if (VALID_PROVIDERS.includes(raw as AiProvider)) return raw as AiProvider;
-    return getActiveProvider();
+
+    const pick = (v: unknown) => {
+      const raw = String(v || "").toLowerCase().trim();
+      return VALID_PROVIDERS.includes(raw as AiProvider) ? (raw as AiProvider) : null;
+    };
+
+    if (category === "design") {
+      const p = pick((data as any)?.ai_provider_design);
+      if (p) return p;
+    } else if (category === "content") {
+      const p = pick((data as any)?.ai_provider_content);
+      if (p) return p;
+    }
+
+    return pick(data?.ai_provider) ?? getActiveProvider();
   } catch {
     return getActiveProvider();
   }
 }
+
 
 export interface UserAiAccess {
   enabled: boolean;
