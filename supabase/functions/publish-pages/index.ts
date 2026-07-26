@@ -732,16 +732,71 @@ function inferPublishType(
 }
 
 // Max pages to publish in a single invocation before self-chaining.
-// Keep this intentionally small: a single WordPress/Shopify publish can include
-// remote CMS writes + media sync, so batching too many pages in one edge request
-// risks the platform 150s IDLE_TIMEOUT.
-const PUBLISH_BATCH_SIZE = 1;
+// A single WordPress/Shopify publish can include remote CMS writes + media sync,
+// so we keep the per-invocation batch modest (timeout guard below still
+// self-chains early if we run long) and instead gain speed by fanning the
+// remainder out across several parallel worker chains.
+const PUBLISH_BATCH_SIZE = 3;
+// How many parallel self-chained workers process the remaining pages.
+// Each worker handles a disjoint slice of page ids, so there is no write
+// contention on the same row; keep this low to stay friendly to the CMS.
+const PUBLISH_FANOUT = 3;
+// Minimum pages left before it's worth fanning out to multiple workers.
+const PUBLISH_FANOUT_MIN = 4;
 // Small delay (ms) between individual page publishes to reduce DB I/O pressure
-const INTER_PUBLISH_DELAY_MS = 200;
+const INTER_PUBLISH_DELAY_MS = 60;
+
 // Edge function soft timeout — leave headroom for the self-chain call
 const PUBLISH_TIMEOUT_MS = 115_000;
 const FUNCTION_SAFE_TIMEOUT_MS = 140_000;
 const PAGE_PUBLISH_TIMEOUT_MS = 125_000;
+
+/**
+ * Continue publishing the remaining page ids.
+ *
+ * Splits the remainder into up to PUBLISH_FANOUT disjoint slices and kicks off
+ * one self-chained invocation per slice, so several pages publish in parallel
+ * instead of strictly one after another. Slices never overlap, so no two
+ * workers touch the same `generated_pages` row.
+ */
+function fanOutPublish(
+  remaining: string[],
+  opts: {
+    supabaseUrl: string;
+    authHeader: string;
+    pubType: string;
+    websiteId?: string | null;
+    allowOverwriteDesign: boolean;
+    asAdmin?: boolean;
+    priorResults: unknown[];
+  },
+) {
+  if (remaining.length === 0) return;
+  const workers = remaining.length >= PUBLISH_FANOUT_MIN
+    ? Math.min(PUBLISH_FANOUT, Math.ceil(remaining.length / PUBLISH_BATCH_SIZE))
+    : 1;
+  const perWorker = Math.ceil(remaining.length / workers);
+  for (let w = 0; w < workers; w++) {
+    const slice = remaining.slice(w * perWorker, (w + 1) * perWorker);
+    if (slice.length === 0) continue;
+    fetch(`${opts.supabaseUrl}/functions/v1/publish-pages`, {
+      method: "POST",
+      headers: { Authorization: opts.authHeader, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        page_ids: slice,
+        publish_type: opts.pubType,
+        website_id: opts.websiteId,
+        overwrite_design: opts.allowOverwriteDesign,
+        elementor_mode: "native",
+        // Only the first worker carries the accumulated history so parallel
+        // workers can't duplicate the same result entries.
+        _prior_results: w === 0 ? opts.priorResults : [],
+        as_admin: opts.asAdmin,
+      }),
+    }).catch((e) => console.error("[PUBLISH] Chain worker failed:", e));
+  }
+}
+
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -1398,19 +1453,21 @@ async function handlePublishPages(req: Request): Promise<Response> {
     for (const page of pages) {
       // Timeout guard — self-chain remaining pages
       if (Date.now() - publishStartTime > PUBLISH_TIMEOUT_MS) {
-        console.log(`[PUBLISH] Timeout after ${pageIndex} pages, self-chaining remaining`);
+        console.log(`[PUBLISH] Timeout after ${pageIndex} pages, chaining remaining`);
         const unprocessedIds = pages.slice(pageIndex).map((p: any) => p.id);
         const allRemaining = [...unprocessedIds, ...remainingIds];
         if (allRemaining.length > 0) {
-          fetch(`${supabaseUrl}/functions/v1/publish-pages`, {
-            method: "POST",
-            headers: { Authorization: authHeader, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              page_ids: allRemaining, publish_type: pubType, website_id: fallbackWebsiteId,
-              overwrite_design: allowOverwriteDesign, elementor_mode: "native", _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
-            }),
-          }).catch(() => {});
+          fanOutPublish(allRemaining, {
+            supabaseUrl,
+            authHeader,
+            pubType,
+            websiteId: fallbackWebsiteId,
+            allowOverwriteDesign,
+            asAdmin: body.as_admin,
+            priorResults: [...priorResults, ...results],
+          });
         }
+
         const allResults = [...priorResults, ...results];
         const published = allResults.filter((r) => r.status === "published").length;
         const failed = allResults.filter((r) => r.status === "failed").length;
@@ -2022,18 +2079,21 @@ async function handlePublishPages(req: Request): Promise<Response> {
       }
     }
 
-    // Self-chain remaining pages if there are more to process
+    // Self-chain remaining pages if there are more to process.
+    // Fan out across several parallel workers so large campaigns publish faster.
     if (remainingIds.length > 0) {
-      console.log(`[PUBLISH] Batch done (${results.length} pages). Self-chaining ${remainingIds.length} remaining pages.`);
-      fetch(`${supabaseUrl}/functions/v1/publish-pages`, {
-        method: "POST",
-        headers: { Authorization: authHeader, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          page_ids: remainingIds, publish_type: pubType, website_id: fallbackWebsiteId,
-          overwrite_design: allowOverwriteDesign, elementor_mode: "native", _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
-        }),
-      }).catch((e) => console.error("[PUBLISH] Self-chain failed:", e));
+      console.log(`[PUBLISH] Batch done (${results.length} pages). Chaining ${remainingIds.length} remaining pages.`);
+      fanOutPublish(remainingIds, {
+        supabaseUrl,
+        authHeader,
+        pubType,
+        websiteId: fallbackWebsiteId,
+        allowOverwriteDesign,
+        asAdmin: body.as_admin,
+        priorResults: [...priorResults, ...results],
+      });
     }
+
 
     // Automatic preview → published HTML/CSS match check. Fire-and-forget so
     // publishing is never blocked; results land in `page_render_checks` and

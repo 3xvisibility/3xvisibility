@@ -3146,7 +3146,7 @@ Deno.serve(async (req) => {
 
       if (pageIdsToPublish.length > 0) {
         const publishUrl = `${supabaseUrl}/functions/v1/publish-pages`;
-        const PUBLISH_CHUNK = 5;
+        const PUBLISH_CHUNK = 3;
         publishQueuedCount += pageIdsToPublish.length;
 
         console.log(`[GENERATE-PAGES] Queueing background publish for batch of ${pageIdsToPublish.length} pages`);
@@ -3349,7 +3349,7 @@ Deno.serve(async (req) => {
         if (pendingPages && pendingPages.length > 0) {
           const pageIds = pendingPages.map((p: any) => p.id);
           const publishUrl = `${supabaseUrl}/functions/v1/publish-pages`;
-          const PUBLISH_CHUNK = 5;
+          const PUBLISH_CHUNK = 3;
 
           console.log(`[GENERATE-PAGES] Queueing fallback publish for ${pageIds.length} pages`);
           await logEvent(
