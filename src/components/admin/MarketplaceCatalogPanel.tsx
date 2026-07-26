@@ -505,6 +505,36 @@ export function MarketplaceCatalogPanel() {
                 placeholder="https://example.com/design"
               />
             </div>
+            <div className="space-y-1.5 rounded-md border border-border p-3">
+              <Label>Import HTML from a URL</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={importUrl}
+                  onChange={(e) => setImportUrl(e.target.value)}
+                  placeholder="https://example.com/landing-page"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && importUrl.trim() && !importMutation.isPending) {
+                      e.preventDefault();
+                      importMutation.mutate();
+                    }
+                  }}
+                />
+                <Button
+                  variant="secondary"
+                  disabled={!importUrl.trim() || importMutation.isPending}
+                  onClick={() => importMutation.mutate()}
+                >
+                  {importMutation.isPending
+                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : <Download className="h-4 w-4" />}
+                  <span className="ml-1">Fetch HTML</span>
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Pulls the live page HTML with its CSS/JS inlined and fills the field below. You can edit it afterwards.
+              </p>
+            </div>
+
             <div className="space-y-1.5">
               <Label>Template HTML</Label>
               <Textarea
