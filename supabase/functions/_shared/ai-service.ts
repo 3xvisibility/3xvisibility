@@ -449,8 +449,8 @@ export interface UserAiAccess {
  * or restrict which AI purposes/features they may use; it can NEVER change
  * which provider is used.
  */
-export async function resolveUserAiAccess(userId?: string): Promise<UserAiAccess> {
-  const globalProvider = await getGlobalProvider();
+export async function resolveUserAiAccess(userId?: string, category?: AiTaskCategory): Promise<UserAiAccess> {
+  const globalProvider = await getGlobalProvider(category);
   if (!userId) return { enabled: true, provider: globalProvider, purposes: [] };
   const sb = getServiceClient();
   if (!sb) return { enabled: true, provider: globalProvider, purposes: [] };
