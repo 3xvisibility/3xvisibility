@@ -1406,19 +1406,21 @@ async function handlePublishPages(req: Request): Promise<Response> {
     for (const page of pages) {
       // Timeout guard — self-chain remaining pages
       if (Date.now() - publishStartTime > PUBLISH_TIMEOUT_MS) {
-        console.log(`[PUBLISH] Timeout after ${pageIndex} pages, self-chaining remaining`);
+        console.log(`[PUBLISH] Timeout after ${pageIndex} pages, chaining remaining`);
         const unprocessedIds = pages.slice(pageIndex).map((p: any) => p.id);
         const allRemaining = [...unprocessedIds, ...remainingIds];
         if (allRemaining.length > 0) {
-          fetch(`${supabaseUrl}/functions/v1/publish-pages`, {
-            method: "POST",
-            headers: { Authorization: authHeader, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              page_ids: allRemaining, publish_type: pubType, website_id: fallbackWebsiteId,
-              overwrite_design: allowOverwriteDesign, elementor_mode: "native", _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
-            }),
-          }).catch(() => {});
+          fanOutPublish(allRemaining, {
+            supabaseUrl,
+            authHeader,
+            pubType,
+            websiteId: fallbackWebsiteId,
+            allowOverwriteDesign,
+            asAdmin: body.as_admin,
+            priorResults: [...priorResults, ...results],
+          });
         }
+
         const allResults = [...priorResults, ...results];
         const published = allResults.filter((r) => r.status === "published").length;
         const failed = allResults.filter((r) => r.status === "failed").length;
