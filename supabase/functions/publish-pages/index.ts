@@ -751,6 +751,53 @@ const PUBLISH_TIMEOUT_MS = 115_000;
 const FUNCTION_SAFE_TIMEOUT_MS = 140_000;
 const PAGE_PUBLISH_TIMEOUT_MS = 125_000;
 
+/**
+ * Continue publishing the remaining page ids.
+ *
+ * Splits the remainder into up to PUBLISH_FANOUT disjoint slices and kicks off
+ * one self-chained invocation per slice, so several pages publish in parallel
+ * instead of strictly one after another. Slices never overlap, so no two
+ * workers touch the same `generated_pages` row.
+ */
+function fanOutPublish(
+  remaining: string[],
+  opts: {
+    supabaseUrl: string;
+    authHeader: string;
+    pubType: string;
+    websiteId?: string | null;
+    allowOverwriteDesign: boolean;
+    asAdmin?: boolean;
+    priorResults: unknown[];
+  },
+) {
+  if (remaining.length === 0) return;
+  const workers = remaining.length >= PUBLISH_FANOUT_MIN
+    ? Math.min(PUBLISH_FANOUT, Math.ceil(remaining.length / PUBLISH_BATCH_SIZE))
+    : 1;
+  const perWorker = Math.ceil(remaining.length / workers);
+  for (let w = 0; w < workers; w++) {
+    const slice = remaining.slice(w * perWorker, (w + 1) * perWorker);
+    if (slice.length === 0) continue;
+    fetch(`${opts.supabaseUrl}/functions/v1/publish-pages`, {
+      method: "POST",
+      headers: { Authorization: opts.authHeader, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        page_ids: slice,
+        publish_type: opts.pubType,
+        website_id: opts.websiteId,
+        overwrite_design: opts.allowOverwriteDesign,
+        elementor_mode: "native",
+        // Only the first worker carries the accumulated history so parallel
+        // workers can't duplicate the same result entries.
+        _prior_results: w === 0 ? opts.priorResults : [],
+        as_admin: opts.asAdmin,
+      }),
+    }).catch((e) => console.error("[PUBLISH] Chain worker failed:", e));
+  }
+}
+
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
