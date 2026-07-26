@@ -437,10 +437,12 @@ export default function DashboardPage() {
       <UsageLimitBanner type="ai" used={aiUsed} limit={aiLimit} />
 
       {/* Usage Overview Widgets */}
+      <TrialStatusWidget />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <PagesUsageWidget />
         <AiCreditsWidget />
       </div>
+
 
 
 
