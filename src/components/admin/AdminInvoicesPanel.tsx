@@ -256,6 +256,8 @@ export function AdminInvoicesPanel() {
               <SelectItem value="paid">Paid</SelectItem>
               <SelectItem value="partially_refunded">Partially refunded</SelectItem>
               <SelectItem value="refunded">Refunded</SelectItem>
+              <SelectItem value="disputed">Disputed (chargeback)</SelectItem>
+              <SelectItem value="voided">Voided (chargeback lost)</SelectItem>
             </SelectContent>
           </Select>
           <Select value={range} onValueChange={setRange}>
