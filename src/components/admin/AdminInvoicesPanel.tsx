@@ -47,6 +47,9 @@ const statusTone = (status: string) => {
   if (status === "paid") return "bg-green-500/15 text-green-500 border-green-500/30";
   if (status === "partially_refunded")
     return "bg-amber-500/15 text-amber-500 border-amber-500/30";
+  if (status === "refunded") return "bg-orange-500/15 text-orange-500 border-orange-500/30";
+  if (status === "disputed") return "bg-yellow-500/15 text-yellow-600 border-yellow-500/30";
+  if (status === "voided") return "bg-destructive/15 text-destructive border-destructive/30";
   return "bg-muted text-muted-foreground border-border";
 };
 
