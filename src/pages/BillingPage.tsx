@@ -148,8 +148,9 @@ function getFeatureList(name: PlanName, t: (key: string, vars?: Record<string, s
 }
 
 export default function BillingPage() {
-  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, resetDate, isLoading: subLoading } = useSubscription();
+  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, resetDate, status: subStatus, isTrialing, isLoading: subLoading } = useSubscription();
   const [downgradeTarget, setDowngradeTarget] = useState<PlanName | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<PlanName | null>(null);
 
   const { toast } = useToast();
   const navigate = useNavigate();
