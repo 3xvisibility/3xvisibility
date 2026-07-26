@@ -176,6 +176,35 @@ export function MarketplaceCatalogPanel() {
 
   const emptyForm = { name: "", description: "", category: "business", source_url: "", html: "" };
   const [form, setForm] = useState(emptyForm);
+  const [importUrl, setImportUrl] = useState("");
+
+  /** Pull the full rendered HTML (with inlined CSS/JS) from any public URL. */
+  const importMutation = useMutation({
+    mutationFn: async () => {
+      const url = importUrl.trim();
+      if (!/^https?:\/\//i.test(url)) throw new Error("Enter a full URL starting with http(s)://");
+      const { data, error } = await supabase.functions.invoke("scan-template", { body: { url } });
+      if (error) throw error;
+      const body = data?.bodyHtml || "";
+      if (!body || body.replace(/<[^>]*>/g, "").trim().length < 50) {
+        throw new Error("Could not read enough HTML from that URL. Paste the page source instead.");
+      }
+      const styles = data?.headStyles ? `<style>\n${data.headStyles}\n</style>\n` : "";
+      return { html: `${styles}${body}`, title: data?.title as string | undefined, url };
+    },
+    onSuccess: ({ html, title, url }) => {
+      setForm((f) => ({
+        ...f,
+        html,
+        source_url: f.source_url || url,
+        name: f.name || title || "",
+      }));
+      toast({ title: "HTML imported", description: "Review it below, then preview and save." });
+    },
+    onError: (e: any) =>
+      toast({ title: "Import failed", description: e.message, variant: "destructive" }),
+  });
+
 
   const openCreate = () => {
     setEditingId(null);
