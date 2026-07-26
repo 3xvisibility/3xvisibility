@@ -67,6 +67,19 @@ export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusW
     ? Math.min(100, Math.max(0, ((TRIAL_LENGTH_DAYS - trialDaysLeft) / TRIAL_LENGTH_DAYS) * 100))
     : 0;
 
+  const meters = [
+    { label: "Pages", used: pagesUsed, limit: pagesLimit },
+    { label: "AI credits", used: aiUsed, limit: aiLimit },
+    { label: "Sites", used: sitesConnected, limit: sitesLimit },
+  ].map((m) => ({
+    ...m,
+    // -1 means unlimited → never show a filled bar or a near-cap warning.
+    percent: m.limit > 0 ? Math.min(100, Math.round((m.used / m.limit) * 100)) : 0,
+  }));
+  const nearCap = isLoading ? [] : meters.filter((m) => m.limit > 0 && m.percent >= 80);
+  const atCap = nearCap.filter((m) => m.percent >= 100);
+
+
   const openCustomerPortal = async () => {
     setPortalLoading(true);
     try {
