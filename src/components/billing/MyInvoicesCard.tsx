@@ -30,14 +30,55 @@ export function MyInvoicesCard() {
     },
   });
 
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const runBulk = async (mode: "zip" | "merged") => {
+    if (invoices.length === 0) return;
+    setBulkBusy(true);
+    try {
+      if (mode === "zip") await downloadInvoicesZip(invoices);
+      else downloadMergedInvoicePdf(invoices);
+      toast.success(`${invoices.length} invoices downloaded`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Bulk download failed");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   if (!isLoading && invoices.length === 0) return null;
 
   return (
     <Card className="shadow-surface border-0">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0 gap-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <FileText className="h-4 w-4 text-primary" /> Invoices
         </CardTitle>
+        {invoices.length > 1 && (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={bulkBusy}
+              onClick={() => runBulk("zip")}
+            >
+              {bulkBusy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+              ) : (
+                <FileArchive className="h-3.5 w-3.5 mr-1" />
+              )}
+              Download all (ZIP)
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={bulkBusy}
+              onClick={() => runBulk("merged")}
+            >
+              <FilePlus2 className="h-3.5 w-3.5 mr-1" /> Merged PDF
+            </Button>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-2">
         {isLoading ? (
