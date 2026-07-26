@@ -571,6 +571,20 @@ serve(async (req) => {
           origin: APP_ORIGIN,
         });
 
+        // Notify the customer, but only when the invoice actually changed
+        // state against them (won disputes need no customer email).
+        if (!won && target.dispute_status !== dispute.status) {
+          await notifyInvoiceStatus({
+            invoice: target,
+            statusKey: lost ? "voided" : "disputed",
+            amountCents: dispute.amount ?? 0,
+            currency: dispute.currency ?? target.currency,
+            reason: dispute.reason ?? null,
+            idempotencyKey: `inv-${target.id}-dispute-${dispute.id}-${dispute.status}`,
+          });
+        }
+
+
         log("invoice_dispute_synced", {
           invoice: target.invoice_number,
           disputeStatus: dispute.status,
