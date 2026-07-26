@@ -543,6 +543,8 @@ export default function BillingPage() {
           </div>
         </CardContent>
       </Card>
+
+      <MyInvoicesCard />
     </div>
   );
 }
