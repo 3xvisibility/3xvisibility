@@ -28,6 +28,12 @@ export interface InvoiceRecord {
   stripe_customer_id?: string | null;
   stripe_payment_intent?: string | null;
   user_id?: string | null;
+  dispute_status?: string | null;
+  dispute_reason?: string | null;
+  disputed_amount?: number | null;
+  disputed_at?: string | null;
+  refunded_at?: string | null;
+  voided_at?: string | null;
 }
 
 export const formatInvoiceMoney = (cents: number, currency: string) =>

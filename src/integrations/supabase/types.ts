@@ -1355,6 +1355,10 @@ export type Database = {
           customer_email: string | null
           customer_name: string | null
           description: string | null
+          dispute_reason: string | null
+          dispute_status: string | null
+          disputed_amount: number
+          disputed_at: string | null
           hosted_invoice_url: string | null
           id: string
           invoice_number: string
@@ -1363,6 +1367,7 @@ export type Database = {
           line_items: Json
           plan: string | null
           receipt_url: string | null
+          refunded_at: string | null
           status: string
           stripe_charge_id: string | null
           stripe_customer_id: string | null
@@ -1370,6 +1375,7 @@ export type Database = {
           stripe_payment_intent: string | null
           updated_at: string
           user_id: string | null
+          voided_at: string | null
         }
         Insert: {
           amount_refunded?: number
@@ -1380,6 +1386,10 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           description?: string | null
+          dispute_reason?: string | null
+          dispute_status?: string | null
+          disputed_amount?: number
+          disputed_at?: string | null
           hosted_invoice_url?: string | null
           id?: string
           invoice_number: string
@@ -1388,6 +1398,7 @@ export type Database = {
           line_items?: Json
           plan?: string | null
           receipt_url?: string | null
+          refunded_at?: string | null
           status?: string
           stripe_charge_id?: string | null
           stripe_customer_id?: string | null
@@ -1395,6 +1406,7 @@ export type Database = {
           stripe_payment_intent?: string | null
           updated_at?: string
           user_id?: string | null
+          voided_at?: string | null
         }
         Update: {
           amount_refunded?: number
@@ -1405,6 +1417,10 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           description?: string | null
+          dispute_reason?: string | null
+          dispute_status?: string | null
+          disputed_amount?: number
+          disputed_at?: string | null
           hosted_invoice_url?: string | null
           id?: string
           invoice_number?: string
@@ -1413,6 +1429,7 @@ export type Database = {
           line_items?: Json
           plan?: string | null
           receipt_url?: string | null
+          refunded_at?: string | null
           status?: string
           stripe_charge_id?: string | null
           stripe_customer_id?: string | null
@@ -1420,6 +1437,7 @@ export type Database = {
           stripe_payment_intent?: string | null
           updated_at?: string
           user_id?: string | null
+          voided_at?: string | null
         }
         Relationships: []
       }

@@ -102,11 +102,24 @@ export function MyInvoicesCard() {
                     className={
                       inv.status === "paid"
                         ? "bg-green-500/15 text-green-500 border-green-500/30"
-                        : "bg-muted text-muted-foreground border-border"
+                        : inv.status === "partially_refunded"
+                          ? "bg-amber-500/15 text-amber-500 border-amber-500/30"
+                          : inv.status === "refunded"
+                            ? "bg-orange-500/15 text-orange-500 border-orange-500/30"
+                            : inv.status === "disputed"
+                              ? "bg-yellow-500/15 text-yellow-600 border-yellow-500/30"
+                              : inv.status === "voided"
+                                ? "bg-destructive/15 text-destructive border-destructive/30"
+                                : "bg-muted text-muted-foreground border-border"
                     }
                   >
                     {inv.status.replace("_", " ")}
                   </Badge>
+                  {(inv.amount_refunded || 0) > 0 && (
+                    <span className="text-[11px] text-destructive">
+                      -{formatInvoiceMoney(inv.amount_refunded, inv.currency)} refunded
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm font-medium truncate">
                   {inv.plan || inv.description || "Subscription payment"}

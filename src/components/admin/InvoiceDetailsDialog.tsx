@@ -67,7 +67,13 @@ export function InvoiceDetailsDialog({ invoice, open, onOpenChange }: Props) {
                   ? "bg-green-500/15 text-green-500 border-green-500/30"
                   : invoice.status === "partially_refunded"
                     ? "bg-amber-500/15 text-amber-500 border-amber-500/30"
-                    : "bg-muted text-muted-foreground border-border"
+                    : invoice.status === "refunded"
+                      ? "bg-orange-500/15 text-orange-500 border-orange-500/30"
+                      : invoice.status === "disputed"
+                        ? "bg-yellow-500/15 text-yellow-600 border-yellow-500/30"
+                        : invoice.status === "voided"
+                          ? "bg-destructive/15 text-destructive border-destructive/30"
+                          : "bg-muted text-muted-foreground border-border"
               }
             >
               {invoice.status.replace("_", " ")}
@@ -99,7 +105,33 @@ export function InvoiceDetailsDialog({ invoice, open, onOpenChange }: Props) {
               </div>
             </div>
 
+            {/* Chargeback / dispute details */}
+            {invoice.dispute_status && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-1">
+                <p className="text-[11px] uppercase text-destructive font-medium">
+                  Chargeback / dispute
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2 text-sm">
+                  <Field label="Dispute status" value={invoice.dispute_status} />
+                  <Field label="Reason" value={invoice.dispute_reason} />
+                  <Field
+                    label="Disputed amount"
+                    value={formatInvoiceMoney(invoice.disputed_amount || 0, invoice.currency)}
+                  />
+                  <Field
+                    label="Opened"
+                    value={
+                      invoice.disputed_at
+                        ? new Date(invoice.disputed_at).toLocaleString()
+                        : null
+                    }
+                  />
+                </div>
+              </div>
+            )}
+
             <Separator />
+
 
             {/* Customer + dates */}
             <div className="grid gap-4 sm:grid-cols-2">
