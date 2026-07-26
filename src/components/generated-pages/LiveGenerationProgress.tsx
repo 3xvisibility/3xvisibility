@@ -181,6 +181,33 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
             );
           })}
         </div>
+
+        <AlertDialog open={!!confirmJob} onOpenChange={(open) => !open && setConfirmJob(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Stop this generation job?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {confirmJob
+                  ? `"${confirmJob.name}" has generated ${confirmJob.done} of ${confirmJob.total} pages. Cancelling stops the job and returns the campaign to draft. Already generated pages are kept, and you can restart generation later.`
+                  : ""}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep generating</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  if (confirmJob) {
+                    cancelMutation.mutate({ id: confirmJob.id, campaign_id: confirmJob.campaign_id });
+                  }
+                  setConfirmJob(null);
+                }}
+              >
+                Yes, cancel job
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
