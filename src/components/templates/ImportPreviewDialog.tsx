@@ -230,6 +230,64 @@ export function ImportPreviewDialog({
     return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${baseTag}<style>${revealCss}</style></head><body>${injected}</body></html>`;
   }, [editedContent, sourceUrl]);
 
+  // ------- Preview loading progress (assets: CSS + images) -------
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [previewReady, setPreviewReady] = useState(false);
+  const [previewProgress, setPreviewProgress] = useState(0);
+  const [previewStage, setPreviewStage] = useState("Preparing preview…");
+
+  // Reset whenever the rendered document changes.
+  useEffect(() => {
+    if (!open) return;
+    setPreviewReady(false);
+    setPreviewProgress(8);
+    setPreviewStage("Preparing preview…");
+  }, [open, highlightedHtml]);
+
+  // Creep the bar forward while the document is still parsing/fetching.
+  useEffect(() => {
+    if (previewReady || !open) return;
+    const id = window.setInterval(() => {
+      setPreviewProgress((p) => (p < 85 ? p + Math.max(1, (85 - p) * 0.08) : p));
+    }, 180);
+    return () => window.clearInterval(id);
+  }, [previewReady, open]);
+
+  const handleIframeLoad = () => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) {
+      setPreviewProgress(100);
+      setPreviewReady(true);
+      return;
+    }
+    setPreviewStage("Loading styles & images…");
+
+    const start = Date.now();
+    const tick = window.setInterval(() => {
+      const sheets = Array.from(doc.querySelectorAll("link[rel~=stylesheet]")) as HTMLLinkElement[];
+      const imgs = Array.from(doc.images);
+      const total = sheets.length + imgs.length;
+      const doneSheets = sheets.filter((l) => {
+        try { return !!l.sheet || l.dataset.failed === "1"; } catch { return true; }
+      }).length;
+      const doneImgs = imgs.filter((i) => i.complete).length;
+      const done = doneSheets + doneImgs;
+      const pct = total === 0 ? 100 : 40 + Math.round((done / total) * 60);
+      setPreviewProgress((p) => Math.max(p, pct));
+      setPreviewStage(
+        total === 0 ? "Rendering…" : `Loading assets ${done}/${total}…`,
+      );
+
+      const timedOut = Date.now() - start > 8000;
+      if (done >= total || timedOut) {
+        window.clearInterval(tick);
+        setPreviewProgress(100);
+        setPreviewStage("Ready");
+        window.setTimeout(() => setPreviewReady(true), 150);
+      }
+    }, 200);
+  };
+
 
   // ------- Mutations against `rows` (source of truth) -------
 
