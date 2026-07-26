@@ -294,6 +294,10 @@ export default function BillingPage() {
         <p className="text-muted-foreground mt-1">{t("billing.description")}</p>
       </div>
 
+      <TrialStatusWidget hideUpgradeAction />
+
+
+
       {/* Usage overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="shadow-surface border-0">
