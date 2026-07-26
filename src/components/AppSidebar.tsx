@@ -97,6 +97,21 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     }
     checkAdmin();
   }, []);
+  const { data: keywordGroups = [] } = useQuery({
+    queryKey: ["sidebar-keyword-groups", currentWorkspace?.id],
+    enabled: !!currentWorkspace?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pgp_keyword_groups")
+        .select("id, name")
+        .eq("workspace_id", currentWorkspace!.id)
+        .order("updated_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data || []) as { id: string; name: string }[];
+    },
+  });
+
 
   const onboardingMap: Record<string, string> = {
     "websites": "websites",
