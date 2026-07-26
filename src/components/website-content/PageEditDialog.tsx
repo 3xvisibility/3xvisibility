@@ -51,6 +51,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
 import { extractEdgeError } from "@/lib/edge-function-error";
+import { AiDraftReviewDialog, type AiDraftField } from "@/components/ai/AiDraftReviewDialog";
 import {
   readPageEditorDraft,
   writePageEditorDraft,
