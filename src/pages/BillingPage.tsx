@@ -38,6 +38,7 @@ import { PaymentMethods } from "@/components/billing/PaymentMethods";
 import { MyInvoicesCard } from "@/components/billing/MyInvoicesCard";
 import { TrialStatusWidget } from "@/components/billing/TrialStatusWidget";
 import { DowngradePlanDialog } from "@/components/billing/DowngradePlanDialog";
+import { CheckoutConfirmDialog } from "@/components/billing/CheckoutConfirmDialog";
 
 
 import { logAudit } from "@/lib/audit";
