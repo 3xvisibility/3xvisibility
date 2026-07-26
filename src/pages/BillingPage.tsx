@@ -267,6 +267,22 @@ export default function BillingPage() {
     return { label: t("billing.downgrade"), disabled: false, variant: "outline" as const };
   };
 
+  // Upgrades go through Stripe checkout; downgrades are handled in-app so the
+  // new limits apply immediately with a clear billing effective date.
+  const handlePlanClick = (name: PlanName) => {
+    if (planOrder.indexOf(name) < currentIdx) {
+      setDowngradeTarget(name);
+      return;
+    }
+    handleCheckout(name);
+  };
+
+  const refreshSubscription = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["user-subscription"] });
+    await queryClient.invalidateQueries({ queryKey: ["dashboard-ai-usage"] });
+  };
+
+
   const handleSuccessDismiss = () => {
     setShowSuccess(false);
     setSearchParams({}, { replace: true });
