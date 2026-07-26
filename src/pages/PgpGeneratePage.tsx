@@ -1426,9 +1426,10 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           throw genErr;
         }
 
+        setGenStage("Connection dropped — checking saved pages…");
         toast({
           title: "Still generating…",
-          description: "The connection dropped but generation continues in the background.",
+          description: "The connection dropped, so I’ll follow saved page progress instead of keeping you stuck here.",
         });
 
         // Ask the server to pick up where it left off (idempotent — it skips
@@ -1438,21 +1439,47 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           .catch(() => {});
 
 
-        // Wait for the job to reach a terminal state (max ~15 min).
-        const deadline = Date.now() + 15 * 60 * 1000;
+        // Wait for the job or generated page count to reach a terminal state.
+        // The Edge Function can finish the pages but lose the final job update;
+        // in that case, count the saved pages as completion and move on.
+        const deadline = Date.now() + 5 * 60 * 1000;
         let settled = false;
         let noJobTicks = 0;
         let lastProcessed = -1;
         let stalledTicks = 0;
         while (Date.now() < deadline) {
           await new Promise((r) => setTimeout(r, 3000));
-          const { data: job } = await supabase
-            .from("generation_jobs")
-            .select("processed_rows, success_count, error_count, total_rows, status")
-            .eq("campaign_id", campaign.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
+          const [{ data: job }, { data: latestCampaign }, { count: savedPagesCount }] = await Promise.all([
+            supabase
+              .from("generation_jobs")
+              .select("processed_rows, success_count, error_count, total_rows, status")
+              .eq("campaign_id", campaign.id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+            supabase
+              .from("campaigns")
+              .select("status, processed_rows, failed_rows")
+              .eq("id", campaign.id)
+              .maybeSingle(),
+            supabase
+              .from("generated_pages")
+              .select("id", { count: "exact", head: true })
+              .eq("campaign_id", campaign.id)
+              .neq("status", "failed"),
+          ]);
+
+          const savedCount = savedPagesCount || 0;
+          const campaignProcessed = latestCampaign?.processed_rows || 0;
+          const processedFallback = Math.max(savedCount, campaignProcessed);
+          const failedFallback = latestCampaign?.failed_rows || 0;
+          const totalFallback = rows.length;
+          if (processedFallback >= totalFallback || latestCampaign?.status === "completed" || latestCampaign?.status === "failed") {
+            setGenProgress({ processed: Math.min(totalFallback, processedFallback + failedFallback), total: totalFallback, errors: failedFallback });
+            settled = true;
+            break;
+          }
+
           if (!job) {
             // No job at all → the function never started (real failure).
             if (++noJobTicks >= 10) { clearInterval(pollInterval); throw genErr; }
@@ -1460,7 +1487,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           }
 
           setGenProgress({
-            processed: job.processed_rows || 0,
+            processed: Math.max(job.processed_rows || 0, processedFallback),
             total: job.total_rows || rows.length,
             errors: job.error_count || 0,
           });
@@ -1469,15 +1496,16 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
           // Stall watchdog: if nothing progressed for ~45s the worker was most
           // likely recycled — kick a resume so the run finishes by itself.
-          if ((job.processed_rows || 0) === lastProcessed) {
+          if (Math.max(job.processed_rows || 0, processedFallback) === lastProcessed) {
             stalledTicks++;
             if (stalledTicks % 15 === 0) {
+              setGenStage("Still processing — retrying safely…");
               supabase.functions
                 .invoke("generate-pages", { body: { campaign_id: campaign.id, action: "resume" } })
                 .catch(() => {});
             }
           } else {
-            lastProcessed = job.processed_rows || 0;
+            lastProcessed = Math.max(job.processed_rows || 0, processedFallback);
             stalledTicks = 0;
           }
         }
@@ -3506,7 +3534,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               >
 
                 {isGenerating ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Publishing…</>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
                 ) : (
                   <><Play className="h-4 w-4" /> Generate & Publish Pages</>
                 )}
