@@ -42,12 +42,8 @@ interface IssuerDetails {
   website?: string;
 }
 
-/**
- * Renders a clean, print-ready A4 invoice PDF from a stored invoice record.
- * Everything is drawn with jsPDF primitives so no fonts/images need loading.
- */
-export function generateInvoicePdf(invoice: InvoiceRecord, issuer: IssuerDetails = {}) {
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
+/** Draws one invoice onto the current page of an existing jsPDF document. */
+function renderInvoice(doc: jsPDF, invoice: InvoiceRecord, issuer: IssuerDetails = {}) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 48;
   const right = pageWidth - margin;
