@@ -37,6 +37,8 @@ import { CheckoutCanceledOverlay } from "@/components/billing/CheckoutCanceledOv
 import { PaymentMethods } from "@/components/billing/PaymentMethods";
 import { MyInvoicesCard } from "@/components/billing/MyInvoicesCard";
 import { TrialStatusWidget } from "@/components/billing/TrialStatusWidget";
+import { DowngradePlanDialog } from "@/components/billing/DowngradePlanDialog";
+
 
 import { logAudit } from "@/lib/audit";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
