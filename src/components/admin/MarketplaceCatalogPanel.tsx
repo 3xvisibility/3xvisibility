@@ -131,17 +131,48 @@ function extractVariables(html: string): string[] {
   return Array.from(out);
 }
 
+/** One card in the unified grid — either a DB row or a bundled template. */
+interface GridItem {
+  key: string;
+  id: string | null; // DB id (null for built-ins)
+  builtin: boolean;
+  name: string;
+  description: string;
+  category: string;
+  html: string;
+  variables: string[];
+  source_url: string | null;
+}
+
+function Thumb({ html }: { html: string }) {
+  const doc = `<!doctype html><html><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>body{margin:0}</style></head><body>${html}</body></html>`;
+  return (
+    <div className="relative h-40 w-full overflow-hidden rounded-t-lg border-b bg-muted/30">
+      <iframe
+        title="thumb"
+        sandbox="allow-same-origin"
+        srcDoc={doc}
+        scrolling="no"
+        className="pointer-events-none absolute left-0 top-0 origin-top-left border-0 bg-background"
+        style={{ width: "1280px", height: "800px", transform: "scale(0.28)" }}
+      />
+    </div>
+  );
+}
+
 export function MarketplaceCatalogPanel() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
-  const [builtinSearch, setBuiltinSearch] = useState("");
+  const [visible, setVisible] = useState(24);
   const [addOpen, setAddOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [toDelete, setToDelete] = useState<MarketplaceRow | null>(null);
+  const [toDelete, setToDelete] = useState<GridItem | null>(null);
   const [step, setStep] = useState<"edit" | "preview">("edit");
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
-  const [previewRow, setPreviewRow] = useState<MarketplaceRow | null>(null);
+  const [previewItem, setPreviewItem] = useState<GridItem | null>(null);
 
   const emptyForm = { name: "", description: "", category: "business", source_url: "", html: "" };
   const [form, setForm] = useState(emptyForm);
@@ -153,14 +184,15 @@ export function MarketplaceCatalogPanel() {
     setAddOpen(true);
   };
 
-  const openEdit = (r: MarketplaceRow) => {
-    setEditingId(r.id);
+  /** Built-ins open pre-filled but save as a new editable marketplace row. */
+  const openEdit = (t: GridItem) => {
+    setEditingId(t.builtin ? null : t.id);
     setForm({
-      name: r.name,
-      description: r.description || "",
-      category: r.category || "business",
-      source_url: r.source_url || "",
-      html: r.preview_html || "",
+      name: t.name,
+      description: t.description || "",
+      category: t.category || "business",
+      source_url: t.source_url || "",
+      html: t.html || "",
     });
     setStep("edit");
     setAddOpen(true);
@@ -221,7 +253,6 @@ export function MarketplaceCatalogPanel() {
       toast({ title: "Could not save template", description: e.message, variant: "destructive" }),
   });
 
-
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("marketplace_templates").delete().eq("id", id);
@@ -236,28 +267,45 @@ export function MarketplaceCatalogPanel() {
       toast({ title: "Delete failed", description: e.message, variant: "destructive" }),
   });
 
+  /** DB templates first, then the bundled catalog — one single grid. */
+  const items = useMemo<GridItem[]>(() => {
+    const custom: GridItem[] = rows.map((r) => ({
+      key: `db-${r.id}`,
+      id: r.id,
+      builtin: false,
+      name: r.name,
+      description: r.description || "",
+      category: r.category || "business",
+      html: r.preview_html || "",
+      variables: r.variables || [],
+      source_url: r.source_url,
+    }));
+    const builtin: GridItem[] = COMMUNITY_TEMPLATES.map((t) => ({
+      key: `builtin-${t.id}`,
+      id: null,
+      builtin: true,
+      name: t.name,
+      description: t.description || "",
+      category: t.category || "business",
+      html: t.content || "",
+      variables: t.variables || [],
+      source_url: null,
+    }));
+    return [...custom, ...builtin];
+  }, [rows]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(
-      (r) =>
-        r.name.toLowerCase().includes(q) ||
-        (r.description || "").toLowerCase().includes(q) ||
-        (r.category || "").toLowerCase().includes(q),
-    );
-  }, [rows, search]);
-
-  const builtins = useMemo(() => {
-    const q = builtinSearch.trim().toLowerCase();
-    const list = COMMUNITY_TEMPLATES;
-    if (!q) return list;
-    return list.filter(
+    if (!q) return items;
+    return items.filter(
       (t) =>
         t.name.toLowerCase().includes(q) ||
-        (t.description || "").toLowerCase().includes(q) ||
-        (t.category || "").toLowerCase().includes(q),
+        t.description.toLowerCase().includes(q) ||
+        t.category.toLowerCase().includes(q),
     );
-  }, [builtinSearch]);
+  }, [items, search]);
+
+  const shown = filtered.slice(0, visible);
 
   return (
     <div className="space-y-4">
@@ -265,18 +313,16 @@ export function MarketplaceCatalogPanel() {
         <Store className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-semibold">Marketplace</h2>
         <Badge variant="outline" className="text-muted-foreground">
-          {rows.length} custom · {COMMUNITY_TEMPLATES.length} built-in
+          {items.length} templates
         </Badge>
       </div>
 
       <Tabs defaultValue="custom" className="space-y-4">
         <TabsList>
           <TabsTrigger value="custom">Marketplace templates</TabsTrigger>
-          <TabsTrigger value="builtin">Built-in catalog</TabsTrigger>
           <TabsTrigger value="submissions">User submissions</TabsTrigger>
         </TabsList>
 
-        {/* ── Admin-managed templates ── */}
         <TabsContent value="custom" className="space-y-3">
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
             <div className="relative">
@@ -284,7 +330,7 @@ export function MarketplaceCatalogPanel() {
               <Input
                 placeholder="Search templates..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setVisible(24); }}
                 className="pl-8 w-full sm:w-64"
               />
             </div>
@@ -301,95 +347,70 @@ export function MarketplaceCatalogPanel() {
             <Card>
               <CardContent className="py-14 text-center text-muted-foreground space-y-3">
                 <Package className="h-8 w-8 mx-auto opacity-50" />
-                <p>No custom marketplace templates yet.</p>
+                <p>No templates match your search.</p>
                 <Button variant="outline" onClick={openCreate}>
-                  <Plus className="h-4 w-4 mr-1" /> Add your first template
+                  <Plus className="h-4 w-4 mr-1" /> Add a template
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <ScrollArea className="h-[520px] pr-2">
-              <div className="space-y-2">
-                {filtered.map((r) => (
-                  <Card key={r.id}>
-                    <CardContent className="flex flex-col sm:flex-row sm:items-center gap-3 py-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium truncate">{r.name}</span>
-                          <Badge variant="outline" className="text-muted-foreground">{r.category}</Badge>
-                          <Badge variant="outline" className="text-muted-foreground">
-                            {(r.variables || []).length} vars
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1 truncate">
-                          {r.description || "(no description)"} · {new Date(r.created_at).toLocaleDateString()}
-                        </p>
+            <ScrollArea className="h-[620px] pr-2">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {shown.map((t) => (
+                  <Card key={t.key} className="overflow-hidden flex flex-col">
+                    <Thumb html={t.html} />
+                    <CardContent className="p-3 flex flex-col gap-2 flex-1">
+                      <div className="flex items-start gap-2">
+                        <span className="font-medium text-sm leading-tight line-clamp-2 flex-1">{t.name}</span>
+                        <Badge variant={t.builtin ? "outline" : "secondary"} className="shrink-0 text-[10px]">
+                          {t.builtin ? "Built-in" : "Custom"}
+                        </Badge>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0"
-                        onClick={() => { setPreviewDevice("desktop"); setPreviewRow(r); }}
-                      >
-                        <Eye className="h-4 w-4 mr-1" /> Preview
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0"
-                        onClick={() => openEdit(r)}
-                      >
-                        <Pencil className="h-4 w-4 mr-1" /> Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive shrink-0"
-                        onClick={() => setToDelete(r)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {t.description || "(no description)"}
+                      </p>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground">{t.category}</Badge>
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                          {t.variables.length} vars
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1 mt-auto pt-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => { setPreviewDevice("desktop"); setPreviewItem(t); }}
+                        >
+                          <Eye className="h-4 w-4 mr-1" /> Preview
+                        </Button>
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(t)}>
+                          <Pencil className="h-4 w-4 mr-1" /> {t.builtin ? "Copy & edit" : "Edit"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={t.builtin}
+                          title={t.builtin ? "Built-in templates ship with the app" : "Delete"}
+                          className="text-destructive hover:text-destructive shrink-0"
+                          onClick={() => setToDelete(t)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
+              {shown.length < filtered.length && (
+                <div className="flex justify-center py-4">
+                  <Button variant="outline" onClick={() => setVisible((v) => v + 24)}>
+                    Load more ({filtered.length - shown.length} left)
+                  </Button>
+                </div>
+              )}
             </ScrollArea>
           )}
-        </TabsContent>
-
-        {/* ── Bundled catalog (read-only) ── */}
-        <TabsContent value="builtin" className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search built-in templates..."
-              value={builtinSearch}
-              onChange={(e) => setBuiltinSearch(e.target.value)}
-              className="pl-8 w-full sm:w-64"
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            These {COMMUNITY_TEMPLATES.length} templates ship with the app and are always available to users.
-          </p>
-          <ScrollArea className="h-[520px] pr-2">
-            <div className="space-y-2">
-              {builtins.map((t) => (
-                <Card key={t.id}>
-                  <CardContent className="flex items-center gap-3 py-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium truncate">{t.name}</span>
-                        <Badge variant="outline" className="text-muted-foreground">{t.category}</Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1 truncate">{t.description}</p>
-                    </div>
-                    <Badge variant="outline" className="shrink-0 text-muted-foreground">Built-in</Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
         </TabsContent>
 
         <TabsContent value="submissions">
@@ -397,7 +418,7 @@ export function MarketplaceCatalogPanel() {
         </TabsContent>
       </Tabs>
 
-      {/* Add dialog — step 1: details, step 2: render preview */}
+      {/* Add / edit dialog — step 1: details, step 2: render preview */}
       <Dialog
         open={addOpen}
         onOpenChange={(o) => {
@@ -412,7 +433,6 @@ export function MarketplaceCatalogPanel() {
                 ? editingId ? "Edit marketplace template" : "Add marketplace template"
                 : `Preview — ${form.name || "Untitled"}`}
             </DialogTitle>
-
             <DialogDescription>
               {step === "edit"
                 ? <>Paste the full HTML (with inline CSS/JS). Variables like {"{{city}}"} are detected automatically.</>
@@ -428,7 +448,7 @@ export function MarketplaceCatalogPanel() {
                 <Input
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="Plumber Landing Page"
+                  placeholder="Plumber landing page"
                 />
               </div>
               <div className="space-y-1.5">
@@ -453,17 +473,16 @@ export function MarketplaceCatalogPanel() {
               <Input
                 value={form.source_url}
                 onChange={(e) => setForm((f) => ({ ...f, source_url: e.target.value }))}
-                placeholder="https://example.com/page"
+                placeholder="https://example.com/design"
               />
             </div>
             <div className="space-y-1.5">
-              <Label>HTML</Label>
+              <Label>Template HTML</Label>
               <Textarea
                 value={form.html}
                 onChange={(e) => setForm((f) => ({ ...f, html: e.target.value }))}
-                rows={10}
-                className="font-mono text-xs"
                 placeholder="<section>...</section>"
+                className="font-mono text-xs h-56"
               />
               <p className="text-xs text-muted-foreground">
                 Detected variables: {extractVariables(form.html).join(", ") || "none yet"}
@@ -501,7 +520,6 @@ export function MarketplaceCatalogPanel() {
                 >
                   {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
                   {editingId ? "Save changes" : "Save template"}
-
                 </Button>
               </>
             )}
@@ -509,25 +527,24 @@ export function MarketplaceCatalogPanel() {
         </DialogContent>
       </Dialog>
 
-      {/* Preview a saved template */}
-      <Dialog open={!!previewRow} onOpenChange={(o) => !o && setPreviewRow(null)}>
+      {/* Full preview */}
+      <Dialog open={!!previewItem} onOpenChange={(o) => !o && setPreviewItem(null)}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Preview — {previewRow?.name}</DialogTitle>
-            <DialogDescription>{previewRow?.description || "Saved marketplace template"}</DialogDescription>
+            <DialogTitle>Preview — {previewItem?.name}</DialogTitle>
+            <DialogDescription>{previewItem?.description || "Marketplace template"}</DialogDescription>
           </DialogHeader>
           <TemplatePreview
-            html={previewRow?.preview_html || ""}
+            html={previewItem?.html || ""}
             device={previewDevice}
             onDeviceChange={setPreviewDevice}
-            variables={previewRow?.variables || []}
+            variables={previewItem?.variables || []}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPreviewRow(null)}>Close</Button>
+            <Button variant="outline" onClick={() => setPreviewItem(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
 
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
@@ -542,7 +559,7 @@ export function MarketplaceCatalogPanel() {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
-                if (toDelete) deleteMutation.mutate(toDelete.id);
+                if (toDelete?.id) deleteMutation.mutate(toDelete.id);
                 setToDelete(null);
               }}
             >
@@ -556,3 +573,4 @@ export function MarketplaceCatalogPanel() {
 }
 
 export default MarketplaceCatalogPanel;
+
