@@ -195,7 +195,68 @@ function renderInvoice(doc: jsPDF, invoice: InvoiceRecord, issuer: IssuerDetails
   return doc;
 }
 
+/**
+ * Builds a print-ready A4 PDF for a single invoice.
+ * Everything is drawn with jsPDF primitives so no fonts/images need loading.
+ */
+export function generateInvoicePdf(invoice: InvoiceRecord, issuer: IssuerDetails = {}) {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  renderInvoice(doc, invoice, issuer);
+  return doc;
+}
+
+/** Builds one PDF containing every invoice, each on its own page. */
+export function generateMergedInvoicePdf(
+  invoices: InvoiceRecord[],
+  issuer: IssuerDetails = {},
+) {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  invoices.forEach((invoice, index) => {
+    if (index > 0) doc.addPage();
+    renderInvoice(doc, invoice, issuer);
+  });
+  return doc;
+}
+
 export function downloadInvoicePdf(invoice: InvoiceRecord, issuer?: IssuerDetails) {
   const doc = generateInvoicePdf(invoice, issuer);
   doc.save(`${invoice.invoice_number}.pdf`);
 }
+
+const stamp = () => new Date().toISOString().slice(0, 10);
+
+/** Downloads a single merged PDF with one page per invoice. */
+export function downloadMergedInvoicePdf(
+  invoices: InvoiceRecord[],
+  issuer?: IssuerDetails,
+  fileName?: string,
+) {
+  if (invoices.length === 0) throw new Error("No invoices selected");
+  const doc = generateMergedInvoicePdf(invoices, issuer);
+  doc.save(fileName || `invoices-${stamp()}.pdf`);
+}
+
+/** Downloads a .zip archive containing one PDF file per invoice. */
+export async function downloadInvoicesZip(
+  invoices: InvoiceRecord[],
+  issuer?: IssuerDetails,
+  fileName?: string,
+) {
+  if (invoices.length === 0) throw new Error("No invoices selected");
+  const { default: JSZip } = await import("jszip");
+  const zip = new JSZip();
+
+  for (const invoice of invoices) {
+    const blob = generateInvoicePdf(invoice, issuer).output("blob");
+    zip.file(`${invoice.invoice_number}.pdf`, blob);
+  }
+
+  const archive = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(archive);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName || `invoices-${stamp()}.zip`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
