@@ -46,7 +46,7 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
   } | null>(null);
 
   const cancelMutation = useMutation({
-    mutationFn: async (job: { id: string; campaign_id: string | null }) => {
+    mutationFn: async (job: { id: string; campaign_id: string | null; deleteCampaign?: boolean }) => {
       setCancellingId(job.id);
       if (job.campaign_id) {
         try {
@@ -63,18 +63,26 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
         .eq("id", job.id);
       if (error) throw error;
       if (job.campaign_id) {
+        if (job.deleteCampaign) {
+          const { error: delErr } = await supabase.from("campaigns").delete().eq("id", job.campaign_id);
+          if (delErr) throw delErr;
+          return { deleted: true };
+        }
         await supabase
           .from("campaigns")
           .update({ status: "draft" as never, is_paused: false })
           .eq("id", job.campaign_id);
       }
+      return { deleted: false };
     },
     onSettled: () => setCancellingId(null),
-    onSuccess: () => {
+    onSuccess: (res) => {
       setTick((t) => t + 1);
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
-      toast({ title: "Generation cancelled" });
+      toast({
+        title: res?.deleted ? "Generation cancelled & campaign deleted" : "Generation cancelled",
+      });
     },
     onError: (err: Error) => {
       toast({ title: "Cancel failed", description: err.message, variant: "destructive" });
