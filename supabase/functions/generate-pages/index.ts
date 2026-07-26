@@ -2137,9 +2137,11 @@ Deno.serve(async (req) => {
           // Process conditional logic {{#if}}...{{/if}}
           pageContent = processConditionals(pageContent, allVars);
 
+          probeLen = pageContent.length; stage("after-conditionals");
           // Process loops {{#each}}...{{/each}}
           pageContent = processLoops(pageContent, allVars);
 
+          probeLen = pageContent.length; stage("after-loops");
           // Separate custom-value mappings from regular custom mappings
           const customValueMaps = (customMappings || []).filter((m: any) => m.source_column?.startsWith("__custom__:"));
           const regularMappings = (customMappings || []).filter((m: any) => !m.source_column?.startsWith("__custom__:"));
@@ -2180,6 +2182,7 @@ Deno.serve(async (req) => {
             }
           }
 
+          probeLen = pageContent.length; stage("after-mappings");
           // Process variable transforms {variable:transform}
           pageContent = pageContent.replace(/\{(\w+):(\w+(?:\(\d+\))?)\}/gi, (_m, varName, transform) => {
             const rawVal = allVars[varName] || allVars[varName.toLowerCase()] || row[varName] || "";
@@ -2201,6 +2204,7 @@ Deno.serve(async (req) => {
             return rawVal;
           });
 
+          probeLen = pageContent.length; stage("after-transforms");
           // Per-variable fill rules: ai_only / ai_first override CSV.
           type FillRule = "csv_first" | "csv_only" | "ai_only" | "ai_first";
           const _fillRules = (((campaign.mapping || {}) as { fill_rules?: Record<string, FillRule> }).fill_rules) || {};
@@ -2264,6 +2268,7 @@ Deno.serve(async (req) => {
           }
 
 
+          probeLen = pageContent.length; stage("before-spintax");
           // Process spintax {option1|option2|option3}
           pageContent = processSpintax(pageContent);
 
@@ -2311,6 +2316,7 @@ Deno.serve(async (req) => {
             }
           }
 
+          probeLen = pageContent.length; stage("before-dynamic-elements");
           // Process dynamic elements {{MAP:}}, {{YOUTUBE:}}, {{IMAGE:}}, {{WEATHER:}}
           pageContent = processDynamicElements(pageContent, allVars);
 
@@ -2462,6 +2468,7 @@ Deno.serve(async (req) => {
             }
           }
 
+          probeLen = pageContent.length; stage("after-images");
           // Build a meaningful fallback title from row values.
           // Skip non-content columns (emails, urls, ids, tracking, workspace, company alone, bare years)
           // and prefer named vars like title/headline/h1/service/product/city/topic.
@@ -2575,6 +2582,7 @@ Deno.serve(async (req) => {
           }
           const utmQueryString = utmParams.length > 0 ? `?${utmParams.join("&")}` : "";
 
+          probeLen = pageContent.length; stage("after-slug");
           // Apply template SEO patterns if defined, otherwise use AI
           const tplSeoTitle = campaign.templates.seo_title_pattern as string || "";
           const tplSeoDesc = campaign.templates.seo_description_pattern as string || "";
@@ -2743,6 +2751,7 @@ Deno.serve(async (req) => {
           const vibeTheme = (((campaign.mapping || {}) as { vibe_theme?: VibeTheme }).vibe_theme) || null;
           const vibeOverride = buildVibeOverrideStyles(vibeTheme);
 
+          probeLen = pageContent.length; stage("after-seo");
           // ── Additive SEO enhancements (multi-engine + AI-friendly) ──
           // These never replace existing tags; they are appended so any
           // engine/AI crawler that ignored Google-first hints can still parse
@@ -2856,6 +2865,7 @@ Deno.serve(async (req) => {
           // Confirm the finished page uses ONLY template images and contains
           // no leftover {{AI_IMAGE}} placeholders. On failure, throw so the
           // page is marked "failed" and never published.
+          probeLen = pageContent.length; stage("before-media-gate");
           const mediaErrors = validatePageMedia(
             pageContent,
             templateImageUrls,
@@ -2882,6 +2892,7 @@ Deno.serve(async (req) => {
             if (v != null && !pageVariables[k]) pageVariables[k] = String(v);
           }
 
+          probeLen = pageContent.length; stage("before-push");
           batchPages.push({
             campaign_id,
             user_id: user.id,
