@@ -302,8 +302,9 @@ async function callExternal(
   opts: AiGenerateOptions,
 ): Promise<Response> {
   const cfg = PROVIDERS[provider];
-  const key = Deno.env.get(cfg.keyEnv); // stays dynamic — provider-specific key lookup
-  if (!key) throw new Error(`${cfg.keyEnv} not configured for provider "${provider}"`);
+  const key = await resolveProviderKey(provider, cfg.keyEnv);
+  if (!key) throw new Error(`No API key configured for provider "${provider}" (set it in Admin → AI Providers, or as ${cfg.keyEnv}).`);
+
 
   const body: any = {
     model: opts.model || cfg.defaultModel,
