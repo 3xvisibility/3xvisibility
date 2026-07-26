@@ -298,6 +298,169 @@ async function handleSuccessfulPayment(params: Parameters<typeof recordInvoice>[
   return invoice;
 }
 
+// ───────────────────────────────────────────────────────────────────────────
+// Subscription + trial sync
+// Keeps public.subscriptions (and ai_credits allowances) in step with Stripe
+// whenever a subscription is created, trialed, updated or cancelled.
+// ───────────────────────────────────────────────────────────────────────────
+
+const PRODUCT_TO_PLAN: Record<string, string> = {
+  "prod_UALduTYX0c1iq6": "starter",
+  "prod_UAMvLB3qPitarV": "pro",
+  "prod_UAMyFLJgpAa7L7": "agency",
+};
+
+const PLAN_LIMITS: Record<string, { pages_limit: number; ai_generations_limit: number }> = {
+  free: { pages_limit: 10, ai_generations_limit: 10 },
+  starter: { pages_limit: 100, ai_generations_limit: 100 },
+  pro: { pages_limit: 1000, ai_generations_limit: 1000 },
+  agency: { pages_limit: 10000, ai_generations_limit: 5000 },
+};
+
+// Statuses that should keep the paid plan active for the user.
+const ENTITLED_STATUSES = new Set(["active", "trialing", "past_due"]);
+
+const toIso = (ts?: number | null): string | null =>
+  ts && Number(ts) > 0 ? new Date(Number(ts) * 1000).toISOString() : null;
+
+async function syncAiCredits(userId: string, planLimit: number) {
+  try {
+    await supabase
+      .from("ai_credits")
+      .upsert({ user_id: userId }, { onConflict: "user_id", ignoreDuplicates: true });
+    const { data: row } = await supabase
+      .from("ai_credits")
+      .select("total_credits, used_credits")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const used = Number(row?.used_credits ?? 0);
+    if (Number(row?.total_credits ?? -1) !== planLimit) {
+      await supabase
+        .from("ai_credits")
+        .update({
+          total_credits: planLimit,
+          remaining_credits: Math.max(0, planLimit - used),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
+    }
+  } catch (err) {
+    log("ai_credits_sync_error", {
+      userId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+async function resolveCustomerEmail(
+  stripe: Stripe,
+  customerId?: string | null,
+): Promise<string | undefined> {
+  if (!customerId) return undefined;
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if ((customer as any).deleted) return undefined;
+    return (customer as Stripe.Customer).email ?? undefined;
+  } catch (err) {
+    log("customer_lookup_error", {
+      customerId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return undefined;
+  }
+}
+
+/**
+ * Write a Stripe subscription's state into public.subscriptions.
+ * Resolves the app user via the Stripe customer email, then upserts plan,
+ * limits, status, trial end and billing period on the user's row.
+ */
+async function syncSubscriptionRow(stripe: Stripe, sub: Stripe.Subscription) {
+  const customerId =
+    typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+  const email = await resolveCustomerEmail(stripe, customerId);
+  const userId = await findUserIdByEmail(email);
+
+  if (!userId) {
+    log("subscription_sync_skipped", {
+      reason: "user_not_found",
+      customerId,
+      email,
+      subscriptionId: sub.id,
+    });
+    return;
+  }
+
+  const item = sub.items?.data?.[0];
+  const productId = String(item?.price?.product ?? "");
+  const priceId = item?.price?.id ?? null;
+  const entitled = ENTITLED_STATUSES.has(sub.status);
+  const plan = entitled ? (PRODUCT_TO_PLAN[productId] ?? "free") : "free";
+  const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+  const billingCycle =
+    item?.price?.recurring?.interval === "year" ? "yearly" : "monthly";
+
+  await syncAiCredits(userId, limits.ai_generations_limit);
+
+  const { data: member } = await supabase
+    .from("workspace_members")
+    .select("workspace_id")
+    .eq("user_id", userId)
+    .limit(1)
+    .maybeSingle();
+
+  const payload: Record<string, unknown> = {
+    plan,
+    status: sub.status,
+    pages_limit: limits.pages_limit,
+    ai_generations_limit: limits.ai_generations_limit,
+    stripe_customer_id: customerId ?? null,
+    stripe_subscription_id: sub.id,
+    stripe_price_id: priceId,
+    billing_cycle: billingCycle,
+    trial_end: toIso((sub as any).trial_end),
+    cancel_at_period_end: Boolean(sub.cancel_at_period_end),
+    current_period_start: toIso((sub as any).current_period_start),
+    current_period_end: toIso((sub as any).current_period_end),
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data: existing } = await supabase
+    .from("subscriptions")
+    .select("id, workspace_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existing) {
+    if (!existing.workspace_id && member?.workspace_id) {
+      payload.workspace_id = member.workspace_id;
+    }
+    const { error } = await supabase
+      .from("subscriptions")
+      .update(payload)
+      .eq("id", existing.id);
+    if (error) log("subscription_sync_error", { userId, error: error.message });
+  } else {
+    if (member?.workspace_id) payload.workspace_id = member.workspace_id;
+    const { error } = await supabase
+      .from("subscriptions")
+      .insert({ user_id: userId, ...payload });
+    if (error) log("subscription_sync_error", { userId, error: error.message });
+  }
+
+  log("subscription_synced", {
+    userId,
+    subscriptionId: sub.id,
+    status: sub.status,
+    plan,
+    trialEnd: payload.trial_end,
+    cancelAtPeriodEnd: payload.cancel_at_period_end,
+  });
+
+  return { userId, email, plan, entitled };
+}
+
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
