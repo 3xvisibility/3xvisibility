@@ -2030,18 +2030,21 @@ async function handlePublishPages(req: Request): Promise<Response> {
       }
     }
 
-    // Self-chain remaining pages if there are more to process
+    // Self-chain remaining pages if there are more to process.
+    // Fan out across several parallel workers so large campaigns publish faster.
     if (remainingIds.length > 0) {
-      console.log(`[PUBLISH] Batch done (${results.length} pages). Self-chaining ${remainingIds.length} remaining pages.`);
-      fetch(`${supabaseUrl}/functions/v1/publish-pages`, {
-        method: "POST",
-        headers: { Authorization: authHeader, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          page_ids: remainingIds, publish_type: pubType, website_id: fallbackWebsiteId,
-          overwrite_design: allowOverwriteDesign, elementor_mode: "native", _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
-        }),
-      }).catch((e) => console.error("[PUBLISH] Self-chain failed:", e));
+      console.log(`[PUBLISH] Batch done (${results.length} pages). Chaining ${remainingIds.length} remaining pages.`);
+      fanOutPublish(remainingIds, {
+        supabaseUrl,
+        authHeader,
+        pubType,
+        websiteId: fallbackWebsiteId,
+        allowOverwriteDesign,
+        asAdmin: body.as_admin,
+        priorResults: [...priorResults, ...results],
+      });
     }
+
 
     // Automatic preview → published HTML/CSS match check. Fire-and-forget so
     // publishing is never blocked; results land in `page_render_checks` and
