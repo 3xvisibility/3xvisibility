@@ -962,13 +962,6 @@ Return only valid JSON: an object mapping each variable name to a single string 
     }
 
     const failed = names.filter((n) => !filled[n]);
-    if (Object.keys(filled).length > 0) {
-      if (rowIndex === undefined) {
-        setCustomVars((prev) => ({ ...prev, ...filled }));
-      } else {
-        setRowOverrides((prev) => ({ ...prev, [rowIndex]: { ...(prev[rowIndex] ?? {}), ...filled } }));
-      }
-    }
     setAiFillFailures((prev) => {
       const next = { ...prev };
       if (failed.length > 0) next[scopeKey] = { names: failed, error: lastError || "AI could not produce a value" };
@@ -976,16 +969,27 @@ Return only valid JSON: an object mapping each variable name to a single string 
       return next;
     });
 
-    if (Object.keys(filled).length > 0 && failed.length === 0) {
+    if (Object.keys(filled).length > 0) {
+      // Draft mode: show the proposed values for review instead of applying
+      // them straight into the form.
+      const existing = rowIndex === undefined ? customVars : (rowOverrides[rowIndex] ?? {});
+      setAiDraftRowIndex(rowIndex);
+      setAiDraftFields(
+        Object.entries(filled).map(([name, value]) => ({
+          key: name,
+          label: `{${name}}`,
+          value,
+          original: existing[name] ?? "",
+          multiline: value.length > 90,
+        })),
+      );
+      setAiDraftOpen(true);
       toast({
-        title: rowIndex === undefined ? "AI filled the missing variables" : `AI filled row ${rowIndex + 1}`,
-        description: `${Object.keys(filled).length} value(s) added. You can edit them before generating.`,
-      });
-    } else if (Object.keys(filled).length > 0) {
-      toast({
-        title: "Partly filled by AI",
-        description: `${failed.length} variable(s) still need a manual value: ${failed.map((n) => `{${n}}`).join(", ")}`,
-        variant: "destructive",
+        title: rowIndex === undefined ? "AI draft ready" : `AI draft ready for row ${rowIndex + 1}`,
+        description: failed.length > 0
+          ? `${failed.length} variable(s) still need a manual value: ${failed.map((n) => `{${n}}`).join(", ")}`
+          : "Review the proposed values, then apply them.",
+        variant: failed.length > 0 ? "destructive" : undefined,
       });
     } else {
       toast({
@@ -995,6 +999,26 @@ Return only valid JSON: an object mapping each variable name to a single string 
       });
     }
     setAiFillingMissing(false);
+  };
+
+  /** Commit the reviewed AI draft values into the form (still not generated). */
+  const applyAiDraft = (values: Record<string, string>) => {
+    const clean: Record<string, string> = {};
+    for (const [k, v] of Object.entries(values)) {
+      if ((v ?? "").trim()) clean[k] = v.trim();
+    }
+    if (Object.keys(clean).length === 0) return;
+
+    if (aiDraftRowIndex === undefined) {
+      setCustomVars((prev) => ({ ...prev, ...clean }));
+    } else {
+      const idx = aiDraftRowIndex;
+      setRowOverrides((prev) => ({ ...prev, [idx]: { ...(prev[idx] ?? {}), ...clean } }));
+    }
+    toast({
+      title: "Draft applied",
+      description: `${Object.keys(clean).length} value(s) added. Preview the page, then generate when it looks right.`,
+    });
   };
 
 
