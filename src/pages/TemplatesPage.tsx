@@ -1517,6 +1517,7 @@ slug: ${fields.slug}`,
           pageTitle={importPreview.pageTitle}
           fullContent={importPreview.fullContent}
           variables={importPreview.variables}
+          sourceUrl={importPreview.sourceUrl}
         />
       )}
 
