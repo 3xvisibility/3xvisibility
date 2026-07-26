@@ -1971,7 +1971,7 @@ Deno.serve(async (req) => {
 
     // Create or reuse GenerationJob
     let jobId = existingJobId;
-    const isFirstRun = action !== "resume" || !jobId;
+    const isFirstRun = action !== "resume";
 
     if (isFirstRun && !test_mode) {
       // Create a new generation job
