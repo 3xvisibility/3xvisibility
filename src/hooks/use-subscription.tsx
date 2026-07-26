@@ -26,7 +26,18 @@ export interface SubscriptionData {
   sitesRemaining: number;
   /** ISO date string for the next usage reset / billing period end. */
   resetDate: string | null;
+  /** Raw Stripe subscription status (active, trialing, past_due, canceled…). */
+  status: string;
+  /** True while the subscription is inside its free-trial window. */
+  isTrialing: boolean;
+  /** ISO date the trial ends, when trialing. */
+  trialEnd: string | null;
+  /** Days left in the trial (0 when not trialing). */
+  trialDaysLeft: number;
+  /** True when the subscription will not renew at period end. */
+  cancelAtPeriodEnd: boolean;
 }
+
 
 // ── Shared singletons across ALL useSubscription instances ────────────────
 // The hook is mounted by ~19 components, often several on the same page. If
