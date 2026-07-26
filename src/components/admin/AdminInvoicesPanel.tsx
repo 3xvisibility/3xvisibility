@@ -367,6 +367,13 @@ export function AdminInvoicesPanel() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[40px]">
+                    <Checkbox
+                      checked={allVisibleChecked}
+                      onCheckedChange={(v) => toggleAll(!!v)}
+                      aria-label="Select all invoices"
+                    />
+                  </TableHead>
                   <TableHead>Invoice</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Customer</TableHead>
@@ -383,6 +390,13 @@ export function AdminInvoicesPanel() {
                     className="cursor-pointer"
                     onClick={() => setSelected(inv)}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={checked.has(inv.id)}
+                        onCheckedChange={(v) => toggleOne(inv.id, !!v)}
+                        aria-label={`Select ${inv.invoice_number}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(inv.issued_at).toLocaleDateString("en-US", {
