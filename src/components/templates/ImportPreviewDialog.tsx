@@ -623,13 +623,13 @@ export function ImportPreviewDialog({
             <div className="relative flex-1 min-h-0 overflow-hidden">
               <iframe
                 ref={iframeRef}
-                key={highlightedHtml.length}
                 title="Import preview"
                 sandbox="allow-same-origin"
                 srcDoc={highlightedHtml}
                 onLoad={handleIframeLoad}
-                className={`w-full h-full border-0 bg-white transition-opacity duration-300 ${previewReady ? "opacity-100" : "opacity-0"}`}
+                className="w-full h-full border-0 bg-white"
               />
+
               {!previewReady && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 backdrop-blur-sm">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
