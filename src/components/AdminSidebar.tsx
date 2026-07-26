@@ -12,6 +12,8 @@ import {
   BarChart3,
   Plug,
   KeyRound,
+  Sparkles,
+
   Settings,
   Store,
   RefreshCw,
