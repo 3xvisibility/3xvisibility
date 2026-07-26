@@ -38,7 +38,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { SharedTemplatesModerationPanel } from "@/components/admin/SharedTemplatesModerationPanel";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
-import { ArrowLeft, Eye, Loader2, Monitor, Pencil, Plus, Search, Smartphone, Store, Tablet, Trash2, Package } from "lucide-react";
+import { ArrowLeft, Download, Eye, Loader2, Monitor, Pencil, Plus, Search, Smartphone, Store, Tablet, Trash2, Package } from "lucide-react";
 
 type PreviewDevice = "desktop" | "tablet" | "mobile";
 
@@ -176,6 +176,35 @@ export function MarketplaceCatalogPanel() {
 
   const emptyForm = { name: "", description: "", category: "business", source_url: "", html: "" };
   const [form, setForm] = useState(emptyForm);
+  const [importUrl, setImportUrl] = useState("");
+
+  /** Pull the full rendered HTML (with inlined CSS/JS) from any public URL. */
+  const importMutation = useMutation({
+    mutationFn: async () => {
+      const url = importUrl.trim();
+      if (!/^https?:\/\//i.test(url)) throw new Error("Enter a full URL starting with http(s)://");
+      const { data, error } = await supabase.functions.invoke("scan-template", { body: { url } });
+      if (error) throw error;
+      const body = data?.bodyHtml || "";
+      if (!body || body.replace(/<[^>]*>/g, "").trim().length < 50) {
+        throw new Error("Could not read enough HTML from that URL. Paste the page source instead.");
+      }
+      const styles = data?.headStyles ? `<style>\n${data.headStyles}\n</style>\n` : "";
+      return { html: `${styles}${body}`, title: data?.title as string | undefined, url };
+    },
+    onSuccess: ({ html, title, url }) => {
+      setForm((f) => ({
+        ...f,
+        html,
+        source_url: f.source_url || url,
+        name: f.name || title || "",
+      }));
+      toast({ title: "HTML imported", description: "Review it below, then preview and save." });
+    },
+    onError: (e: any) =>
+      toast({ title: "Import failed", description: e.message, variant: "destructive" }),
+  });
+
 
   const openCreate = () => {
     setEditingId(null);
@@ -476,6 +505,36 @@ export function MarketplaceCatalogPanel() {
                 placeholder="https://example.com/design"
               />
             </div>
+            <div className="space-y-1.5 rounded-md border border-border p-3">
+              <Label>Import HTML from a URL</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={importUrl}
+                  onChange={(e) => setImportUrl(e.target.value)}
+                  placeholder="https://example.com/landing-page"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && importUrl.trim() && !importMutation.isPending) {
+                      e.preventDefault();
+                      importMutation.mutate();
+                    }
+                  }}
+                />
+                <Button
+                  variant="secondary"
+                  disabled={!importUrl.trim() || importMutation.isPending}
+                  onClick={() => importMutation.mutate()}
+                >
+                  {importMutation.isPending
+                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : <Download className="h-4 w-4" />}
+                  <span className="ml-1">Fetch HTML</span>
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Pulls the live page HTML with its CSS/JS inlined and fills the field below. You can edit it afterwards.
+              </p>
+            </div>
+
             <div className="space-y-1.5">
               <Label>Template HTML</Label>
               <Textarea
