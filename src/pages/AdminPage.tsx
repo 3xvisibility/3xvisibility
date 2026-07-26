@@ -24,6 +24,8 @@ import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
 import { SystemSettingsPanel } from "@/components/admin/SystemSettingsPanel";
 import { AiAccessAdminPanel } from "@/components/admin/AiAccessAdminPanel";
+import AiProvidersAdminPanel from "@/components/admin/AiProvidersAdminPanel";
+
 import { AiUsageReportPanel } from "@/components/admin/AiUsageReportPanel";
 import { AdminOverviewPanel } from "@/components/admin/AdminOverviewPanel";
 import { ContactInboxPanel } from "@/components/admin/ContactInboxPanel";
@@ -976,6 +978,11 @@ export default function AdminPage() {
         <TabsContent value="ai-access" className="space-y-4">
           <AiAccessAdminPanel />
         </TabsContent>
+
+        <TabsContent value="ai-providers" className="space-y-4">
+          <AiProvidersAdminPanel />
+        </TabsContent>
+
 
 
         <TabsContent value="ai-credits" className="space-y-4">

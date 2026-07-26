@@ -12,6 +12,8 @@ import {
   BarChart3,
   Plug,
   KeyRound,
+  Sparkles,
+
   Settings,
   Store,
   RefreshCw,
@@ -52,10 +54,12 @@ const managementNav: AdminNavItem[] = [
 ];
 
 const aiNav: AdminNavItem[] = [
+  { label: "AI Providers", section: "ai-providers", icon: Sparkles },
   { label: "AI Credits", section: "ai-credits", icon: Zap },
   { label: "Usage Report", section: "ai-usage", icon: BarChart3 },
   { label: "AI Access", section: "ai-access", icon: KeyRound },
 ];
+
 
 const systemNav: AdminNavItem[] = [
   { label: "Marketplace", section: "marketplace", icon: Store },

@@ -297,13 +297,44 @@ async function callLovable(
 
 // ── External provider call ───────────────────────────────────────────────────
 
+/**
+ * Resolve an external provider's API key. Admin-managed keys stored in
+ * `ai_provider_keys` (Admin → AI Providers) take precedence; the project
+ * secret env var is used as a fallback.
+ */
+const _keyCache = new Map<string, { key: string | null; at: number }>();
+
+async function resolveProviderKey(provider: string, keyEnv: string): Promise<string | null> {
+  const cached = _keyCache.get(provider);
+  if (cached && Date.now() - cached.at < 30_000) return cached.key || Deno.env.get(keyEnv) || null;
+
+  let dbKey: string | null = null;
+  try {
+    const sb = getServiceClient();
+    if (sb) {
+      const { data } = await sb
+        .from("ai_provider_keys")
+        .select("api_key, enabled")
+        .eq("provider", provider)
+        .maybeSingle();
+      if (data && data.enabled !== false && data.api_key) dbKey = data.api_key as string;
+    }
+  } catch (_) { /* fall back to env */ }
+
+  _keyCache.set(provider, { key: dbKey, at: Date.now() });
+  return dbKey || Deno.env.get(keyEnv) || null;
+}
+
+
+
 async function callExternal(
   provider: Exclude<AiProvider, "lovable">,
   opts: AiGenerateOptions,
 ): Promise<Response> {
   const cfg = PROVIDERS[provider];
-  const key = Deno.env.get(cfg.keyEnv); // stays dynamic — provider-specific key lookup
-  if (!key) throw new Error(`${cfg.keyEnv} not configured for provider "${provider}"`);
+  const key = await resolveProviderKey(provider, cfg.keyEnv);
+  if (!key) throw new Error(`No API key configured for provider "${provider}" (set it in Admin → AI Providers, or as ${cfg.keyEnv}).`);
+
 
   const body: any = {
     model: opts.model || cfg.defaultModel,
