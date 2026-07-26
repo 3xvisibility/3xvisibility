@@ -60,6 +60,8 @@ export function AdminInvoicesPanel() {
   const [range, setRange] = useState("all");
   const [plan, setPlan] = useState("all");
   const [selected, setSelected] = useState<InvoiceRecord | null>(null);
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const invoicesQuery = useQuery({
     queryKey: ["admin-invoices"],
