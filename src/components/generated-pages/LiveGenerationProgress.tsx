@@ -196,22 +196,40 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
               <AlertDialogTitle>Stop this generation job?</AlertDialogTitle>
               <AlertDialogDescription>
                 {confirmJob
-                  ? `"${confirmJob.name}" has generated ${confirmJob.done} of ${confirmJob.total} pages. Cancelling stops the job and returns the campaign to draft. Already generated pages are kept, and you can restart generation later.`
+                  ? `"${confirmJob.name}" has generated ${confirmJob.done} of ${confirmJob.total} pages. Cancelling stops the job and returns the campaign to draft.`
                   : ""}
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <label className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm cursor-pointer">
+              <Checkbox
+                checked={alsoDelete}
+                onCheckedChange={(v) => setAlsoDelete(v === true)}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="font-medium">Also delete this campaign</span>
+                <span className="block text-xs text-muted-foreground">
+                  Permanently removes the campaign and its generated pages. This cannot be undone.
+                </span>
+              </span>
+            </label>
             <AlertDialogFooter>
               <AlertDialogCancel>Keep generating</AlertDialogCancel>
               <AlertDialogAction
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={() => {
                   if (confirmJob) {
-                    cancelMutation.mutate({ id: confirmJob.id, campaign_id: confirmJob.campaign_id });
+                    cancelMutation.mutate({
+                      id: confirmJob.id,
+                      campaign_id: confirmJob.campaign_id,
+                      deleteCampaign: alsoDelete,
+                    });
                   }
                   setConfirmJob(null);
+                  setAlsoDelete(false);
                 }}
               >
-                Yes, cancel job
+                {alsoDelete ? "Cancel & delete campaign" : "Yes, cancel job"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
