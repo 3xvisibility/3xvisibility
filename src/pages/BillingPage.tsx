@@ -37,6 +37,8 @@ import { CheckoutCanceledOverlay } from "@/components/billing/CheckoutCanceledOv
 import { PaymentMethods } from "@/components/billing/PaymentMethods";
 import { MyInvoicesCard } from "@/components/billing/MyInvoicesCard";
 import { TrialStatusWidget } from "@/components/billing/TrialStatusWidget";
+import { DowngradePlanDialog } from "@/components/billing/DowngradePlanDialog";
+
 
 import { logAudit } from "@/lib/audit";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -145,7 +147,9 @@ function getFeatureList(name: PlanName, t: (key: string, vars?: Record<string, s
 }
 
 export default function BillingPage() {
-  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, isLoading: subLoading } = useSubscription();
+  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, resetDate, isLoading: subLoading } = useSubscription();
+  const [downgradeTarget, setDowngradeTarget] = useState<PlanName | null>(null);
+
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -266,6 +270,22 @@ export default function BillingPage() {
     if (idx > currentIdx) return { label: t("billing.upgrade"), disabled: false, variant: "default" as const };
     return { label: t("billing.downgrade"), disabled: false, variant: "outline" as const };
   };
+
+  // Upgrades go through Stripe checkout; downgrades are handled in-app so the
+  // new limits apply immediately with a clear billing effective date.
+  const handlePlanClick = (name: PlanName) => {
+    if (planOrder.indexOf(name) < currentIdx) {
+      setDowngradeTarget(name);
+      return;
+    }
+    handleCheckout(name);
+  };
+
+  const refreshSubscription = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["user-subscription"] });
+    await queryClient.invalidateQueries({ queryKey: ["dashboard-ai-usage"] });
+  };
+
 
   const handleSuccessDismiss = () => {
     setShowSuccess(false);
@@ -465,7 +485,7 @@ export default function BillingPage() {
                   }`}
                   variant={btn.variant}
                   disabled={btn.disabled || isLoading}
-                  onClick={() => !btn.disabled && handleCheckout(config.name)}
+                  onClick={() => !btn.disabled && handlePlanClick(config.name)}
                 >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -482,6 +502,20 @@ export default function BillingPage() {
           );
         })}
       </div>
+
+      {activePlan !== "free" && (
+        <div className="text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={() => setDowngradeTarget("free")}
+          >
+            Downgrade to Free
+          </Button>
+        </div>
+      )}
+
 
       <Separator />
 
@@ -558,6 +592,18 @@ export default function BillingPage() {
       </Card>
 
       <MyInvoicesCard />
+
+      {downgradeTarget && (
+        <DowngradePlanDialog
+          open={!!downgradeTarget}
+          onOpenChange={(o) => !o && setDowngradeTarget(null)}
+          currentPlan={activePlan}
+          targetPlan={downgradeTarget}
+          periodEnd={resetDate}
+          onDowngraded={refreshSubscription}
+        />
+      )}
     </div>
   );
 }
+
