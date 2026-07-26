@@ -549,18 +549,33 @@ export function ImportPreviewDialog({
             <div className="px-4 py-2 border-b text-[11px] uppercase tracking-wide text-muted-foreground font-semibold shrink-0 flex items-center justify-between">
               <span>Live preview</span>
               <span className="text-[10px] normal-case tracking-normal">
-                Green pills reflect your current mapping.
+                {previewReady ? "Green pills reflect your current mapping." : previewStage}
               </span>
             </div>
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="relative flex-1 min-h-0 overflow-hidden">
               <iframe
+                ref={iframeRef}
+                key={highlightedHtml.length}
                 title="Import preview"
                 sandbox="allow-same-origin"
                 srcDoc={highlightedHtml}
-                className="w-full h-full border-0 bg-white"
+                onLoad={handleIframeLoad}
+                className={`w-full h-full border-0 bg-white transition-opacity duration-300 ${previewReady ? "opacity-100" : "opacity-0"}`}
               />
+              {!previewReady && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 backdrop-blur-sm">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <div className="w-56 space-y-2">
+                    <Progress value={previewProgress} className="h-1.5" />
+                    <p className="text-[11px] text-muted-foreground text-center">
+                      {previewStage} — {Math.round(previewProgress)}%
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+
         </div>
 
         <div className="flex items-center justify-between gap-2 px-5 py-3 border-t bg-card shrink-0">
