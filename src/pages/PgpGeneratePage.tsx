@@ -35,6 +35,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { ExistingSiteOptimizePanel } from "@/components/website-content/ExistingSiteOptimizePanel";
 import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
+import { AiDraftReviewDialog, type AiDraftField } from "@/components/ai/AiDraftReviewDialog";
 
 type Template = Tables<"templates">;
 
@@ -262,6 +263,10 @@ export default function PgpGeneratePage() {
   const [rowOverrides, setRowOverrides] = useState<Record<number, Record<string, string>>>({});
   // Which AI fill attempts failed and for which variables ("all" or row index)
   const [aiFillFailures, setAiFillFailures] = useState<Record<string, { names: string[]; error: string }>>({});
+  // AI fill draft preview — values are reviewed before they enter the form.
+  const [aiDraftOpen, setAiDraftOpen] = useState(false);
+  const [aiDraftFields, setAiDraftFields] = useState<AiDraftField[]>([]);
+  const [aiDraftRowIndex, setAiDraftRowIndex] = useState<number | undefined>(undefined);
 
   // ---- Persist manual / AI-filled variable values across visits ----------
   // Scoped per (template group + keyword group) so switching sources doesn't
@@ -958,13 +963,6 @@ Return only valid JSON: an object mapping each variable name to a single string 
     }
 
     const failed = names.filter((n) => !filled[n]);
-    if (Object.keys(filled).length > 0) {
-      if (rowIndex === undefined) {
-        setCustomVars((prev) => ({ ...prev, ...filled }));
-      } else {
-        setRowOverrides((prev) => ({ ...prev, [rowIndex]: { ...(prev[rowIndex] ?? {}), ...filled } }));
-      }
-    }
     setAiFillFailures((prev) => {
       const next = { ...prev };
       if (failed.length > 0) next[scopeKey] = { names: failed, error: lastError || "AI could not produce a value" };
@@ -972,16 +970,27 @@ Return only valid JSON: an object mapping each variable name to a single string 
       return next;
     });
 
-    if (Object.keys(filled).length > 0 && failed.length === 0) {
+    if (Object.keys(filled).length > 0) {
+      // Draft mode: show the proposed values for review instead of applying
+      // them straight into the form.
+      const existing = rowIndex === undefined ? customVars : (rowOverrides[rowIndex] ?? {});
+      setAiDraftRowIndex(rowIndex);
+      setAiDraftFields(
+        Object.entries(filled).map(([name, value]) => ({
+          key: name,
+          label: `{${name}}`,
+          value,
+          original: existing[name] ?? "",
+          multiline: value.length > 90,
+        })),
+      );
+      setAiDraftOpen(true);
       toast({
-        title: rowIndex === undefined ? "AI filled the missing variables" : `AI filled row ${rowIndex + 1}`,
-        description: `${Object.keys(filled).length} value(s) added. You can edit them before generating.`,
-      });
-    } else if (Object.keys(filled).length > 0) {
-      toast({
-        title: "Partly filled by AI",
-        description: `${failed.length} variable(s) still need a manual value: ${failed.map((n) => `{${n}}`).join(", ")}`,
-        variant: "destructive",
+        title: rowIndex === undefined ? "AI draft ready" : `AI draft ready for row ${rowIndex + 1}`,
+        description: failed.length > 0
+          ? `${failed.length} variable(s) still need a manual value: ${failed.map((n) => `{${n}}`).join(", ")}`
+          : "Review the proposed values, then apply them.",
+        variant: failed.length > 0 ? "destructive" : undefined,
       });
     } else {
       toast({
@@ -991,6 +1000,26 @@ Return only valid JSON: an object mapping each variable name to a single string 
       });
     }
     setAiFillingMissing(false);
+  };
+
+  /** Commit the reviewed AI draft values into the form (still not generated). */
+  const applyAiDraft = (values: Record<string, string>) => {
+    const clean: Record<string, string> = {};
+    for (const [k, v] of Object.entries(values)) {
+      if ((v ?? "").trim()) clean[k] = v.trim();
+    }
+    if (Object.keys(clean).length === 0) return;
+
+    if (aiDraftRowIndex === undefined) {
+      setCustomVars((prev) => ({ ...prev, ...clean }));
+    } else {
+      const idx = aiDraftRowIndex;
+      setRowOverrides((prev) => ({ ...prev, [idx]: { ...(prev[idx] ?? {}), ...clean } }));
+    }
+    toast({
+      title: "Draft applied",
+      description: `${Object.keys(clean).length} value(s) added. Preview the page, then generate when it looks right.`,
+    });
   };
 
 
@@ -3758,6 +3787,16 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           }
           setShowLocationsDialog(false);
         }}
+      />
+
+      <AiDraftReviewDialog
+        open={aiDraftOpen}
+        onOpenChange={setAiDraftOpen}
+        title={aiDraftRowIndex === undefined ? "AI fill draft — review before generating" : `AI fill draft — row ${aiDraftRowIndex + 1}`}
+        description="These values are a draft only. Nothing is generated or published yet — edit anything, then apply."
+        fields={aiDraftFields}
+        applyLabel="Apply values"
+        onApply={applyAiDraft}
       />
     </div>
   );

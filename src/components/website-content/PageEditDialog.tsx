@@ -51,6 +51,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
 import { extractEdgeError } from "@/lib/edge-function-error";
+import { AiDraftReviewDialog, type AiDraftField } from "@/components/ai/AiDraftReviewDialog";
 import {
   readPageEditorDraft,
   writePageEditorDraft,
@@ -153,6 +154,10 @@ export function PageEditDialog({
   const [seoInstruction, setSeoInstruction] = useState(() => initialDraft?.seoInstruction ?? "");
   const [optimizing, setOptimizing] = useState(false);
   const [seoResult, setSeoResult] = useState<PageEditorSeoResult | null>(initialSeoResult);
+
+  // AI draft / preview state (review before anything is published)
+  const [draftOpen, setDraftOpen] = useState(false);
+  const [draftFields, setDraftFields] = useState<AiDraftField[]>([]);
 
   // Rollback state
   const [rollingBack, setRollingBack] = useState(false);
@@ -356,7 +361,7 @@ export function PageEditDialog({
     );
   };
 
-  // Run AI SEO optimization → populate editor fields
+  // Run AI SEO optimization → draft preview (nothing is pushed live yet)
   const runOptimize = async () => {
     if (seoFields.length === 0) {
       toast({ title: "Select fields", description: "Pick at least one field to optimize", variant: "destructive" });
@@ -367,8 +372,6 @@ export function PageEditDialog({
     setPushError(null);
 
     try {
-      const shouldAutoPublish = ["publish", "published"].includes((page.status || "").toLowerCase());
-
       const { data, error } = await supabase.functions.invoke("optimize-seo-content", {
         body: {
           website_id: websiteId,
@@ -384,7 +387,8 @@ export function PageEditDialog({
           page_seo_description: seoResult?.seo_description || page.seo_description || editExcerpt,
           page_seo_keywords: seoResult?.seo_keywords || page.seo_keywords || [],
           instruction: seoInstruction || undefined,
-          skip_push: !shouldAutoPublish,
+          // Draft mode: never push to the live site from the optimize step.
+          skip_push: true,
         },
       });
 
@@ -413,46 +417,59 @@ export function PageEditDialog({
 
       const result = data.result || {};
 
-      // Apply AI results to the editor fields
+      // Build the draft review fields instead of applying straight away.
+      const fields: AiDraftField[] = [];
       if (result.seo_title && seoFields.includes("seo_title")) {
-        setEditTitle(result.seo_title);
+        fields.push({ key: "seo_title", label: "SEO / page title", value: String(result.seo_title), original: editTitle });
       }
       if (result.seo_description && seoFields.includes("seo_description")) {
-        setEditExcerpt(result.seo_description);
+        fields.push({ key: "seo_description", label: "Meta description", value: String(result.seo_description), original: editExcerpt, multiline: true });
       }
       if (result.content && seoFields.includes("content")) {
-        setEditContent(result.content);
+        fields.push({ key: "content", label: "Page content (HTML)", value: String(result.content), original: editContent, multiline: true });
+      }
+      if (Array.isArray(result.seo_keywords) && result.seo_keywords.length > 0) {
+        fields.push({ key: "seo_keywords", label: "Focus keywords (comma separated)", value: result.seo_keywords.join(", "), original: (page.seo_keywords || []).join(", ") });
       }
 
-      setSeoResult((prev) => ({
-        seo_title: result.seo_title ?? prev?.seo_title ?? page.seo_title ?? undefined,
-        seo_description: result.seo_description ?? prev?.seo_description ?? page.seo_description ?? editExcerpt,
-        seo_keywords: result.seo_keywords ?? prev?.seo_keywords ?? page.seo_keywords ?? undefined,
-      }));
+      if (fields.length === 0) {
+        toast({ title: "Nothing to review", description: "The AI returned no changes for the selected fields.", variant: "destructive" });
+        return;
+      }
 
-      setPublished(Boolean(data?.pushed_to_cms));
-      setPushError(data?.push_error || null);
-
+      setDraftFields(fields);
+      setDraftOpen(true);
       toast({
-        title: data?.pushed_to_cms ? "SEO optimized & updated live!" : "SEO content generated!",
-        description: data?.pushed_to_cms
-          ? "The existing published page was updated on your live website."
-          : data?.push_error || "Review the changes in the Edit tab, then republish.",
-        variant: data?.push_error ? "destructive" : undefined,
+        title: "AI draft ready — review before publishing",
+        description: "Nothing was pushed to your live site yet.",
       });
-
-      if (data?.pushed_to_cms) {
-        onUpdated?.();
-      }
-
-      // Switch to Changes tab to show diff
-      setActiveTab("changes");
     } catch (err: any) {
       toast({ title: "Optimization failed", description: err.message, variant: "destructive" });
     } finally {
       setOptimizing(false);
     }
   };
+
+  /** Apply the reviewed draft into the editor fields (still not published). */
+  const applyDraft = (values: Record<string, string>) => {
+    if (values.seo_title !== undefined) setEditTitle(values.seo_title);
+    if (values.seo_description !== undefined) setEditExcerpt(values.seo_description);
+    if (values.content !== undefined) setEditContent(values.content);
+
+    setSeoResult((prev) => ({
+      seo_title: values.seo_title ?? prev?.seo_title ?? page.seo_title ?? undefined,
+      seo_description: values.seo_description ?? prev?.seo_description ?? page.seo_description ?? editExcerpt,
+      seo_keywords: values.seo_keywords !== undefined
+        ? values.seo_keywords.split(",").map((k) => k.trim()).filter(Boolean)
+        : prev?.seo_keywords ?? page.seo_keywords ?? undefined,
+    }));
+
+    setPublished(false);
+    setPushError(null);
+    setActiveTab("changes");
+    toast({ title: "Draft applied", description: "Review the diff, then hit Publish to update your live page." });
+  };
+
 
   const handlePublish = async () => {
     setPublishing(true);
@@ -901,6 +918,16 @@ export function PageEditDialog({
           </div>
         </div>
       </DialogContent>
+
+      <AiDraftReviewDialog
+        open={draftOpen}
+        onOpenChange={setDraftOpen}
+        title="AI SEO draft — review before publishing"
+        description="This is a draft only. Nothing has been saved or pushed to your live site. Edit anything, then apply it to the editor."
+        fields={draftFields}
+        applyLabel="Apply to editor"
+        onApply={applyDraft}
+      />
     </Dialog>
   );
 }
