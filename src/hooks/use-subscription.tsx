@@ -231,6 +231,17 @@ export function useSubscription(): SubscriptionData {
     (data?.current_period_end as string | undefined) ??
     new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString();
 
+  // Trial / lifecycle state synced from Stripe by the webhook + check-subscription.
+  const status = (data?.status as string | undefined) ?? "active";
+  const trialEnd = (data?.trial_end as string | undefined) ?? null;
+  const isTrialing =
+    status === "trialing" && !!trialEnd && new Date(trialEnd).getTime() > Date.now();
+  const trialDaysLeft = isTrialing
+    ? Math.max(0, Math.ceil((new Date(trialEnd!).getTime() - Date.now()) / 86_400_000))
+    : 0;
+  const cancelAtPeriodEnd = Boolean(data?.cancel_at_period_end);
+
+
   // Publish a snapshot so non-React code (e.g. handleApiError) can show page counts
   useEffect(() => {
     setUsageSnapshot({
