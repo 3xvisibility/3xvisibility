@@ -38,7 +38,78 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { SharedTemplatesModerationPanel } from "@/components/admin/SharedTemplatesModerationPanel";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
-import { Loader2, Plus, Search, Store, Trash2, Package } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Monitor, Plus, Search, Smartphone, Store, Tablet, Trash2, Package } from "lucide-react";
+
+type PreviewDevice = "desktop" | "tablet" | "mobile";
+
+const DEVICE_WIDTH: Record<PreviewDevice, string> = {
+  desktop: "100%",
+  tablet: "768px",
+  mobile: "390px",
+};
+
+/** Sandboxed render of the raw template HTML, with a device-width switcher. */
+function TemplatePreview({
+  html,
+  device,
+  onDeviceChange,
+  variables,
+}: {
+  html: string;
+  device: PreviewDevice;
+  onDeviceChange: (d: PreviewDevice) => void;
+  variables: string[];
+}) {
+  const doc = `<!doctype html><html><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>body{margin:0}</style></head><body>${html}</body></html>`;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1">
+          {([
+            ["desktop", Monitor],
+            ["tablet", Tablet],
+            ["mobile", Smartphone],
+          ] as const).map(([d, Icon]) => (
+            <Button
+              key={d}
+              size="sm"
+              variant={device === d ? "default" : "outline"}
+              onClick={() => onDeviceChange(d)}
+            >
+              <Icon className="h-4 w-4 mr-1" />
+              <span className="capitalize">{d}</span>
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1 flex-wrap">
+          {variables.length === 0 ? (
+            <Badge variant="outline" className="text-muted-foreground">No variables</Badge>
+          ) : (
+            variables.slice(0, 8).map((v) => (
+              <Badge key={v} variant="outline" className="text-muted-foreground">{`{{${v}}}`}</Badge>
+            ))
+          )}
+          {variables.length > 8 && (
+            <Badge variant="outline" className="text-muted-foreground">+{variables.length - 8}</Badge>
+          )}
+        </div>
+      </div>
+      <div className="rounded-lg border bg-muted/30 p-3 flex justify-center">
+        <iframe
+          title="Template preview"
+          sandbox="allow-same-origin"
+          srcDoc={doc}
+          className="bg-background rounded-md border h-[60vh]"
+          style={{ width: DEVICE_WIDTH[device], maxWidth: "100%" }}
+        />
+      </div>
+    </div>
+  );
+}
+
 
 interface MarketplaceRow {
   id: string;
@@ -67,6 +138,9 @@ export function MarketplaceCatalogPanel() {
   const [builtinSearch, setBuiltinSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [toDelete, setToDelete] = useState<MarketplaceRow | null>(null);
+  const [step, setStep] = useState<"edit" | "preview">("edit");
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
+  const [previewRow, setPreviewRow] = useState<MarketplaceRow | null>(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -105,6 +179,7 @@ export function MarketplaceCatalogPanel() {
     onSuccess: () => {
       toast({ title: "Template added", description: "It is now live on the Marketplace page." });
       setAddOpen(false);
+      setStep("edit");
       setForm({ name: "", description: "", category: "business", source_url: "", html: "" });
       qc.invalidateQueries({ queryKey: ["admin-marketplace-templates"] });
       qc.invalidateQueries({ queryKey: ["marketplace-admin-templates"] });
@@ -218,6 +293,14 @@ export function MarketplaceCatalogPanel() {
                       </div>
                       <Button
                         size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        onClick={() => { setPreviewDevice("desktop"); setPreviewRow(r); }}
+                      >
+                        <Eye className="h-4 w-4 mr-1" /> Preview
+                      </Button>
+                      <Button
+                        size="sm"
                         variant="ghost"
                         className="text-destructive hover:text-destructive shrink-0"
                         onClick={() => setToDelete(r)}
@@ -271,15 +354,27 @@ export function MarketplaceCatalogPanel() {
         </TabsContent>
       </Tabs>
 
-      {/* Add dialog */}
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-2xl">
+      {/* Add dialog — step 1: details, step 2: render preview */}
+      <Dialog
+        open={addOpen}
+        onOpenChange={(o) => {
+          setAddOpen(o);
+          if (!o) setStep("edit");
+        }}
+      >
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Add marketplace template</DialogTitle>
+            <DialogTitle>
+              {step === "edit" ? "Add marketplace template" : `Preview — ${form.name || "Untitled"}`}
+            </DialogTitle>
             <DialogDescription>
-              Paste the full HTML (with inline CSS/JS). Variables like {"{{city}}"} are detected automatically.
+              {step === "edit"
+                ? <>Paste the full HTML (with inline CSS/JS). Variables like {"{{city}}"} are detected automatically.</>
+                : "This is exactly how the template renders. Go back to edit, or save it to the Marketplace."}
             </DialogDescription>
           </DialogHeader>
+
+          {step === "edit" ? (
           <div className="space-y-3">
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -329,18 +424,63 @@ export function MarketplaceCatalogPanel() {
               </p>
             </div>
           </div>
+          ) : (
+            <TemplatePreview
+              html={form.html}
+              device={previewDevice}
+              onDeviceChange={setPreviewDevice}
+              variables={extractVariables(form.html)}
+            />
+          )}
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button
-              disabled={!form.name.trim() || !form.html.trim() || addMutation.isPending}
-              onClick={() => addMutation.mutate()}
-            >
-              {addMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-              Add template
-            </Button>
+            {step === "edit" ? (
+              <>
+                <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+                <Button
+                  disabled={!form.name.trim() || !form.html.trim()}
+                  onClick={() => setStep("preview")}
+                >
+                  <Eye className="h-4 w-4 mr-1" /> Preview
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setStep("edit")}>
+                  <ArrowLeft className="h-4 w-4 mr-1" /> Back to edit
+                </Button>
+                <Button
+                  disabled={!form.name.trim() || !form.html.trim() || addMutation.isPending}
+                  onClick={() => addMutation.mutate()}
+                >
+                  {addMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                  Save template
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Preview a saved template */}
+      <Dialog open={!!previewRow} onOpenChange={(o) => !o && setPreviewRow(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Preview — {previewRow?.name}</DialogTitle>
+            <DialogDescription>{previewRow?.description || "Saved marketplace template"}</DialogDescription>
+          </DialogHeader>
+          <TemplatePreview
+            html={previewRow?.preview_html || ""}
+            device={previewDevice}
+            onDeviceChange={setPreviewDevice}
+            variables={previewRow?.variables || []}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewRow(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
