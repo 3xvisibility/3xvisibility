@@ -1745,7 +1745,18 @@ Deno.serve(async (req) => {
     const hasAiBlocks = aiBlocks.length > 0;
     const hasAiImageBlocks = aiImageBlocks.length > 0;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const effectiveBatchSize = hasAiBlocks || hasAiImageBlocks ? 1 : BATCH_SIZE;
+    // Memory guard: heavy imported templates (inlined CSS/JS, data URIs) make
+    // every generated page hundreds of KB. Building 25-50 of those in one batch
+    // — plus the single multi-row INSERT — can exhaust the worker, which dies
+    // WITHOUT any error (the gateway then answers non-2xx). Scale the batch
+    // down with the template weight so each batch stays well inside the limit.
+    const tplWeight = templateContent.length;
+    const weightCap =
+      tplWeight > 400_000 ? 2 :
+      tplWeight > 200_000 ? 3 :
+      tplWeight > 80_000 ? 6 : BATCH_SIZE;
+    const effectiveBatchSize = hasAiBlocks || hasAiImageBlocks ? 1 : Math.max(1, Math.min(BATCH_SIZE, weightCap));
+
 
     // ─────────────────────────────────────────────────────────────────────
     // AI auto-fill for unmapped variables
