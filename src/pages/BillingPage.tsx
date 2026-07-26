@@ -578,6 +578,18 @@ export default function BillingPage() {
       </Card>
 
       <MyInvoicesCard />
+
+      {downgradeTarget && (
+        <DowngradePlanDialog
+          open={!!downgradeTarget}
+          onOpenChange={(o) => !o && setDowngradeTarget(null)}
+          currentPlan={activePlan}
+          targetPlan={downgradeTarget}
+          periodEnd={resetDate}
+          onDowngraded={refreshSubscription}
+        />
+      )}
     </div>
   );
 }
+
