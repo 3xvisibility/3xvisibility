@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,7 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [tick, setTick] = useState(0);
+  const [alsoDelete, setAlsoDelete] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [confirmJob, setConfirmJob] = useState<{
     id: string;
@@ -46,7 +48,7 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
   } | null>(null);
 
   const cancelMutation = useMutation({
-    mutationFn: async (job: { id: string; campaign_id: string | null }) => {
+    mutationFn: async (job: { id: string; campaign_id: string | null; deleteCampaign?: boolean }) => {
       setCancellingId(job.id);
       if (job.campaign_id) {
         try {
@@ -63,18 +65,26 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
         .eq("id", job.id);
       if (error) throw error;
       if (job.campaign_id) {
+        if (job.deleteCampaign) {
+          const { error: delErr } = await supabase.from("campaigns").delete().eq("id", job.campaign_id);
+          if (delErr) throw delErr;
+          return { deleted: true };
+        }
         await supabase
           .from("campaigns")
           .update({ status: "draft" as never, is_paused: false })
           .eq("id", job.campaign_id);
       }
+      return { deleted: false };
     },
     onSettled: () => setCancellingId(null),
-    onSuccess: () => {
+    onSuccess: (res) => {
       setTick((t) => t + 1);
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
-      toast({ title: "Generation cancelled" });
+      toast({
+        title: res?.deleted ? "Generation cancelled & campaign deleted" : "Generation cancelled",
+      });
     },
     onError: (err: Error) => {
       toast({ title: "Cancel failed", description: err.message, variant: "destructive" });
@@ -188,22 +198,40 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
               <AlertDialogTitle>Stop this generation job?</AlertDialogTitle>
               <AlertDialogDescription>
                 {confirmJob
-                  ? `"${confirmJob.name}" has generated ${confirmJob.done} of ${confirmJob.total} pages. Cancelling stops the job and returns the campaign to draft. Already generated pages are kept, and you can restart generation later.`
+                  ? `"${confirmJob.name}" has generated ${confirmJob.done} of ${confirmJob.total} pages. Cancelling stops the job and returns the campaign to draft.`
                   : ""}
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <label className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm cursor-pointer">
+              <Checkbox
+                checked={alsoDelete}
+                onCheckedChange={(v) => setAlsoDelete(v === true)}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="font-medium">Also delete this campaign</span>
+                <span className="block text-xs text-muted-foreground">
+                  Permanently removes the campaign and its generated pages. This cannot be undone.
+                </span>
+              </span>
+            </label>
             <AlertDialogFooter>
               <AlertDialogCancel>Keep generating</AlertDialogCancel>
               <AlertDialogAction
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={() => {
                   if (confirmJob) {
-                    cancelMutation.mutate({ id: confirmJob.id, campaign_id: confirmJob.campaign_id });
+                    cancelMutation.mutate({
+                      id: confirmJob.id,
+                      campaign_id: confirmJob.campaign_id,
+                      deleteCampaign: alsoDelete,
+                    });
                   }
                   setConfirmJob(null);
+                  setAlsoDelete(false);
                 }}
               >
-                Yes, cancel job
+                {alsoDelete ? "Cancel & delete campaign" : "Yes, cancel job"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
