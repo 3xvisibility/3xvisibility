@@ -477,7 +477,8 @@ export async function resolveUserAiAccess(userId?: string, category?: AiTaskCate
 export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
   // Resolve user + admin-controlled AI access
   const uid = await resolveUserId(opts);
-  let provider = await getGlobalProvider();
+  const category: AiTaskCategory = opts.taskCategory || inferTaskCategory(opts.promptType);
+  let provider = await getGlobalProvider(category);
   if (!opts.skipCredits) {
     if (!uid) {
       return {
@@ -487,7 +488,7 @@ export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
         fallback_used: false,
       };
     }
-    const access = await resolveUserAiAccess(uid);
+    const access = await resolveUserAiAccess(uid, category);
     if (!access.enabled) {
       return {
         success: false,
