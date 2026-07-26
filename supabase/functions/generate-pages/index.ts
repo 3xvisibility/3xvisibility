@@ -2110,11 +2110,21 @@ Deno.serve(async (req) => {
       const usedSlugs = new Set<string>(seenSlugsGlobal);
       const usedTitles = new Set<string>(seenTitlesGlobal);
 
+      let rowNo = 0;
       for (const row of batchRows) {
+        rowNo++;
+        // Stage tracer — lets us see exactly where a row dies if the worker is
+        // killed (CPU/memory limits produce NO error, just a silent shutdown).
+        const stage = (name: string) =>
+          console.log(`[GEN-ROW ${batchesCompleted}.${rowNo}] ${name} (+${Date.now() - startTime}ms, len=${(pageContentLenProbe ?? 0)})`);
+        let pageContentLenProbe: number | undefined;
         try {
           // Reset per-row record of clamped field values for the length gate.
           appliedFieldValues = {};
           let pageContent = templateContent;
+          pageContentLenProbe = pageContent.length;
+          stage("start");
+
 
           // Build combined vars for conditionals/loops
           const allVars: Record<string, string> = { ...row };
