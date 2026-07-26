@@ -246,6 +246,9 @@ export function AdminPaymentsPanel() {
         </CardContent>
       </Card>
 
+      {/* Auto-generated invoices */}
+      <AdminInvoicesPanel />
+
       {/* Transactions */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
