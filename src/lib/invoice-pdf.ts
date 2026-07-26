@@ -25,6 +25,8 @@ export interface InvoiceRecord {
   issued_at: string;
   stripe_charge_id?: string | null;
   stripe_invoice_id?: string | null;
+  stripe_customer_id?: string | null;
+  stripe_payment_intent?: string | null;
   user_id?: string | null;
 }
 

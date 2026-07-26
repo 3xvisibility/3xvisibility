@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,6 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -14,24 +21,45 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Download, ExternalLink, FileText, Loader2, RefreshCw, Search } from "lucide-react";
+import {
+  Download,
+  ExternalLink,
+  Eye,
+  FileText,
+  Loader2,
+  RefreshCw,
+  Search,
+  Sheet,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   downloadInvoicePdf,
   formatInvoiceMoney,
   type InvoiceRecord,
 } from "@/lib/invoice-pdf";
+import { InvoiceDetailsDialog } from "./InvoiceDetailsDialog";
 
 const statusTone = (status: string) => {
   if (status === "paid") return "bg-green-500/15 text-green-500 border-green-500/30";
-  if (status === "refunded") return "bg-muted text-muted-foreground border-border";
   if (status === "partially_refunded")
     return "bg-amber-500/15 text-amber-500 border-amber-500/30";
   return "bg-muted text-muted-foreground border-border";
 };
 
+const RANGES: Record<string, number | null> = {
+  all: null,
+  "7d": 7,
+  "30d": 30,
+  "90d": 90,
+  "365d": 365,
+};
+
 export function AdminInvoicesPanel() {
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
+  const [range, setRange] = useState("all");
+  const [plan, setPlan] = useState("all");
+  const [selected, setSelected] = useState<InvoiceRecord | null>(null);
 
   const invoicesQuery = useQuery({
     queryKey: ["admin-invoices"],
@@ -40,38 +68,92 @@ export function AdminInvoicesPanel() {
         .from("invoices")
         .select("*")
         .order("issued_at", { ascending: false })
-        .limit(200);
+        .limit(500);
       if (error) throw error;
       return (data || []) as unknown as InvoiceRecord[];
     },
   });
 
-  const invoices = invoicesQuery.data ?? [];
-  const filtered = invoices.filter((inv) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return (
-      inv.invoice_number.toLowerCase().includes(q) ||
-      inv.customer_email?.toLowerCase().includes(q) ||
-      inv.customer_name?.toLowerCase().includes(q) ||
-      inv.plan?.toLowerCase().includes(q) ||
-      inv.description?.toLowerCase().includes(q)
-    );
-  });
+  const invoices = useMemo(() => invoicesQuery.data ?? [], [invoicesQuery.data]);
 
-  const totalPaid = filtered.reduce(
-    (sum, inv) => sum + (inv.amount_total - (inv.amount_refunded || 0)),
-    0,
-  );
+  const plans = useMemo(() => {
+    const set = new Set<string>();
+    invoices.forEach((i) => {
+      const p = i.plan || i.description;
+      if (p) set.add(p);
+    });
+    return Array.from(set).sort();
+  }, [invoices]);
+
+  const filtered = useMemo(() => {
+    const days = RANGES[range];
+    const cutoff = days ? Date.now() - days * 86_400_000 : null;
+    const q = search.trim().toLowerCase();
+
+    return invoices.filter((inv) => {
+      if (status !== "all" && inv.status !== status) return false;
+      if (plan !== "all" && (inv.plan || inv.description) !== plan) return false;
+      if (cutoff && new Date(inv.issued_at).getTime() < cutoff) return false;
+      if (!q) return true;
+      return [
+        inv.invoice_number,
+        inv.customer_email,
+        inv.customer_name,
+        inv.plan,
+        inv.description,
+        inv.stripe_charge_id,
+        inv.stripe_invoice_id,
+        inv.stripe_customer_id,
+        inv.stripe_payment_intent,
+      ]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q));
+    });
+  }, [invoices, search, status, plan, range]);
+
+  const totals = useMemo(() => {
+    const gross = filtered.reduce((s, i) => s + i.amount_total, 0);
+    const refunded = filtered.reduce((s, i) => s + (i.amount_refunded || 0), 0);
+    return { gross, refunded, net: gross - refunded };
+  }, [filtered]);
+
   const currency = filtered[0]?.currency || "usd";
 
-  const handleDownload = (inv: InvoiceRecord) => {
-    try {
-      downloadInvoicePdf(inv);
-      toast.success(`${inv.invoice_number}.pdf downloaded`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not build the PDF");
-    }
+  const exportCsv = () => {
+    const header = [
+      "Invoice",
+      "Issued",
+      "Customer",
+      "Email",
+      "Plan",
+      "Amount",
+      "Refunded",
+      "Currency",
+      "Status",
+      "Charge",
+    ];
+    const rows = filtered.map((i) => [
+      i.invoice_number,
+      new Date(i.issued_at).toISOString(),
+      i.customer_name ?? "",
+      i.customer_email ?? "",
+      i.plan ?? i.description ?? "",
+      (i.amount_total / 100).toFixed(2),
+      ((i.amount_refunded || 0) / 100).toFixed(2),
+      i.currency,
+      i.status,
+      i.stripe_charge_id ?? "",
+    ]);
+    const csv = [header, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `invoices-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filtered.length} invoices`);
   };
 
   return (
@@ -82,42 +164,104 @@ export function AdminInvoicesPanel() {
             <FileText className="h-4 w-4" /> Invoices
           </CardTitle>
           <CardDescription>
-            Every successful payment automatically creates a numbered invoice. Download any of
-            them as a PDF.
+            Every successful payment creates a numbered invoice. Search, filter, inspect full
+            transaction metadata, and export.
           </CardDescription>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => invoicesQuery.refetch()}
-          disabled={invoicesQuery.isFetching}
-        >
-          {invoicesQuery.isFetching ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-1" />
-          ) : (
-            <RefreshCw className="h-4 w-4 mr-1" />
-          )}
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={exportCsv} disabled={!filtered.length}>
+            <Sheet className="h-4 w-4 mr-1" /> CSV
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => invoicesQuery.refetch()}
+            disabled={invoicesQuery.isFetching}
+          >
+            {invoicesQuery.isFetching ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-1" />
+            )}
+            Refresh
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative max-w-sm flex-1 min-w-[200px]">
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[220px] max-w-sm">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               className="pl-8"
-              placeholder="Filter by invoice number, email, plan…"
+              placeholder="Search invoice, email, plan, charge id…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">{filtered.length}</span> invoices ·{" "}
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="partially_refunded">Partially refunded</SelectItem>
+              <SelectItem value="refunded">Refunded</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={range} onValueChange={setRange}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All time</SelectItem>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+              <SelectItem value="90d">Last 90 days</SelectItem>
+              <SelectItem value="365d">Last 12 months</SelectItem>
+            </SelectContent>
+          </Select>
+          {plans.length > 0 && (
+            <Select value={plan} onValueChange={setPlan}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Plan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All plans</SelectItem>
+                {plans.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+
+        {/* Totals */}
+        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+          <span>
+            <span className="font-medium text-foreground">{filtered.length}</span> invoices
+          </span>
+          <span>
+            Gross{" "}
             <span className="font-medium text-foreground">
-              {formatInvoiceMoney(totalPaid, currency)}
-            </span>{" "}
-            net collected
-          </div>
+              {formatInvoiceMoney(totals.gross, currency)}
+            </span>
+          </span>
+          <span>
+            Refunded{" "}
+            <span className="font-medium text-destructive">
+              {formatInvoiceMoney(totals.refunded, currency)}
+            </span>
+          </span>
+          <span>
+            Net{" "}
+            <span className="font-medium text-foreground">
+              {formatInvoiceMoney(totals.net, currency)}
+            </span>
+          </span>
         </div>
 
         {invoicesQuery.isLoading ? (
@@ -128,7 +272,9 @@ export function AdminInvoicesPanel() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-12 text-center text-muted-foreground text-sm">
-            No invoices yet. They are created automatically when a customer pays.
+            {invoices.length === 0
+              ? "No invoices yet. They are created automatically when a customer pays."
+              : "No invoices match these filters."}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -141,12 +287,16 @@ export function AdminInvoicesPanel() {
                   <TableHead>Plan / item</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">PDF</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((inv) => (
-                  <TableRow key={inv.id}>
+                  <TableRow
+                    key={inv.id}
+                    className="cursor-pointer"
+                    onClick={() => setSelected(inv)}
+                  >
                     <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(inv.issued_at).toLocaleDateString("en-US", {
@@ -159,7 +309,7 @@ export function AdminInvoicesPanel() {
                         {inv.customer_email || "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm max-w-[220px] truncate">
+                    <TableCell className="text-sm max-w-[200px] truncate">
                       {inv.plan || inv.description || "—"}
                     </TableCell>
                     <TableCell className="text-sm tabular-nums whitespace-nowrap">
@@ -175,8 +325,26 @@ export function AdminInvoicesPanel() {
                         {inv.status.replace("_", " ")}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
-                      <Button size="sm" variant="outline" onClick={() => handleDownload(inv)}>
+                    <TableCell
+                      className="text-right whitespace-nowrap"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Button size="sm" variant="ghost" onClick={() => setSelected(inv)}>
+                        <Eye className="h-3.5 w-3.5 mr-1" /> Details
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          try {
+                            downloadInvoicePdf(inv);
+                          } catch (e) {
+                            toast.error(
+                              e instanceof Error ? e.message : "Could not build the PDF",
+                            );
+                          }
+                        }}
+                      >
                         <Download className="h-3.5 w-3.5 mr-1" /> PDF
                       </Button>
                       {inv.hosted_invoice_url && (
@@ -199,6 +367,12 @@ export function AdminInvoicesPanel() {
           </div>
         )}
       </CardContent>
+
+      <InvoiceDetailsDialog
+        invoice={selected}
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+      />
     </Card>
   );
 }
