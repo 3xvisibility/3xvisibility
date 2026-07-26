@@ -1442,6 +1442,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         const deadline = Date.now() + 15 * 60 * 1000;
         let settled = false;
         let noJobTicks = 0;
+        let lastProcessed = -1;
+        let stalledTicks = 0;
         while (Date.now() < deadline) {
           await new Promise((r) => setTimeout(r, 3000));
           const { data: job } = await supabase
@@ -1464,7 +1466,22 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           });
           if (cancelRequestedRef.current) { settled = true; break; }
           if (job.status === "completed" || job.status === "failed") { settled = true; break; }
+
+          // Stall watchdog: if nothing progressed for ~45s the worker was most
+          // likely recycled — kick a resume so the run finishes by itself.
+          if ((job.processed_rows || 0) === lastProcessed) {
+            stalledTicks++;
+            if (stalledTicks % 15 === 0) {
+              supabase.functions
+                .invoke("generate-pages", { body: { campaign_id: campaign.id, action: "resume" } })
+                .catch(() => {});
+            }
+          } else {
+            lastProcessed = job.processed_rows || 0;
+            stalledTicks = 0;
+          }
         }
+
         clearInterval(pollInterval);
         if (!settled) {
           toast({
