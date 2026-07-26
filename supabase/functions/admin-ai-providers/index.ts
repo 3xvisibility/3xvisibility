@@ -76,8 +76,8 @@ Deno.serve(async (req) => {
         return PROVIDERS[s] ? s : null;
       };
       const routing = {
-        design: norm((settings as any)?.ai_provider_design) || active,
-        content: norm((settings as any)?.ai_provider_content) || active,
+        design: norm((settings as any)?.ai_provider_design) || "inherit",
+        content: norm((settings as any)?.ai_provider_content) || "inherit",
         split_enabled: !!(norm((settings as any)?.ai_provider_design) || norm((settings as any)?.ai_provider_content)),
       };
 
