@@ -1345,6 +1345,84 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount_refunded: number
+          amount_total: number
+          billing_details: Json
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string | null
+          description: string | null
+          hosted_invoice_url: string | null
+          id: string
+          invoice_number: string
+          invoice_pdf_url: string | null
+          issued_at: string
+          line_items: Json
+          plan: string | null
+          receipt_url: string | null
+          status: string
+          stripe_charge_id: string | null
+          stripe_customer_id: string | null
+          stripe_invoice_id: string | null
+          stripe_payment_intent: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_refunded?: number
+          amount_total?: number
+          billing_details?: Json
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          hosted_invoice_url?: string | null
+          id?: string
+          invoice_number: string
+          invoice_pdf_url?: string | null
+          issued_at?: string
+          line_items?: Json
+          plan?: string | null
+          receipt_url?: string | null
+          status?: string
+          stripe_charge_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_refunded?: number
+          amount_total?: number
+          billing_details?: Json
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          hosted_invoice_url?: string | null
+          id?: string
+          invoice_number?: string
+          invoice_pdf_url?: string | null
+          issued_at?: string
+          line_items?: Json
+          plan?: string | null
+          receipt_url?: string | null
+          status?: string
+          stripe_charge_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           area_code: string | null
@@ -3395,6 +3473,7 @@ export type Database = {
         }
         Returns: number
       }
+      next_invoice_number: { Args: never; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
