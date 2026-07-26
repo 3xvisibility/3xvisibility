@@ -732,12 +732,20 @@ function inferPublishType(
 }
 
 // Max pages to publish in a single invocation before self-chaining.
-// Keep this intentionally small: a single WordPress/Shopify publish can include
-// remote CMS writes + media sync, so batching too many pages in one edge request
-// risks the platform 150s IDLE_TIMEOUT.
-const PUBLISH_BATCH_SIZE = 1;
+// A single WordPress/Shopify publish can include remote CMS writes + media sync,
+// so we keep the per-invocation batch modest (timeout guard below still
+// self-chains early if we run long) and instead gain speed by fanning the
+// remainder out across several parallel worker chains.
+const PUBLISH_BATCH_SIZE = 3;
+// How many parallel self-chained workers process the remaining pages.
+// Each worker handles a disjoint slice of page ids, so there is no write
+// contention on the same row; keep this low to stay friendly to the CMS.
+const PUBLISH_FANOUT = 3;
+// Minimum pages left before it's worth fanning out to multiple workers.
+const PUBLISH_FANOUT_MIN = 4;
 // Small delay (ms) between individual page publishes to reduce DB I/O pressure
-const INTER_PUBLISH_DELAY_MS = 200;
+const INTER_PUBLISH_DELAY_MS = 60;
+
 // Edge function soft timeout — leave headroom for the self-chain call
 const PUBLISH_TIMEOUT_MS = 115_000;
 const FUNCTION_SAFE_TIMEOUT_MS = 140_000;
