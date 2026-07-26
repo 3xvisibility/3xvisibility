@@ -262,6 +262,10 @@ export default function PgpGeneratePage() {
   const [rowOverrides, setRowOverrides] = useState<Record<number, Record<string, string>>>({});
   // Which AI fill attempts failed and for which variables ("all" or row index)
   const [aiFillFailures, setAiFillFailures] = useState<Record<string, { names: string[]; error: string }>>({});
+  // AI fill draft preview — values are reviewed before they enter the form.
+  const [aiDraftOpen, setAiDraftOpen] = useState(false);
+  const [aiDraftFields, setAiDraftFields] = useState<AiDraftField[]>([]);
+  const [aiDraftRowIndex, setAiDraftRowIndex] = useState<number | undefined>(undefined);
 
   // ---- Persist manual / AI-filled variable values across visits ----------
   // Scoped per (template group + keyword group) so switching sources doesn't
