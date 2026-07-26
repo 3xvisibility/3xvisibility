@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Gift, CalendarClock, AlertTriangle, Sparkles } from "lucide-react";
+import { Gift, CalendarClock, AlertTriangle, Sparkles, CreditCard, Loader2, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLAN_FEATURES } from "@/lib/plan-features";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
 
 const TRIAL_LENGTH_DAYS = 30;
 
