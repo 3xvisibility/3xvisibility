@@ -399,8 +399,11 @@ export function MarketplaceCatalogPanel() {
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>
-              {step === "edit" ? "Add marketplace template" : `Preview — ${form.name || "Untitled"}`}
+              {step === "edit"
+                ? editingId ? "Edit marketplace template" : "Add marketplace template"
+                : `Preview — ${form.name || "Untitled"}`}
             </DialogTitle>
+
             <DialogDescription>
               {step === "edit"
                 ? <>Paste the full HTML (with inline CSS/JS). Variables like {"{{city}}"} are detected automatically.</>
