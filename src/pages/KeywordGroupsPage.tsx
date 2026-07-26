@@ -178,6 +178,21 @@ export default function KeywordGroupsPage() {
     setEditorOpen(true);
   };
 
+  // Deep link from the sidebar submenu: /keyword-groups?group=<id> opens it in edit mode.
+  const [handledDeepLink, setHandledDeepLink] = useState(false);
+  useEffect(() => {
+    if (handledDeepLink || groups.length === 0) return;
+    const id = new URLSearchParams(window.location.search).get("group");
+    if (!id) return;
+    const g = groups.find((x) => x.id === id);
+    if (g) {
+      openEdit(g);
+      setHandledDeepLink(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups, handledDeepLink]);
+
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!wsId) throw new Error("No workspace");
