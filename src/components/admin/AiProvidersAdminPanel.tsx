@@ -26,6 +26,7 @@ interface ProviderRow {
 
 interface ProvidersState {
   active_provider: string;
+  routing?: { design: string; content: string; split_enabled: boolean };
   providers: ProviderRow[];
 }
 
