@@ -503,6 +503,20 @@ export default function BillingPage() {
         })}
       </div>
 
+      {activePlan !== "free" && (
+        <div className="text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={() => setDowngradeTarget("free")}
+          >
+            Downgrade to Free
+          </Button>
+        </div>
+      )}
+
+
       <Separator />
 
       {/* Feature comparison table */}
