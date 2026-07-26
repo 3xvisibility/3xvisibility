@@ -38,7 +38,78 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { SharedTemplatesModerationPanel } from "@/components/admin/SharedTemplatesModerationPanel";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
-import { Loader2, Plus, Search, Store, Trash2, Package } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Monitor, Plus, Search, Smartphone, Store, Tablet, Trash2, Package } from "lucide-react";
+
+type PreviewDevice = "desktop" | "tablet" | "mobile";
+
+const DEVICE_WIDTH: Record<PreviewDevice, string> = {
+  desktop: "100%",
+  tablet: "768px",
+  mobile: "390px",
+};
+
+/** Sandboxed render of the raw template HTML, with a device-width switcher. */
+function TemplatePreview({
+  html,
+  device,
+  onDeviceChange,
+  variables,
+}: {
+  html: string;
+  device: PreviewDevice;
+  onDeviceChange: (d: PreviewDevice) => void;
+  variables: string[];
+}) {
+  const doc = `<!doctype html><html><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>body{margin:0}</style></head><body>${html}</body></html>`;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1">
+          {([
+            ["desktop", Monitor],
+            ["tablet", Tablet],
+            ["mobile", Smartphone],
+          ] as const).map(([d, Icon]) => (
+            <Button
+              key={d}
+              size="sm"
+              variant={device === d ? "default" : "outline"}
+              onClick={() => onDeviceChange(d)}
+            >
+              <Icon className="h-4 w-4 mr-1" />
+              <span className="capitalize">{d}</span>
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1 flex-wrap">
+          {variables.length === 0 ? (
+            <Badge variant="outline" className="text-muted-foreground">No variables</Badge>
+          ) : (
+            variables.slice(0, 8).map((v) => (
+              <Badge key={v} variant="outline" className="text-muted-foreground">{`{{${v}}}`}</Badge>
+            ))
+          )}
+          {variables.length > 8 && (
+            <Badge variant="outline" className="text-muted-foreground">+{variables.length - 8}</Badge>
+          )}
+        </div>
+      </div>
+      <div className="rounded-lg border bg-muted/30 p-3 flex justify-center">
+        <iframe
+          title="Template preview"
+          sandbox="allow-same-origin"
+          srcDoc={doc}
+          className="bg-background rounded-md border h-[60vh]"
+          style={{ width: DEVICE_WIDTH[device], maxWidth: "100%" }}
+        />
+      </div>
+    </div>
+  );
+}
+
 
 interface MarketplaceRow {
   id: string;
