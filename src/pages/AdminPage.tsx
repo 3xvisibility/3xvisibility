@@ -979,6 +979,11 @@ export default function AdminPage() {
           <AiAccessAdminPanel />
         </TabsContent>
 
+        <TabsContent value="ai-providers" className="space-y-4">
+          <AiProvidersAdminPanel />
+        </TabsContent>
+
+
 
         <TabsContent value="ai-credits" className="space-y-4">
           <AiCreditsAdminPanel />
