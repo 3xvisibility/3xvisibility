@@ -288,7 +288,7 @@ export function MarketplaceCatalogPanel() {
                 className="pl-8 w-full sm:w-64"
               />
             </div>
-            <Button onClick={() => setAddOpen(true)}>
+            <Button onClick={openCreate}>
               <Plus className="h-4 w-4 mr-1" /> Add template
             </Button>
           </div>
