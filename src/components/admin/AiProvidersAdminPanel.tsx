@@ -65,9 +65,11 @@ export default function AiProvidersAdminPanel() {
       toast.success(
         action === "set-active"
           ? "Active AI provider updated"
-          : action === "delete-key"
-            ? "API key removed"
-            : "API key saved",
+          : action === "set-routing"
+            ? "Task routing updated"
+            : action === "delete-key"
+              ? "API key removed"
+              : "API key saved",
       );
       setDrafts((d) => ({ ...d, [String(vars.provider)]: { key: "", model: d[String(vars.provider)]?.model || "" } }));
     },
