@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, ArrowRight, X, ArrowUp, ArrowDown, Trash2, RotateCcw, AlertCircle, Plus, ListOrdered } from "lucide-react";
+import { Sparkles, ArrowRight, X, ArrowUp, ArrowDown, Trash2, RotateCcw, AlertCircle, Plus, ListOrdered, Loader2 } from "lucide-react";
 import { validateVariableValue, detectVariableFormat } from "@/lib/variable-format";
 
 
