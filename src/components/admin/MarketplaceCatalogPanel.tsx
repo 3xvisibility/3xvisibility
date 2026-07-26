@@ -179,6 +179,7 @@ export function MarketplaceCatalogPanel() {
     onSuccess: () => {
       toast({ title: "Template added", description: "It is now live on the Marketplace page." });
       setAddOpen(false);
+      setStep("edit");
       setForm({ name: "", description: "", category: "business", source_url: "", html: "" });
       qc.invalidateQueries({ queryKey: ["admin-marketplace-templates"] });
       qc.invalidateQueries({ queryKey: ["marketplace-admin-templates"] });
