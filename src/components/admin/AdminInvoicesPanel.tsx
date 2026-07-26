@@ -309,6 +309,47 @@ export function AdminInvoicesPanel() {
           </span>
         </div>
 
+        {/* Bulk download bar */}
+        {filtered.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+            <span className="text-xs text-muted-foreground">
+              {chosen.length > 0
+                ? `${chosen.length} selected`
+                : `No selection — actions apply to all ${filtered.length} filtered invoices`}
+            </span>
+            <div className="ml-auto flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={bulkBusy}
+                onClick={() => runBulk("zip")}
+              >
+                {bulkBusy ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                ) : (
+                  <FileArchive className="h-3.5 w-3.5 mr-1" />
+                )}
+                Download ZIP ({bulkTargets.length})
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={bulkBusy}
+                onClick={() => runBulk("merged")}
+              >
+                <FilePlus2 className="h-3.5 w-3.5 mr-1" /> Merged PDF ({bulkTargets.length})
+              </Button>
+              {chosen.length > 0 && (
+                <Button size="sm" variant="ghost" onClick={() => setChecked(new Set())}>
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+
+
         {invoicesQuery.isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-10 w-full" />
