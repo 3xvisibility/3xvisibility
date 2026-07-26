@@ -132,6 +132,57 @@ async function findInvoice(refs: {
   return null;
 }
 
+// Notify the customer (email + in-app bell) about an invoice status change.
+const STATUS_COPY: Record<string, string> = {
+  refunded: "Refunded",
+  partially_refunded: "Partially refunded",
+  voided: "Voided",
+  disputed: "Under dispute review",
+};
+
+async function notifyInvoiceStatus(opts: {
+  invoice: Record<string, any>;
+  statusKey: "refunded" | "partially_refunded" | "voided" | "disputed";
+  amountCents: number;
+  currency?: string | null;
+  reason?: string | null;
+  idempotencyKey: string;
+}) {
+  const { invoice, statusKey, amountCents, currency, reason } = opts;
+  const statusLabel = STATUS_COPY[statusKey] ?? statusKey;
+
+  if (invoice.customer_email) {
+    await sendEmail("invoice-status-update", invoice.customer_email, opts.idempotencyKey, {
+      name: invoice.customer_name ?? undefined,
+      email: invoice.customer_email,
+      invoiceNumber: invoice.invoice_number,
+      statusKey,
+      statusLabel,
+      amount: (Math.abs(amountCents ?? 0) / 100).toFixed(2),
+      currency: currency ?? invoice.currency,
+      reason: reason ?? undefined,
+      occurredAt: new Date().toISOString(),
+      origin: APP_ORIGIN,
+    });
+  }
+
+  if (invoice.user_id) {
+    const { error } = await supabase.from("notifications").insert({
+      user_id: invoice.user_id,
+      title: `Invoice ${invoice.invoice_number}: ${statusLabel}`,
+      message:
+        statusKey === "disputed"
+          ? `A dispute was opened for this payment${reason ? ` (${reason})` : ""}. We'll update you once it's resolved.`
+          : statusKey === "voided"
+            ? "This invoice has been voided and is no longer payable."
+            : `${((Math.abs(amountCents ?? 0)) / 100).toFixed(2)} ${(currency ?? invoice.currency ?? "usd").toUpperCase()} has been refunded to your original payment method.`,
+      type: statusKey === "disputed" || statusKey === "voided" ? "warning" : "success",
+    });
+    if (error) log("notification_insert_error", { error: error.message });
+  }
+}
+
+
 // Persist an invoice record for a successful payment. Returns the stored row
 // (or the existing one when the same Stripe object was already recorded).
 async function recordInvoice(input: {
@@ -447,11 +498,22 @@ serve(async (req) => {
           })
           .eq("id", target.id);
 
+        if (refundedTotal > 0 && (target.amount_refunded ?? 0) !== refundedTotal) {
+          await notifyInvoiceStatus({
+            invoice: target,
+            statusKey: fullyRefunded ? "refunded" : "partially_refunded",
+            amountCents: refundedTotal,
+            currency: target.currency,
+            idempotencyKey: `inv-${target.id}-refund-${refundedTotal}`,
+          });
+        }
+
         log("invoice_refund_synced", {
           invoice: target.invoice_number,
           refunded: refundedTotal,
           fullyRefunded,
         });
+
         break;
       }
 
@@ -508,6 +570,20 @@ serve(async (req) => {
           paidAt: new Date().toISOString(),
           origin: APP_ORIGIN,
         });
+
+        // Notify the customer, but only when the invoice actually changed
+        // state against them (won disputes need no customer email).
+        if (!won && target.dispute_status !== dispute.status) {
+          await notifyInvoiceStatus({
+            invoice: target,
+            statusKey: lost ? "voided" : "disputed",
+            amountCents: dispute.amount ?? 0,
+            currency: dispute.currency ?? target.currency,
+            reason: dispute.reason ?? null,
+            idempotencyKey: `inv-${target.id}-dispute-${dispute.id}-${dispute.status}`,
+          });
+        }
+
 
         log("invoice_dispute_synced", {
           invoice: target.invoice_number,
