@@ -51,6 +51,7 @@ async function callFn(body?: Record<string, unknown>) {
 export default function AiProvidersAdminPanel() {
   const qc = useQueryClient();
   const [drafts, setDrafts] = useState<Record<string, { key: string; model: string }>>({});
+  const [routing, setRouting] = useState<{ design?: string; content?: string }>({});
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-ai-providers"],
