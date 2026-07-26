@@ -351,17 +351,53 @@ export function MarketplaceCatalogPanel() {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button
-              disabled={!form.name.trim() || !form.html.trim() || addMutation.isPending}
-              onClick={() => addMutation.mutate()}
-            >
-              {addMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-              Add template
-            </Button>
+            {step === "edit" ? (
+              <>
+                <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+                <Button
+                  disabled={!form.name.trim() || !form.html.trim()}
+                  onClick={() => setStep("preview")}
+                >
+                  <Eye className="h-4 w-4 mr-1" /> Preview
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setStep("edit")}>
+                  <ArrowLeft className="h-4 w-4 mr-1" /> Back to edit
+                </Button>
+                <Button
+                  disabled={!form.name.trim() || !form.html.trim() || addMutation.isPending}
+                  onClick={() => addMutation.mutate()}
+                >
+                  {addMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                  Save template
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Preview a saved template */}
+      <Dialog open={!!previewRow} onOpenChange={(o) => !o && setPreviewRow(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Preview — {previewRow?.name}</DialogTitle>
+            <DialogDescription>{previewRow?.description || "Saved marketplace template"}</DialogDescription>
+          </DialogHeader>
+          <TemplatePreview
+            html={previewRow?.preview_html || ""}
+            device={previewDevice}
+            onDeviceChange={setPreviewDevice}
+            variables={previewRow?.variables || []}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewRow(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
