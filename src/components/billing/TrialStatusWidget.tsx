@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Gift, CalendarClock, AlertTriangle, Sparkles } from "lucide-react";
+import { Gift, CalendarClock, AlertTriangle, Sparkles, CreditCard, Loader2, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLAN_FEATURES } from "@/lib/plan-features";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
 
 const TRIAL_LENGTH_DAYS = 30;
 
@@ -38,7 +42,10 @@ interface TrialStatusWidgetProps {
  */
 export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusWidgetProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [portalLoading, setPortalLoading] = useState(false);
   const {
+
     plan,
     isLoading,
     isTrialing,
@@ -59,6 +66,29 @@ export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusW
   const trialPercent = isTrialing
     ? Math.min(100, Math.max(0, ((TRIAL_LENGTH_DAYS - trialDaysLeft) / TRIAL_LENGTH_DAYS) * 100))
     : 0;
+
+  const openCustomerPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("customer-portal");
+      if (error) throw error;
+      if (!data?.url) throw new Error("No portal URL returned");
+      window.open(data.url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast({
+        title: "Could not open the billing portal",
+        description:
+          err instanceof Error && err.message
+            ? err.message
+            : "Please try again, or subscribe to a plan first.",
+        variant: "destructive",
+      });
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
+
 
   return (
     <Card className={`shadow-surface border-0 ${className ?? ""}`}>
@@ -88,13 +118,27 @@ export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusW
               )}
             </div>
           </div>
-          {!hideUpgradeAction && (
-            <Button size="sm" variant="outline" onClick={() => navigate("/billing")}>
-              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-              View plans
-            </Button>
-          )}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {!hideUpgradeAction && (
+              <Button size="sm" variant="outline" onClick={() => navigate("/billing")}>
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                View plans
+              </Button>
+            )}
+            {plan !== "free" && (
+              <Button size="sm" onClick={openCustomerPortal} disabled={portalLoading}>
+                {portalLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <CreditCard className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                Manage subscription
+                <ExternalLink className="h-3 w-3 ml-1.5 opacity-70" />
+              </Button>
+            )}
+          </div>
         </div>
+
 
         {isTrialing ? (
           <div className="space-y-2">
