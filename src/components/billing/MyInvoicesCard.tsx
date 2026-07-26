@@ -1,12 +1,19 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, FileText } from "lucide-react";
+import { Download, FileArchive, FilePlus2, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { downloadInvoicePdf, formatInvoiceMoney, type InvoiceRecord } from "@/lib/invoice-pdf";
+import {
+  downloadInvoicePdf,
+  downloadInvoicesZip,
+  downloadMergedInvoicePdf,
+  formatInvoiceMoney,
+  type InvoiceRecord,
+} from "@/lib/invoice-pdf";
 
 /** Invoices belonging to the signed-in customer, each downloadable as a PDF. */
 export function MyInvoicesCard() {
