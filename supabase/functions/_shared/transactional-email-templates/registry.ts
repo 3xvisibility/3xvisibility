@@ -9,6 +9,7 @@ import { template as passwordResetConfirmation } from './password-reset-confirma
 import { template as paymentReceipt } from './payment-receipt.tsx'
 import { template as paymentFailed } from './payment-failed.tsx'
 import { template as adminPaymentFailed } from './admin-payment-failed.tsx'
+import { template as adminPaymentReceived } from './admin-payment-received.tsx'
 import { template as subscriptionConfirmation } from './subscription-confirmation.tsx'
 import { template as subscriptionCancelled } from './subscription-cancelled.tsx'
 
@@ -34,6 +35,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'payment-receipt': paymentReceipt,
   'payment-failed': paymentFailed,
   'admin-payment-failed': adminPaymentFailed,
+  'admin-payment-received': adminPaymentReceived,
   'subscription-confirmation': subscriptionConfirmation,
   'subscription-cancelled': subscriptionCancelled,
 }
