@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Activity, CheckCircle2, AlertCircle, Pause } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Activity, CheckCircle2, AlertCircle, Pause, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { wsChannel } from "@/lib/realtime-scope";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Job = Tables<"generation_jobs"> & { campaigns?: { name: string } | null };
@@ -22,7 +24,45 @@ const JOB_STATE_META: Record<string, { label: string; tone: string; icon: typeof
 
 export function LiveGenerationProgress({ workspaceId }: { workspaceId: string }) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [tick, setTick] = useState(0);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const cancelMutation = useMutation({
+    mutationFn: async (job: { id: string; campaign_id: string | null }) => {
+      setCancellingId(job.id);
+      if (job.campaign_id) {
+        try {
+          await supabase.functions.invoke("generate-pages", {
+            body: { campaign_id: job.campaign_id, action: "pause" },
+          });
+        } catch {
+          /* pause is best-effort */
+        }
+      }
+      const { error } = await supabase
+        .from("generation_jobs")
+        .update({ status: "cancelled" as never, updated_at: new Date().toISOString() })
+        .eq("id", job.id);
+      if (error) throw error;
+      if (job.campaign_id) {
+        await supabase
+          .from("campaigns")
+          .update({ status: "draft" as never, is_paused: false })
+          .eq("id", job.campaign_id);
+      }
+    },
+    onSettled: () => setCancellingId(null),
+    onSuccess: () => {
+      setTick((t) => t + 1);
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      toast({ title: "Generation cancelled" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Cancel failed", description: err.message, variant: "destructive" });
+    },
+  });
 
   const { data: jobs = [] } = useQuery({
     queryKey: ["generation-jobs-live", workspaceId, tick],
