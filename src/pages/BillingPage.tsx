@@ -605,6 +605,27 @@ export default function BillingPage() {
           onDowngraded={refreshSubscription}
         />
       )}
+
+      {confirmTarget && (
+        <CheckoutConfirmDialog
+          open={!!confirmTarget}
+          onOpenChange={(o) => !o && setConfirmTarget(null)}
+          currentPlan={activePlan}
+          targetPlan={confirmTarget}
+          monthlyPrice={(() => {
+            const base = planConfigs.find((p) => p.name === confirmTarget)?.monthlyPrice ?? 0;
+            return isYearly ? Math.round(base * (1 - YEARLY_DISCOUNT)) : base;
+          })()}
+          isYearly={isYearly}
+          trialEligible={activePlan === "free" && subStatus !== "canceled" && !isTrialing}
+          loading={loadingPlan === confirmTarget}
+          onConfirm={async () => {
+            const target = confirmTarget;
+            await handleCheckout(target);
+            setConfirmTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 }
