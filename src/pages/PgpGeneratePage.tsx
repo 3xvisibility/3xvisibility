@@ -35,6 +35,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { ExistingSiteOptimizePanel } from "@/components/website-content/ExistingSiteOptimizePanel";
 import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
+import { AiDraftReviewDialog, type AiDraftField } from "@/components/ai/AiDraftReviewDialog";
 
 type Template = Tables<"templates">;
 
