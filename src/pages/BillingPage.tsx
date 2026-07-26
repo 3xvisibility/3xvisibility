@@ -36,6 +36,8 @@ import { CheckoutSuccessOverlay } from "@/components/billing/CheckoutSuccessOver
 import { CheckoutCanceledOverlay } from "@/components/billing/CheckoutCanceledOverlay";
 import { PaymentMethods } from "@/components/billing/PaymentMethods";
 import { MyInvoicesCard } from "@/components/billing/MyInvoicesCard";
+import { TrialStatusWidget } from "@/components/billing/TrialStatusWidget";
+
 import { logAudit } from "@/lib/audit";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -291,6 +293,10 @@ export default function BillingPage() {
         <h1 className="text-display">{t("billing.title")}</h1>
         <p className="text-muted-foreground mt-1">{t("billing.description")}</p>
       </div>
+
+      <TrialStatusWidget hideUpgradeAction />
+
+
 
       {/* Usage overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
