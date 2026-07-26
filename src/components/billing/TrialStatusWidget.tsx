@@ -67,6 +67,29 @@ export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusW
     ? Math.min(100, Math.max(0, ((TRIAL_LENGTH_DAYS - trialDaysLeft) / TRIAL_LENGTH_DAYS) * 100))
     : 0;
 
+  const openCustomerPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("customer-portal");
+      if (error) throw error;
+      if (!data?.url) throw new Error("No portal URL returned");
+      window.open(data.url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast({
+        title: "Could not open the billing portal",
+        description:
+          err instanceof Error && err.message
+            ? err.message
+            : "Please try again, or subscribe to a plan first.",
+        variant: "destructive",
+      });
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
+
+
   return (
     <Card className={`shadow-surface border-0 ${className ?? ""}`}>
       <CardContent className="p-5 space-y-4">
