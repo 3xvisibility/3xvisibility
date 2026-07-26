@@ -498,11 +498,22 @@ serve(async (req) => {
           })
           .eq("id", target.id);
 
+        if (refundedTotal > 0 && (target.amount_refunded ?? 0) !== refundedTotal) {
+          await notifyInvoiceStatus({
+            invoice: target,
+            statusKey: fullyRefunded ? "refunded" : "partially_refunded",
+            amountCents: refundedTotal,
+            currency: target.currency,
+            idempotencyKey: `inv-${target.id}-refund-${refundedTotal}`,
+          });
+        }
+
         log("invoice_refund_synced", {
           invoice: target.invoice_number,
           refunded: refundedTotal,
           fullyRefunded,
         });
+
         break;
       }
 
