@@ -107,6 +107,31 @@ async function sendEmail(
   return result;
 }
 
+// Locate the invoice a refund / dispute belongs to. Stripe events sometimes
+// only carry the payment intent, so try both references.
+async function findInvoice(refs: {
+  chargeId?: string | null;
+  paymentIntentId?: string | null;
+}) {
+  if (refs.chargeId) {
+    const { data } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("stripe_charge_id", refs.chargeId)
+      .maybeSingle();
+    if (data) return data;
+  }
+  if (refs.paymentIntentId) {
+    const { data } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("stripe_payment_intent", refs.paymentIntentId)
+      .maybeSingle();
+    if (data) return data;
+  }
+  return null;
+}
+
 // Persist an invoice record for a successful payment. Returns the stored row
 // (or the existing one when the same Stripe object was already recorded).
 async function recordInvoice(input: {
