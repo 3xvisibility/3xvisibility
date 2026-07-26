@@ -40,5 +40,9 @@ export function WorkspaceRedirect({ path }: { path: string }) {
   const ws = currentWorkspace || workspaces[0];
   if (!ws) return <Navigate to="/auth" replace />;
 
-  return <Navigate to={`/w/${ws.slug}/${path}`} replace />;
+  // Keep the original path (including any :id segment) and query string.
+  const legacy = location.pathname.replace(/^\/+/, "");
+  const target = legacy.startsWith(path) ? legacy : path;
+
+  return <Navigate to={`/w/${ws.slug}/${target}${location.search}${location.hash}`} replace />;
 }
