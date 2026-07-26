@@ -38,7 +38,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { SharedTemplatesModerationPanel } from "@/components/admin/SharedTemplatesModerationPanel";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
-import { ArrowLeft, Eye, Loader2, Monitor, Plus, Search, Smartphone, Store, Tablet, Trash2, Package } from "lucide-react";
+import { ArrowLeft, Eye, Loader2, Monitor, Pencil, Plus, Search, Smartphone, Store, Tablet, Trash2, Package } from "lucide-react";
 
 type PreviewDevice = "desktop" | "tablet" | "mobile";
 
