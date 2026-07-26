@@ -67,6 +67,19 @@ export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusW
     ? Math.min(100, Math.max(0, ((TRIAL_LENGTH_DAYS - trialDaysLeft) / TRIAL_LENGTH_DAYS) * 100))
     : 0;
 
+  const meters = [
+    { label: "Pages", used: pagesUsed, limit: pagesLimit },
+    { label: "AI credits", used: aiUsed, limit: aiLimit },
+    { label: "Sites", used: sitesConnected, limit: sitesLimit },
+  ].map((m) => ({
+    ...m,
+    // -1 means unlimited → never show a filled bar or a near-cap warning.
+    percent: m.limit > 0 ? Math.min(100, Math.round((m.used / m.limit) * 100)) : 0,
+  }));
+  const nearCap = isLoading ? [] : meters.filter((m) => m.limit > 0 && m.percent >= 80);
+  const atCap = nearCap.filter((m) => m.percent >= 100);
+
+
   const openCustomerPortal = async () => {
     setPortalLoading(true);
     try {
@@ -162,26 +175,47 @@ export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusW
           </p>
         )}
 
-        <div className="grid grid-cols-3 gap-3 pt-1 border-t border-border/60">
-          <div className="pt-3">
-            <p className="text-xs text-muted-foreground">Pages</p>
-            <p className="text-sm font-semibold tabular-nums">
-              {isLoading ? "—" : `${pagesUsed.toLocaleString()} / ${fmtLimit(pagesLimit)}`}
+        <div className="space-y-3 pt-3 border-t border-border/60">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              This period's usage
             </p>
+            <span className="text-xs text-muted-foreground">Resets {fmtDate(resetDate)}</span>
           </div>
-          <div className="pt-3">
-            <p className="text-xs text-muted-foreground">AI credits</p>
-            <p className="text-sm font-semibold tabular-nums">
-              {isLoading ? "—" : `${aiUsed.toLocaleString()} / ${fmtLimit(aiLimit)}`}
-            </p>
-          </div>
-          <div className="pt-3">
-            <p className="text-xs text-muted-foreground">Sites</p>
-            <p className="text-sm font-semibold tabular-nums">
-              {isLoading ? "—" : `${sitesConnected.toLocaleString()} / ${fmtLimit(sitesLimit)}`}
-            </p>
-          </div>
+          {meters.map((m) => (
+            <div key={m.label} className="space-y-1">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{m.label}</span>
+                <span className="font-semibold tabular-nums">
+                  {isLoading ? "—" : `${m.used.toLocaleString()} / ${fmtLimit(m.limit)}`}
+                </span>
+              </div>
+              <Progress
+                value={m.percent}
+                className={`h-2 ${m.percent >= 100 ? "[&>div]:bg-destructive" : m.percent >= 80 ? "[&>div]:bg-amber-500" : ""}`}
+              />
+            </div>
+          ))}
         </div>
+
+        {nearCap.length > 0 && (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+            <p className="text-sm font-medium flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+              {atCap.length > 0
+                ? `You've reached your ${atCap.map((m) => m.label.toLowerCase()).join(" and ")} limit`
+                : `You're close to your ${nearCap.map((m) => m.label.toLowerCase()).join(" and ")} limit`}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Upgrade your plan for higher limits, or wait until {fmtDate(resetDate)} when usage resets.
+            </p>
+            <Button size="sm" onClick={() => navigate("/billing")}>
+              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+              Upgrade plan
+            </Button>
+          </div>
+        )}
+
       </CardContent>
     </Card>
   );
