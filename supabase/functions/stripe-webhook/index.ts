@@ -107,6 +107,121 @@ async function sendEmail(
   return result;
 }
 
+// Persist an invoice record for a successful payment. Returns the stored row
+// (or the existing one when the same Stripe object was already recorded).
+async function recordInvoice(input: {
+  stripeInvoiceId?: string | null;
+  stripeChargeId?: string | null;
+  stripeCustomerId?: string | null;
+  stripePaymentIntent?: string | null;
+  email?: string | null;
+  name?: string | null;
+  userId?: string | null;
+  description?: string | null;
+  plan?: string | null;
+  amountTotal: number;
+  currency: string;
+  hostedInvoiceUrl?: string | null;
+  invoicePdfUrl?: string | null;
+  receiptUrl?: string | null;
+  lineItems: Array<{ description: string; quantity: number; amount: number }>;
+  billingDetails?: Record<string, unknown>;
+  issuedAt?: string;
+}) {
+  // Idempotency: never create two invoices for the same Stripe object.
+  const match = input.stripeInvoiceId
+    ? { column: "stripe_invoice_id", value: input.stripeInvoiceId }
+    : input.stripeChargeId
+      ? { column: "stripe_charge_id", value: input.stripeChargeId }
+      : null;
+
+  if (match) {
+    const { data: existing } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq(match.column, match.value)
+      .maybeSingle();
+    if (existing) {
+      log("invoice_exists", { invoice_number: existing.invoice_number });
+      return existing;
+    }
+  }
+
+  const { data: numberData, error: numberError } = await supabase.rpc("next_invoice_number");
+  if (numberError) log("invoice_number_error", { error: numberError.message });
+  const invoiceNumber =
+    (numberData as string | null) ??
+    `INV-${new Date().getFullYear()}-${Date.now().toString().slice(-5)}`;
+
+  const { data, error } = await supabase
+    .from("invoices")
+    .insert({
+      invoice_number: invoiceNumber,
+      user_id: input.userId ?? null,
+      customer_email: input.email ?? null,
+      customer_name: input.name ?? null,
+      stripe_invoice_id: input.stripeInvoiceId ?? null,
+      stripe_charge_id: input.stripeChargeId ?? null,
+      stripe_customer_id: input.stripeCustomerId ?? null,
+      stripe_payment_intent: input.stripePaymentIntent ?? null,
+      description: input.description ?? null,
+      plan: input.plan ?? null,
+      amount_total: input.amountTotal,
+      currency: input.currency,
+      status: "paid",
+      hosted_invoice_url: input.hostedInvoiceUrl ?? null,
+      invoice_pdf_url: input.invoicePdfUrl ?? null,
+      receipt_url: input.receiptUrl ?? null,
+      line_items: input.lineItems,
+      billing_details: input.billingDetails ?? {},
+      issued_at: input.issuedAt ?? new Date().toISOString(),
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    log("invoice_insert_error", { error: error.message });
+    return null;
+  }
+  log("invoice_created", { invoice_number: data.invoice_number, amount: data.amount_total });
+  return data;
+}
+
+// Create the invoice + send the customer receipt and the admin notification.
+async function handleSuccessfulPayment(params: Parameters<typeof recordInvoice>[0]) {
+  const invoice = await recordInvoice(params);
+  const amount = (params.amountTotal / 100).toFixed(2);
+  const invoiceNumber = invoice?.invoice_number ?? undefined;
+  const key = params.stripeInvoiceId || params.stripeChargeId || crypto.randomUUID();
+
+  await sendEmail("payment-receipt", params.email ?? undefined, `rcpt-${key}`, {
+    name: params.name ?? undefined,
+    email: params.email ?? undefined,
+    planName: params.plan ?? params.description ?? undefined,
+    amount,
+    currency: params.currency,
+    invoiceNumber,
+    paidAt: params.issuedAt ?? new Date().toISOString(),
+    origin: APP_ORIGIN,
+  });
+
+  await sendEmail("admin-payment-received", undefined, `apr-${key}`, {
+    email: params.email ?? undefined,
+    name: params.name ?? undefined,
+    userId: params.userId ?? undefined,
+    customerId: params.stripeCustomerId ?? undefined,
+    planName: params.plan ?? params.description ?? undefined,
+    amount,
+    currency: params.currency,
+    invoiceNumber,
+    paidAt: params.issuedAt ?? new Date().toISOString(),
+    invoiceUrl: params.hostedInvoiceUrl ?? undefined,
+    origin: APP_ORIGIN,
+  });
+
+  return invoice;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
