@@ -293,6 +293,14 @@ export function MarketplaceCatalogPanel() {
                       </div>
                       <Button
                         size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        onClick={() => { setPreviewDevice("desktop"); setPreviewRow(r); }}
+                      >
+                        <Eye className="h-4 w-4 mr-1" /> Preview
+                      </Button>
+                      <Button
+                        size="sm"
                         variant="ghost"
                         className="text-destructive hover:text-destructive shrink-0"
                         onClick={() => setToDelete(r)}
