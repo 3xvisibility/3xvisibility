@@ -12,6 +12,7 @@ import { template as adminPaymentFailed } from './admin-payment-failed.tsx'
 import { template as adminPaymentReceived } from './admin-payment-received.tsx'
 import { template as subscriptionConfirmation } from './subscription-confirmation.tsx'
 import { template as subscriptionCancelled } from './subscription-cancelled.tsx'
+import { template as invoiceStatusUpdate } from './invoice-status-update.tsx'
 
 
 
@@ -38,4 +39,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'admin-payment-received': adminPaymentReceived,
   'subscription-confirmation': subscriptionConfirmation,
   'subscription-cancelled': subscriptionCancelled,
+  'invoice-status-update': invoiceStatusUpdate,
 }
