@@ -110,7 +110,51 @@ Deno.serve(async (req) => {
       const action = String(body.action || "");
       const provider = String(body.provider || "").toLowerCase().trim();
 
+      // Split routing: one provider for design work, another for content/SEO work.
+      if (action === "set-routing") {
+        const norm = (v: unknown) => {
+          const s = String(v ?? "").toLowerCase().trim();
+          if (!s || s === "inherit") return null;
+          if (!PROVIDERS[s]) throw new Error(`Unknown provider "${s}"`);
+          return s;
+        };
+        let design: string | null;
+        let content: string | null;
+        try {
+          design = norm(body.design);
+          content = norm(body.content);
+        } catch (e: any) {
+          return json({ error: e.message }, 400);
+        }
+
+        for (const p of [design, content]) {
+          if (!p || p === "lovable") continue;
+          const { data: row } = await sb
+            .from("ai_provider_keys")
+            .select("api_key")
+            .eq("provider", p)
+            .maybeSingle();
+          const hasKey = !!row?.api_key || !!Deno.env.get(PROVIDERS[p].keyEnv);
+          if (!hasKey) {
+            return json({ error: `Add an API key for ${PROVIDERS[p].name} before routing traffic to it.` }, 400);
+          }
+        }
+
+        const { error } = await sb.from("system_settings").upsert(
+          {
+            id: "global",
+            ai_provider_design: design,
+            ai_provider_content: content,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "id" },
+        );
+        if (error) return json({ error: error.message }, 500);
+        return json({ success: true, ...(await loadState()) });
+      }
+
       if (!PROVIDERS[provider]) return json({ error: "Unknown provider" }, 400);
+
 
       if (action === "save-key") {
         const apiKey = typeof body.api_key === "string" ? body.api_key.trim() : "";
