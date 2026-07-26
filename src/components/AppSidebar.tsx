@@ -179,6 +179,24 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             </NavLink>
 
           </SidebarMenuButton>
+
+          {/* Saved Keyword Groups appear as a nested list under the Keywords entry. */}
+          {item.path === "keyword-groups" && !collapsed && keywordGroups.length > 0 && (
+            <ul className="mt-0.5 ml-5 space-y-0.5 border-l border-border/60 pl-2">
+              {keywordGroups.map((g) => (
+                <li key={g.id}>
+                  <NavLink
+                    to={`${fullPath}?group=${g.id}`}
+                    aria-label={g.name}
+                    className="block truncate rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    activeClassName="text-primary font-medium"
+                  >
+                    {g.name}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          )}
         </SidebarMenuItem>
       );
     });
