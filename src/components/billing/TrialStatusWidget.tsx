@@ -118,13 +118,27 @@ export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusW
               )}
             </div>
           </div>
-          {!hideUpgradeAction && (
-            <Button size="sm" variant="outline" onClick={() => navigate("/billing")}>
-              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-              View plans
-            </Button>
-          )}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {!hideUpgradeAction && (
+              <Button size="sm" variant="outline" onClick={() => navigate("/billing")}>
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                View plans
+              </Button>
+            )}
+            {plan !== "free" && (
+              <Button size="sm" onClick={openCustomerPortal} disabled={portalLoading}>
+                {portalLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <CreditCard className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                Manage subscription
+                <ExternalLink className="h-3 w-3 ml-1.5 opacity-70" />
+              </Button>
+            )}
+          </div>
         </div>
+
 
         {isTrialing ? (
           <div className="space-y-2">
