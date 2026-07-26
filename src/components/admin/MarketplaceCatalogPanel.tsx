@@ -302,7 +302,7 @@ export function MarketplaceCatalogPanel() {
               <CardContent className="py-14 text-center text-muted-foreground space-y-3">
                 <Package className="h-8 w-8 mx-auto opacity-50" />
                 <p>No custom marketplace templates yet.</p>
-                <Button variant="outline" onClick={() => setAddOpen(true)}>
+                <Button variant="outline" onClick={openCreate}>
                   <Plus className="h-4 w-4 mr-1" /> Add your first template
                 </Button>
               </CardContent>
