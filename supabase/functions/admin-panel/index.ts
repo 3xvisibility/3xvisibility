@@ -613,6 +613,79 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Grant / revoke a manual 1-month trial license (no Stripe involved).
+    if (action === "grant-trial" || action === "end-trial") {
+      const { user_id, plan, days } = body;
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const PLAN_LIMITS: Record<string, { pages: number; ai: number }> = {
+        free: { pages: 10, ai: 10 },
+        starter: { pages: 300, ai: 100 },
+        pro: { pages: 3000, ai: 1000 },
+        agency: { pages: 15000, ai: 5000 },
+      };
+
+      if (action === "end-trial") {
+        const { error } = await serviceClient
+          .from("subscriptions")
+          .update({
+            status: "canceled",
+            trial_end: new Date().toISOString(),
+            plan: "free",
+            pages_limit: PLAN_LIMITS.free.pages,
+            ai_generations_limit: PLAN_LIMITS.free.ai,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", user_id);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const trialPlan = PLAN_LIMITS[plan] ? plan : "pro";
+      const trialDays = Math.min(Math.max(Number(days) || 30, 1), 365);
+      const start = new Date();
+      const end = new Date(start.getTime() + trialDays * 24 * 60 * 60 * 1000);
+      const limits = PLAN_LIMITS[trialPlan];
+
+      const row = {
+        user_id,
+        plan: trialPlan,
+        status: "trialing",
+        trial_end: end.toISOString(),
+        current_period_start: start.toISOString(),
+        current_period_end: end.toISOString(),
+        cancel_at_period_end: false,
+        pages_limit: limits.pages,
+        ai_generations_limit: limits.ai,
+        updated_at: start.toISOString(),
+      };
+
+      const { data: existing } = await serviceClient
+        .from("subscriptions")
+        .select("id")
+        .eq("user_id", user_id)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { error } = await serviceClient.from("subscriptions").update(row).eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await serviceClient.from("subscriptions").insert(row);
+        if (error) throw error;
+      }
+
+      return new Response(JSON.stringify({ success: true, trial_end: end.toISOString(), plan: trialPlan }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     if (action === "pause-campaign" || action === "resume-campaign") {
       const { campaign_id } = body;
       if (!campaign_id) return new Response(JSON.stringify({ error: "campaign_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
