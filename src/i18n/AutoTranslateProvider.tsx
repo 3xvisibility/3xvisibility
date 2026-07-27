@@ -214,7 +214,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       const done = window.setTimeout(() => {
         setTranslating(false);
         setTranslationProgress({ done: 0, total: 0 });
-      }, 600);
+      }, 350);
       return () => {
         window.cancelAnimationFrame(raf);
         window.clearTimeout(done);
