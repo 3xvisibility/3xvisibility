@@ -75,6 +75,7 @@ function collectTextNodes(root: HTMLElement): Text[] {
       // Skip whitespace-only and tiny tokens; require at least one letter.
       if (text.trim().length < 2) return NodeFilter.FILTER_REJECT;
       if (!/[A-Za-z\u00C0-\u024F]/.test(text)) return NodeFilter.FILTER_REJECT;
+      if (/^[a-z]+(?:-[a-z0-9]+)+$/i.test(text.trim())) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     },
   });
