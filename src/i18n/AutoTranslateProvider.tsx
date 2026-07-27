@@ -146,19 +146,27 @@ function collectJobs(root: Node, targetLang: string): Job[] {
   return jobs;
 }
 
-function restoreOriginals() {
-  if (typeof document === "undefined") return;
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-  let n: Node | null;
-  while ((n = walker.nextNode())) {
+function restoreOriginals(root: Node = typeof document !== "undefined" ? document.body : (null as unknown as Node)) {
+  if (typeof document === "undefined" || !root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let n: Node | null = root.nodeType === 3 ? root : walker.nextNode();
+  while (n) {
     const node = n as TrTextNode;
     if (node.__autoTrOriginal && node.nodeValue !== node.__autoTrOriginal) {
       node.nodeValue = node.__autoTrOriginal;
     }
     node.__autoTrLang = "en";
+    n = walker.nextNode();
   }
   const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
-  document.body.querySelectorAll<HTMLElement>(selector).forEach((el) => {
+  const scope: ParentNode | null =
+    root.nodeType === 1 ? (root as Element) : root.nodeType === 9 || root === document.body ? document.body : root.parentElement;
+  const els: HTMLElement[] = [];
+  if (scope && typeof (scope as ParentNode).querySelectorAll === "function") {
+    els.push(...Array.from((scope as ParentNode).querySelectorAll<HTMLElement>(selector)));
+  }
+  if (root.nodeType === 1 && (root as Element).matches?.(selector)) els.push(root as HTMLElement);
+  els.forEach((el) => {
     for (const attr of TRANSLATABLE_ATTRS) {
       const origKey = `__autoTr_${attr}_orig` as const;
       const langKey = `__autoTr_${attr}_lang` as const;
