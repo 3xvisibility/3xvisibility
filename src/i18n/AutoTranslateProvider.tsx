@@ -256,22 +256,44 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       const total = Math.ceil(misses.length / MAX_BATCH);
       setTranslationProgress({ done: 0, total });
 
-      for (let i = 0; i < misses.length; i += MAX_BATCH) {
-        if (cancelled || runId !== runIdRef.current) return;
-        const chunk = misses.slice(i, i + MAX_BATCH);
-        const translated = await translateBatch(chunk, language);
-        if (cancelled || runId !== runIdRef.current) return;
-        if (!translated) {
-          setTranslationError("Translation service is unavailable. Please retry.");
-          setTranslating(false);
-          return;
+      const chunks: string[][] = [];
+      for (let i = 0; i < misses.length; i += MAX_BATCH) chunks.push(misses.slice(i, i + MAX_BATCH));
+
+      let completed = 0;
+      let failed = false;
+      let next = 0;
+
+      const worker = async () => {
+        while (!failed) {
+          const idx = next++;
+          if (idx >= chunks.length) return;
+          if (cancelled || runId !== runIdRef.current) return;
+          const chunk = chunks[idx];
+          const translated = await translateBatch(chunk, language);
+          if (cancelled || runId !== runIdRef.current) return;
+          if (!translated) {
+            failed = true;
+            return;
+          }
+          chunk.forEach((text, k) => {
+            const tr = translated[k] || text;
+            cacheSet(language, text, tr);
+            (byText.get(text) || []).forEach((j) => j.apply(tr));
+          });
+          completed++;
+          setTranslationProgress({ done: Math.min(total, completed), total });
         }
-        chunk.forEach((text, k) => {
-          const tr = translated[k] || text;
-          cacheSet(language, text, tr);
-          (byText.get(text) || []).forEach((j) => j.apply(tr));
-        });
-        setTranslationProgress({ done: Math.min(total, Math.ceil((i + chunk.length) / MAX_BATCH)), total });
+      };
+
+      await Promise.all(
+        Array.from({ length: Math.min(MAX_CONCURRENCY, chunks.length) }, () => worker())
+      );
+
+      if (cancelled || runId !== runIdRef.current) return;
+      if (failed) {
+        setTranslationError("Translation service is unavailable. Please retry.");
+        setTranslating(false);
+        return;
       }
 
       setTranslating(false);
