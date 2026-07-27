@@ -106,7 +106,16 @@ export function PricingSection() {
                         {t("pricing.billed")} €{price * 12}/{t("pricing.year")} <span className="line-through text-[hsl(220,10%,52%)]">€{plan.monthlyPrice * 12}</span>
                       </p>
                     )}
-                    <p className="text-xs text-[hsl(220,10%,70%)] mt-1">{plan.pagesLimit}</p>
+                    {plan.monthlyPrice > 0 && (
+                      <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[hsl(96,90%,45%,0.25)] bg-[hsl(96,90%,45%,0.1)] px-2.5 py-1">
+                        <Gift className="h-3 w-3 text-[hsl(96,80%,52%)]" />
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(96,80%,52%)]">{t("pricing.trialBadge")}</span>
+                      </div>
+                    )}
+                    <p className="text-xs text-[hsl(220,10%,70%)] mt-2">{plan.pagesLimit}</p>
+                    {plan.monthlyPrice > 0 && (
+                      <p className="text-[11px] text-[hsl(96,80%,52%)] mt-0.5">{t("pricing.trialNote")}</p>
+                    )}
                   </CardHeader>
                   <CardContent className="pt-4 space-y-4">
                     <Separator className="bg-[hsl(96,90%,45%,0.08)]" />
