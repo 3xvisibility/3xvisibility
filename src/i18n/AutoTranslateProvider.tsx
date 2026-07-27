@@ -209,23 +209,53 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (typeof document === "undefined") return;
 
-    // English → restore any prior translations. Keep the spinner visible for a
-    // brief moment so the user sees that the switch back is being applied.
+    // English → restore any prior translations immediately, then re-run a few
+    // times (and watch the DOM briefly) because React re-renders after the
+    // language change can re-mount nodes that still hold translated text.
     if (language === "en") {
       ++runIdRef.current;
       setTranslationError(null);
       setTranslationProgress({ done: 0, total: 1 });
-      const raf = window.requestAnimationFrame(() => {
-        restoreOriginals();
-        setTranslationProgress({ done: 1, total: 1 });
+
+      // Synchronous first pass so the UI flips back to English right away.
+      restoreOriginals();
+      setTranslationProgress({ done: 1, total: 1 });
+
+      const timers: number[] = [];
+      [0, 60, 150, 300, 600].forEach((delay) => {
+        timers.push(window.setTimeout(() => restoreOriginals(), delay));
       });
+
+      // Catch nodes mounted by late re-renders / route transitions.
+      const enObserver = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          if (m.type === "childList") {
+            m.addedNodes.forEach((node) => {
+              if (node.nodeType === 1 || node.nodeType === 3) restoreOriginals(node);
+            });
+          } else if (m.target) {
+            restoreOriginals(m.target);
+          }
+        }
+      });
+      enObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: [...TRANSLATABLE_ATTRS],
+      });
+      const stopObserver = window.setTimeout(() => enObserver.disconnect(), 1500);
+
       const done = window.setTimeout(() => {
         setTranslating(false);
         setTranslationProgress({ done: 0, total: 0 });
       }, 350);
       return () => {
-        window.cancelAnimationFrame(raf);
+        timers.forEach((t) => window.clearTimeout(t));
+        window.clearTimeout(stopObserver);
         window.clearTimeout(done);
+        enObserver.disconnect();
       };
     }
 
