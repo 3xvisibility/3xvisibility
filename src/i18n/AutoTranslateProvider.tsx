@@ -101,7 +101,7 @@ const SKIP_TAGS = new Set([
 ]);
 
 function isInsideSkipped(node: Node): boolean {
-  let el: Node | null = node.parentNode;
+  let el: Node | null = node.nodeType === 1 ? node : node.parentNode;
   while (el && el !== document.body) {
     if (el.nodeType === 1) {
       const tag = (el as Element).tagName;
