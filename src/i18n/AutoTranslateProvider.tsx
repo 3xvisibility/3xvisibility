@@ -349,28 +349,30 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       });
 
       // Catch nodes mounted by late re-renders / route transitions.
+      // Only childList is observed: observing characterData/attributes here
+      // makes our own restore writes re-trigger the callback (freeze loop).
+      let enPending: number | null = null;
+      const enRoots = new Set<Node>();
       const enObserver = new MutationObserver((mutations) => {
         for (const m of mutations) {
-          if (m.type === "childList") {
-            m.addedNodes.forEach((node) => {
-              if (node.nodeType === 1 || node.nodeType === 3) {
-                restoreOriginals(node);
-                sanitizeBadRenderedText(node);
-              }
-            });
-          } else if (m.target) {
-            restoreOriginals(m.target);
-            sanitizeBadRenderedText(m.target);
-          }
+          m.addedNodes.forEach((node) => {
+            if (node.nodeType === 1 || node.nodeType === 3) enRoots.add(node);
+          });
         }
+        if (enRoots.size === 0) return;
+        if (enPending) window.clearTimeout(enPending);
+        enPending = window.setTimeout(() => {
+          const roots = Array.from(enRoots);
+          enRoots.clear();
+          roots.forEach((node) => {
+            if (!node.isConnected) return;
+            restoreOriginals(node);
+            sanitizeBadRenderedText(node);
+          });
+        }, 100);
       });
-      enObserver.observe(document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-        attributes: true,
-        attributeFilter: [...TRANSLATABLE_ATTRS],
-      });
+      enObserver.observe(document.body, { childList: true, subtree: true });
+
       const stopObserver = window.setTimeout(() => enObserver.disconnect(), 1500);
 
       const done = window.setTimeout(() => {
