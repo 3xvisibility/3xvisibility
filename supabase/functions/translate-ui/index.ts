@@ -24,15 +24,26 @@ const LANG_NAMES: Record<string, string> = {
   th: "Thai", vi: "Vietnamese",
 };
 
+function isBadText(value: unknown): boolean {
+  if (typeof value !== "string") return true;
+  const normalized = value.trim();
+  return !normalized || normalized === "[object Object]" || /\[object Object\]/i.test(normalized);
+}
+
 /** Coerce any provider response item into a plain string (never "[object Object]"). */
-function toText(v: unknown, fallback: string): string {
-  if (typeof v === "string") return v;
+function toText(v: unknown, fallback: string, depth = 0): string {
+  if (depth > 4) return fallback;
+  if (typeof v === "string") return isBadText(v) ? fallback : v;
   if (typeof v === "number" || typeof v === "boolean") return String(v);
-  if (Array.isArray(v)) return v.map((x) => toText(x, "")).filter(Boolean).join(" ") || fallback;
+  if (Array.isArray(v)) {
+    const joined = v.map((x) => toText(x, "", depth + 1)).filter((x) => !isBadText(x)).join(" ").trim();
+    return joined || fallback;
+  }
   if (v && typeof v === "object") {
     const o = v as Record<string, unknown>;
-    for (const k of ["translatedText", "translation", "translated_text", "text", "value", "result", "output"]) {
-      if (typeof o[k] === "string") return o[k] as string;
+    for (const k of ["translatedText", "translation", "translated_text", "text", "value", "result", "output", "content", "message"]) {
+      const coerced = toText(o[k], "", depth + 1);
+      if (!isBadText(coerced)) return coerced;
     }
     return fallback;
   }
@@ -122,7 +133,7 @@ Deno.serve(async (req) => {
       });
     }
     // Cap batch size for safety
-    const capped = texts.slice(0, 100).map((t) => String(t ?? ""));
+    const capped = texts.slice(0, 100).map((t) => toText(t, ""));
     const hasLetters = (s: string) => /[A-Za-z\u00C0-\u024F]/.test(s);
     let translations = await libreBatch(capped, target);
     let via = "libre";
@@ -156,7 +167,7 @@ Deno.serve(async (req) => {
     }
     const safe = translations.map((tr, i) => {
       const s2 = toText(tr, capped[i]);
-      return !s2 || s2 === "[object Object]" ? capped[i] : s2;
+      return isBadText(s2) ? capped[i] : s2;
     });
     return new Response(JSON.stringify({ translations: safe, via }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
