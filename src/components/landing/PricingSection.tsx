@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,10 @@ import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, St
 import { ScrollReveal } from "./ScrollReveal";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { Loader2 } from "lucide-react";
+import { startPlanCheckout } from "@/lib/checkout";
+import type { PlanName } from "@/lib/plan-features";
+import { useToast } from "@/hooks/use-toast";
 
 const YEARLY_DISCOUNT = 2 / 12; // Save 2 months
 
@@ -30,12 +34,39 @@ function TableCell({ val }: { val: string | boolean }) {
 export function PricingSection() {
   const [isYearly, setIsYearly] = useState(false);
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [checkoutPlan, setCheckoutPlan] = useState<PlanName | null>(null);
+
+  const handleCheckout = async (plan: PlanName) => {
+    setCheckoutPlan(plan);
+    try {
+      const result = await startPlanCheckout(plan);
+      if (result.status === "unauthenticated") {
+        navigate(`/auth?plan=${plan}`);
+        return;
+      }
+      if (result.status === "unsupported") {
+        navigate("/billing");
+        return;
+      }
+      window.location.href = result.url;
+    } catch (err: any) {
+      toast({
+        title: t("pricing.checkoutFailed"),
+        description: err?.message ?? String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setCheckoutPlan(null);
+    }
+  };
 
   const plans = [
-    { name: t("pricing.free"), monthlyPrice: 0, description: t("pricing.freeDesc"), popular: false, icon: <Layers className="h-5 w-5" />, cta: t("pricing.tryFree"), pagesLimit: `10 ${t("pricing.pagesPerMonth")}`, features: [`10 ${t("pricing.pagesPerMonth")}`, `10 ${t("pricing.aiGenerations")}`, `1 ${t("pricing.campaignsPerMonth")}`, `1 ${t("pricing.templates").toLowerCase()}`, `1 ${t("pricing.websites").toLowerCase()}`, `${t("pricing.wordpress")} ${t("pricing.only")}`, t("pricing.noCreditCard")] },
-    { name: t("pricing.starter"), monthlyPrice: 19, description: t("pricing.starterDesc"), popular: false, icon: <Zap className="h-5 w-5" />, cta: t("pricing.getStarted"), pagesLimit: `300 ${t("pricing.pagesPerMonth")}`, features: [t("pricing.trialFeature"), `300 ${t("pricing.pagesPerMonth")}`, `100 ${t("pricing.aiGenerations")}`, `10 ${t("pricing.campaignsPerMonth")}`, `10 ${t("pricing.templates").toLowerCase()}`, `2 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress"), `${t("pricing.email")} ${t("pricing.support").toLowerCase()}`] },
-    { name: t("pricing.pro"), monthlyPrice: 59, description: t("pricing.proDesc"), popular: true, icon: <Sparkles className="h-5 w-5" />, cta: t("pricing.startProTrial"), pagesLimit: `3,000 ${t("pricing.pagesPerMonth")}`, features: [t("pricing.trialFeature"), `3,000 ${t("pricing.pagesPerMonth")}`, `1,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.campaignsPerMonth")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `10 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + ", " + t("pricing.shopify") + " & PrestaShop", t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), `${t("pricing.priority")} ${t("pricing.support").toLowerCase()}`] },
-    { name: t("pricing.agency"), monthlyPrice: 149, description: t("pricing.agencyDesc"), popular: false, icon: <Crown className="h-5 w-5" />, cta: t("pricing.contactSales"), pagesLimit: `15,000 ${t("pricing.pagesPerMonth")}`, features: [t("pricing.trialFeature"), `15,000 ${t("pricing.pagesPerMonth")}`, `5,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.campaignsPerMonth")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `${t("pricing.unlimited")} ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + ", " + t("pricing.shopify") + " & PrestaShop", t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), t("pricing.teamCollaboration"), `${t("pricing.dedicated")} ${t("pricing.support").toLowerCase()}`] },
+    { key: "free" as PlanName, name: t("pricing.free"), monthlyPrice: 0, description: t("pricing.freeDesc"), popular: false, icon: <Layers className="h-5 w-5" />, cta: t("pricing.tryFree"), pagesLimit: `10 ${t("pricing.pagesPerMonth")}`, features: [`10 ${t("pricing.pagesPerMonth")}`, `10 ${t("pricing.aiGenerations")}`, `1 ${t("pricing.campaignsPerMonth")}`, `1 ${t("pricing.templates").toLowerCase()}`, `1 ${t("pricing.websites").toLowerCase()}`, `${t("pricing.wordpress")} ${t("pricing.only")}`, t("pricing.noCreditCard")] },
+    { key: "starter" as PlanName, name: t("pricing.starter"), monthlyPrice: 19, description: t("pricing.starterDesc"), popular: false, icon: <Zap className="h-5 w-5" />, cta: t("pricing.getStarted"), pagesLimit: `300 ${t("pricing.pagesPerMonth")}`, features: [t("pricing.trialFeature"), `300 ${t("pricing.pagesPerMonth")}`, `100 ${t("pricing.aiGenerations")}`, `10 ${t("pricing.campaignsPerMonth")}`, `10 ${t("pricing.templates").toLowerCase()}`, `2 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress"), `${t("pricing.email")} ${t("pricing.support").toLowerCase()}`] },
+    { key: "pro" as PlanName, name: t("pricing.pro"), monthlyPrice: 59, description: t("pricing.proDesc"), popular: true, icon: <Sparkles className="h-5 w-5" />, cta: t("pricing.startProTrial"), pagesLimit: `3,000 ${t("pricing.pagesPerMonth")}`, features: [t("pricing.trialFeature"), `3,000 ${t("pricing.pagesPerMonth")}`, `1,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.campaignsPerMonth")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `10 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + ", " + t("pricing.shopify") + " & PrestaShop", t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), `${t("pricing.priority")} ${t("pricing.support").toLowerCase()}`] },
+    { key: "agency" as PlanName, name: t("pricing.agency"), monthlyPrice: 149, description: t("pricing.agencyDesc"), popular: false, icon: <Crown className="h-5 w-5" />, cta: t("pricing.contactSales"), pagesLimit: `15,000 ${t("pricing.pagesPerMonth")}`, features: [t("pricing.trialFeature"), `15,000 ${t("pricing.pagesPerMonth")}`, `5,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.campaignsPerMonth")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `${t("pricing.unlimited")} ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + ", " + t("pricing.shopify") + " & PrestaShop", t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), t("pricing.teamCollaboration"), `${t("pricing.dedicated")} ${t("pricing.support").toLowerCase()}`] },
   ];
 
   const comparisonFeatures = [
@@ -130,9 +161,23 @@ export function PricingSection() {
                         </li>
                       ))}
                     </ul>
-                    <Button className={`w-full rounded-xl h-11 text-sm font-semibold transition-all duration-300 active:scale-[0.97] ${plan.popular ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25" : "bg-[hsl(220,30%,12%)] border border-[hsl(96,90%,45%,0.2)] text-foreground hover:bg-[hsl(96,90%,45%,0.1)] hover:border-[hsl(96,90%,45%,0.3)]"}`} asChild>
-                      <Link to="/auth">{plan.cta}<ArrowRight className="ml-1.5 h-3.5 w-3.5" /></Link>
-                    </Button>
+                    {plan.monthlyPrice === 0 ? (
+                      <Button className="w-full rounded-xl h-11 text-sm font-semibold transition-all duration-300 active:scale-[0.97] bg-[hsl(220,30%,12%)] border border-[hsl(96,90%,45%,0.2)] text-foreground hover:bg-[hsl(96,90%,45%,0.1)] hover:border-[hsl(96,90%,45%,0.3)]" asChild>
+                        <Link to="/auth">{plan.cta}<ArrowRight className="ml-1.5 h-3.5 w-3.5" /></Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => handleCheckout(plan.key)}
+                        disabled={checkoutPlan !== null}
+                        className={`w-full rounded-xl h-11 text-sm font-semibold transition-all duration-300 active:scale-[0.97] ${plan.popular ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25" : "bg-[hsl(220,30%,12%)] border border-[hsl(96,90%,45%,0.2)] text-foreground hover:bg-[hsl(96,90%,45%,0.1)] hover:border-[hsl(96,90%,45%,0.3)]"}`}
+                      >
+                        {checkoutPlan === plan.key ? (
+                          <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />{t("pricing.startingTrial")}</>
+                        ) : (
+                          <>{t("pricing.startTrialCta")}<ArrowRight className="ml-1.5 h-3.5 w-3.5" /></>
+                        )}
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
