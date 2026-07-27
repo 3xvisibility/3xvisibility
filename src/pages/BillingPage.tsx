@@ -254,7 +254,7 @@ export default function BillingPage() {
     searchParams.delete("plan");
     setSearchParams(searchParams, { replace: true });
     if (!STRIPE_TIERS[requested] || requested === currentPlan) return;
-    handleCheckout(requested);
+    handleCheckout(requested, true);
   }, [searchParams, autoCheckoutDone, subLoading, currentPlan]);
 
 
