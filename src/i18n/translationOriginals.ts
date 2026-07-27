@@ -16,6 +16,12 @@ function normalizeText(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
+function isBadTranslation(value: unknown): boolean {
+  if (typeof value !== "string") return true;
+  const normalized = normalizeText(value);
+  return !normalized || normalized === "[object Object]" || /\[object Object\]/i.test(normalized);
+}
+
 function getDictionaryReverse(): Map<string, string> {
   if (dictionaryReverse) return dictionaryReverse;
 
@@ -48,6 +54,7 @@ export function rememberTranslationPair(lang: string, original: string, translat
   const normalizedOriginal = normalizeText(original);
   const normalizedTranslated = normalizeText(translated);
   if (!lang || lang === "en" || !normalizedOriginal || !normalizedTranslated) return;
+  if (isBadTranslation(original) || isBadTranslation(translated)) return;
   if (normalizedOriginal === normalizedTranslated) return;
 
   runtimeReverse.set(reverseKey(lang, translated), original);
@@ -60,7 +67,7 @@ export function rememberTranslationPair(lang: string, original: string, translat
 
 function readRuntimeReverse(lang: string, text: string): string | null {
   const normalized = normalizeText(text);
-  if (!normalized || lang === "en") return null;
+  if (!normalized || lang === "en" || isBadTranslation(text)) return null;
 
   const inMemory = runtimeReverse.get(reverseKey(lang, text));
   if (inMemory) return inMemory;
