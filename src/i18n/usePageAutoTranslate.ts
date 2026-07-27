@@ -134,6 +134,7 @@ export function usePageAutoTranslate(
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
+    root.setAttribute("data-page-autotranslate", "");
 
     let cancelled = false;
     const nodes = collectTextNodes(root);
