@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
         serviceClient.from("user_roles").select("user_id, role"),
         serviceClient.from("campaigns").select("id, user_id, name, status, created_at").order("created_at", { ascending: false }).limit(500),
         serviceClient.from("generated_pages").select("id, status, created_at, title, user_id").order("created_at", { ascending: false }).limit(200),
-        serviceClient.from("subscriptions").select("id, user_id, plan, pages_limit, pages_used, current_period_start, current_period_end, ai_generations_used, ai_generations_limit, workspace_id, billing_cycle, created_at, updated_at"),
+        serviceClient.from("subscriptions").select("id, user_id, plan, pages_limit, pages_used, current_period_start, current_period_end, ai_generations_used, ai_generations_limit, workspace_id, billing_cycle, status, trial_end, cancel_at_period_end, created_at, updated_at"),
         serviceClient.from("websites").select("id, user_id, type, status"),
         serviceClient.from("ai_credits").select("user_id, total_credits, used_credits, remaining_credits"),
         serviceClient.from("generated_pages").select("id", { count: "exact", head: true }),
@@ -435,7 +435,7 @@ Deno.serve(async (req) => {
       ] = await Promise.all([
         serviceClient.from("profiles").select("*").eq("user_id", target_user_id).maybeSingle(),
         serviceClient.from("user_roles").select("role").eq("user_id", target_user_id).maybeSingle(),
-        serviceClient.from("subscriptions").select("id, user_id, plan, pages_limit, pages_used, current_period_start, current_period_end, ai_generations_used, ai_generations_limit, workspace_id, billing_cycle, created_at, updated_at").eq("user_id", target_user_id).maybeSingle(),
+        serviceClient.from("subscriptions").select("id, user_id, plan, pages_limit, pages_used, current_period_start, current_period_end, ai_generations_used, ai_generations_limit, workspace_id, billing_cycle, status, trial_end, cancel_at_period_end, created_at, updated_at").eq("user_id", target_user_id).maybeSingle(),
         serviceClient.from("campaigns").select("*").eq("user_id", target_user_id).order("created_at", { ascending: false }),
         serviceClient.from("generated_pages").select("id, title, slug, status, created_at, campaign_id").eq("user_id", target_user_id).order("created_at", { ascending: false }).limit(200),
         serviceClient.from("websites").select("id, user_id, name, url, type, status, last_sync, created_at, updated_at, google_indexing_enabled, workspace_id, language, language_locked, shop_details, site_context").eq("user_id", target_user_id),
@@ -612,6 +612,79 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Grant / revoke a manual 1-month trial license (no Stripe involved).
+    if (action === "grant-trial" || action === "end-trial") {
+      const { user_id, plan, days } = body;
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const PLAN_LIMITS: Record<string, { pages: number; ai: number }> = {
+        free: { pages: 10, ai: 10 },
+        starter: { pages: 300, ai: 100 },
+        pro: { pages: 3000, ai: 1000 },
+        agency: { pages: 15000, ai: 5000 },
+      };
+
+      if (action === "end-trial") {
+        const { error } = await serviceClient
+          .from("subscriptions")
+          .update({
+            status: "canceled",
+            trial_end: new Date().toISOString(),
+            plan: "free",
+            pages_limit: PLAN_LIMITS.free.pages,
+            ai_generations_limit: PLAN_LIMITS.free.ai,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", user_id);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const trialPlan = PLAN_LIMITS[plan] ? plan : "pro";
+      const trialDays = Math.min(Math.max(Number(days) || 30, 1), 365);
+      const start = new Date();
+      const end = new Date(start.getTime() + trialDays * 24 * 60 * 60 * 1000);
+      const limits = PLAN_LIMITS[trialPlan];
+
+      const row = {
+        user_id,
+        plan: trialPlan,
+        status: "trialing",
+        trial_end: end.toISOString(),
+        current_period_start: start.toISOString(),
+        current_period_end: end.toISOString(),
+        cancel_at_period_end: false,
+        pages_limit: limits.pages,
+        ai_generations_limit: limits.ai,
+        updated_at: start.toISOString(),
+      };
+
+      const { data: existing } = await serviceClient
+        .from("subscriptions")
+        .select("id")
+        .eq("user_id", user_id)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { error } = await serviceClient.from("subscriptions").update(row).eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await serviceClient.from("subscriptions").insert(row);
+        if (error) throw error;
+      }
+
+      return new Response(JSON.stringify({ success: true, trial_end: end.toISOString(), plan: trialPlan }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
 
     if (action === "pause-campaign" || action === "resume-campaign") {
       const { campaign_id } = body;

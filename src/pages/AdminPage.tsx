@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play, Mail, RefreshCw, Store, CreditCard } from "lucide-react";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play, Mail, RefreshCw, Store, CreditCard, Gift, Cpu } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
@@ -713,6 +713,18 @@ export default function AdminPage() {
     return data;
   };
 
+  const trialMutation = useMutation({
+    mutationFn: (vars: { user_id: string; plan?: string; days?: number; end?: boolean }) =>
+      callAction(vars.end
+        ? { action: "end-trial", user_id: vars.user_id }
+        : { action: "grant-trial", user_id: vars.user_id, plan: vars.plan ?? "pro", days: vars.days ?? 30 }),
+    onSuccess: (_d, vars) => {
+      toast.success(vars.end ? "Trial ended" : `1 month ${vars.plan ?? "pro"} trial granted`);
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
   const banMutation = useMutation({
     mutationFn: (vars: { user_id: string; banned: boolean; reason?: string }) =>
       callAction({ action: "ban-user", target_user_id: vars.user_id, banned: vars.banned, reason: vars.reason }),
@@ -949,6 +961,7 @@ export default function AdminPage() {
           <TabsTrigger value="inbox" className="text-xs gap-1"><Mail className="h-3 w-3" />Inbox</TabsTrigger>
           <TabsTrigger value="subscriptions" className="text-xs">{t("admin.subscriptions")}</TabsTrigger>
           <TabsTrigger value="payments" className="text-xs gap-1"><CreditCard className="h-3 w-3" />Payments</TabsTrigger>
+          <TabsTrigger value="ai-providers" className="text-xs gap-1"><Cpu className="h-3 w-3" />AI Providers</TabsTrigger>
           <TabsTrigger value="ai-credits" className="text-xs gap-1"><Zap className="h-3 w-3" />AI Credits</TabsTrigger>
           <TabsTrigger value="ai-usage" className="text-xs gap-1"><Activity className="h-3 w-3" />Usage Report</TabsTrigger>
           <TabsTrigger value="connections" className="text-xs gap-1"><AlertCircle className="h-3 w-3" />Connections</TabsTrigger>
@@ -1516,7 +1529,15 @@ export default function AdminPage() {
                               usagePercent >= 70 ? "text-yellow-600 border-yellow-500/20" :
                               "text-success border-success/20"
                             }`}>{usagePercent}%</Badge>
+                            <Badge variant="outline" className="capitalize text-[10px]">{(s as any).status || "none"}</Badge>
+                            {(s as any).trial_end && (
+                              <span className="text-[10px] text-muted-foreground">trial ends {formatDate((s as any).trial_end)}</span>
+                            )}
                           </div>
+                          <Button variant="outline" size="sm" className="h-7 mt-2 text-[11px] gap-1" disabled={trialMutation.isPending}
+                            onClick={() => trialMutation.mutate({ user_id: s.user_id, plan: "pro" })}>
+                            <Gift className="h-3 w-3" />Grant 1 month trial
+                          </Button>
                         </div>
                         <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => openEditFromSub(s)}>
                           <Pencil className="h-3.5 w-3.5" />
@@ -1533,6 +1554,8 @@ export default function AdminPage() {
                     <TableRow>
                       <TableHead>User</TableHead>
                       <TableHead>Plan</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="hidden xl:table-cell">Trial ends</TableHead>
                       <TableHead className="text-right">Usage</TableHead>
                       <TableHead className="hidden xl:table-cell">Period Start</TableHead>
                       <TableHead className="hidden xl:table-cell">Period End</TableHead>
@@ -1542,7 +1565,7 @@ export default function AdminPage() {
                   <TableBody>
                     {subPagination.items.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No subscriptions found</TableCell>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">No subscriptions found</TableCell>
                       </TableRow>
                     ) : (
                       subPagination.items.map((s) => {
@@ -1557,6 +1580,17 @@ export default function AdminPage() {
                               </div>
                             </TableCell>
                             <TableCell><Badge variant="outline" className="capitalize">{s.plan}</Badge></TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={`capitalize text-xs ${
+                                (s as any).status === "trialing" ? "text-primary border-primary/30" :
+                                (s as any).status === "active" ? "text-success border-success/20" :
+                                (s as any).status === "past_due" ? "text-yellow-600 border-yellow-500/20" :
+                                "text-muted-foreground"
+                              }`}>{(s as any).status || "none"}</Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground hidden xl:table-cell">
+                              {(s as any).trial_end ? formatDate((s as any).trial_end) : "—"}
+                            </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-2">
                                 <span className="text-sm tabular-nums">{s.pages_used} / {s.pages_limit}</span>
@@ -1570,9 +1604,32 @@ export default function AdminPage() {
                             <TableCell className="text-sm text-muted-foreground hidden xl:table-cell">{formatDate(s.current_period_start)}</TableCell>
                             <TableCell className="text-sm text-muted-foreground hidden xl:table-cell">{formatDate(s.current_period_end)}</TableCell>
                             <TableCell>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditFromSub(s)}>
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
+                              <div className="flex items-center justify-end gap-1">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1" disabled={trialMutation.isPending}>
+                                      <Gift className="h-3.5 w-3.5" />Trial
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => trialMutation.mutate({ user_id: s.user_id, plan: "starter" })}>
+                                      Grant 1 month · Starter
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => trialMutation.mutate({ user_id: s.user_id, plan: "pro" })}>
+                                      Grant 1 month · Pro
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => trialMutation.mutate({ user_id: s.user_id, plan: "agency" })}>
+                                      Grant 1 month · Agency
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-destructive" onClick={() => trialMutation.mutate({ user_id: s.user_id, end: true })}>
+                                      End trial (back to Free)
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditFromSub(s)}>
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
