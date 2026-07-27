@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "./LanguageContext";
+import { coerceToEnglishOriginal, rememberTranslationPair, resolveEnglishOriginal } from "./translationOriginals";
 
 /**
  * usePageAutoTranslate
@@ -108,7 +109,10 @@ export function usePageAutoTranslate(
     // Capture originals once per node.
     for (const node of nodes) {
       if (!originals.current.has(node)) {
-        originals.current.set(node, node.textContent ?? "");
+        originals.current.set(node, coerceToEnglishOriginal(node.textContent ?? "", language));
+      } else {
+        const restored = resolveEnglishOriginal(originals.current.get(node) ?? "", language);
+        if (restored) originals.current.set(node, restored);
       }
     }
 
@@ -116,7 +120,9 @@ export function usePageAutoTranslate(
 
     if (language === "en") {
       nodes.forEach((node, i) => {
-        if (node.textContent !== origTexts[i]) node.textContent = origTexts[i];
+        const restored = resolveEnglishOriginal(origTexts[i], language) ?? resolveEnglishOriginal(node.textContent ?? "", language) ?? origTexts[i];
+        originals.current.set(node, restored);
+        if (node.textContent !== restored) node.textContent = restored;
       });
       setTranslating(false);
       setTranslationProgress({ done: 0, total: 0 });
@@ -134,7 +140,11 @@ export function usePageAutoTranslate(
       if (cancelled) return;
       translations.forEach((tr, offset) => {
         const node = nodes[start + offset];
-        if (node && typeof tr === "string" && tr.length > 0) node.textContent = tr;
+        const original = origTexts[start + offset];
+        if (node && typeof tr === "string" && tr.length > 0) {
+          rememberTranslationPair(language, original, tr);
+          node.textContent = tr;
+        }
       });
     };
 
