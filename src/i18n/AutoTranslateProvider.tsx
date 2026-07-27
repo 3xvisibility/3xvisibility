@@ -24,7 +24,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const TRANSLATABLE_ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
 const CACHE_PREFIX = "autotr:v1:";
-const MAX_BATCH = 60;
+const MAX_BATCH = 100;
+const MAX_CONCURRENCY = 4;
 
 type TrTextNode = Text & { __autoTrOriginal?: string; __autoTrLang?: string };
 type TrElement = HTMLElement & Record<string, string | undefined>;
