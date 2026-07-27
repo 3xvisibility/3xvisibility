@@ -52,6 +52,8 @@ export function PricingSection() {
     { label: t("pricing.teamCollaboration"), icon: <Users className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: false, starter: false, pro: false, agency: true },
     { label: t("pricing.support"), icon: <Headphones className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: "—", starter: t("pricing.email"), pro: t("pricing.priority"), agency: t("pricing.dedicated") },
   ];
+  const trialFaqs = [1, 2, 3, 4, 5].map((n) => ({ q: t(`pricing.trialFaq.q${n}`), a: t(`pricing.trialFaq.a${n}`) }));
+
 
   return (
     <section id="pricing" className="py-20 md:py-28 relative overflow-hidden">
