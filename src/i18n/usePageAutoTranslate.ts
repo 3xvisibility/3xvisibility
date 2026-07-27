@@ -3,6 +3,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "./LanguageContext";
 import { coerceToEnglishOriginal, rememberTranslationPair, resolveEnglishOriginal } from "./translationOriginals";
 
+/** Never let a non-string provider payload leak into the DOM as "[object Object]". */
+function coerceTranslation(value: unknown, fallback: string): string {
+  if (typeof value === "string") return value.trim() && value !== "[object Object]" ? value : fallback;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (value && typeof value === "object") {
+    const o = value as Record<string, unknown>;
+    for (const k of ["translatedText", "translation", "translated_text", "text", "value", "result", "output"]) {
+      if (typeof o[k] === "string" && o[k]) return o[k] as string;
+    }
+  }
+  return fallback;
+}
+
 /**
  * usePageAutoTranslate
  *
@@ -200,7 +213,10 @@ export function usePageAutoTranslate(
             );
             if (cancelled) return;
 
-            const translations = (data as { translations?: string[] })?.translations;
+            const raw = (data as { translations?: unknown[] })?.translations;
+            const translations = Array.isArray(raw)
+              ? raw.map((v, i) => coerceTranslation(v, slice[i]))
+              : undefined;
             if (!error && Array.isArray(translations) && translations.length === slice.length) {
               applyRange(translations, start);
               translations.forEach((tr, offset) => {
