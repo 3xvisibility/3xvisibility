@@ -187,7 +187,9 @@ export default function AuthPage() {
       } else {
         localStorage.removeItem("sessionEphemeral");
       }
-      navigate("/dashboard");
+      // Resume a plan checkout started from the public pricing section
+      const pendingPlan = takePendingCheckoutPlan();
+      navigate(pendingPlan ? `/billing?plan=${pendingPlan}` : "/dashboard");
     }
   };
 
