@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Search, Link2, Code, Users, Headphones } from "lucide-react";
+import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Search, Link2, Code, Users, Headphones, Gift } from "lucide-react";
 import { ScrollReveal } from "./ScrollReveal";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -32,9 +32,9 @@ export function PricingSection() {
 
   const plans = [
     { name: t("pricing.free"), monthlyPrice: 0, description: t("pricing.freeDesc"), popular: false, icon: <Layers className="h-5 w-5" />, cta: t("pricing.tryFree"), pagesLimit: `10 ${t("pricing.pagesPerMonth")}`, features: [`10 ${t("pricing.pagesPerMonth")}`, `10 ${t("pricing.aiGenerations")}`, `1 ${t("pricing.campaignsPerMonth")}`, `1 ${t("pricing.templates").toLowerCase()}`, `1 ${t("pricing.websites").toLowerCase()}`, `${t("pricing.wordpress")} ${t("pricing.only")}`, t("pricing.noCreditCard")] },
-    { name: t("pricing.starter"), monthlyPrice: 19, description: t("pricing.starterDesc"), popular: false, icon: <Zap className="h-5 w-5" />, cta: t("pricing.getStarted"), pagesLimit: `300 ${t("pricing.pagesPerMonth")}`, features: [`300 ${t("pricing.pagesPerMonth")}`, `100 ${t("pricing.aiGenerations")}`, `10 ${t("pricing.campaignsPerMonth")}`, `10 ${t("pricing.templates").toLowerCase()}`, `2 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress"), `${t("pricing.email")} ${t("pricing.support").toLowerCase()}`] },
-    { name: t("pricing.pro"), monthlyPrice: 59, description: t("pricing.proDesc"), popular: true, icon: <Sparkles className="h-5 w-5" />, cta: t("pricing.startProTrial"), pagesLimit: `3,000 ${t("pricing.pagesPerMonth")}`, features: [`3,000 ${t("pricing.pagesPerMonth")}`, `1,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.campaignsPerMonth")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `10 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + ", " + t("pricing.shopify") + " & PrestaShop", t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), `${t("pricing.priority")} ${t("pricing.support").toLowerCase()}`] },
-    { name: t("pricing.agency"), monthlyPrice: 149, description: t("pricing.agencyDesc"), popular: false, icon: <Crown className="h-5 w-5" />, cta: t("pricing.contactSales"), pagesLimit: `15,000 ${t("pricing.pagesPerMonth")}`, features: [`15,000 ${t("pricing.pagesPerMonth")}`, `5,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.campaignsPerMonth")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `${t("pricing.unlimited")} ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + ", " + t("pricing.shopify") + " & PrestaShop", t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), t("pricing.teamCollaboration"), `${t("pricing.dedicated")} ${t("pricing.support").toLowerCase()}`] },
+    { name: t("pricing.starter"), monthlyPrice: 19, description: t("pricing.starterDesc"), popular: false, icon: <Zap className="h-5 w-5" />, cta: t("pricing.getStarted"), pagesLimit: `300 ${t("pricing.pagesPerMonth")}`, features: [t("pricing.trialFeature"), `300 ${t("pricing.pagesPerMonth")}`, `100 ${t("pricing.aiGenerations")}`, `10 ${t("pricing.campaignsPerMonth")}`, `10 ${t("pricing.templates").toLowerCase()}`, `2 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress"), `${t("pricing.email")} ${t("pricing.support").toLowerCase()}`] },
+    { name: t("pricing.pro"), monthlyPrice: 59, description: t("pricing.proDesc"), popular: true, icon: <Sparkles className="h-5 w-5" />, cta: t("pricing.startProTrial"), pagesLimit: `3,000 ${t("pricing.pagesPerMonth")}`, features: [t("pricing.trialFeature"), `3,000 ${t("pricing.pagesPerMonth")}`, `1,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.campaignsPerMonth")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `10 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + ", " + t("pricing.shopify") + " & PrestaShop", t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), `${t("pricing.priority")} ${t("pricing.support").toLowerCase()}`] },
+    { name: t("pricing.agency"), monthlyPrice: 149, description: t("pricing.agencyDesc"), popular: false, icon: <Crown className="h-5 w-5" />, cta: t("pricing.contactSales"), pagesLimit: `15,000 ${t("pricing.pagesPerMonth")}`, features: [t("pricing.trialFeature"), `15,000 ${t("pricing.pagesPerMonth")}`, `5,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.campaignsPerMonth")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `${t("pricing.unlimited")} ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + ", " + t("pricing.shopify") + " & PrestaShop", t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), t("pricing.teamCollaboration"), `${t("pricing.dedicated")} ${t("pricing.support").toLowerCase()}`] },
   ];
 
   const comparisonFeatures = [
@@ -62,7 +62,15 @@ export function PricingSection() {
           <p className="mt-3 text-sm text-[hsl(220,10%,70%)] max-w-md mx-auto">{t("pricing.description")}</p>
         </ScrollReveal>
 
+        <ScrollReveal className="flex justify-center mb-8">
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-[hsl(96,90%,45%,0.25)] bg-[hsl(96,90%,45%,0.08)] px-4 py-2 text-center">
+            <Gift className="h-4 w-4 text-[hsl(96,80%,52%)] shrink-0" />
+            <span className="text-xs md:text-[13px] font-medium text-[hsl(220,10%,86%)]">{t("pricing.trialBanner")}</span>
+          </div>
+        </ScrollReveal>
+
         <div className="flex items-center justify-center gap-3 mb-10">
+
           <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-[hsl(220,10%,70%)]"}`}>{t("pricing.monthly")}</span>
           <button onClick={() => setIsYearly(!isYearly)} className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${isYearly ? "bg-primary" : "bg-[hsl(220,30%,17%)]"}`}>
             <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${isYearly ? "translate-x-[26px]" : "translate-x-0.5"}`} />
@@ -98,7 +106,16 @@ export function PricingSection() {
                         {t("pricing.billed")} €{price * 12}/{t("pricing.year")} <span className="line-through text-[hsl(220,10%,52%)]">€{plan.monthlyPrice * 12}</span>
                       </p>
                     )}
-                    <p className="text-xs text-[hsl(220,10%,70%)] mt-1">{plan.pagesLimit}</p>
+                    {plan.monthlyPrice > 0 && (
+                      <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[hsl(96,90%,45%,0.25)] bg-[hsl(96,90%,45%,0.1)] px-2.5 py-1">
+                        <Gift className="h-3 w-3 text-[hsl(96,80%,52%)]" />
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(96,80%,52%)]">{t("pricing.trialBadge")}</span>
+                      </div>
+                    )}
+                    <p className="text-xs text-[hsl(220,10%,70%)] mt-2">{plan.pagesLimit}</p>
+                    {plan.monthlyPrice > 0 && (
+                      <p className="text-[11px] text-[hsl(96,80%,52%)] mt-0.5">{t("pricing.trialNote")}</p>
+                    )}
                   </CardHeader>
                   <CardContent className="pt-4 space-y-4">
                     <Separator className="bg-[hsl(96,90%,45%,0.08)]" />
