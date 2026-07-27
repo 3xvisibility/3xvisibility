@@ -233,39 +233,49 @@ function restoreOriginals(root: Node = typeof document !== "undefined" ? documen
   });
 }
 
-function sanitizeBadRenderedText(root: Node = typeof document !== "undefined" ? document.body : (null as unknown as Node)) {
-  if (typeof document === "undefined" || !root) return;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  let n: Node | null = root.nodeType === 3 ? root : walker.nextNode();
-  while (n) {
-    const node = n as TrTextNode;
-    if (!isInsideSkipped(node) && isBadTranslation(node.nodeValue)) {
-      const restored = node.__autoTrOriginal || resolveEnglishOriginal(node.nodeValue ?? "", node.__autoTrLang) || "";
-      node.nodeValue = restored;
-    }
-    n = walker.nextNode();
-  }
+let sanitizing = false;
 
-  const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
-  const scope: ParentNode | null =
-    root.nodeType === 1 ? (root as Element) : root.nodeType === 9 || root === document.body ? document.body : root.parentElement;
-  const els: HTMLElement[] = [];
-  if (scope && typeof scope.querySelectorAll === "function") {
-    els.push(...Array.from(scope.querySelectorAll<HTMLElement>(selector)));
-  }
-  if (root.nodeType === 1 && (root as Element).matches?.(selector)) els.push(root as HTMLElement);
-  els.forEach((el) => {
-    if (isInsideSkipped(el)) return;
-    for (const attr of TRANSLATABLE_ATTRS) {
-      const current = el.getAttribute(attr);
-      if (!isBadTranslation(current)) continue;
-      const origKey = `__autoTr_${attr}_orig` as const;
-      const langKey = `__autoTr_${attr}_lang` as const;
-      const restored = (el as TrElement)[origKey] || resolveEnglishOriginal(current ?? "", (el as TrElement)[langKey]) || "";
-      el.setAttribute(attr, restored);
+function sanitizeBadRenderedText(root: Node = typeof document !== "undefined" ? document.body : (null as unknown as Node)) {
+  if (typeof document === "undefined" || !root || sanitizing) return;
+  sanitizing = true;
+  try {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let n: Node | null = root.nodeType === 3 ? root : walker.nextNode();
+    while (n) {
+      const node = n as TrTextNode;
+      if (!isInsideSkipped(node) && isBadTranslation(node.nodeValue)) {
+        const restored = node.__autoTrOriginal || resolveEnglishOriginal(node.nodeValue ?? "", node.__autoTrLang) || "";
+        // Only write when the value actually changes — re-assigning the same
+        // string still fires a characterData mutation and can loop forever.
+        if (node.nodeValue !== restored) node.nodeValue = restored;
+      }
+      n = walker.nextNode();
     }
-  });
+
+    const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
+    const scope: ParentNode | null =
+      root.nodeType === 1 ? (root as Element) : root.nodeType === 9 || root === document.body ? document.body : root.parentElement;
+    const els: HTMLElement[] = [];
+    if (scope && typeof scope.querySelectorAll === "function") {
+      els.push(...Array.from(scope.querySelectorAll<HTMLElement>(selector)));
+    }
+    if (root.nodeType === 1 && (root as Element).matches?.(selector)) els.push(root as HTMLElement);
+    els.forEach((el) => {
+      if (isInsideSkipped(el)) return;
+      for (const attr of TRANSLATABLE_ATTRS) {
+        const current = el.getAttribute(attr);
+        if (!isBadTranslation(current)) continue;
+        const origKey = `__autoTr_${attr}_orig` as const;
+        const langKey = `__autoTr_${attr}_lang` as const;
+        const restored = (el as TrElement)[origKey] || resolveEnglishOriginal(current ?? "", (el as TrElement)[langKey]) || "";
+        if (current !== restored) el.setAttribute(attr, restored);
+      }
+    });
+  } finally {
+    sanitizing = false;
+  }
 }
+
 
 /** Never let a non-string provider payload leak into the DOM as "[object Object]". */
 function coerceTranslation(value: unknown, fallback: string): string {
@@ -339,28 +349,30 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       });
 
       // Catch nodes mounted by late re-renders / route transitions.
+      // Only childList is observed: observing characterData/attributes here
+      // makes our own restore writes re-trigger the callback (freeze loop).
+      let enPending: number | null = null;
+      const enRoots = new Set<Node>();
       const enObserver = new MutationObserver((mutations) => {
         for (const m of mutations) {
-          if (m.type === "childList") {
-            m.addedNodes.forEach((node) => {
-              if (node.nodeType === 1 || node.nodeType === 3) {
-                restoreOriginals(node);
-                sanitizeBadRenderedText(node);
-              }
-            });
-          } else if (m.target) {
-            restoreOriginals(m.target);
-            sanitizeBadRenderedText(m.target);
-          }
+          m.addedNodes.forEach((node) => {
+            if (node.nodeType === 1 || node.nodeType === 3) enRoots.add(node);
+          });
         }
+        if (enRoots.size === 0) return;
+        if (enPending) window.clearTimeout(enPending);
+        enPending = window.setTimeout(() => {
+          const roots = Array.from(enRoots);
+          enRoots.clear();
+          roots.forEach((node) => {
+            if (!node.isConnected) return;
+            restoreOriginals(node);
+            sanitizeBadRenderedText(node);
+          });
+        }, 100);
       });
-      enObserver.observe(document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-        attributes: true,
-        attributeFilter: [...TRANSLATABLE_ATTRS],
-      });
+      enObserver.observe(document.body, { childList: true, subtree: true });
+
       const stopObserver = window.setTimeout(() => enObserver.disconnect(), 1500);
 
       const done = window.setTimeout(() => {
@@ -371,8 +383,10 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         timers.forEach((t) => window.clearTimeout(t));
         window.clearTimeout(stopObserver);
         window.clearTimeout(done);
+        if (enPending) window.clearTimeout(enPending);
         enObserver.disconnect();
       };
+
     }
 
     const runId = ++runIdRef.current;

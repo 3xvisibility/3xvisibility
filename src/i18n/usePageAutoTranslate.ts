@@ -144,8 +144,9 @@ export function usePageAutoTranslate(
     const sanitizeNode = (node: Text) => {
       if (!isBadTranslation(node.textContent)) return;
       const restored = originals.current.get(node) || resolveEnglishOriginal(node.textContent ?? "", language) || "";
-      node.textContent = restored;
+      if (node.textContent !== restored) node.textContent = restored;
     };
+
 
     nodes.forEach(sanitizeNode);
 
