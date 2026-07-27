@@ -3,14 +3,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "./LanguageContext";
 import { coerceToEnglishOriginal, rememberTranslationPair, resolveEnglishOriginal } from "./translationOriginals";
 
+function isBadTranslation(value: unknown): boolean {
+  if (typeof value !== "string") return !value;
+  const normalized = value.trim();
+  return !normalized || normalized === "[object Object]" || /\[object Object\]/i.test(normalized);
+}
+
 /** Never let a non-string provider payload leak into the DOM as "[object Object]". */
 function coerceTranslation(value: unknown, fallback: string): string {
-  if (typeof value === "string") return value.trim() && value !== "[object Object]" ? value : fallback;
+  if (typeof value === "string") return isBadTranslation(value) ? fallback : value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    const joined = value.map((item) => coerceTranslation(item, "")).filter((item) => !isBadTranslation(item)).join(" ").trim();
+    return joined || fallback;
+  }
   if (value && typeof value === "object") {
     const o = value as Record<string, unknown>;
     for (const k of ["translatedText", "translation", "translated_text", "text", "value", "result", "output"]) {
-      if (typeof o[k] === "string" && o[k]) return o[k] as string;
+      const coerced = coerceTranslation(o[k], "");
+      if (!isBadTranslation(coerced)) return coerced;
     }
   }
   return fallback;
@@ -155,7 +166,7 @@ export function usePageAutoTranslate(
     setTranslationError(null);
 
 
-    const cacheKey = `autotr:${language}:${hashStrings(origTexts)}`;
+    const cacheKey = `autotr:v2:${language}:${hashStrings(origTexts)}`;
 
     const applyRange = (translations: string[], start: number) => {
       if (cancelled) return;
@@ -174,7 +185,7 @@ export function usePageAutoTranslate(
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
         const parsed = JSON.parse(cached) as string[];
-        if (Array.isArray(parsed) && parsed.length === origTexts.length) {
+        if (Array.isArray(parsed) && parsed.length === origTexts.length && parsed.every((item) => !isBadTranslation(item))) {
           applyRange(parsed, 0);
           setTranslating(false);
           setTranslationProgress({ done: 0, total: 0 });
