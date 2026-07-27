@@ -24,7 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { coerceToEnglishOriginal, rememberTranslationPair, resolveEnglishOriginal } from "./translationOriginals";
 
 const TRANSLATABLE_ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
-const CACHE_PREFIX = "autotr:v1:";
+const CACHE_PREFIX = "autotr:v2:";
 const MAX_BATCH = 100;
 const MAX_CONCURRENCY = 4;
 
@@ -40,12 +40,14 @@ function hash(str: string): string {
 
 function cacheGet(lang: string, text: string): string | null {
   try {
-    return localStorage.getItem(`${CACHE_PREFIX}${lang}:${hash(text)}`);
+    const cached = localStorage.getItem(`${CACHE_PREFIX}${lang}:${hash(text)}`);
+    return isBadTranslation(cached) ? null : cached;
   } catch {
     return null;
   }
 }
 function cacheSet(lang: string, text: string, translation: string) {
+  if (isBadTranslation(translation)) return;
   try {
     localStorage.setItem(`${CACHE_PREFIX}${lang}:${hash(text)}`, translation);
   } catch {
@@ -53,10 +55,17 @@ function cacheSet(lang: string, text: string, translation: string) {
   }
 }
 
+function isBadTranslation(value: unknown): boolean {
+  if (typeof value !== "string") return !value;
+  const normalized = value.trim();
+  return !normalized || normalized === "[object Object]" || /\[object Object\]/i.test(normalized);
+}
+
 // Text worth translating: has at least one alphabetic character, not just
 // numbers/punctuation/symbols, and not code-like.
 function shouldTranslate(text: string): boolean {
   const t = text.trim();
+  if (isBadTranslation(t)) return false;
   if (t.length < 2 || t.length > 500) return false;
   if (!/[A-Za-z]/.test(t)) return false;
   // Skip pure identifiers/urls/emails.
@@ -219,12 +228,17 @@ function restoreOriginals(root: Node = typeof document !== "undefined" ? documen
 
 /** Never let a non-string provider payload leak into the DOM as "[object Object]". */
 function coerceTranslation(value: unknown, fallback: string): string {
-  if (typeof value === "string") return value.trim() && value !== "[object Object]" ? value : fallback;
+  if (typeof value === "string") return isBadTranslation(value) ? fallback : value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    const joined = value.map((item) => coerceTranslation(item, "")).filter((item) => !isBadTranslation(item)).join(" ").trim();
+    return joined || fallback;
+  }
   if (value && typeof value === "object") {
     const o = value as Record<string, unknown>;
     for (const k of ["translatedText", "translation", "translated_text", "text", "value", "result", "output"]) {
-      if (typeof o[k] === "string" && o[k]) return o[k] as string;
+      const coerced = coerceTranslation(o[k], "");
+      if (!isBadTranslation(coerced)) return coerced;
     }
   }
   return fallback;
