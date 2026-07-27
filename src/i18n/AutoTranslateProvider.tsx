@@ -143,7 +143,7 @@ function collectJobs(root: Node, targetLang: string): Job[] {
     const original = getNodeOriginal(node, targetLang);
     if (!shouldTranslate(original)) continue;
     // Skip if already applied for this language.
-    if (node.__autoTrLang === targetLang && node.nodeValue !== original) continue;
+    if (node.__autoTrLang === targetLang && node.nodeValue !== original && !isBadTranslation(node.nodeValue)) continue;
     jobs.push({
       text: original,
       apply: (translated) => {
@@ -169,7 +169,7 @@ function collectJobs(root: Node, targetLang: string): Job[] {
       if (!original) continue;
       const langKey = `__autoTr_${attr}_lang` as const;
       if (!shouldTranslate(original)) continue;
-      if ((el as TrElement)[langKey] === targetLang && el.getAttribute(attr) !== original) continue;
+      if ((el as TrElement)[langKey] === targetLang && el.getAttribute(attr) !== original && !isBadTranslation(el.getAttribute(attr))) continue;
       jobs.push({
         text: original,
         apply: (translated) => {
