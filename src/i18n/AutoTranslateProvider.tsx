@@ -354,28 +354,34 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           role="status"
           aria-live="polite"
           aria-busy="true"
-          className="fixed bottom-4 right-4 z-[9999] w-56 rounded-xl border border-primary/30 bg-background/90 px-4 py-3 shadow-lg backdrop-blur"
+          data-no-autotranslate
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/70 backdrop-blur-sm animate-fade-in"
         >
-          <div className="flex items-center gap-2">
-            <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <span className="text-xs font-medium text-foreground">Translating…</span>
-            {total > 0 && (
-              <span className="ml-auto text-xs font-semibold tabular-nums text-primary">{percent}%</span>
-            )}
+          <div className="w-[min(20rem,90vw)] rounded-2xl border border-border/60 bg-card/95 px-7 py-8 text-center shadow-2xl animate-scale-in">
+            <div className="relative mx-auto h-16 w-16">
+              <span className="absolute inset-0 rounded-full border-2 border-primary/20" />
+              <span className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary border-r-primary animate-spin" />
+              <span
+                className="absolute inset-2 rounded-full border-2 border-transparent border-b-primary/60 animate-spin"
+                style={{ animationDirection: "reverse", animationDuration: "1.4s" }}
+              />
+              <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold tabular-nums text-primary">
+                {total > 0 ? `${percent}%` : ""}
+              </span>
+            </div>
+            <p className="mt-5 text-sm font-semibold text-foreground">Translating…</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {total > 0
+                ? `Batch ${Math.min(done + (done < total ? 1 : 0), total)} of ${total}`
+                : "Preparing your language"}
+            </p>
+            <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary transition-all duration-300"
+                style={{ width: total > 0 ? `${Math.max(percent, 8)}%` : "35%" }}
+              />
+            </div>
           </div>
-          {total > 0 && (
-            <>
-              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-300"
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                Batch {Math.min(done + (done < total ? 1 : 0), total)} of {total}
-              </p>
-            </>
-          )}
         </div>
       )}
       {!translating && translationError && (
