@@ -62,7 +62,15 @@ export function PricingSection() {
           <p className="mt-3 text-sm text-[hsl(220,10%,70%)] max-w-md mx-auto">{t("pricing.description")}</p>
         </ScrollReveal>
 
+        <ScrollReveal className="flex justify-center mb-8">
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-[hsl(96,90%,45%,0.25)] bg-[hsl(96,90%,45%,0.08)] px-4 py-2 text-center">
+            <Gift className="h-4 w-4 text-[hsl(96,80%,52%)] shrink-0" />
+            <span className="text-xs md:text-[13px] font-medium text-[hsl(220,10%,86%)]">{t("pricing.trialBanner")}</span>
+          </div>
+        </ScrollReveal>
+
         <div className="flex items-center justify-center gap-3 mb-10">
+
           <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-[hsl(220,10%,70%)]"}`}>{t("pricing.monthly")}</span>
           <button onClick={() => setIsYearly(!isYearly)} className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${isYearly ? "bg-primary" : "bg-[hsl(220,30%,17%)]"}`}>
             <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${isYearly ? "translate-x-[26px]" : "translate-x-0.5"}`} />
