@@ -278,7 +278,16 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     }
 
     setTranslationError(null);
-    void processRoot(document.body);
+    setTranslating(true);
+    const startedAt = Date.now();
+    void processRoot(document.body).finally(() => {
+      // Keep the spinner up for at least 500ms (even when everything is served
+      // from cache) so the switch is always visibly acknowledged.
+      const wait = Math.max(0, 500 - (Date.now() - startedAt));
+      window.setTimeout(() => {
+        if (!cancelled && runId === runIdRef.current) setTranslating(false);
+      }, wait);
+    });
 
     // Watch for new content (route changes, dialogs, dynamic tables).
     observer = new MutationObserver((mutations) => {
