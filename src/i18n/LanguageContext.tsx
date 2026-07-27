@@ -28,7 +28,7 @@ interface TranslationProgress {
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string, vars?: Record<string, string | number>) => string;
+  t: (key: string, vars?: Record<string, unknown>) => string;
   /** True while the runtime DOM translator is processing a language switch. */
   translating: boolean;
   /** Internal — used by AutoTranslateProvider to signal completion. */
@@ -48,6 +48,23 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+function formatTranslationValue(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    return value.map(formatTranslationValue).filter(Boolean).join(", ");
+  }
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    for (const key of ["label", "name", "title", "displayName", "plan", "value", "text", "id"]) {
+      const formatted = formatTranslationValue(record[key]);
+      if (formatted) return formatted;
+    }
+    return "";
+  }
+  return String(value);
+}
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
@@ -88,13 +105,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: string, vars?: Record<string, string | number>) => {
+    (key: string, vars?: Record<string, unknown>) => {
       const template = translations[language]?.[key] ?? translations.en[key] ?? key;
 
       if (!vars) return template;
 
       return Object.entries(vars).reduce(
-        (result, [name, value]) => result.split(`{${name}}`).join(String(value)),
+        (result, [name, value]) => result.split(`{${name}}`).join(formatTranslationValue(value)),
         template
       );
     },
@@ -119,13 +136,13 @@ const fallback: LanguageContextType = {
   setTranslationError: () => {},
   translationRetryNonce: 0,
   retryTranslation: () => {},
-  t: (key: string, vars?: Record<string, string | number>) => {
+  t: (key: string, vars?: Record<string, unknown>) => {
     const template = translations.en[key] ?? key;
 
     if (!vars) return template;
 
     return Object.entries(vars).reduce(
-      (result, [name, value]) => result.split(`{${name}}`).join(String(value)),
+      (result, [name, value]) => result.split(`{${name}}`).join(formatTranslationValue(value)),
       template
     );
   },
