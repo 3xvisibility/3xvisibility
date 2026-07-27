@@ -35,9 +35,17 @@ function collectTextNodes(root: HTMLElement): Text[] {
     acceptNode(node) {
       const parent = (node as Text).parentElement;
       if (!parent) return NodeFilter.FILTER_REJECT;
-      const tag = parent.tagName;
-      if (tag === "SCRIPT" || tag === "STYLE" || tag === "CODE" || tag === "PRE") {
-        return NodeFilter.FILTER_REJECT;
+      let el: HTMLElement | null = parent;
+      while (el && el !== document.body) {
+        const tag = el.tagName;
+        if (tag === "SCRIPT" || tag === "STYLE" || tag === "CODE" || tag === "PRE") {
+          return NodeFilter.FILTER_REJECT;
+        }
+        if (el.getAttribute("data-no-autotranslate") !== null) return NodeFilter.FILTER_REJECT;
+        if (el.getAttribute("data-no-translate") !== null) return NodeFilter.FILTER_REJECT;
+        if (el.getAttribute("translate") === "no") return NodeFilter.FILTER_REJECT;
+        if (el.isContentEditable) return NodeFilter.FILTER_REJECT;
+        el = el.parentElement;
       }
       const text = (node as Text).textContent ?? "";
       // Skip whitespace-only and tiny tokens; require at least one letter.
