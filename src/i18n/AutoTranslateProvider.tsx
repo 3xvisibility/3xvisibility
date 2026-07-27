@@ -72,6 +72,7 @@ function shouldTranslate(text: string): boolean {
   if (/^https?:\/\//i.test(t)) return false;
   if (/^[\w.-]+@[\w.-]+$/.test(t)) return false;
   if (/^[A-Z_][A-Z0-9_]{2,}$/.test(t)) return false; // SCREAMING_SNAKE
+  if (/^[a-z]+(?:-[a-z0-9]+)+$/i.test(t)) return false; // internal/kebab-case labels
   return true;
 }
 
