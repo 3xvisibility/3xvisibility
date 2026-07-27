@@ -222,7 +222,7 @@ export default function BillingPage() {
     syncSubscription();
   }, []);
 
-  const handleCheckout = async (planName: PlanName) => {
+  const handleCheckout = async (planName: PlanName, sameTab = false) => {
     const tier = STRIPE_TIERS[planName];
     if (!tier) return;
 
@@ -234,7 +234,8 @@ export default function BillingPage() {
       if (error) throw error;
       if (data?.url) {
         if (wsId) logAudit(wsId, "plan_changed", "subscription", null, { from: currentPlan, to: planName, billing: isYearly ? "yearly" : "monthly" });
-        window.open(data.url, "_blank");
+        if (sameTab) window.location.href = data.url;
+        else window.open(data.url, "_blank");
       }
     } catch (err: any) {
       toast({ title: t("billing.checkoutFailed"), description: err.message, variant: "destructive" });
@@ -242,6 +243,21 @@ export default function BillingPage() {
       setLoadingPlan(null);
     }
   };
+
+  // Resume a checkout that was started from the public pricing page:
+  // /billing?plan=pro opens the Stripe session for that plan automatically.
+  const [autoCheckoutDone, setAutoCheckoutDone] = useState(false);
+  useEffect(() => {
+    const requested = searchParams.get("plan") as PlanName | null;
+    if (!requested || autoCheckoutDone || subLoading) return;
+    setAutoCheckoutDone(true);
+    searchParams.delete("plan");
+    setSearchParams(searchParams, { replace: true });
+    if (!STRIPE_TIERS[requested] || requested === currentPlan) return;
+    handleCheckout(requested, true);
+  }, [searchParams, autoCheckoutDone, subLoading, currentPlan]);
+
+
 
   const handleManageSubscription = async () => {
     setPortalLoading(true);
