@@ -383,8 +383,10 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         timers.forEach((t) => window.clearTimeout(t));
         window.clearTimeout(stopObserver);
         window.clearTimeout(done);
+        if (enPending) window.clearTimeout(enPending);
         enObserver.disconnect();
       };
+
     }
 
     const runId = ++runIdRef.current;
