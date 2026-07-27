@@ -73,9 +73,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setLanguage = useCallback((lang: Language) => {
-    // All supported languages are covered by the built-in t() dictionary, so
-    // switching is instant and synchronous — no translating overlay needed.
-    setLanguageState(lang);
+    // Always show the spinner while the UI swaps language — including when
+    // switching back to English (the DOM translator has to restore originals).
+    setLanguageState((prev) => {
+      if (prev !== lang) {
+        setTranslationError(null);
+        setTranslationProgress({ done: 0, total: 0 });
+        setTranslating(true);
+      }
+      return lang;
+    });
     localStorage.setItem("language", lang);
     document.documentElement.lang = lang;
   }, []);
