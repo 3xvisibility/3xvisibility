@@ -243,6 +243,21 @@ export default function BillingPage() {
     }
   };
 
+  // Resume a checkout that was started from the public pricing page:
+  // /billing?plan=pro opens the Stripe session for that plan automatically.
+  const [autoCheckoutDone, setAutoCheckoutDone] = useState(false);
+  useEffect(() => {
+    const requested = searchParams.get("plan") as PlanName | null;
+    if (!requested || autoCheckoutDone || subLoading) return;
+    setAutoCheckoutDone(true);
+    searchParams.delete("plan");
+    setSearchParams(searchParams, { replace: true });
+    if (!STRIPE_TIERS[requested] || requested === currentPlan) return;
+    handleCheckout(requested);
+  }, [searchParams, autoCheckoutDone, subLoading, currentPlan]);
+
+
+
   const handleManageSubscription = async () => {
     setPortalLoading(true);
     try {
