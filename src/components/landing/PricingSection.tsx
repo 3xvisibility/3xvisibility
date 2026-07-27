@@ -37,6 +37,9 @@ export function PricingSection() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [checkoutPlan, setCheckoutPlan] = useState<PlanName | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const gridRevealed = useRevealed(gridRef, 700);
+
 
   const handleCheckout = async (plan: PlanName) => {
     setCheckoutPlan(plan);
