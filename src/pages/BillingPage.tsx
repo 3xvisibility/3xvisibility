@@ -222,7 +222,7 @@ export default function BillingPage() {
     syncSubscription();
   }, []);
 
-  const handleCheckout = async (planName: PlanName) => {
+  const handleCheckout = async (planName: PlanName, sameTab = false) => {
     const tier = STRIPE_TIERS[planName];
     if (!tier) return;
 
@@ -234,7 +234,8 @@ export default function BillingPage() {
       if (error) throw error;
       if (data?.url) {
         if (wsId) logAudit(wsId, "plan_changed", "subscription", null, { from: currentPlan, to: planName, billing: isYearly ? "yearly" : "monthly" });
-        window.open(data.url, "_blank");
+        if (sameTab) window.location.href = data.url;
+        else window.open(data.url, "_blank");
       }
     } catch (err: any) {
       toast({ title: t("billing.checkoutFailed"), description: err.message, variant: "destructive" });
