@@ -21,6 +21,7 @@
 import { useEffect, useRef } from "react";
 import { useLanguage } from "./LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { coerceToEnglishOriginal, rememberTranslationPair, resolveEnglishOriginal } from "./translationOriginals";
 
 const TRANSLATABLE_ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
 const CACHE_PREFIX = "autotr:v1:";
@@ -65,18 +66,49 @@ function shouldTranslate(text: string): boolean {
   return true;
 }
 
+function getNodeOriginal(node: TrTextNode, targetLang?: string): string {
+  const current = node.nodeValue ?? "";
+  if (!node.__autoTrOriginal) {
+    node.__autoTrOriginal = coerceToEnglishOriginal(current, targetLang);
+  } else {
+    const restored = resolveEnglishOriginal(node.__autoTrOriginal, node.__autoTrLang ?? targetLang);
+    if (restored) node.__autoTrOriginal = restored;
+  }
+  return node.__autoTrOriginal;
+}
+
+function getAttrOriginal(el: HTMLElement, attr: (typeof TRANSLATABLE_ATTRS)[number], targetLang?: string): string | null {
+  const value = el.getAttribute(attr);
+  if (!value) return null;
+
+  const origKey = `__autoTr_${attr}_orig` as const;
+  const langKey = `__autoTr_${attr}_lang` as const;
+  const stored = (el as TrElement)[origKey];
+  if (!stored) {
+    const original = coerceToEnglishOriginal(value, targetLang);
+    (el as TrElement)[origKey] = original;
+    return original;
+  }
+
+  const restored = resolveEnglishOriginal(stored, (el as TrElement)[langKey] ?? targetLang);
+  if (restored) (el as TrElement)[origKey] = restored;
+  return (el as TrElement)[origKey] ?? stored;
+}
+
 const SKIP_TAGS = new Set([
   "SCRIPT", "STYLE", "NOSCRIPT", "CODE", "PRE", "SVG", "PATH",
   "TEXTAREA", "INPUT", "SELECT", "OPTION",
 ]);
 
 function isInsideSkipped(node: Node): boolean {
-  let el: Node | null = node.parentNode;
+  let el: Node | null = node.nodeType === 1 ? node : node.parentNode;
   while (el && el !== document.body) {
     if (el.nodeType === 1) {
       const tag = (el as Element).tagName;
       if (SKIP_TAGS.has(tag)) return true;
       if ((el as Element).getAttribute("data-no-autotranslate") !== null) return true;
+      if ((el as Element).getAttribute("data-no-translate") !== null) return true;
+      if ((el as Element).getAttribute("translate") === "no") return true;
       const contentEditable = (el as HTMLElement).isContentEditable;
       if (contentEditable) return true;
     }
@@ -99,14 +131,14 @@ function collectJobs(root: Node, targetLang: string): Job[] {
   while ((n = walker.nextNode())) {
     const node = n as TrTextNode;
     if (isInsideSkipped(node)) continue;
-    const original = node.__autoTrOriginal ?? node.nodeValue ?? "";
+    const original = getNodeOriginal(node, targetLang);
     if (!shouldTranslate(original)) continue;
     // Skip if already applied for this language.
     if (node.__autoTrLang === targetLang && node.nodeValue !== original) continue;
-    if (!node.__autoTrOriginal) node.__autoTrOriginal = original;
     jobs.push({
       text: original,
       apply: (translated) => {
+        rememberTranslationPair(targetLang, original, translated);
         node.nodeValue = translated;
         node.__autoTrLang = targetLang;
       },
@@ -124,18 +156,15 @@ function collectJobs(root: Node, targetLang: string): Job[] {
     if (isInsideSkipped(el)) return;
     if (SKIP_TAGS.has(el.tagName)) return;
     for (const attr of TRANSLATABLE_ATTRS) {
-      const value = el.getAttribute(attr);
-      if (!value) continue;
-      const origKey = `__autoTr_${attr}_orig` as const;
+      const original = getAttrOriginal(el, attr, targetLang);
+      if (!original) continue;
       const langKey = `__autoTr_${attr}_lang` as const;
-      const stored = (el as TrElement)[origKey];
-      const original = stored ?? value;
       if (!shouldTranslate(original)) continue;
       if ((el as TrElement)[langKey] === targetLang && el.getAttribute(attr) !== original) continue;
-      if (!stored) (el as TrElement)[origKey] = original;
       jobs.push({
         text: original,
         apply: (translated) => {
+          rememberTranslationPair(targetLang, original, translated);
           el.setAttribute(attr, translated);
           (el as TrElement)[langKey] = targetLang;
         },
@@ -152,6 +181,13 @@ function restoreOriginals(root: Node = typeof document !== "undefined" ? documen
   let n: Node | null = root.nodeType === 3 ? root : walker.nextNode();
   while (n) {
     const node = n as TrTextNode;
+    if (!node.__autoTrOriginal) {
+      const restored = resolveEnglishOriginal(node.nodeValue ?? "", node.__autoTrLang);
+      if (restored) node.__autoTrOriginal = restored;
+    } else {
+      const restored = resolveEnglishOriginal(node.__autoTrOriginal, node.__autoTrLang);
+      if (restored) node.__autoTrOriginal = restored;
+    }
     if (node.__autoTrOriginal && node.nodeValue !== node.__autoTrOriginal) {
       node.nodeValue = node.__autoTrOriginal;
     }
@@ -170,7 +206,11 @@ function restoreOriginals(root: Node = typeof document !== "undefined" ? documen
     for (const attr of TRANSLATABLE_ATTRS) {
       const origKey = `__autoTr_${attr}_orig` as const;
       const langKey = `__autoTr_${attr}_lang` as const;
-      const orig = (el as TrElement)[origKey];
+      const stored = (el as TrElement)[origKey];
+      const current = el.getAttribute(attr) ?? "";
+      const restored = resolveEnglishOriginal(stored ?? current, (el as TrElement)[langKey]);
+      const orig = restored ?? stored;
+      if (restored) (el as TrElement)[origKey] = restored;
       if (orig && el.getAttribute(attr) !== orig) el.setAttribute(attr, orig);
       (el as TrElement)[langKey] = "en";
     }
