@@ -146,19 +146,27 @@ function collectJobs(root: Node, targetLang: string): Job[] {
   return jobs;
 }
 
-function restoreOriginals() {
-  if (typeof document === "undefined") return;
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-  let n: Node | null;
-  while ((n = walker.nextNode())) {
+function restoreOriginals(root: Node = typeof document !== "undefined" ? document.body : (null as unknown as Node)) {
+  if (typeof document === "undefined" || !root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let n: Node | null = root.nodeType === 3 ? root : walker.nextNode();
+  while (n) {
     const node = n as TrTextNode;
     if (node.__autoTrOriginal && node.nodeValue !== node.__autoTrOriginal) {
       node.nodeValue = node.__autoTrOriginal;
     }
     node.__autoTrLang = "en";
+    n = walker.nextNode();
   }
   const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
-  document.body.querySelectorAll<HTMLElement>(selector).forEach((el) => {
+  const scope: ParentNode | null =
+    root.nodeType === 1 ? (root as Element) : root.nodeType === 9 || root === document.body ? document.body : root.parentElement;
+  const els: HTMLElement[] = [];
+  if (scope && typeof (scope as ParentNode).querySelectorAll === "function") {
+    els.push(...Array.from((scope as ParentNode).querySelectorAll<HTMLElement>(selector)));
+  }
+  if (root.nodeType === 1 && (root as Element).matches?.(selector)) els.push(root as HTMLElement);
+  els.forEach((el) => {
     for (const attr of TRANSLATABLE_ATTRS) {
       const origKey = `__autoTr_${attr}_orig` as const;
       const langKey = `__autoTr_${attr}_lang` as const;
@@ -201,23 +209,53 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (typeof document === "undefined") return;
 
-    // English → restore any prior translations. Keep the spinner visible for a
-    // brief moment so the user sees that the switch back is being applied.
+    // English → restore any prior translations immediately, then re-run a few
+    // times (and watch the DOM briefly) because React re-renders after the
+    // language change can re-mount nodes that still hold translated text.
     if (language === "en") {
       ++runIdRef.current;
       setTranslationError(null);
       setTranslationProgress({ done: 0, total: 1 });
-      const raf = window.requestAnimationFrame(() => {
-        restoreOriginals();
-        setTranslationProgress({ done: 1, total: 1 });
+
+      // Synchronous first pass so the UI flips back to English right away.
+      restoreOriginals();
+      setTranslationProgress({ done: 1, total: 1 });
+
+      const timers: number[] = [];
+      [0, 60, 150, 300, 600].forEach((delay) => {
+        timers.push(window.setTimeout(() => restoreOriginals(), delay));
       });
+
+      // Catch nodes mounted by late re-renders / route transitions.
+      const enObserver = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          if (m.type === "childList") {
+            m.addedNodes.forEach((node) => {
+              if (node.nodeType === 1 || node.nodeType === 3) restoreOriginals(node);
+            });
+          } else if (m.target) {
+            restoreOriginals(m.target);
+          }
+        }
+      });
+      enObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: [...TRANSLATABLE_ATTRS],
+      });
+      const stopObserver = window.setTimeout(() => enObserver.disconnect(), 1500);
+
       const done = window.setTimeout(() => {
         setTranslating(false);
         setTranslationProgress({ done: 0, total: 0 });
       }, 350);
       return () => {
-        window.cancelAnimationFrame(raf);
+        timers.forEach((t) => window.clearTimeout(t));
+        window.clearTimeout(stopObserver);
         window.clearTimeout(done);
+        enObserver.disconnect();
       };
     }
 
