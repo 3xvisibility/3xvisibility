@@ -233,39 +233,49 @@ function restoreOriginals(root: Node = typeof document !== "undefined" ? documen
   });
 }
 
-function sanitizeBadRenderedText(root: Node = typeof document !== "undefined" ? document.body : (null as unknown as Node)) {
-  if (typeof document === "undefined" || !root) return;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  let n: Node | null = root.nodeType === 3 ? root : walker.nextNode();
-  while (n) {
-    const node = n as TrTextNode;
-    if (!isInsideSkipped(node) && isBadTranslation(node.nodeValue)) {
-      const restored = node.__autoTrOriginal || resolveEnglishOriginal(node.nodeValue ?? "", node.__autoTrLang) || "";
-      node.nodeValue = restored;
-    }
-    n = walker.nextNode();
-  }
+let sanitizing = false;
 
-  const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
-  const scope: ParentNode | null =
-    root.nodeType === 1 ? (root as Element) : root.nodeType === 9 || root === document.body ? document.body : root.parentElement;
-  const els: HTMLElement[] = [];
-  if (scope && typeof scope.querySelectorAll === "function") {
-    els.push(...Array.from(scope.querySelectorAll<HTMLElement>(selector)));
-  }
-  if (root.nodeType === 1 && (root as Element).matches?.(selector)) els.push(root as HTMLElement);
-  els.forEach((el) => {
-    if (isInsideSkipped(el)) return;
-    for (const attr of TRANSLATABLE_ATTRS) {
-      const current = el.getAttribute(attr);
-      if (!isBadTranslation(current)) continue;
-      const origKey = `__autoTr_${attr}_orig` as const;
-      const langKey = `__autoTr_${attr}_lang` as const;
-      const restored = (el as TrElement)[origKey] || resolveEnglishOriginal(current ?? "", (el as TrElement)[langKey]) || "";
-      el.setAttribute(attr, restored);
+function sanitizeBadRenderedText(root: Node = typeof document !== "undefined" ? document.body : (null as unknown as Node)) {
+  if (typeof document === "undefined" || !root || sanitizing) return;
+  sanitizing = true;
+  try {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let n: Node | null = root.nodeType === 3 ? root : walker.nextNode();
+    while (n) {
+      const node = n as TrTextNode;
+      if (!isInsideSkipped(node) && isBadTranslation(node.nodeValue)) {
+        const restored = node.__autoTrOriginal || resolveEnglishOriginal(node.nodeValue ?? "", node.__autoTrLang) || "";
+        // Only write when the value actually changes — re-assigning the same
+        // string still fires a characterData mutation and can loop forever.
+        if (node.nodeValue !== restored) node.nodeValue = restored;
+      }
+      n = walker.nextNode();
     }
-  });
+
+    const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
+    const scope: ParentNode | null =
+      root.nodeType === 1 ? (root as Element) : root.nodeType === 9 || root === document.body ? document.body : root.parentElement;
+    const els: HTMLElement[] = [];
+    if (scope && typeof scope.querySelectorAll === "function") {
+      els.push(...Array.from(scope.querySelectorAll<HTMLElement>(selector)));
+    }
+    if (root.nodeType === 1 && (root as Element).matches?.(selector)) els.push(root as HTMLElement);
+    els.forEach((el) => {
+      if (isInsideSkipped(el)) return;
+      for (const attr of TRANSLATABLE_ATTRS) {
+        const current = el.getAttribute(attr);
+        if (!isBadTranslation(current)) continue;
+        const origKey = `__autoTr_${attr}_orig` as const;
+        const langKey = `__autoTr_${attr}_lang` as const;
+        const restored = (el as TrElement)[origKey] || resolveEnglishOriginal(current ?? "", (el as TrElement)[langKey]) || "";
+        if (current !== restored) el.setAttribute(attr, restored);
+      }
+    });
+  } finally {
+    sanitizing = false;
+  }
 }
+
 
 /** Never let a non-string provider payload leak into the DOM as "[object Object]". */
 function coerceTranslation(value: unknown, fallback: string): string {
