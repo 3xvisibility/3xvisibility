@@ -73,6 +73,7 @@ function collectTextNodes(root: HTMLElement): Text[] {
       }
       const text = (node as Text).textContent ?? "";
       // Skip whitespace-only and tiny tokens; require at least one letter.
+      if (isBadTranslation(text)) return NodeFilter.FILTER_REJECT;
       if (text.trim().length < 2) return NodeFilter.FILTER_REJECT;
       if (!/[A-Za-z\u00C0-\u024F]/.test(text)) return NodeFilter.FILTER_REJECT;
       if (/^[a-z]+(?:-[a-z0-9]+)+$/i.test(text.trim())) return NodeFilter.FILTER_REJECT;
@@ -140,6 +141,14 @@ export function usePageAutoTranslate(
     let cancelled = false;
     const nodes = collectTextNodes(root);
 
+    const sanitizeNode = (node: Text) => {
+      if (!isBadTranslation(node.textContent)) return;
+      const restored = originals.current.get(node) || resolveEnglishOriginal(node.textContent ?? "", language) || "";
+      node.textContent = restored;
+    };
+
+    nodes.forEach(sanitizeNode);
+
     // Capture originals once per node.
     for (const node of nodes) {
       if (!originals.current.has(node)) {
@@ -175,7 +184,7 @@ export function usePageAutoTranslate(
       translations.forEach((tr, offset) => {
         const node = nodes[start + offset];
         const original = origTexts[start + offset];
-        if (node && typeof tr === "string" && tr.length > 0) {
+        if (node && typeof tr === "string" && tr.length > 0 && !isBadTranslation(tr)) {
           rememberTranslationPair(language, original, tr);
           node.textContent = tr;
         }
@@ -264,7 +273,9 @@ export function usePageAutoTranslate(
       // Only cache a fully-successful translation set.
       if (!anyFailure) {
         try {
-          localStorage.setItem(cacheKey, JSON.stringify(collected));
+          if (collected.every((item) => !isBadTranslation(item))) {
+            localStorage.setItem(cacheKey, JSON.stringify(collected));
+          }
         } catch {
           /* storage full — ignore */
         }
