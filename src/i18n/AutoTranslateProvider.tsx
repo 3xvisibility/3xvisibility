@@ -116,6 +116,7 @@ function isInsideSkipped(node: Node): boolean {
       const tag = (el as Element).tagName;
       if (SKIP_TAGS.has(tag)) return true;
       if ((el as Element).getAttribute("data-no-autotranslate") !== null) return true;
+      if ((el as Element).getAttribute("data-page-autotranslate") !== null) return true;
       if ((el as Element).getAttribute("data-no-translate") !== null) return true;
       if ((el as Element).getAttribute("translate") === "no") return true;
       const contentEditable = (el as HTMLElement).isContentEditable;
