@@ -175,7 +175,30 @@ export function PricingSection() {
             </CardContent>
           </Card>
         </ScrollReveal>
+
+        <ScrollReveal className="mt-14 max-w-3xl mx-auto" delay={0.1}>
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 mb-2">
+              <Gift className="h-4 w-4 text-[hsl(96,80%,52%)]" />
+              <h3 className="text-xl font-bold">{t("pricing.trialFaqTitle")}</h3>
+            </div>
+            <p className="text-sm text-[hsl(220,10%,70%)]">{t("pricing.trialFaqDesc")}</p>
+          </div>
+          <Accordion type="single" collapsible className="space-y-2">
+            {trialFaqs.map((faq, i) => (
+              <AccordionItem
+                key={i}
+                value={`trial-faq-${i}`}
+                className="border border-[hsl(96,90%,45%,0.1)] rounded-xl px-5 bg-[hsl(220,40%,8%)] hover:border-[hsl(96,90%,45%,0.2)] transition-colors duration-200 data-[state=open]:border-[hsl(96,90%,45%,0.25)] data-[state=open]:bg-[hsl(220,40%,9%)]"
+              >
+                <AccordionTrigger className="text-sm font-semibold text-left hover:no-underline py-4 text-foreground">{faq.q}</AccordionTrigger>
+                <AccordionContent className="text-[13px] text-[hsl(220,10%,74%)] leading-relaxed pb-4">{faq.a}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </ScrollReveal>
       </div>
+
     </section>
   );
 }
