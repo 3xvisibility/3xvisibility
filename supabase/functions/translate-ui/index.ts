@@ -24,6 +24,21 @@ const LANG_NAMES: Record<string, string> = {
   th: "Thai", vi: "Vietnamese",
 };
 
+/** Coerce any provider response item into a plain string (never "[object Object]"). */
+function toText(v: unknown, fallback: string): string {
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (Array.isArray(v)) return v.map((x) => toText(x, "")).filter(Boolean).join(" ") || fallback;
+  if (v && typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    for (const k of ["translatedText", "translation", "translated_text", "text", "value", "result", "output"]) {
+      if (typeof o[k] === "string") return o[k] as string;
+    }
+    return fallback;
+  }
+  return fallback;
+}
+
 async function libreBatch(texts: string[], target: string): Promise<string[] | null> {
   for (const url of LIBRE_ENDPOINTS) {
     try {
@@ -39,9 +54,9 @@ async function libreBatch(texts: string[], target: string): Promise<string[] | n
       if (!res.ok) continue;
       const data = await res.json();
       // Some endpoints return array, some return single object when q is array
-      if (Array.isArray(data?.translatedText)) return data.translatedText as string[];
-      if (Array.isArray(data) && data.every((d) => typeof d?.translatedText === "string")) {
-        return data.map((d: any) => d.translatedText);
+      if (Array.isArray(data?.translatedText)) return (data.translatedText as unknown[]).map((v, i) => toText(v, texts[i] ?? ""));
+      if (Array.isArray(data) && data.length === texts.length) {
+        return data.map((d: unknown, i: number) => toText(d, texts[i] ?? ""));
       }
       // Fallback: re-issue per item if batch unsupported
       const out: string[] = [];
@@ -53,7 +68,7 @@ async function libreBatch(texts: string[], target: string): Promise<string[] | n
         });
         if (!r.ok) return null;
         const d = await r.json();
-        out.push(d?.translatedText || q);
+        out.push(toText(d?.translatedText ?? d, q));
       }
       return out;
     } catch (_e) {
@@ -85,7 +100,7 @@ async function aiBatch(texts: string[], target: string): Promise<string[] | null
     const content = j.choices?.[0]?.message?.content?.trim() || "";
     const cleaned = content.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
     const arr = JSON.parse(cleaned);
-    if (Array.isArray(arr) && arr.length === texts.length) return arr.map(String);
+    if (Array.isArray(arr) && arr.length === texts.length) return arr.map((v: unknown, i: number) => toText(v, texts[i] ?? ""));
     return null;
   } catch (_e) {
     return null;
@@ -139,7 +154,11 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    return new Response(JSON.stringify({ translations, via }), {
+    const safe = translations.map((tr, i) => {
+      const s2 = toText(tr, capped[i]);
+      return !s2 || s2 === "[object Object]" ? capped[i] : s2;
+    });
+    return new Response(JSON.stringify({ translations: safe, via }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e: any) {

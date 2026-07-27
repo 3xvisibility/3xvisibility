@@ -200,7 +200,10 @@ export function usePageAutoTranslate(
             );
             if (cancelled) return;
 
-            const translations = (data as { translations?: string[] })?.translations;
+            const raw = (data as { translations?: unknown[] })?.translations;
+            const translations = Array.isArray(raw)
+              ? raw.map((v, i) => coerceTranslation(v, slice[i]))
+              : undefined;
             if (!error && Array.isArray(translations) && translations.length === slice.length) {
               applyRange(translations, start);
               translations.forEach((tr, offset) => {

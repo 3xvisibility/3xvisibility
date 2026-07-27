@@ -217,15 +217,28 @@ function restoreOriginals(root: Node = typeof document !== "undefined" ? documen
   });
 }
 
+/** Never let a non-string provider payload leak into the DOM as "[object Object]". */
+function coerceTranslation(value: unknown, fallback: string): string {
+  if (typeof value === "string") return value.trim() && value !== "[object Object]" ? value : fallback;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (value && typeof value === "object") {
+    const o = value as Record<string, unknown>;
+    for (const k of ["translatedText", "translation", "translated_text", "text", "value", "result", "output"]) {
+      if (typeof o[k] === "string" && o[k]) return o[k] as string;
+    }
+  }
+  return fallback;
+}
+
 async function translateBatch(texts: string[], target: string): Promise<string[] | null> {
   try {
     const { data, error } = await supabase.functions.invoke("translate-ui", {
       body: { texts, target },
     });
     if (error) throw error;
-    const out = (data as { translations?: string[] } | null)?.translations;
+    const out = (data as { translations?: unknown[] } | null)?.translations;
     if (!Array.isArray(out) || out.length !== texts.length) return null;
-    return out.map(String);
+    return out.map((v, i) => coerceTranslation(v, texts[i]));
   } catch {
     return null;
   }
