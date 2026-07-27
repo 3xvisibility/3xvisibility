@@ -3,14 +3,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "./LanguageContext";
 import { coerceToEnglishOriginal, rememberTranslationPair, resolveEnglishOriginal } from "./translationOriginals";
 
+function isBadTranslation(value: unknown): boolean {
+  if (typeof value !== "string") return !value;
+  const normalized = value.trim();
+  return !normalized || normalized === "[object Object]" || /\[object Object\]/i.test(normalized);
+}
+
 /** Never let a non-string provider payload leak into the DOM as "[object Object]". */
 function coerceTranslation(value: unknown, fallback: string): string {
-  if (typeof value === "string") return value.trim() && value !== "[object Object]" ? value : fallback;
+  if (typeof value === "string") return isBadTranslation(value) ? fallback : value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    const joined = value.map((item) => coerceTranslation(item, "")).filter((item) => !isBadTranslation(item)).join(" ").trim();
+    return joined || fallback;
+  }
   if (value && typeof value === "object") {
     const o = value as Record<string, unknown>;
     for (const k of ["translatedText", "translation", "translated_text", "text", "value", "result", "output"]) {
-      if (typeof o[k] === "string" && o[k]) return o[k] as string;
+      const coerced = coerceTranslation(o[k], "");
+      if (!isBadTranslation(coerced)) return coerced;
     }
   }
   return fallback;
@@ -62,8 +73,10 @@ function collectTextNodes(root: HTMLElement): Text[] {
       }
       const text = (node as Text).textContent ?? "";
       // Skip whitespace-only and tiny tokens; require at least one letter.
+      if (isBadTranslation(text)) return NodeFilter.FILTER_REJECT;
       if (text.trim().length < 2) return NodeFilter.FILTER_REJECT;
       if (!/[A-Za-z\u00C0-\u024F]/.test(text)) return NodeFilter.FILTER_REJECT;
+      if (/^[a-z]+(?:-[a-z0-9]+)+$/i.test(text.trim())) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     },
   });
@@ -123,9 +136,18 @@ export function usePageAutoTranslate(
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
+    root.setAttribute("data-page-autotranslate", "");
 
     let cancelled = false;
     const nodes = collectTextNodes(root);
+
+    const sanitizeNode = (node: Text) => {
+      if (!isBadTranslation(node.textContent)) return;
+      const restored = originals.current.get(node) || resolveEnglishOriginal(node.textContent ?? "", language) || "";
+      node.textContent = restored;
+    };
+
+    nodes.forEach(sanitizeNode);
 
     // Capture originals once per node.
     for (const node of nodes) {
@@ -155,14 +177,14 @@ export function usePageAutoTranslate(
     setTranslationError(null);
 
 
-    const cacheKey = `autotr:${language}:${hashStrings(origTexts)}`;
+    const cacheKey = `autotr:v2:${language}:${hashStrings(origTexts)}`;
 
     const applyRange = (translations: string[], start: number) => {
       if (cancelled) return;
       translations.forEach((tr, offset) => {
         const node = nodes[start + offset];
         const original = origTexts[start + offset];
-        if (node && typeof tr === "string" && tr.length > 0) {
+        if (node && typeof tr === "string" && tr.length > 0 && !isBadTranslation(tr)) {
           rememberTranslationPair(language, original, tr);
           node.textContent = tr;
         }
@@ -174,7 +196,7 @@ export function usePageAutoTranslate(
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
         const parsed = JSON.parse(cached) as string[];
-        if (Array.isArray(parsed) && parsed.length === origTexts.length) {
+        if (Array.isArray(parsed) && parsed.length === origTexts.length && parsed.every((item) => !isBadTranslation(item))) {
           applyRange(parsed, 0);
           setTranslating(false);
           setTranslationProgress({ done: 0, total: 0 });
@@ -251,7 +273,9 @@ export function usePageAutoTranslate(
       // Only cache a fully-successful translation set.
       if (!anyFailure) {
         try {
-          localStorage.setItem(cacheKey, JSON.stringify(collected));
+          if (collected.every((item) => !isBadTranslation(item))) {
+            localStorage.setItem(cacheKey, JSON.stringify(collected));
+          }
         } catch {
           /* storage full — ignore */
         }

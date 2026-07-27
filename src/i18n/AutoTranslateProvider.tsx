@@ -24,7 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { coerceToEnglishOriginal, rememberTranslationPair, resolveEnglishOriginal } from "./translationOriginals";
 
 const TRANSLATABLE_ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
-const CACHE_PREFIX = "autotr:v1:";
+const CACHE_PREFIX = "autotr:v2:";
 const MAX_BATCH = 100;
 const MAX_CONCURRENCY = 4;
 
@@ -40,12 +40,14 @@ function hash(str: string): string {
 
 function cacheGet(lang: string, text: string): string | null {
   try {
-    return localStorage.getItem(`${CACHE_PREFIX}${lang}:${hash(text)}`);
+    const cached = localStorage.getItem(`${CACHE_PREFIX}${lang}:${hash(text)}`);
+    return isBadTranslation(cached) ? null : cached;
   } catch {
     return null;
   }
 }
 function cacheSet(lang: string, text: string, translation: string) {
+  if (isBadTranslation(translation)) return;
   try {
     localStorage.setItem(`${CACHE_PREFIX}${lang}:${hash(text)}`, translation);
   } catch {
@@ -53,21 +55,34 @@ function cacheSet(lang: string, text: string, translation: string) {
   }
 }
 
+function isBadTranslation(value: unknown): boolean {
+  if (typeof value !== "string") return !value;
+  const normalized = value.trim();
+  return !normalized || normalized === "[object Object]" || /\[object Object\]/i.test(normalized);
+}
+
 // Text worth translating: has at least one alphabetic character, not just
 // numbers/punctuation/symbols, and not code-like.
 function shouldTranslate(text: string): boolean {
   const t = text.trim();
+  if (isBadTranslation(t)) return false;
   if (t.length < 2 || t.length > 500) return false;
   if (!/[A-Za-z]/.test(t)) return false;
   // Skip pure identifiers/urls/emails.
   if (/^https?:\/\//i.test(t)) return false;
   if (/^[\w.-]+@[\w.-]+$/.test(t)) return false;
   if (/^[A-Z_][A-Z0-9_]{2,}$/.test(t)) return false; // SCREAMING_SNAKE
+  if (/^[a-z]+(?:-[a-z0-9]+)+$/i.test(t)) return false; // internal/kebab-case labels
   return true;
 }
 
 function getNodeOriginal(node: TrTextNode, targetLang?: string): string {
   const current = node.nodeValue ?? "";
+  if (isBadTranslation(current)) {
+    const restored = resolveEnglishOriginal(current, node.__autoTrLang ?? targetLang) ?? node.__autoTrOriginal ?? "";
+    node.__autoTrOriginal = restored;
+    return restored;
+  }
   if (!node.__autoTrOriginal) {
     node.__autoTrOriginal = coerceToEnglishOriginal(current, targetLang);
   } else {
@@ -107,6 +122,7 @@ function isInsideSkipped(node: Node): boolean {
       const tag = (el as Element).tagName;
       if (SKIP_TAGS.has(tag)) return true;
       if ((el as Element).getAttribute("data-no-autotranslate") !== null) return true;
+      if ((el as Element).getAttribute("data-page-autotranslate") !== null) return true;
       if ((el as Element).getAttribute("data-no-translate") !== null) return true;
       if ((el as Element).getAttribute("translate") === "no") return true;
       const contentEditable = (el as HTMLElement).isContentEditable;
@@ -134,7 +150,7 @@ function collectJobs(root: Node, targetLang: string): Job[] {
     const original = getNodeOriginal(node, targetLang);
     if (!shouldTranslate(original)) continue;
     // Skip if already applied for this language.
-    if (node.__autoTrLang === targetLang && node.nodeValue !== original) continue;
+    if (node.__autoTrLang === targetLang && node.nodeValue !== original && !isBadTranslation(node.nodeValue)) continue;
     jobs.push({
       text: original,
       apply: (translated) => {
@@ -160,7 +176,7 @@ function collectJobs(root: Node, targetLang: string): Job[] {
       if (!original) continue;
       const langKey = `__autoTr_${attr}_lang` as const;
       if (!shouldTranslate(original)) continue;
-      if ((el as TrElement)[langKey] === targetLang && el.getAttribute(attr) !== original) continue;
+      if ((el as TrElement)[langKey] === targetLang && el.getAttribute(attr) !== original && !isBadTranslation(el.getAttribute(attr))) continue;
       jobs.push({
         text: original,
         apply: (translated) => {
@@ -217,14 +233,53 @@ function restoreOriginals(root: Node = typeof document !== "undefined" ? documen
   });
 }
 
+function sanitizeBadRenderedText(root: Node = typeof document !== "undefined" ? document.body : (null as unknown as Node)) {
+  if (typeof document === "undefined" || !root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let n: Node | null = root.nodeType === 3 ? root : walker.nextNode();
+  while (n) {
+    const node = n as TrTextNode;
+    if (!isInsideSkipped(node) && isBadTranslation(node.nodeValue)) {
+      const restored = node.__autoTrOriginal || resolveEnglishOriginal(node.nodeValue ?? "", node.__autoTrLang) || "";
+      node.nodeValue = restored;
+    }
+    n = walker.nextNode();
+  }
+
+  const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
+  const scope: ParentNode | null =
+    root.nodeType === 1 ? (root as Element) : root.nodeType === 9 || root === document.body ? document.body : root.parentElement;
+  const els: HTMLElement[] = [];
+  if (scope && typeof scope.querySelectorAll === "function") {
+    els.push(...Array.from(scope.querySelectorAll<HTMLElement>(selector)));
+  }
+  if (root.nodeType === 1 && (root as Element).matches?.(selector)) els.push(root as HTMLElement);
+  els.forEach((el) => {
+    if (isInsideSkipped(el)) return;
+    for (const attr of TRANSLATABLE_ATTRS) {
+      const current = el.getAttribute(attr);
+      if (!isBadTranslation(current)) continue;
+      const origKey = `__autoTr_${attr}_orig` as const;
+      const langKey = `__autoTr_${attr}_lang` as const;
+      const restored = (el as TrElement)[origKey] || resolveEnglishOriginal(current ?? "", (el as TrElement)[langKey]) || "";
+      el.setAttribute(attr, restored);
+    }
+  });
+}
+
 /** Never let a non-string provider payload leak into the DOM as "[object Object]". */
 function coerceTranslation(value: unknown, fallback: string): string {
-  if (typeof value === "string") return value.trim() && value !== "[object Object]" ? value : fallback;
+  if (typeof value === "string") return isBadTranslation(value) ? fallback : value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    const joined = value.map((item) => coerceTranslation(item, "")).filter((item) => !isBadTranslation(item)).join(" ").trim();
+    return joined || fallback;
+  }
   if (value && typeof value === "object") {
     const o = value as Record<string, unknown>;
     for (const k of ["translatedText", "translation", "translated_text", "text", "value", "result", "output"]) {
-      if (typeof o[k] === "string" && o[k]) return o[k] as string;
+      const coerced = coerceTranslation(o[k], "");
+      if (!isBadTranslation(coerced)) return coerced;
     }
   }
   return fallback;
@@ -272,11 +327,15 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
 
       // Synchronous first pass so the UI flips back to English right away.
       restoreOriginals();
+      sanitizeBadRenderedText();
       setTranslationProgress({ done: 1, total: 1 });
 
       const timers: number[] = [];
       [0, 60, 150, 300, 600].forEach((delay) => {
-        timers.push(window.setTimeout(() => restoreOriginals(), delay));
+        timers.push(window.setTimeout(() => {
+          restoreOriginals();
+          sanitizeBadRenderedText();
+        }, delay));
       });
 
       // Catch nodes mounted by late re-renders / route transitions.
@@ -284,10 +343,14 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         for (const m of mutations) {
           if (m.type === "childList") {
             m.addedNodes.forEach((node) => {
-              if (node.nodeType === 1 || node.nodeType === 3) restoreOriginals(node);
+              if (node.nodeType === 1 || node.nodeType === 3) {
+                restoreOriginals(node);
+                sanitizeBadRenderedText(node);
+              }
             });
           } else if (m.target) {
             restoreOriginals(m.target);
+            sanitizeBadRenderedText(m.target);
           }
         }
       });
@@ -319,6 +382,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
 
     async function processRoot(root: Node) {
       if (cancelled || runId !== runIdRef.current) return;
+      sanitizeBadRenderedText(root);
       const jobs = collectJobs(root, language);
       if (jobs.length === 0) return;
 
@@ -416,7 +480,10 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       if (roots.size === 0) return;
       if (pendingTimer) window.clearTimeout(pendingTimer);
       pendingTimer = window.setTimeout(() => {
-        roots.forEach((r) => void processRoot(r));
+        roots.forEach((r) => {
+          sanitizeBadRenderedText(r);
+          void processRoot(r);
+        });
       }, 250);
     });
     observer.observe(document.body, {
