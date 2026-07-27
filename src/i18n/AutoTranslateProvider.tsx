@@ -200,13 +200,24 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (typeof document === "undefined") return;
 
-    // English → just restore any prior translations and stop.
+    // English → restore any prior translations. Keep the spinner visible for a
+    // brief moment so the user sees that the switch back is being applied.
     if (language === "en") {
-      restoreOriginals();
-      setTranslating(false);
+      ++runIdRef.current;
       setTranslationError(null);
-      setTranslationProgress({ done: 0, total: 0 });
-      return;
+      setTranslationProgress({ done: 0, total: 1 });
+      const raf = window.requestAnimationFrame(() => {
+        restoreOriginals();
+        setTranslationProgress({ done: 1, total: 1 });
+      });
+      const done = window.setTimeout(() => {
+        setTranslating(false);
+        setTranslationProgress({ done: 0, total: 0 });
+      }, 600);
+      return () => {
+        window.cancelAnimationFrame(raf);
+        window.clearTimeout(done);
+      };
     }
 
     const runId = ++runIdRef.current;
@@ -267,7 +278,16 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     }
 
     setTranslationError(null);
-    void processRoot(document.body);
+    setTranslating(true);
+    const startedAt = Date.now();
+    void processRoot(document.body).finally(() => {
+      // Keep the spinner up for at least 500ms (even when everything is served
+      // from cache) so the switch is always visibly acknowledged.
+      const wait = Math.max(0, 500 - (Date.now() - startedAt));
+      window.setTimeout(() => {
+        if (!cancelled && runId === runIdRef.current) setTranslating(false);
+      }, wait);
+    });
 
     // Watch for new content (route changes, dialogs, dynamic tables).
     observer = new MutationObserver((mutations) => {
