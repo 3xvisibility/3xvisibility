@@ -583,7 +583,7 @@ export default function CampaignsPage() {
                           {c.status === "processing" && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id, action: "pause" })}><Pause className="h-3.5 w-3.5 mr-2" /> Pause</DropdownMenuItem>}
                           <DropdownMenuItem onClick={() => duplicateMutation.mutate(c)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive" onClick={() => { if (window.confirm(`Delete "${c.name}"?`)) deleteMutation.mutate(c.id); }}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => { if (window.confirm(`Delete "${c.name}"?`)) deleteMutation.mutate(c); }}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
