@@ -483,19 +483,21 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     });
 
     // Watch for new content (route changes, dialogs, dynamic tables).
+    // Only childList/subtree is observed: watching characterData/attributes
+    // makes our own `apply()` writes re-trigger the callback, which caused
+    // the loading overlay to lock at "Batch 1 of N / 0%".
     observer = new MutationObserver((mutations) => {
       const roots = new Set<Node>();
       for (const m of mutations) {
         m.addedNodes.forEach((node) => {
           if (node.nodeType === 1 || node.nodeType === 3) roots.add(node);
         });
-        if (m.type === "characterData" && m.target) roots.add(m.target);
-        if (m.type === "attributes" && m.target) roots.add(m.target);
       }
       if (roots.size === 0) return;
       if (pendingTimer) window.clearTimeout(pendingTimer);
       pendingTimer = window.setTimeout(() => {
         roots.forEach((r) => {
+          if (!(r as Node).isConnected) return;
           sanitizeBadRenderedText(r);
           void processRoot(r);
         });
@@ -504,9 +506,6 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: [...TRANSLATABLE_ATTRS],
     });
 
     return () => {
