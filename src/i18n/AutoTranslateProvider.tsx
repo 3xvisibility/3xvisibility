@@ -421,7 +421,10 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
 
       if (misses.length === 0) return;
 
-      setTranslating(true);
+      // NOTE: don't flip `translating` back on from within the observer-driven
+      // re-runs — the initial run (line ~473) already owns the overlay lifecycle.
+      // Re-setting it here caused the spinner to be stuck at "Batch 1 of N / 0%"
+      // whenever our own DOM writes re-triggered the MutationObserver.
       const total = Math.ceil(misses.length / MAX_BATCH);
       setTranslationProgress({ done: 0, total });
 
@@ -461,11 +464,9 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       if (cancelled || runId !== runIdRef.current) return;
       if (failed) {
         setTranslationError("Translation service is unavailable. Please retry.");
-        setTranslating(false);
         return;
       }
 
-      setTranslating(false);
       setTranslationError(null);
     }
 
@@ -482,19 +483,21 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     });
 
     // Watch for new content (route changes, dialogs, dynamic tables).
+    // Only childList/subtree is observed: watching characterData/attributes
+    // makes our own `apply()` writes re-trigger the callback, which caused
+    // the loading overlay to lock at "Batch 1 of N / 0%".
     observer = new MutationObserver((mutations) => {
       const roots = new Set<Node>();
       for (const m of mutations) {
         m.addedNodes.forEach((node) => {
           if (node.nodeType === 1 || node.nodeType === 3) roots.add(node);
         });
-        if (m.type === "characterData" && m.target) roots.add(m.target);
-        if (m.type === "attributes" && m.target) roots.add(m.target);
       }
       if (roots.size === 0) return;
       if (pendingTimer) window.clearTimeout(pendingTimer);
       pendingTimer = window.setTimeout(() => {
         roots.forEach((r) => {
+          if (!(r as Node).isConnected) return;
           sanitizeBadRenderedText(r);
           void processRoot(r);
         });
@@ -503,9 +506,6 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: [...TRANSLATABLE_ATTRS],
     });
 
     return () => {
@@ -517,6 +517,20 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
 
   const { done, total } = translationProgress;
   const percent = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
+
+  // Safety net so the overlay can never get stuck:
+  //  - dismiss shortly after progress hits 100%
+  //  - hard-cap the overlay at 15s regardless of progress state
+  useEffect(() => {
+    if (!translating) return;
+    const timers: number[] = [];
+    if (total > 0 && done >= total) {
+      timers.push(window.setTimeout(() => setTranslating(false), 400));
+    }
+    timers.push(window.setTimeout(() => setTranslating(false), 15000));
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [translating, done, total, setTranslating]);
+
 
   return (
     <>
