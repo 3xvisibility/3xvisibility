@@ -2216,14 +2216,6 @@ const nl: Record<string, string> = {
   "workspaceSettings.workspaceName": "Naam werkruimte",
   "workspaceSettings.workspaceRenamed": "Werkruimte hernoemd",
   "workspaceSettings.workspaceRenamedDesc": "Werkruimtenaam is bijgewerkt.",
-  "audit.action.securityAdminDenied": "Admin Action Denied",
-  "audit.action.securityCrossWorkspace": "Cross-Workspace Blocked",
-  "audit.action.securityPermissionDenied": "Permission Denied",
-  "audit.action.securityRateLimited": "Rate Limited",
-  "audit.action.securitySuspicious": "Suspicious Request",
-  "audit.securityOnly": "Security events only",
-  "sidebar.keywordGroups": "Keywords",
-  "sidebar.wpControl": "WordPress Control",
 };
 
 export default nl;
