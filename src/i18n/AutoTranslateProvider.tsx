@@ -518,6 +518,20 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   const { done, total } = translationProgress;
   const percent = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
 
+  // Safety net so the overlay can never get stuck:
+  //  - dismiss shortly after progress hits 100%
+  //  - hard-cap the overlay at 15s regardless of progress state
+  useEffect(() => {
+    if (!translating) return;
+    const timers: number[] = [];
+    if (total > 0 && done >= total) {
+      timers.push(window.setTimeout(() => setTranslating(false), 400));
+    }
+    timers.push(window.setTimeout(() => setTranslating(false), 15000));
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [translating, done, total, setTranslating]);
+
+
   return (
     <>
       {children}
