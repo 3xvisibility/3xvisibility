@@ -1805,8 +1805,6 @@ const it: Record<string, string> = {
   "showcase.live": "Vivi",
   "sidebar.abTesting": "Test A/B",
   "sidebar.account": "Conto",
-  "sidebar.websiteSection": "Sito web",
-  "sidebar.seoSection": "SEO e analisi",
   "sidebar.admin": "Ammin",
   "sidebar.affiliate": "Affiliato",
   "sidebar.aiScanner": "AI Scanner",
@@ -2218,8 +2216,6 @@ const it: Record<string, string> = {
   "workspaceSettings.workspaceName": "Nome dell'area di lavoro",
   "workspaceSettings.workspaceRenamed": "Area di lavoro rinominata",
   "workspaceSettings.workspaceRenamedDesc": "Il nome dell'area di lavoro è stato aggiornato.",
-  "sidebar.keywordGroups": "Keyword Groups",
-  "sidebar.wpControl": "WordPress Control",
 };
 
 export default it;

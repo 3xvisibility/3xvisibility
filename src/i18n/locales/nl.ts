@@ -1805,8 +1805,6 @@ const nl: Record<string, string> = {
   "showcase.live": "Leef",
   "sidebar.abTesting": "A/B-testen",
   "sidebar.account": "Rekening",
-  "sidebar.websiteSection": "Website",
-  "sidebar.seoSection": "SEO en analyse",
   "sidebar.admin": "Beheerder",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI Scanner",
@@ -2218,8 +2216,6 @@ const nl: Record<string, string> = {
   "workspaceSettings.workspaceName": "Naam werkruimte",
   "workspaceSettings.workspaceRenamed": "Werkruimte hernoemd",
   "workspaceSettings.workspaceRenamedDesc": "Werkruimtenaam is bijgewerkt.",
-  "sidebar.keywordGroups": "Keyword Groups",
-  "sidebar.wpControl": "WordPress Control",
 };
 
 export default nl;
