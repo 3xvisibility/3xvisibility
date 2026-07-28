@@ -56,6 +56,14 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!roleData) {
+      const wsId = await userWorkspace(serviceClient, user.id);
+      await logSecurityEvent({
+        workspaceId: wsId || "00000000-0000-0000-0000-000000000000",
+        userId: user.id,
+        action: "security_admin_action_denied",
+        req,
+        details: { reason: "admin_role_required" },
+      });
       return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
