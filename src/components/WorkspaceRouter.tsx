@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useParams, Navigate, Outlet } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { logSecurityEvent } from "@/lib/security-audit";
 
 /**
  * Resolves the :workspaceSlug URL param, syncs it with WorkspaceContext,
@@ -9,6 +10,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 export function WorkspaceRouter() {
   const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
   const { workspaces, currentWorkspace, setCurrentWorkspace, isLoading } = useWorkspace();
+  const reportedSlug = useRef<string | null>(null);
 
   useEffect(() => {
     if (!workspaceSlug || isLoading || workspaces.length === 0) return;
@@ -18,9 +20,22 @@ export function WorkspaceRouter() {
       const target = workspaces.find((w) => w.slug === workspaceSlug);
       if (target) {
         setCurrentWorkspace(target);
+      } else if (reportedSlug.current !== workspaceSlug) {
+        // The user navigated to a workspace they are not a member of.
+        reportedSlug.current = workspaceSlug;
+        const home = currentWorkspace || workspaces[0];
+        void logSecurityEvent({
+          workspaceId: home.id,
+          action: "security_cross_workspace_blocked",
+          entityType: "workspace",
+          details: {
+            attempted_workspace_slug: workspaceSlug,
+            reason: "not_a_workspace_member",
+          },
+        });
       }
     }
-  }, [workspaceSlug, workspaces, currentWorkspace?.slug, isLoading, setCurrentWorkspace]);
+  }, [workspaceSlug, workspaces, currentWorkspace, isLoading, setCurrentWorkspace]);
 
   if (isLoading) {
     return (

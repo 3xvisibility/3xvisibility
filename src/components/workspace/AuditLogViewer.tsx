@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   History, UserPlus, Shield, Pencil, Trash2, Clock, Loader2, Filter,
   Globe, Rocket, FileText, CreditCard, Download, CalendarIcon, Search, X, RefreshCw,
+  ShieldAlert, Ban, AlertTriangle, Gauge,
 } from "lucide-react";
 import { formatDistanceToNow, format, startOfDay, endOfDay } from "date-fns";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -51,10 +52,26 @@ const actionConfig: Record<string, { icon: React.ReactNode; labelKey: string; co
   // Plan / billing
   plan_changed:      { icon: <CreditCard className="h-3.5 w-3.5" />, labelKey: "audit.action.planChanged",     color: "bg-warning/10 text-warning" },
   subscription_updated: { icon: <CreditCard className="h-3.5 w-3.5" />, labelKey: "audit.action.subscriptionUpdated", color: "bg-primary/10 text-primary" },
+  // Security
+  security_cross_workspace_blocked: { icon: <Ban className="h-3.5 w-3.5" />,           labelKey: "audit.action.securityCrossWorkspace", color: "bg-destructive/10 text-destructive" },
+  security_permission_denied:       { icon: <ShieldAlert className="h-3.5 w-3.5" />,   labelKey: "audit.action.securityPermissionDenied", color: "bg-destructive/10 text-destructive" },
+  security_suspicious_request:      { icon: <AlertTriangle className="h-3.5 w-3.5" />, labelKey: "audit.action.securitySuspicious",     color: "bg-warning/10 text-warning" },
+  security_rate_limited:            { icon: <Gauge className="h-3.5 w-3.5" />,         labelKey: "audit.action.securityRateLimited",    color: "bg-warning/10 text-warning" },
+  security_admin_action_denied:     { icon: <ShieldAlert className="h-3.5 w-3.5" />,   labelKey: "audit.action.securityAdminDenied",    color: "bg-destructive/10 text-destructive" },
 };
 
+export const SECURITY_ACTIONS = [
+  "security_cross_workspace_blocked",
+  "security_permission_denied",
+  "security_suspicious_request",
+  "security_rate_limited",
+  "security_admin_action_denied",
+];
 
 const ALL_ACTIONS = Object.keys(actionConfig);
+
+/** Sentinel value for the "Security events only" option in the action filter. */
+const SECURITY_FILTER = "__security__";
 
 function getActionDetails(log: AuditLog): string {
   const d = log.details as Record<string, string> | null;
@@ -88,6 +105,14 @@ function getActionDetails(log: AuditLog): string {
       return d.from && d.to ? `${d.from} → ${d.to}` : d.plan || "";
     case "subscription_updated":
       return d.detail || "";
+    case "security_cross_workspace_blocked":
+      return `Blocked ${d.entity_type || "resource"} access → workspace ${(d.attempted_workspace_id || "").slice(0, 8)}`;
+    case "security_permission_denied":
+      return `${d.operation || "operation"} denied${d.message ? ` — ${d.message}` : ""}`;
+    case "security_suspicious_request":
+    case "security_rate_limited":
+    case "security_admin_action_denied":
+      return `${d.reason || "flagged"}${d.route ? ` (${d.route})` : ""}`;
     default:
       return Object.entries(d).map(([k, v]) => `${k}: ${v}`).join(", ");
   }
@@ -134,7 +159,9 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
         .order("created_at", { ascending: false })
         .range(from, to);
 
-      if (actionFilter !== "all") {
+      if (actionFilter === SECURITY_FILTER) {
+        query = query.in("action", SECURITY_ACTIONS);
+      } else if (actionFilter !== "all") {
         query = query.eq("action", actionFilter);
       }
       if (dateRange.from) {
@@ -228,6 +255,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("audit.allActions")}</SelectItem>
+              <SelectItem value={SECURITY_FILTER}>{t("audit.securityOnly")}</SelectItem>
               {ALL_ACTIONS.map((a) => (
                 <SelectItem key={a} value={a}>
                   {t(actionConfig[a].labelKey)}
