@@ -144,15 +144,25 @@ export default function CampaignsPage() {
   const getLatestJob = (campaignId: string) => generationJobs.find((j: any) => j.campaign_id === campaignId);
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("campaigns").delete().eq("id", id);
-      if (error) throw error;
+    mutationFn: async (campaign: Campaign) => {
+      if (!wsId) throw new Error("No workspace selected");
+      const allowed = await assertSameWorkspace(wsId, campaign.workspace_id, {
+        entityType: "campaign",
+        entityId: campaign.id,
+        reason: "campaign_delete",
+      });
+      if (!allowed) throw new Error("Cross-workspace action blocked");
+      const { error } = await supabase.from("campaigns").delete().eq("id", campaign.id);
+      if (error) {
+        await logIfAuthorizationFailure(wsId, error, { entityType: "campaign", entityId: campaign.id, operation: "delete" });
+        throw error;
+      }
     },
-    onSuccess: (_d, id) => {
+    onSuccess: (_d, campaign) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["user-campaign-count"] });
       toast({ title: "Campaign deleted" });
-      if (wsId) logAudit(wsId, "campaign_deleted", "campaign", id);
+      if (wsId) logAudit(wsId, "campaign_deleted", "campaign", campaign.id);
     },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
