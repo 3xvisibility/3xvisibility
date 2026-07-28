@@ -749,7 +749,7 @@ export default function WebsitesPage() {
               key={site.id}
               site={site}
               sitemap={getSitemap(site.id)}
-              onDelete={(id) => deleteMutation.mutate(id)}
+              onDelete={(site) => deleteMutation.mutate(site)}
               isDeleting={deleteMutation.isPending}
               autoOpenProducts={
                 autoOpenShopifyProducts && site.type === "shopify" && idx === 0
