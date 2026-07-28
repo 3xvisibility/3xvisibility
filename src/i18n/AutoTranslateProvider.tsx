@@ -421,7 +421,10 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
 
       if (misses.length === 0) return;
 
-      setTranslating(true);
+      // NOTE: don't flip `translating` back on from within the observer-driven
+      // re-runs — the initial run (line ~473) already owns the overlay lifecycle.
+      // Re-setting it here caused the spinner to be stuck at "Batch 1 of N / 0%"
+      // whenever our own DOM writes re-triggered the MutationObserver.
       const total = Math.ceil(misses.length / MAX_BATCH);
       setTranslationProgress({ done: 0, total });
 
