@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { logAudit } from "@/lib/audit";
+import { assertSameWorkspace, logIfAuthorizationFailure } from "@/lib/security-audit";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -143,15 +144,25 @@ export default function CampaignsPage() {
   const getLatestJob = (campaignId: string) => generationJobs.find((j: any) => j.campaign_id === campaignId);
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("campaigns").delete().eq("id", id);
-      if (error) throw error;
+    mutationFn: async (campaign: Campaign) => {
+      if (!wsId) throw new Error("No workspace selected");
+      const allowed = await assertSameWorkspace(wsId, campaign.workspace_id, {
+        entityType: "campaign",
+        entityId: campaign.id,
+        reason: "campaign_delete",
+      });
+      if (!allowed) throw new Error("Cross-workspace action blocked");
+      const { error } = await supabase.from("campaigns").delete().eq("id", campaign.id);
+      if (error) {
+        await logIfAuthorizationFailure(wsId, error, { entityType: "campaign", entityId: campaign.id, operation: "delete" });
+        throw error;
+      }
     },
-    onSuccess: (_d, id) => {
+    onSuccess: (_d, campaign) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["user-campaign-count"] });
       toast({ title: "Campaign deleted" });
-      if (wsId) logAudit(wsId, "campaign_deleted", "campaign", id);
+      if (wsId) logAudit(wsId, "campaign_deleted", "campaign", campaign.id);
     },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
@@ -160,6 +171,12 @@ export default function CampaignsPage() {
     mutationFn: async (campaign: Campaign) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
+      const allowed = await assertSameWorkspace(wsId, campaign.workspace_id, {
+        entityType: "campaign",
+        entityId: campaign.id,
+        reason: "campaign_duplicate",
+      });
+      if (!allowed) throw new Error("Cross-workspace action blocked");
       if (campaignLimitReached) {
         throw new Error(`Your ${planLabel} plan allows ${campaignLimit} campaign${campaignLimit === 1 ? "" : "s"}. Upgrade your plan to create more.`);
       }
@@ -181,7 +198,10 @@ export default function CampaignsPage() {
         generation_method: campaign.generation_method,
         status: "draft" as const,
       }).select("id").single();
-      if (error) throw error;
+      if (error) {
+        await logIfAuthorizationFailure(wsId, error, { entityType: "campaign", entityId: campaign.id, operation: "duplicate" });
+        throw error;
+      }
 
       const { data: csvFile } = await supabase.from("campaign_csv_files").select("*").eq("campaign_id", campaign.id).maybeSingle();
       if (csvFile && newCampaign) {
@@ -572,7 +592,7 @@ export default function CampaignsPage() {
                           {c.status === "processing" && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id, action: "pause" })}><Pause className="h-3.5 w-3.5 mr-2" /> Pause</DropdownMenuItem>}
                           <DropdownMenuItem onClick={() => duplicateMutation.mutate(c)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive" onClick={() => { if (window.confirm(`Delete "${c.name}"?`)) deleteMutation.mutate(c.id); }}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => { if (window.confirm(`Delete "${c.name}"?`)) deleteMutation.mutate(c); }}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

@@ -22,6 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logAudit } from "@/lib/audit";
+import { assertSameWorkspace, logIfAuthorizationFailure } from "@/lib/security-audit";
 import type { Tables, Database } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WebsiteCard } from "@/components/websites/WebsiteCard";
@@ -441,14 +442,24 @@ export default function WebsitesPage() {
 
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("websites").delete().eq("id", id);
-      if (error) throw error;
+    mutationFn: async (site: Website) => {
+      if (!wsId) throw new Error("No workspace selected");
+      const allowed = await assertSameWorkspace(wsId, site.workspace_id, {
+        entityType: "website",
+        entityId: site.id,
+        reason: "website_delete",
+      });
+      if (!allowed) throw new Error("Cross-workspace action blocked");
+      const { error } = await supabase.from("websites").delete().eq("id", site.id);
+      if (error) {
+        await logIfAuthorizationFailure(wsId, error, { entityType: "website", entityId: site.id, operation: "delete" });
+        throw error;
+      }
     },
-    onSuccess: (_data, id) => {
+    onSuccess: (_data, site) => {
       queryClient.invalidateQueries({ queryKey: ["websites"] });
       toast({ title: "Website removed" });
-      if (wsId) logAudit(wsId, "site_deleted", "website", id);
+      if (wsId) logAudit(wsId, "site_deleted", "website", site.id);
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -738,7 +749,7 @@ export default function WebsitesPage() {
               key={site.id}
               site={site}
               sitemap={getSitemap(site.id)}
-              onDelete={(id) => deleteMutation.mutate(id)}
+              onDelete={(site) => deleteMutation.mutate(site)}
               isDeleting={deleteMutation.isPending}
               autoOpenProducts={
                 autoOpenShopifyProducts && site.type === "shopify" && idx === 0

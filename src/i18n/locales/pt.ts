@@ -1805,8 +1805,6 @@ const pt: Record<string, string> = {
   "showcase.live": "Ao vivo",
   "sidebar.abTesting": "Teste A/B",
   "sidebar.account": "Conta",
-  "sidebar.websiteSection": "Site",
-  "sidebar.seoSection": "SEO e análises",
   "sidebar.admin": "Administrador",
   "sidebar.affiliate": "Afiliado",
   "sidebar.aiScanner": "AI Scanner",
@@ -2218,7 +2216,13 @@ const pt: Record<string, string> = {
   "workspaceSettings.workspaceName": "Nome do espaço de trabalho",
   "workspaceSettings.workspaceRenamed": "Espaço de trabalho renomeado",
   "workspaceSettings.workspaceRenamedDesc": "O nome do espaço de trabalho foi atualizado.",
-  "sidebar.keywordGroups": "Keyword Groups",
+  "audit.action.securityAdminDenied": "Admin Action Denied",
+  "audit.action.securityCrossWorkspace": "Cross-Workspace Blocked",
+  "audit.action.securityPermissionDenied": "Permission Denied",
+  "audit.action.securityRateLimited": "Rate Limited",
+  "audit.action.securitySuspicious": "Suspicious Request",
+  "audit.securityOnly": "Security events only",
+  "sidebar.keywordGroups": "Keywords",
   "sidebar.wpControl": "WordPress Control",
 };
 

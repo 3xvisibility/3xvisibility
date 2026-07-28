@@ -32,7 +32,7 @@ type Website = Tables<"websites">;
 interface WebsiteCardProps {
   site: Website;
   sitemap: any;
-  onDelete: (id: string) => void;
+  onDelete: (site: Website) => void;
   isDeleting: boolean;
   autoOpenProducts?: boolean;
 }
@@ -309,7 +309,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditOpen(true)}>
                 <Pencil className="h-3 w-3" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(site.id)} disabled={isDeleting}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(site)} disabled={isDeleting}>
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>

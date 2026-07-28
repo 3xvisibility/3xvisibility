@@ -1,10 +1,22 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { logSecurityEvent, logSuspiciousRequest } from "../_shared/security-audit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+async function userWorkspace(serviceClient: any, userId: string): Promise<string | null> {
+  const { data } = await serviceClient
+    .from("workspace_members")
+    .select("workspace_id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return data?.workspace_id || null;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -44,6 +56,14 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!roleData) {
+      const wsId = await userWorkspace(serviceClient, user.id);
+      await logSecurityEvent({
+        workspaceId: wsId || "00000000-0000-0000-0000-000000000000",
+        userId: user.id,
+        action: "security_admin_action_denied",
+        req,
+        details: { reason: "admin_role_required" },
+      });
       return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -228,7 +248,11 @@ Deno.serve(async (req) => {
     if (action === "ban-user") {
       const { target_user_id, banned, reason } = body;
       if (!target_user_id) return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (target_user_id === user.id) return new Response(JSON.stringify({ error: "Cannot ban yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (target_user_id === user.id) {
+        const wsId = await userWorkspace(serviceClient, user.id);
+        await logSuspiciousRequest({ workspaceId: wsId || "00000000-0000-0000-0000-000000000000", userId: user.id, reason: "self_targeting_ban", entityType: "user", req, details: { action } });
+        return new Response(JSON.stringify({ error: "Cannot ban yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       const isBan = banned !== false;
       const { error } = await serviceClient.from("profiles").update({
         is_banned: isBan,
@@ -246,7 +270,11 @@ Deno.serve(async (req) => {
     if (action === "delete-user") {
       const { target_user_id } = body;
       if (!target_user_id) return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (target_user_id === user.id) return new Response(JSON.stringify({ error: "Cannot delete yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (target_user_id === user.id) {
+        const wsId = await userWorkspace(serviceClient, user.id);
+        await logSuspiciousRequest({ workspaceId: wsId || "00000000-0000-0000-0000-000000000000", userId: user.id, reason: "self_targeting_delete", entityType: "user", req, details: { action } });
+        return new Response(JSON.stringify({ error: "Cannot delete yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       const { error } = await serviceClient.auth.admin.deleteUser(target_user_id);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -397,6 +425,8 @@ Deno.serve(async (req) => {
       const allowed = ["admin", "moderator", "user"];
       if (!allowed.includes(role)) return new Response(JSON.stringify({ error: "Invalid role" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (target_user_id === user.id && role !== "admin") {
+        const wsId = await userWorkspace(serviceClient, user.id);
+        await logSuspiciousRequest({ workspaceId: wsId || "00000000-0000-0000-0000-000000000000", userId: user.id, reason: "self_demote_attempt", entityType: "user", req, details: { action, role } });
         return new Response(JSON.stringify({ error: "Cannot demote yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       // Remove all existing roles, then insert new one (single active role per user)

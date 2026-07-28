@@ -2216,5 +2216,11 @@
   "workspaceSettings.workspaceName": "Workspace Name",
   "workspaceSettings.workspaceRenamed": "Workspace renamed",
   "workspaceSettings.workspaceRenamedDesc": "Workspace name has been updated.",
-  "sidebar.aiSiteBuilder": "AI Site Builder"
+  "sidebar.aiSiteBuilder": "AI Site Builder",
+  "audit.action.securityCrossWorkspace": "Cross-Workspace Blocked",
+  "audit.action.securityPermissionDenied": "Permission Denied",
+  "audit.action.securitySuspicious": "Suspicious Request",
+  "audit.action.securityRateLimited": "Rate Limited",
+  "audit.action.securityAdminDenied": "Admin Action Denied",
+  "audit.securityOnly": "Security events only"
 }

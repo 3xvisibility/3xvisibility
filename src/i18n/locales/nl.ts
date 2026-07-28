@@ -1805,8 +1805,6 @@ const nl: Record<string, string> = {
   "showcase.live": "Leef",
   "sidebar.abTesting": "A/B-testen",
   "sidebar.account": "Rekening",
-  "sidebar.websiteSection": "Website",
-  "sidebar.seoSection": "SEO en analyse",
   "sidebar.admin": "Beheerder",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI Scanner",
@@ -2218,7 +2216,13 @@ const nl: Record<string, string> = {
   "workspaceSettings.workspaceName": "Naam werkruimte",
   "workspaceSettings.workspaceRenamed": "Werkruimte hernoemd",
   "workspaceSettings.workspaceRenamedDesc": "Werkruimtenaam is bijgewerkt.",
-  "sidebar.keywordGroups": "Keyword Groups",
+  "audit.action.securityAdminDenied": "Admin Action Denied",
+  "audit.action.securityCrossWorkspace": "Cross-Workspace Blocked",
+  "audit.action.securityPermissionDenied": "Permission Denied",
+  "audit.action.securityRateLimited": "Rate Limited",
+  "audit.action.securitySuspicious": "Suspicious Request",
+  "audit.securityOnly": "Security events only",
+  "sidebar.keywordGroups": "Keywords",
   "sidebar.wpControl": "WordPress Control",
 };
 

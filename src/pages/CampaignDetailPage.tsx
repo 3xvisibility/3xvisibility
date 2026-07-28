@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { logAudit } from "@/lib/audit";
+import { assertSameWorkspace, logIfAuthorizationFailure } from "@/lib/security-audit";
 import { computeCampaignSeoSummary } from "@/components/SeoAnalysisDialog";
 import { DirectoryStructureBuilder } from "@/components/campaigns/DirectoryStructureBuilder";
 import { SpintaxPreview } from "@/components/campaigns/SpintaxPreview";
@@ -122,13 +123,14 @@ export default function CampaignDetailPage() {
 
   // Fetch campaign
   const { data: campaign, isLoading: campaignLoading } = useQuery({
-    queryKey: ["campaign-detail", id],
+    queryKey: ["campaign-detail", id, wsId],
     enabled: !!id && !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
         .select("*, templates(name, variables), websites(name, url, type, language, language_locked)")
         .eq("id", id!)
+        .eq("workspace_id", wsId!)
         .single();
       if (error) throw error;
       return data;
@@ -167,14 +169,15 @@ export default function CampaignDetailPage() {
 
   // Fetch generation jobs
   const { data: jobs = [] } = useQuery({
-    queryKey: ["campaign-jobs", id],
-    enabled: !!id,
+    queryKey: ["campaign-jobs", id, wsId],
+    enabled: !!id && !!wsId,
     refetchInterval: 5000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generation_jobs")
         .select("*")
         .eq("campaign_id", id!)
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -629,8 +632,18 @@ export default function CampaignDetailPage() {
 
   const bulkStatusMutation = useMutation({
     mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
+      if (!wsId || !campaign) throw new Error("No campaign loaded");
+      const allowed = await assertSameWorkspace(wsId, campaign.workspace_id, {
+        entityType: "campaign",
+        entityId: campaign.id,
+        reason: "bulk_page_status_update",
+      });
+      if (!allowed) throw new Error("Cross-workspace action blocked");
       const { error } = await supabase.from("generated_pages").update({ status: status as any }).in("id", ids);
-      if (error) throw error;
+      if (error) {
+        await logIfAuthorizationFailure(wsId, error, { entityType: "generated_page", entityId: ids[0], operation: "bulk_status_update" });
+        throw error;
+      }
       return ids.length;
     },
     onSuccess: (count, { status }) => {
@@ -645,8 +658,18 @@ export default function CampaignDetailPage() {
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
+      if (!wsId || !campaign) throw new Error("No campaign loaded");
+      const allowed = await assertSameWorkspace(wsId, campaign.workspace_id, {
+        entityType: "campaign",
+        entityId: campaign.id,
+        reason: "bulk_page_delete",
+      });
+      if (!allowed) throw new Error("Cross-workspace action blocked");
       const { error } = await supabase.from("generated_pages").delete().in("id", ids);
-      if (error) throw error;
+      if (error) {
+        await logIfAuthorizationFailure(wsId, error, { entityType: "generated_page", entityId: ids[0], operation: "bulk_delete" });
+        throw error;
+      }
       return ids.length;
     },
     onSuccess: (count) => {
