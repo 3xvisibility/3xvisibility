@@ -255,6 +255,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("audit.allActions")}</SelectItem>
+              <SelectItem value={SECURITY_FILTER}>{t("audit.securityOnly")}</SelectItem>
               {ALL_ACTIONS.map((a) => (
                 <SelectItem key={a} value={a}>
                   {t(actionConfig[a].labelKey)}
