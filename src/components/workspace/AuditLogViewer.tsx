@@ -68,6 +68,8 @@ export const SECURITY_ACTIONS = [
   "security_admin_action_denied",
 ];
 
+const ALL_ACTIONS = Object.keys(actionConfig);
+
 /** Sentinel value for the "Security events only" option in the action filter. */
 const SECURITY_FILTER = "__security__";
 
