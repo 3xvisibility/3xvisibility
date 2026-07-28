@@ -425,6 +425,8 @@ Deno.serve(async (req) => {
       const allowed = ["admin", "moderator", "user"];
       if (!allowed.includes(role)) return new Response(JSON.stringify({ error: "Invalid role" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (target_user_id === user.id && role !== "admin") {
+        const wsId = await userWorkspace(serviceClient, user.id);
+        await logSuspiciousRequest({ workspaceId: wsId || "00000000-0000-0000-0000-000000000000", userId: user.id, reason: "self_demote_attempt", entityType: "user", req, details: { action, role } });
         return new Response(JSON.stringify({ error: "Cannot demote yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       // Remove all existing roles, then insert new one (single active role per user)
