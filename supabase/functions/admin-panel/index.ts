@@ -248,7 +248,11 @@ Deno.serve(async (req) => {
     if (action === "ban-user") {
       const { target_user_id, banned, reason } = body;
       if (!target_user_id) return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (target_user_id === user.id) return new Response(JSON.stringify({ error: "Cannot ban yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (target_user_id === user.id) {
+        const wsId = await userWorkspace(serviceClient, user.id);
+        await logSuspiciousRequest({ workspaceId: wsId || "00000000-0000-0000-0000-000000000000", userId: user.id, reason: "self_targeting_ban", entityType: "user", req, details: { action } });
+        return new Response(JSON.stringify({ error: "Cannot ban yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       const isBan = banned !== false;
       const { error } = await serviceClient.from("profiles").update({
         is_banned: isBan,
@@ -266,7 +270,11 @@ Deno.serve(async (req) => {
     if (action === "delete-user") {
       const { target_user_id } = body;
       if (!target_user_id) return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (target_user_id === user.id) return new Response(JSON.stringify({ error: "Cannot delete yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (target_user_id === user.id) {
+        const wsId = await userWorkspace(serviceClient, user.id);
+        await logSuspiciousRequest({ workspaceId: wsId || "00000000-0000-0000-0000-000000000000", userId: user.id, reason: "self_targeting_delete", entityType: "user", req, details: { action } });
+        return new Response(JSON.stringify({ error: "Cannot delete yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       const { error } = await serviceClient.auth.admin.deleteUser(target_user_id);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
