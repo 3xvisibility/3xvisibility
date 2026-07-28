@@ -61,6 +61,9 @@ import ContactPage from "./pages/ContactPage";
 import UnsubscribePage from "./pages/UnsubscribePage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
+import CgvPage from "./pages/CgvPage";
+import ConfidentialitePage from "./pages/ConfidentialitePage";
+import MentionsLegalesPage from "./pages/MentionsLegalesPage";
 import ChangelogPage from "./pages/ChangelogPage";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { AutoTranslateProvider } from "./i18n/AutoTranslateProvider";
@@ -293,6 +296,9 @@ const App = () => {
             <Route path="/unsubscribe" element={<UnsubscribePage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
+            <Route path="/cgv" element={<CgvPage />} />
+            <Route path="/confidentialite" element={<ConfidentialitePage />} />
+            <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
             <Route path="/changelog" element={<ChangelogPage />} />
             <Route path="/shopify/oauth-launch" element={<ShopifyOAuthLaunchPage />} />
             <Route path="/shopify/callback" element={<ShopifyCallbackPage />} />
