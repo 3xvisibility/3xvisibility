@@ -123,13 +123,14 @@ export default function CampaignDetailPage() {
 
   // Fetch campaign
   const { data: campaign, isLoading: campaignLoading } = useQuery({
-    queryKey: ["campaign-detail", id],
+    queryKey: ["campaign-detail", id, wsId],
     enabled: !!id && !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
         .select("*, templates(name, variables), websites(name, url, type, language, language_locked)")
         .eq("id", id!)
+        .eq("workspace_id", wsId!)
         .single();
       if (error) throw error;
       return data;
