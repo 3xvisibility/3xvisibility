@@ -67,6 +67,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Prevent starting an OAuth flow that would attach a Shopify store to a
+    // workspace the caller does not belong to.
+    const membershipClient = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: isMember, error: memberErr } = await membershipClient.rpc("is_workspace_member", {
+      _user_id: user.id,
+      _workspace_id: workspace_id,
+    });
+    if (memberErr || !isMember) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Normalize domain
     const domain = shop_domain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
     if (!/\.myshopify\.com$/i.test(domain)) {
@@ -75,6 +89,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     // Generate a random nonce/state
     const stateBytes = new Uint8Array(24);
