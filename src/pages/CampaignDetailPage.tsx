@@ -187,14 +187,13 @@ export default function CampaignDetailPage() {
 
   // Fetch campaign logs
   const { data: campaignLogs = [] } = useQuery({
-    queryKey: ["campaign-logs", id, wsId],
-    enabled: !!id && !!wsId,
+    queryKey: ["campaign-logs", id],
+    enabled: !!id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaign_logs")
         .select("*")
         .eq("campaign_id", id!)
-        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
