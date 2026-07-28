@@ -171,6 +171,12 @@ export default function CampaignsPage() {
     mutationFn: async (campaign: Campaign) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
+      const allowed = await assertSameWorkspace(wsId, campaign.workspace_id, {
+        entityType: "campaign",
+        entityId: campaign.id,
+        reason: "campaign_duplicate",
+      });
+      if (!allowed) throw new Error("Cross-workspace action blocked");
       if (campaignLimitReached) {
         throw new Error(`Your ${planLabel} plan allows ${campaignLimit} campaign${campaignLimit === 1 ? "" : "s"}. Upgrade your plan to create more.`);
       }
