@@ -159,7 +159,9 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
         .order("created_at", { ascending: false })
         .range(from, to);
 
-      if (actionFilter !== "all") {
+      if (actionFilter === SECURITY_FILTER) {
+        query = query.in("action", SECURITY_ACTIONS);
+      } else if (actionFilter !== "all") {
         query = query.eq("action", actionFilter);
       }
       if (dateRange.from) {
