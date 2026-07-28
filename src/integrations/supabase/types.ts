@@ -3539,6 +3539,16 @@ export type Database = {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
       }
+      log_security_event: {
+        Args: {
+          _action: string
+          _details?: Json
+          _entity_id?: string
+          _entity_type?: string
+          _workspace_id: string
+        }
+        Returns: string
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
