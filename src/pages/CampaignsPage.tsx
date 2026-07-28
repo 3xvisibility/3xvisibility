@@ -198,7 +198,10 @@ export default function CampaignsPage() {
         generation_method: campaign.generation_method,
         status: "draft" as const,
       }).select("id").single();
-      if (error) throw error;
+      if (error) {
+        await logIfAuthorizationFailure(wsId, error, { entityType: "campaign", entityId: campaign.id, operation: "duplicate" });
+        throw error;
+      }
 
       const { data: csvFile } = await supabase.from("campaign_csv_files").select("*").eq("campaign_id", campaign.id).maybeSingle();
       if (csvFile && newCampaign) {
