@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   History, UserPlus, Shield, Pencil, Trash2, Clock, Loader2, Filter,
   Globe, Rocket, FileText, CreditCard, Download, CalendarIcon, Search, X, RefreshCw,
+  ShieldAlert, Ban, AlertTriangle, Gauge,
 } from "lucide-react";
 import { formatDistanceToNow, format, startOfDay, endOfDay } from "date-fns";
 import { useState, useEffect, useRef, useCallback } from "react";
