@@ -32,7 +32,7 @@ type Website = Tables<"websites">;
 interface WebsiteCardProps {
   site: Website;
   sitemap: any;
-  onDelete: (id: string) => void;
+  onDelete: (site: Website) => void;
   isDeleting: boolean;
   autoOpenProducts?: boolean;
 }
