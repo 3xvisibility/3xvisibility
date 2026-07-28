@@ -52,10 +52,24 @@ const actionConfig: Record<string, { icon: React.ReactNode; labelKey: string; co
   // Plan / billing
   plan_changed:      { icon: <CreditCard className="h-3.5 w-3.5" />, labelKey: "audit.action.planChanged",     color: "bg-warning/10 text-warning" },
   subscription_updated: { icon: <CreditCard className="h-3.5 w-3.5" />, labelKey: "audit.action.subscriptionUpdated", color: "bg-primary/10 text-primary" },
+  // Security
+  security_cross_workspace_blocked: { icon: <Ban className="h-3.5 w-3.5" />,           labelKey: "audit.action.securityCrossWorkspace", color: "bg-destructive/10 text-destructive" },
+  security_permission_denied:       { icon: <ShieldAlert className="h-3.5 w-3.5" />,   labelKey: "audit.action.securityPermissionDenied", color: "bg-destructive/10 text-destructive" },
+  security_suspicious_request:      { icon: <AlertTriangle className="h-3.5 w-3.5" />, labelKey: "audit.action.securitySuspicious",     color: "bg-warning/10 text-warning" },
+  security_rate_limited:            { icon: <Gauge className="h-3.5 w-3.5" />,         labelKey: "audit.action.securityRateLimited",    color: "bg-warning/10 text-warning" },
+  security_admin_action_denied:     { icon: <ShieldAlert className="h-3.5 w-3.5" />,   labelKey: "audit.action.securityAdminDenied",    color: "bg-destructive/10 text-destructive" },
 };
 
+export const SECURITY_ACTIONS = [
+  "security_cross_workspace_blocked",
+  "security_permission_denied",
+  "security_suspicious_request",
+  "security_rate_limited",
+  "security_admin_action_denied",
+];
 
-const ALL_ACTIONS = Object.keys(actionConfig);
+/** Sentinel value for the "Security events only" option in the action filter. */
+const SECURITY_FILTER = "__security__";
 
 function getActionDetails(log: AuditLog): string {
   const d = log.details as Record<string, string> | null;
