@@ -105,6 +105,14 @@ function getActionDetails(log: AuditLog): string {
       return d.from && d.to ? `${d.from} → ${d.to}` : d.plan || "";
     case "subscription_updated":
       return d.detail || "";
+    case "security_cross_workspace_blocked":
+      return `Blocked ${d.entity_type || "resource"} access → workspace ${(d.attempted_workspace_id || "").slice(0, 8)}`;
+    case "security_permission_denied":
+      return `${d.operation || "operation"} denied${d.message ? ` — ${d.message}` : ""}`;
+    case "security_suspicious_request":
+    case "security_rate_limited":
+    case "security_admin_action_denied":
+      return `${d.reason || "flagged"}${d.route ? ` (${d.route})` : ""}`;
     default:
       return Object.entries(d).map(([k, v]) => `${k}: ${v}`).join(", ");
   }
