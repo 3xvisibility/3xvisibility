@@ -90,18 +90,29 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setLanguage = useCallback((lang: Language) => {
-    // Always show the spinner while the UI swaps language — including when
-    // switching back to English (the DOM translator has to restore originals).
-    setLanguageState((prev) => {
-      if (prev !== lang) {
+    const prev = (localStorage.getItem("language") as Language | null) ?? "en";
+    localStorage.setItem("language", lang);
+    document.documentElement.lang = lang;
+
+    // Switching back to English is the one case the runtime DOM translator
+    // can't fully recover from: nodes captured while the UI was already in a
+    // non-English language have their "original" set to the translated text,
+    // so restoring writes the same translated text back. React re-renders
+    // from source (English literals + t()) — a fresh load is the reliable
+    // reset. Skip the reload if we're already on English.
+    if (lang === "en" && prev !== "en") {
+      if (typeof window !== "undefined") window.location.reload();
+      return;
+    }
+
+    setLanguageState((current) => {
+      if (current !== lang) {
         setTranslationError(null);
         setTranslationProgress({ done: 0, total: 0 });
         setTranslating(true);
       }
       return lang;
     });
-    localStorage.setItem("language", lang);
-    document.documentElement.lang = lang;
   }, []);
 
   const t = useCallback(
