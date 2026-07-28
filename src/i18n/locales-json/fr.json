@@ -2214,5 +2214,11 @@
   "workspaceSettings.workspaceDetailsDesc": "Mettez à jour le nom de votre espace de travail. Seuls les propriétaires de l'espace de travail peuvent le renommer.",
   "workspaceSettings.workspaceName": "Nom de l'espace de travail",
   "workspaceSettings.workspaceRenamed": "Espace de travail renommé",
-  "workspaceSettings.workspaceRenamedDesc": "Le nom de l’espace de travail a été mis à jour."
+  "workspaceSettings.workspaceRenamedDesc": "Le nom de l’espace de travail a été mis à jour.",
+  "audit.action.securityCrossWorkspace": "Accès inter-espace bloqué",
+  "audit.action.securityPermissionDenied": "Permission refusée",
+  "audit.action.securitySuspicious": "Requête suspecte",
+  "audit.action.securityRateLimited": "Taux limité",
+  "audit.action.securityAdminDenied": "Action admin refusée",
+  "audit.securityOnly": "Événements de sécurité uniquement"
 }
