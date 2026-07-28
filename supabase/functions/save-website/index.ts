@@ -46,6 +46,21 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Enforce workspace membership before letting service-role writes touch
+    // another workspace's websites row. Without this, any authenticated user
+    // could plant or hijack website credentials in a workspace they don't own.
+    const { data: isMember, error: memberErr } = await serviceClient.rpc("is_workspace_member", {
+      _user_id: user.id,
+      _workspace_id: workspace_id,
+    });
+    if (memberErr || !isMember) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     // Encrypt credential values only when caller actually provided new ones.
     const hasNewCredentials = credentials && Object.keys(credentials).length > 0;
     const encryptedCreds = hasNewCredentials ? await encryptCredentials(credentials) : null;

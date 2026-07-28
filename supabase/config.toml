@@ -18,7 +18,7 @@ project_id = "djknwurjbaltbbchfoss"
   [functions.discover-templates]
     verify_jwt = false
   [functions.fire-webhooks]
-    verify_jwt = false
+    verify_jwt = true
   [functions.generate-caption]
     verify_jwt = false
   [functions.generate-pages]
@@ -44,7 +44,7 @@ project_id = "djknwurjbaltbbchfoss"
   [functions.scan-template]
     verify_jwt = false
   [functions.seed-locations]
-    verify_jwt = false
+    verify_jwt = true
   [functions.translate-content]
     verify_jwt = false
 
