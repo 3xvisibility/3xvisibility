@@ -170,14 +170,15 @@ export default function CampaignDetailPage() {
 
   // Fetch generation jobs
   const { data: jobs = [] } = useQuery({
-    queryKey: ["campaign-jobs", id],
-    enabled: !!id,
+    queryKey: ["campaign-jobs", id, wsId],
+    enabled: !!id && !!wsId,
     refetchInterval: 5000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generation_jobs")
         .select("*")
         .eq("campaign_id", id!)
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -186,13 +187,14 @@ export default function CampaignDetailPage() {
 
   // Fetch campaign logs
   const { data: campaignLogs = [] } = useQuery({
-    queryKey: ["campaign-logs", id],
-    enabled: !!id,
+    queryKey: ["campaign-logs", id, wsId],
+    enabled: !!id && !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaign_logs")
         .select("*")
         .eq("campaign_id", id!)
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
