@@ -2216,6 +2216,14 @@ const pt: Record<string, string> = {
   "workspaceSettings.workspaceName": "Nome do espaço de trabalho",
   "workspaceSettings.workspaceRenamed": "Espaço de trabalho renomeado",
   "workspaceSettings.workspaceRenamedDesc": "O nome do espaço de trabalho foi atualizado.",
+  "audit.action.securityAdminDenied": "Admin Action Denied",
+  "audit.action.securityCrossWorkspace": "Cross-Workspace Blocked",
+  "audit.action.securityPermissionDenied": "Permission Denied",
+  "audit.action.securityRateLimited": "Rate Limited",
+  "audit.action.securitySuspicious": "Suspicious Request",
+  "audit.securityOnly": "Security events only",
+  "sidebar.keywordGroups": "Keywords",
+  "sidebar.wpControl": "WordPress Control",
 };
 
 export default pt;

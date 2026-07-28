@@ -2222,6 +2222,8 @@ const de: Record<string, string> = {
   "workspaceSettings.workspaceName": "Workspace-Name",
   "workspaceSettings.workspaceRenamed": "Arbeitsbereich umbenannt",
   "workspaceSettings.workspaceRenamedDesc": "Der Name des Arbeitsbereichs wurde aktualisiert.",
+  "sidebar.keywordGroups": "Keywords",
+  "sidebar.wpControl": "WordPress Control",
 };
 
 export default de;
