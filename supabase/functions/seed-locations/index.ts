@@ -718,8 +718,26 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    // Require an authenticated caller for every path. Bulk/hardcoded seeding
+    // triggers outbound HTTP calls and database writes; leaving it public
+    // allowed unauthenticated abusers to spam expensive imports.
+    const authHeader = req.headers.get("Authorization");
+    const token = authHeader?.replace(/^Bearer\s+/i, "").trim();
+    if (!token) {
+      return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    }
+    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: { user }, error: authErr } = await userClient.auth.getUser(token);
+    if (authErr || !user) {
+      return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    }
+
     let body: { country_code?: string; expand?: boolean; state?: string; region?: string; target?: number; bulk?: boolean; all?: boolean } = {};
     try { body = await req.json(); } catch { /* empty body ok */ }
+
 
     // ── Bulk mode: pull high-coverage city data for a country (or every country)
     // from GeoNames first, then fall back to other public city sources.
