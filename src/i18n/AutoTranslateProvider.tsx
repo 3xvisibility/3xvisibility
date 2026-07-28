@@ -464,11 +464,9 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       if (cancelled || runId !== runIdRef.current) return;
       if (failed) {
         setTranslationError("Translation service is unavailable. Please retry.");
-        setTranslating(false);
         return;
       }
 
-      setTranslating(false);
       setTranslationError(null);
     }
 
