@@ -154,13 +154,14 @@ export default function CampaignDetailPage() {
 
   // Fetch generated pages
   const { data: pages = [], isLoading: pagesLoading } = useQuery({
-    queryKey: ["campaign-pages", id],
-    enabled: !!id,
+    queryKey: ["campaign-pages", id, wsId],
+    enabled: !!id && !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
-        .select("id, title, slug, status, external_url, external_id, error_message, created_at, seo_title, seo_description, seo_keywords, content, canonical_url, website_id, keyword_source, keyword_source_details")
+        .select("id, title, slug, status, external_url, external_id, error_message, created_at, seo_title, seo_description, seo_keywords, content, canonical_url, website_id, keyword_source, keyword_source_details, workspace_id")
         .eq("campaign_id", id!)
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
