@@ -232,7 +232,7 @@ export function PricingComparisonTable({
 
   const cellValue = (row: FeatureRow, plan: PlanName): CellValue => {
     if (row.values) return row.values[plan];
-    if (row.featureKey) return (PLAN_FEATURES[plan] as Record<string, CellValue>)[row.featureKey];
+    if (row.featureKey) return (PLAN_FEATURES[plan] as unknown as Record<string, CellValue>)[row.featureKey];
     return false;
   };
 
