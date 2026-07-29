@@ -333,6 +333,7 @@
   "billing.paymentMethods": "Payment Methods",
   "billing.paymentMethodsDesc": "Manage your saved cards and PayPal. Add, set default or remove anytime.",
   "billing.planDescAgency": "For agencies and multi-client teams",
+  "billing.planDescFree": "For trying out the platform",
   "billing.planDescPro": "For growing businesses and marketers",
   "billing.planDescStarter": "For freelancers and small businesses",
   "billing.portalError": "Portal error",
