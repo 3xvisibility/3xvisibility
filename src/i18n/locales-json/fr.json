@@ -347,6 +347,7 @@
   "billing.renews": "Renouvellement {date}",
   "billing.save20": "Économisez 20%",
   "billing.setAsDefault": "Définir par défaut",
+  "billing.trialBadge": "1 mois gratuit",
   "billing.slotsAvailable": "{count} emplacements disponibles",
   "billing.support": "Support",
   "billing.teamCollaboration": "Collaboration d’équipe",
