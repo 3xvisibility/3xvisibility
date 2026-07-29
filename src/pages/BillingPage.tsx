@@ -26,105 +26,12 @@ import { useLanguage } from "@/i18n/LanguageContext";
 
 const YEARLY_DISCOUNT = 2 / 12;
 
-interface PlanConfig {
-  name: PlanName;
-  monthlyPrice: number;
-  descriptionKey: string;
-  popular: boolean;
-  icon: React.ReactNode;
-  gradient: string;
-}
-
-const planConfigs: PlanConfig[] = [
-  {
-    name: "starter",
-    monthlyPrice: 19,
-    descriptionKey: "billing.planDescStarter",
-    popular: false,
-    icon: <Zap className="h-5 w-5" />,
-    gradient: "from-secondary/20 to-secondary/5",
-  },
-  {
-    name: "pro",
-    monthlyPrice: 59,
-    descriptionKey: "billing.planDescPro",
-    popular: true,
-    icon: <Sparkles className="h-5 w-5" />,
-    gradient: "from-primary/20 to-primary/5",
-  },
-  {
-    name: "agency",
-    monthlyPrice: 149,
-    descriptionKey: "billing.planDescAgency",
-    popular: false,
-    icon: <Crown className="h-5 w-5" />,
-    gradient: "from-warning/20 to-warning/5",
-  },
-];
-
-const featureIcons: Record<string, React.ReactNode> = {
-  pagesLimit: <Layers className="h-4 w-4 text-primary" />,
-  aiLimit: <Sparkles className="h-4 w-4 text-primary" />,
-  templates: <FileText className="h-4 w-4 text-primary" />,
-  websites: <Globe className="h-4 w-4 text-primary" />,
-  wordpress: <Globe className="h-4 w-4 text-primary" />,
-  shopify: <Store className="h-4 w-4 text-primary" />,
-  prestashop: <Store className="h-4 w-4 text-primary" />,
-  woocommerce: <Store className="h-4 w-4 text-primary" />,
-  indexing: <Search className="h-4 w-4 text-primary" />,
-  discovery: <Search className="h-4 w-4 text-primary" />,
-  internalLinks: <Link2 className="h-4 w-4 text-primary" />,
-  apiAccess: <Code className="h-4 w-4 text-primary" />,
-  teamCollaboration: <Users className="h-4 w-4 text-primary" />,
+const planMonthlyPrices: Record<PlanName, number> = {
+  free: 0,
+  starter: 19,
+  pro: 59,
+  agency: 149,
 };
-
-const featureRows: { labelKey: string; key: string }[] = [
-  { labelKey: "billing.featurePagesMonth", key: "pagesLimit" },
-  { labelKey: "billing.featureAiCreditsMonth", key: "aiLimit" },
-  { labelKey: "billing.featureTemplates", key: "templates" },
-  { labelKey: "billing.featureWebsites", key: "websites" },
-  { labelKey: "billing.featureWordPress", key: "wordpress" },
-  { labelKey: "billing.featureShopify", key: "shopify" },
-  { labelKey: "billing.featurePrestaShop", key: "prestashop" },
-  { labelKey: "billing.featureWooCommerce", key: "woocommerce" },
-  { labelKey: "billing.featureGoogleIndexing", key: "indexing" },
-  { labelKey: "billing.featureWebsiteDiscovery", key: "discovery" },
-  { labelKey: "billing.featureInternalLinks", key: "internalLinks" },
-  { labelKey: "billing.featureApiAccess", key: "apiAccess" },
-  { labelKey: "billing.featureTeamCollaboration", key: "teamCollaboration" },
-];
-
-function formatValue(val: number | boolean, unlimitedLabel: string): React.ReactNode {
-  if (typeof val === "boolean") {
-    return val ? (
-      <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-success/10">
-        <Check className="h-3.5 w-3.5 text-success" />
-      </div>
-    ) : (
-      <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted">
-        <X className="h-3.5 w-3.5 text-muted-foreground/40" />
-      </div>
-    );
-  }
-  return <span className="font-semibold tabular-nums">{val === -1 ? unlimitedLabel : val.toLocaleString()}</span>;
-}
-
-function getFeatureList(name: PlanName, t: (key: string, vars?: Record<string, string | number>) => string): string[] {
-  const f = PLAN_FEATURES[name];
-  return [
-    t("billing.pagesCountMonth", { count: f.pagesLimit.toLocaleString() }),
-    t("billing.aiCreditsCount", { count: f.aiLimit.toLocaleString() }),
-    f.templates === -1 ? t("billing.unlimitedTemplates") : t("billing.templatesCount", { count: f.templates }),
-    f.websites === -1 ? t("billing.unlimited") : t(f.websites === 1 ? "billing.websiteCount" : "billing.websitesCount", { count: f.websites }),
-    ...(f.shopify ? [t("billing.allCmsIntegrations")] : f.wordpress ? [t("billing.wordpressIntegration")] : []),
-    ...(f.indexing ? [t("billing.googleIndexing")] : []),
-    ...(f.discovery ? [t("billing.websiteDiscovery")] : []),
-    ...(f.internalLinks ? [t("billing.internalLinkBuilding")] : []),
-    ...(f.apiAccess ? [t("billing.apiAccess")] : []),
-    ...(f.teamCollaboration ? [t("billing.teamCollaboration")] : []),
-    name === "starter" ? t("billing.emailSupport") : name === "pro" ? t("billing.prioritySupport") : t("billing.dedicatedSupport"),
-  ];
-}
 
 export default function BillingPage() {
   const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, resetDate, status: subStatus, isTrialing, isLoading: subLoading } = useSubscription();
