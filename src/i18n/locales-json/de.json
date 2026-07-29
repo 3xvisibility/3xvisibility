@@ -333,6 +333,7 @@
   "billing.paymentMethods": "Zahlungsmethoden",
   "billing.paymentMethodsDesc": "Verwalten Sie Ihre gespeicherten Karten und PayPal. Jederzeit hinzufügen, als Standard festlegen oder entfernen.",
   "billing.planDescAgency": "Für Agenturen und Multi-Client-Teams",
+  "billing.planDescFree": "Zum Ausprobieren der Plattform",
   "billing.planDescPro": "Für wachsende Unternehmen und Marketer",
   "billing.planDescStarter": "Für Freelancer und kleine Unternehmen",
   "billing.portalError": "Portalfehler",
