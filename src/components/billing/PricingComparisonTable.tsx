@@ -212,7 +212,7 @@ const featureGroups: FeatureGroup[] = [
       { id: "seats", label: "Team seats", values: tier(1, 1, 3, -1) },
       { id: "collab", labelKey: "billing.featureTeamCollaboration", featureKey: "teamCollaboration" },
       { id: "api", labelKey: "billing.featureApiAccess", featureKey: "apiAccess" },
-      { id: "audit", label: "Audit log", values: tier(false, false, true, true) },
+      { id: "auditLog", label: "Audit log", values: tier(false, false, true, true) },
       {
         id: "support",
         labelKey: "billing.support",
