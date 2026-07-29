@@ -1,7 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Sparkles, Zap, Crown, Gift, Loader2, ArrowRight } from "lucide-react";
+import {
+  Check,
+  X,
+  Sparkles,
+  Zap,
+  Crown,
+  Gift,
+  Loader2,
+  ArrowRight,
+  Rocket,
+  LayoutTemplate,
+  Search,
+  Globe,
+  Users,
+} from "lucide-react";
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -17,6 +31,8 @@ interface PricingComparisonTableProps {
 }
 
 const YEARLY_DISCOUNT = 2 / 12;
+
+const PLAN_ORDER: PlanName[] = ["free", "starter", "pro", "agency"];
 
 const planMeta: {
   name: PlanName;
@@ -62,40 +78,135 @@ const monthlyPrices: Record<PlanName, number> = {
   agency: 149,
 };
 
+type CellValue = boolean | number | string;
+
 interface FeatureRow {
-  labelKey: string;
-  key: keyof typeof PLAN_FEATURES.free | "support" | "trial";
-  type: "number" | "boolean" | "text";
+  /** Stable id used for hover state. */
+  id: string;
+  /** Existing i18n key, when one exists. */
+  labelKey?: string;
+  /** Plain label used when no i18n key exists (auto-translated at runtime). */
+  label?: string;
+  /** Numeric plan-features key, or explicit per-plan values. */
+  featureKey?: keyof (typeof PLAN_FEATURES)["free"];
+  values?: Record<PlanName, CellValue>;
+  /** Extra note rendered under a truthy check, per plan. */
+  notes?: Partial<Record<PlanName, string>>;
 }
 
-const featureRows: FeatureRow[] = [
-  { labelKey: "billing.featurePagesMonth", key: "pagesLimit", type: "number" },
-  { labelKey: "billing.featureAiCreditsMonth", key: "aiLimit", type: "number" },
-  { labelKey: "billing.featureTemplates", key: "templates", type: "number" },
-  { labelKey: "billing.featureWebsites", key: "websites", type: "number" },
-  { labelKey: "billing.featureCampaigns", key: "campaigns", type: "number" },
-  { labelKey: "billing.featureWordPress", key: "wordpress", type: "boolean" },
-  { labelKey: "billing.featureShopify", key: "shopify", type: "boolean" },
-  { labelKey: "billing.featureWooCommerce", key: "woocommerce", type: "boolean" },
-  { labelKey: "billing.featurePrestaShop", key: "prestashop", type: "boolean" },
-  { labelKey: "billing.featureGoogleIndexing", key: "indexing", type: "boolean" },
-  { labelKey: "billing.featureWebsiteDiscovery", key: "discovery", type: "boolean" },
-  { labelKey: "billing.featureInternalLinks", key: "internalLinks", type: "boolean" },
-  { labelKey: "billing.featureApiAccess", key: "apiAccess", type: "boolean" },
-  { labelKey: "billing.featureTeamCollaboration", key: "teamCollaboration", type: "boolean" },
-  { labelKey: "billing.support", key: "support", type: "text" },
+interface FeatureGroup {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  rows: FeatureRow[];
+}
+
+/** `t` helper shorthand */
+type T = (key: string, vars?: Record<string, string | number>) => string;
+
+const tier = (free: CellValue, starter: CellValue, pro: CellValue, agency: CellValue): Record<PlanName, CellValue> => ({
+  free,
+  starter,
+  pro,
+  agency,
+});
+
+const featureGroups: FeatureGroup[] = [
+  {
+    id: "generation",
+    label: "Generation engine",
+    icon: <Rocket className="h-3.5 w-3.5" />,
+    rows: [
+      { id: "pages", labelKey: "billing.featurePagesMonth", featureKey: "pagesLimit" },
+      { id: "ai", labelKey: "billing.featureAiCreditsMonth", featureKey: "aiLimit" },
+      { id: "campaigns", labelKey: "billing.featureCampaigns", featureKey: "campaigns" },
+      { id: "keywordGroups", label: "Keyword groups", values: tier(1, 10, -1, -1) },
+      { id: "pairing", label: "Zip & Cross pairing modes", values: tier(true, true, true, true) },
+      { id: "csv", label: "Bulk CSV import", values: tier(true, true, true, true) },
+      { id: "locations", label: "Location database (country / region / city)", values: tier(true, true, true, true) },
+      {
+        id: "languages",
+        label: "Multi-language generation",
+        values: tier(true, true, true, true),
+        notes: { free: "4 languages", starter: "8 languages", pro: "26 languages", agency: "26 languages" },
+      },
+      { id: "spintax", label: "Spintax & block spinning", values: tier(false, true, true, true) },
+      { id: "diversity", label: "Content diversity repair", values: tier(false, true, true, true) },
+    ],
+  },
+  {
+    id: "templates",
+    label: "Templates & design",
+    icon: <LayoutTemplate className="h-3.5 w-3.5" />,
+    rows: [
+      { id: "templates", labelKey: "billing.featureTemplates", featureKey: "templates" },
+      { id: "marketplace", label: "Marketplace templates", values: tier(true, true, true, true) },
+      { id: "importUrl", label: "Import template from any URL", values: tier(false, true, true, true) },
+      { id: "aiBuilder", label: "AI Site Builder", values: tier(false, false, true, true) },
+      { id: "aiVariables", label: "AI variable injection", values: tier(false, true, true, true) },
+      { id: "versions", label: "Template version history", values: tier(false, false, true, true) },
+      { id: "whitelabel", label: "Whitelabel branding", values: tier(false, false, false, true) },
+    ],
+  },
+  {
+    id: "seo",
+    label: "SEO & content",
+    icon: <Search className="h-3.5 w-3.5" />,
+    rows: [
+      { id: "audit", label: "SEO audit suite", values: tier(true, true, true, true) },
+      { id: "quality", label: "Content quality scoring", values: tier(true, true, true, true) },
+      { id: "autofix", label: "Auto-fix SEO score (80+ target)", values: tier(false, true, true, true) },
+      { id: "section", label: "Section-scoped rewriting", values: tier(false, false, true, true) },
+      { id: "duplicate", label: "Duplicate content detection", values: tier(false, true, true, true) },
+      { id: "internalLinks", labelKey: "billing.featureInternalLinks", featureKey: "internalLinks" },
+      { id: "discovery", labelKey: "billing.featureWebsiteDiscovery", featureKey: "discovery" },
+      { id: "indexing", labelKey: "billing.featureGoogleIndexing", featureKey: "indexing" },
+    ],
+  },
+  {
+    id: "publishing",
+    label: "Publishing & integrations",
+    icon: <Globe className="h-3.5 w-3.5" />,
+    rows: [
+      { id: "websites", labelKey: "billing.featureWebsites", featureKey: "websites" },
+      { id: "html", label: "HTML / CSS direct publishing", values: tier(true, true, true, true) },
+      { id: "wordpress", labelKey: "billing.featureWordPress", featureKey: "wordpress" },
+      { id: "woocommerce", labelKey: "billing.featureWooCommerce", featureKey: "woocommerce" },
+      { id: "shopify", labelKey: "billing.featureShopify", featureKey: "shopify" },
+      { id: "prestashop", labelKey: "billing.featurePrestaShop", featureKey: "prestashop" },
+      { id: "calendar", label: "Content calendar & scheduling", values: tier(false, false, true, true) },
+      { id: "webhooks", label: "Automation webhooks", values: tier(false, false, true, true) },
+    ],
+  },
+  {
+    id: "team",
+    label: "Team, API & support",
+    icon: <Users className="h-3.5 w-3.5" />,
+    rows: [
+      { id: "workspaces", label: "Workspaces", values: tier(1, 2, 5, -1) },
+      { id: "seats", label: "Team seats", values: tier(1, 1, 3, -1) },
+      { id: "collab", labelKey: "billing.featureTeamCollaboration", featureKey: "teamCollaboration" },
+      { id: "api", labelKey: "billing.featureApiAccess", featureKey: "apiAccess" },
+      { id: "audit", label: "Audit log", values: tier(false, false, true, true) },
+      {
+        id: "support",
+        labelKey: "billing.support",
+        values: tier("__email__", "__email__", "__priority__", "__dedicated__"),
+      },
+    ],
+  },
 ];
 
-function formatNumber(val: number, t: (key: string, vars?: Record<string, string | number>) => string): string {
+function formatNumber(val: number, t: T): string {
   if (val === -1) return t("common.unlimited");
   return val.toLocaleString();
 }
 
-function getSupportLabel(name: PlanName, t: (key: string, vars?: Record<string, string | number>) => string): string {
-  if (name === "free") return t("billing.email");
-  if (name === "starter") return t("billing.email");
-  if (name === "pro") return t("billing.priority");
-  return t("billing.dedicated");
+function resolveText(val: string, t: T): string {
+  if (val === "__email__") return t("billing.email");
+  if (val === "__priority__") return t("billing.priority");
+  if (val === "__dedicated__") return t("billing.dedicated");
+  return val;
 }
 
 export function PricingComparisonTable({
@@ -110,36 +221,49 @@ export function PricingComparisonTable({
   const { t } = useLanguage();
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
-  const planOrder: PlanName[] = ["free", "starter", "pro", "agency"];
-  const currentIdx = planOrder.indexOf(currentPlan);
+  const currentIdx = PLAN_ORDER.indexOf(currentPlan);
 
   const getButtonState = (name: PlanName) => {
-    const idx = planOrder.indexOf(name);
+    const idx = PLAN_ORDER.indexOf(name);
     if (idx === currentIdx) return { label: t("billing.currentPlanBtn"), disabled: true, variant: "outline" as const };
     if (idx > currentIdx) return { label: t("billing.upgrade"), disabled: false, variant: "default" as const };
     return { label: t("billing.downgrade"), disabled: false, variant: "outline" as const };
   };
 
+  const cellValue = (row: FeatureRow, plan: PlanName): CellValue => {
+    if (row.values) return row.values[plan];
+    if (row.featureKey) return (PLAN_FEATURES[plan] as Record<string, CellValue>)[row.featureKey];
+    return false;
+  };
+
   const renderCell = (row: FeatureRow, plan: PlanName) => {
-    if (row.key === "support") {
-      return <span className="text-sm font-medium text-foreground/90">{getSupportLabel(plan, t)}</span>;
+    const val = cellValue(row, plan);
+    const note = row.notes?.[plan];
+
+    if (typeof val === "number") {
+      return <span className="text-sm font-semibold tabular-nums text-foreground/90">{formatNumber(val, t)}</span>;
     }
 
-    const val = (PLAN_FEATURES[plan] as any)[row.key];
+    if (typeof val === "string") {
+      return <span className="text-sm font-medium text-foreground/90">{resolveText(val, t)}</span>;
+    }
 
-    if (row.type === "boolean") {
-      return val ? (
-        <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-success/10">
-          <Check className="h-3.5 w-3.5 text-success" />
-        </div>
-      ) : (
+    if (!val) {
+      return (
         <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted">
           <X className="h-3.5 w-3.5 text-muted-foreground/40" />
         </div>
       );
     }
 
-    return <span className="text-sm font-semibold tabular-nums text-foreground/90">{formatNumber(val, t)}</span>;
+    return (
+      <div className="inline-flex items-center justify-center gap-1.5">
+        <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-success/10">
+          <Check className="h-3.5 w-3.5 text-success" />
+        </div>
+        {note && <span className="text-xs text-muted-foreground whitespace-nowrap">{note}</span>}
+      </div>
+    );
   };
 
   return (
@@ -177,10 +301,10 @@ export function PricingComparisonTable({
       {/* Comparison table */}
       <div className="rounded-2xl border border-border bg-card shadow-surface overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px] border-collapse">
-            <thead>
+          <table className="w-full min-w-[900px] border-collapse">
+            <thead className="sticky top-0 z-20 bg-card">
               <tr className="border-b border-border">
-                <th className="text-left p-5 w-[260px] align-bottom">
+                <th className="text-left p-5 w-[300px] align-bottom bg-card">
                   <div className="space-y-1">
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("billing.comparePlans")}</p>
                     <p className="text-sm text-muted-foreground">{t("billing.compareDesc")}</p>
@@ -278,43 +402,50 @@ export function PricingComparisonTable({
                 })}
               </tr>
             </thead>
-            <tbody>
-              {featureRows.map((row, i) => (
-                <tr
-                  key={row.key}
-                  className={cn(
-                    "border-b border-border/50 transition-colors",
-                    i % 2 === 1 && "bg-muted/20",
-                    hoveredRow === row.key && "bg-muted/40"
-                  )}
-                  onMouseEnter={() => setHoveredRow(row.key)}
-                  onMouseLeave={() => setHoveredRow(null)}
-                >
-                  <td className="py-3.5 px-5">
-                    <span className="text-sm font-medium text-foreground">{t(row.labelKey)}</span>
+
+            {featureGroups.map((group) => (
+              <tbody key={group.id}>
+                <tr>
+                  <td colSpan={5} className="p-0">
+                    <div className="flex items-center gap-2 bg-muted/50 border-y border-border px-5 py-2.5">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-background text-primary shadow-sm">
+                        {group.icon}
+                      </span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-foreground">{group.label}</span>
+                    </div>
                   </td>
-                  {planMeta.map((meta) => {
-                    const plan = meta.name;
-                    const isCurrent = plan === currentPlan;
-                    return (
+                </tr>
+                {group.rows.map((row, i) => (
+                  <tr
+                    key={row.id}
+                    className={cn(
+                      "border-b border-border/50 transition-colors",
+                      i % 2 === 1 && "bg-muted/20",
+                      hoveredRow === row.id && "bg-muted/40"
+                    )}
+                    onMouseEnter={() => setHoveredRow(row.id)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                  >
+                    <td className="py-3.5 px-5">
+                      <span className="text-sm font-medium text-foreground">
+                        {row.labelKey ? t(row.labelKey) : row.label}
+                      </span>
+                    </td>
+                    {planMeta.map((meta) => (
                       <td
-                        key={plan}
+                        key={meta.name}
                         className={cn(
                           "py-3.5 px-5 text-center transition-colors",
-                          isCurrent && "bg-primary/[0.02]"
+                          meta.name === currentPlan && "bg-primary/[0.02]"
                         )}
                       >
-                        {row.key === "prestashop" ? (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        ) : (
-                          renderCell(row, plan)
-                        )}
+                        {renderCell(row, meta.name)}
                       </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            ))}
           </table>
         </div>
       </div>
