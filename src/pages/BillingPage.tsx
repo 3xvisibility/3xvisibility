@@ -330,7 +330,7 @@ export default function BillingPage() {
           currentPlan={activePlan}
           targetPlan={confirmTarget}
           monthlyPrice={(() => {
-            const base = planConfigs.find((p) => p.name === confirmTarget)?.monthlyPrice ?? 0;
+            const base = planMonthlyPrices[confirmTarget] ?? 0;
             return isYearly ? Math.round(base * (1 - YEARLY_DISCOUNT)) : base;
           })()}
           isYearly={isYearly}
