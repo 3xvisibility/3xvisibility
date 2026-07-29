@@ -15,6 +15,8 @@ import {
   Search,
   Globe,
   Users,
+  Wrench,
+
 } from "lucide-react";
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -113,10 +115,33 @@ const tier = (free: CellValue, starter: CellValue, pro: CellValue, agency: CellV
 
 const featureGroups: FeatureGroup[] = [
   {
+    id: "tools",
+    label: "Tools included",
+    icon: <Wrench className="h-3.5 w-3.5" />,
+    rows: [
+      { id: "tool-campaigns", label: "Campaigns — bulk page generation wizard", values: tier(true, true, true, true) },
+      { id: "tool-keywords", label: "Keyword Groups — reusable keyword + variable bundles", values: tier(true, true, true, true) },
+      { id: "tool-locations", label: "Location Database — country / region / city", values: tier(true, true, true, true) },
+      { id: "tool-templates", label: "Template Manager — edit, preview, versions", values: tier(true, true, true, true) },
+      { id: "tool-marketplace", label: "Template Marketplace", values: tier(true, true, true, true) },
+      { id: "tool-import", label: "Template Importer — pull HTML from any URL", values: tier(false, true, true, true) },
+      { id: "tool-sitebuilder", label: "AI Site Builder", values: tier(false, false, true, true) },
+      { id: "tool-seoaudit", label: "SEO Audit Suite", values: tier(true, true, true, true) },
+      { id: "tool-seofix", label: "SEO Optimizer — auto-fix to 80+ score", values: tier(false, true, true, true) },
+      { id: "tool-wp", label: "WP Control — WordPress publishing console", values: tier(false, true, true, true) },
+      { id: "tool-shopify", label: "Shopify Manager — products & bulk SEO", values: tier(false, false, true, true) },
+      { id: "tool-calendar", label: "Content Calendar & scheduler", values: tier(false, false, true, true) },
+      { id: "tool-translate", label: "Multi-language workspace UI", values: tier(true, true, true, true) },
+      { id: "tool-api", label: "API & Webhooks console", values: tier(false, false, true, true) },
+      { id: "tool-whitelabel", label: "Whitelabel & agency branding", values: tier(false, false, false, true) },
+    ],
+  },
+  {
     id: "generation",
     label: "Generation engine",
     icon: <Rocket className="h-3.5 w-3.5" />,
     rows: [
+
       { id: "pages", labelKey: "billing.featurePagesMonth", featureKey: "pagesLimit" },
       { id: "ai", labelKey: "billing.featureAiCreditsMonth", featureKey: "aiLimit" },
       { id: "campaigns", labelKey: "billing.featureCampaigns", featureKey: "campaigns" },
@@ -187,7 +212,7 @@ const featureGroups: FeatureGroup[] = [
       { id: "seats", label: "Team seats", values: tier(1, 1, 3, -1) },
       { id: "collab", labelKey: "billing.featureTeamCollaboration", featureKey: "teamCollaboration" },
       { id: "api", labelKey: "billing.featureApiAccess", featureKey: "apiAccess" },
-      { id: "audit", label: "Audit log", values: tier(false, false, true, true) },
+      { id: "auditLog", label: "Audit log", values: tier(false, false, true, true) },
       {
         id: "support",
         labelKey: "billing.support",
