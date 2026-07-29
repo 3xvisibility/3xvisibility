@@ -1,31 +1,10 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
-import {
-  Check,
-  X,
-  Sparkles,
-  ArrowRight,
-  Layers,
-  Zap,
-  Globe,
-  FileText,
-  Users,
-  Headphones,
-  Store,
-  Search,
-  Link2,
-  Code,
-  
-  Crown,
-  Loader2,
-  ExternalLink,
-  Gift,
-} from "lucide-react";
+import { Sparkles, Loader2, ExternalLink } from "lucide-react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 import { STRIPE_TIERS } from "@/lib/stripe-config";
