@@ -16,12 +16,20 @@ import {
   Globe,
   Users,
   Wrench,
-
+  Info,
 } from "lucide-react";
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { cn } from "@/lib/utils";
 import { BRANDS, type BrandModel } from "./ModelBrandIcons";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 
 
 interface PricingComparisonTableProps {
@@ -111,7 +119,12 @@ interface FeatureRow {
   models?: Record<PlanName, ModelChip[]>;
   /** Renders brand logo chips (OpenAI, Gemini, Claude…). */
   brands?: Record<PlanName, BrandModel[]>;
+  /** Longer explanation shown in the row detail modal. */
+  details?: string;
+  /** Concrete usage examples shown in the row detail modal. */
+  examples?: string[];
 }
+
 
 
 interface FeatureGroup {
@@ -407,6 +420,8 @@ export function PricingComparisonTable({
 }: PricingComparisonTableProps) {
   const { t } = useLanguage();
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  const [detailRow, setDetailRow] = useState<{ row: FeatureRow; group: string } | null>(null);
+
 
   const currentIdx = PLAN_ORDER.indexOf(currentPlan);
 
@@ -653,22 +668,40 @@ export function PricingComparisonTable({
                 {group.rows.map((row, i) => (
                   <tr
                     key={row.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${row.labelKey ? t(row.labelKey) : row.label} — details`}
                     className={cn(
-                      "transition-colors",
+                      "transition-colors cursor-pointer outline-none",
                       i % 2 === 0 ? "bg-muted/40" : "bg-transparent",
-                      hoveredRow === row.id && "bg-muted/60"
+                      hoveredRow === row.id && "bg-muted/60",
+                      "focus-visible:ring-2 focus-visible:ring-primary/40"
                     )}
                     onMouseEnter={() => setHoveredRow(row.id)}
                     onMouseLeave={() => setHoveredRow(null)}
+                    onClick={() => setDetailRow({ row, group: group.label })}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setDetailRow({ row, group: group.label });
+                      }
+                    }}
                   >
                     <td className="py-4 px-5 rounded-l-2xl align-top">
-                      <span className="text-sm font-medium text-foreground">
+                      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
                         {row.labelKey ? t(row.labelKey) : row.label}
+                        <Info
+                          className={cn(
+                            "h-3.5 w-3.5 shrink-0 transition-opacity",
+                            hoveredRow === row.id ? "opacity-70 text-primary" : "opacity-0"
+                          )}
+                        />
                       </span>
                       {row.hint && (
                         <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground max-w-[280px]">{row.hint}</p>
                       )}
                     </td>
+
 
                     {planMeta.map((meta, mi) => (
                       <td
@@ -688,6 +721,120 @@ export function PricingComparisonTable({
           </table>
         </div>
       </div>
+
+      {/* Row detail modal */}
+      <Dialog open={!!detailRow} onOpenChange={(o) => !o && setDetailRow(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {detailRow && (
+            <>
+              <DialogHeader>
+                <Badge variant="outline" className="w-fit mb-1 text-[10px] uppercase tracking-wide">
+                  {detailRow.group}
+                </Badge>
+                <DialogTitle className="text-xl">
+                  {detailRow.row.labelKey ? t(detailRow.row.labelKey) : detailRow.row.label}
+                </DialogTitle>
+                {(detailRow.row.details || detailRow.row.hint) && (
+                  <DialogDescription className="text-sm leading-relaxed">
+                    {detailRow.row.details || detailRow.row.hint}
+                  </DialogDescription>
+                )}
+              </DialogHeader>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("billing.comparePlans")}
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {planMeta.map((meta) => (
+                    <div
+                      key={meta.name}
+                      className={cn(
+                        "rounded-xl border p-3 flex flex-col gap-2",
+                        meta.name === currentPlan ? "border-primary/40 bg-primary/5" : "border-border bg-muted/30"
+                      )}
+                    >
+                      <span className={cn("inline-flex items-center gap-1.5 text-xs font-semibold capitalize", meta.colorClass)}>
+                        {meta.icon}
+                        {meta.name}
+                      </span>
+                      <div>{renderCell(detailRow.row, meta.name)}</div>
+                      <p className="text-[11px] leading-snug text-muted-foreground">
+                        {t(meta.descriptionKey)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {detailRow.row.examples && detailRow.row.examples.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Examples
+                  </p>
+                  <ul className="space-y-1.5">
+                    {detailRow.row.examples.map((ex, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm text-foreground/85">
+                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+                        <span>{ex}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {detailRow.row.brands && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Providers by plan
+                  </p>
+                  <div className="space-y-2">
+                    {planMeta.map((meta) => (
+                      <div key={meta.name} className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="w-16 shrink-0 font-semibold capitalize text-muted-foreground">{meta.name}</span>
+                        {detailRow.row.brands![meta.name].map((b) => {
+                          const Icon = b.icon;
+                          return (
+                            <span
+                              key={b.id}
+                              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1"
+                              title={b.detail}
+                            >
+                              <Icon className="h-3.5 w-3.5" />
+                              {b.name}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {detailRow.row.models && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Models by plan
+                  </p>
+                  <div className="space-y-2">
+                    {planMeta.map((meta) => (
+                      <div key={meta.name} className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="w-16 shrink-0 font-semibold capitalize text-muted-foreground">{meta.name}</span>
+                        {detailRow.row.models![meta.name].map((m) => (
+                          <span key={m.short} className="rounded-md border border-border bg-muted/40 px-2 py-1">
+                            {m.full}
+                          </span>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
