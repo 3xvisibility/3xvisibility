@@ -111,7 +111,12 @@ interface FeatureRow {
   models?: Record<PlanName, ModelChip[]>;
   /** Renders brand logo chips (OpenAI, Gemini, Claude…). */
   brands?: Record<PlanName, BrandModel[]>;
+  /** Longer explanation shown in the row detail modal. */
+  details?: string;
+  /** Concrete usage examples shown in the row detail modal. */
+  examples?: string[];
 }
+
 
 
 interface FeatureGroup {
