@@ -1299,7 +1299,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           <div className="relative z-10 shrink-0 border-t border-border bg-background px-6 py-4 space-y-2">
             <Button
               onClick={handleFixAndRepublish}
-              disabled={fixing}
+              disabled={fixing || allowedModes.length === 0}
               className="w-full gap-2"
               size="lg"
             >
@@ -1309,6 +1309,15 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
                 <><Sparkles className="h-4 w-4" />AI Fix All Issues {page.status === "published" && page.external_id ? "& Republish" : ""}</>
               )}
             </Button>
+            <p className="text-[10px] text-center text-muted-foreground">
+              {allowedModes.length === 0 ? (
+                <>Your {plan} plan includes SEO scoring only — upgrade to Starter or higher to unlock AI auto-fix.</>
+              ) : (
+                <>
+                  Auto-fix includes {allowedModes.map((m) => m.toUpperCase()).join(" + ")} · {runCreditCost} credits per pass
+                </>
+              )}
+            </p>
             {fixing && (
               <div className="space-y-2">
                 <Progress value={fixProgress} className="h-1.5" />
