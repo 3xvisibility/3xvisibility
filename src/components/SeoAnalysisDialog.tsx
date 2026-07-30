@@ -9,6 +9,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext } from "@/lib/seo-rules";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
+import { canAutoFix, optimizationCreditCost, type OptimizationMode } from "@/lib/plan-features";
+import { useSubscription } from "@/hooks/use-subscription";
 import { analyzeExtendedSeo } from "@/lib/seo-extended-analysis";
 import { analyzeKeywordUsage, resolvePrimaryKeyword, type KeywordUsageAnalysis } from "@/lib/keyword-usage-suggestions";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +59,13 @@ function normalizeKeywords(value: unknown) {
 }
 
 export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campaignTitles, campaignSlugs, onUpdated }: SeoAnalysisDialogProps) {
+  const { plan } = useSubscription();
+  // Which of SEO / SEA / GEO this plan may auto-fix, and what the run costs.
+  const allowedModes = useMemo<OptimizationMode[]>(
+    () => (["seo", "sea", "geo"] as OptimizationMode[]).filter((m) => canAutoFix(plan, m)),
+    [plan],
+  );
+  const runCreditCost = useMemo(() => optimizationCreditCost(allowedModes), [allowedModes]);
   const [fixing, setFixing] = useState(false);
   const [fixStep, setFixStep] = useState("");
   const [fixProgress, setFixProgress] = useState(0);
@@ -507,7 +516,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           next.add("keywords");
           next.add("content");
         }
-        if (legacy.sea < STRONG || legacy.geo < STRONG) {
+        // SEA / GEO repairs only run when the plan entitles auto-fix for them.
+        if ((allowedModes.includes("sea") && legacy.sea < STRONG) || (allowedModes.includes("geo") && legacy.geo < STRONG)) {
           next.add("title");
           next.add("content");
         }
@@ -582,6 +592,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
                 page_type: inferPublishType(currentPage),
                 workspace_id: currentPage.workspace_id,
                 optimize_fields: optimizeFields,
+                optimization_modes: allowedModes,
                 page_seo_title: working.title,
                 page_seo_description: working.description,
                 page_seo_keywords: working.keywords,
@@ -1288,7 +1299,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           <div className="relative z-10 shrink-0 border-t border-border bg-background px-6 py-4 space-y-2">
             <Button
               onClick={handleFixAndRepublish}
-              disabled={fixing}
+              disabled={fixing || allowedModes.length === 0}
               className="w-full gap-2"
               size="lg"
             >
@@ -1298,6 +1309,15 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
                 <><Sparkles className="h-4 w-4" />AI Fix All Issues {page.status === "published" && page.external_id ? "& Republish" : ""}</>
               )}
             </Button>
+            <p className="text-[10px] text-center text-muted-foreground">
+              {allowedModes.length === 0 ? (
+                <>Your {plan} plan includes SEO scoring only — upgrade to Starter or higher to unlock AI auto-fix.</>
+              ) : (
+                <>
+                  Auto-fix includes {allowedModes.map((m) => m.toUpperCase()).join(" + ")} · {runCreditCost} credits per pass
+                </>
+              )}
+            </p>
             {fixing && (
               <div className="space-y-2">
                 <Progress value={fixProgress} className="h-1.5" />
