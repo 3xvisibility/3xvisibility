@@ -103,24 +103,22 @@ export function PricingSection() {
           <p className="mt-3 text-sm text-[hsl(220,10%,70%)] max-w-md mx-auto">{t("pricing.description")}</p>
         </ScrollReveal>
 
-        <ScrollReveal className="flex justify-center mb-8">
-          <div className="inline-flex items-center gap-2.5 rounded-full border border-[hsl(96,90%,45%,0.25)] bg-[hsl(96,90%,45%,0.08)] px-4 py-2 text-center">
-            <Gift className="h-4 w-4 text-[hsl(96,80%,52%)] shrink-0" />
-            <span className="text-xs md:text-[13px] font-medium text-[hsl(220,10%,86%)]">{t("pricing.trialBanner")}</span>
-          </div>
-        </ScrollReveal>
-
         <div className="flex items-center justify-center gap-3 mb-10">
-
-          <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-[hsl(220,10%,70%)]"}`}>{t("pricing.monthly")}</span>
-          <button onClick={() => setIsYearly(!isYearly)} className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${isYearly ? "bg-primary" : "bg-[hsl(220,30%,17%)]"}`}>
+          <button
+            onClick={() => setIsYearly(!isYearly)}
+            className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${isYearly ? "bg-primary" : "bg-[hsl(220,30%,17%)]"}`}
+            aria-label={t("pricing.yearly")}
+          >
             <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${isYearly ? "translate-x-[26px]" : "translate-x-0.5"}`} />
           </button>
-          <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-[hsl(220,10%,70%)]"}`}>{t("pricing.yearly")}</span>
-          {isYearly && (
-            <Badge className="bg-[hsl(96,90%,45%,0.1)] text-[hsl(96,80%,52%)] border-[hsl(96,90%,45%,0.2)] text-[10px] font-bold animate-fade-in">{t("pricing.save")}</Badge>
-          )}
+          <span className="text-sm font-medium text-foreground">
+            {isYearly ? `${t("pricing.billed")} ${t("pricing.yearly").toLowerCase()}` : `${t("pricing.billed")} ${t("pricing.monthly").toLowerCase()}`}
+          </span>
+          <Badge className="rounded-full bg-primary/10 text-[hsl(96,80%,52%)] border border-[hsl(96,90%,45%,0.25)] text-xs font-medium px-3 py-1">
+            {t("pricing.save")}
+          </Badge>
         </div>
+
 
         <motion.div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 max-w-6xl mx-auto items-stretch rounded-2xl border border-[hsl(96,90%,45%,0.12)] overflow-hidden bg-[hsl(220,40%,7%)]" initial="hidden" animate={gridRevealed ? "visible" : "hidden"} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
           {plans.map((plan) => {
@@ -128,7 +126,7 @@ export function PricingSection() {
             const price = Math.round(plan.monthlyPrice * qty * (isYearly ? 1 - YEARLY_DISCOUNT : 1));
             return (
               <motion.div key={plan.name} className="h-full" variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } }}>
-                <div className={`relative h-full flex flex-col p-6 border-r border-[hsl(96,90%,45%,0.1)] last:border-r-0 transition-colors ${plan.popular ? "bg-[hsl(220,40%,9%)]" : "bg-transparent hover:bg-[hsl(220,40%,8.5%)]"}`}>
+                <div className={`group relative h-full flex flex-col p-6 border-r border-[hsl(96,90%,45%,0.1)] last:border-r-0 transition-all duration-300 ${plan.popular ? "bg-[hsl(220,40%,9%)] hover:bg-[hsl(220,40%,11%)]" : "bg-transparent hover:bg-[hsl(220,40%,10%)]"} hover:shadow-[inset_0_0_0_1px_hsl(96,90%,45%,0.25)]`}>
                   {plan.popular && <div className="absolute top-0 left-0 right-0 h-[3px] bg-primary" />}
 
                   <div className="flex items-center justify-between gap-2">
