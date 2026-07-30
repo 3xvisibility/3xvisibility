@@ -68,7 +68,7 @@ export function runSeoEngine(input: SeoEngineInput): SeoEngineReport {
     if (result.details) Object.assign(details, result.details);
     for (const [key, value] of Object.entries(result.scores ?? {})) {
       if (value === undefined) continue;
-      (scores as Record<string, unknown>)[key] = value;
+      (scores as unknown as Record<string, unknown>)[key] = value;
     }
   }
 
@@ -87,7 +87,7 @@ export function runSeoEngine(input: SeoEngineInput): SeoEngineReport {
   for (const key of Object.keys(scores) as (keyof EngineScores)[]) {
     const value = scores[key];
     if (typeof value === "number") {
-      (scores as Record<string, number>)[key] = Math.max(0, Math.min(100, Math.round(value)));
+      (scores as unknown as Record<string, number>)[key] = Math.max(0, Math.min(100, Math.round(value)));
     }
   }
 
