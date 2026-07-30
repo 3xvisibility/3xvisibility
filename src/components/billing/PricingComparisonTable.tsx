@@ -420,6 +420,8 @@ export function PricingComparisonTable({
 }: PricingComparisonTableProps) {
   const { t } = useLanguage();
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  const [detailRow, setDetailRow] = useState<{ row: FeatureRow; group: string } | null>(null);
+
 
   const currentIdx = PLAN_ORDER.indexOf(currentPlan);
 
