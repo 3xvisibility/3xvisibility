@@ -24,8 +24,9 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
 
-    const { priceId, origin: bodyOrigin } = await req.json();
+    const { priceId, quantity, origin: bodyOrigin } = await req.json();
     if (!priceId) throw new Error("priceId is required");
+    const qty = Math.min(Math.max(Number(quantity) || 1, 1), 20);
 
     // Prefer the explicit origin sent by the client (real app domain),
     // fall back to the request Origin header.
