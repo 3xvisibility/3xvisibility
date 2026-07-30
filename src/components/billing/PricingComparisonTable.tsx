@@ -16,12 +16,20 @@ import {
   Globe,
   Users,
   Wrench,
-
+  Info,
 } from "lucide-react";
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { cn } from "@/lib/utils";
 import { BRANDS, type BrandModel } from "./ModelBrandIcons";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 
 
 interface PricingComparisonTableProps {
