@@ -154,6 +154,17 @@ export function HeroSection() {
             {t("hero.description")}
           </motion.p>
 
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.26, ease }}
+            className="mt-4 mx-auto max-w-2xl rounded-xl border border-[hsl(96,90%,45%,0.18)] bg-[hsl(96,90%,45%,0.06)] px-4 py-3 text-sm md:text-base font-medium text-[hsl(220,10%,88%)]"
+          >
+            <CheckCircle2 className="inline-block h-4 w-4 mr-2 -mt-0.5 text-[hsl(96,80%,52%)]" />
+            {t("hero.oneClick")}
+          </motion.p>
+
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
