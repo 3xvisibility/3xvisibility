@@ -84,18 +84,8 @@ export function applyInternalLinks(html: string, suggestions: InternalLinkSugges
     const escaped = suggestion.anchor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     // Match only text that is outside of any tag and not already inside an <a>.
     const pattern = new RegExp(`(>[^<]*?)\\b(${escaped})\\b`, "i");
-    let replaced = false;
 
-    output = output.replace(
-      /<a\b[\s\S]*?<\/a>|<(script|style|h1|h2|h3)\b[\s\S]*?<\/\1>|[\s\S]/gi,
-      (chunk) => {
-        if (replaced) return chunk;
-        if (chunk.length === 1) return chunk;
-        return chunk;
-      },
-    );
-
-    // Simple, safe single replacement on the raw string, skipping anchors.
+    // Ranges we must never inject into: existing links, scripts/styles, headings.
     const anchorRanges: [number, number][] = [];
     for (const m of output.matchAll(/<a\b[\s\S]*?<\/a>|<(script|style)\b[\s\S]*?<\/\1>|<h[1-3]\b[\s\S]*?<\/h[1-3]>/gi)) {
       anchorRanges.push([m.index ?? 0, (m.index ?? 0) + m[0].length]);
