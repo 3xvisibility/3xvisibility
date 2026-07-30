@@ -6,25 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function buildSitemapXml(
-  baseUrl: string,
-  pages: { slug: string; created_at: string; status: string }[]
-): string {
-  const urlEntries = pages
-    .filter((p) => p.status !== "failed")
-    .map((p) => {
-      const loc = `${baseUrl.replace(/\/$/, "")}/${p.slug}`;
-      const lastmod = new Date(p.created_at).toISOString().split("T")[0];
-      const priority = p.status === "published" ? "0.8" : "0.5";
-      return `  <url>\n    <loc>${escapeXml(loc)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
-    });
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urlEntries.join("\n")}
-</urlset>`;
-}
-
 function escapeXml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -34,116 +15,168 @@ function escapeXml(str: string): string {
     .replace(/'/g, "&apos;");
 }
 
+type PageRow = {
+  slug: string;
+  created_at: string;
+  status: string;
+  external_url: string | null;
+  canonical_url: string | null;
+};
+
+function pageUrl(baseUrl: string, page: PageRow): string {
+  const explicit = page.external_url || page.canonical_url;
+  if (explicit && /^https?:\/\//i.test(explicit)) return explicit;
+  return `${baseUrl.replace(/\/$/, "")}/${String(page.slug || "").replace(/^\//, "")}`;
+}
+
+function buildSitemapXml(baseUrl: string, pages: PageRow[]): { xml: string; urls: string[] } {
+  const urls: string[] = [];
+  const entries = pages.map((p) => {
+    const loc = pageUrl(baseUrl, p);
+    urls.push(loc);
+    const lastmod = new Date(p.created_at).toISOString().split("T")[0];
+    const priority = p.status === "published" ? "0.8" : "0.5";
+    return `  <url>\n    <loc>${escapeXml(loc)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+  });
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${entries.join("\n")}
+</urlset>`;
+  return { xml, urls };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing authorization" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!authHeader) return json({ error: "Missing authorization" }, 401);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user) return json({ error: "Unauthorized" }, 401);
 
-    const { website_id } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const website_id: string | undefined = body?.website_id;
+    const campaign_id: string | null = body?.campaign_id ?? null;
+    const publishedOnly: boolean = body?.published_only !== false;
 
-    if (!website_id) {
-      return new Response(JSON.stringify({ error: "website_id is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!website_id) return json({ error: "website_id is required" }, 400);
 
-    // Verify website ownership
-    const { data: website, error: webError } = await supabase
+    const { data: website } = await supabase
       .from("websites")
-      .select("id, url, name")
+      .select("id, url, name, workspace_id")
       .eq("id", website_id)
-      .eq("user_id", user.id)
       .maybeSingle();
 
-    if (webError || !website) {
-      return new Response(JSON.stringify({ error: "Website not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!website) return json({ error: "Website not found" }, 404);
+
+    const { data: membership } = await supabase
+      .from("workspace_members")
+      .select("user_id")
+      .eq("workspace_id", website.workspace_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!membership) return json({ error: "Not authorized for this website" }, 403);
+
+    if (campaign_id) {
+      const { data: campaign } = await supabase
+        .from("campaigns")
+        .select("id, workspace_id")
+        .eq("id", campaign_id)
+        .maybeSingle();
+      if (!campaign || campaign.workspace_id !== website.workspace_id) {
+        return json({ error: "Campaign not found for this website" }, 404);
+      }
     }
 
-    // Fetch all generated pages for this website
-    const { data: pages, error: pagesError } = await supabase
+    let query = supabase
       .from("generated_pages")
-      .select("slug, created_at, status")
+      .select("slug, created_at, status, external_url, canonical_url")
       .eq("website_id", website_id)
-      .eq("user_id", user.id)
       .order("created_at", { ascending: true });
 
-    if (pagesError) {
-      return new Response(JSON.stringify({ error: "Failed to fetch pages" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (campaign_id) query = query.eq("campaign_id", campaign_id);
 
-    const validPages = (pages || []).filter((p) => p.status !== "failed");
-    const sitemapXml = buildSitemapXml(website.url, validPages);
+    const { data: pages, error: pagesError } = await query;
+    if (pagesError) return json({ error: "Failed to fetch pages" }, 500);
 
-    // Upsert sitemap record
-    const { data: existing } = await supabase
-      .from("sitemaps")
-      .select("id")
-      .eq("website_id", website_id)
-      .maybeSingle();
+    const validPages = ((pages || []) as PageRow[]).filter((p) =>
+      publishedOnly ? p.status === "published" : p.status !== "failed"
+    );
 
+    const { xml, urls } = buildSitemapXml(website.url, validPages);
+    const sitemapUrl = `${String(website.url).replace(/\/$/, "")}/sitemap.xml`;
+    const nowIso = new Date().toISOString();
+
+    let existingQuery = supabase.from("sitemaps").select("id").eq("website_id", website_id);
+    existingQuery = campaign_id
+      ? existingQuery.eq("campaign_id", campaign_id)
+      : existingQuery.is("campaign_id", null);
+    const { data: existing } = await existingQuery.maybeSingle();
+
+    const payload = {
+      content: xml,
+      page_count: validPages.length,
+      sitemap_url: sitemapUrl,
+      last_generated_at: nowIso,
+      updated_at: nowIso,
+    };
+
+    let sitemapId = existing?.id as string | undefined;
     if (existing) {
-      await supabase
-        .from("sitemaps")
-        .update({
-          content: sitemapXml,
-          page_count: validPages.length,
-          last_generated_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", existing.id);
+      await supabase.from("sitemaps").update(payload).eq("id", existing.id);
     } else {
-      await supabase.from("sitemaps").insert({
-        website_id,
-        user_id: user.id,
-        content: sitemapXml,
-        page_count: validPages.length,
-        last_generated_at: new Date().toISOString(),
-      });
+      const { data: inserted } = await supabase
+        .from("sitemaps")
+        .insert({
+          website_id,
+          campaign_id,
+          user_id: user.id,
+          workspace_id: website.workspace_id,
+          ...payload,
+        })
+        .select("id")
+        .maybeSingle();
+      sitemapId = inserted?.id;
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        page_count: validPages.length,
-        sitemap_url: `${website.url.replace(/\/$/, "")}/sitemap.xml`,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (err: any) {
-    return new Response(
-      JSON.stringify({ error: err.message || "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    await supabase.from("site_index_events").insert({
+      workspace_id: website.workspace_id,
+      user_id: user.id,
+      website_id,
+      campaign_id,
+      kind: "sitemap",
+      status: validPages.length > 0 ? "success" : "partial",
+      url_count: validPages.length,
+      message: validPages.length > 0
+        ? `Sitemap generated with ${validPages.length} URL(s).`
+        : "Sitemap generated but no eligible pages were found.",
+      details: { sitemap_url: sitemapUrl, published_only: publishedOnly, sample_urls: urls.slice(0, 20) },
+    });
+
+    return json({
+      success: true,
+      sitemap_id: sitemapId,
+      page_count: validPages.length,
+      sitemap_url: sitemapUrl,
+      urls,
+      xml,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return json({ error: message }, 500);
   }
 });
