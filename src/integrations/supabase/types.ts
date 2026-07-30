@@ -2520,35 +2520,120 @@ export type Database = {
         }
         Relationships: []
       }
+      site_index_events: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          kind: string
+          message: string | null
+          status: string
+          url_count: number
+          user_id: string
+          website_id: string
+          workspace_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          kind: string
+          message?: string | null
+          status?: string
+          url_count?: number
+          user_id: string
+          website_id: string
+          workspace_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          kind?: string
+          message?: string | null
+          status?: string
+          url_count?: number
+          user_id?: string
+          website_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_index_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_index_events_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_index_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sitemaps: {
         Row: {
+          campaign_id: string | null
           content: string
           created_at: string
           id: string
+          indexnow_key: string | null
           last_generated_at: string
+          last_ping_at: string | null
+          last_ping_result: Json | null
           page_count: number
+          robots_checked_at: string | null
+          robots_result: Json | null
+          sitemap_url: string | null
           updated_at: string
           user_id: string
           website_id: string
           workspace_id: string | null
         }
         Insert: {
+          campaign_id?: string | null
           content?: string
           created_at?: string
           id?: string
+          indexnow_key?: string | null
           last_generated_at?: string
+          last_ping_at?: string | null
+          last_ping_result?: Json | null
           page_count?: number
+          robots_checked_at?: string | null
+          robots_result?: Json | null
+          sitemap_url?: string | null
           updated_at?: string
           user_id: string
           website_id: string
           workspace_id?: string | null
         }
         Update: {
+          campaign_id?: string | null
           content?: string
           created_at?: string
           id?: string
+          indexnow_key?: string | null
           last_generated_at?: string
+          last_ping_at?: string | null
+          last_ping_result?: Json | null
           page_count?: number
+          robots_checked_at?: string | null
+          robots_result?: Json | null
+          sitemap_url?: string | null
           updated_at?: string
           user_id?: string
           website_id?: string
@@ -2556,9 +2641,16 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "sitemaps_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sitemaps_website_id_fkey"
             columns: ["website_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "websites"
             referencedColumns: ["id"]
           },
