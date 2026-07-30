@@ -38,14 +38,15 @@ export function PricingSection() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [checkoutPlan, setCheckoutPlan] = useState<PlanName | null>(null);
+  const [creditQty, setCreditQty] = useState<Partial<Record<PlanName, number>>>({});
   const gridRef = useRef<HTMLDivElement>(null);
   const gridRevealed = useRevealed(gridRef, 700);
 
 
-  const handleCheckout = async (plan: PlanName) => {
+  const handleCheckout = async (plan: PlanName, quantity = 1) => {
     setCheckoutPlan(plan);
     try {
-      const result = await startPlanCheckout(plan);
+      const result = await startPlanCheckout(plan, quantity);
       if (result.status === "unauthenticated") {
         navigate(`/auth?plan=${plan}`);
         return;
@@ -65,6 +66,7 @@ export function PricingSection() {
       setCheckoutPlan(null);
     }
   };
+
 
   const plans = [
     { key: "free" as PlanName, name: t("pricing.free"), monthlyPrice: 0, description: t("pricing.freeDesc"), popular: false, icon: <Layers className="h-5 w-5" />, cta: t("pricing.tryFree"), baseCredits: 500, creditSteps: [1], features: ["500 credits to try", `10 ${t("pricing.aiGenerations")}`, `1 ${t("pricing.campaignsPerMonth")}`, `1 ${t("pricing.templates").toLowerCase()}`, `1 ${t("pricing.websites").toLowerCase()}`, `${t("pricing.wordpress")} ${t("pricing.only")}`, t("pricing.noCreditCard")] },
