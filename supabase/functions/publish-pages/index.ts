@@ -8,6 +8,7 @@ import { buildExactElementorData, htmlToElementor, enforceNativeElementorData, e
 import { PgpConnector } from "../_shared/connectors/pgp-connector.ts";
 import { bundleTemplateAssets, isDesignLinkTag } from "../_shared/asset-bundler.ts";
 import { normalizeTemplateHtml } from "../_shared/template-normalizer.ts";
+import { applySeoFixes, type SeoFixResult } from "../_shared/seo-engine/index.ts";
 
 const PUBLISH_FORMATS = ["elementor", "gutenberg", "shopify", "html"] as const;
 type PublishFormat = (typeof PUBLISH_FORMATS)[number];
@@ -81,7 +82,7 @@ async function retryNativeReimport(
   externalId: string | undefined,
   payload: Partial<PagePayload>,
   currentReadiness: EditorReadiness | null,
-  step: (label: string, status: string, detail?: string) => void,
+  step: (label: string, status: PublishStep["status"], detail?: string) => void,
 ): Promise<{ readiness: EditorReadiness | null; elementorData: string | undefined } | null> {
   if (!(connector instanceof PgpConnector)) return null;
   if (!externalId) return null;
@@ -719,6 +720,102 @@ function buildPayload(
   return payload;
 }
 
+/**
+ * One-click SEO fixes applied at publish time.
+ *
+ * Runs the shared engine's deterministic fixers (meta, canonical, schema,
+ * internal links, image alt/lazy) over the outgoing page and folds the result
+ * into the WordPress/Shopify payload. Layout-safe by construction: only head
+ * metadata, JSON-LD and attribute-level edits are produced — wrappers, classes,
+ * ids and <style> blocks are never touched.
+ *
+ * Never throws: a fixer hiccup must not block a publish.
+ */
+function runPublishSeoFixes(args: {
+  html: string;
+  title: string;
+  slug: string;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoKeywords?: string[] | null;
+  canonicalUrl?: string | null;
+  language?: string | null;
+  siteUrl?: string | null;
+  siteName?: string | null;
+  corpus?: { title: string; slug: string; keywords?: string[] }[] | null;
+  websiteType?: string;
+}): { result: SeoFixResult | null; html: string } {
+  try {
+    const result = applySeoFixes(
+      {
+        html: args.html,
+        title: args.title,
+        slug: args.slug,
+        seoTitle: args.seoTitle ?? null,
+        seoDescription: args.seoDescription ?? null,
+        seoKeywords: args.seoKeywords ?? null,
+        focusKeyword: args.seoKeywords?.[0] ?? null,
+        canonicalUrl: args.canonicalUrl ?? null,
+        corpus: args.corpus ?? null,
+        language: args.language ?? undefined,
+      },
+      {
+        siteUrl: args.siteUrl ?? null,
+        siteName: args.siteName ?? null,
+        path: args.slug,
+        maxInternalLinks: 5,
+      },
+    );
+    return { result, html: result.html || args.html };
+  } catch (e) {
+    console.warn("[publish-pages] SEO one-click fixes skipped", e);
+    return { result: null, html: args.html };
+  }
+}
+
+/**
+ * Fold fixer output into the outgoing payload. WordPress consumes `schema_json`
+ * and the SEO fields natively; Shopify has no schema field, so extra JSON-LD and
+ * social meta ride along in the page body (appended after the design markup).
+ */
+function applyFixesToPayload(
+  payload: PagePayload,
+  fix: SeoFixResult | null,
+  websiteType?: string,
+): string[] {
+  if (!fix) return [];
+
+  if (fix.patch.seo_title) payload.seo_title = fix.patch.seo_title;
+  if (fix.patch.seo_description) {
+    payload.seo_description = fix.patch.seo_description;
+    payload.excerpt = fix.patch.seo_description;
+  }
+  if (fix.patch.canonical_url) payload.canonical_url = fix.patch.canonical_url;
+
+  const blocks = [...fix.schema];
+  if (blocks.length && !payload.schema_json) {
+    payload.schema_json = blocks.shift() as Record<string, unknown>;
+  }
+
+  const extras: string[] = [];
+  for (const block of blocks) {
+    extras.push(`<script type="application/ld+json">${JSON.stringify(block)}</script>`);
+  }
+  if (websiteType === "shopify") {
+    for (const [key, value] of Object.entries(fix.social)) {
+      const attr = key.startsWith("og:") ? "property" : "name";
+      extras.push(`<meta ${attr}="${key}" content="${String(value).replace(/"/g, "&quot;")}" />`);
+    }
+  }
+  if (extras.length) {
+    payload.content = `${payload.content}\n<div data-xxxv-seo="1" hidden>${extras.join("\n")}</div>`;
+  }
+
+  return fix.applied;
+}
+
+
+
 function inferPublishType(
   page: { external_url?: string | null },
   requestedType: string,
@@ -1157,6 +1254,20 @@ async function handlePublishPages(req: Request): Promise<Response> {
           const isRepublish = !!dp.external_id;
           const preserveDesign = isRepublish && !allowOverwriteDesign;
 
+          // One-click SEO fixes (meta, canonical, schema, internal links, images)
+          // applied to the outgoing payload — layout/markup untouched.
+          const dpFix = runPublishSeoFixes({
+            html: cleanedContent,
+            title: dp.title,
+            slug: dp.slug,
+            seoTitle: dp.seo_title,
+            seoDescription: dp.seo_description,
+            siteUrl: website.url,
+            siteName: (website as { name?: string }).name ?? null,
+            websiteType: website.type,
+          });
+          cleanedContent = dpFix.html;
+
           const payload = buildPayload(
             { title: dp.title, content: cleanedContent, slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
             pubType,
@@ -1165,6 +1276,12 @@ async function handlePublishPages(req: Request): Promise<Response> {
             !preserveDesign ? templateInfo.pageTemplate : undefined,
             preserveDesign,
           );
+
+          const dpFixApplied = applyFixesToPayload(payload, dpFix.result, website.type);
+          if (dpFixApplied.length) {
+            step("Applying SEO fixes", "ok", dpFixApplied.join(" · "));
+          }
+
 
 
           // Apply Shopify template suffix overrides for direct publish
@@ -1445,6 +1562,8 @@ async function handlePublishPages(req: Request): Promise<Response> {
 
     // Cache page-template detection per website to avoid redundant checks
     const templateCache = new Map<string, { pageTemplate?: string }>();
+    // Sibling pages per campaign, used for internal-link one-click fixes.
+    const corpusCache = new Map<string, { title: string; slug: string }[]>();
     const elementorCatalogCache = new Map<string, unknown>();
     const shopifySectionKitCache = new Map<string, unknown>();
 
@@ -1732,6 +1851,36 @@ async function handlePublishPages(req: Request): Promise<Response> {
         // WordPress connector emits Elementor or Gutenberg content accordingly.
         const publishFormat = await getCampaignPublishFormat(page.campaign_id);
         const websiteType = (page.websites as { type?: string })?.type;
+        // One-click SEO fixes: meta, canonical, schema, internal links and image
+        // attributes are repaired on the outgoing page. Design markup untouched.
+        let pageCorpus: { title: string; slug: string }[] | null = null;
+        if (page.campaign_id) {
+          if (!corpusCache.has(page.campaign_id)) {
+            const { data: siblings } = await supabase
+              .from("generated_pages")
+              .select("title, slug")
+              .eq("campaign_id", page.campaign_id)
+              .limit(100);
+            corpusCache.set(page.campaign_id, (siblings || []) as { title: string; slug: string }[]);
+          }
+          pageCorpus = (corpusCache.get(page.campaign_id) || []).filter((p) => p.slug !== page.slug);
+        }
+
+        const pageFix = runPublishSeoFixes({
+          html: cleanedContent,
+          title: page.title,
+          slug: page.slug,
+          seoTitle: page.seo_title,
+          seoDescription: page.seo_description,
+          seoKeywords: page.seo_keywords,
+          canonicalUrl: page.canonical_url,
+          siteUrl: (page.websites as { url?: string } | null)?.url ?? null,
+          siteName: (page.websites as { name?: string } | null)?.name ?? null,
+          corpus: pageCorpus,
+          websiteType,
+        });
+        cleanedContent = pageFix.html;
+
         const payload = buildPayload(
           { title: page.title, content: cleanedContent, slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
           resolvedPublishType,
@@ -1741,6 +1890,20 @@ async function handlePublishPages(req: Request): Promise<Response> {
             : undefined,
           preserveDesign,
         );
+
+        const pageFixApplied = applyFixesToPayload(payload, pageFix.result, websiteType);
+        if (pageFixApplied.length) {
+          step("Applying SEO fixes", "ok", pageFixApplied.join(" · "));
+          // Persist the corrected metadata so the app and the live page match.
+          const metaPatch: Record<string, unknown> = {};
+          if (pageFix.result?.patch.seo_title) metaPatch.seo_title = pageFix.result.patch.seo_title;
+          if (pageFix.result?.patch.seo_description) metaPatch.seo_description = pageFix.result.patch.seo_description;
+          if (pageFix.result?.patch.canonical_url) metaPatch.canonical_url = pageFix.result.patch.canonical_url;
+          if (Object.keys(metaPatch).length) {
+            await supabase.from("generated_pages").update(metaPatch).eq("id", page.id);
+          }
+        }
+
 
         payload.publish_format = publishFormat;
         // Real code format: no Elementor/Gutenberg conversion at all — the exact
