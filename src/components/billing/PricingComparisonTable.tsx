@@ -439,11 +439,11 @@ export function PricingComparisonTable({
               <tbody key={group.id}>
                 <tr>
                   <td colSpan={5} className="p-0">
-                    <div className="flex items-center gap-2 bg-muted/50 border-y border-border px-5 py-2.5">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-background text-primary shadow-sm">
+                    <div className="flex items-center gap-2 px-5 pt-8 pb-3">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted text-primary">
                         {group.icon}
                       </span>
-                      <span className="text-xs font-bold uppercase tracking-wider text-foreground">{group.label}</span>
+                      <span className="text-sm font-bold text-foreground">{group.label}</span>
                     </div>
                   </td>
                 </tr>
@@ -451,24 +451,24 @@ export function PricingComparisonTable({
                   <tr
                     key={row.id}
                     className={cn(
-                      "border-b border-border/50 transition-colors",
-                      i % 2 === 1 && "bg-muted/20",
-                      hoveredRow === row.id && "bg-muted/40"
+                      "transition-colors",
+                      i % 2 === 0 ? "bg-muted/40" : "bg-transparent",
+                      hoveredRow === row.id && "bg-muted/60"
                     )}
                     onMouseEnter={() => setHoveredRow(row.id)}
                     onMouseLeave={() => setHoveredRow(null)}
                   >
-                    <td className="py-3.5 px-5">
+                    <td className="py-4 px-5 rounded-l-2xl">
                       <span className="text-sm font-medium text-foreground">
                         {row.labelKey ? t(row.labelKey) : row.label}
                       </span>
                     </td>
-                    {planMeta.map((meta) => (
+                    {planMeta.map((meta, mi) => (
                       <td
                         key={meta.name}
                         className={cn(
-                          "py-3.5 px-5 text-center transition-colors",
-                          meta.name === currentPlan && "bg-primary/[0.02]"
+                          "py-4 px-5 text-left",
+                          mi === planMeta.length - 1 && "rounded-r-2xl"
                         )}
                       >
                         {renderCell(row, meta.name)}
