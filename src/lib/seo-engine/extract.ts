@@ -55,7 +55,8 @@ export function extractSignals(html: string, opts?: { url?: string }): PageSigna
   let description: string | undefined;
   let robots: string | undefined;
 
-  for (const tag of source.match(/<meta\b[^>]*>/gi) ?? []) {
+  const metaTags: string[] = source.match(/<meta\b[^>]*>/gi) || [];
+  for (const tag of metaTags) {
     const property = (attr(tag, "property") || "").toLowerCase();
     const name = (attr(tag, "name") || "").toLowerCase();
     const content = attr(tag, "content") ?? "";
@@ -68,9 +69,8 @@ export function extractSignals(html: string, opts?: { url?: string }): PageSigna
   }
 
   const titleTag = source.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  const canonicalTag = (source.match(/<link\b[^>]*>/gi) ?? []).find(
-    (t) => (attr(t, "rel") || "").toLowerCase() === "canonical",
-  );
+  const linkTags: string[] = source.match(/<link\b[^>]*>/gi) || [];
+  const canonicalTag = linkTags.find((t: string) => (attr(t, "rel") || "").toLowerCase() === "canonical");
   const langTag = source.match(/<html\b[^>]*\blang\s*=\s*["']([^"']+)/i);
 
   // ── headings ─────────────────────────────────────────────────────────────
@@ -81,7 +81,8 @@ export function extractSignals(html: string, opts?: { url?: string }): PageSigna
   }
 
   // ── images ───────────────────────────────────────────────────────────────
-  const images: PageSignals["images"] = (source.match(/<img\b[^>]*>/gi) ?? []).map((tag) => {
+  const imgTags: string[] = source.match(/<img\b[^>]*>/gi) || [];
+  const images: PageSignals["images"] = imgTags.map((tag: string) => {
     const alt = attr(tag, "alt");
     return {
       src: attr(tag, "src") || attr(tag, "data-src") || "",
@@ -139,18 +140,13 @@ export function extractSignals(html: string, opts?: { url?: string }): PageSigna
   const bodyMatch = source.match(/<body\b[^>]*>([\s\S]*)<\/body>/i);
   const text = stripHtml(bodyMatch ? bodyMatch[1] : source);
   const words = tokenize(text);
-  const paragraphs = (source.match(/<p\b[^>]*>([\s\S]*?)<\/p>/gi) ?? [])
-    .map((p) => stripHtml(p))
-    .filter((p) => p.length > 0);
+  const pTags: string[] = source.match(/<p\b[^>]*>([\s\S]*?)<\/p>/gi) || [];
+  const paragraphs = pTags.map((p: string) => stripHtml(p)).filter((p: string) => p.length > 0);
 
-  const inlineCssBytes = (source.match(/<style\b[^>]*>([\s\S]*?)<\/style>/gi) ?? []).reduce(
-    (sum, block) => sum + block.length,
-    0,
-  );
-  const inlineJsBytes = (source.match(/<script\b(?![^>]*ld\+json)[^>]*>([\s\S]*?)<\/script>/gi) ?? []).reduce(
-    (sum, block) => sum + block.length,
-    0,
-  );
+  const styleBlocks: string[] = source.match(/<style\b[^>]*>([\s\S]*?)<\/style>/gi) || [];
+  const scriptBlocks: string[] = source.match(/<script\b(?![^>]*ld\+json)[^>]*>([\s\S]*?)<\/script>/gi) || [];
+  const inlineCssBytes = styleBlocks.reduce((sum: number, block: string) => sum + block.length, 0);
+  const inlineJsBytes = scriptBlocks.reduce((sum: number, block: string) => sum + block.length, 0);
 
   return {
     text,
