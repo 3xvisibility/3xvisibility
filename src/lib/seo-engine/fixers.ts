@@ -308,7 +308,7 @@ export function applySeoFixes(input: SeoEngineInput, options: SeoFixOptions = {}
     if (budget > 0) {
       const suggestions = suggestInternalLinks(signals, input.corpus, {
         currentSlug: input.slug,
-        limit: budget,
+        max: budget,
       });
       if (suggestions.length) {
         const next = applyInternalLinks(html, suggestions);
