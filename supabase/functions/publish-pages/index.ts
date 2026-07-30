@@ -1849,6 +1849,36 @@ async function handlePublishPages(req: Request): Promise<Response> {
         // WordPress connector emits Elementor or Gutenberg content accordingly.
         const publishFormat = await getCampaignPublishFormat(page.campaign_id);
         const websiteType = (page.websites as { type?: string })?.type;
+        // One-click SEO fixes: meta, canonical, schema, internal links and image
+        // attributes are repaired on the outgoing page. Design markup untouched.
+        let pageCorpus: { title: string; slug: string }[] | null = null;
+        if (page.campaign_id) {
+          if (!corpusCache.has(page.campaign_id)) {
+            const { data: siblings } = await supabase
+              .from("generated_pages")
+              .select("title, slug")
+              .eq("campaign_id", page.campaign_id)
+              .limit(100);
+            corpusCache.set(page.campaign_id, (siblings || []) as { title: string; slug: string }[]);
+          }
+          pageCorpus = (corpusCache.get(page.campaign_id) || []).filter((p) => p.slug !== page.slug);
+        }
+
+        const pageFix = runPublishSeoFixes({
+          html: cleanedContent,
+          title: page.title,
+          slug: page.slug,
+          seoTitle: page.seo_title,
+          seoDescription: page.seo_description,
+          seoKeywords: page.seo_keywords,
+          canonicalUrl: page.canonical_url,
+          siteUrl: (page.websites as { url?: string } | null)?.url ?? null,
+          siteName: (page.websites as { name?: string } | null)?.name ?? null,
+          corpus: pageCorpus,
+          websiteType,
+        });
+        cleanedContent = pageFix.html;
+
         const payload = buildPayload(
           { title: page.title, content: cleanedContent, slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
           resolvedPublishType,
@@ -1858,6 +1888,20 @@ async function handlePublishPages(req: Request): Promise<Response> {
             : undefined,
           preserveDesign,
         );
+
+        const pageFixApplied = applyFixesToPayload(payload, pageFix.result, websiteType);
+        if (pageFixApplied.length) {
+          step("Applying SEO fixes", "ok", pageFixApplied.join(" · "));
+          // Persist the corrected metadata so the app and the live page match.
+          const metaPatch: Record<string, unknown> = {};
+          if (pageFix.result?.patch.seo_title) metaPatch.seo_title = pageFix.result.patch.seo_title;
+          if (pageFix.result?.patch.seo_description) metaPatch.seo_description = pageFix.result.patch.seo_description;
+          if (pageFix.result?.patch.canonical_url) metaPatch.canonical_url = pageFix.result.patch.canonical_url;
+          if (Object.keys(metaPatch).length) {
+            await supabase.from("generated_pages").update(metaPatch).eq("id", page.id);
+          }
+        }
+
 
         payload.publish_format = publishFormat;
         // Real code format: no Elementor/Gutenberg conversion at all — the exact
