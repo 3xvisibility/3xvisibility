@@ -424,6 +424,26 @@ export function PricingComparisonTable({
   };
 
   const renderCell = (row: FeatureRow, plan: PlanName) => {
+    if (row.brands) {
+      return (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          {row.brands[plan].map((b) => {
+            const Icon = b.icon;
+            return (
+              <span
+                key={b.id}
+                title={`${b.name} — ${b.detail}`}
+                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-foreground/80"
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="hidden xl:inline">{b.name}</span>
+              </span>
+            );
+          })}
+        </div>
+      );
+    }
+
     if (row.models) {
       return (
         <div className="flex flex-wrap items-center gap-1.5">
@@ -442,6 +462,7 @@ export function PricingComparisonTable({
         </div>
       );
     }
+
 
     const val = cellValue(row, plan);
     const note = row.notes?.[plan];
