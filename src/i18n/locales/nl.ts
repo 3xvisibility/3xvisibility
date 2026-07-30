@@ -934,6 +934,7 @@ const nl: Record<string, string> = {
   "hero.mockTotalViews": "Totaal aantal weergaven",
   "hero.mockWelcomeBack": "Welkom terug, {name}",
   "hero.noCreditCard": "✓ Geen creditcard",
+  "hero.oneClick": "Generate hundreds of SEO-optimized pages and publish them directly to WordPress (Elementor/Gutenberg) and Shopify in one click.",
   "hero.pagesPerMonth": "✓ 100 pagina's/maand",
   "hero.title1": "Zet uw gegevens om in",
   "hero.title2": "gepubliceerde pagina's",

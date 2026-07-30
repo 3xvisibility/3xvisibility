@@ -931,6 +931,7 @@ const fi: Record<string, string> = {
   "hero.mockTotalViews": "Total Views",
   "hero.mockWelcomeBack": "Welcome back, {name}",
   "hero.noCreditCard": "✓ Ei luottokorttia",
+  "hero.oneClick": "Generate hundreds of SEO-optimized pages and publish them directly to WordPress (Elementor/Gutenberg) and Shopify in one click.",
   "hero.pagesPerMonth": "✓ 100 sivua/kk",
   "hero.title1": "Muuta datasi",
   "hero.title2": "julkaistuiksi sivuiksi",

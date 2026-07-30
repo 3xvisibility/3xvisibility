@@ -931,6 +931,7 @@ const el: Record<string, string> = {
   "hero.mockTotalViews": "Total Views",
   "hero.mockWelcomeBack": "Welcome back, {name}",
   "hero.noCreditCard": "✓ Χωρίς πιστωτική κάρτα",
+  "hero.oneClick": "Generate hundreds of SEO-optimized pages and publish them directly to WordPress (Elementor/Gutenberg) and Shopify in one click.",
   "hero.pagesPerMonth": "✓ 100 σελίδες/μήνα",
   "hero.title1": "Μετατρέψτε τα δεδομένα σας σε",
   "hero.title2": "δημοσιευμένες σελίδες",

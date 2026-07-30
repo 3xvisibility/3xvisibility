@@ -931,6 +931,7 @@ const zh: Record<string, string> = {
   "hero.mockTotalViews": "Total Views",
   "hero.mockWelcomeBack": "Welcome back, {name}",
   "hero.noCreditCard": "✓ 无需信用卡",
+  "hero.oneClick": "Generate hundreds of SEO-optimized pages and publish them directly to WordPress (Elementor/Gutenberg) and Shopify in one click.",
   "hero.pagesPerMonth": "✓ 每月100页",
   "hero.title1": "将您的数据转化为",
   "hero.title2": "已发布的页面",
