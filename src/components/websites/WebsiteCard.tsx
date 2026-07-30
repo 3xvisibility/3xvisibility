@@ -21,6 +21,8 @@ import { EditWebsiteDialog } from "./EditWebsiteDialog";
 import { RetranslateSiteDialog } from "./RetranslateSiteDialog";
 import { WpPluginSettings } from "./WpPluginSettings";
 import { WpPluginStatus } from "./WpPluginStatus";
+import { SitemapIndexPanel } from "./SitemapIndexPanel";
+
 
 import { ShopifyProductManager } from "./ShopifyProductManager";
 import { extractEdgeError } from "@/lib/edge-function-error";
@@ -126,23 +128,8 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
   });
 
   // --- existing mutations ---
-  const generateSitemapMutation = useMutation({
-    mutationFn: async (websiteId: string) => {
-      const { data, error } = await supabase.functions.invoke("generate-sitemap", {
-        body: { website_id: websiteId },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["sitemaps"] });
-      toast({ title: "Sitemap generated", description: `${data.page_count} pages included in sitemap.` });
-    },
-    onError: (err: Error) => {
-      toast({ title: "Sitemap generation failed", description: err.message, variant: "destructive" });
-    },
-  });
+
+
 
   const testConnectionMutation = useMutation({
     mutationFn: async () => {
@@ -268,18 +255,8 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
     },
   });
 
-  const isGenerating = generateSitemapMutation.isPending;
 
-  const handleDownloadSitemap = () => {
-    if (!sitemap) return;
-    const blob = new Blob([sitemap.content], { type: "application/xml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `sitemap-${(site.name || "site").toLowerCase().replace(/\s+/g, "-")}.xml`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -607,57 +584,9 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           </div>
 
 
-          {/* Sitemap Section */}
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex items-center gap-2 mb-2">
-              <Map className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-semibold">{t("websiteCard.sitemap")}</span>
-            </div>
-            {sitemap ? (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="tabular-nums">{t("websiteCard.pagesCount", { count: sitemap.page_count })}</span>
-                  <span>•</span>
-                  <span className="tabular-nums">{new Date(sitemap.last_generated_at).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-1 flex-wrap">
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleDownloadSitemap}>
-                    <Download className="h-3 w-3 mr-1" /> {t("websiteCard.download")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs"
-                    disabled={isGenerating}
-                    onClick={() => generateSitemapMutation.mutate(site.id)}
-                  >
-                    {isGenerating ? (
-                      <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> {t("websiteCard.generating")}</>
-                    ) : (
-                      <><RefreshCw className="h-3 w-3 mr-1" /> {t("websiteCard.regenerate")}</>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">{t("websiteCard.noSitemap")}</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs"
-                  disabled={isGenerating}
-                  onClick={() => generateSitemapMutation.mutate(site.id)}
-                >
-                  {isGenerating ? (
-                    <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> {t("websiteCard.generating")}</>
-                  ) : (
-                    <><Map className="h-3 w-3 mr-1" /> {t("websiteCard.generateSitemap")}</>
-                  )}
-                </Button>
-              </div>
-            )}
-          </div>
+          {/* Sitemap, IndexNow & robots.txt */}
+          <SitemapIndexPanel websiteId={site.id} websiteName={site.name} />
+
         </CardContent>
       </Card>
 
