@@ -21,6 +21,8 @@ import { EditWebsiteDialog } from "./EditWebsiteDialog";
 import { RetranslateSiteDialog } from "./RetranslateSiteDialog";
 import { WpPluginSettings } from "./WpPluginSettings";
 import { WpPluginStatus } from "./WpPluginStatus";
+import { SitemapIndexPanel } from "./SitemapIndexPanel";
+
 
 import { ShopifyProductManager } from "./ShopifyProductManager";
 import { extractEdgeError } from "@/lib/edge-function-error";
