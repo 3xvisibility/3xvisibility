@@ -82,6 +82,15 @@ const monthlyPrices: Record<PlanName, number> = {
 
 type CellValue = boolean | number | string;
 
+interface ModelChip {
+  /** Short badge label, e.g. "GPT" */
+  short: string;
+  /** Full model name shown on hover */
+  full: string;
+  /** Tailwind classes for the chip */
+  tone: string;
+}
+
 interface FeatureRow {
   /** Stable id used for hover state. */
   id: string;
@@ -94,7 +103,10 @@ interface FeatureRow {
   values?: Record<PlanName, CellValue>;
   /** Extra note rendered under a truthy check, per plan. */
   notes?: Partial<Record<PlanName, string>>;
+  /** Renders model chips instead of a check/number cell. */
+  models?: Record<PlanName, ModelChip[]>;
 }
+
 
 interface FeatureGroup {
   id: string;
