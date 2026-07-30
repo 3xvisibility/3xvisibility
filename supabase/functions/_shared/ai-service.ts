@@ -91,6 +91,7 @@ async function checkAndDeductCredits(
   userId: string,
   promptType: string,
   model?: string,
+  creditsOverride?: number,
 ): Promise<{ allowed: boolean; remaining?: number; error?: string }> {
   const sb = getServiceClient();
   try {
@@ -101,7 +102,9 @@ async function checkAndDeductCredits(
       return { allowed: true, error: "credit_system_unavailable" };
     }
 
-    const cost = CREDIT_COSTS[promptType] ?? CREDIT_COSTS.default;
+    const cost = Number.isFinite(creditsOverride) && (creditsOverride as number) > 0
+      ? Math.round(creditsOverride as number)
+      : (CREDIT_COSTS[promptType] ?? CREDIT_COSTS.default);
 
     const { data, error } = await sb.rpc("deduct_ai_credits", {
       p_user_id: userId,
@@ -194,13 +197,14 @@ export async function deductCreditsForRequest(
   req: Request,
   promptType: string,
   model?: string,
+  creditsOverride?: number,
 ): Promise<{ allowed: boolean; remaining?: number; error?: string }> {
   const authToken = extractAuthToken(req);
   const userId = await resolveUserId({ authToken } as AiGenerateOptions);
   if (!userId) {
     return { allowed: false, remaining: 0, error: "unauthorized" };
   }
-  return await checkAndDeductCredits(userId, promptType, model);
+  return await checkAndDeductCredits(userId, promptType, model, creditsOverride);
 }
 
 export interface AiResult {
