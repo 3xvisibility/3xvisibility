@@ -212,20 +212,28 @@ export function HeroSection() {
             className="lg:col-span-5 lg:pb-3"
           >
             <div className="tilt-right relative max-w-sm lg:ml-auto rounded-2xl border border-[hsl(220,20%,20%)] bg-[hsl(220,45%,6%,0.7)] p-6 paper-grain">
-              <div className="font-editorial text-2xl leading-snug text-foreground">
-                <em>“{t("hero.title1")}”</em>
+              <div className="prose-human text-[10px] uppercase tracking-[0.2em] text-[hsl(220,10%,55%)]">
+                {t("howItWorks.title")}
               </div>
-              <p className="prose-human mt-3 text-sm leading-relaxed text-[hsl(220,10%,68%)]">
-                {t("hero.description")}
-              </p>
-              <div className="mt-5 flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-[hsl(96,70%,45%,0.18)] border border-[hsl(96,70%,45%,0.35)]" />
-                <div className="prose-human text-[11px] leading-tight text-[hsl(220,10%,60%)]">
-                  <div className="text-[hsl(220,10%,82%)]">3XVISIBILITY</div>
-                  <div>{t("hero.freeStart")}</div>
-                </div>
-              </div>
+              <ol className="mt-4 space-y-4">
+                {[
+                  [t("howItWorks.step1Title"), t("howItWorks.step1Desc")],
+                  [t("howItWorks.step2Title"), t("howItWorks.step2Desc")],
+                  [t("howItWorks.step3Title"), t("howItWorks.step3Desc")],
+                ].map(([title, desc], i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="font-editorial text-xl leading-none text-[hsl(96,70%,58%)] w-5 shrink-0">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <div className="prose-human text-sm text-[hsl(220,10%,88%)]">{title}</div>
+                      <div className="prose-human text-xs leading-relaxed text-[hsl(220,10%,62%)]">{desc}</div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
+
           </motion.div>
         </div>
 
