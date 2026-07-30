@@ -52,7 +52,7 @@ export function ReviewsSection() {
       <ScrollReveal className="container mx-auto px-4 lg:px-8 relative z-10 mb-10">
         <div className="text-center max-w-2xl mx-auto">
           <span className="section-badge mb-6">{t("reviews.badge")}</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em]">{t("reviews.title")}</h2>
+          <h2 className="font-editorial text-4xl md:text-5xl lg:text-[3.4rem]">{t("reviews.title")}</h2>
           <p className="mt-3 text-sm text-[hsl(220,10%,70%)]">{t("reviews.description")}</p>
         </div>
       </ScrollReveal>
