@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Search, Link2, Code, Users, Headphones, Gift } from "lucide-react";
 import { ScrollReveal, useRevealed } from "./ScrollReveal";
 import { motion } from "framer-motion";
