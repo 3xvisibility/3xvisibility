@@ -21,6 +21,8 @@ import {
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { cn } from "@/lib/utils";
+import { BRANDS, type BrandModel } from "./ModelBrandIcons";
+
 
 interface PricingComparisonTableProps {
   activePlan: PlanName;
@@ -98,6 +100,8 @@ interface FeatureRow {
   labelKey?: string;
   /** Plain label used when no i18n key exists (auto-translated at runtime). */
   label?: string;
+  /** Short explainer shown under the label (opttab-style detail). */
+  hint?: string;
   /** Numeric plan-features key, or explicit per-plan values. */
   featureKey?: keyof (typeof PLAN_FEATURES)["free"];
   values?: Record<PlanName, CellValue>;
@@ -105,6 +109,8 @@ interface FeatureRow {
   notes?: Partial<Record<PlanName, string>>;
   /** Renders model chips instead of a check/number cell. */
   models?: Record<PlanName, ModelChip[]>;
+  /** Renders brand logo chips (OpenAI, Gemini, Claude…). */
+  brands?: Record<PlanName, BrandModel[]>;
 }
 
 
@@ -145,6 +151,11 @@ const starterModels = [...freeModels, M.gemFlash, M.gptMini, M.imgMini];
 const proModels = [...starterModels, M.gemPro, M.gpt55, M.img2, M.nano2];
 const agencyModels = [...proModels, M.gptSol, M.gem3ProImg, M.voice];
 
+const freeBrands = [BRANDS.openai, BRANDS.gemini];
+const starterBrands = [...freeBrands, BRANDS.google];
+const proBrands = [...starterBrands, BRANDS.deepseek, BRANDS.mistral, BRANDS.perplexity];
+const agencyBrands = [...proBrands, BRANDS.claude, BRANDS.grok, BRANDS.copilot, BRANDS.meta];
+
 const featureGroups: FeatureGroup[] = [
   {
     id: "models",
@@ -152,8 +163,20 @@ const featureGroups: FeatureGroup[] = [
     icon: <Sparkles className="h-3.5 w-3.5" />,
     rows: [
       {
-        id: "available-models",
+        id: "available-brands",
         label: "Available models",
+        hint: "Model providers you can generate, rewrite and score content with",
+        brands: {
+          free: freeBrands,
+          starter: starterBrands,
+          pro: proBrands,
+          agency: agencyBrands,
+        },
+      },
+      {
+        id: "available-models",
+        label: "Included model tiers",
+        hint: "Exact models unlocked on each plan",
         models: {
           free: freeModels,
           starter: starterModels,
@@ -164,11 +187,30 @@ const featureGroups: FeatureGroup[] = [
       {
         id: "model-picker",
         label: "Choose model per generation",
+        hint: "Pick a specific model for each campaign, rewrite or image job",
         values: tier(false, false, true, true),
       },
       {
+        id: "model-fallback",
+        label: "Automatic provider fallback",
+        hint: "Retries on another provider if one fails or is rate-limited",
+        values: tier(true, true, true, true),
+      },
+      {
+        id: "model-image",
+        label: "AI image generation",
+        values: tier(false, true, true, true),
+        notes: { starter: "Standard", pro: "High quality", agency: "Highest fidelity" },
+      },
+      {
+        id: "model-voice",
+        label: "Voice models (TTS / STT)",
+        values: tier(false, false, false, true),
+      },
+      {
         id: "model-byok",
-        label: "Bring your own API key (OpenAI / Gemini / DeepSeek)",
+        label: "Bring your own API key",
+        hint: "OpenAI, Gemini, Claude, DeepSeek, Mistral, Grok, Copilot, Llama",
         values: tier(false, false, false, true),
       },
     ],
@@ -190,6 +232,7 @@ const featureGroups: FeatureGroup[] = [
       { id: "tool-seofix", label: "SEO Optimizer — auto-fix to 80+ score", values: tier(false, true, true, true) },
       { id: "tool-wp", label: "WP Control — WordPress publishing console", values: tier(false, true, true, true) },
       { id: "tool-shopify", label: "Shopify Manager — products & bulk SEO", values: tier(false, false, true, true) },
+      { id: "tool-sitemap", label: "Sitemap & IndexNow toolkit", values: tier(false, true, true, true) },
       { id: "tool-calendar", label: "Content Calendar & scheduler", values: tier(false, false, true, true) },
       { id: "tool-translate", label: "Multi-language workspace UI", values: tier(true, true, true, true) },
       { id: "tool-api", label: "API & Webhooks console", values: tier(false, false, true, true) },
@@ -202,11 +245,15 @@ const featureGroups: FeatureGroup[] = [
     icon: <Rocket className="h-3.5 w-3.5" />,
     rows: [
 
-      { id: "pages", labelKey: "billing.featurePagesMonth", featureKey: "pagesLimit" },
-      { id: "ai", labelKey: "billing.featureAiCreditsMonth", featureKey: "aiLimit" },
+      { id: "pages", labelKey: "billing.featurePagesMonth", featureKey: "pagesLimit", hint: "Pages you can generate every billing cycle" },
+      { id: "ai", labelKey: "billing.featureAiCreditsMonth", featureKey: "aiLimit", hint: "Credits consumed by AI writing, rewriting and scoring" },
       { id: "campaigns", labelKey: "billing.featureCampaigns", featureKey: "campaigns" },
       { id: "keywordGroups", label: "Keyword groups", values: tier(1, 10, -1, -1) },
+      { id: "terms-per-variable", label: "Terms per variable", hint: "How many unique values each variable can spin through", values: tier(3, 10, 25, -1) },
+      { id: "batch", label: "Pages per campaign run", values: tier(10, 100, 500, -1) },
+      { id: "queue", label: "Parallel generation workers", hint: "How fast large batches complete", values: tier(1, 2, 4, 8) },
       { id: "pairing", label: "Zip & Cross pairing modes", values: tier(true, true, true, true) },
+      { id: "preview", label: "Live row preview before generation", values: tier(true, true, true, true) },
       { id: "csv", label: "Bulk CSV import", values: tier(true, true, true, true) },
       { id: "locations", label: "Location database (country / region / city)", values: tier(true, true, true, true) },
       {
@@ -216,7 +263,10 @@ const featureGroups: FeatureGroup[] = [
         notes: { free: "4 languages", starter: "8 languages", pro: "26 languages", agency: "26 languages" },
       },
       { id: "spintax", label: "Spintax & block spinning", values: tier(false, true, true, true) },
-      { id: "diversity", label: "Content diversity repair", values: tier(false, true, true, true) },
+      { id: "diversity", label: "Content diversity repair", hint: "Guarantees every generated page is genuinely unique", values: tier(false, true, true, true) },
+      { id: "draft", label: "Draft / review mode before publish", values: tier(true, true, true, true) },
+      { id: "regen", label: "Section-level regeneration", hint: "Regenerate only services, FAQ, testimonials or about", values: tier(false, false, true, true) },
+      { id: "scheduling", label: "Scheduled & recurring campaigns", values: tier(false, false, true, true) },
     ],
   },
   {
@@ -226,10 +276,14 @@ const featureGroups: FeatureGroup[] = [
     rows: [
       { id: "templates", labelKey: "billing.featureTemplates", featureKey: "templates" },
       { id: "marketplace", label: "Marketplace templates", values: tier(true, true, true, true) },
+      { id: "html", label: "HTML / CSS / JS editor", values: tier(true, true, true, true) },
       { id: "importUrl", label: "Import template from any URL", values: tier(false, true, true, true) },
+      { id: "scan", label: "AI template scanner (auto variable detection)", values: tier(false, true, true, true) },
       { id: "aiBuilder", label: "AI Site Builder", values: tier(false, false, true, true) },
       { id: "aiVariables", label: "AI variable injection", values: tier(false, true, true, true) },
+      { id: "assets", label: "Asset inlining (CSS/JS/fonts travel with the page)", values: tier(true, true, true, true) },
       { id: "versions", label: "Template version history", values: tier(false, false, true, true) },
+      { id: "brandkit", label: "Brand kit (colors, fonts, logo)", values: tier(false, false, true, true) },
       { id: "whitelabel", label: "Whitelabel branding", values: tier(false, false, false, true) },
     ],
   },
@@ -241,39 +295,49 @@ const featureGroups: FeatureGroup[] = [
       {
         id: "seo-score",
         label: "SEO scoring — search engine optimization",
+        hint: "Title, meta, headings, density, readability, links, schema",
         values: tier(true, true, true, true),
         notes: { free: "Score only", starter: "Score + auto-fix", pro: "Auto-fix + section rewrite", agency: "Full suite + bulk" },
       },
       {
         id: "sea-score",
         label: "SEA scoring — ad / landing page readiness",
+        hint: "Message match, CTA strength, conversion elements",
         values: tier(false, true, true, true),
         notes: { starter: "Score only", pro: "Score + auto-fix", agency: "Auto-fix + bulk" },
       },
       {
         id: "geo-score",
         label: "GEO scoring — AI / generative engine visibility",
+        hint: "Answerability, entities, citations, structured facts",
         values: tier(false, false, true, true),
         notes: { pro: "Score + auto-fix", agency: "Auto-fix + bulk" },
       },
+      { id: "credit-cost", label: "Optimization credit cost", hint: "Credits deducted per optimization run", values: tier("—", "SEO 2", "SEO 2 / SEA 3", "SEO 2 / SEA 3 / GEO 4") },
       { id: "score-badges", label: "Live SEO / SEA / GEO badges on every page", values: tier(true, true, true, true) },
       { id: "score-target", label: "Guaranteed 80+ multi-pass optimization", values: tier(false, false, true, true) },
+      { id: "score-diff", label: "Before / after diff preview", values: tier(false, true, true, true) },
       { id: "score-bulk", label: "Bulk SEO / SEA / GEO optimization across campaigns", values: tier(false, false, false, true) },
     ],
   },
   {
     id: "seo",
-    label: "SEO & content",
+    label: "SEO & content quality",
     icon: <Search className="h-3.5 w-3.5" />,
     rows: [
       { id: "audit", label: "SEO audit suite", values: tier(true, true, true, true) },
       { id: "quality", label: "Content quality scoring", values: tier(true, true, true, true) },
+      { id: "readability", label: "Readability & keyword density analysis", values: tier(true, true, true, true) },
+      { id: "entities", label: "Entity & topic coverage discovery", values: tier(false, true, true, true) },
       { id: "autofix", label: "Auto-fix SEO score (80+ target)", values: tier(false, true, true, true) },
       { id: "section", label: "Section-scoped rewriting", values: tier(false, false, true, true) },
-      { id: "duplicate", label: "Duplicate content detection", values: tier(false, true, true, true) },
+      { id: "duplicate", label: "Duplicate content & slug detection", values: tier(false, true, true, true) },
+      { id: "schema", label: "Schema / JSON-LD generation", values: tier(false, true, true, true) },
       { id: "internalLinks", labelKey: "billing.featureInternalLinks", featureKey: "internalLinks" },
       { id: "discovery", labelKey: "billing.featureWebsiteDiscovery", featureKey: "discovery" },
       { id: "indexing", labelKey: "billing.featureGoogleIndexing", featureKey: "indexing" },
+      { id: "indexnow", label: "IndexNow ping & robots.txt validation", values: tier(false, true, true, true) },
+      { id: "sitemapgen", label: "XML sitemap generation per campaign", values: tier(false, true, true, true) },
     ],
   },
 
@@ -283,13 +347,16 @@ const featureGroups: FeatureGroup[] = [
     icon: <Globe className="h-3.5 w-3.5" />,
     rows: [
       { id: "websites", labelKey: "billing.featureWebsites", featureKey: "websites" },
-      { id: "html", label: "HTML / CSS direct publishing", values: tier(true, true, true, true) },
+      { id: "html-pub", label: "HTML / CSS direct publishing", values: tier(true, true, true, true) },
       { id: "wordpress", labelKey: "billing.featureWordPress", featureKey: "wordpress" },
       { id: "woocommerce", labelKey: "billing.featureWooCommerce", featureKey: "woocommerce" },
       { id: "shopify", labelKey: "billing.featureShopify", featureKey: "shopify" },
       { id: "prestashop", labelKey: "billing.featurePrestaShop", featureKey: "prestashop" },
+      { id: "gsc", label: "Google Search Console connection", values: tier(false, true, true, true) },
+      { id: "bulk-publish", label: "One-click bulk publishing", values: tier(false, true, true, true) },
+      { id: "rollback", label: "Publish logs & rollback", values: tier(false, false, true, true) },
       { id: "calendar", label: "Content calendar & scheduling", values: tier(false, false, true, true) },
-      { id: "webhooks", label: "Automation webhooks", values: tier(false, false, true, true) },
+      { id: "webhooks", label: "Automation webhooks (HMAC signed)", values: tier(false, false, true, true) },
     ],
   },
   {
@@ -300,8 +367,13 @@ const featureGroups: FeatureGroup[] = [
       { id: "workspaces", label: "Workspaces", values: tier(1, 2, 5, -1) },
       { id: "seats", label: "Team seats", values: tier(1, 1, 3, -1) },
       { id: "collab", labelKey: "billing.featureTeamCollaboration", featureKey: "teamCollaboration" },
+      { id: "roles", label: "Roles & permissions", values: tier(false, false, true, true) },
       { id: "api", labelKey: "billing.featureApiAccess", featureKey: "apiAccess" },
+      { id: "rate", label: "API rate limit", hint: "Requests per minute", values: tier("—", "60/min", "300/min", "1,000/min") },
       { id: "auditLog", label: "Audit log", values: tier(false, false, true, true) },
+      { id: "invoices", label: "Automated invoices (PDF + email)", values: tier(false, true, true, true) },
+      { id: "trial", label: "Free trial", values: tier("—", "7 days", "7 days", "7 days") },
+      { id: "onboarding", label: "Onboarding", values: tier("Self-serve", "Self-serve", "Guided walkthrough", "Dedicated onboarding") },
       {
         id: "support",
         labelKey: "billing.support",
@@ -310,6 +382,7 @@ const featureGroups: FeatureGroup[] = [
     ],
   },
 ];
+
 
 function formatNumber(val: number, t: T): string {
   if (val === -1) return t("common.unlimited");
@@ -351,6 +424,26 @@ export function PricingComparisonTable({
   };
 
   const renderCell = (row: FeatureRow, plan: PlanName) => {
+    if (row.brands) {
+      return (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          {row.brands[plan].map((b) => {
+            const Icon = b.icon;
+            return (
+              <span
+                key={b.id}
+                title={`${b.name} — ${b.detail}`}
+                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-foreground/80"
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="hidden xl:inline">{b.name}</span>
+              </span>
+            );
+          })}
+        </div>
+      );
+    }
+
     if (row.models) {
       return (
         <div className="flex flex-wrap items-center gap-1.5">
@@ -369,6 +462,7 @@ export function PricingComparisonTable({
         </div>
       );
     }
+
 
     const val = cellValue(row, plan);
     const note = row.notes?.[plan];
@@ -567,11 +661,15 @@ export function PricingComparisonTable({
                     onMouseEnter={() => setHoveredRow(row.id)}
                     onMouseLeave={() => setHoveredRow(null)}
                   >
-                    <td className="py-4 px-5 rounded-l-2xl">
+                    <td className="py-4 px-5 rounded-l-2xl align-top">
                       <span className="text-sm font-medium text-foreground">
                         {row.labelKey ? t(row.labelKey) : row.label}
                       </span>
+                      {row.hint && (
+                        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground max-w-[280px]">{row.hint}</p>
+                      )}
                     </td>
+
                     {planMeta.map((meta, mi) => (
                       <td
                         key={meta.name}
