@@ -8,6 +8,7 @@ import { buildExactElementorData, htmlToElementor, enforceNativeElementorData, e
 import { PgpConnector } from "../_shared/connectors/pgp-connector.ts";
 import { bundleTemplateAssets, isDesignLinkTag } from "../_shared/asset-bundler.ts";
 import { normalizeTemplateHtml } from "../_shared/template-normalizer.ts";
+import { applySeoFixes, type SeoFixResult } from "../_shared/seo-engine/index.ts";
 
 const PUBLISH_FORMATS = ["elementor", "gutenberg", "shopify", "html"] as const;
 type PublishFormat = (typeof PUBLISH_FORMATS)[number];
