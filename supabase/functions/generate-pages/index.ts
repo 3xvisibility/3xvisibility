@@ -3025,6 +3025,32 @@ Deno.serve(async (req) => {
             if (v != null && !pageVariables[k]) pageVariables[k] = String(v);
           }
 
+          probeLen = pageContent.length; stage("before-seo-engine");
+
+          // ── Shared SEO Engine ──
+          // Score the finished page and persist findings so Website Content,
+          // Audit and Analytics all read the same numbers. Never mutates HTML.
+          const seoEngineColumns = buildSeoEngineColumns({
+            html: pageContent,
+            title: pageTitle,
+            slug: slug,
+            seoTitle: seoData.seo_title,
+            seoDescription: seoData.seo_description,
+            seoKeywords: seoData.seo_keywords,
+            canonicalUrl,
+            targetEntities: Object.values(pageVariables).filter(
+              (value) => typeof value === "string" && value.length > 2 && value.length < 60,
+            ),
+            corpus: batchPages
+              .filter((p: any) => p.status !== "failed")
+              .map((p: any) => ({
+                title: p.title,
+                slug: String(p.slug || "").split("?")[0],
+                keywords: p.seo_keywords || [],
+              })),
+            language: campaign.language || undefined,
+          });
+
           probeLen = pageContent.length; stage("before-push");
           batchPages.push({
             campaign_id,
@@ -3044,6 +3070,7 @@ Deno.serve(async (req) => {
             ad_group_id: adGroupId,
             seo_warnings: seoWarnings,
             variables: pageVariables,
+            ...seoEngineColumns,
           });
 
           processedCount++;
