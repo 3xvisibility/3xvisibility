@@ -107,100 +107,128 @@ export function HeroSection() {
   const sidebarIcons = [Home, BarChart3, Globe, FileText, Settings, Info];
 
   return (
-    <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden">
-      {/* Background effects */}
+    <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden paper-grain">
+      {/* Background — quieter, less "AI glow" */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_center,hsl(96,90%,45%,0.15),transparent_70%)]" />
-        <div className="absolute top-[100px] left-[5%] w-[400px] h-[400px] rounded-full bg-[hsl(96,92%,62%,0.06)] blur-[100px]" />
-        <div className="absolute top-[200px] right-[5%] w-[350px] h-[350px] rounded-full bg-[hsl(96,90%,45%,0.05)] blur-[80px]" />
-        <div className="absolute inset-0 opacity-[0.015]"
+        <div className="absolute top-[-260px] left-[8%] w-[720px] h-[520px] bg-[radial-gradient(ellipse_at_center,hsl(96,90%,45%,0.10),transparent_70%)]" />
+        <div className="absolute inset-0 opacity-[0.05]"
           style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, hsl(96,90%,45%) 1px, transparent 0)`,
-            backgroundSize: "40px 40px",
+            backgroundImage:
+              "linear-gradient(hsl(220,20%,60%,0.10) 1px, transparent 1px), linear-gradient(90deg, hsl(220,20%,60%,0.10) 1px, transparent 1px)",
+            backgroundSize: "88px 88px",
+            maskImage: "radial-gradient(ellipse at 30% 0%, black, transparent 70%)",
+            WebkitMaskImage: "radial-gradient(ellipse at 30% 0%, black, transparent 70%)",
           }}
         />
       </div>
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <div className="text-center max-w-4xl mx-auto">
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-8 items-end">
+          {/* Left column — the argument */}
+          <div className="lg:col-span-7 text-left">
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease }}
+              className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-[hsl(96,60%,58%)] mb-6 prose-human"
+            >
+              <span className="h-px w-8 bg-[hsl(96,70%,45%,0.6)]" />
+              <span>{t("hero.badge")}</span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 26 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.08, ease }}
+              className="font-editorial text-[2.75rem] sm:text-6xl lg:text-[4.75rem] leading-[0.98] text-foreground"
+            >
+              {t("hero.title1")}
+              <br />
+              <span className="ink-underline italic text-[hsl(96,70%,62%)]">{t("hero.title2")}</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.18, ease }}
+              className="prose-human mt-7 text-[0.98rem] md:text-[1.05rem] text-[hsl(220,10%,74%)] leading-[1.75] max-w-xl"
+            >
+              {t("hero.description")}
+            </motion.p>
+
+            <motion.p
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.24, ease }}
+              className="prose-human mt-5 max-w-xl border-l-2 border-[hsl(96,70%,45%,0.5)] pl-4 text-sm md:text-[0.95rem] italic text-[hsl(220,10%,82%)]"
+            >
+              {t("hero.oneClick")}
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3, ease }}
+              className="mt-9 flex flex-col sm:flex-row items-start sm:items-center gap-3"
+            >
+              <Button
+                size="lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 active:scale-[0.97] text-sm px-8 h-12 rounded-full font-semibold"
+                asChild
+              >
+                <Link to="/auth">
+                  {t("hero.cta")} <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
+                className="text-[hsl(220,10%,80%)] hover:text-foreground h-12 text-sm px-2 rounded-full font-medium underline underline-offset-[6px] decoration-[hsl(96,70%,45%,0.5)] hover:bg-transparent"
+                asChild
+              >
+                <a href="#demo-video">{t("hero.watchDemo")}</a>
+              </Button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.45 }}
+              className="prose-human mt-6 flex items-center gap-x-5 gap-y-2 text-[11px] text-[hsl(220,10%,60%)] flex-wrap"
+            >
+              <span>{t("hero.freeStart")}</span>
+              <span className="h-1 w-1 rounded-full bg-[hsl(220,10%,35%)]" />
+              <span>{t("hero.noCreditCard")}</span>
+              <span className="h-1 w-1 rounded-full bg-[hsl(220,10%,35%)]" />
+              <span>{t("hero.pagesPerMonth")}</span>
+            </motion.div>
+          </div>
+
+          {/* Right column — a margin note, like something written by hand */}
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.6, ease }}
-            className="inline-flex items-center gap-2 rounded-full border border-[hsl(96,90%,45%,0.2)] bg-[hsl(96,90%,45%,0.08)] px-4 py-1.5 text-xs font-medium text-[hsl(96,80%,52%)] mb-8"
-          >
-            <Sparkles className="h-3 w-3" />
-            <span>{t("hero.badge")}</span>
-            <ArrowRight className="h-3 w-3" />
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1, ease }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-extrabold tracking-[-0.04em] leading-[1.05]"
-          >
-            {t("hero.title1")}
-            <br />
-            <span className="text-gradient-primary">{t("hero.title2")}</span>
-          </motion.h1>
-
-          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2, ease }}
-            className="mt-6 text-base md:text-lg text-[hsl(220,10%,74%)] leading-relaxed max-w-xl mx-auto"
+            transition={{ duration: 0.8, delay: 0.35, ease }}
+            className="lg:col-span-5 lg:pb-3"
           >
-            {t("hero.description")}
-          </motion.p>
-
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.26, ease }}
-            className="mt-4 mx-auto max-w-2xl rounded-xl border border-[hsl(96,90%,45%,0.18)] bg-[hsl(96,90%,45%,0.06)] px-4 py-3 text-sm md:text-base font-medium text-[hsl(220,10%,88%)]"
-          >
-            <CheckCircle2 className="inline-block h-4 w-4 mr-2 -mt-0.5 text-[hsl(96,80%,52%)]" />
-            {t("hero.oneClick")}
-          </motion.p>
-
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3, ease }}
-            className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3"
-          >
-            <Button
-              size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 active:scale-[0.97] text-sm px-8 h-12 rounded-xl font-semibold shadow-xl shadow-primary/25"
-              asChild
-            >
-              <Link to="/auth">
-                {t("hero.cta")} <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-[hsl(96,90%,45%,0.2)] bg-transparent text-[hsl(220,10%,85%)] hover:text-foreground h-12 text-sm px-8 rounded-xl font-medium hover:bg-[hsl(96,90%,45%,0.08)] hover:border-[hsl(96,90%,45%,0.3)]"
-              asChild
-            >
-              <a href="#demo-video">{t("hero.watchDemo")}</a>
-            </Button>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.45 }}
-            className="mt-5 flex items-center justify-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-[hsl(220,10%,64%)] flex-wrap"
-          >
-            <span>{t("hero.freeStart")}</span>
-            <span>{t("hero.noCreditCard")}</span>
-            <span>{t("hero.pagesPerMonth")}</span>
+            <div className="tilt-right relative max-w-sm lg:ml-auto rounded-2xl border border-[hsl(220,20%,20%)] bg-[hsl(220,45%,6%,0.7)] p-6 paper-grain">
+              <div className="font-editorial text-2xl leading-snug text-foreground">
+                <em>“{t("hero.title1")}”</em>
+              </div>
+              <p className="prose-human mt-3 text-sm leading-relaxed text-[hsl(220,10%,68%)]">
+                {t("hero.description")}
+              </p>
+              <div className="mt-5 flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-[hsl(96,70%,45%,0.18)] border border-[hsl(96,70%,45%,0.35)]" />
+                <div className="prose-human text-[11px] leading-tight text-[hsl(220,10%,60%)]">
+                  <div className="text-[hsl(220,10%,82%)]">3XVISIBILITY</div>
+                  <div>{t("hero.freeStart")}</div>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
+
 
         {/* DASHBOARD MOCKUP */}
         <motion.div
