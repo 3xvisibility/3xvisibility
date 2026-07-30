@@ -128,23 +128,8 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
   });
 
   // --- existing mutations ---
-  const generateSitemapMutation = useMutation({
-    mutationFn: async (websiteId: string) => {
-      const { data, error } = await supabase.functions.invoke("generate-sitemap", {
-        body: { website_id: websiteId },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["sitemaps"] });
-      toast({ title: "Sitemap generated", description: `${data.page_count} pages included in sitemap.` });
-    },
-    onError: (err: Error) => {
-      toast({ title: "Sitemap generation failed", description: err.message, variant: "destructive" });
-    },
-  });
+
+
 
   const testConnectionMutation = useMutation({
     mutationFn: async () => {
