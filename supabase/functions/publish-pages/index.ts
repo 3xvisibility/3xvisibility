@@ -1254,6 +1254,20 @@ async function handlePublishPages(req: Request): Promise<Response> {
           const isRepublish = !!dp.external_id;
           const preserveDesign = isRepublish && !allowOverwriteDesign;
 
+          // One-click SEO fixes (meta, canonical, schema, internal links, images)
+          // applied to the outgoing payload — layout/markup untouched.
+          const dpFix = runPublishSeoFixes({
+            html: cleanedContent,
+            title: dp.title,
+            slug: dp.slug,
+            seoTitle: dp.seo_title,
+            seoDescription: dp.seo_description,
+            siteUrl: website.url,
+            siteName: (website as { name?: string }).name ?? null,
+            websiteType: website.type,
+          });
+          cleanedContent = dpFix.html;
+
           const payload = buildPayload(
             { title: dp.title, content: cleanedContent, slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
             pubType,
@@ -1262,6 +1276,12 @@ async function handlePublishPages(req: Request): Promise<Response> {
             !preserveDesign ? templateInfo.pageTemplate : undefined,
             preserveDesign,
           );
+
+          const dpFixApplied = applyFixesToPayload(payload, dpFix.result, website.type);
+          if (dpFixApplied.length) {
+            step("Applying SEO fixes", "ok", dpFixApplied.join(" · "));
+          }
+
 
 
           // Apply Shopify template suffix overrides for direct publish
