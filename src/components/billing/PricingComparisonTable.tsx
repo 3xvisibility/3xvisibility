@@ -21,6 +21,8 @@ import {
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { cn } from "@/lib/utils";
+import { BRANDS, type BrandModel } from "./ModelBrandIcons";
+
 
 interface PricingComparisonTableProps {
   activePlan: PlanName;
