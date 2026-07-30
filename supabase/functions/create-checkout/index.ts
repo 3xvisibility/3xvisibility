@@ -24,8 +24,9 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
 
-    const { priceId, origin: bodyOrigin } = await req.json();
+    const { priceId, quantity, origin: bodyOrigin } = await req.json();
     if (!priceId) throw new Error("priceId is required");
+    const qty = Math.min(Math.max(Number(quantity) || 1, 1), 20);
 
     // Prefer the explicit origin sent by the client (real app domain),
     // fall back to the request Origin header.
@@ -56,7 +57,7 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: qty }],
       mode: "subscription",
       ...(eligibleForTrial
         ? { subscription_data: { trial_period_days: 30 } }
