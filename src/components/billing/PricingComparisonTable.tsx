@@ -125,13 +125,61 @@ const tier = (free: CellValue, starter: CellValue, pro: CellValue, agency: CellV
   agency,
 });
 
+const M = {
+  gptNano: { short: "5.6L", full: "GPT-5.6 Luna (fast, low cost)", tone: "bg-foreground/10 text-foreground" },
+  gptMini: { short: "5.4M", full: "GPT-5.4 Mini", tone: "bg-foreground/10 text-foreground" },
+  gpt55: { short: "5.5", full: "GPT-5.5 (frontier reasoning)", tone: "bg-foreground/15 text-foreground" },
+  gptSol: { short: "5.6S", full: "GPT-5.6 Sol (flagship)", tone: "bg-foreground/15 text-foreground" },
+  gemLite: { short: "G-L", full: "Gemini 3.1 Flash Lite", tone: "bg-primary/10 text-primary" },
+  gemFlash: { short: "G-F", full: "Gemini 3.6 Flash", tone: "bg-primary/10 text-primary" },
+  gemPro: { short: "G-P", full: "Gemini 3.1 Pro", tone: "bg-primary/15 text-primary" },
+  imgMini: { short: "IMG", full: "GPT-Image-1 Mini (image generation)", tone: "bg-secondary/15 text-secondary" },
+  img2: { short: "IMG2", full: "GPT-Image-2 (high quality images)", tone: "bg-secondary/15 text-secondary" },
+  nano2: { short: "NB2", full: "Nano Banana 2 — Gemini 3.1 Flash Image", tone: "bg-warning/15 text-warning" },
+  gem3ProImg: { short: "G3PI", full: "Gemini 3 Pro Image (highest fidelity)", tone: "bg-warning/15 text-warning" },
+  voice: { short: "TTS", full: "Text-to-speech & speech-to-text models", tone: "bg-success/15 text-success" },
+} satisfies Record<string, ModelChip>;
+
+const freeModels = [M.gemLite, M.gptNano];
+const starterModels = [...freeModels, M.gemFlash, M.gptMini, M.imgMini];
+const proModels = [...starterModels, M.gemPro, M.gpt55, M.img2, M.nano2];
+const agencyModels = [...proModels, M.gptSol, M.gem3ProImg, M.voice];
+
 const featureGroups: FeatureGroup[] = [
+  {
+    id: "models",
+    label: "AI models",
+    icon: <Sparkles className="h-3.5 w-3.5" />,
+    rows: [
+      {
+        id: "available-models",
+        label: "Available models",
+        models: {
+          free: freeModels,
+          starter: starterModels,
+          pro: proModels,
+          agency: agencyModels,
+        },
+      },
+      {
+        id: "model-picker",
+        label: "Choose model per generation",
+        values: tier(false, false, true, true),
+      },
+      {
+        id: "model-byok",
+        label: "Bring your own API key (OpenAI / Gemini / DeepSeek)",
+        values: tier(false, false, false, true),
+      },
+    ],
+  },
   {
     id: "tools",
     label: "Tools included",
     icon: <Wrench className="h-3.5 w-3.5" />,
     rows: [
       { id: "tool-campaigns", label: "Campaigns — bulk page generation wizard", values: tier(true, true, true, true) },
+
       { id: "tool-keywords", label: "Keyword Groups — reusable keyword + variable bundles", values: tier(true, true, true, true) },
       { id: "tool-locations", label: "Location Database — country / region / city", values: tier(true, true, true, true) },
       { id: "tool-templates", label: "Template Manager — edit, preview, versions", values: tier(true, true, true, true) },
