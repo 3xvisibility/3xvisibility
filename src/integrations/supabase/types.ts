@@ -1006,8 +1006,12 @@ export type Database = {
           keyword_source: string | null
           keyword_source_details: Json | null
           publish_steps: Json | null
+          seo_analyzed_at: string | null
           seo_description: string | null
+          seo_findings: Json | null
+          seo_grade: string | null
           seo_keywords: string[] | null
+          seo_scores: Json | null
           seo_title: string | null
           seo_warnings: Json | null
           slug: string
@@ -1039,8 +1043,12 @@ export type Database = {
           keyword_source?: string | null
           keyword_source_details?: Json | null
           publish_steps?: Json | null
+          seo_analyzed_at?: string | null
           seo_description?: string | null
+          seo_findings?: Json | null
+          seo_grade?: string | null
           seo_keywords?: string[] | null
+          seo_scores?: Json | null
           seo_title?: string | null
           seo_warnings?: Json | null
           slug: string
@@ -1072,8 +1080,12 @@ export type Database = {
           keyword_source?: string | null
           keyword_source_details?: Json | null
           publish_steps?: Json | null
+          seo_analyzed_at?: string | null
           seo_description?: string | null
+          seo_findings?: Json | null
+          seo_grade?: string | null
           seo_keywords?: string[] | null
+          seo_scores?: Json | null
           seo_title?: string | null
           seo_warnings?: Json | null
           slug?: string

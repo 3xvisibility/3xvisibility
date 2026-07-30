@@ -6,6 +6,77 @@ import { resolveLanguageName } from "../_shared/languages.ts";
 import { buildVibeOverrideStyles, type VibeTheme } from "../_shared/vibe-theme.ts";
 import { aiGenerate } from "../_shared/ai-service.ts";
 import { cacheVolatileTemplateImages } from "../_shared/image-cache.ts";
+import { runSeoEngine } from "../_shared/seo-engine/index.ts";
+
+/**
+ * Run the shared SEO Engine on a finished page and return the columns that
+ * are persisted alongside it. Analysis is pure and must never block or alter
+ * generation — any failure degrades to null scores.
+ */
+function buildSeoEngineColumns(args: {
+  html: string;
+  title?: string;
+  slug?: string;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoKeywords?: string[] | null;
+  canonicalUrl?: string | null;
+  targetEntities?: string[] | null;
+  corpus?: { title: string; slug: string; keywords?: string[] }[] | null;
+  language?: string;
+}) {
+  try {
+    const report = runSeoEngine({
+      html: args.html,
+      title: args.title,
+      slug: (args.slug || "").split("?")[0],
+      seoTitle: args.seoTitle,
+      seoDescription: args.seoDescription,
+      seoKeywords: args.seoKeywords,
+      focusKeyword: args.seoKeywords?.[0] ?? null,
+      canonicalUrl: args.canonicalUrl,
+      targetEntities: args.targetEntities,
+      corpus: args.corpus,
+      language: args.language,
+    });
+
+    // Keep the stored payload small: drop "pass" rows and cap the list.
+    const issues = report.findings
+      .filter((finding) => finding.severity !== "pass")
+      .slice(0, 60)
+      .map((finding) => ({
+        id: finding.id,
+        category: finding.category,
+        severity: finding.severity,
+        label: finding.label,
+        tip: finding.tip ?? null,
+        fixable: !!finding.fixable,
+      }));
+
+    return {
+      seo_scores: report.scores as unknown as Record<string, unknown>,
+      seo_findings: {
+        issues,
+        counts: {
+          critical: issues.filter((i) => i.severity === "critical").length,
+          warning: issues.filter((i) => i.severity === "warning").length,
+          info: issues.filter((i) => i.severity === "info").length,
+          fixable: issues.filter((i) => i.fixable).length,
+        },
+      },
+      seo_grade: report.grade,
+      seo_analyzed_at: new Date().toISOString(),
+    };
+  } catch (err) {
+    console.error("[GENERATE-PAGES] SEO engine failed (non-fatal):", err);
+    return {
+      seo_scores: null,
+      seo_findings: null,
+      seo_grade: null,
+      seo_analyzed_at: null,
+    };
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2954,6 +3025,32 @@ Deno.serve(async (req) => {
             if (v != null && !pageVariables[k]) pageVariables[k] = String(v);
           }
 
+          probeLen = pageContent.length; stage("before-seo-engine");
+
+          // ── Shared SEO Engine ──
+          // Score the finished page and persist findings so Website Content,
+          // Audit and Analytics all read the same numbers. Never mutates HTML.
+          const seoEngineColumns = buildSeoEngineColumns({
+            html: pageContent,
+            title: pageTitle,
+            slug: slug,
+            seoTitle: seoData.seo_title,
+            seoDescription: seoData.seo_description,
+            seoKeywords: seoData.seo_keywords,
+            canonicalUrl,
+            targetEntities: Object.values(pageVariables).filter(
+              (value) => typeof value === "string" && value.length > 2 && value.length < 60,
+            ),
+            corpus: batchPages
+              .filter((p: any) => p.status !== "failed")
+              .map((p: any) => ({
+                title: p.title,
+                slug: String(p.slug || "").split("?")[0],
+                keywords: p.seo_keywords || [],
+              })),
+            language: campaign.language || undefined,
+          });
+
           probeLen = pageContent.length; stage("before-push");
           batchPages.push({
             campaign_id,
@@ -2973,6 +3070,7 @@ Deno.serve(async (req) => {
             ad_group_id: adGroupId,
             seo_warnings: seoWarnings,
             variables: pageVariables,
+            ...seoEngineColumns,
           });
 
           processedCount++;
@@ -3089,6 +3187,22 @@ Deno.serve(async (req) => {
                   });
                   updates.content = updatedContent;
                 }
+              }
+              // Re-score whenever content or SEO metadata was overwritten.
+              if (overwrite_fields.content || overwrite_fields.seo || overwrite_fields.images) {
+                Object.assign(
+                  updates,
+                  buildSeoEngineColumns({
+                    html: updates.content ?? page.content,
+                    title: updates.title ?? page.title,
+                    slug: page.slug,
+                    seoTitle: updates.seo_title ?? page.seo_title,
+                    seoDescription: updates.seo_description ?? page.seo_description,
+                    seoKeywords: updates.seo_keywords ?? page.seo_keywords,
+                    canonicalUrl: updates.canonical_url ?? page.canonical_url,
+                    language: campaign.language || undefined,
+                  }),
+                );
               }
               updates.status = "pending";
               if (Object.keys(updates).length > 0) {
