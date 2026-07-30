@@ -351,8 +351,28 @@ export function PricingComparisonTable({
   };
 
   const renderCell = (row: FeatureRow, plan: PlanName) => {
+    if (row.models) {
+      return (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {row.models[plan].map((m) => (
+            <span
+              key={m.short}
+              title={m.full}
+              className={cn(
+                "inline-flex h-6 min-w-6 items-center justify-center rounded-md px-1.5 text-[10px] font-bold tracking-tight",
+                m.tone
+              )}
+            >
+              {m.short}
+            </span>
+          ))}
+        </div>
+      );
+    }
+
     const val = cellValue(row, plan);
     const note = row.notes?.[plan];
+
 
     if (typeof val === "number") {
       return <span className="text-sm font-semibold tabular-nums text-foreground/90">{formatNumber(val, t)}</span>;
