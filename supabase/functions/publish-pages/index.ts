@@ -720,6 +720,102 @@ function buildPayload(
   return payload;
 }
 
+/**
+ * One-click SEO fixes applied at publish time.
+ *
+ * Runs the shared engine's deterministic fixers (meta, canonical, schema,
+ * internal links, image alt/lazy) over the outgoing page and folds the result
+ * into the WordPress/Shopify payload. Layout-safe by construction: only head
+ * metadata, JSON-LD and attribute-level edits are produced — wrappers, classes,
+ * ids and <style> blocks are never touched.
+ *
+ * Never throws: a fixer hiccup must not block a publish.
+ */
+function runPublishSeoFixes(args: {
+  html: string;
+  title: string;
+  slug: string;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoKeywords?: string[] | null;
+  canonicalUrl?: string | null;
+  language?: string | null;
+  siteUrl?: string | null;
+  siteName?: string | null;
+  corpus?: { title: string; slug: string; keywords?: string[] }[] | null;
+  websiteType?: string;
+}): { result: SeoFixResult | null; html: string } {
+  try {
+    const result = applySeoFixes(
+      {
+        html: args.html,
+        title: args.title,
+        slug: args.slug,
+        seoTitle: args.seoTitle ?? null,
+        seoDescription: args.seoDescription ?? null,
+        seoKeywords: args.seoKeywords ?? null,
+        focusKeyword: args.seoKeywords?.[0] ?? null,
+        canonicalUrl: args.canonicalUrl ?? null,
+        corpus: args.corpus ?? null,
+        language: args.language ?? undefined,
+      },
+      {
+        siteUrl: args.siteUrl ?? null,
+        siteName: args.siteName ?? null,
+        path: args.slug,
+        maxInternalLinks: 5,
+      },
+    );
+    return { result, html: result.html || args.html };
+  } catch (e) {
+    console.warn("[publish-pages] SEO one-click fixes skipped", e);
+    return { result: null, html: args.html };
+  }
+}
+
+/**
+ * Fold fixer output into the outgoing payload. WordPress consumes `schema_json`
+ * and the SEO fields natively; Shopify has no schema field, so extra JSON-LD and
+ * social meta ride along in the page body (appended after the design markup).
+ */
+function applyFixesToPayload(
+  payload: PagePayload,
+  fix: SeoFixResult | null,
+  websiteType?: string,
+): string[] {
+  if (!fix) return [];
+
+  if (fix.patch.seo_title) payload.seo_title = fix.patch.seo_title;
+  if (fix.patch.seo_description) {
+    payload.seo_description = fix.patch.seo_description;
+    payload.excerpt = fix.patch.seo_description;
+  }
+  if (fix.patch.canonical_url) payload.canonical_url = fix.patch.canonical_url;
+
+  const blocks = [...fix.schema];
+  if (blocks.length && !payload.schema_json) {
+    payload.schema_json = blocks.shift() as Record<string, unknown>;
+  }
+
+  const extras: string[] = [];
+  for (const block of blocks) {
+    extras.push(`<script type="application/ld+json">${JSON.stringify(block)}</script>`);
+  }
+  if (websiteType === "shopify") {
+    for (const [key, value] of Object.entries(fix.social)) {
+      const attr = key.startsWith("og:") ? "property" : "name";
+      extras.push(`<meta ${attr}="${key}" content="${String(value).replace(/"/g, "&quot;")}" />`);
+    }
+  }
+  if (extras.length) {
+    payload.content = `${payload.content}\n<div data-xxxv-seo="1" hidden>${extras.join("\n")}</div>`;
+  }
+
+  return fix.applied;
+}
+
+
+
 function inferPublishType(
   page: { external_url?: string | null },
   requestedType: string,
