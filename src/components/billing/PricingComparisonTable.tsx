@@ -668,22 +668,40 @@ export function PricingComparisonTable({
                 {group.rows.map((row, i) => (
                   <tr
                     key={row.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${row.labelKey ? t(row.labelKey) : row.label} — details`}
                     className={cn(
-                      "transition-colors",
+                      "transition-colors cursor-pointer outline-none",
                       i % 2 === 0 ? "bg-muted/40" : "bg-transparent",
-                      hoveredRow === row.id && "bg-muted/60"
+                      hoveredRow === row.id && "bg-muted/60",
+                      "focus-visible:ring-2 focus-visible:ring-primary/40"
                     )}
                     onMouseEnter={() => setHoveredRow(row.id)}
                     onMouseLeave={() => setHoveredRow(null)}
+                    onClick={() => setDetailRow({ row, group: group.label })}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setDetailRow({ row, group: group.label });
+                      }
+                    }}
                   >
                     <td className="py-4 px-5 rounded-l-2xl align-top">
-                      <span className="text-sm font-medium text-foreground">
+                      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
                         {row.labelKey ? t(row.labelKey) : row.label}
+                        <Info
+                          className={cn(
+                            "h-3.5 w-3.5 shrink-0 transition-opacity",
+                            hoveredRow === row.id ? "opacity-70 text-primary" : "opacity-0"
+                          )}
+                        />
                       </span>
                       {row.hint && (
                         <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground max-w-[280px]">{row.hint}</p>
                       )}
                     </td>
+
 
                     {planMeta.map((meta, mi) => (
                       <td
