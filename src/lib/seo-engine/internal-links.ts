@@ -100,7 +100,6 @@ export function applyInternalLinks(html: string, suggestions: InternalLinkSugges
       output.slice(0, at) +
       `<a href="${suggestion.targetSlug}">${match[2]}</a>` +
       output.slice(at + match[2].length);
-    replaced = true;
   }
 
   return output;
