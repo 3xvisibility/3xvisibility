@@ -112,9 +112,11 @@ export function PricingSection() {
           <span className="text-sm font-medium text-foreground">
             {isYearly ? `${t("pricing.billed")} ${t("pricing.yearly").toLowerCase()}` : `${t("pricing.billed")} ${t("pricing.monthly").toLowerCase()}`}
           </span>
-          <Badge className="rounded-full bg-primary/10 text-[hsl(96,80%,52%)] border border-[hsl(96,90%,45%,0.25)] text-xs font-medium px-3 py-1">
-            {t("pricing.save")}
-          </Badge>
+          {isYearly && (
+            <Badge className="rounded-full bg-primary/10 text-[hsl(96,80%,52%)] border border-[hsl(96,90%,45%,0.25)] text-xs font-medium px-3 py-1">
+              {t("pricing.save")}
+            </Badge>
+          )}
         </div>
 
 
