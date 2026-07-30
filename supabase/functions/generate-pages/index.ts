@@ -3188,6 +3188,22 @@ Deno.serve(async (req) => {
                   updates.content = updatedContent;
                 }
               }
+              // Re-score whenever content or SEO metadata was overwritten.
+              if (overwrite_fields.content || overwrite_fields.seo || overwrite_fields.images) {
+                Object.assign(
+                  updates,
+                  buildSeoEngineColumns({
+                    html: updates.content ?? page.content,
+                    title: updates.title ?? page.title,
+                    slug: page.slug,
+                    seoTitle: updates.seo_title ?? page.seo_title,
+                    seoDescription: updates.seo_description ?? page.seo_description,
+                    seoKeywords: updates.seo_keywords ?? page.seo_keywords,
+                    canonicalUrl: updates.canonical_url ?? page.canonical_url,
+                    language: campaign.language || undefined,
+                  }),
+                );
+              }
               updates.status = "pending";
               if (Object.keys(updates).length > 0) {
                 const { error: updateError } = await supabase.from("generated_pages").update(updates).eq("id", existing.id);
