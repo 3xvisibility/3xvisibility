@@ -59,6 +59,13 @@ function normalizeKeywords(value: unknown) {
 }
 
 export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campaignTitles, campaignSlugs, onUpdated }: SeoAnalysisDialogProps) {
+  const { plan } = useSubscription();
+  // Which of SEO / SEA / GEO this plan may auto-fix, and what the run costs.
+  const allowedModes = useMemo<OptimizationMode[]>(
+    () => (["seo", "sea", "geo"] as OptimizationMode[]).filter((m) => canAutoFix(plan, m)),
+    [plan],
+  );
+  const runCreditCost = useMemo(() => optimizationCreditCost(allowedModes), [allowedModes]);
   const [fixing, setFixing] = useState(false);
   const [fixStep, setFixStep] = useState("");
   const [fixProgress, setFixProgress] = useState(0);
