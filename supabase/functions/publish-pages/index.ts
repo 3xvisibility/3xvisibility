@@ -1562,6 +1562,8 @@ async function handlePublishPages(req: Request): Promise<Response> {
 
     // Cache page-template detection per website to avoid redundant checks
     const templateCache = new Map<string, { pageTemplate?: string }>();
+    // Sibling pages per campaign, used for internal-link one-click fixes.
+    const corpusCache = new Map<string, { title: string; slug: string }[]>();
     const elementorCatalogCache = new Map<string, unknown>();
     const shopifySectionKitCache = new Map<string, unknown>();
 
