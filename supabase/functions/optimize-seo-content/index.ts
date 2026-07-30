@@ -2,6 +2,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import { deductCreditsForRequest } from "../_shared/ai-service.ts";
 import {
+  gateModes,
+  parseModes,
+  resolveUserPlan,
+  canBulkOptimize,
+  type OptimizationMode,
+} from "../_shared/plan-entitlements.ts";
+import {
   analyzeSeoQuality,
   autoRepairContent,
   buildQualityRepairChecklist,
@@ -270,6 +277,8 @@ async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.n
       page_type,
       workspace_id,
       optimize_fields,
+      optimization_modes,
+      bulk,
       content_sections,
       language,
       instruction,
@@ -889,7 +898,34 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
     // model or it echoes the original HTML back unchanged.
     const activeModel = includeContent ? CONTENT_REWRITE_MODEL : METADATA_MODEL;
 
-    const credit = await deductCreditsForRequest(req, "seo_optimization", activeModel);
+    // ── Plan entitlements: which of SEO / SEA / GEO may this user auto-fix,
+    // and how many credits does that combination cost? ──────────────────────
+    const requestedModes: OptimizationMode[] = parseModes(optimization_modes);
+    const plan = await resolveUserPlan(supabase, user.id);
+    const gate = gateModes(plan, requestedModes);
+
+    if (gate.allowed.length === 0) {
+      return new Response(JSON.stringify({
+        error: `Your ${plan} plan does not include auto-fix for ${gate.blocked.map((m) => m.toUpperCase()).join(", ")}. Upgrade your plan to unlock it.`,
+        blocked_modes: gate.blocked,
+        plan,
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (bulk && !canBulkOptimize(plan)) {
+      return new Response(JSON.stringify({
+        error: `Bulk SEO / SEA / GEO optimization is an Agency feature. Your current plan is ${plan}.`,
+        plan,
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const credit = await deductCreditsForRequest(req, "seo_optimization", activeModel, gate.credits);
     if (!credit.allowed) {
       return new Response(JSON.stringify({
         error: credit.error === "insufficient_credits"
