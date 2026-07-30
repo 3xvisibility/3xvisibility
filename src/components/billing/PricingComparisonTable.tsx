@@ -640,11 +640,15 @@ export function PricingComparisonTable({
                     onMouseEnter={() => setHoveredRow(row.id)}
                     onMouseLeave={() => setHoveredRow(null)}
                   >
-                    <td className="py-4 px-5 rounded-l-2xl">
+                    <td className="py-4 px-5 rounded-l-2xl align-top">
                       <span className="text-sm font-medium text-foreground">
                         {row.labelKey ? t(row.labelKey) : row.label}
                       </span>
+                      {row.hint && (
+                        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground max-w-[280px]">{row.hint}</p>
+                      )}
                     </td>
+
                     {planMeta.map((meta, mi) => (
                       <td
                         key={meta.name}
