@@ -31,7 +31,7 @@ export function FeaturesSection() {
               <Sparkles className="h-3 w-3" />
               {t("features.badge")}
             </span>
-            <h2 className="font-editorial text-4xl md:text-5xl lg:text-[3.4rem] leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em] leading-tight">
               {t("features.title1")}<br />
               <span className="text-gradient-primary">{t("features.title2")}</span>
             </h2>

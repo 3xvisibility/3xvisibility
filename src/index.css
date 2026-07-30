@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Work+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -132,50 +132,6 @@
     font-weight: 700;
     text-wrap: balance;
   }
-
-  /* ---- Editorial / hand-made layer (landing pages) ---- */
-  .font-editorial {
-    font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
-    font-weight: 400;
-    letter-spacing: -0.015em;
-    text-wrap: balance;
-  }
-  .font-editorial em {
-    font-style: italic;
-  }
-  .prose-human {
-    font-family: 'Work Sans', 'Plus Jakarta Sans', sans-serif;
-    letter-spacing: 0.005em;
-  }
-  /* Subtle paper grain so surfaces don't read machine-flat */
-  .paper-grain::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.035;
-    mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-  /* Hand-drawn marker underline */
-  .ink-underline {
-    position: relative;
-    display: inline-block;
-  }
-  .ink-underline::after {
-    content: "";
-    position: absolute;
-    left: -2%;
-    right: -2%;
-    bottom: 0.02em;
-    height: 0.34em;
-    border-radius: 50%;
-    background: hsl(var(--primary) / 0.28);
-    transform: rotate(-0.6deg);
-    z-index: -1;
-  }
-  .tilt-left { transform: rotate(-0.7deg); }
-  .tilt-right { transform: rotate(0.6deg); }
 
   html {
     scroll-behavior: smooth;

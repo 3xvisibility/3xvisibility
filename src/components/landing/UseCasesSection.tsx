@@ -88,7 +88,7 @@ export function UseCasesSection() {
             <Target className="h-3 w-3" />
             {t("useCases.badge")}
           </span>
-          <h2 className="font-editorial text-4xl md:text-5xl lg:text-[3.4rem] leading-tight">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em] leading-tight">
             {t("useCases.title1")}<br />
             <span className="text-gradient-primary">{t("useCases.title2")}</span>
           </h2>

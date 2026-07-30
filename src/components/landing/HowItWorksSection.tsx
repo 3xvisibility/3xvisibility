@@ -19,7 +19,7 @@ export function HowItWorksSection() {
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <ScrollReveal className="text-center max-w-2xl mx-auto mb-14">
           <span className="section-badge mb-6">{t("howItWorks.badge")}</span>
-          <h2 className="font-editorial text-4xl md:text-5xl lg:text-[3.4rem]">{t("howItWorks.title")}</h2>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em]">{t("howItWorks.title")}</h2>
         </ScrollReveal>
 
         <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto" initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>

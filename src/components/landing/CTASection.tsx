@@ -17,7 +17,7 @@ export function CTASection() {
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,hsl(96,92%,62%,0.15),transparent_60%)]" />
             <div className="absolute inset-0 rounded-3xl border border-[hsl(96,90%,45%,0.15)]" />
             <div className="relative z-10 py-16 md:py-20 px-8 md:px-16 text-center">
-              <h2 className="font-editorial text-4xl md:text-5xl lg:text-[3.4rem] leading-tight max-w-lg mx-auto">{t("cta.title")}</h2>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em] leading-tight max-w-lg mx-auto">{t("cta.title")}</h2>
               <p className="mt-4 text-[hsl(220,10%,70%)] max-w-md mx-auto text-sm leading-relaxed">{t("cta.description")}</p>
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 active:scale-[0.97] text-sm px-8 h-12 rounded-xl font-semibold shadow-xl shadow-primary/25" asChild>
