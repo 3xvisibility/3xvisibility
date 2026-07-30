@@ -126,7 +126,7 @@ export function PricingSection() {
             const price = Math.round(plan.monthlyPrice * qty * (isYearly ? 1 - YEARLY_DISCOUNT : 1));
             return (
               <motion.div key={plan.name} className="h-full" variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } }}>
-                <div className={`relative h-full flex flex-col p-6 border-r border-[hsl(96,90%,45%,0.1)] last:border-r-0 transition-colors ${plan.popular ? "bg-[hsl(220,40%,9%)]" : "bg-transparent hover:bg-[hsl(220,40%,8.5%)]"}`}>
+                <div className={`group relative h-full flex flex-col p-6 border-r border-[hsl(96,90%,45%,0.1)] last:border-r-0 transition-all duration-300 ${plan.popular ? "bg-[hsl(220,40%,9%)] hover:bg-[hsl(220,40%,11%)]" : "bg-transparent hover:bg-[hsl(220,40%,10%)]"} hover:shadow-[inset_0_0_0_1px_hsl(96,90%,45%,0.25)]`}>
                   {plan.popular && <div className="absolute top-0 left-0 right-0 h-[3px] bg-primary" />}
 
                   <div className="flex items-center justify-between gap-2">
