@@ -82,7 +82,7 @@ async function retryNativeReimport(
   externalId: string | undefined,
   payload: Partial<PagePayload>,
   currentReadiness: EditorReadiness | null,
-  step: (label: string, status: string, detail?: string) => void,
+  step: (label: string, status: PublishStep["status"], detail?: string) => void,
 ): Promise<{ readiness: EditorReadiness | null; elementorData: string | undefined } | null> {
   if (!(connector instanceof PgpConnector)) return null;
   if (!externalId) return null;
