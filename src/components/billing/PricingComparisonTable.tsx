@@ -174,6 +174,34 @@ const featureGroups: FeatureGroup[] = [
     ],
   },
   {
+    id: "scores",
+    label: "SEO, SEA & GEO optimization",
+    icon: <Search className="h-3.5 w-3.5" />,
+    rows: [
+      {
+        id: "seo-score",
+        label: "SEO scoring — search engine optimization",
+        values: tier(true, true, true, true),
+        notes: { free: "Score only", starter: "Score + auto-fix", pro: "Auto-fix + section rewrite", agency: "Full suite + bulk" },
+      },
+      {
+        id: "sea-score",
+        label: "SEA scoring — ad / landing page readiness",
+        values: tier(false, true, true, true),
+        notes: { starter: "Score only", pro: "Score + auto-fix", agency: "Auto-fix + bulk" },
+      },
+      {
+        id: "geo-score",
+        label: "GEO scoring — AI / generative engine visibility",
+        values: tier(false, false, true, true),
+        notes: { pro: "Score + auto-fix", agency: "Auto-fix + bulk" },
+      },
+      { id: "score-badges", label: "Live SEO / SEA / GEO badges on every page", values: tier(true, true, true, true) },
+      { id: "score-target", label: "Guaranteed 80+ multi-pass optimization", values: tier(false, false, true, true) },
+      { id: "score-bulk", label: "Bulk SEO / SEA / GEO optimization across campaigns", values: tier(false, false, false, true) },
+    ],
+  },
+  {
     id: "seo",
     label: "SEO & content",
     icon: <Search className="h-3.5 w-3.5" />,
@@ -188,6 +216,7 @@ const featureGroups: FeatureGroup[] = [
       { id: "indexing", labelKey: "billing.featureGoogleIndexing", featureKey: "indexing" },
     ],
   },
+
   {
     id: "publishing",
     label: "Publishing & integrations",
