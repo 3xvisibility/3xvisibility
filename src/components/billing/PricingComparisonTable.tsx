@@ -292,7 +292,15 @@ export function PricingComparisonTable({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Heading */}
+      <div className="text-center space-y-3 max-w-2xl mx-auto">
+        <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground">
+          {t("billing.comparePlans")}
+        </h2>
+        <p className="text-sm md:text-base text-muted-foreground">{t("billing.compareDesc")}</p>
+      </div>
+
       {/* Billing toggle */}
       <div className="flex items-center justify-center gap-3">
         <span className={cn("text-sm font-medium transition-colors", !isYearly ? "text-foreground" : "text-muted-foreground")}>
@@ -324,15 +332,14 @@ export function PricingComparisonTable({
       </div>
 
       {/* Comparison table */}
-      <div className="rounded-2xl border border-border bg-card shadow-surface overflow-hidden">
+      <div className="rounded-2xl bg-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] border-collapse">
-            <thead className="sticky top-0 z-20 bg-card">
-              <tr className="border-b border-border">
-                <th className="text-left p-5 w-[300px] align-bottom bg-card">
+            <thead className="sticky top-0 z-20 bg-muted/40">
+              <tr>
+                <th className="text-left p-5 w-[300px] align-bottom rounded-l-2xl">
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("billing.comparePlans")}</p>
-                    <p className="text-sm text-muted-foreground">{t("billing.compareDesc")}</p>
+                    <p className="text-sm font-semibold text-foreground">{t("billing.comparePlans")}</p>
                   </div>
                 </th>
                 {planMeta.map((meta) => {
@@ -432,11 +439,11 @@ export function PricingComparisonTable({
               <tbody key={group.id}>
                 <tr>
                   <td colSpan={5} className="p-0">
-                    <div className="flex items-center gap-2 bg-muted/50 border-y border-border px-5 py-2.5">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-background text-primary shadow-sm">
+                    <div className="flex items-center gap-2 px-5 pt-8 pb-3">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted text-primary">
                         {group.icon}
                       </span>
-                      <span className="text-xs font-bold uppercase tracking-wider text-foreground">{group.label}</span>
+                      <span className="text-sm font-bold text-foreground">{group.label}</span>
                     </div>
                   </td>
                 </tr>
@@ -444,24 +451,24 @@ export function PricingComparisonTable({
                   <tr
                     key={row.id}
                     className={cn(
-                      "border-b border-border/50 transition-colors",
-                      i % 2 === 1 && "bg-muted/20",
-                      hoveredRow === row.id && "bg-muted/40"
+                      "transition-colors",
+                      i % 2 === 0 ? "bg-muted/40" : "bg-transparent",
+                      hoveredRow === row.id && "bg-muted/60"
                     )}
                     onMouseEnter={() => setHoveredRow(row.id)}
                     onMouseLeave={() => setHoveredRow(null)}
                   >
-                    <td className="py-3.5 px-5">
+                    <td className="py-4 px-5 rounded-l-2xl">
                       <span className="text-sm font-medium text-foreground">
                         {row.labelKey ? t(row.labelKey) : row.label}
                       </span>
                     </td>
-                    {planMeta.map((meta) => (
+                    {planMeta.map((meta, mi) => (
                       <td
                         key={meta.name}
                         className={cn(
-                          "py-3.5 px-5 text-center transition-colors",
-                          meta.name === currentPlan && "bg-primary/[0.02]"
+                          "py-4 px-5 text-left",
+                          mi === planMeta.length - 1 && "rounded-r-2xl"
                         )}
                       >
                         {renderCell(row, meta.name)}
