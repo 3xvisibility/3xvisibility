@@ -9,6 +9,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext } from "@/lib/seo-rules";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
+import { canAutoFix, optimizationCreditCost, type OptimizationMode } from "@/lib/plan-features";
+import { useSubscription } from "@/hooks/use-subscription";
 import { analyzeExtendedSeo } from "@/lib/seo-extended-analysis";
 import { analyzeKeywordUsage, resolvePrimaryKeyword, type KeywordUsageAnalysis } from "@/lib/keyword-usage-suggestions";
 import { supabase } from "@/integrations/supabase/client";
@@ -507,7 +509,8 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
           next.add("keywords");
           next.add("content");
         }
-        if (legacy.sea < STRONG || legacy.geo < STRONG) {
+        // SEA / GEO repairs only run when the plan entitles auto-fix for them.
+        if ((allowedModes.includes("sea") && legacy.sea < STRONG) || (allowedModes.includes("geo") && legacy.geo < STRONG)) {
           next.add("title");
           next.add("content");
         }
@@ -582,6 +585,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
                 page_type: inferPublishType(currentPage),
                 workspace_id: currentPage.workspace_id,
                 optimize_fields: optimizeFields,
+                optimization_modes: allowedModes,
                 page_seo_title: working.title,
                 page_seo_description: working.description,
                 page_seo_keywords: working.keywords,
