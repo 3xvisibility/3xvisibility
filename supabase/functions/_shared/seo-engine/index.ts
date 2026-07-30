@@ -100,3 +100,5 @@ export function runSeoEngine(input: SeoEngineInput): SeoEngineReport {
     grade: gradeFor(scores.seo),
   };
 }
+export { applySeoFixes, renderFixHeadTags } from "./fixers.ts";
+export type { FixKey, SeoFixOptions, SeoFixResult } from "./fixers.ts";
