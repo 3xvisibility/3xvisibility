@@ -931,6 +931,7 @@ const ko: Record<string, string> = {
   "hero.mockTotalViews": "Total Views",
   "hero.mockWelcomeBack": "Welcome back, {name}",
   "hero.noCreditCard": "✓ 신용카드 불필요",
+  "hero.oneClick": "Generate hundreds of SEO-optimized pages and publish them directly to WordPress (Elementor/Gutenberg) and Shopify in one click.",
   "hero.pagesPerMonth": "✓ 월 100페이지",
   "hero.title1": "데이터를",
   "hero.title2": "게시된 페이지로 변환",

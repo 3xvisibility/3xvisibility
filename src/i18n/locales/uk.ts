@@ -931,6 +931,7 @@ const uk: Record<string, string> = {
   "hero.mockTotalViews": "Total Views",
   "hero.mockWelcomeBack": "Welcome back, {name}",
   "hero.noCreditCard": "✓ Без кредитної карти",
+  "hero.oneClick": "Generate hundreds of SEO-optimized pages and publish them directly to WordPress (Elementor/Gutenberg) and Shopify in one click.",
   "hero.pagesPerMonth": "✓ 100 сторінок/міс",
   "hero.title1": "Перетворіть ваші дані на",
   "hero.title2": "опубліковані сторінки",

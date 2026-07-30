@@ -931,6 +931,7 @@ const vi: Record<string, string> = {
   "hero.mockTotalViews": "Total Views",
   "hero.mockWelcomeBack": "Welcome back, {name}",
   "hero.noCreditCard": "✓ Không cần thẻ tín dụng",
+  "hero.oneClick": "Generate hundreds of SEO-optimized pages and publish them directly to WordPress (Elementor/Gutenberg) and Shopify in one click.",
   "hero.pagesPerMonth": "✓ 100 trang/tháng",
   "hero.title1": "Biến dữ liệu của bạn thành",
   "hero.title2": "trang đã xuất bản",

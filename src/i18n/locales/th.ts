@@ -931,6 +931,7 @@ const th: Record<string, string> = {
   "hero.mockTotalViews": "Total Views",
   "hero.mockWelcomeBack": "Welcome back, {name}",
   "hero.noCreditCard": "✓ ไม่ต้องใช้บัตรเครดิต",
+  "hero.oneClick": "Generate hundreds of SEO-optimized pages and publish them directly to WordPress (Elementor/Gutenberg) and Shopify in one click.",
   "hero.pagesPerMonth": "✓ 100 หน้า/เดือน",
   "hero.title1": "เปลี่ยนข้อมูลของคุณเป็น",
   "hero.title2": "หน้าที่เผยแพร่แล้ว",
