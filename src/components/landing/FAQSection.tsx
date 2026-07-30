@@ -13,7 +13,12 @@ export function FAQSection() {
     { q: t("faq.q5"), a: t("faq.a5") },
     { q: t("faq.q6"), a: t("faq.a6") },
     { q: t("faq.q7"), a: t("faq.a7") },
+    ...[1, 2, 3, 4, 5].map((n) => ({
+      q: t(`pricing.trialFaq.q${n}`),
+      a: t(`pricing.trialFaq.a${n}`),
+    })),
   ];
+
   return (
     <section id="faq" className="py-20 md:py-28 relative">
       <div className="container mx-auto px-4 lg:px-8 relative z-10 max-w-3xl">
