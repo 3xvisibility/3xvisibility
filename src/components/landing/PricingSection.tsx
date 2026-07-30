@@ -119,75 +119,91 @@ export function PricingSection() {
           )}
         </div>
 
-        <motion.div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto items-start" initial="hidden" animate={gridRevealed ? "visible" : "hidden"} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
+        <motion.div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 max-w-6xl mx-auto items-stretch rounded-2xl border border-[hsl(96,90%,45%,0.12)] overflow-hidden bg-[hsl(220,40%,7%)]" initial="hidden" animate={gridRevealed ? "visible" : "hidden"} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
           {plans.map((plan) => {
-            const price = isYearly ? Math.round(plan.monthlyPrice * (1 - YEARLY_DISCOUNT)) : plan.monthlyPrice;
+            const qty = creditQty[plan.key] ?? 1;
+            const price = Math.round(plan.monthlyPrice * qty * (isYearly ? 1 - YEARLY_DISCOUNT : 1));
             return (
-              <motion.div key={plan.name} variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } }}>
-                <Card className={`relative h-full rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 border-0 ${plan.popular ? "border border-[hsl(96,90%,45%,0.3)] bg-[hsl(220,40%,8%)] shadow-xl glow-purple-sm md:scale-[1.03]" : "border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)] hover:border-[hsl(96,90%,45%,0.2)]"}`}>
-                  {plan.popular && <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(96,92%,62%)] to-primary" />}
-                  <CardHeader className="pb-2 pt-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-9 w-9 rounded-xl bg-[hsl(96,90%,45%,0.1)] border border-[hsl(96,90%,45%,0.15)] flex items-center justify-center">{plan.icon}</div>
-                        <CardTitle className="text-base font-bold">{plan.name}</CardTitle>
+              <motion.div key={plan.name} className="h-full" variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } }}>
+                <div className={`relative h-full flex flex-col p-6 border-r border-[hsl(96,90%,45%,0.1)] last:border-r-0 transition-colors ${plan.popular ? "bg-[hsl(220,40%,9%)]" : "bg-transparent hover:bg-[hsl(220,40%,8.5%)]"}`}>
+                  {plan.popular && <div className="absolute top-0 left-0 right-0 h-[3px] bg-primary" />}
+
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-lg font-semibold tracking-tight">{plan.name}</h3>
+                    {plan.popular && <Badge className="bg-primary/15 text-[hsl(96,80%,52%)] border border-[hsl(96,90%,45%,0.3)] text-[10px] font-bold uppercase tracking-wider">{t("pricing.mostPopular")}</Badge>}
+                  </div>
+                  <p className="text-sm text-[hsl(220,10%,64%)] mt-1">{plan.description}</p>
+
+                  <Separator className="my-5 bg-[hsl(96,90%,45%,0.1)]" />
+
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl font-semibold tabular-nums tracking-tight">€{price}</span>
+                    {plan.monthlyPrice > 0 && <span className="text-sm text-[hsl(220,10%,64%)]">{isYearly ? t("pricing.yearly").toLowerCase() : "per month"}</span>}
+                  </div>
+
+                  <div className="mt-3">
+                    {plan.creditSteps.length > 1 ? (
+                      <Select value={String(qty)} onValueChange={(v) => setCreditQty((s) => ({ ...s, [plan.key]: Number(v) }))}>
+                        <SelectTrigger className="h-10 rounded-lg bg-transparent border-[hsl(96,90%,45%,0.18)] text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {plan.creditSteps.map((step) => (
+                            <SelectItem key={step} value={String(step)}>
+                              {(plan.baseCredits * step).toLocaleString()} credits / month
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="h-10 flex items-center rounded-lg border border-[hsl(96,90%,45%,0.14)] px-3 text-sm text-[hsl(220,10%,80%)]">
+                        {plan.baseCredits.toLocaleString()} credits to try
                       </div>
-                      {plan.popular && <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5">{t("pricing.mostPopular")}</Badge>}
-                    </div>
-                    <p className="text-xs text-[hsl(220,10%,70%)] mt-2">{plan.description}</p>
-                    <div className="mt-4 flex items-baseline gap-1">
-                      <span className="text-4xl font-extrabold tabular-nums tracking-tight">€{price}</span>
-                      <span className="text-[hsl(220,10%,70%)] text-sm">{t("pricing.mo")}</span>
-                    </div>
-                    {isYearly && (
-                      <p className="text-[11px] text-[hsl(220,10%,64%)] mt-0.5">
-                        {t("pricing.billed")} €{price * 12}/{t("pricing.year")} <span className="line-through text-[hsl(220,10%,52%)]">€{plan.monthlyPrice * 12}</span>
-                      </p>
                     )}
-                    {plan.monthlyPrice > 0 && (
-                      <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[hsl(96,90%,45%,0.25)] bg-[hsl(96,90%,45%,0.1)] px-2.5 py-1">
-                        <Gift className="h-3 w-3 text-[hsl(96,80%,52%)]" />
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(96,80%,52%)]">{t("pricing.trialBadge")}</span>
-                      </div>
-                    )}
-                    <p className="text-xs text-[hsl(220,10%,70%)] mt-2">{plan.pagesLimit}</p>
-                    {plan.monthlyPrice > 0 && (
-                      <p className="text-[11px] text-[hsl(96,80%,52%)] mt-0.5">{t("pricing.trialNote")}</p>
-                    )}
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-4">
-                    <Separator className="bg-[hsl(96,90%,45%,0.08)]" />
-                    <ul className="space-y-2.5">
-                      {plan.features.map((f) => (
-                        <li key={f} className="flex items-center gap-2.5 text-[13px]">
-                          <div className="h-5 w-5 rounded-full bg-[hsl(142,76%,36%,0.1)] flex items-center justify-center shrink-0"><Check className="h-3 w-3 text-[hsl(142,76%,50%)]" /></div>
-                          <span className="text-[hsl(220,10%,82%)]">{f}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  </div>
+
+                  {plan.monthlyPrice > 0 && (
+                    <p className="text-[11px] text-[hsl(96,80%,52%)] mt-2 inline-flex items-center gap-1.5">
+                      <Gift className="h-3 w-3" />{t("pricing.trialNote")}
+                    </p>
+                  )}
+
+                  <Separator className="my-5 bg-[hsl(96,90%,45%,0.1)]" />
+
+                  <ul className="space-y-2.5 flex-1">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-[13px]">
+                        <Check className="h-3.5 w-3.5 mt-0.5 text-[hsl(220,10%,55%)] shrink-0" />
+                        <span className="text-[hsl(220,10%,82%)]">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="pt-6">
                     {plan.monthlyPrice === 0 ? (
-                      <Button className="w-full rounded-xl h-11 text-sm font-semibold transition-all duration-300 active:scale-[0.97] bg-[hsl(220,30%,12%)] border border-[hsl(96,90%,45%,0.2)] text-foreground hover:bg-[hsl(96,90%,45%,0.1)] hover:border-[hsl(96,90%,45%,0.3)]" asChild>
-                        <Link to="/auth">{plan.cta}<ArrowRight className="ml-1.5 h-3.5 w-3.5" /></Link>
+                      <Button className="w-full rounded-lg h-11 text-sm font-semibold bg-[hsl(220,30%,12%)] border border-[hsl(96,90%,45%,0.15)] text-foreground hover:bg-[hsl(96,90%,45%,0.1)]" asChild>
+                        <Link to="/auth">{plan.cta}</Link>
                       </Button>
                     ) : (
                       <Button
-                        onClick={() => handleCheckout(plan.key)}
+                        onClick={() => handleCheckout(plan.key, qty)}
                         disabled={checkoutPlan !== null}
-                        className={`w-full rounded-xl h-11 text-sm font-semibold transition-all duration-300 active:scale-[0.97] ${plan.popular ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25" : "bg-[hsl(220,30%,12%)] border border-[hsl(96,90%,45%,0.2)] text-foreground hover:bg-[hsl(96,90%,45%,0.1)] hover:border-[hsl(96,90%,45%,0.3)]"}`}
+                        className={`w-full rounded-lg h-11 text-sm font-semibold ${plan.popular ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-[hsl(220,30%,12%)] border border-[hsl(96,90%,45%,0.15)] text-foreground hover:bg-[hsl(96,90%,45%,0.1)]"}`}
                       >
                         {checkoutPlan === plan.key ? (
                           <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />{t("pricing.startingTrial")}</>
                         ) : (
-                          <>{t("pricing.startTrialCta")}<ArrowRight className="ml-1.5 h-3.5 w-3.5" /></>
+                          <>{t("pricing.startTrialCta")}</>
                         )}
                       </Button>
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </motion.div>
             );
           })}
         </motion.div>
+
 
         <ScrollReveal className="mt-16 max-w-5xl mx-auto">
           <Card className="rounded-2xl overflow-hidden border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)]">
