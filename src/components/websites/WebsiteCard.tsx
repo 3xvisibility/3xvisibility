@@ -270,18 +270,8 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
     },
   });
 
-  const isGenerating = generateSitemapMutation.isPending;
 
-  const handleDownloadSitemap = () => {
-    if (!sitemap) return;
-    const blob = new Blob([sitemap.content], { type: "application/xml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `sitemap-${(site.name || "site").toLowerCase().replace(/\s+/g, "-")}.xml`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
