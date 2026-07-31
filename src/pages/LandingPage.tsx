@@ -8,6 +8,8 @@ import { IntegrationsSection } from "@/components/landing/IntegrationsSection";
 import { VideoSection } from "@/components/landing/VideoSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { ReviewsSection } from "@/components/landing/ReviewsSection";
+import { HumanTouchSection } from "@/components/landing/HumanTouchSection";
+
 import { PricingSection } from "@/components/landing/PricingSection";
 import { AffiliateSection } from "@/components/landing/AffiliateSection";
 import { FAQSection } from "@/components/landing/FAQSection";
@@ -41,6 +43,8 @@ export default function LandingPage() {
         <IntegrationsSection />
         <VideoSection />
         <HowItWorksSection />
+        <HumanTouchSection />
+
         <ReviewsSection />
         <PricingSection />
         <AffiliateSection />
