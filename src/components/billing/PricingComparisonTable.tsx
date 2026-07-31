@@ -550,102 +550,45 @@ export function PricingComparisonTable({
       </div>
 
       {/* Comparison table */}
-      <div className="rounded-2xl bg-card overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+        <p className="text-center text-sm text-muted-foreground px-6 pt-8 pb-6">{t("billing.compareDesc")}</p>
+
+        <div className="overflow-x-auto px-3 pb-4 sm:px-6 sm:pb-6">
           <table className="w-full min-w-[900px] border-collapse">
-            <thead className="sticky top-0 z-20 bg-muted/40">
+            <thead className="sticky top-0 z-20">
               <tr>
-                <th className="text-left p-5 w-[300px] align-bottom rounded-l-2xl">
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">{t("billing.comparePlans")}</p>
+                <th className="text-left p-0 w-[300px]">
+                  <div className="rounded-l-2xl bg-muted/50 px-5 py-4">
+                    <span className="text-[15px] font-semibold text-foreground">{t("billing.comparePlans")}</span>
                   </div>
                 </th>
-                {planMeta.map((meta) => {
+                {planMeta.map((meta, mi) => {
                   const plan = meta.name;
                   const features = PLAN_FEATURES[plan];
                   const basePrice = monthlyPrices[plan];
                   const price = isYearly && plan !== "free" ? Math.round(basePrice * (1 - YEARLY_DISCOUNT)) : basePrice;
                   const isCurrent = plan === currentPlan;
-                  const isPopular = plan === "pro";
-                  const btn = getButtonState(plan);
-                  const isLoading = loadingPlan === plan;
 
                   return (
-                    <th key={plan} className="p-0 w-[180px] align-top">
+                    <th key={plan} className="p-0 w-[180px] text-left">
                       <div
                         className={cn(
-                          "relative flex flex-col items-center text-center p-5 h-full min-h-[220px] transition-colors",
-                          isCurrent && "bg-primary/[0.03]",
-                          isPopular && !isCurrent && "bg-gradient-to-b from-primary/[0.04] to-transparent"
+                          "flex items-center gap-2 bg-muted/50 px-5 py-4",
+                          mi === planMeta.length - 1 && "rounded-r-2xl"
                         )}
                       >
-                        {isPopular && (
-                          <Badge className="absolute top-0 left-1/2 -translate-x-1/2 rounded-t-none rounded-b-md bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-3 py-1">
-                            {t("billing.mostPopular")}
-                          </Badge>
-                        )}
+                        <span className={cn("inline-flex h-7 w-7 items-center justify-center rounded-lg", meta.bgClass, meta.colorClass)}>
+                          {meta.icon}
+                        </span>
+                        <span className="text-[15px] font-semibold text-foreground">{features.label}</span>
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {price === 0 ? t("common.free") : `€${price}`}
+                        </span>
                         {isCurrent && (
-                          <Badge variant="outline" className="absolute top-3 right-3 text-[10px] text-primary border-primary/30 bg-primary/5 px-2 py-0.5">
+                          <Badge variant="outline" className="text-[9px] text-primary border-primary/30 bg-primary/5 px-1.5 py-0">
                             {t("billing.current")}
                           </Badge>
                         )}
-
-                        <div
-                          className={cn(
-                            "h-10 w-10 rounded-xl flex items-center justify-center mb-3",
-                            meta.bgClass,
-                            meta.colorClass
-                          )}
-                        >
-                          {meta.icon}
-                        </div>
-
-                        <h3 className="text-base font-bold text-foreground">{features.label}</h3>
-                        <p className="text-xs text-muted-foreground mt-1">{t(meta.descriptionKey)}</p>
-
-                        <div className="mt-4 flex items-baseline gap-1">
-                          <span className="text-3xl font-extrabold tabular-nums tracking-tight">
-                            {price === 0 ? t("common.free") : `€${price}`}
-                          </span>
-                          {price > 0 && <span className="text-muted-foreground text-sm">/mo</span>}
-                        </div>
-
-                        {isYearly && plan !== "free" && (
-                          <p className="text-[11px] text-muted-foreground mt-1">
-                            {t("billing.billedYearly", { amount: price * 12 })}
-                          </p>
-                        )}
-
-                        {trialEligible && plan !== "free" && (
-                          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-success/10 border border-success/20 px-2.5 py-1 text-[11px] font-semibold text-success">
-                            <Gift className="h-3 w-3" />
-                            {t("billing.trialBadge")}
-                          </div>
-                        )}
-
-                        <div className="mt-auto pt-4 w-full">
-                          <Button
-                            className={cn(
-                              "w-full rounded-lg h-10 text-sm font-semibold transition-all duration-200 active:scale-[0.98]",
-                              isPopular && !btn.disabled
-                                ? "bg-gradient-to-r from-primary to-primary-glow hover:brightness-110 shadow-lg shadow-primary/20 text-primary-foreground"
-                                : ""
-                            )}
-                            variant={btn.variant}
-                            disabled={btn.disabled || isLoading}
-                            onClick={() => !btn.disabled && onPlanClick(plan)}
-                          >
-                            {isLoading ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : btn.disabled ? (
-                              t("billing.currentPlanBtn")
-                            ) : (
-                              <>
-                                {btn.label} <ArrowRight className="ml-1.5 h-4 w-4" />
-                              </>
-                            )}
-                          </Button>
-                        </div>
                       </div>
                     </th>
                   );
@@ -657,11 +600,11 @@ export function PricingComparisonTable({
               <tbody key={group.id}>
                 <tr>
                   <td colSpan={5} className="p-0">
-                    <div className="flex items-center gap-2 px-5 pt-8 pb-3">
+                    <div className="flex items-center gap-2 px-5 pt-7 pb-2">
                       <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted text-primary">
                         {group.icon}
                       </span>
-                      <span className="text-sm font-bold text-foreground">{group.label}</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{group.label}</span>
                     </div>
                   </td>
                 </tr>
@@ -672,9 +615,9 @@ export function PricingComparisonTable({
                     tabIndex={0}
                     aria-label={`${row.labelKey ? t(row.labelKey) : row.label} — details`}
                     className={cn(
-                      "transition-colors cursor-pointer outline-none",
+                      "transition-colors cursor-pointer outline-none group",
                       i % 2 === 0 ? "bg-muted/40" : "bg-transparent",
-                      hoveredRow === row.id && "bg-muted/60",
+                      hoveredRow === row.id && "bg-muted/70",
                       "focus-visible:ring-2 focus-visible:ring-primary/40"
                     )}
                     onMouseEnter={() => setHoveredRow(row.id)}
@@ -687,7 +630,7 @@ export function PricingComparisonTable({
                       }
                     }}
                   >
-                    <td className="py-4 px-5 rounded-l-2xl align-top">
+                    <td className="py-4 px-5 rounded-l-2xl align-middle">
                       <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
                         {row.labelKey ? t(row.labelKey) : row.label}
                         <Info
@@ -707,7 +650,7 @@ export function PricingComparisonTable({
                       <td
                         key={meta.name}
                         className={cn(
-                          "py-4 px-5 text-left",
+                          "py-4 px-5 text-left align-middle",
                           mi === planMeta.length - 1 && "rounded-r-2xl"
                         )}
                       >
@@ -718,9 +661,41 @@ export function PricingComparisonTable({
                 ))}
               </tbody>
             ))}
+
+            {/* CTA footer */}
+            <tbody>
+              <tr>
+                <td className="py-6 px-5" />
+                {planMeta.map((meta) => {
+                  const btn = getButtonState(meta.name);
+                  const isLoading = loadingPlan === meta.name;
+                  return (
+                    <td key={meta.name} className="py-6 px-5 align-top">
+                      <Button
+                        className="w-full rounded-lg h-10 text-sm font-semibold transition-all duration-200 active:scale-[0.98]"
+                        variant={btn.variant}
+                        disabled={btn.disabled || isLoading}
+                        onClick={() => !btn.disabled && onPlanClick(meta.name)}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : btn.disabled ? (
+                          t("billing.currentPlanBtn")
+                        ) : (
+                          <>
+                            {btn.label} <ArrowRight className="ml-1.5 h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+                    </td>
+                  );
+                })}
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
+
 
       {/* Row detail modal */}
       <Dialog open={!!detailRow} onOpenChange={(o) => !o && setDetailRow(null)}>
