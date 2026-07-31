@@ -6,6 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Search, Link2, Code, Users, Headphones, Gift } from "lucide-react";
 import { ScrollReveal, useRevealed } from "./ScrollReveal";
+import { OpenAIMark, GeminiMark, ClaudeMark, PerplexityMark, GoogleMark, GrokMark, DeepSeekMark, MistralMark, CopilotMark, MetaMark } from "@/components/billing/ModelBrandIcons";
+import { Cpu } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Loader2 } from "lucide-react";
@@ -15,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const YEARLY_DISCOUNT = 2 / 12; // Save 2 months
 
-function TableCell({ val }: { val: string | boolean }) {
+function TableCell({ val }: { val: string | boolean | JSX.Element }) {
   if (typeof val === "boolean") {
     return val ? (
       <div className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-success/15">
@@ -27,8 +29,22 @@ function TableCell({ val }: { val: string | boolean }) {
       </div>
     );
   }
+  if (typeof val !== "string") return val;
   return <span className="text-sm font-semibold tabular-nums text-foreground">{val}</span>;
 }
+
+function ModelIcons({ marks }: { marks: React.ComponentType<{ className?: string }>[] }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {marks.map((Mark, i) => (
+        <span key={i} className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted/60">
+          <Mark className="h-4 w-4" />
+        </span>
+      ))}
+    </div>
+  );
+}
+
 
 export function PricingSection() {
   const [isYearly, setIsYearly] = useState(false);
@@ -74,6 +90,14 @@ export function PricingSection() {
   ];
 
   const comparisonFeatures = [
+    {
+      label: "Available models",
+      icon: <Cpu className="h-4 w-4 text-primary" />,
+      free: <ModelIcons marks={[GeminiMark, GoogleMark]} />,
+      starter: <ModelIcons marks={[GeminiMark, GoogleMark, OpenAIMark, MistralMark, DeepSeekMark]} />,
+      pro: <ModelIcons marks={[GeminiMark, GoogleMark, OpenAIMark, MistralMark, DeepSeekMark, ClaudeMark, GrokMark, PerplexityMark]} />,
+      agency: <ModelIcons marks={[GeminiMark, GoogleMark, OpenAIMark, MistralMark, DeepSeekMark, ClaudeMark, GrokMark, PerplexityMark, CopilotMark, MetaMark]} />,
+    },
     { label: "Credits / month", icon: <Layers className="h-4 w-4 text-primary" />, free: "10", starter: "100 – 500", pro: "300 – 900", agency: "500 – 1,000" },
     { label: t("pricing.aiGenerations"), icon: <Sparkles className="h-4 w-4 text-primary" />, free: "10", starter: "100", pro: "1,000", agency: "5,000" },
     { label: t("pricing.campaigns"), icon: <Zap className="h-4 w-4 text-primary" />, free: "1", starter: "10", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
