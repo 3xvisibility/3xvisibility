@@ -494,17 +494,24 @@ export function PricingComparisonTable({
     }
 
     if (!val) {
-      return <X className="h-[18px] w-[18px] text-destructive" strokeWidth={3} />;
+      return (
+        <>
+          <X className="h-[18px] w-[18px] text-destructive" strokeWidth={3} aria-hidden="true" />
+          <span className="sr-only">{t("common.no") === "common.no" ? "Not included" : t("common.no")}</span>
+        </>
+      );
     }
 
     return (
       <div className="inline-flex items-center gap-1.5">
-        <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-success">
+        <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-success" aria-hidden="true">
           <Check className="h-3 w-3 text-success-foreground" strokeWidth={3.5} />
         </span>
+        <span className="sr-only">{t("common.yes") === "common.yes" ? "Included" : t("common.yes")}</span>
         {note && <span className="text-xs text-muted-foreground whitespace-nowrap">{note}</span>}
       </div>
     );
+
 
   };
 
@@ -524,13 +531,17 @@ export function PricingComparisonTable({
           {t("billing.monthly")}
         </span>
         <button
+          type="button"
+          role="switch"
+          aria-checked={isYearly}
           onClick={onToggleYearly}
           className={cn(
-            "relative h-7 w-[52px] rounded-full transition-colors duration-300",
+            "relative h-7 w-[52px] rounded-full transition-colors duration-300 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             isYearly ? "bg-primary" : "bg-muted"
           )}
           aria-label={t("billing.yearly")}
         >
+
           <div
             className={cn(
               "absolute top-0.5 h-6 w-6 rounded-full bg-card shadow-md transition-transform duration-300",
@@ -571,14 +582,17 @@ export function PricingComparisonTable({
                 isPopular ? "border-primary/40" : "border-border"
               )}
             >
-              <summary className="list-none cursor-pointer select-none px-4 py-4">
+              <summary className="list-none cursor-pointer select-none px-4 py-4 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary/60">
                 <div className="flex items-center gap-3">
-                  <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-xl shrink-0", meta.bgClass, meta.colorClass)}>
+                  <span
+                    aria-hidden="true"
+                    className={cn("inline-flex h-9 w-9 items-center justify-center rounded-xl shrink-0", meta.bgClass, meta.colorClass)}
+                  >
                     {meta.icon}
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-base font-bold text-foreground">{features.label}</span>
+                      <h3 className="text-base font-bold text-foreground">{features.label}</h3>
                       {isPopular && (
                         <Badge className="bg-primary text-primary-foreground text-[9px] font-bold uppercase px-1.5 py-0">
                           {t("billing.mostPopular")}
@@ -601,48 +615,54 @@ export function PricingComparisonTable({
                 </div>
 
                 <Button
-                  className="mt-3 w-full rounded-lg h-10 text-sm font-semibold active:scale-[0.98]"
+                  className="mt-3 w-full rounded-lg min-h-11 text-sm font-semibold active:scale-[0.98]"
                   variant={btn.variant}
                   disabled={btn.disabled || isLoading}
+                  aria-label={`${btn.label} — ${features.label}`}
+                  aria-busy={isLoading}
                   onClick={(e) => {
                     e.preventDefault();
                     if (!btn.disabled) onPlanClick(plan);
                   }}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                   ) : btn.disabled ? (
                     t("billing.currentPlanBtn")
                   ) : (
                     <>
-                      {btn.label} <ArrowRight className="ml-1.5 h-4 w-4" />
+                      {btn.label} <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
                     </>
                   )}
                 </Button>
 
                 <div className="mt-2 flex items-center justify-center gap-1 text-[11px] font-medium text-muted-foreground">
                   <span className="group-open:hidden">{t("billing.comparePlans")}</span>
-                  <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+                  <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" aria-hidden="true" />
                 </div>
               </summary>
 
               <div className="border-t border-border">
                 {featureGroups.map((group) => (
-                  <div key={group.id}>
+                  <section key={group.id} aria-labelledby={`${plan}-${group.id}-heading`}>
                     <div className="flex items-center gap-2 bg-muted/50 px-4 py-2">
-                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-md text-primary">
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-md text-primary" aria-hidden="true">
                         {group.icon}
                       </span>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      <h4
+                        id={`${plan}-${group.id}-heading`}
+                        className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+                      >
                         {group.label}
-                      </span>
+                      </h4>
                     </div>
                     {group.rows.map((row) => (
                       <button
                         key={row.id}
                         type="button"
+                        aria-haspopup="dialog"
                         onClick={() => setDetailRow({ row, group: group.label })}
-                        className="flex w-full items-start justify-between gap-3 border-b border-border/50 px-4 py-3 text-left active:bg-muted/60"
+                        className="flex w-full min-h-11 items-start justify-between gap-3 border-b border-border/50 px-4 py-3 text-left outline-none active:bg-muted/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60"
                       >
                         <span className="text-sm font-medium text-foreground">
                           {row.labelKey ? t(row.labelKey) : row.label}
@@ -650,9 +670,10 @@ export function PricingComparisonTable({
                         <span className="shrink-0 text-right">{renderCell(row, plan)}</span>
                       </button>
                     ))}
-                  </div>
+                  </section>
                 ))}
               </div>
+
             </details>
           );
         })}
@@ -660,12 +681,13 @@ export function PricingComparisonTable({
 
       {/* Comparison table (tablet & desktop) */}
       <div className="hidden md:block">
-        <div className="overflow-x-auto pb-4">
+        <div className="overflow-x-auto pb-4" tabIndex={0} role="region" aria-label={t("billing.comparePlans")}>
 
           <table className="w-full min-w-[900px] border-collapse border-spacing-0">
+            <caption className="sr-only">{t("billing.compareDesc")}</caption>
             <thead className="sticky top-0 z-20">
               <tr>
-                <th className="text-left p-0 w-[300px]">
+                <th scope="col" className="text-left p-0 w-[300px]">
                   <div className="rounded-l-2xl bg-muted/60 px-6 py-5">
                     <span className="text-[15px] font-semibold text-foreground">{t("billing.comparePlans")}</span>
                   </div>
@@ -676,14 +698,22 @@ export function PricingComparisonTable({
                   const isCurrent = plan === currentPlan;
 
                   return (
-                    <th key={plan} className="p-0 w-[180px] text-left">
+                    <th
+                      key={plan}
+                      scope="col"
+                      aria-current={isCurrent ? "true" : undefined}
+                      className="p-0 w-[180px] text-left"
+                    >
                       <div
                         className={cn(
                           "flex items-center gap-2 bg-muted/60 px-6 py-5",
                           mi === planMeta.length - 1 && "rounded-r-2xl"
                         )}
                       >
-                        <span className={cn("inline-flex h-7 w-7 items-center justify-center rounded-lg", meta.bgClass, meta.colorClass)}>
+                        <span
+                          aria-hidden="true"
+                          className={cn("inline-flex h-7 w-7 items-center justify-center rounded-lg", meta.bgClass, meta.colorClass)}
+                        >
                           {meta.icon}
                         </span>
                         <span className="text-[15px] font-semibold text-foreground">{features.label}</span>
@@ -702,60 +732,68 @@ export function PricingComparisonTable({
             <tbody>
               {featureGroups
                 .flatMap((group) => group.rows.map((row) => ({ row, group: group.label })))
-                .map(({ row, group }, i) => (
-                  <tr
-                    key={row.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`${row.labelKey ? t(row.labelKey) : row.label} — details`}
-                    className={cn(
-                      "transition-colors cursor-pointer outline-none group",
-                      i % 2 === 0 ? "bg-transparent" : "bg-muted/40",
-                      hoveredRow === row.id && "bg-muted/70",
-                      "focus-visible:ring-2 focus-visible:ring-primary/40"
-                    )}
-                    onMouseEnter={() => setHoveredRow(row.id)}
-                    onMouseLeave={() => setHoveredRow(null)}
-                    onClick={() => setDetailRow({ row, group })}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setDetailRow({ row, group });
-                      }
-                    }}
-                  >
-                    <td className="py-5 px-6 rounded-l-2xl align-middle">
-                      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
-                        {row.labelKey ? t(row.labelKey) : row.label}
-                        <Info
-                          className={cn(
-                            "h-3.5 w-3.5 shrink-0 transition-opacity",
-                            hoveredRow === row.id ? "opacity-70 text-primary" : "opacity-0"
-                          )}
-                        />
-                      </span>
-                    </td>
+                .map(({ row, group }, i) => {
+                  const rowLabel = row.labelKey ? t(row.labelKey) : row.label;
+                  return (
+                    <tr
+                      key={row.id}
+                      className={cn(
+                        "transition-colors cursor-pointer",
+                        i % 2 === 0 ? "bg-transparent" : "bg-muted/40",
+                        hoveredRow === row.id && "bg-muted/70"
+                      )}
+                      onMouseEnter={() => setHoveredRow(row.id)}
+                      onMouseLeave={() => setHoveredRow(null)}
+                      onClick={() => setDetailRow({ row, group })}
+                    >
+                      <th scope="row" className="py-5 px-6 rounded-l-2xl align-middle text-left font-normal">
+                        <button
+                          type="button"
+                          aria-haspopup="dialog"
+                          aria-label={`${rowLabel} — ${group} — ${t("common.details") === "common.details" ? "details" : t("common.details")}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDetailRow({ row, group });
+                          }}
+                          onFocus={() => setHoveredRow(row.id)}
+                          onBlur={() => setHoveredRow(null)}
+                          className="inline-flex items-center gap-1.5 rounded-md text-left text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        >
+                          {rowLabel}
+                          <Info
+                            aria-hidden="true"
+                            className={cn(
+                              "h-3.5 w-3.5 shrink-0 transition-opacity",
+                              hoveredRow === row.id ? "opacity-70 text-primary" : "opacity-0"
+                            )}
+                          />
+                        </button>
+                      </th>
 
-                    {planMeta.map((meta, mi) => (
-                      <td
-                        key={meta.name}
-                        className={cn(
-                          "py-5 px-6 text-left align-middle",
-                          mi === planMeta.length - 1 && "rounded-r-2xl"
-                        )}
-                      >
-                        {renderCell(row, meta.name)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                      {planMeta.map((meta, mi) => (
+                        <td
+                          key={meta.name}
+                          className={cn(
+                            "py-5 px-6 text-left align-middle",
+                            mi === planMeta.length - 1 && "rounded-r-2xl"
+                          )}
+                        >
+                          {renderCell(row, meta.name)}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
             </tbody>
+
 
 
             {/* CTA footer */}
             <tbody>
               <tr>
-                <td className="py-6 px-5" />
+                <th scope="row" className="py-6 px-5 text-left font-normal">
+                  <span className="sr-only">{t("billing.comparePlans")}</span>
+                </th>
                 {planMeta.map((meta) => {
                   const btn = getButtonState(meta.name);
                   const isLoading = loadingPlan === meta.name;
@@ -765,8 +803,11 @@ export function PricingComparisonTable({
                         className="w-full rounded-lg h-10 text-sm font-semibold transition-all duration-200 active:scale-[0.98]"
                         variant={btn.variant}
                         disabled={btn.disabled || isLoading}
+                        aria-label={`${btn.label} — ${PLAN_FEATURES[meta.name].label}`}
+                        aria-busy={isLoading}
                         onClick={() => !btn.disabled && onPlanClick(meta.name)}
                       >
+
                         {isLoading ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : btn.disabled ? (
