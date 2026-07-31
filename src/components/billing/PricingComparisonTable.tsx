@@ -500,7 +500,7 @@ export function PricingComparisonTable({
     return (
       <div className="inline-flex items-center gap-1.5">
         <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-success">
-          <Check className="h-3 w-3 text-white" strokeWidth={3.5} />
+          <Check className="h-3 w-3 text-success-foreground" strokeWidth={3.5} />
         </span>
         {note && <span className="text-xs text-muted-foreground whitespace-nowrap">{note}</span>}
       </div>
