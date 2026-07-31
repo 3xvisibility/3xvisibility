@@ -187,7 +187,10 @@ export function usePageAutoTranslate(
         const original = origTexts[start + offset];
         if (node && typeof tr === "string" && tr.length > 0 && !isBadTranslation(tr)) {
           rememberTranslationPair(language, original, tr);
-          node.textContent = tr;
+          const raw = node.textContent ?? "";
+          const lead = /^\s*/.exec(raw)?.[0] ?? "";
+          const trail = /\s*$/.exec(raw)?.[0] ?? "";
+          node.textContent = `${lead}${tr.trim()}${trail}`;
         }
       });
     };

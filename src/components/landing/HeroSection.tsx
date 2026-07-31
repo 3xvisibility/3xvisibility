@@ -151,7 +151,7 @@ export function HeroSection() {
             transition={{ duration: 0.7, delay: 0.2, ease }}
             className="mt-6 text-base md:text-lg text-[hsl(220,12%,45%)] leading-relaxed max-w-2xl mx-auto"
           >
-            {t("hero.description")}{" "}
+            {`${t("hero.description")} `}
             <span className="text-[hsl(220,14%,28%)] font-medium">{t("hero.oneClick")}</span>
           </motion.p>
 

@@ -38,7 +38,7 @@ export function IntegrationsSection() {
               <span>✦</span><span>{t("integrations.badge")}</span><span>✦</span>
             </div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.04em]">
-              {t("integrations.title1")}{" "}<span className="text-gradient-primary">{t("integrations.title2")}</span>
+              {`${t("integrations.title1")} `}<span className="text-gradient-primary">{t("integrations.title2")}</span>
             </h2>
             <p className="mt-4 text-sm md:text-base text-[hsl(220,12%,42%)] max-w-lg mx-auto leading-relaxed">
               {t("integrations.description")}
