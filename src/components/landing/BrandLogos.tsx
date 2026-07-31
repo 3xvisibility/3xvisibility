@@ -47,8 +47,8 @@ export function BrandLogos() {
               key={`${logo.name}-${i}`}
               className="flex-shrink-0 flex items-center gap-2.5 opacity-40 hover:opacity-70 transition-opacity duration-300"
             >
-              <logo.icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
-              <span className="text-sm md:text-base font-semibold text-white tracking-tight whitespace-nowrap">
+              <logo.icon className="h-5 w-5 md:h-6 md:w-6 text-foreground/60" />
+              <span className="text-sm md:text-base font-semibold text-foreground/60 tracking-tight whitespace-nowrap">
                 {logo.name}
               </span>
               {"soon" in logo && logo.soon && (
