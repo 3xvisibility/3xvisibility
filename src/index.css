@@ -15,9 +15,9 @@
     --popover: 0 0% 100%;
     --popover-foreground: 252 40% 10%;
 
-    --primary: 96 90% 45%;
+    --primary: 96 67% 48%;
     --primary-foreground: 220 60% 6%;
-    --primary-glow: 96 92% 62%;
+    --primary-glow: 96 67% 62%;
 
     --secondary: 217 50% 50%;
     --secondary-foreground: 0 0% 100%;
@@ -37,23 +37,23 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --info: 96 90% 45%;
+    --info: 96 67% 48%;
     --info-foreground: 0 0% 100%;
 
     --border: 220 13% 88%;
     --input: 220 13% 88%;
-    --ring: 96 90% 45%;
+    --ring: 96 67% 48%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 40% 10%;
-    --sidebar-primary: 96 90% 45%;
+    --sidebar-primary: 96 67% 48%;
     --sidebar-primary-foreground: 220 60% 6%;
     --sidebar-accent: 220 15% 96%;
     --sidebar-accent-foreground: 220 40% 10%;
     --sidebar-border: 220 13% 88%;
-    --sidebar-ring: 96 90% 45%;
+    --sidebar-ring: 96 67% 48%;
 
     /* Landing-specific */
     --landing-bg: 220 60% 8%;
@@ -82,9 +82,9 @@
     --card-foreground: 220 20% 95%;
     --popover: 220 50% 7%;
     --popover-foreground: 220 20% 95%;
-    --primary: 96 90% 45%;
+    --primary: 96 67% 48%;
     --primary-foreground: 220 60% 6%;
-    --primary-glow: 96 92% 62%;
+    --primary-glow: 96 67% 62%;
     --secondary: 217 50% 50%;
     --secondary-foreground: 0 0% 100%;
     --muted: 220 30% 12%;
@@ -97,19 +97,19 @@
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 96 90% 45%;
+    --info: 96 67% 48%;
     --info-foreground: 0 0% 100%;
     --border: 220 25% 14%;
     --input: 220 25% 14%;
-    --ring: 96 90% 45%;
+    --ring: 96 67% 48%;
     --sidebar-background: 220 50% 7%;
     --sidebar-foreground: 220 20% 95%;
-    --sidebar-primary: 96 90% 45%;
+    --sidebar-primary: 96 67% 48%;
     --sidebar-primary-foreground: 220 60% 6%;
     --sidebar-accent: 220 30% 12%;
     --sidebar-accent-foreground: 220 20% 95%;
     --sidebar-border: 220 25% 14%;
-    --sidebar-ring: 96 90% 45%;
+    --sidebar-ring: 96 67% 48%;
 
     /* Landing-specific dark */
     --landing-bg: 220 60% 4%;
@@ -195,17 +195,17 @@
   --card-foreground: 240 12% 8%;
   --popover: 0 0% 100%;
   --popover-foreground: 240 12% 8%;
-  --primary: 91 96% 43%;
+  --primary: 96 67% 48%;
   --primary-foreground: 220 60% 8%;
   --secondary: 250 30% 97%;
   --secondary-foreground: 240 12% 8%;
   --muted: 250 30% 97%;
   --muted-foreground: 240 8% 42%;
   --accent: 250 40% 96%;
-  --accent-foreground: 91 96% 30%;
+  --accent-foreground: 96 67% 30%;
   --border: 250 20% 90%;
   --input: 250 20% 90%;
-  --ring: 91 96% 43%;
+  --ring: 96 67% 48%;
   --success: 152 62% 38%;
   background: hsl(0 0% 100%);
   color: hsl(240 12% 8%);
