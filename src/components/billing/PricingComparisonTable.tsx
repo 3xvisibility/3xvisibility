@@ -39,6 +39,60 @@ import {
 } from "@/components/ui/tooltip";
 
 
+/**
+ * Tooltip trigger that also works on touch screens (tap toggles),
+ * stays inside the viewport on small screens, and closes on Escape.
+ */
+function IconTooltip({
+  label,
+  title,
+  detail,
+  className,
+  children,
+}: {
+  label: string;
+  title: string;
+  detail?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Tooltip open={open} onOpenChange={setOpen}>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          onClick={() => setOpen((v) => !v)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setOpen(false);
+          }}
+          className={cn(
+            "inline-flex cursor-help items-center justify-center rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            className
+          )}
+        >
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        align="center"
+        sideOffset={6}
+        collisionPadding={12}
+        avoidCollisions
+        role="tooltip"
+        className="z-50 max-w-[min(220px,calc(100vw-2rem))] break-words"
+      >
+        <p className="text-xs font-semibold">{title}</p>
+        {detail && <p className="text-[11px] text-muted-foreground">{detail}</p>}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+
 
 
 interface PricingComparisonTableProps {
