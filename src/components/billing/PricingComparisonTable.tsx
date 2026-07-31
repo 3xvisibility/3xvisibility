@@ -488,22 +488,34 @@ export function PricingComparisonTable({
 
     if (row.models) {
       return (
-        <div className="flex flex-wrap items-center gap-1.5">
-          {row.models[plan].map((m) => (
-            <span
-              key={m.short}
-              title={m.full}
-              className={cn(
-                "inline-flex h-6 min-w-6 items-center justify-center rounded-md px-1.5 text-[10px] font-bold tracking-tight",
-                m.tone
-              )}
-            >
-              {m.short}
-            </span>
-          ))}
-        </div>
+        <TooltipProvider delayDuration={100}>
+          <ul className="flex list-none flex-wrap items-center gap-1.5 p-0">
+            {row.models[plan].map((m) => (
+              <li key={m.short}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={m.full}
+                      className={cn(
+                        "inline-flex h-6 min-w-6 cursor-help items-center justify-center rounded-md px-1.5 text-[10px] font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                        m.tone
+                      )}
+                    >
+                      <span aria-hidden="true">{m.short}</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" role="tooltip" className="max-w-[220px]">
+                    <p className="text-xs font-semibold">{m.full}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </li>
+            ))}
+          </ul>
+        </TooltipProvider>
       );
     }
+
 
 
     const val = cellValue(row, plan);
