@@ -192,7 +192,7 @@ export function LandingNav() {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className={`transition-all duration-500 ${scrolled ? "bg-[hsl(250,30%,100%)]/80 backdrop-blur-2xl border-b border-[hsl(258,88%,58%,0.08)]" : "bg-transparent"}`}
+        className={`transition-all duration-500 ${scrolled ? "bg-white/92 backdrop-blur-2xl border-b border-[hsl(258,88%,58%,0.10)] shadow-[0_2px_20px_hsl(258,88%,58%,0.06)]" : "bg-white/70 backdrop-blur-xl"}`}
       >
         <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-8">
           <Link to="/" className="flex items-center">
