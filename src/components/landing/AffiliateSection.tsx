@@ -22,7 +22,7 @@ export function AffiliateSection() {
         <ScrollReveal className="text-center mb-12">
           <span className="section-badge mb-6">{t("affiliateLanding.badge")}</span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em]">
-            {t("affiliateLanding.title1")}{" "}
+            {`${t("affiliateLanding.title1")} `}
             <span className="text-primary">{t("affiliateLanding.title2")}</span>
           </h2>
           <p className="text-[hsl(220,12%,45%)] mt-4 max-w-2xl mx-auto text-base md:text-lg">
