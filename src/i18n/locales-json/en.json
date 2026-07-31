@@ -2242,19 +2242,5 @@
   "workspaceSettings.workspaceDetailsDesc": "Update your workspace name. Only workspace owners can rename.",
   "workspaceSettings.workspaceName": "Workspace Name",
   "workspaceSettings.workspaceRenamed": "Workspace renamed",
-  "workspaceSettings.workspaceRenamedDesc": "Workspace name has been updated.",
-  "human.badge": "Humans + AI",
-  "human.title": "Built by people who do SEO by hand",
-  "human.description": "AI does the heavy lifting. Real people set the strategy, review the output and answer your emails.",
-  "human.founder.alt": "Portrait of the 3XVISIBILITY founder at his desk",
-  "human.founder.name": "Julien Marchand",
-  "human.founder.role": "Founder — 12 years in technical SEO",
-  "human.founder.quote": "I spent a decade building local landing pages by hand for clients — hundreds of them, city by city. 3XVISIBILITY is that same workflow, just faster. Every prompt, scoring rule and template in this product came from a page we actually shipped and ranked. If something reads like a robot wrote it, tell me and we fix it that week.",
-  "human.founder.signature": "— Written by a human, no AI polish.",
-  "human.pillar1.title": "You approve before anything goes live",
-  "human.pillar1.text": "Every generated page lands in a draft with a preview and a diff. Nothing is published to your site until you press the button.",
-  "human.pillar2.title": "Editable, not locked",
-  "human.pillar2.text": "Titles, sections, keywords and schema stay fully editable. Rewrite a paragraph yourself, keep the rest — your voice, your call.",
-  "human.pillar3.title": "A real person answers support",
-  "human.pillar3.text": "Support is handled by the small team that builds the product. Median first reply is under 6 hours on weekdays — no ticket bots."
+  "workspaceSettings.workspaceRenamedDesc": "Workspace name has been updated."
 }

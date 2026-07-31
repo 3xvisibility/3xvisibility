@@ -1,23 +1,19 @@
 import { Star } from "lucide-react";
 import { ScrollReveal } from "./ScrollReveal";
 import { useLanguage } from "@/i18n/LanguageContext";
-import photo1 from "@/assets/team/person-1.jpg";
-import photo2 from "@/assets/team/person-2.jpg";
-import photo3 from "@/assets/team/person-3.jpg";
-import photo4 from "@/assets/team/person-4.jpg";
 
 const reviewConfigs = [
-  { name: "Sarah Chen", roleKey: "reviews.role1", avatar: "SC", photo: photo1, textKey: "reviews.text1" },
-  { name: "Marcus Johnson", roleKey: "reviews.role2", avatar: "MJ", photo: photo2, textKey: "reviews.text2" },
-  { name: "Emily Rodriguez", roleKey: "reviews.role3", avatar: "ER", photo: photo3, textKey: "reviews.text3" },
-  { name: "David Park", roleKey: "reviews.role4", avatar: "DP", photo: photo4, textKey: "reviews.text4" },
+  { name: "Sarah Chen", roleKey: "reviews.role1", avatar: "SC", textKey: "reviews.text1" },
+  { name: "Marcus Johnson", roleKey: "reviews.role2", avatar: "MJ", textKey: "reviews.text2" },
+  { name: "Emily Rodriguez", roleKey: "reviews.role3", avatar: "ER", textKey: "reviews.text3" },
+  { name: "David Park", roleKey: "reviews.role4", avatar: "DP", textKey: "reviews.text4" },
   { name: "Lisa Thompson", roleKey: "reviews.role5", avatar: "LT", textKey: "reviews.text5" },
   { name: "James Mitchell", roleKey: "reviews.role6", avatar: "JM", textKey: "reviews.text6" },
   { name: "Anna Kowalski", roleKey: "reviews.role7", avatar: "AK", textKey: "reviews.text7" },
   { name: "Robert Kim", roleKey: "reviews.role8", avatar: "RK", textKey: "reviews.text8" },
 ];
 
-type Review = { name: string; role: string; avatar: string; photo?: string; text: string };
+type Review = { name: string; role: string; avatar: string; text: string };
 
 function ReviewCard({ review }: { review: Review }) {
   return (
@@ -29,20 +25,9 @@ function ReviewCard({ review }: { review: Review }) {
       </div>
       <p className="text-[13px] text-[hsl(220,10%,82%)] leading-relaxed mb-4">"{review.text}"</p>
       <div className="flex items-center gap-3 pt-3 border-t border-[hsl(96,90%,45%,0.08)]">
-        {review.photo ? (
-          <img
-            src={review.photo}
-            alt={`${review.name}, ${review.role}`}
-            loading="lazy"
-            width={512}
-            height={512}
-            className="h-8 w-8 rounded-full object-cover border border-[hsl(96,90%,45%,0.2)]"
-          />
-        ) : (
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(96,90%,45%,0.2)] to-[hsl(96,92%,62%,0.2)] flex items-center justify-center text-[10px] font-bold text-[hsl(96,80%,52%)]">
-            {review.avatar}
-          </div>
-        )}
+        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(96,90%,45%,0.2)] to-[hsl(96,92%,62%,0.2)] flex items-center justify-center text-[10px] font-bold text-[hsl(96,80%,52%)]">
+          {review.avatar}
+        </div>
         <div>
           <p className="text-xs font-semibold text-foreground">{review.name}</p>
           <p className="text-[10px] text-[hsl(220,10%,64%)]">{review.role}</p>
@@ -52,14 +37,11 @@ function ReviewCard({ review }: { review: Review }) {
   );
 }
 
-
 export function ReviewsSection() {
   const { t } = useLanguage();
   const reviews = reviewConfigs.map((review) => ({
     name: review.name,
     avatar: review.avatar,
-    photo: (review as { photo?: string }).photo,
-
     role: t(review.roleKey),
     text: t(review.textKey),
   }));
