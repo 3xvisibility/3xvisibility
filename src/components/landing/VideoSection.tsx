@@ -47,7 +47,7 @@ export function VideoSection() {
         </ScrollReveal>
 
         <ScrollReveal delay={0.1} className="max-w-4xl mx-auto">
-          <div className="relative rounded-2xl overflow-hidden border border-[hsl(258,88%,58%,0.15)] shadow-2xl glow-purple-sm">
+          <div className="relative rounded-2xl overflow-hidden border border-[hsl(91,96%,43%,0.15)] shadow-2xl glow-purple-sm">
             <div className="relative aspect-video bg-[hsl(250,30%,98%)]">
               {playing ? (
                 <video key={`play-${videoSrc}`} className="absolute inset-0 w-full h-full object-cover" src={videoSrc} autoPlay controls playsInline />
@@ -74,7 +74,7 @@ export function VideoSection() {
               { value: "< 2min", labelKey: "video.setupTime" },
               { value: "99.9%", labelKey: "video.uptimeSLA" },
             ].map((stat) => (
-              <div key={stat.labelKey} className="text-center py-5 rounded-2xl border border-[hsl(258,88%,58%,0.1)] bg-[hsl(250,30%,98%)]">
+              <div key={stat.labelKey} className="text-center py-5 rounded-2xl border border-[hsl(91,96%,43%,0.1)] bg-[hsl(250,30%,98%)]">
                 <p className="text-2xl md:text-3xl font-extrabold tracking-tight text-gradient-primary">{stat.value}</p>
                 <p className="text-[11px] text-[hsl(220,12%,38%)] mt-1 uppercase tracking-wider font-medium">{t(stat.labelKey)}</p>
               </div>
