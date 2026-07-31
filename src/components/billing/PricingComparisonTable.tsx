@@ -753,7 +753,7 @@ export function PricingComparisonTable({
                       <td
                         key={meta.name}
                         className={cn(
-                          "py-4 px-5 text-left align-middle",
+                          "py-5 px-6 text-left align-middle",
                           mi === planMeta.length - 1 && "rounded-r-2xl"
                         )}
                       >
