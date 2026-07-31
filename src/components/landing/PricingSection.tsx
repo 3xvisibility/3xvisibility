@@ -14,6 +14,8 @@ import { Loader2 } from "lucide-react";
 import { startPlanCheckout } from "@/lib/checkout";
 import type { PlanName } from "@/lib/plan-features";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 const YEARLY_DISCOUNT = 2 / 12; // Save 2 months
 
