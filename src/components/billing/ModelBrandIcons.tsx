@@ -1,6 +1,6 @@
 /**
- * Compact brand marks used in the pricing comparison table.
- * Simplified, dependency-free SVG glyphs (no external logo assets).
+ * Brand marks for the AI providers shown in the pricing comparison table.
+ * Dependency-free SVG glyphs drawn to match each vendor's official mark/colors.
  */
 import type { SVGProps } from "react";
 
@@ -14,38 +14,50 @@ const base = (props: IconProps) => ({
   ...props,
 });
 
+/** ChatGPT / OpenAI knot */
 export const OpenAIMark = (props: IconProps) => (
   <svg {...base(props)} fill="none">
     <path
-      d="M12 3.2c-1.6 0-3 .9-3.7 2.3a4.3 4.3 0 0 0-3 6.3 4.3 4.3 0 0 0 3 6.3 4.3 4.3 0 0 0 7.4 0 4.3 4.3 0 0 0 3-6.3 4.3 4.3 0 0 0-3-6.3A4.2 4.2 0 0 0 12 3.2Z"
-      stroke="currentColor"
-      strokeWidth="1.4"
+      d="M21.18 9.83a5.4 5.4 0 0 0-.47-4.44 5.48 5.48 0 0 0-5.9-2.62A5.44 5.44 0 0 0 10.7 1a5.47 5.47 0 0 0-5.22 3.78 5.42 5.42 0 0 0-3.63 2.62 5.47 5.47 0 0 0 .68 6.42 5.4 5.4 0 0 0 .46 4.44 5.48 5.48 0 0 0 5.9 2.62A5.43 5.43 0 0 0 13 23a5.47 5.47 0 0 0 5.22-3.79 5.42 5.42 0 0 0 3.63-2.62 5.47 5.47 0 0 0-.68-6.42Zm-8.17 11.4a4.06 4.06 0 0 1-2.6-.94l.13-.07 4.32-2.49a.7.7 0 0 0 .35-.61v-6.1l1.83 1.06a.07.07 0 0 1 .03.05v5.04a4.08 4.08 0 0 1-4.06 4.06ZM4.28 17.5a4.05 4.05 0 0 1-.49-2.72l.13.08 4.32 2.49a.7.7 0 0 0 .7 0l5.28-3.05v2.11a.07.07 0 0 1-.03.06L9.83 19a4.08 4.08 0 0 1-5.55-1.49ZM3.14 8.1a4.05 4.05 0 0 1 2.12-1.78v5.13a.7.7 0 0 0 .35.6l5.27 3.05-1.83 1.05a.07.07 0 0 1-.06.01L4.62 13.6A4.08 4.08 0 0 1 3.14 8.1Zm15.01 3.49-5.28-3.06 1.83-1.05a.07.07 0 0 1 .07-.01l4.37 2.52a4.06 4.06 0 0 1-.63 7.33v-5.13a.7.7 0 0 0-.36-.6Zm1.82-2.74-.13-.08-4.31-2.5a.7.7 0 0 0-.71 0L9.55 9.32V7.21a.07.07 0 0 1 .03-.06l4.37-2.52a4.06 4.06 0 0 1 6.02 4.22ZM8.55 12.6l-1.83-1.05a.07.07 0 0 1-.04-.05V6.46a4.06 4.06 0 0 1 6.66-3.12l-.13.08-4.32 2.49a.7.7 0 0 0-.35.6l-.01 6.09Zm1-2.14L11.93 9l2.38 1.37v2.75l-2.38 1.37-2.38-1.37v-2.75Z"
+      fill="currentColor"
     />
-    <path d="M12 8.2v7.6M8.6 10.1l6.8 3.8M15.4 10.1l-6.8 3.8" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
   </svg>
 );
 
+/** Google Gemini spark */
 export const GeminiMark = (props: IconProps) => (
   <svg {...base(props)} fill="none">
+    <defs>
+      <linearGradient id="gemini-g" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#1C7DFF" />
+        <stop offset="0.52" stopColor="#1C69FF" />
+        <stop offset="1" stopColor="#F0DCD6" />
+      </linearGradient>
+    </defs>
     <path
       d="M12 2c.4 4.9 5.1 9.6 10 10-4.9.4-9.6 5.1-10 10-.4-4.9-5.1-9.6-10-10C6.9 11.6 11.6 6.9 12 2Z"
-      fill="#3B82F6"
+      fill="url(#gemini-g)"
     />
   </svg>
 );
 
+/** Anthropic Claude asterisk */
 export const ClaudeMark = (props: IconProps) => (
   <svg {...base(props)} fill="none">
-    <g stroke="#D97757" strokeWidth="1.8" strokeLinecap="round">
-      <path d="M12 3.5v17M4.5 7.8l15 8.4M19.5 7.8l-15 8.4" />
+    <g stroke="#D97757" strokeWidth="2.1" strokeLinecap="round">
+      <path d="M12 4v16M5.1 8l13.8 8M18.9 8 5.1 16" />
     </g>
   </svg>
 );
 
+/** Perplexity mark */
 export const PerplexityMark = (props: IconProps) => (
   <svg {...base(props)} fill="none">
-    <path d="M12 4.2 4.8 9v6L12 19.8 19.2 15V9L12 4.2Z" stroke="#20808D" strokeWidth="1.4" />
-    <path d="M12 4.2v15.6M4.8 9 12 12l7.2-3" stroke="#20808D" strokeWidth="1.2" />
+    <g stroke="#20808D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3.2 5.6 8.1v3.3M12 3.2l6.4 4.9v3.3" />
+      <path d="M4.2 8.1h15.6M12 8.1v12.7" />
+      <path d="M8.6 8.1v4.6c0 1.4 1.1 2.5 2.5 2.5h1.8c1.4 0 2.5-1.1 2.5-2.5V8.1" />
+    </g>
   </svg>
 );
 
@@ -58,20 +70,21 @@ export const GoogleMark = (props: IconProps) => (
   </svg>
 );
 
+/** xAI Grok */
 export const GrokMark = (props: IconProps) => (
   <svg {...base(props)} fill="none">
-    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.4" />
-    <path d="M8 16 16.5 7.5M13 16h3.5v-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M6 19 17 5M9.8 19 20 5.4M4 14.6 12.4 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
   </svg>
 );
 
+/** DeepSeek whale */
 export const DeepSeekMark = (props: IconProps) => (
   <svg {...base(props)} fill="none">
     <path
-      d="M4 14.5c3.2 2.4 6.2 3.2 9 2.4 2.8-.8 4.6-2.9 5.4-6.3-2 1.7-3.9 2.2-5.6 1.6-1.7-.7-2.5-2.2-2.3-4.6-2.8 1.4-4.6 3.4-5.4 6.1"
+      d="M21.4 5.6c-.4-.2-.6.1-.8.3-.1.1-.2.2-.3.4-.5.6-1.2.9-2 .9-1.1-.1-2.1.3-3 1.2-.2-1.1-.8-1.8-1.7-2.4-.5-.3-1-.6-1.4-1-.2-.2-.5-.5-.2-.9.1-.1.1-.3 0-.4-.3-.4-.7-.2-1 0-.6.4-.8 1-.7 1.7.1 1.6 1.3 2.5 2.6 3.4.1.1.3.2.3.4-.1.4-.3.8-.4 1.2-.1.3-.2.2-.4.1-.7-.4-1.3-.9-1.8-1.6-.9-1.2-1.7-2.5-2.7-3.6-.2-.3-.5-.5-.8-.7-.6-.6-1.3-.2-1.4.6-.1.9.3 1.7.7 2.4 1.1 1.9 2.5 3.6 4 5.1.2.2.3.4.2.7-.4 1-.5 2.1-.4 3.2 0 .5.1.9.3 1.3.2.4.5.5.9.4.7-.2 1.3-.6 1.6-1.3.4-.8.4-1.6.2-2.4-.1-.3 0-.4.3-.5 1.4-.4 2.6-1.2 3.4-2.4.6-.9.9-1.9.9-3 0-.7.2-1.2.7-1.6.4-.3.7-.7 1-1.1.2-.3.2-.5-.1-.4Z"
       fill="#4D6BFE"
     />
-    <circle cx="15.4" cy="8.4" r="1" fill="#fff" />
+    <circle cx="16.2" cy="9.4" r=".8" fill="#fff" />
   </svg>
 );
 
@@ -95,15 +108,21 @@ export const CopilotMark = (props: IconProps) => (
   </svg>
 );
 
+/** Meta infinity mark */
 export const MetaMark = (props: IconProps) => (
   <svg {...base(props)} fill="none">
     <path
-      d="M3.2 14.6c0-3.6 1.9-7 4.3-7 1.7 0 2.8 1.3 4.5 4.2 1.7 2.9 2.6 4.2 4 4.2 1.3 0 2.1-1.2 2.1-3 0-2.4-1.4-5.4-3.2-5.4-1.4 0-2.6 1.1-3.9 3.2"
+      d="M3 14.4c0-3.3 1.7-6.6 4-6.6 1.4 0 2.4.9 4 3.5l1 1.6c1.6 2.6 2.5 3.5 3.9 3.5 1.7 0 2.6-1.5 2.6-3.7 0-2.9-1.3-6-3.4-6-1.7 0-3.1 1.2-4.7 3.8"
       stroke="#0866FF"
-      strokeWidth="1.6"
+      strokeWidth="1.9"
       strokeLinecap="round"
     />
-    <path d="M7.5 7.6c-2.4 0-4.3 3.4-4.3 7 0 1.8.8 2.9 2.1 2.9 1.4 0 2.4-1.2 4-4.1" stroke="#0866FF" strokeWidth="1.6" strokeLinecap="round" />
+    <path
+      d="M7 7.8c-2.3 0-4 3.3-4 6.6 0 2 .9 3.2 2.3 3.2 1.5 0 2.6-1.1 4.4-4"
+      stroke="#0081FB"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+    />
   </svg>
 );
 
@@ -116,7 +135,7 @@ export interface BrandModel {
 }
 
 export const BRANDS = {
-  openai: { id: "openai", name: "OpenAI", detail: "GPT-5.x family (Luna, Mini, 5.5, Sol) + GPT-Image", icon: OpenAIMark },
+  openai: { id: "openai", name: "ChatGPT (OpenAI)", detail: "GPT-5.x family (Luna, Mini, 5.5, Sol) + GPT-Image", icon: OpenAIMark },
   gemini: { id: "gemini", name: "Gemini", detail: "Gemini 3.x Flash / Flash Lite / Pro", icon: GeminiMark },
   google: { id: "google", name: "Google AI", detail: "Nano Banana 2 & Gemini 3 Pro Image generation", icon: GoogleMark },
   claude: { id: "claude", name: "Claude", detail: "Anthropic Claude via your own API key", icon: ClaudeMark },
