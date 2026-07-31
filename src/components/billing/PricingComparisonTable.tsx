@@ -510,26 +510,19 @@ export function PricingComparisonTable({
     if (row.brands) {
       return (
         <TooltipProvider delayDuration={100}>
-          <ul className="flex list-none flex-wrap items-center gap-2 p-0">
+          <ul className="flex list-none flex-wrap items-center justify-end gap-1.5 p-0 md:justify-start md:gap-2">
             {row.brands[plan].map((b) => {
               const Icon = b.icon;
               return (
                 <li key={b.id}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        aria-label={`${b.name} — ${b.detail}`}
-                        className="inline-flex h-7 w-7 cursor-help items-center justify-center rounded-md border border-border/60 bg-muted/40 text-foreground/80 transition-colors hover:border-primary/40 hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                      >
-                        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[220px]" role="tooltip">
-                      <p className="text-xs font-semibold">{b.name}</p>
-                      <p className="text-[11px] text-muted-foreground">{b.detail}</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <IconTooltip
+                    label={`${b.name} — ${b.detail}`}
+                    title={b.name}
+                    detail={b.detail}
+                    className="h-9 w-9 border border-border/60 bg-muted/40 text-foreground/80 hover:border-primary/40 hover:bg-primary/10 md:h-7 md:w-7"
+                  >
+                    <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  </IconTooltip>
                 </li>
               );
             })}
@@ -543,31 +536,25 @@ export function PricingComparisonTable({
     if (row.models) {
       return (
         <TooltipProvider delayDuration={100}>
-          <ul className="flex list-none flex-wrap items-center gap-1.5 p-0">
+          <ul className="flex list-none flex-wrap items-center justify-end gap-1.5 p-0 md:justify-start">
             {row.models[plan].map((m) => (
               <li key={m.short}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label={m.full}
-                      className={cn(
-                        "inline-flex h-6 min-w-6 cursor-help items-center justify-center rounded-md px-1.5 text-[10px] font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                        m.tone
-                      )}
-                    >
-                      <span aria-hidden="true">{m.short}</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" role="tooltip" className="max-w-[220px]">
-                    <p className="text-xs font-semibold">{m.full}</p>
-                  </TooltipContent>
-                </Tooltip>
+                <IconTooltip
+                  label={m.full}
+                  title={m.full}
+                  className={cn(
+                    "h-8 min-w-8 px-2 text-[11px] font-bold tracking-tight md:h-6 md:min-w-6 md:px-1.5 md:text-[10px]",
+                    m.tone
+                  )}
+                >
+                  <span aria-hidden="true">{m.short}</span>
+                </IconTooltip>
               </li>
             ))}
           </ul>
         </TooltipProvider>
       );
+
     }
 
 
