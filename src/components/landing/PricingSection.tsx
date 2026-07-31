@@ -14,7 +14,7 @@ import { Loader2 } from "lucide-react";
 import { startPlanCheckout } from "@/lib/checkout";
 import type { PlanName } from "@/lib/plan-features";
 import { useToast } from "@/hooks/use-toast";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { BrandIconTooltip, BrandTooltipProvider } from "@/components/billing/BrandIconTooltip";
 
 
 const YEARLY_DISCOUNT = 2 / 12; // Save 2 months
@@ -48,54 +48,23 @@ const MARK_NAMES = new Map<React.ComponentType<{ className?: string }>, string>(
   [MetaMark, "Meta Llama"],
 ]);
 
-function ModelIconTooltip({
-  Mark,
-  name,
-}: {
-  Mark: React.ComponentType<{ className?: string }>;
-  name: string;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <Tooltip open={open} onOpenChange={setOpen}>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={name}
-          onClick={() => setOpen((v) => !v)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setOpen(false);
-          }}
-          className="inline-flex h-9 w-9 cursor-help items-center justify-center rounded-md bg-muted/60 transition-colors hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:h-6 md:w-6"
-        >
-          <Mark className="h-4 w-4" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent
-        side="top"
-        sideOffset={6}
-        collisionPadding={12}
-        avoidCollisions
-        role="tooltip"
-        className="z-50 max-w-[min(220px,calc(100vw-2rem))] break-words text-xs font-semibold"
-      >
-        {name}
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
 function ModelIcons({ marks }: { marks: React.ComponentType<{ className?: string }>[] }) {
   return (
-    <TooltipProvider delayDuration={100}>
+    <BrandTooltipProvider>
       <ul className="flex list-none flex-wrap items-center justify-start gap-1.5 p-0">
         {marks.map((Mark, i) => (
           <li key={i}>
-            <ModelIconTooltip Mark={Mark} name={MARK_NAMES.get(Mark) ?? "AI model"} />
+            <BrandIconTooltip
+              label={MARK_NAMES.get(Mark) ?? "AI model"}
+              title={MARK_NAMES.get(Mark) ?? "AI model"}
+              className="h-9 w-9 bg-muted/60 hover:bg-primary/10 md:h-6 md:w-6"
+            >
+              <Mark className="h-4 w-4" aria-hidden="true" />
+            </BrandIconTooltip>
           </li>
         ))}
       </ul>
-    </TooltipProvider>
+    </BrandTooltipProvider>
   );
 }
 
