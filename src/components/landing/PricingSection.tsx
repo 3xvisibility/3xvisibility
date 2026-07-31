@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -19,16 +18,16 @@ const YEARLY_DISCOUNT = 2 / 12; // Save 2 months
 function TableCell({ val }: { val: string | boolean }) {
   if (typeof val === "boolean") {
     return val ? (
-      <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[hsl(142,76%,36%,0.1)]">
-        <Check className="h-3.5 w-3.5 text-[hsl(142,76%,50%)]" />
+      <div className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-success/15">
+        <Check className="h-4 w-4 text-success" strokeWidth={3} />
       </div>
     ) : (
-      <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[hsl(220,30%,12%)]">
-        <X className="h-3.5 w-3.5 text-[hsl(220,10%,52%)]" />
+      <div className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-muted">
+        <X className="h-4 w-4 text-muted-foreground" strokeWidth={2.5} />
       </div>
     );
   }
-  return <span className="font-semibold tabular-nums">{val}</span>;
+  return <span className="text-sm font-semibold tabular-nums text-foreground">{val}</span>;
 }
 
 export function PricingSection() {
@@ -75,18 +74,18 @@ export function PricingSection() {
   ];
 
   const comparisonFeatures = [
-    { label: "Credits / month", icon: <Layers className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: "10", starter: "100 – 500", pro: "300 – 900", agency: "500 – 1,000" },
-    { label: t("pricing.aiGenerations"), icon: <Sparkles className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: "10", starter: "100", pro: "1,000", agency: "5,000" },
-    { label: t("pricing.campaigns"), icon: <Zap className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: "1", starter: "10", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
-    { label: t("pricing.templates"), icon: <FileText className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: "1", starter: "10", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
-    { label: t("pricing.websites"), icon: <Globe className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: "1", starter: "2", pro: "10", agency: t("pricing.unlimited") },
-    { label: t("pricing.wordpress"), icon: <Globe className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: true, starter: true, pro: true, agency: true },
-    { label: t("pricing.shopify"), icon: <Store className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: false, starter: false, pro: true, agency: true },
-    { label: t("pricing.googleIndexing"), icon: <Search className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: false, starter: false, pro: true, agency: true },
-    { label: t("pricing.internalLinks"), icon: <Link2 className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: false, starter: false, pro: true, agency: true },
-    { label: t("pricing.apiAccess"), icon: <Code className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: false, starter: false, pro: true, agency: true },
-    { label: t("pricing.teamCollaboration"), icon: <Users className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: false, starter: false, pro: false, agency: true },
-    { label: t("pricing.support"), icon: <Headphones className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: "—", starter: t("pricing.email"), pro: t("pricing.priority"), agency: t("pricing.dedicated") },
+    { label: "Credits / month", icon: <Layers className="h-4 w-4 text-primary" />, free: "10", starter: "100 – 500", pro: "300 – 900", agency: "500 – 1,000" },
+    { label: t("pricing.aiGenerations"), icon: <Sparkles className="h-4 w-4 text-primary" />, free: "10", starter: "100", pro: "1,000", agency: "5,000" },
+    { label: t("pricing.campaigns"), icon: <Zap className="h-4 w-4 text-primary" />, free: "1", starter: "10", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
+    { label: t("pricing.templates"), icon: <FileText className="h-4 w-4 text-primary" />, free: "1", starter: "10", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
+    { label: t("pricing.websites"), icon: <Globe className="h-4 w-4 text-primary" />, free: "1", starter: "2", pro: "10", agency: t("pricing.unlimited") },
+    { label: t("pricing.wordpress"), icon: <Globe className="h-4 w-4 text-primary" />, free: true, starter: true, pro: true, agency: true },
+    { label: t("pricing.shopify"), icon: <Store className="h-4 w-4 text-primary" />, free: false, starter: false, pro: true, agency: true },
+    { label: t("pricing.googleIndexing"), icon: <Search className="h-4 w-4 text-primary" />, free: false, starter: false, pro: true, agency: true },
+    { label: t("pricing.internalLinks"), icon: <Link2 className="h-4 w-4 text-primary" />, free: false, starter: false, pro: true, agency: true },
+    { label: t("pricing.apiAccess"), icon: <Code className="h-4 w-4 text-primary" />, free: false, starter: false, pro: true, agency: true },
+    { label: t("pricing.teamCollaboration"), icon: <Users className="h-4 w-4 text-primary" />, free: false, starter: false, pro: false, agency: true },
+    { label: t("pricing.support"), icon: <Headphones className="h-4 w-4 text-primary" />, free: "—", starter: t("pricing.email"), pro: t("pricing.priority"), agency: t("pricing.dedicated") },
   ];
 
 
@@ -206,43 +205,88 @@ export function PricingSection() {
         </motion.div>
 
 
-        <ScrollReveal className="mt-16 max-w-5xl mx-auto">
-          <Card className="rounded-2xl overflow-hidden border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)]">
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-xl font-bold">{t("pricing.comparePlans")}</CardTitle>
-              <p className="text-sm text-[hsl(220,10%,70%)]">{t("pricing.compareDesc")}</p>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[hsl(96,90%,45%,0.08)] bg-[hsl(220,35%,10%)]">
-                      <th className="text-left py-3.5 px-5 font-semibold text-foreground">{t("pricing.feature")}</th>
-                      {plans.map((p) => (
-                        <th key={p.name} className="text-center py-3.5 px-5">
-                          <div className="flex flex-col items-center gap-1">
-                            <span className={`font-semibold ${p.popular ? "text-[hsl(96,80%,52%)]" : "text-foreground"}`}>{p.name}</span>
-                            <span className="text-xs text-[hsl(220,10%,64%)] tabular-nums">€{isYearly ? Math.round(p.monthlyPrice * (1 - YEARLY_DISCOUNT)) : p.monthlyPrice}{t("pricing.mo")}</span>
+        <ScrollReveal className="mt-24 max-w-6xl mx-auto">
+          <div className="mb-10 text-center">
+            <span className="section-badge mb-5">{t("pricing.feature")}</span>
+            <h3 className="text-3xl font-extrabold text-foreground md:text-5xl">{t("pricing.comparePlans")}</h3>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground md:text-base">{t("pricing.compareDesc")}</p>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-surface">
+            <div className="overflow-x-auto" role="region" aria-label={t("pricing.comparePlans")} tabIndex={0}>
+              <table className="w-full min-w-[940px] border-separate border-spacing-0 text-sm">
+                <caption className="sr-only">{t("pricing.compareDesc")}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col" className="w-[260px] border-b border-border bg-muted/50 px-6 py-6 text-left align-bottom">
+                      <span className="text-base font-bold text-foreground">{t("pricing.feature")}</span>
+                      <span className="mt-1 block text-xs font-normal text-muted-foreground">Everything included, side by side</span>
+                    </th>
+                    {plans.map((plan) => {
+                      const price = isYearly ? Math.round(plan.monthlyPrice * (1 - YEARLY_DISCOUNT)) : plan.monthlyPrice;
+                      return (
+                        <th
+                          key={plan.key}
+                          scope="col"
+                          className={`relative min-w-[170px] border-b border-border px-5 py-6 text-left align-top ${plan.popular ? "bg-primary/10" : "bg-muted/50"}`}
+                        >
+                          {plan.popular && <span className="absolute inset-x-0 top-0 h-1 bg-primary" />}
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${plan.popular ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground"}`}>
+                              {plan.icon}
+                            </span>
+                            <span className="font-bold text-foreground">{plan.name}</span>
                           </div>
+                          <div className="mt-4 flex items-end gap-1">
+                            <span className="text-2xl font-extrabold tabular-nums text-foreground">€{price}</span>
+                            <span className="pb-0.5 text-xs font-normal text-muted-foreground">{t("pricing.mo")}</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={plan.popular ? "default" : "outline"}
+                            className="mt-4 h-9 w-full rounded-lg"
+                            onClick={() => plan.monthlyPrice === 0 ? navigate("/auth") : handleCheckout(plan.key, creditQty[plan.key] ?? 1)}
+                            disabled={checkoutPlan !== null}
+                          >
+                            {checkoutPlan === plan.key ? <Loader2 className="h-4 w-4 animate-spin" /> : plan.cta}
+                          </Button>
                         </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparisonFeatures.map((row, index) => (
+                    <tr key={row.label} className="group">
+                      <th
+                        scope="row"
+                        className={`border-b border-border/60 px-6 py-4 text-left font-medium text-foreground transition-colors group-hover:bg-primary/5 ${index % 2 ? "bg-muted/25" : "bg-card"}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">{row.icon}</span>
+                          {row.label}
+                        </div>
+                      </th>
+                      {(["free", "starter", "pro", "agency"] as const).map((planKey) => (
+                        <td
+                          key={planKey}
+                          className={`border-b border-border/60 px-5 py-4 text-left transition-colors group-hover:bg-primary/5 ${index % 2 ? "bg-muted/25" : "bg-card"} ${planKey === "pro" ? "border-x border-x-primary/10 bg-primary/5" : ""}`}
+                        >
+                          <TableCell val={row[planKey]} />
+                        </td>
                       ))}
                     </tr>
-                  </thead>
-                  <tbody>
-                    {comparisonFeatures.map((row, i) => (
-                      <tr key={row.label} className={`border-b border-[hsl(96,90%,45%,0.06)] last:border-0 transition-colors hover:bg-[hsl(96,90%,45%,0.03)] ${i % 2 === 1 ? "bg-[hsl(220,35%,7%)]" : ""}`}>
-                        <td className="py-3.5 px-5"><div className="flex items-center gap-2.5">{row.icon}<span className="text-foreground font-medium">{row.label}</span></div></td>
-                        <td className="py-3.5 px-5 text-center"><TableCell val={row.free} /></td>
-                        <td className="py-3.5 px-5 text-center"><TableCell val={row.starter} /></td>
-                        <td className="py-3.5 px-5 text-center bg-[hsl(96,90%,45%,0.02)]"><TableCell val={row.pro} /></td>
-                        <td className="py-3.5 px-5 text-center"><TableCell val={row.agency} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex items-center justify-between gap-4 border-t border-border bg-muted/30 px-6 py-4">
+              <p className="text-xs text-muted-foreground">Scroll horizontally on smaller screens to compare every plan.</p>
+              <Button variant="ghost" size="sm" asChild className="shrink-0 text-primary">
+                <Link to="/auth">{t("pricing.getStarted")} <ArrowRight className="ml-1.5 h-4 w-4" /></Link>
+              </Button>
+            </div>
+          </div>
         </ScrollReveal>
 
       </div>
