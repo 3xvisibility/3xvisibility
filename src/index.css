@@ -195,40 +195,40 @@
   --card-foreground: 240 12% 8%;
   --popover: 0 0% 100%;
   --popover-foreground: 240 12% 8%;
-  --primary: 258 88% 58%;
-  --primary-foreground: 0 0% 100%;
+  --primary: 91 96% 43%;
+  --primary-foreground: 220 60% 8%;
   --secondary: 250 30% 97%;
   --secondary-foreground: 240 12% 8%;
   --muted: 250 30% 97%;
   --muted-foreground: 240 8% 42%;
   --accent: 250 40% 96%;
-  --accent-foreground: 258 80% 45%;
+  --accent-foreground: 91 96% 30%;
   --border: 250 20% 90%;
   --input: 250 20% 90%;
-  --ring: 258 88% 58%;
+  --ring: 91 96% 43%;
   --success: 152 62% 38%;
   background: hsl(0 0% 100%);
   color: hsl(240 12% 8%);
 }
 
 .landing-page .section-badge {
-  background: hsl(258 88% 58% / 0.08);
-  border: 1px solid hsl(258 88% 58% / 0.18);
-  color: hsl(258 70% 48%);
+  background: hsl(91 96% 43% / 0.08);
+  border: 1px solid hsl(91 96% 43% / 0.18);
+  color: hsl(91 96% 30%);
 }
 
 .landing-page .text-gradient-primary {
-  background: linear-gradient(100deg, hsl(258 88% 58%), hsl(212 92% 55%));
+  background: linear-gradient(100deg, hsl(91 96% 32%), hsl(96 90% 42%));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .landing-page .glow-purple {
-  box-shadow: 0 24px 80px hsl(258 88% 58% / 0.18), 0 8px 30px hsl(212 92% 55% / 0.10);
+  box-shadow: 0 24px 80px hsl(91 96% 43% / 0.18), 0 8px 30px hsl(96 92% 55% / 0.10);
 }
 .landing-page .glow-purple-sm {
-  box-shadow: 0 12px 40px hsl(258 88% 58% / 0.12);
+  box-shadow: 0 12px 40px hsl(91 96% 43% / 0.12);
 }
 
 

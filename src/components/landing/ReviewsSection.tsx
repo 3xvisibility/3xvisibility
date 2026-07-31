@@ -17,15 +17,15 @@ type Review = { name: string; role: string; avatar: string; text: string };
 
 function ReviewCard({ review }: { review: Review }) {
   return (
-    <div className="flex-shrink-0 w-[300px] rounded-2xl border border-[hsl(258,88%,58%,0.1)] bg-[hsl(250,30%,98%)] p-5 hover:border-[hsl(258,88%,58%,0.2)] transition-all duration-300">
+    <div className="flex-shrink-0 w-[300px] rounded-2xl border border-[hsl(91,96%,43%,0.1)] bg-[hsl(250,30%,98%)] p-5 hover:border-[hsl(91,96%,43%,0.2)] transition-all duration-300">
       <div className="flex items-center gap-0.5 mb-3">
         {[...Array(5)].map((_, i) => (
           <Star key={i} className="h-3.5 w-3.5 fill-[hsl(38,90%,45%)] text-[hsl(38,90%,45%)]" />
         ))}
       </div>
       <p className="text-[13px] text-[hsl(220,12%,52%)] leading-relaxed mb-4">"{review.text}"</p>
-      <div className="flex items-center gap-3 pt-3 border-t border-[hsl(258,88%,58%,0.08)]">
-        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(258,88%,58%,0.2)] to-[hsl(258,88%,58%,0.2)] flex items-center justify-center text-[10px] font-bold text-[hsl(258,88%,52%)]">
+      <div className="flex items-center gap-3 pt-3 border-t border-[hsl(91,96%,43%,0.08)]">
+        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(91,96%,43%,0.2)] to-[hsl(91,96%,43%,0.2)] flex items-center justify-center text-[10px] font-bold text-[hsl(91,96%,32%)]">
           {review.avatar}
         </div>
         <div>

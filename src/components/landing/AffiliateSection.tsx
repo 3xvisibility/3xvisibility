@@ -33,7 +33,7 @@ export function AffiliateSection() {
         <ScrollReveal delay={0.1}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {benefits.map((b, i) => (
-              <div key={i} className="p-6 rounded-2xl border border-[hsl(258,88%,58%,0.1)] bg-[hsl(250,30%,98%)] hover:border-[hsl(258,88%,58%,0.2)] transition-all duration-300 group">
+              <div key={i} className="p-6 rounded-2xl border border-[hsl(91,96%,43%,0.1)] bg-[hsl(250,30%,98%)] hover:border-[hsl(91,96%,43%,0.2)] transition-all duration-300 group">
                 <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                   <b.icon className="h-6 w-6 text-primary" />
                 </div>
@@ -52,12 +52,12 @@ export function AffiliateSection() {
                 <p className="text-xs text-[hsl(220,12%,45%)] mt-1">{t("affiliateLanding.commissionRate")}</p>
                 <p className="text-[10px] text-primary/80 mt-0.5">{t("affiliateLanding.yearlyNote")}</p>
               </div>
-              <div className="h-10 w-px bg-[hsl(258,88%,58%,0.15)]" />
+              <div className="h-10 w-px bg-[hsl(91,96%,43%,0.15)]" />
               <div>
                 <p className="text-3xl font-extrabold text-foreground">$25</p>
                 <p className="text-xs text-[hsl(220,12%,45%)] mt-1">{t("affiliateLanding.minPayout")}</p>
               </div>
-              <div className="h-10 w-px bg-[hsl(258,88%,58%,0.15)]" />
+              <div className="h-10 w-px bg-[hsl(91,96%,43%,0.15)]" />
               <div>
                 <p className="text-3xl font-extrabold text-foreground">∞</p>
                 <p className="text-xs text-[hsl(220,12%,45%)] mt-1">{t("affiliateLanding.unlimited")}</p>

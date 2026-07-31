@@ -192,12 +192,12 @@ export function LandingNav() {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className={`transition-all duration-500 ${scrolled ? "bg-white/92 backdrop-blur-2xl border-b border-[hsl(258,88%,58%,0.10)] shadow-[0_2px_20px_hsl(258,88%,58%,0.06)]" : "bg-white/70 backdrop-blur-xl"}`}
+        className={`transition-all duration-500 ${scrolled ? "bg-white/92 backdrop-blur-2xl border-b border-[hsl(91,96%,43%,0.10)] shadow-[0_2px_20px_hsl(91,96%,43%,0.06)]" : "bg-white/70 backdrop-blur-xl"}`}
       >
         <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-8">
           <Link to="/" className="flex items-center">
-            <span className="group/logo relative inline-flex items-center rounded-full bg-[linear-gradient(135deg,hsl(240,18%,13%),hsl(245,22%,8%))] px-4 py-2 ring-1 ring-inset ring-white/10 shadow-[0_6px_20px_-8px_hsl(258,88%,40%,0.55)] transition-all duration-300 hover:ring-[hsl(258,88%,62%,0.45)] hover:shadow-[0_10px_28px_-8px_hsl(258,88%,55%,0.5)]">
-              <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(120%_120%_at_0%_0%,hsl(258,88%,62%,0.22),transparent_60%)]" />
+            <span className="group/logo relative inline-flex items-center rounded-full bg-[linear-gradient(135deg,hsl(240,18%,13%),hsl(245,22%,8%))] px-4 py-2 ring-1 ring-inset ring-white/10 shadow-[0_6px_20px_-8px_hsl(91,96%,30%,0.55)] transition-all duration-300 hover:ring-[hsl(96,92%,55%,0.45)] hover:shadow-[0_10px_28px_-8px_hsl(91,96%,40%,0.5)]">
+              <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(120%_120%_at_0%_0%,hsl(96,92%,55%,0.22),transparent_60%)]" />
               <img src={logo3x} alt="3X Visibility logo" width={1107} height={261} className="relative h-6 sm:h-7 w-auto object-contain" />
             </span>
           </Link>
@@ -213,7 +213,7 @@ export function LandingNav() {
                   aria-current={isActive ? "true" : undefined}
                   className={`text-sm px-4 py-2 rounded-lg transition-colors duration-200 font-medium ${
                     isActive
-                      ? "text-primary bg-[hsl(258,88%,58%,0.1)]"
+                      ? "text-primary bg-[hsl(91,96%,43%,0.1)]"
                       : "text-[hsl(220,12%,48%)] hover:text-foreground"
                   }`}
                 >
@@ -225,7 +225,7 @@ export function LandingNav() {
 
           <div className="hidden lg:flex items-center gap-2">
             <LanguageSwitcher variant="ghost" size="icon" className="h-9 w-auto px-2 text-[hsl(220,12%,45%)] hover:text-foreground rounded-lg" />
-            <Button variant="ghost" size="sm" className="text-sm h-9 px-4 rounded-lg font-medium text-[hsl(220,12%,48%)] hover:text-foreground hover:bg-[hsl(258,88%,58%,0.08)]" asChild>
+            <Button variant="ghost" size="sm" className="text-sm h-9 px-4 rounded-lg font-medium text-[hsl(220,12%,48%)] hover:text-foreground hover:bg-[hsl(91,96%,43%,0.08)]" asChild>
               <Link to="/auth">{t("nav.login")}</Link>
             </Button>
             <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm h-9 px-5 rounded-lg font-semibold shadow-lg shadow-primary/20" asChild>
@@ -240,7 +240,7 @@ export function LandingNav() {
 
         <AnimatePresence>
           {mobileOpen && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="lg:hidden border-t border-[hsl(258,88%,58%,0.1)] overflow-hidden bg-[hsl(250,30%,100%)]/95 backdrop-blur-2xl">
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="lg:hidden border-t border-[hsl(91,96%,43%,0.1)] overflow-hidden bg-[hsl(250,30%,100%)]/95 backdrop-blur-2xl">
               <div className="px-4 py-4 space-y-1">
                 {navLinks.map((l) => {
                   const isActive = activeId === l.href.replace("#", "");
@@ -251,8 +251,8 @@ export function LandingNav() {
                       aria-current={isActive ? "true" : undefined}
                       className={`block text-sm py-2.5 px-3 rounded-lg transition-all ${
                         isActive
-                          ? "text-primary bg-[hsl(258,88%,58%,0.1)]"
-                          : "text-[hsl(220,12%,48%)] hover:text-foreground hover:bg-[hsl(258,88%,58%,0.08)]"
+                          ? "text-primary bg-[hsl(91,96%,43%,0.1)]"
+                          : "text-[hsl(220,12%,48%)] hover:text-foreground hover:bg-[hsl(91,96%,43%,0.08)]"
                       }`}
                       onClick={(e) => handleNavClick(e, l.href)}
                     >
@@ -260,9 +260,9 @@ export function LandingNav() {
                     </a>
                   );
                 })}
-                <div className="pt-3 flex flex-col gap-2 border-t border-[hsl(258,88%,58%,0.1)] mt-3">
-                  <LanguageSwitcher variant="outline" size="sm" className="justify-start gap-2 rounded-lg h-10 border-[hsl(258,88%,58%,0.15)]" />
-                  <Button variant="outline" size="sm" className="rounded-lg h-10 border-[hsl(258,88%,58%,0.15)] text-foreground" asChild>
+                <div className="pt-3 flex flex-col gap-2 border-t border-[hsl(91,96%,43%,0.1)] mt-3">
+                  <LanguageSwitcher variant="outline" size="sm" className="justify-start gap-2 rounded-lg h-10 border-[hsl(91,96%,43%,0.15)]" />
+                  <Button variant="outline" size="sm" className="rounded-lg h-10 border-[hsl(91,96%,43%,0.15)] text-foreground" asChild>
                     <Link to="/auth">{t("nav.login")}</Link>
                   </Button>
                   <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-10 font-semibold" asChild>
