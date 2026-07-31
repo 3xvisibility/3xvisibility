@@ -88,7 +88,7 @@ function ModelIconTooltip({
 function ModelIcons({ marks }: { marks: React.ComponentType<{ className?: string }>[] }) {
   return (
     <TooltipProvider delayDuration={100}>
-      <ul className="flex list-none flex-wrap items-center justify-end gap-1.5 p-0 md:justify-start">
+      <ul className="flex list-none flex-wrap items-center justify-start gap-1.5 p-0">
         {marks.map((Mark, i) => (
           <li key={i}>
             <ModelIconTooltip Mark={Mark} name={MARK_NAMES.get(Mark) ?? "AI model"} />
