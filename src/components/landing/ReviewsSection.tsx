@@ -17,20 +17,20 @@ type Review = { name: string; role: string; avatar: string; text: string };
 
 function ReviewCard({ review }: { review: Review }) {
   return (
-    <div className="flex-shrink-0 w-[300px] rounded-2xl border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)] p-5 hover:border-[hsl(96,90%,45%,0.2)] transition-all duration-300">
+    <div className="flex-shrink-0 w-[300px] rounded-2xl border border-[hsl(258,88%,58%,0.1)] bg-[hsl(250,30%,98%)] p-5 hover:border-[hsl(258,88%,58%,0.2)] transition-all duration-300">
       <div className="flex items-center gap-0.5 mb-3">
         {[...Array(5)].map((_, i) => (
-          <Star key={i} className="h-3.5 w-3.5 fill-[hsl(38,92%,60%)] text-[hsl(38,92%,60%)]" />
+          <Star key={i} className="h-3.5 w-3.5 fill-[hsl(38,90%,45%)] text-[hsl(38,90%,45%)]" />
         ))}
       </div>
-      <p className="text-[13px] text-[hsl(220,10%,82%)] leading-relaxed mb-4">"{review.text}"</p>
-      <div className="flex items-center gap-3 pt-3 border-t border-[hsl(96,90%,45%,0.08)]">
-        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(96,90%,45%,0.2)] to-[hsl(96,92%,62%,0.2)] flex items-center justify-center text-[10px] font-bold text-[hsl(96,80%,52%)]">
+      <p className="text-[13px] text-[hsl(220,12%,52%)] leading-relaxed mb-4">"{review.text}"</p>
+      <div className="flex items-center gap-3 pt-3 border-t border-[hsl(258,88%,58%,0.08)]">
+        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(258,88%,58%,0.2)] to-[hsl(258,88%,58%,0.2)] flex items-center justify-center text-[10px] font-bold text-[hsl(258,88%,52%)]">
           {review.avatar}
         </div>
         <div>
           <p className="text-xs font-semibold text-foreground">{review.name}</p>
-          <p className="text-[10px] text-[hsl(220,10%,64%)]">{review.role}</p>
+          <p className="text-[10px] text-[hsl(220,12%,38%)]">{review.role}</p>
         </div>
       </div>
     </div>
@@ -53,13 +53,13 @@ export function ReviewsSection() {
         <div className="text-center max-w-2xl mx-auto">
           <span className="section-badge mb-6">{t("reviews.badge")}</span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em]">{t("reviews.title")}</h2>
-          <p className="mt-3 text-sm text-[hsl(220,10%,70%)]">{t("reviews.description")}</p>
+          <p className="mt-3 text-sm text-[hsl(220,12%,42%)]">{t("reviews.description")}</p>
         </div>
       </ScrollReveal>
       <ScrollReveal delay={0.1}>
         <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[hsl(220,60%,4%)] to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[hsl(220,60%,4%)] to-transparent z-10 pointer-events-none" />
+          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[hsl(250,30%,100%)] to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[hsl(250,30%,100%)] to-transparent z-10 pointer-events-none" />
           <div className="flex gap-4 animate-scroll-left" style={{ width: "max-content" }}>
             {allReviews.map((review, i) => (<ReviewCard key={`r-${i}`} review={review} />))}
           </div>

@@ -24,12 +24,12 @@ export function BrandLogos() {
       transition={{ duration: 0.8, delay: 0.8 }}
       className="mt-16 md:mt-20 text-center"
     >
-      <p className="text-[11px] uppercase tracking-[0.2em] text-[hsl(220,10%,58%)] font-medium mb-8">
+      <p className="text-[11px] uppercase tracking-[0.2em] text-[hsl(220,12%,34%)] font-medium mb-8">
         {t("hero.trustedBy")}
       </p>
       <div className="relative overflow-hidden max-w-5xl mx-auto">
-        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-[hsl(220,60%,4%)] to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-[hsl(220,60%,4%)] to-transparent z-10 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-[hsl(250,30%,100%)] to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-[hsl(250,30%,100%)] to-transparent z-10 pointer-events-none" />
 
         <motion.div
           className="flex items-center gap-16 md:gap-24 w-max"
@@ -47,8 +47,8 @@ export function BrandLogos() {
               key={`${logo.name}-${i}`}
               className="flex-shrink-0 flex items-center gap-2.5 opacity-40 hover:opacity-70 transition-opacity duration-300"
             >
-              <logo.icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
-              <span className="text-sm md:text-base font-semibold text-white tracking-tight whitespace-nowrap">
+              <logo.icon className="h-5 w-5 md:h-6 md:w-6 text-foreground/60" />
+              <span className="text-sm md:text-base font-semibold text-foreground/60 tracking-tight whitespace-nowrap">
                 {logo.name}
               </span>
               {"soon" in logo && logo.soon && (

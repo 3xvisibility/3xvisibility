@@ -61,7 +61,7 @@ function SmoothScrollLink({ href, children }: { href: string; children: React.Re
   };
 
   return (
-    <a href={href} onClick={handleClick} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
+    <a href={href} onClick={handleClick} className="text-xs text-[hsl(250,10%,25%)] hover:text-foreground transition-colors duration-200">
       {children}
     </a>
   );
@@ -103,40 +103,40 @@ export function LandingFooter() {
   };
 
   return (
-    <footer className="border-t border-[hsl(96,90%,45%,0.08)] py-14 md:py-16">
+    <footer className="border-t border-[hsl(258,88%,58%,0.08)] py-14 md:py-16">
       <div className="container mx-auto px-4 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center">
-              <img src={logo3x} alt="3X Visibility logo" width={1107} height={261} loading="lazy" className="h-9 w-auto object-contain" />
+              <span className="inline-flex items-center rounded-xl bg-[hsl(240,14%,10%)] px-3 py-1.5"><img src={logo3x} alt="3X Visibility logo" width={1107} height={261} loading="lazy" className="h-7 w-auto object-contain" /></span>
             </Link>
-            <p className="mt-3 text-xs text-[hsl(250,15%,40%)] leading-relaxed max-w-[200px]">
+            <p className="mt-3 text-xs text-[hsl(250,10%,25%)] leading-relaxed max-w-[200px]">
               {t("footer.description")}
             </p>
           </div>
 
           {Object.entries(footerLinks).map(([group, links]) => (
             <div key={group}>
-              <h4 className="font-semibold text-[11px] uppercase tracking-[0.15em] text-[hsl(250,15%,40%)] mb-4">{group}</h4>
+              <h4 className="font-semibold text-[11px] uppercase tracking-[0.15em] text-[hsl(250,10%,25%)] mb-4">{group}</h4>
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.label} className="flex items-center gap-1.5 flex-wrap">
                     {link.comingSoon ? (
                       <button
                         onClick={handleComingSoon}
-                        className="text-xs text-[hsl(250,15%,35%)] cursor-default transition-colors duration-200 flex items-center gap-1"
+                        className="text-xs text-[hsl(250,10%,25%)] cursor-default transition-colors duration-200 flex items-center gap-1"
                       >
                         {link.label}
                       </button>
                     ) : link.isHash ? (
                       <SmoothScrollLink href={link.href}>{link.label}</SmoothScrollLink>
                     ) : (
-                      <Link to={link.href} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
+                      <Link to={link.href} className="text-xs text-[hsl(250,10%,25%)] hover:text-foreground transition-colors duration-200">
                         {link.label}
                       </Link>
                     )}
                     {link.badge && (
-                      <span className="inline-flex items-center rounded-full bg-[hsl(96,90%,45%,0.12)] px-1.5 py-0.5 text-[9px] font-medium text-[hsl(96,90%,55%)] uppercase tracking-wide">
+                      <span className="inline-flex items-center rounded-full bg-[hsl(258,88%,58%,0.12)] px-1.5 py-0.5 text-[9px] font-medium text-[hsl(258,88%,52%)] uppercase tracking-wide">
                         {link.badge}
                       </span>
                     )}
@@ -147,8 +147,8 @@ export function LandingFooter() {
           ))}
         </div>
 
-        <div className="mt-12 pt-6 border-t border-[hsl(96,90%,45%,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[11px] text-[hsl(250,15%,35%)]">
+        <div className="mt-12 pt-6 border-t border-[hsl(258,88%,58%,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-[11px] text-[hsl(250,10%,25%)]">
             &copy; {new Date().getFullYear()} 3XVISIBILITY. {t("footer.rights")}
           </p>
           <div className="flex items-center gap-4">
@@ -157,7 +157,7 @@ export function LandingFooter() {
                 key={s.label}
                 href={s.href}
                 aria-label={s.label}
-                className="text-[hsl(250,15%,45%)] hover:text-foreground transition-colors"
+                className="text-[hsl(250,10%,25%)] hover:text-foreground transition-colors"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
                   <path d={s.path} />

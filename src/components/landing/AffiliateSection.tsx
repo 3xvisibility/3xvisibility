@@ -25,7 +25,7 @@ export function AffiliateSection() {
             {t("affiliateLanding.title1")}{" "}
             <span className="text-primary">{t("affiliateLanding.title2")}</span>
           </h2>
-          <p className="text-[hsl(220,10%,74%)] mt-4 max-w-2xl mx-auto text-base md:text-lg">
+          <p className="text-[hsl(220,12%,45%)] mt-4 max-w-2xl mx-auto text-base md:text-lg">
             {t("affiliateLanding.description")}
           </p>
         </ScrollReveal>
@@ -33,12 +33,12 @@ export function AffiliateSection() {
         <ScrollReveal delay={0.1}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {benefits.map((b, i) => (
-              <div key={i} className="p-6 rounded-2xl border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)] hover:border-[hsl(96,90%,45%,0.2)] transition-all duration-300 group">
+              <div key={i} className="p-6 rounded-2xl border border-[hsl(258,88%,58%,0.1)] bg-[hsl(250,30%,98%)] hover:border-[hsl(258,88%,58%,0.2)] transition-all duration-300 group">
                 <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                   <b.icon className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">{b.title}</h3>
-                <p className="text-sm text-[hsl(220,10%,74%)]">{b.desc}</p>
+                <p className="text-sm text-[hsl(220,12%,45%)]">{b.desc}</p>
               </div>
             ))}
           </div>
@@ -49,18 +49,18 @@ export function AffiliateSection() {
             <div className="flex items-center gap-8 text-center">
               <div>
                 <p className="text-3xl font-extrabold text-primary">5%</p>
-                <p className="text-xs text-[hsl(220,10%,74%)] mt-1">{t("affiliateLanding.commissionRate")}</p>
+                <p className="text-xs text-[hsl(220,12%,45%)] mt-1">{t("affiliateLanding.commissionRate")}</p>
                 <p className="text-[10px] text-primary/80 mt-0.5">{t("affiliateLanding.yearlyNote")}</p>
               </div>
-              <div className="h-10 w-px bg-[hsl(96,90%,45%,0.15)]" />
+              <div className="h-10 w-px bg-[hsl(258,88%,58%,0.15)]" />
               <div>
                 <p className="text-3xl font-extrabold text-foreground">$25</p>
-                <p className="text-xs text-[hsl(220,10%,74%)] mt-1">{t("affiliateLanding.minPayout")}</p>
+                <p className="text-xs text-[hsl(220,12%,45%)] mt-1">{t("affiliateLanding.minPayout")}</p>
               </div>
-              <div className="h-10 w-px bg-[hsl(96,90%,45%,0.15)]" />
+              <div className="h-10 w-px bg-[hsl(258,88%,58%,0.15)]" />
               <div>
                 <p className="text-3xl font-extrabold text-foreground">∞</p>
-                <p className="text-xs text-[hsl(220,10%,74%)] mt-1">{t("affiliateLanding.unlimited")}</p>
+                <p className="text-xs text-[hsl(220,12%,45%)] mt-1">{t("affiliateLanding.unlimited")}</p>
               </div>
             </div>
           </div>
