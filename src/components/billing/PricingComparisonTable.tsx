@@ -777,7 +777,9 @@ export function PricingComparisonTable({
             {/* CTA footer */}
             <tbody>
               <tr>
-                <td className="py-6 px-5" />
+                <th scope="row" className="py-6 px-5 text-left font-normal">
+                  <span className="sr-only">{t("billing.comparePlans")}</span>
+                </th>
                 {planMeta.map((meta) => {
                   const btn = getButtonState(meta.name);
                   const isLoading = loadingPlan === meta.name;
@@ -787,8 +789,11 @@ export function PricingComparisonTable({
                         className="w-full rounded-lg h-10 text-sm font-semibold transition-all duration-200 active:scale-[0.98]"
                         variant={btn.variant}
                         disabled={btn.disabled || isLoading}
+                        aria-label={`${btn.label} — ${PLAN_FEATURES[meta.name].label}`}
+                        aria-busy={isLoading}
                         onClick={() => !btn.disabled && onPlanClick(meta.name)}
                       >
+
                         {isLoading ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : btn.disabled ? (
