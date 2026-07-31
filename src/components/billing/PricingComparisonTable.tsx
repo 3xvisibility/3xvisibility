@@ -677,26 +677,31 @@ export function PricingComparisonTable({
                       const rowKey = `${plan}-${group.id}-${row.id}`;
                       const isOpen = expandedRows.includes(rowKey);
                       const explanation = row.details || row.hint;
+                      const isRich = Boolean(row.brands || row.models);
+                      const expandable = Boolean(explanation) || isRich;
+                      const rowLabel = row.labelKey ? t(row.labelKey) : row.label;
                       return (
                         <div key={row.id} className="border-b border-border/50">
-                          <button
-                            type="button"
-                            aria-expanded={isOpen}
-                            aria-controls={`${rowKey}-panel`}
-                            onClick={() => toggleRow(rowKey)}
-                            className="flex w-full min-h-11 items-center justify-between gap-3 px-4 py-3 text-left outline-none active:bg-muted/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60"
-                          >
-                            <span className="flex min-w-0 items-center gap-1.5">
-                              <span className="text-sm font-medium text-foreground">
-                                {row.labelKey ? t(row.labelKey) : row.label}
-                              </span>
-                              {explanation && (
+                          {expandable ? (
+                            <button
+                              type="button"
+                              aria-expanded={isOpen}
+                              aria-controls={`${rowKey}-panel`}
+                              onClick={() => toggleRow(rowKey)}
+                              className="flex w-full min-h-11 items-center justify-between gap-3 px-4 py-3 text-left outline-none active:bg-muted/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60"
+                            >
+                              <span className="flex min-w-0 items-center gap-1.5">
+                                <span className="text-sm font-medium text-foreground">{rowLabel}</span>
                                 <Info className="h-3.5 w-3.5 shrink-0 text-primary/70" aria-hidden="true" />
-                              )}
-                            </span>
-                            <span className="flex shrink-0 items-center gap-2 text-right">
-                              {renderCell(row, plan)}
-                              {explanation && (
+                              </span>
+                              <span className="flex shrink-0 items-center gap-2 text-right">
+                                {isRich ? (
+                                  <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                                    {(row.brands?.[plan] ?? row.models?.[plan] ?? []).length}
+                                  </span>
+                                ) : (
+                                  renderCell(row, plan)
+                                )}
                                 <ChevronDown
                                   aria-hidden="true"
                                   className={cn(
@@ -704,15 +709,26 @@ export function PricingComparisonTable({
                                     isOpen && "rotate-180"
                                   )}
                                 />
-                              )}
-                            </span>
-                          </button>
-                          {explanation && isOpen && (
+                              </span>
+                            </button>
+                          ) : (
+                            <div className="flex w-full min-h-11 items-center justify-between gap-3 px-4 py-3">
+                              <span className="text-sm font-medium text-foreground">{rowLabel}</span>
+                              <span className="shrink-0 text-right">{renderCell(row, plan)}</span>
+                            </div>
+                          )}
+                          {expandable && isOpen && (
                             <div
                               id={`${rowKey}-panel`}
-                              className="space-y-2 bg-muted/40 px-4 pb-3 pt-1 text-xs leading-relaxed text-muted-foreground"
+                              className="space-y-2 bg-muted/40 px-4 pb-3 pt-2 text-xs leading-relaxed text-muted-foreground"
                             >
-                              <p>{explanation}</p>
+                              {isRich && (
+                                <div className="pb-1">
+                                  <span className="sr-only">{`${rowLabel} included in ${plan} plan`}</span>
+                                  {renderCell(row, plan)}
+                                </div>
+                              )}
+                              {explanation && <p>{explanation}</p>}
                               {row.examples && row.examples.length > 0 && (
                                 <ul className="list-disc space-y-1 pl-4">
                                   {row.examples.slice(0, 3).map((ex, i) => (
@@ -733,6 +749,7 @@ export function PricingComparisonTable({
                         </div>
                       );
                     })}
+
 
                   </section>
                 ))}
