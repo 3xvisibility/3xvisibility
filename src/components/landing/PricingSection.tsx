@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const YEARLY_DISCOUNT = 2 / 12; // Save 2 months
 
-function TableCell({ val }: { val: string | boolean }) {
+function TableCell({ val }: { val: string | boolean | JSX.Element }) {
   if (typeof val === "boolean") {
     return val ? (
       <div className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-success/15">
@@ -27,8 +27,22 @@ function TableCell({ val }: { val: string | boolean }) {
       </div>
     );
   }
+  if (typeof val !== "string") return val;
   return <span className="text-sm font-semibold tabular-nums text-foreground">{val}</span>;
 }
+
+function ModelIcons({ marks }: { marks: React.ComponentType<{ className?: string }>[] }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {marks.map((Mark, i) => (
+        <span key={i} className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted/60">
+          <Mark className="h-4 w-4" />
+        </span>
+      ))}
+    </div>
+  );
+}
+
 
 export function PricingSection() {
   const [isYearly, setIsYearly] = useState(false);
