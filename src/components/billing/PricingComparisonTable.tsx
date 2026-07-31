@@ -39,6 +39,60 @@ import {
 } from "@/components/ui/tooltip";
 
 
+/**
+ * Tooltip trigger that also works on touch screens (tap toggles),
+ * stays inside the viewport on small screens, and closes on Escape.
+ */
+function IconTooltip({
+  label,
+  title,
+  detail,
+  className,
+  children,
+}: {
+  label: string;
+  title: string;
+  detail?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Tooltip open={open} onOpenChange={setOpen}>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          onClick={() => setOpen((v) => !v)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setOpen(false);
+          }}
+          className={cn(
+            "inline-flex cursor-help items-center justify-center rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            className
+          )}
+        >
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        align="center"
+        sideOffset={6}
+        collisionPadding={12}
+        avoidCollisions
+        role="tooltip"
+        className="z-50 max-w-[min(220px,calc(100vw-2rem))] break-words"
+      >
+        <p className="text-xs font-semibold">{title}</p>
+        {detail && <p className="text-[11px] text-muted-foreground">{detail}</p>}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+
 
 
 interface PricingComparisonTableProps {
@@ -456,26 +510,19 @@ export function PricingComparisonTable({
     if (row.brands) {
       return (
         <TooltipProvider delayDuration={100}>
-          <ul className="flex list-none flex-wrap items-center gap-2 p-0">
+          <ul className="flex list-none flex-wrap items-center justify-end gap-1.5 p-0 md:justify-start md:gap-2">
             {row.brands[plan].map((b) => {
               const Icon = b.icon;
               return (
                 <li key={b.id}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        aria-label={`${b.name} — ${b.detail}`}
-                        className="inline-flex h-7 w-7 cursor-help items-center justify-center rounded-md border border-border/60 bg-muted/40 text-foreground/80 transition-colors hover:border-primary/40 hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                      >
-                        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[220px]" role="tooltip">
-                      <p className="text-xs font-semibold">{b.name}</p>
-                      <p className="text-[11px] text-muted-foreground">{b.detail}</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <IconTooltip
+                    label={`${b.name} — ${b.detail}`}
+                    title={b.name}
+                    detail={b.detail}
+                    className="h-9 w-9 border border-border/60 bg-muted/40 text-foreground/80 hover:border-primary/40 hover:bg-primary/10 md:h-7 md:w-7"
+                  >
+                    <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  </IconTooltip>
                 </li>
               );
             })}
@@ -489,31 +536,25 @@ export function PricingComparisonTable({
     if (row.models) {
       return (
         <TooltipProvider delayDuration={100}>
-          <ul className="flex list-none flex-wrap items-center gap-1.5 p-0">
+          <ul className="flex list-none flex-wrap items-center justify-end gap-1.5 p-0 md:justify-start">
             {row.models[plan].map((m) => (
               <li key={m.short}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label={m.full}
-                      className={cn(
-                        "inline-flex h-6 min-w-6 cursor-help items-center justify-center rounded-md px-1.5 text-[10px] font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                        m.tone
-                      )}
-                    >
-                      <span aria-hidden="true">{m.short}</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" role="tooltip" className="max-w-[220px]">
-                    <p className="text-xs font-semibold">{m.full}</p>
-                  </TooltipContent>
-                </Tooltip>
+                <IconTooltip
+                  label={m.full}
+                  title={m.full}
+                  className={cn(
+                    "h-8 min-w-8 px-2 text-[11px] font-bold tracking-tight md:h-6 md:min-w-6 md:px-1.5 md:text-[10px]",
+                    m.tone
+                  )}
+                >
+                  <span aria-hidden="true">{m.short}</span>
+                </IconTooltip>
               </li>
             ))}
           </ul>
         </TooltipProvider>
       );
+
     }
 
 
@@ -1014,35 +1055,34 @@ export function PricingComparisonTable({
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Providers by plan
                   </p>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {planMeta.map((meta) => (
-                      <div key={meta.name} className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="w-16 shrink-0 font-semibold capitalize text-muted-foreground">{meta.name}</span>
-                        {detailRow.row.brands![meta.name].map((b) => {
-                          const Icon = b.icon;
-                          return (
-                            <TooltipProvider key={b.id} delayDuration={100}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    aria-label={`${b.name} — ${b.detail}`}
-                                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 transition-colors hover:border-primary/40 hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      <div key={meta.name} className="space-y-1.5 text-xs sm:flex sm:flex-wrap sm:items-center sm:gap-2 sm:space-y-0">
+                        <span className="block font-semibold capitalize text-muted-foreground sm:w-16 sm:shrink-0">{meta.name}</span>
+                        <ul className="flex list-none flex-wrap gap-1.5 p-0 sm:gap-2">
+                          {detailRow.row.brands![meta.name].map((b) => {
+                            const Icon = b.icon;
+                            return (
+                              <li key={b.id}>
+                                <TooltipProvider delayDuration={100}>
+                                  <IconTooltip
+                                    label={`${b.name} — ${b.detail}`}
+                                    title={b.name}
+                                    detail={b.detail}
+                                    className="min-h-9 gap-1.5 border border-border bg-muted/40 px-2.5 py-1 text-xs hover:border-primary/40 hover:bg-primary/10"
                                   >
-                                    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-                                    {b.name}
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-[220px]" role="tooltip">
-                                  <p className="text-[11px] text-muted-foreground">{b.detail}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          );
-                        })}
+                                    <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                    <span>{b.name}</span>
+                                  </IconTooltip>
+                                </TooltipProvider>
+                              </li>
+                            );
+                          })}
+                        </ul>
                       </div>
                     ))}
                   </div>
+
                 </div>
               )}
 
