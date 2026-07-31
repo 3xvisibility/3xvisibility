@@ -531,13 +531,17 @@ export function PricingComparisonTable({
           {t("billing.monthly")}
         </span>
         <button
+          type="button"
+          role="switch"
+          aria-checked={isYearly}
           onClick={onToggleYearly}
           className={cn(
-            "relative h-7 w-[52px] rounded-full transition-colors duration-300",
+            "relative h-7 w-[52px] rounded-full transition-colors duration-300 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             isYearly ? "bg-primary" : "bg-muted"
           )}
           aria-label={t("billing.yearly")}
         >
+
           <div
             className={cn(
               "absolute top-0.5 h-6 w-6 rounded-full bg-card shadow-md transition-transform duration-300",
