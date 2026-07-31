@@ -578,14 +578,17 @@ export function PricingComparisonTable({
                 isPopular ? "border-primary/40" : "border-border"
               )}
             >
-              <summary className="list-none cursor-pointer select-none px-4 py-4">
+              <summary className="list-none cursor-pointer select-none px-4 py-4 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary/60">
                 <div className="flex items-center gap-3">
-                  <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-xl shrink-0", meta.bgClass, meta.colorClass)}>
+                  <span
+                    aria-hidden="true"
+                    className={cn("inline-flex h-9 w-9 items-center justify-center rounded-xl shrink-0", meta.bgClass, meta.colorClass)}
+                  >
                     {meta.icon}
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-base font-bold text-foreground">{features.label}</span>
+                      <h3 className="text-base font-bold text-foreground">{features.label}</h3>
                       {isPopular && (
                         <Badge className="bg-primary text-primary-foreground text-[9px] font-bold uppercase px-1.5 py-0">
                           {t("billing.mostPopular")}
@@ -608,48 +611,54 @@ export function PricingComparisonTable({
                 </div>
 
                 <Button
-                  className="mt-3 w-full rounded-lg h-10 text-sm font-semibold active:scale-[0.98]"
+                  className="mt-3 w-full rounded-lg min-h-11 text-sm font-semibold active:scale-[0.98]"
                   variant={btn.variant}
                   disabled={btn.disabled || isLoading}
+                  aria-label={`${btn.label} — ${features.label}`}
+                  aria-busy={isLoading}
                   onClick={(e) => {
                     e.preventDefault();
                     if (!btn.disabled) onPlanClick(plan);
                   }}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                   ) : btn.disabled ? (
                     t("billing.currentPlanBtn")
                   ) : (
                     <>
-                      {btn.label} <ArrowRight className="ml-1.5 h-4 w-4" />
+                      {btn.label} <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
                     </>
                   )}
                 </Button>
 
                 <div className="mt-2 flex items-center justify-center gap-1 text-[11px] font-medium text-muted-foreground">
                   <span className="group-open:hidden">{t("billing.comparePlans")}</span>
-                  <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+                  <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" aria-hidden="true" />
                 </div>
               </summary>
 
               <div className="border-t border-border">
                 {featureGroups.map((group) => (
-                  <div key={group.id}>
+                  <section key={group.id} aria-labelledby={`${plan}-${group.id}-heading`}>
                     <div className="flex items-center gap-2 bg-muted/50 px-4 py-2">
-                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-md text-primary">
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-md text-primary" aria-hidden="true">
                         {group.icon}
                       </span>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      <h4
+                        id={`${plan}-${group.id}-heading`}
+                        className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+                      >
                         {group.label}
-                      </span>
+                      </h4>
                     </div>
                     {group.rows.map((row) => (
                       <button
                         key={row.id}
                         type="button"
+                        aria-haspopup="dialog"
                         onClick={() => setDetailRow({ row, group: group.label })}
-                        className="flex w-full items-start justify-between gap-3 border-b border-border/50 px-4 py-3 text-left active:bg-muted/60"
+                        className="flex w-full min-h-11 items-start justify-between gap-3 border-b border-border/50 px-4 py-3 text-left outline-none active:bg-muted/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60"
                       >
                         <span className="text-sm font-medium text-foreground">
                           {row.labelKey ? t(row.labelKey) : row.label}
@@ -657,9 +666,10 @@ export function PricingComparisonTable({
                         <span className="shrink-0 text-right">{renderCell(row, plan)}</span>
                       </button>
                     ))}
-                  </div>
+                  </section>
                 ))}
               </div>
+
             </details>
           );
         })}
