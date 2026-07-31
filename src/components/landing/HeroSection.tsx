@@ -149,20 +149,13 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2, ease }}
-            className="mt-6 text-base md:text-lg text-[hsl(220,12%,45%)] leading-relaxed max-w-xl mx-auto"
+            className="mt-6 text-base md:text-lg text-[hsl(220,12%,45%)] leading-relaxed max-w-2xl mx-auto"
           >
-            {t("hero.description")}
+            {t("hero.description")}{" "}
+            <span className="text-[hsl(220,14%,28%)] font-medium">{t("hero.oneClick")}</span>
           </motion.p>
 
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.26, ease }}
-            className="mt-4 mx-auto max-w-2xl rounded-xl border border-[hsl(258,88%,58%,0.18)] bg-[hsl(258,88%,58%,0.06)] px-4 py-3 text-sm md:text-base font-medium text-[hsl(220,12%,58%)]"
-          >
-            <CheckCircle2 className="inline-block h-4 w-4 mr-2 -mt-0.5 text-[hsl(258,88%,52%)]" />
-            {t("hero.oneClick")}
-          </motion.p>
+
 
 
           <motion.div
