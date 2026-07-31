@@ -17,6 +17,8 @@ import {
   Users,
   Wrench,
   Info,
+  ChevronDown,
+
 } from "lucide-react";
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 import { useLanguage } from "@/i18n/LanguageContext";
