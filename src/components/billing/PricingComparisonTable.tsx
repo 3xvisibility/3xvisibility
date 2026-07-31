@@ -434,6 +434,11 @@ export function PricingComparisonTable({
 
   const currentIdx = PLAN_ORDER.indexOf(currentPlan);
 
+  const [expandedRows, setExpandedRows] = useState<string[]>([]);
+  const toggleRow = (key: string) =>
+    setExpandedRows((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+
+
   const getButtonState = (name: PlanName) => {
     const idx = PLAN_ORDER.indexOf(name);
     if (idx === currentIdx) return { label: t("billing.currentPlanBtn"), disabled: true, variant: "outline" as const };
