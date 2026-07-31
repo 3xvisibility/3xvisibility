@@ -549,11 +549,121 @@ export function PricingComparisonTable({
         )}
       </div>
 
-      {/* Comparison table */}
-      <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+      {/* Mobile: stacked plan cards */}
+      <div className="md:hidden space-y-4">
+        <p className="text-center text-sm text-muted-foreground">{t("billing.compareDesc")}</p>
+        {planMeta.map((meta) => {
+          const plan = meta.name;
+          const features = PLAN_FEATURES[plan];
+          const basePrice = monthlyPrices[plan];
+          const price = isYearly && plan !== "free" ? Math.round(basePrice * (1 - YEARLY_DISCOUNT)) : basePrice;
+          const isCurrent = plan === currentPlan;
+          const isPopular = plan === "pro";
+          const btn = getButtonState(plan);
+          const isLoading = loadingPlan === plan;
+
+          return (
+            <details
+              key={plan}
+              open={isCurrent || isPopular}
+              className={cn(
+                "group rounded-2xl border bg-card overflow-hidden shadow-sm",
+                isPopular ? "border-primary/40" : "border-border"
+              )}
+            >
+              <summary className="list-none cursor-pointer select-none px-4 py-4">
+                <div className="flex items-center gap-3">
+                  <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-xl shrink-0", meta.bgClass, meta.colorClass)}>
+                    {meta.icon}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-bold text-foreground">{features.label}</span>
+                      {isPopular && (
+                        <Badge className="bg-primary text-primary-foreground text-[9px] font-bold uppercase px-1.5 py-0">
+                          {t("billing.mostPopular")}
+                        </Badge>
+                      )}
+                      {isCurrent && (
+                        <Badge variant="outline" className="text-[9px] text-primary border-primary/30 bg-primary/5 px-1.5 py-0">
+                          {t("billing.current")}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{t(meta.descriptionKey)}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-xl font-extrabold tabular-nums">
+                      {price === 0 ? t("common.free") : `€${price}`}
+                    </span>
+                    {price > 0 && <span className="text-[11px] text-muted-foreground">/mo</span>}
+                  </div>
+                </div>
+
+                <Button
+                  className="mt-3 w-full rounded-lg h-10 text-sm font-semibold active:scale-[0.98]"
+                  variant={btn.variant}
+                  disabled={btn.disabled || isLoading}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!btn.disabled) onPlanClick(plan);
+                  }}
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : btn.disabled ? (
+                    t("billing.currentPlanBtn")
+                  ) : (
+                    <>
+                      {btn.label} <ArrowRight className="ml-1.5 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+
+                <div className="mt-2 flex items-center justify-center gap-1 text-[11px] font-medium text-muted-foreground">
+                  <span className="group-open:hidden">{t("billing.comparePlans")}</span>
+                  <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+                </div>
+              </summary>
+
+              <div className="border-t border-border">
+                {featureGroups.map((group) => (
+                  <div key={group.id}>
+                    <div className="flex items-center gap-2 bg-muted/50 px-4 py-2">
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-md text-primary">
+                        {group.icon}
+                      </span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {group.label}
+                      </span>
+                    </div>
+                    {group.rows.map((row) => (
+                      <button
+                        key={row.id}
+                        type="button"
+                        onClick={() => setDetailRow({ row, group: group.label })}
+                        className="flex w-full items-start justify-between gap-3 border-b border-border/50 px-4 py-3 text-left active:bg-muted/60"
+                      >
+                        <span className="text-sm font-medium text-foreground">
+                          {row.labelKey ? t(row.labelKey) : row.label}
+                        </span>
+                        <span className="shrink-0 text-right">{renderCell(row, plan)}</span>
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </details>
+          );
+        })}
+      </div>
+
+      {/* Comparison table (tablet & desktop) */}
+      <div className="hidden md:block rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
         <p className="text-center text-sm text-muted-foreground px-6 pt-8 pb-6">{t("billing.compareDesc")}</p>
 
         <div className="overflow-x-auto px-3 pb-4 sm:px-6 sm:pb-6">
+
           <table className="w-full min-w-[900px] border-collapse">
             <thead className="sticky top-0 z-20">
               <tr>
