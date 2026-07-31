@@ -494,17 +494,24 @@ export function PricingComparisonTable({
     }
 
     if (!val) {
-      return <X className="h-[18px] w-[18px] text-destructive" strokeWidth={3} />;
+      return (
+        <>
+          <X className="h-[18px] w-[18px] text-destructive" strokeWidth={3} aria-hidden="true" />
+          <span className="sr-only">{t("common.no") === "common.no" ? "Not included" : t("common.no")}</span>
+        </>
+      );
     }
 
     return (
       <div className="inline-flex items-center gap-1.5">
-        <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-success">
+        <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-success" aria-hidden="true">
           <Check className="h-3 w-3 text-success-foreground" strokeWidth={3.5} />
         </span>
+        <span className="sr-only">{t("common.yes") === "common.yes" ? "Included" : t("common.yes")}</span>
         {note && <span className="text-xs text-muted-foreground whitespace-nowrap">{note}</span>}
       </div>
     );
+
 
   };
 
