@@ -117,18 +117,18 @@ export function PricingSection() {
 
   return (
     <section id="pricing" className="py-20 md:py-28 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_30%_at_50%_20%,hsl(96,90%,45%,0.06),transparent)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_30%_at_50%_20%,hsl(258,88%,58%,0.06),transparent)] pointer-events-none" />
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <ScrollReveal className="text-center max-w-2xl mx-auto mb-10">
           <span className="section-badge mb-6">{t("pricing.badge")}</span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em]">{t("pricing.title")}</h2>
-          <p className="mt-3 text-sm text-[hsl(220,10%,70%)] max-w-md mx-auto">{t("pricing.description")}</p>
+          <p className="mt-3 text-sm text-[hsl(220,12%,42%)] max-w-md mx-auto">{t("pricing.description")}</p>
         </ScrollReveal>
 
         <div className="flex items-center justify-center gap-3 mb-10">
           <button
             onClick={() => setIsYearly(!isYearly)}
-            className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${isYearly ? "bg-primary" : "bg-[hsl(220,30%,17%)]"}`}
+            className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${isYearly ? "bg-primary" : "bg-[hsl(250,30%,92%)]"}`}
             aria-label={t("pricing.yearly")}
           >
             <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${isYearly ? "translate-x-[26px]" : "translate-x-0.5"}`} />
@@ -137,39 +137,39 @@ export function PricingSection() {
             {isYearly ? `${t("pricing.billed")} ${t("pricing.yearly").toLowerCase()}` : `${t("pricing.billed")} ${t("pricing.monthly").toLowerCase()}`}
           </span>
           {isYearly && (
-            <Badge className="rounded-full bg-primary/10 text-[hsl(96,80%,52%)] border border-[hsl(96,90%,45%,0.25)] text-xs font-medium px-3 py-1">
+            <Badge className="rounded-full bg-primary/10 text-[hsl(258,88%,52%)] border border-[hsl(258,88%,58%,0.25)] text-xs font-medium px-3 py-1">
               {t("pricing.save")}
             </Badge>
           )}
         </div>
 
 
-        <motion.div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 max-w-6xl mx-auto items-stretch rounded-2xl border border-[hsl(96,90%,45%,0.12)] overflow-hidden bg-[hsl(220,40%,7%)]" initial="hidden" animate={gridRevealed ? "visible" : "hidden"} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
+        <motion.div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 max-w-6xl mx-auto items-stretch rounded-2xl border border-[hsl(258,88%,58%,0.12)] overflow-hidden bg-[hsl(250,30%,98%)]" initial="hidden" animate={gridRevealed ? "visible" : "hidden"} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
           {plans.map((plan) => {
             const qty = creditQty[plan.key] ?? 1;
             const price = Math.round(plan.monthlyPrice * qty * (isYearly ? 1 - YEARLY_DISCOUNT : 1));
             return (
               <motion.div key={plan.name} className="h-full" variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } }}>
-                <div className={`group relative h-full flex flex-col p-6 border-r border-[hsl(96,90%,45%,0.1)] last:border-r-0 transition-all duration-300 ${plan.popular ? "bg-[hsl(220,40%,9%)] hover:bg-[hsl(220,40%,11%)]" : "bg-transparent hover:bg-[hsl(220,40%,10%)]"} hover:shadow-[inset_0_0_0_1px_hsl(96,90%,45%,0.25)]`}>
+                <div className={`group relative h-full flex flex-col p-6 border-r border-[hsl(258,88%,58%,0.1)] last:border-r-0 transition-all duration-300 ${plan.popular ? "bg-[hsl(250,30%,97%)] hover:bg-[hsl(250,30%,96%)]" : "bg-transparent hover:bg-[hsl(250,30%,96%)]"} hover:shadow-[inset_0_0_0_1px_hsl(258,88%,58%,0.25)]`}>
                   {plan.popular && <div className="absolute top-0 left-0 right-0 h-[3px] bg-primary" />}
 
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-lg font-semibold tracking-tight">{plan.name}</h3>
-                    {plan.popular && <Badge className="bg-primary/15 text-[hsl(96,80%,52%)] border border-[hsl(96,90%,45%,0.3)] text-[10px] font-bold uppercase tracking-wider">{t("pricing.mostPopular")}</Badge>}
+                    {plan.popular && <Badge className="bg-primary/15 text-[hsl(258,88%,52%)] border border-[hsl(258,88%,58%,0.3)] text-[10px] font-bold uppercase tracking-wider">{t("pricing.mostPopular")}</Badge>}
                   </div>
-                  <p className="text-sm text-[hsl(220,10%,64%)] mt-1">{plan.description}</p>
+                  <p className="text-sm text-[hsl(220,12%,38%)] mt-1">{plan.description}</p>
 
-                  <Separator className="my-5 bg-[hsl(96,90%,45%,0.1)]" />
+                  <Separator className="my-5 bg-[hsl(258,88%,58%,0.1)]" />
 
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-3xl font-semibold tabular-nums tracking-tight">€{price}</span>
-                    {plan.monthlyPrice > 0 && <span className="text-sm text-[hsl(220,10%,64%)]">{isYearly ? t("pricing.yearly").toLowerCase() : "per month"}</span>}
+                    {plan.monthlyPrice > 0 && <span className="text-sm text-[hsl(220,12%,38%)]">{isYearly ? t("pricing.yearly").toLowerCase() : "per month"}</span>}
                   </div>
 
                   <div className="mt-3">
                     {plan.creditSteps.length > 1 ? (
                       <Select value={String(qty)} onValueChange={(v) => setCreditQty((s) => ({ ...s, [plan.key]: Number(v) }))}>
-                        <SelectTrigger className="h-10 rounded-lg bg-transparent border-[hsl(96,90%,45%,0.18)] text-sm">
+                        <SelectTrigger className="h-10 rounded-lg bg-transparent border-[hsl(258,88%,58%,0.18)] text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -181,39 +181,39 @@ export function PricingSection() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <div className="h-10 flex items-center rounded-lg border border-[hsl(96,90%,45%,0.14)] px-3 text-sm text-[hsl(220,10%,80%)]">
+                      <div className="h-10 flex items-center rounded-lg border border-[hsl(258,88%,58%,0.14)] px-3 text-sm text-[hsl(220,12%,50%)]">
                         {plan.baseCredits.toLocaleString()} credits to try
                       </div>
                     )}
                   </div>
 
                   {plan.monthlyPrice > 0 && (
-                    <p className="text-[11px] text-[hsl(96,80%,52%)] mt-2 inline-flex items-center gap-1.5">
+                    <p className="text-[11px] text-[hsl(258,88%,52%)] mt-2 inline-flex items-center gap-1.5">
                       <Gift className="h-3 w-3" />{t("pricing.trialNote")}
                     </p>
                   )}
 
-                  <Separator className="my-5 bg-[hsl(96,90%,45%,0.1)]" />
+                  <Separator className="my-5 bg-[hsl(258,88%,58%,0.1)]" />
 
                   <ul className="space-y-2.5 flex-1">
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-start gap-2.5 text-[13px]">
-                        <Check className="h-3.5 w-3.5 mt-0.5 text-[hsl(220,10%,55%)] shrink-0" />
-                        <span className="text-[hsl(220,10%,82%)]">{f}</span>
+                        <Check className="h-3.5 w-3.5 mt-0.5 text-[hsl(220,12%,32%)] shrink-0" />
+                        <span className="text-[hsl(220,12%,52%)]">{f}</span>
                       </li>
                     ))}
                   </ul>
 
                   <div className="pt-6">
                     {plan.monthlyPrice === 0 ? (
-                      <Button className="w-full rounded-lg h-11 text-sm font-semibold bg-[hsl(220,30%,12%)] border border-[hsl(96,90%,45%,0.15)] text-foreground hover:bg-[hsl(96,90%,45%,0.1)]" asChild>
+                      <Button className="w-full rounded-lg h-11 text-sm font-semibold bg-[hsl(250,30%,95%)] border border-[hsl(258,88%,58%,0.15)] text-foreground hover:bg-[hsl(258,88%,58%,0.1)]" asChild>
                         <Link to="/auth">{plan.cta}</Link>
                       </Button>
                     ) : (
                       <Button
                         onClick={() => handleCheckout(plan.key, qty)}
                         disabled={checkoutPlan !== null}
-                        className={`w-full rounded-lg h-11 text-sm font-semibold ${plan.popular ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-[hsl(220,30%,12%)] border border-[hsl(96,90%,45%,0.15)] text-foreground hover:bg-[hsl(96,90%,45%,0.1)]"}`}
+                        className={`w-full rounded-lg h-11 text-sm font-semibold ${plan.popular ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-[hsl(250,30%,95%)] border border-[hsl(258,88%,58%,0.15)] text-foreground hover:bg-[hsl(258,88%,58%,0.1)]"}`}
                       >
                         {checkoutPlan === plan.key ? (
                           <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />{t("pricing.startingTrial")}</>
