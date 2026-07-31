@@ -522,7 +522,7 @@ export function PricingComparisonTable({
       </div>
 
       {/* Billing toggle */}
-      <div className="flex items-center justify-center gap-3">
+      <div className="flex md:hidden items-center justify-center gap-3">
         <span className={cn("text-sm font-medium transition-colors", !isYearly ? "text-foreground" : "text-muted-foreground")}>
           {t("billing.monthly")}
         </span>
@@ -550,6 +550,7 @@ export function PricingComparisonTable({
           </Badge>
         )}
       </div>
+
 
       {/* Mobile: stacked plan cards */}
       <div className="md:hidden space-y-4">
