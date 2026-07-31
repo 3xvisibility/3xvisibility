@@ -33,17 +33,70 @@ function TableCell({ val }: { val: string | boolean | JSX.Element }) {
   return <span className="text-sm font-semibold tabular-nums text-foreground">{val}</span>;
 }
 
-function ModelIcons({ marks }: { marks: React.ComponentType<{ className?: string }>[] }) {
+const MARK_NAMES = new Map<React.ComponentType<{ className?: string }>, string>([
+  [OpenAIMark, "ChatGPT (OpenAI)"],
+  [GeminiMark, "Google Gemini"],
+  [ClaudeMark, "Anthropic Claude"],
+  [PerplexityMark, "Perplexity"],
+  [GoogleMark, "Google AI"],
+  [GrokMark, "Grok (xAI)"],
+  [DeepSeekMark, "DeepSeek"],
+  [MistralMark, "Mistral"],
+  [CopilotMark, "Microsoft Copilot"],
+  [MetaMark, "Meta Llama"],
+]);
+
+function ModelIconTooltip({
+  Mark,
+  name,
+}: {
+  Mark: React.ComponentType<{ className?: string }>;
+  name: string;
+}) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {marks.map((Mark, i) => (
-        <span key={i} className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted/60">
+    <Tooltip open={open} onOpenChange={setOpen}>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={name}
+          onClick={() => setOpen((v) => !v)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setOpen(false);
+          }}
+          className="inline-flex h-9 w-9 cursor-help items-center justify-center rounded-md bg-muted/60 transition-colors hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:h-6 md:w-6"
+        >
           <Mark className="h-4 w-4" />
-        </span>
-      ))}
-    </div>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        sideOffset={6}
+        collisionPadding={12}
+        avoidCollisions
+        role="tooltip"
+        className="z-50 max-w-[min(220px,calc(100vw-2rem))] break-words text-xs font-semibold"
+      >
+        {name}
+      </TooltipContent>
+    </Tooltip>
   );
 }
+
+function ModelIcons({ marks }: { marks: React.ComponentType<{ className?: string }>[] }) {
+  return (
+    <TooltipProvider delayDuration={100}>
+      <ul className="flex list-none flex-wrap items-center justify-end gap-1.5 p-0 md:justify-start">
+        {marks.map((Mark, i) => (
+          <li key={i}>
+            <ModelIconTooltip Mark={Mark} name={MARK_NAMES.get(Mark) ?? "AI model"} />
+          </li>
+        ))}
+      </ul>
+    </TooltipProvider>
+  );
+}
+
 
 
 export function PricingSection() {
