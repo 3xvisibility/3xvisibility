@@ -122,7 +122,7 @@ export default function AboutPage() {
       <main className="flex-1">
         {/* Hero */}
         <section className="py-20 md:py-28 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_45%_at_50%_0%,hsl(96,90%,45%,0.08),transparent)] pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_45%_at_50%_0%,hsl(96,67%,48%,0.08),transparent)] pointer-events-none" />
           <div className="container mx-auto px-4 lg:px-8 relative z-10">
             <motion.div
               className="text-center max-w-3xl mx-auto"
@@ -160,7 +160,7 @@ export default function AboutPage() {
               {stats.map((s) => (
                 <motion.div
                   key={s.label}
-                  className="rounded-2xl border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)] p-6 text-center"
+                  className="rounded-2xl border border-[hsl(96,67%,48%,0.1)] bg-[hsl(220,40%,8%)] p-6 text-center"
                   variants={sectionReveal}
                 >
                   <div className="text-3xl md:text-4xl font-extrabold text-gradient-primary tracking-tight">
@@ -181,10 +181,10 @@ export default function AboutPage() {
               whileInView="visible"
               viewport={{ once: true, margin: "-60px" }}
               variants={sectionReveal}
-              className="rounded-3xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(220,40%,8%)] p-8 md:p-12"
+              className="rounded-3xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(220,40%,8%)] p-8 md:p-12"
             >
-              <div className="h-12 w-12 rounded-xl bg-[hsl(96,90%,45%,0.1)] border border-[hsl(96,90%,45%,0.15)] flex items-center justify-center mb-6">
-                <Target className="h-6 w-6 text-[hsl(96,80%,52%)]" />
+              <div className="h-12 w-12 rounded-xl bg-[hsl(96,67%,48%,0.1)] border border-[hsl(96,67%,48%,0.15)] flex items-center justify-center mb-6">
+                <Target className="h-6 w-6 text-[hsl(96,67%,55%)]" />
               </div>
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-[-0.02em]">Our mission</h2>
               <p className="mt-4 text-[hsl(250,15%,65%)] leading-relaxed">
@@ -199,7 +199,7 @@ export default function AboutPage() {
 
         {/* What we build */}
         <section className="py-16 md:py-24 relative">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_0%,hsl(96,90%,45%,0.06),transparent)] pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_0%,hsl(96,67%,48%,0.06),transparent)] pointer-events-none" />
           <div className="container mx-auto px-4 lg:px-8 relative z-10">
             <div className="text-center max-w-2xl mx-auto mb-14">
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={sectionReveal}>
@@ -224,12 +224,12 @@ export default function AboutPage() {
               {buildItems.map((item) => (
                 <motion.div
                   key={item.title}
-                  className="group relative rounded-2xl border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)] p-6 hover:border-[hsl(96,90%,45%,0.25)] transition-all duration-500 hover:bg-[hsl(220,40%,9%)]"
+                  className="group relative rounded-2xl border border-[hsl(96,67%,48%,0.1)] bg-[hsl(220,40%,8%)] p-6 hover:border-[hsl(96,67%,48%,0.25)] transition-all duration-500 hover:bg-[hsl(220,40%,9%)]"
                   variants={sectionReveal}
                   whileHover={{ y: -4 }}
                 >
-                  <div className="h-11 w-11 rounded-xl bg-[hsl(96,90%,45%,0.1)] border border-[hsl(96,90%,45%,0.15)] flex items-center justify-center mb-4 group-hover:scale-110 transition-all duration-300">
-                    <item.icon className="h-5 w-5 text-[hsl(96,80%,52%)]" />
+                  <div className="h-11 w-11 rounded-xl bg-[hsl(96,67%,48%,0.1)] border border-[hsl(96,67%,48%,0.15)] flex items-center justify-center mb-4 group-hover:scale-110 transition-all duration-300">
+                    <item.icon className="h-5 w-5 text-[hsl(96,67%,55%)]" />
                   </div>
                   <h3 className="font-bold text-base mb-2 text-foreground">{item.title}</h3>
                   <p className="text-sm text-[hsl(220,10%,70%)] leading-relaxed">{item.desc}</p>
@@ -241,7 +241,7 @@ export default function AboutPage() {
 
         {/* Testimonials */}
         <section className="py-16 md:py-24 relative">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_55%_40%_at_50%_100%,hsl(96,90%,45%,0.06),transparent)] pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_55%_40%_at_50%_100%,hsl(96,67%,48%,0.06),transparent)] pointer-events-none" />
           <div className="container mx-auto px-4 lg:px-8 relative z-10">
             <div className="text-center max-w-2xl mx-auto mb-14">
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={sectionReveal}>
@@ -273,18 +273,18 @@ export default function AboutPage() {
                 <CarouselContent className="-ml-4">
                   {testimonials.map((t) => (
                     <CarouselItem key={t.name} className="pl-4 md:basis-1/2">
-                      <div className="group relative h-full rounded-2xl border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)] p-6 hover:border-[hsl(96,90%,45%,0.25)] transition-all duration-500 hover:bg-[hsl(220,40%,9%)]">
+                      <div className="group relative h-full rounded-2xl border border-[hsl(96,67%,48%,0.1)] bg-[hsl(220,40%,8%)] p-6 hover:border-[hsl(96,67%,48%,0.25)] transition-all duration-500 hover:bg-[hsl(220,40%,9%)]">
                         <div className="flex items-center gap-1 mb-4">
                           {Array.from({ length: t.stars }).map((_, i) => (
-                            <Star key={i} className="h-4 w-4 fill-[hsl(96,80%,52%)] text-[hsl(96,80%,52%)]" />
+                            <Star key={i} className="h-4 w-4 fill-[hsl(96,67%,55%)] text-[hsl(96,67%,55%)]" />
                           ))}
                         </div>
-                        <Quote className="h-6 w-6 text-[hsl(96,90%,45%,0.25)] mb-3" />
+                        <Quote className="h-6 w-6 text-[hsl(96,67%,48%,0.25)] mb-3" />
                         <p className="text-sm text-[hsl(220,10%,70%)] leading-relaxed mb-6">
                           {t.quote}
                         </p>
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-[hsl(96,90%,45%,0.12)] border border-[hsl(96,90%,45%,0.2)] flex items-center justify-center text-sm font-bold text-[hsl(96,80%,52%)]">
+                          <div className="h-10 w-10 rounded-full bg-[hsl(96,67%,48%,0.12)] border border-[hsl(96,67%,48%,0.2)] flex items-center justify-center text-sm font-bold text-[hsl(96,67%,55%)]">
                             {t.name.split(" ").map((n) => n[0]).join("")}
                           </div>
                           <div>
@@ -316,9 +316,9 @@ export default function AboutPage() {
               className="relative rounded-3xl overflow-hidden"
             >
               <div className="absolute inset-0 bg-[hsl(220,45%,7%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(96,90%,45%,0.2),transparent_60%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,hsl(96,92%,62%,0.15),transparent_60%)]" />
-              <div className="absolute inset-0 rounded-3xl border border-[hsl(96,90%,45%,0.15)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(96,67%,48%,0.2),transparent_60%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,hsl(96,67%,62%,0.15),transparent_60%)]" />
+              <div className="absolute inset-0 rounded-3xl border border-[hsl(96,67%,48%,0.15)]" />
               <div className="relative z-10 py-16 md:py-20 px-8 md:px-16 text-center">
                 <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.03em] leading-tight max-w-lg mx-auto">
                   Built for scale
@@ -340,7 +340,7 @@ export default function AboutPage() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="border-[hsl(96,90%,45%,0.2)] bg-transparent text-[hsl(220,10%,85%)] hover:text-foreground hover:bg-[hsl(96,90%,45%,0.08)] h-12 rounded-xl text-sm font-medium"
+                    className="border-[hsl(96,67%,48%,0.2)] bg-transparent text-[hsl(220,10%,85%)] hover:text-foreground hover:bg-[hsl(96,67%,48%,0.08)] h-12 rounded-xl text-sm font-medium"
                     asChild
                   >
                     <Link to="/contact">Contact us</Link>

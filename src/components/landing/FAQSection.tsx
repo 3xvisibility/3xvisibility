@@ -29,7 +29,7 @@ export function FAQSection() {
         <ScrollReveal delay={0.1}>
           <Accordion type="single" collapsible className="space-y-2">
             {faqs.map((faq, i) => (
-              <AccordionItem key={i} value={`item-${i}`} className="border border-[hsl(91,96%,43%,0.1)] rounded-xl px-5 bg-[hsl(250,30%,98%)] hover:border-[hsl(91,96%,43%,0.2)] transition-colors duration-200 data-[state=open]:border-[hsl(91,96%,43%,0.25)] data-[state=open]:bg-[hsl(250,30%,97%)]">
+              <AccordionItem key={i} value={`item-${i}`} className="border border-[hsl(96,67%,48%,0.1)] rounded-xl px-5 bg-[hsl(250,30%,98%)] hover:border-[hsl(96,67%,48%,0.2)] transition-colors duration-200 data-[state=open]:border-[hsl(96,67%,48%,0.25)] data-[state=open]:bg-[hsl(250,30%,97%)]">
                 <AccordionTrigger className="text-sm font-semibold text-left hover:no-underline py-4 text-foreground">{faq.q}</AccordionTrigger>
                 <AccordionContent className="text-[13px] text-[hsl(220,12%,45%)] leading-relaxed pb-4">{faq.a}</AccordionContent>
               </AccordionItem>

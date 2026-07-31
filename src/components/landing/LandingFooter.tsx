@@ -103,13 +103,13 @@ export function LandingFooter() {
   };
 
   return (
-    <footer className="border-t border-[hsl(91,96%,43%,0.08)] py-14 md:py-16">
+    <footer className="border-t border-[hsl(96,67%,48%,0.08)] py-14 md:py-16">
       <div className="container mx-auto px-4 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center">
-              <span className="relative inline-flex items-center rounded-full bg-[linear-gradient(135deg,hsl(240,18%,13%),hsl(245,22%,8%))] px-4 py-2 ring-1 ring-inset ring-white/10 shadow-[0_6px_20px_-8px_hsl(91,96%,30%,0.5)]">
-                <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(120%_120%_at_0%_0%,hsl(96,92%,55%,0.2),transparent_60%)]" />
+              <span className="relative inline-flex items-center rounded-full bg-[linear-gradient(135deg,hsl(240,18%,13%),hsl(245,22%,8%))] px-4 py-2 ring-1 ring-inset ring-white/10 shadow-[0_6px_20px_-8px_hsl(96,67%,30%,0.5)]">
+                <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(120%_120%_at_0%_0%,hsl(96,67%,55%,0.2),transparent_60%)]" />
                 <img src={logo3x} alt="3X Visibility logo" width={1107} height={261} loading="lazy" className="relative h-6 w-auto object-contain" />
               </span>
             </Link>
@@ -139,7 +139,7 @@ export function LandingFooter() {
                       </Link>
                     )}
                     {link.badge && (
-                      <span className="inline-flex items-center rounded-full bg-[hsl(91,96%,43%,0.12)] px-1.5 py-0.5 text-[9px] font-medium text-[hsl(91,96%,32%)] uppercase tracking-wide">
+                      <span className="inline-flex items-center rounded-full bg-[hsl(96,67%,48%,0.12)] px-1.5 py-0.5 text-[9px] font-medium text-[hsl(96,67%,35%)] uppercase tracking-wide">
                         {link.badge}
                       </span>
                     )}
@@ -150,7 +150,7 @@ export function LandingFooter() {
           ))}
         </div>
 
-        <div className="mt-12 pt-6 border-t border-[hsl(91,96%,43%,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-12 pt-6 border-t border-[hsl(96,67%,48%,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-[hsl(250,10%,25%)]">
             &copy; {new Date().getFullYear()} 3XVISIBILITY. {t("footer.rights")}
           </p>
