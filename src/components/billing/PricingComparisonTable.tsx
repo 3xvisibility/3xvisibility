@@ -33,66 +33,11 @@ import {
 } from "@/components/ui/dialog";
 import {
   Tooltip,
+  TooltipArrow,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-
-/**
- * Tooltip trigger that also works on touch screens (tap toggles),
- * stays inside the viewport on small screens, and closes on Escape.
- */
-function IconTooltip({
-  label,
-  title,
-  detail,
-  className,
-  children,
-}: {
-  label: string;
-  title: string;
-  detail?: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Tooltip open={open} onOpenChange={setOpen}>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          onClick={() => setOpen((v) => !v)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setOpen(false);
-          }}
-          className={cn(
-            "inline-flex cursor-help items-center justify-center rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            className
-          )}
-        >
-          {children}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent
-        side="top"
-        align="center"
-        sideOffset={6}
-        collisionPadding={12}
-        avoidCollisions
-        role="tooltip"
-        className="z-50 max-w-[min(220px,calc(100vw-2rem))] break-words"
-      >
-        <p className="text-xs font-semibold">{title}</p>
-        {detail && <p className="text-[11px] text-muted-foreground">{detail}</p>}
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-
+import { BrandIconTooltip, BrandTooltipProvider } from "@/components/billing/BrandIconTooltip";
 
 
 interface PricingComparisonTableProps {
@@ -509,25 +454,25 @@ export function PricingComparisonTable({
   const renderCell = (row: FeatureRow, plan: PlanName) => {
     if (row.brands) {
       return (
-        <TooltipProvider delayDuration={100}>
+        <BrandTooltipProvider>
           <ul className="flex list-none flex-wrap items-center justify-end gap-1.5 p-0 md:justify-start md:gap-2">
             {row.brands[plan].map((b) => {
               const Icon = b.icon;
               return (
                 <li key={b.id}>
-                  <IconTooltip
+                  <BrandIconTooltip
                     label={`${b.name} — ${b.detail}`}
                     title={b.name}
                     detail={b.detail}
                     className="h-9 w-9 border border-border/60 bg-muted/40 text-foreground/80 hover:border-primary/40 hover:bg-primary/10 md:h-7 md:w-7"
                   >
                     <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  </IconTooltip>
+                  </BrandIconTooltip>
                 </li>
               );
             })}
           </ul>
-        </TooltipProvider>
+        </BrandTooltipProvider>
       );
     }
 
@@ -535,11 +480,11 @@ export function PricingComparisonTable({
 
     if (row.models) {
       return (
-        <TooltipProvider delayDuration={100}>
+        <BrandTooltipProvider>
           <ul className="flex list-none flex-wrap items-center justify-end gap-1.5 p-0 md:justify-start">
             {row.models[plan].map((m) => (
               <li key={m.short}>
-                <IconTooltip
+                <BrandIconTooltip
                   label={m.full}
                   title={m.full}
                   className={cn(
@@ -548,11 +493,11 @@ export function PricingComparisonTable({
                   )}
                 >
                   <span aria-hidden="true">{m.short}</span>
-                </IconTooltip>
+                </BrandIconTooltip>
               </li>
             ))}
           </ul>
-        </TooltipProvider>
+        </BrandTooltipProvider>
       );
 
     }
@@ -894,7 +839,7 @@ export function PricingComparisonTable({
                       onClick={() => setDetailRow({ row, group })}
                     >
                       <th scope="row" className="py-5 px-6 rounded-l-2xl align-middle text-left font-normal">
-                        <TooltipProvider delayDuration={150}>
+                        <BrandTooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <button
@@ -920,14 +865,15 @@ export function PricingComparisonTable({
                                 />
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent side="right" className="max-w-xs text-xs leading-relaxed">
+                            <TooltipContent side="right" sideOffset={8} collisionPadding={12} className="max-w-xs overflow-visible px-3 py-2 text-xs leading-relaxed">
                               <p id={`hint-${row.id}`}>{row.hint || row.details || rowLabel}</p>
                               <p className="mt-1 text-[10px] uppercase tracking-wide opacity-70">
                                 Click for full details
                               </p>
+                              <TooltipArrow />
                             </TooltipContent>
                           </Tooltip>
-                        </TooltipProvider>
+                        </BrandTooltipProvider>
                       </th>
 
 
@@ -1064,8 +1010,8 @@ export function PricingComparisonTable({
                             const Icon = b.icon;
                             return (
                               <li key={b.id}>
-                                <TooltipProvider delayDuration={100}>
-                                  <IconTooltip
+                                <BrandTooltipProvider>
+                                  <BrandIconTooltip
                                     label={`${b.name} — ${b.detail}`}
                                     title={b.name}
                                     detail={b.detail}
@@ -1073,8 +1019,8 @@ export function PricingComparisonTable({
                                   >
                                     <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                                     <span>{b.name}</span>
-                                  </IconTooltip>
-                                </TooltipProvider>
+                                  </BrandIconTooltip>
+                                </BrandTooltipProvider>
                               </li>
                             );
                           })}

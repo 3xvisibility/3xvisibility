@@ -67,7 +67,7 @@ export function BrandIconTooltip({
         collisionPadding={12}
         avoidCollisions
         role="tooltip"
-        className="z-50 max-w-[min(220px,calc(100vw-2rem))] space-y-0.5 break-words px-3 py-2 text-center"
+        className="z-50 overflow-visible max-w-[min(220px,calc(100vw-2rem))] space-y-0.5 break-words px-3 py-2 text-center"
       >
         <p className="text-xs font-semibold leading-snug text-popover-foreground">{title}</p>
         {detail && (
