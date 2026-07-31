@@ -108,7 +108,10 @@ export function LandingFooter() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center">
-              <span className="inline-flex items-center rounded-xl bg-[hsl(240,14%,10%)] px-3 py-1.5"><img src={logo3x} alt="3X Visibility logo" width={1107} height={261} loading="lazy" className="h-7 w-auto object-contain" /></span>
+              <span className="relative inline-flex items-center rounded-full bg-[linear-gradient(135deg,hsl(240,18%,13%),hsl(245,22%,8%))] px-4 py-2 ring-1 ring-inset ring-white/10 shadow-[0_6px_20px_-8px_hsl(258,88%,40%,0.5)]">
+                <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(120%_120%_at_0%_0%,hsl(258,88%,62%,0.2),transparent_60%)]" />
+                <img src={logo3x} alt="3X Visibility logo" width={1107} height={261} loading="lazy" className="relative h-6 w-auto object-contain" />
+              </span>
             </Link>
             <p className="mt-3 text-xs text-[hsl(250,10%,25%)] leading-relaxed max-w-[200px]">
               {t("footer.description")}
