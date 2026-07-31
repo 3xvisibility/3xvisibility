@@ -31,6 +31,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 
 
 
@@ -523,7 +530,12 @@ export function PricingComparisonTable({
           {t("billing.comparePlans")}
         </h2>
         <p className="text-sm md:text-base text-muted-foreground">{t("billing.compareDesc")}</p>
+        <p className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 text-xs text-muted-foreground">
+          <Info className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          Hover any feature for a quick explanation, or click the row for full details and examples.
+        </p>
       </div>
+
 
       {/* Billing toggle */}
       <div className="flex md:hidden items-center justify-center gap-3">
@@ -664,10 +676,18 @@ export function PricingComparisonTable({
                         onClick={() => setDetailRow({ row, group: group.label })}
                         className="flex w-full min-h-11 items-start justify-between gap-3 border-b border-border/50 px-4 py-3 text-left outline-none active:bg-muted/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60"
                       >
-                        <span className="text-sm font-medium text-foreground">
-                          {row.labelKey ? t(row.labelKey) : row.label}
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium text-foreground">
+                            {row.labelKey ? t(row.labelKey) : row.label}
+                          </span>
+                          {row.hint && (
+                            <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
+                              {row.hint}
+                            </span>
+                          )}
                         </span>
                         <span className="shrink-0 text-right">{renderCell(row, plan)}</span>
+
                       </button>
                     ))}
                   </section>
@@ -747,28 +767,42 @@ export function PricingComparisonTable({
                       onClick={() => setDetailRow({ row, group })}
                     >
                       <th scope="row" className="py-5 px-6 rounded-l-2xl align-middle text-left font-normal">
-                        <button
-                          type="button"
-                          aria-haspopup="dialog"
-                          aria-label={`${rowLabel} — ${group} — ${t("common.details") === "common.details" ? "details" : t("common.details")}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDetailRow({ row, group });
-                          }}
-                          onFocus={() => setHoveredRow(row.id)}
-                          onBlur={() => setHoveredRow(null)}
-                          className="inline-flex items-center gap-1.5 rounded-md text-left text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                        >
-                          {rowLabel}
-                          <Info
-                            aria-hidden="true"
-                            className={cn(
-                              "h-3.5 w-3.5 shrink-0 transition-opacity",
-                              hoveredRow === row.id ? "opacity-70 text-primary" : "opacity-0"
-                            )}
-                          />
-                        </button>
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                aria-haspopup="dialog"
+                                aria-label={`${rowLabel} — ${group} — ${t("common.details") === "common.details" ? "details" : t("common.details")}`}
+                                aria-describedby={row.hint ? `hint-${row.id}` : undefined}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDetailRow({ row, group });
+                                }}
+                                onFocus={() => setHoveredRow(row.id)}
+                                onBlur={() => setHoveredRow(null)}
+                                className="inline-flex items-center gap-1.5 rounded-md text-left text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                              >
+                                {rowLabel}
+                                <Info
+                                  aria-hidden="true"
+                                  className={cn(
+                                    "h-3.5 w-3.5 shrink-0 transition-opacity",
+                                    hoveredRow === row.id ? "opacity-70 text-primary" : "opacity-40"
+                                  )}
+                                />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="max-w-xs text-xs leading-relaxed">
+                              <p id={`hint-${row.id}`}>{row.hint || row.details || rowLabel}</p>
+                              <p className="mt-1 text-[10px] uppercase tracking-wide opacity-70">
+                                Click for full details
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </th>
+
 
                       {planMeta.map((meta, mi) => (
                         <td
