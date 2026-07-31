@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Search, Link2, Code, Users, Headphones, Gift } from "lucide-react";
+import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Search, Link2, Code, Users, Headphones, Gift, ChevronDown } from "lucide-react";
 import { ScrollReveal, useRevealed } from "./ScrollReveal";
 import { OpenAIMark, GeminiMark, ClaudeMark, PerplexityMark, GoogleMark, GrokMark, DeepSeekMark, MistralMark, CopilotMark, MetaMark } from "@/components/billing/ModelBrandIcons";
 import { Cpu } from "lucide-react";
@@ -53,6 +53,7 @@ export function PricingSection() {
   const { toast } = useToast();
   const [checkoutPlan, setCheckoutPlan] = useState<PlanName | null>(null);
   const [creditQty, setCreditQty] = useState<Partial<Record<PlanName, number>>>({});
+  const [openRow, setOpenRow] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const gridRevealed = useRevealed(gridRef, 700);
 
@@ -236,9 +237,47 @@ export function PricingSection() {
             <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground md:text-base">{t("pricing.compareDesc")}</p>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-surface">
+          {/* Mobile: tap-to-expand feature list */}
+          <div className="md:hidden overflow-hidden rounded-2xl border border-border bg-card">
+            <ul className="divide-y divide-border/60">
+              {comparisonFeatures.map((row) => {
+                const isOpen = openRow === row.label;
+                const panelId = `pricing-row-${row.label.replace(/\W+/g, "-").toLowerCase()}`;
+                return (
+                  <li key={row.label}>
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      aria-controls={panelId}
+                      onClick={() => setOpenRow(isOpen ? null : row.label)}
+                      className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left outline-none active:bg-muted/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60"
+                    >
+                      <span className="flex min-w-0 items-center gap-3">
+                        <span aria-hidden="true" className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">{row.icon}</span>
+                        <span className="text-sm font-medium text-foreground">{row.label}</span>
+                      </span>
+                      <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {isOpen && (
+                      <dl id={panelId} className="space-y-3 bg-muted/30 px-4 pb-4 pt-1">
+                        {plans.map((plan) => (
+                          <div key={plan.key} className="flex items-center justify-between gap-4">
+                            <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{plan.name}</dt>
+                            <dd className="text-right"><TableCell val={row[plan.key]} /></dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <div className="hidden md:block overflow-hidden rounded-2xl border border-border bg-card shadow-surface">
             <div className="overflow-x-auto" role="region" aria-label={t("pricing.comparePlans")} tabIndex={0}>
               <table className="w-full min-w-[940px] border-separate border-spacing-0 text-sm">
+
                 <caption className="sr-only">{t("pricing.compareDesc")}</caption>
                 <thead>
                   <tr>
