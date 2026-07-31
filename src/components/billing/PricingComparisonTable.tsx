@@ -456,47 +456,66 @@ export function PricingComparisonTable({
     if (row.brands) {
       return (
         <TooltipProvider delayDuration={100}>
-          <div className="flex flex-wrap items-center gap-2">
+          <ul className="flex list-none flex-wrap items-center gap-2 p-0">
             {row.brands[plan].map((b) => {
               const Icon = b.icon;
               return (
-                <Tooltip key={b.id}>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex h-7 w-7 cursor-help items-center justify-center rounded-md border border-border/60 bg-muted/40 text-foreground/80 transition-colors hover:border-primary/40 hover:bg-primary/10">
-                      <Icon className="h-4 w-4 shrink-0" />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-[220px]">
-                    <p className="text-xs font-semibold">{b.name}</p>
-                    <p className="text-[11px] text-muted-foreground">{b.detail}</p>
-                  </TooltipContent>
-                </Tooltip>
+                <li key={b.id}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={`${b.name} — ${b.detail}`}
+                        className="inline-flex h-7 w-7 cursor-help items-center justify-center rounded-md border border-border/60 bg-muted/40 text-foreground/80 transition-colors hover:border-primary/40 hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      >
+                        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[220px]" role="tooltip">
+                      <p className="text-xs font-semibold">{b.name}</p>
+                      <p className="text-[11px] text-muted-foreground">{b.detail}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </TooltipProvider>
       );
     }
 
 
+
     if (row.models) {
       return (
-        <div className="flex flex-wrap items-center gap-1.5">
-          {row.models[plan].map((m) => (
-            <span
-              key={m.short}
-              title={m.full}
-              className={cn(
-                "inline-flex h-6 min-w-6 items-center justify-center rounded-md px-1.5 text-[10px] font-bold tracking-tight",
-                m.tone
-              )}
-            >
-              {m.short}
-            </span>
-          ))}
-        </div>
+        <TooltipProvider delayDuration={100}>
+          <ul className="flex list-none flex-wrap items-center gap-1.5 p-0">
+            {row.models[plan].map((m) => (
+              <li key={m.short}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={m.full}
+                      className={cn(
+                        "inline-flex h-6 min-w-6 cursor-help items-center justify-center rounded-md px-1.5 text-[10px] font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                        m.tone
+                      )}
+                    >
+                      <span aria-hidden="true">{m.short}</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" role="tooltip" className="max-w-[220px]">
+                    <p className="text-xs font-semibold">{m.full}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </li>
+            ))}
+          </ul>
+        </TooltipProvider>
       );
     }
+
 
 
     const val = cellValue(row, plan);
@@ -1002,14 +1021,23 @@ export function PricingComparisonTable({
                         {detailRow.row.brands![meta.name].map((b) => {
                           const Icon = b.icon;
                           return (
-                            <span
-                              key={b.id}
-                              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1"
-                              title={b.detail}
-                            >
-                              <Icon className="h-3.5 w-3.5" />
-                              {b.name}
-                            </span>
+                            <TooltipProvider key={b.id} delayDuration={100}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    aria-label={`${b.name} — ${b.detail}`}
+                                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 transition-colors hover:border-primary/40 hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                  >
+                                    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                                    {b.name}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-[220px]" role="tooltip">
+                                  <p className="text-[11px] text-muted-foreground">{b.detail}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           );
                         })}
                       </div>
@@ -1017,6 +1045,8 @@ export function PricingComparisonTable({
                   </div>
                 </div>
               )}
+
+
 
               {detailRow.row.models && (
                 <div className="space-y-2">
