@@ -316,12 +316,22 @@ export function PricingSection() {
                     {isOpen && (
                       <dl id={panelId} className="space-y-3 bg-muted/30 px-4 pb-4 pt-1">
                         {plans.map((plan) => (
-                          <div key={plan.key} className="flex items-center justify-between gap-4">
+                          <div
+                            key={plan.key}
+                            className={
+                              typeof row[plan.key] === "object"
+                                ? "space-y-1.5"
+                                : "flex items-center justify-between gap-4"
+                            }
+                          >
                             <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{plan.name}</dt>
-                            <dd className="text-right"><TableCell val={row[plan.key]} /></dd>
+                            <dd className={typeof row[plan.key] === "object" ? "" : "text-right"}>
+                              <TableCell val={row[plan.key]} />
+                            </dd>
                           </div>
                         ))}
                       </dl>
+
                     )}
                   </li>
                 );
