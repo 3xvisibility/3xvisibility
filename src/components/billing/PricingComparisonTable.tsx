@@ -530,7 +530,12 @@ export function PricingComparisonTable({
           {t("billing.comparePlans")}
         </h2>
         <p className="text-sm md:text-base text-muted-foreground">{t("billing.compareDesc")}</p>
+        <p className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 text-xs text-muted-foreground">
+          <Info className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          Hover any feature for a quick explanation, or click the row for full details and examples.
+        </p>
       </div>
+
 
       {/* Billing toggle */}
       <div className="flex md:hidden items-center justify-center gap-3">
