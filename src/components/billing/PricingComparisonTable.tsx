@@ -1009,14 +1009,23 @@ export function PricingComparisonTable({
                         {detailRow.row.brands![meta.name].map((b) => {
                           const Icon = b.icon;
                           return (
-                            <span
-                              key={b.id}
-                              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1"
-                              title={b.detail}
-                            >
-                              <Icon className="h-3.5 w-3.5" />
-                              {b.name}
-                            </span>
+                            <TooltipProvider key={b.id} delayDuration={100}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    aria-label={`${b.name} — ${b.detail}`}
+                                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 transition-colors hover:border-primary/40 hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                  >
+                                    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                                    {b.name}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-[220px]" role="tooltip">
+                                  <p className="text-[11px] text-muted-foreground">{b.detail}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           );
                         })}
                       </div>
@@ -1024,6 +1033,8 @@ export function PricingComparisonTable({
                   </div>
                 </div>
               )}
+
+
 
               {detailRow.row.models && (
                 <div className="space-y-2">
