@@ -90,6 +90,14 @@ export function PricingSection() {
   ];
 
   const comparisonFeatures = [
+    {
+      label: "Available models",
+      icon: <Cpu className="h-4 w-4 text-primary" />,
+      free: <ModelIcons marks={[GeminiMark, GoogleMark]} />,
+      starter: <ModelIcons marks={[GeminiMark, GoogleMark, OpenAIMark, MistralMark, DeepSeekMark]} />,
+      pro: <ModelIcons marks={[GeminiMark, GoogleMark, OpenAIMark, MistralMark, DeepSeekMark, ClaudeMark, GrokMark, PerplexityMark]} />,
+      agency: <ModelIcons marks={[GeminiMark, GoogleMark, OpenAIMark, MistralMark, DeepSeekMark, ClaudeMark, GrokMark, PerplexityMark, CopilotMark, MetaMark]} />,
+    },
     { label: "Credits / month", icon: <Layers className="h-4 w-4 text-primary" />, free: "10", starter: "100 – 500", pro: "300 – 900", agency: "500 – 1,000" },
     { label: t("pricing.aiGenerations"), icon: <Sparkles className="h-4 w-4 text-primary" />, free: "10", starter: "100", pro: "1,000", agency: "5,000" },
     { label: t("pricing.campaigns"), icon: <Zap className="h-4 w-4 text-primary" />, free: "1", starter: "10", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
