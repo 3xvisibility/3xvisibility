@@ -494,21 +494,18 @@ export function PricingComparisonTable({
     }
 
     if (!val) {
-      return (
-        <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted">
-          <X className="h-3.5 w-3.5 text-muted-foreground/40" />
-        </div>
-      );
+      return <X className="h-[18px] w-[18px] text-destructive" strokeWidth={3} />;
     }
 
     return (
-      <div className="inline-flex items-center justify-center gap-1.5">
-        <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-success/10">
-          <Check className="h-3.5 w-3.5 text-success" />
-        </div>
+      <div className="inline-flex items-center gap-1.5">
+        <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-success">
+          <Check className="h-3 w-3 text-white" strokeWidth={3.5} />
+        </span>
         {note && <span className="text-xs text-muted-foreground whitespace-nowrap">{note}</span>}
       </div>
     );
+
   };
 
   return (
