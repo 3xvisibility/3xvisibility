@@ -6,6 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Search, Link2, Code, Users, Headphones, Gift } from "lucide-react";
 import { ScrollReveal, useRevealed } from "./ScrollReveal";
+import { OpenAIMark, GeminiMark, ClaudeMark, PerplexityMark, GoogleMark, GrokMark, DeepSeekMark, MistralMark, CopilotMark, MetaMark } from "@/components/billing/ModelBrandIcons";
+import { Cpu } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Loader2 } from "lucide-react";
