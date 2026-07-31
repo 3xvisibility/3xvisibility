@@ -455,23 +455,29 @@ export function PricingComparisonTable({
   const renderCell = (row: FeatureRow, plan: PlanName) => {
     if (row.brands) {
       return (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          {row.brands[plan].map((b) => {
-            const Icon = b.icon;
-            return (
-              <span
-                key={b.id}
-                title={`${b.name} — ${b.detail}`}
-                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-foreground/80"
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="hidden xl:inline">{b.name}</span>
-              </span>
-            );
-          })}
-        </div>
+        <TooltipProvider delayDuration={100}>
+          <div className="flex flex-wrap items-center gap-2">
+            {row.brands[plan].map((b) => {
+              const Icon = b.icon;
+              return (
+                <Tooltip key={b.id}>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex h-7 w-7 cursor-help items-center justify-center rounded-md border border-border/60 bg-muted/40 text-foreground/80 transition-colors hover:border-primary/40 hover:bg-primary/10">
+                      <Icon className="h-4 w-4 shrink-0" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[220px]">
+                    <p className="text-xs font-semibold">{b.name}</p>
+                    <p className="text-[11px] text-muted-foreground">{b.detail}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </TooltipProvider>
       );
     }
+
 
     if (row.models) {
       return (
