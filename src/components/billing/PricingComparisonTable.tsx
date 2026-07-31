@@ -494,21 +494,18 @@ export function PricingComparisonTable({
     }
 
     if (!val) {
-      return (
-        <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted">
-          <X className="h-3.5 w-3.5 text-muted-foreground/40" />
-        </div>
-      );
+      return <X className="h-[18px] w-[18px] text-destructive" strokeWidth={3} />;
     }
 
     return (
-      <div className="inline-flex items-center justify-center gap-1.5">
-        <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-success/10">
-          <Check className="h-3.5 w-3.5 text-success" />
-        </div>
+      <div className="inline-flex items-center gap-1.5">
+        <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-success">
+          <Check className="h-3 w-3 text-success-foreground" strokeWidth={3.5} />
+        </span>
         {note && <span className="text-xs text-muted-foreground whitespace-nowrap">{note}</span>}
       </div>
     );
+
   };
 
   return (
@@ -522,7 +519,7 @@ export function PricingComparisonTable({
       </div>
 
       {/* Billing toggle */}
-      <div className="flex items-center justify-center gap-3">
+      <div className="flex md:hidden items-center justify-center gap-3">
         <span className={cn("text-sm font-medium transition-colors", !isYearly ? "text-foreground" : "text-muted-foreground")}>
           {t("billing.monthly")}
         </span>
@@ -550,6 +547,7 @@ export function PricingComparisonTable({
           </Badge>
         )}
       </div>
+
 
       {/* Mobile: stacked plan cards */}
       <div className="md:hidden space-y-4">
@@ -701,19 +699,10 @@ export function PricingComparisonTable({
               </tr>
             </thead>
 
-            {featureGroups.map((group) => (
-              <tbody key={group.id}>
-                <tr>
-                  <td colSpan={5} className="p-0">
-                    <div className="flex items-center gap-2 px-6 pt-8 pb-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted text-primary">
-                        {group.icon}
-                      </span>
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{group.label}</span>
-                    </div>
-                  </td>
-                </tr>
-                {group.rows.map((row, i) => (
+            <tbody>
+              {featureGroups
+                .flatMap((group) => group.rows.map((row) => ({ row, group: group.label })))
+                .map(({ row, group }, i) => (
                   <tr
                     key={row.id}
                     role="button"
@@ -721,17 +710,17 @@ export function PricingComparisonTable({
                     aria-label={`${row.labelKey ? t(row.labelKey) : row.label} — details`}
                     className={cn(
                       "transition-colors cursor-pointer outline-none group",
-                      i % 2 === 0 ? "bg-muted/40" : "bg-transparent",
+                      i % 2 === 0 ? "bg-transparent" : "bg-muted/40",
                       hoveredRow === row.id && "bg-muted/70",
                       "focus-visible:ring-2 focus-visible:ring-primary/40"
                     )}
                     onMouseEnter={() => setHoveredRow(row.id)}
                     onMouseLeave={() => setHoveredRow(null)}
-                    onClick={() => setDetailRow({ row, group: group.label })}
+                    onClick={() => setDetailRow({ row, group })}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        setDetailRow({ row, group: group.label });
+                        setDetailRow({ row, group });
                       }
                     }}
                   >
@@ -747,8 +736,6 @@ export function PricingComparisonTable({
                       </span>
                     </td>
 
-
-
                     {planMeta.map((meta, mi) => (
                       <td
                         key={meta.name}
@@ -762,8 +749,8 @@ export function PricingComparisonTable({
                     ))}
                   </tr>
                 ))}
-              </tbody>
-            ))}
+            </tbody>
+
 
             {/* CTA footer */}
             <tbody>
