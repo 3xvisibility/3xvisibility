@@ -661,31 +661,27 @@ export function PricingComparisonTable({
       </div>
 
       {/* Comparison table (tablet & desktop) */}
-      <div className="hidden md:block rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-        <p className="text-center text-sm text-muted-foreground px-6 pt-8 pb-6">{t("billing.compareDesc")}</p>
+      <div className="hidden md:block">
+        <div className="overflow-x-auto pb-4">
 
-        <div className="overflow-x-auto px-3 pb-4 sm:px-6 sm:pb-6">
-
-          <table className="w-full min-w-[900px] border-collapse">
+          <table className="w-full min-w-[900px] border-collapse border-spacing-0">
             <thead className="sticky top-0 z-20">
               <tr>
                 <th className="text-left p-0 w-[300px]">
-                  <div className="rounded-l-2xl bg-muted/50 px-5 py-4">
+                  <div className="rounded-l-2xl bg-muted/60 px-6 py-5">
                     <span className="text-[15px] font-semibold text-foreground">{t("billing.comparePlans")}</span>
                   </div>
                 </th>
                 {planMeta.map((meta, mi) => {
                   const plan = meta.name;
                   const features = PLAN_FEATURES[plan];
-                  const basePrice = monthlyPrices[plan];
-                  const price = isYearly && plan !== "free" ? Math.round(basePrice * (1 - YEARLY_DISCOUNT)) : basePrice;
                   const isCurrent = plan === currentPlan;
 
                   return (
                     <th key={plan} className="p-0 w-[180px] text-left">
                       <div
                         className={cn(
-                          "flex items-center gap-2 bg-muted/50 px-5 py-4",
+                          "flex items-center gap-2 bg-muted/60 px-6 py-5",
                           mi === planMeta.length - 1 && "rounded-r-2xl"
                         )}
                       >
@@ -693,9 +689,6 @@ export function PricingComparisonTable({
                           {meta.icon}
                         </span>
                         <span className="text-[15px] font-semibold text-foreground">{features.label}</span>
-                        <span className="text-xs text-muted-foreground tabular-nums">
-                          {price === 0 ? t("common.free") : `€${price}`}
-                        </span>
                         {isCurrent && (
                           <Badge variant="outline" className="text-[9px] text-primary border-primary/30 bg-primary/5 px-1.5 py-0">
                             {t("billing.current")}
@@ -712,7 +705,7 @@ export function PricingComparisonTable({
               <tbody key={group.id}>
                 <tr>
                   <td colSpan={5} className="p-0">
-                    <div className="flex items-center gap-2 px-5 pt-7 pb-2">
+                    <div className="flex items-center gap-2 px-6 pt-8 pb-2">
                       <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted text-primary">
                         {group.icon}
                       </span>
@@ -742,7 +735,7 @@ export function PricingComparisonTable({
                       }
                     }}
                   >
-                    <td className="py-4 px-5 rounded-l-2xl align-middle">
+                    <td className="py-5 px-6 rounded-l-2xl align-middle">
                       <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
                         {row.labelKey ? t(row.labelKey) : row.label}
                         <Info
@@ -752,10 +745,8 @@ export function PricingComparisonTable({
                           )}
                         />
                       </span>
-                      {row.hint && (
-                        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground max-w-[280px]">{row.hint}</p>
-                      )}
                     </td>
+
 
 
                     {planMeta.map((meta, mi) => (
