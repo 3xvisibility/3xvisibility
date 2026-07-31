@@ -667,12 +667,13 @@ export function PricingComparisonTable({
 
       {/* Comparison table (tablet & desktop) */}
       <div className="hidden md:block">
-        <div className="overflow-x-auto pb-4">
+        <div className="overflow-x-auto pb-4" tabIndex={0} role="region" aria-label={t("billing.comparePlans")}>
 
           <table className="w-full min-w-[900px] border-collapse border-spacing-0">
+            <caption className="sr-only">{t("billing.compareDesc")}</caption>
             <thead className="sticky top-0 z-20">
               <tr>
-                <th className="text-left p-0 w-[300px]">
+                <th scope="col" className="text-left p-0 w-[300px]">
                   <div className="rounded-l-2xl bg-muted/60 px-6 py-5">
                     <span className="text-[15px] font-semibold text-foreground">{t("billing.comparePlans")}</span>
                   </div>
@@ -683,14 +684,22 @@ export function PricingComparisonTable({
                   const isCurrent = plan === currentPlan;
 
                   return (
-                    <th key={plan} className="p-0 w-[180px] text-left">
+                    <th
+                      key={plan}
+                      scope="col"
+                      aria-current={isCurrent ? "true" : undefined}
+                      className="p-0 w-[180px] text-left"
+                    >
                       <div
                         className={cn(
                           "flex items-center gap-2 bg-muted/60 px-6 py-5",
                           mi === planMeta.length - 1 && "rounded-r-2xl"
                         )}
                       >
-                        <span className={cn("inline-flex h-7 w-7 items-center justify-center rounded-lg", meta.bgClass, meta.colorClass)}>
+                        <span
+                          aria-hidden="true"
+                          className={cn("inline-flex h-7 w-7 items-center justify-center rounded-lg", meta.bgClass, meta.colorClass)}
+                        >
                           {meta.icon}
                         </span>
                         <span className="text-[15px] font-semibold text-foreground">{features.label}</span>
@@ -709,54 +718,60 @@ export function PricingComparisonTable({
             <tbody>
               {featureGroups
                 .flatMap((group) => group.rows.map((row) => ({ row, group: group.label })))
-                .map(({ row, group }, i) => (
-                  <tr
-                    key={row.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`${row.labelKey ? t(row.labelKey) : row.label} — details`}
-                    className={cn(
-                      "transition-colors cursor-pointer outline-none group",
-                      i % 2 === 0 ? "bg-transparent" : "bg-muted/40",
-                      hoveredRow === row.id && "bg-muted/70",
-                      "focus-visible:ring-2 focus-visible:ring-primary/40"
-                    )}
-                    onMouseEnter={() => setHoveredRow(row.id)}
-                    onMouseLeave={() => setHoveredRow(null)}
-                    onClick={() => setDetailRow({ row, group })}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setDetailRow({ row, group });
-                      }
-                    }}
-                  >
-                    <td className="py-5 px-6 rounded-l-2xl align-middle">
-                      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
-                        {row.labelKey ? t(row.labelKey) : row.label}
-                        <Info
-                          className={cn(
-                            "h-3.5 w-3.5 shrink-0 transition-opacity",
-                            hoveredRow === row.id ? "opacity-70 text-primary" : "opacity-0"
-                          )}
-                        />
-                      </span>
-                    </td>
+                .map(({ row, group }, i) => {
+                  const rowLabel = row.labelKey ? t(row.labelKey) : row.label;
+                  return (
+                    <tr
+                      key={row.id}
+                      className={cn(
+                        "transition-colors cursor-pointer",
+                        i % 2 === 0 ? "bg-transparent" : "bg-muted/40",
+                        hoveredRow === row.id && "bg-muted/70"
+                      )}
+                      onMouseEnter={() => setHoveredRow(row.id)}
+                      onMouseLeave={() => setHoveredRow(null)}
+                      onClick={() => setDetailRow({ row, group })}
+                    >
+                      <th scope="row" className="py-5 px-6 rounded-l-2xl align-middle text-left font-normal">
+                        <button
+                          type="button"
+                          aria-haspopup="dialog"
+                          aria-label={`${rowLabel} — ${group} — ${t("common.details") === "common.details" ? "details" : t("common.details")}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDetailRow({ row, group });
+                          }}
+                          onFocus={() => setHoveredRow(row.id)}
+                          onBlur={() => setHoveredRow(null)}
+                          className="inline-flex items-center gap-1.5 rounded-md text-left text-sm font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        >
+                          {rowLabel}
+                          <Info
+                            aria-hidden="true"
+                            className={cn(
+                              "h-3.5 w-3.5 shrink-0 transition-opacity",
+                              hoveredRow === row.id ? "opacity-70 text-primary" : "opacity-0"
+                            )}
+                          />
+                        </button>
+                      </th>
 
-                    {planMeta.map((meta, mi) => (
-                      <td
-                        key={meta.name}
-                        className={cn(
-                          "py-5 px-6 text-left align-middle",
-                          mi === planMeta.length - 1 && "rounded-r-2xl"
-                        )}
-                      >
-                        {renderCell(row, meta.name)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                      {planMeta.map((meta, mi) => (
+                        <td
+                          key={meta.name}
+                          className={cn(
+                            "py-5 px-6 text-left align-middle",
+                            mi === planMeta.length - 1 && "rounded-r-2xl"
+                          )}
+                        >
+                          {renderCell(row, meta.name)}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
             </tbody>
+
 
 
             {/* CTA footer */}
