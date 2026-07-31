@@ -196,7 +196,7 @@ export function LandingNav() {
       >
         <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-8">
           <Link to="/" className="flex items-center">
-            <span className="group/logo relative inline-flex items-center rounded-full bg-[linear-gradient(135deg,hsl(240,18%,13%),hsl(245,22%,8%))] px-4 py-2 ring-1 ring-inset ring-white/10 shadow-[0_6px_20px_-8px_hsl(96,67%,30%,0.55)] transition-all duration-300 hover:ring-[hsl(96,67%,55%,0.45)] hover:shadow-[0_10px_28px_-8px_hsl(91,96%,40%,0.5)]">
+            <span className="group/logo relative inline-flex items-center rounded-full bg-[linear-gradient(135deg,hsl(240,18%,13%),hsl(245,22%,8%))] px-4 py-2 ring-1 ring-inset ring-white/10 shadow-[0_6px_20px_-8px_hsl(96,67%,30%,0.55)] transition-all duration-300 hover:ring-[hsl(96,67%,55%,0.45)] hover:shadow-[0_10px_28px_-8px_hsl(96,67%,48%,0.5)]">
               <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(120%_120%_at_0%_0%,hsl(96,67%,55%,0.22),transparent_60%)]" />
               <img src={logo3x} alt="3X Visibility logo" width={1107} height={261} className="relative h-6 sm:h-7 w-auto object-contain" />
             </span>
