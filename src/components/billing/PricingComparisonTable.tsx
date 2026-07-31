@@ -701,19 +701,10 @@ export function PricingComparisonTable({
               </tr>
             </thead>
 
-            {featureGroups.map((group) => (
-              <tbody key={group.id}>
-                <tr>
-                  <td colSpan={5} className="p-0">
-                    <div className="flex items-center gap-2 px-6 pt-8 pb-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted text-primary">
-                        {group.icon}
-                      </span>
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{group.label}</span>
-                    </div>
-                  </td>
-                </tr>
-                {group.rows.map((row, i) => (
+            <tbody>
+              {featureGroups
+                .flatMap((group) => group.rows.map((row) => ({ row, group: group.label })))
+                .map(({ row, group }, i) => (
                   <tr
                     key={row.id}
                     role="button"
@@ -721,17 +712,17 @@ export function PricingComparisonTable({
                     aria-label={`${row.labelKey ? t(row.labelKey) : row.label} — details`}
                     className={cn(
                       "transition-colors cursor-pointer outline-none group",
-                      i % 2 === 0 ? "bg-muted/40" : "bg-transparent",
+                      i % 2 === 0 ? "bg-transparent" : "bg-muted/40",
                       hoveredRow === row.id && "bg-muted/70",
                       "focus-visible:ring-2 focus-visible:ring-primary/40"
                     )}
                     onMouseEnter={() => setHoveredRow(row.id)}
                     onMouseLeave={() => setHoveredRow(null)}
-                    onClick={() => setDetailRow({ row, group: group.label })}
+                    onClick={() => setDetailRow({ row, group })}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        setDetailRow({ row, group: group.label });
+                        setDetailRow({ row, group });
                       }
                     }}
                   >
@@ -747,8 +738,6 @@ export function PricingComparisonTable({
                       </span>
                     </td>
 
-
-
                     {planMeta.map((meta, mi) => (
                       <td
                         key={meta.name}
@@ -762,8 +751,8 @@ export function PricingComparisonTable({
                     ))}
                   </tr>
                 ))}
-              </tbody>
-            ))}
+            </tbody>
+
 
             {/* CTA footer */}
             <tbody>
