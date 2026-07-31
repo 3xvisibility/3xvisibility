@@ -151,11 +151,15 @@ function collectJobs(root: Node, targetLang: string): Job[] {
     if (!shouldTranslate(original)) continue;
     // Skip if already applied for this language.
     if (node.__autoTrLang === targetLang && node.nodeValue !== original && !isBadTranslation(node.nodeValue)) continue;
+    const rawValue = node.nodeValue ?? "";
+    const lead = /^\s*/.exec(rawValue)?.[0] ?? "";
+    const trail = /\s*$/.exec(rawValue)?.[0] ?? "";
     jobs.push({
       text: original,
       apply: (translated) => {
         rememberTranslationPair(targetLang, original, translated);
-        node.nodeValue = translated;
+        // Preserve surrounding whitespace so adjacent inline words don't glue together.
+        node.nodeValue = `${lead}${translated.trim()}${trail}`;
         node.__autoTrLang = targetLang;
       },
     });
