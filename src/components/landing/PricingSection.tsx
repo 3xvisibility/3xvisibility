@@ -117,7 +117,7 @@ export function PricingSection() {
 
   return (
     <section id="pricing" className="py-20 md:py-28 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_30%_at_50%_20%,hsl(91,96%,43%,0.06),transparent)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_30%_at_50%_20%,hsl(96,67%,48%,0.06),transparent)] pointer-events-none" />
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <ScrollReveal className="text-center max-w-2xl mx-auto mb-10">
           <span className="section-badge mb-6">{t("pricing.badge")}</span>
@@ -137,29 +137,29 @@ export function PricingSection() {
             {isYearly ? `${t("pricing.billed")} ${t("pricing.yearly").toLowerCase()}` : `${t("pricing.billed")} ${t("pricing.monthly").toLowerCase()}`}
           </span>
           {isYearly && (
-            <Badge className="rounded-full bg-primary/10 text-[hsl(91,96%,32%)] border border-[hsl(91,96%,43%,0.25)] text-xs font-medium px-3 py-1">
+            <Badge className="rounded-full bg-primary/10 text-[hsl(96,67%,35%)] border border-[hsl(96,67%,48%,0.25)] text-xs font-medium px-3 py-1">
               {t("pricing.save")}
             </Badge>
           )}
         </div>
 
 
-        <motion.div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 max-w-6xl mx-auto items-stretch rounded-2xl border border-[hsl(91,96%,43%,0.12)] overflow-hidden bg-[hsl(250,30%,98%)]" initial="hidden" animate={gridRevealed ? "visible" : "hidden"} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
+        <motion.div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 max-w-6xl mx-auto items-stretch rounded-2xl border border-[hsl(96,67%,48%,0.12)] overflow-hidden bg-[hsl(250,30%,98%)]" initial="hidden" animate={gridRevealed ? "visible" : "hidden"} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
           {plans.map((plan) => {
             const qty = creditQty[plan.key] ?? 1;
             const price = Math.round(plan.monthlyPrice * qty * (isYearly ? 1 - YEARLY_DISCOUNT : 1));
             return (
               <motion.div key={plan.name} className="h-full" variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } }}>
-                <div className={`group relative h-full flex flex-col p-6 border-r border-[hsl(91,96%,43%,0.1)] last:border-r-0 transition-all duration-300 ${plan.popular ? "bg-[hsl(250,30%,97%)] hover:bg-[hsl(250,30%,96%)]" : "bg-transparent hover:bg-[hsl(250,30%,96%)]"} hover:shadow-[inset_0_0_0_1px_hsl(91,96%,43%,0.25)]`}>
+                <div className={`group relative h-full flex flex-col p-6 border-r border-[hsl(96,67%,48%,0.1)] last:border-r-0 transition-all duration-300 ${plan.popular ? "bg-[hsl(250,30%,97%)] hover:bg-[hsl(250,30%,96%)]" : "bg-transparent hover:bg-[hsl(250,30%,96%)]"} hover:shadow-[inset_0_0_0_1px_hsl(96,67%,48%,0.25)]`}>
                   {plan.popular && <div className="absolute top-0 left-0 right-0 h-[3px] bg-primary" />}
 
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-lg font-semibold tracking-tight">{plan.name}</h3>
-                    {plan.popular && <Badge className="bg-primary/15 text-[hsl(91,96%,32%)] border border-[hsl(91,96%,43%,0.3)] text-[10px] font-bold uppercase tracking-wider">{t("pricing.mostPopular")}</Badge>}
+                    {plan.popular && <Badge className="bg-primary/15 text-[hsl(96,67%,35%)] border border-[hsl(96,67%,48%,0.3)] text-[10px] font-bold uppercase tracking-wider">{t("pricing.mostPopular")}</Badge>}
                   </div>
                   <p className="text-sm text-[hsl(220,12%,38%)] mt-1">{plan.description}</p>
 
-                  <Separator className="my-5 bg-[hsl(91,96%,43%,0.1)]" />
+                  <Separator className="my-5 bg-[hsl(96,67%,48%,0.1)]" />
 
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-3xl font-semibold tabular-nums tracking-tight">€{price}</span>
@@ -169,7 +169,7 @@ export function PricingSection() {
                   <div className="mt-3">
                     {plan.creditSteps.length > 1 ? (
                       <Select value={String(qty)} onValueChange={(v) => setCreditQty((s) => ({ ...s, [plan.key]: Number(v) }))}>
-                        <SelectTrigger className="h-10 rounded-lg bg-transparent border-[hsl(91,96%,43%,0.18)] text-sm">
+                        <SelectTrigger className="h-10 rounded-lg bg-transparent border-[hsl(96,67%,48%,0.18)] text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -181,19 +181,19 @@ export function PricingSection() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <div className="h-10 flex items-center rounded-lg border border-[hsl(91,96%,43%,0.14)] px-3 text-sm text-[hsl(220,12%,50%)]">
+                      <div className="h-10 flex items-center rounded-lg border border-[hsl(96,67%,48%,0.14)] px-3 text-sm text-[hsl(220,12%,50%)]">
                         {plan.baseCredits.toLocaleString()} credits to try
                       </div>
                     )}
                   </div>
 
                   {plan.monthlyPrice > 0 && (
-                    <p className="text-[11px] text-[hsl(91,96%,32%)] mt-2 inline-flex items-center gap-1.5">
+                    <p className="text-[11px] text-[hsl(96,67%,35%)] mt-2 inline-flex items-center gap-1.5">
                       <Gift className="h-3 w-3" />{t("pricing.trialNote")}
                     </p>
                   )}
 
-                  <Separator className="my-5 bg-[hsl(91,96%,43%,0.1)]" />
+                  <Separator className="my-5 bg-[hsl(96,67%,48%,0.1)]" />
 
                   <ul className="space-y-2.5 flex-1">
                     {plan.features.map((f) => (
@@ -206,14 +206,14 @@ export function PricingSection() {
 
                   <div className="pt-6">
                     {plan.monthlyPrice === 0 ? (
-                      <Button className="w-full rounded-lg h-11 text-sm font-semibold bg-[hsl(250,30%,95%)] border border-[hsl(91,96%,43%,0.15)] text-foreground hover:bg-[hsl(91,96%,43%,0.1)]" asChild>
+                      <Button className="w-full rounded-lg h-11 text-sm font-semibold bg-[hsl(250,30%,95%)] border border-[hsl(96,67%,48%,0.15)] text-foreground hover:bg-[hsl(96,67%,48%,0.1)]" asChild>
                         <Link to="/auth">{plan.cta}</Link>
                       </Button>
                     ) : (
                       <Button
                         onClick={() => handleCheckout(plan.key, qty)}
                         disabled={checkoutPlan !== null}
-                        className={`w-full rounded-lg h-11 text-sm font-semibold ${plan.popular ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-[hsl(250,30%,95%)] border border-[hsl(91,96%,43%,0.15)] text-foreground hover:bg-[hsl(91,96%,43%,0.1)]"}`}
+                        className={`w-full rounded-lg h-11 text-sm font-semibold ${plan.popular ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-[hsl(250,30%,95%)] border border-[hsl(96,67%,48%,0.15)] text-foreground hover:bg-[hsl(96,67%,48%,0.1)]"}`}
                       >
                         {checkoutPlan === plan.key ? (
                           <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />{t("pricing.startingTrial")}</>

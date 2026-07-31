@@ -47,7 +47,7 @@ function MiniBarChart() {
           initial={{ height: 0 }}
           animate={{ height: `${h}%` }}
           transition={{ delay: 1.8 + i * 0.03, duration: 0.5, ease }}
-          className="flex-1 rounded-sm bg-[hsl(91,96%,43%,0.4)] hover:bg-[hsl(91,96%,43%,0.7)] transition-colors cursor-pointer min-w-[4px]"
+          className="flex-1 rounded-sm bg-[hsl(96,67%,48%,0.4)] hover:bg-[hsl(96,67%,48%,0.7)] transition-colors cursor-pointer min-w-[4px]"
         />
       ))}
     </div>
@@ -81,7 +81,7 @@ function TiltCard({ children }: { children: React.ReactNode }) {
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="relative rounded-2xl overflow-hidden border border-[hsl(91,96%,43%,0.15)] bg-[hsl(250,30%,98%)] shadow-2xl will-change-transform"
+      className="relative rounded-2xl overflow-hidden border border-[hsl(96,67%,48%,0.15)] bg-[hsl(250,30%,98%)] shadow-2xl will-change-transform"
       style={{
         transform: `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg)`,
         transition: "transform 0.15s ease-out",
@@ -91,7 +91,7 @@ function TiltCard({ children }: { children: React.ReactNode }) {
       <div
         className="pointer-events-none absolute inset-0 z-50 rounded-2xl"
         style={{
-          background: `radial-gradient(500px circle at ${glowPos.x}px ${glowPos.y}px, hsl(91 96% 43% / 0.12), transparent 50%)`,
+          background: `radial-gradient(500px circle at ${glowPos.x}px ${glowPos.y}px, hsl(96 67% 48% / 0.12), transparent 50%)`,
           opacity: glowPos.opacity,
           transition: "opacity 0.3s ease-out",
         }}
@@ -110,12 +110,12 @@ export function HeroSection() {
     <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_center,hsl(91,96%,43%,0.15),transparent_70%)]" />
-        <div className="absolute top-[100px] left-[5%] w-[400px] h-[400px] rounded-full bg-[hsl(91,96%,43%,0.06)] blur-[100px]" />
-        <div className="absolute top-[200px] right-[5%] w-[350px] h-[350px] rounded-full bg-[hsl(91,96%,43%,0.05)] blur-[80px]" />
+        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_center,hsl(96,67%,48%,0.15),transparent_70%)]" />
+        <div className="absolute top-[100px] left-[5%] w-[400px] h-[400px] rounded-full bg-[hsl(96,67%,48%,0.06)] blur-[100px]" />
+        <div className="absolute top-[200px] right-[5%] w-[350px] h-[350px] rounded-full bg-[hsl(96,67%,48%,0.05)] blur-[80px]" />
         <div className="absolute inset-0 opacity-[0.015]"
           style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, hsl(91,96%,32%) 1px, transparent 0)`,
+            backgroundImage: `radial-gradient(circle at 1px 1px, hsl(96,67%,35%) 1px, transparent 0)`,
             backgroundSize: "40px 40px",
           }}
         />
@@ -127,7 +127,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, ease }}
-            className="inline-flex items-center gap-2 rounded-full border border-[hsl(91,96%,43%,0.2)] bg-[hsl(91,96%,43%,0.08)] px-4 py-1.5 text-xs font-medium text-[hsl(91,96%,32%)] mb-8"
+            className="inline-flex items-center gap-2 rounded-full border border-[hsl(96,67%,48%,0.2)] bg-[hsl(96,67%,48%,0.08)] px-4 py-1.5 text-xs font-medium text-[hsl(96,67%,35%)] mb-8"
           >
             <Sparkles className="h-3 w-3" />
             <span>{t("hero.badge")}</span>
@@ -176,7 +176,7 @@ export function HeroSection() {
             <Button
               variant="outline"
               size="lg"
-              className="border-[hsl(91,96%,43%,0.2)] bg-transparent text-[hsl(220,12%,55%)] hover:text-foreground h-12 text-sm px-8 rounded-xl font-medium hover:bg-[hsl(91,96%,43%,0.08)] hover:border-[hsl(91,96%,43%,0.3)]"
+              className="border-[hsl(96,67%,48%,0.2)] bg-transparent text-[hsl(220,12%,55%)] hover:text-foreground h-12 text-sm px-8 rounded-xl font-medium hover:bg-[hsl(96,67%,48%,0.08)] hover:border-[hsl(96,67%,48%,0.3)]"
               asChild
             >
               <a href="#demo-video">{t("hero.watchDemo")}</a>
@@ -202,11 +202,11 @@ export function HeroSection() {
           transition={{ duration: 1, delay: 0.5, ease }}
           className="mt-14 md:mt-20 max-w-5xl mx-auto relative [perspective:1200px]"
         >
-          <div className="absolute -inset-6 bg-[radial-gradient(ellipse_at_center,hsl(91,96%,43%,0.15),transparent_70%)] rounded-3xl blur-2xl pointer-events-none" />
+          <div className="absolute -inset-6 bg-[radial-gradient(ellipse_at_center,hsl(96,67%,48%,0.15),transparent_70%)] rounded-3xl blur-2xl pointer-events-none" />
 
           <TiltCard>
             <div className="flex">
-              <div className="hidden md:flex flex-col items-center w-14 py-4 gap-5 border-r border-[hsl(91,96%,43%,0.08)] bg-[hsl(250,30%,99%)]">
+              <div className="hidden md:flex flex-col items-center w-14 py-4 gap-5 border-r border-[hsl(96,67%,48%,0.08)] bg-[hsl(250,30%,99%)]">
                 {sidebarIcons.map((Icon, i) => (
                   <motion.div
                     key={i}
@@ -215,7 +215,7 @@ export function HeroSection() {
                     transition={{ delay: 0.8 + i * 0.06, duration: 0.4, ease }}
                     className={`h-8 w-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${
                       i === 0
-                        ? "bg-[hsl(91,96%,43%,0.15)] text-[hsl(91,96%,32%)]"
+                        ? "bg-[hsl(96,67%,48%,0.15)] text-[hsl(96,67%,35%)]"
                         : "text-[hsl(220,12%,34%)] hover:text-[hsl(220,12%,48%)] hover:bg-[hsl(250,30%,95%)]"
                     }`}
                   >
@@ -225,19 +225,19 @@ export function HeroSection() {
               </div>
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between px-5 py-3 border-b border-[hsl(91,96%,43%,0.08)]">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-[hsl(96,67%,48%,0.08)]">
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9, duration: 0.5 }}>
                     <h2 className="text-sm font-bold text-foreground">{t("hero.mockWelcomeBack", { name: "John" })}</h2>
                     <p className="text-[10px] text-[hsl(220,12%,38%)]">{t("hero.mockStatisticsOverview")}</p>
                   </motion.div>
                   <div className="flex items-center gap-3">
-                    <div className="hidden sm:flex items-center gap-2 h-7 px-3 rounded-lg bg-[hsl(250,30%,95%)] border border-[hsl(91,96%,43%,0.08)]">
+                    <div className="hidden sm:flex items-center gap-2 h-7 px-3 rounded-lg bg-[hsl(250,30%,95%)] border border-[hsl(96,67%,48%,0.08)]">
                       <Search className="h-3 w-3 text-[hsl(220,12%,34%)]" />
                       <span className="text-[10px] text-[hsl(220,12%,34%)]">{t("hero.mockSearch")}</span>
                     </div>
                     <Bell className="h-4 w-4 text-[hsl(220,12%,34%)]" />
                     <Mail className="h-4 w-4 text-[hsl(220,12%,34%)]" />
-                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[hsl(91,96%,32%)] to-[hsl(91,96%,32%)]" />
+                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[hsl(96,67%,35%)] to-[hsl(96,67%,35%)]" />
                   </div>
                 </div>
 
@@ -247,7 +247,7 @@ export function HeroSection() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 1, duration: 0.4 }}
-                      className="inline-flex items-center gap-1.5 h-7 px-3 rounded-lg bg-[hsl(250,30%,95%)] border border-[hsl(91,96%,43%,0.1)] text-[10px] font-medium text-[hsl(220,12%,45%)] cursor-pointer"
+                      className="inline-flex items-center gap-1.5 h-7 px-3 rounded-lg bg-[hsl(250,30%,95%)] border border-[hsl(96,67%,48%,0.1)] text-[10px] font-medium text-[hsl(220,12%,45%)] cursor-pointer"
                     >
                       {t("hero.mockThisWeek")} <ArrowRight className="h-2.5 w-2.5 rotate-90" />
                     </motion.div>
@@ -258,8 +258,8 @@ export function HeroSection() {
                     <div className="flex-1 min-w-0">
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
                         {[
-                          { label: t("dashboard.pagesGeneratedLabel"), value: 1324, icon: FileText, change: "+10%", changeColor: "text-[hsl(142,65%,38%)]", iconBg: "bg-[hsl(91,96%,43%,0.1)]" },
-                          { label: t("hero.mockTotalViews"), value: 12100, icon: Eye, change: "+5%", changeColor: "text-[hsl(142,65%,38%)]", iconBg: "bg-[hsl(91,96%,43%,0.1)]" },
+                          { label: t("dashboard.pagesGeneratedLabel"), value: 1324, icon: FileText, change: "+10%", changeColor: "text-[hsl(142,65%,38%)]", iconBg: "bg-[hsl(96,67%,48%,0.1)]" },
+                          { label: t("hero.mockTotalViews"), value: 12100, icon: Eye, change: "+5%", changeColor: "text-[hsl(142,65%,38%)]", iconBg: "bg-[hsl(96,67%,48%,0.1)]" },
                           { label: t("hero.mockIndexingRate"), value: 56, icon: TrendingUp, change: "+12%", changeColor: "text-[hsl(142,65%,38%)]", iconBg: "bg-[hsl(38,92%,50%,0.1)]", suffix: "%" },
                         ].map((stat, i) => (
                           <motion.div
@@ -267,7 +267,7 @@ export function HeroSection() {
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 1.1 + i * 0.1, duration: 0.5, ease }}
-                            className="rounded-xl bg-[hsl(250,30%,96%)] border border-[hsl(91,96%,43%,0.08)] p-3"
+                            className="rounded-xl bg-[hsl(250,30%,96%)] border border-[hsl(96,67%,48%,0.08)] p-3"
                           >
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-[9px] text-[hsl(220,12%,38%)] font-medium">{stat.label}</span>
@@ -280,7 +280,7 @@ export function HeroSection() {
                                 <AnimatedNumber value={stat.value} suffix={stat.suffix || ""} delay={1.3 + i * 0.15} />
                               </span>
                               <div className={`h-5 w-5 rounded-md ${stat.iconBg} flex items-center justify-center`}>
-                                <stat.icon className="h-2.5 w-2.5 text-[hsl(91,96%,32%)]" />
+                                <stat.icon className="h-2.5 w-2.5 text-[hsl(96,67%,35%)]" />
                               </div>
                             </div>
                           </motion.div>
@@ -291,7 +291,7 @@ export function HeroSection() {
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 1.5, duration: 0.5, ease }}
-                        className="rounded-xl bg-[hsl(250,30%,96%)] border border-[hsl(91,96%,43%,0.08)] p-4"
+                        className="rounded-xl bg-[hsl(250,30%,96%)] border border-[hsl(96,67%,48%,0.08)] p-4"
                       >
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-[11px] font-semibold text-foreground">{t("hero.mockDailyVisitors")}</span>
@@ -312,7 +312,7 @@ export function HeroSection() {
                       transition={{ delay: 1.3, duration: 0.6, ease }}
                       className="hidden lg:block w-52 shrink-0"
                     >
-                      <div className="rounded-xl bg-[hsl(250,30%,96%)] border border-[hsl(91,96%,43%,0.08)] p-3">
+                      <div className="rounded-xl bg-[hsl(250,30%,96%)] border border-[hsl(96,67%,48%,0.08)] p-3">
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-[11px] font-semibold text-foreground">{t("hero.mockIntegrations")}</span>
                           <MoreHorizontal className="h-3.5 w-3.5 text-[hsl(220,12%,34%)]" />
@@ -336,13 +336,13 @@ export function HeroSection() {
                             ) : item.connected ? (
                               <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(142,76%,36%,0.15)] text-[hsl(142,65%,38%)] font-medium">{t("common.connected")}</span>
                             ) : (
-                              <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(91,96%,43%,0.1)] text-[hsl(91,96%,32%)] font-medium cursor-pointer hover:bg-[hsl(91,96%,43%,0.2)] transition-colors">{t("common.connect")}</span>
+                              <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(96,67%,48%,0.1)] text-[hsl(96,67%,35%)] font-medium cursor-pointer hover:bg-[hsl(96,67%,48%,0.2)] transition-colors">{t("common.connect")}</span>
                             )}
                           </motion.div>
                         ))}
                       </div>
 
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.8, duration: 0.5, ease }} className="mt-3 rounded-xl bg-[hsl(250,30%,96%)] border border-[hsl(91,96%,43%,0.08)] p-3">
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.8, duration: 0.5, ease }} className="mt-3 rounded-xl bg-[hsl(250,30%,96%)] border border-[hsl(96,67%,48%,0.08)] p-3">
                         <span className="text-[11px] font-semibold text-foreground block mb-2">{t("hero.mockRecentActivity")}</span>
                         {[
                           { text: t("hero.mockGeneratedPagesActivity"), status: t("status.completed") },
@@ -360,7 +360,7 @@ export function HeroSection() {
                 </div>
 
                 <motion.div initial={{ opacity: 0, y: 20, x: -20 }} animate={{ opacity: 1, y: 0, x: 0 }} transition={{ delay: 2.2, duration: 0.6, ease }} className="absolute bottom-4 left-4 md:left-20 hidden sm:block">
-                  <div className="rounded-lg bg-[hsl(250,30%,96%)] border border-[hsl(91,96%,43%,0.15)] p-2.5 shadow-xl backdrop-blur-sm">
+                  <div className="rounded-lg bg-[hsl(250,30%,96%)] border border-[hsl(96,67%,48%,0.15)] p-2.5 shadow-xl backdrop-blur-sm">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="h-2 w-2 rounded-full bg-[hsl(142,65%,38%)]" />
                         <span className="text-[8px] text-[hsl(220,12%,38%)]">{t("hero.mockPublishedAt")}</span>

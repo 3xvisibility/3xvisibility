@@ -60,18 +60,18 @@
     --landing-card: 0 0% 100%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(96 90% 45%), hsl(96 92% 62%));
-    --gradient-hero: linear-gradient(180deg, hsl(96 90% 45% / 0.05) 0%, transparent 60%);
-    --gradient-cta: linear-gradient(135deg, hsl(96 90% 38%), hsl(96 88% 50%));
-    --gradient-card: linear-gradient(135deg, hsl(96 90% 45% / 0.03), hsl(96 92% 62% / 0.03));
-    --gradient-glow: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(96 90% 45% / 0.06), transparent 40%);
+    --gradient-primary: linear-gradient(135deg, hsl(96 67% 48%), hsl(96 67% 62%));
+    --gradient-hero: linear-gradient(180deg, hsl(96 67% 48% / 0.05) 0%, transparent 60%);
+    --gradient-cta: linear-gradient(135deg, hsl(96 67% 42%), hsl(96 67% 55%));
+    --gradient-card: linear-gradient(135deg, hsl(96 67% 48% / 0.03), hsl(96 67% 62% / 0.03));
+    --gradient-glow: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(96 67% 48% / 0.06), transparent 40%);
 
     /* Shadows */
     --shadow-surface: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.02);
     --shadow-hover: 0 4px 12px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
-    --shadow-active: 0 0 0 2px hsl(96 90% 45% / 0.2), 0 4px 12px hsl(96 90% 45% / 0.08);
-    --shadow-glow: 0 0 40px hsl(96 90% 45% / 0.12), 0 0 80px hsl(96 92% 62% / 0.06);
-    --shadow-card-hover: 0 10px 40px -12px hsl(96 90% 45% / 0.15), 0 0 0 1px hsl(96 90% 45% / 0.08);
+    --shadow-active: 0 0 0 2px hsl(96 67% 48% / 0.2), 0 4px 12px hsl(96 67% 48% / 0.08);
+    --shadow-glow: 0 0 40px hsl(96 67% 48% / 0.12), 0 0 80px hsl(96 67% 62% / 0.06);
+    --shadow-card-hover: 0 10px 40px -12px hsl(96 67% 48% / 0.15), 0 0 0 1px hsl(96 67% 48% / 0.08);
     --shadow-lg: 0 10px 25px -3px rgba(0,0,0,.06), 0 4px 6px -4px rgba(0,0,0,.03);
   }
 
@@ -212,23 +212,23 @@
 }
 
 .landing-page .section-badge {
-  background: hsl(91 96% 43% / 0.08);
-  border: 1px solid hsl(91 96% 43% / 0.18);
-  color: hsl(91 96% 30%);
+  background: hsl(96 67% 48% / 0.08);
+  border: 1px solid hsl(96 67% 48% / 0.18);
+  color: hsl(96 67% 30%);
 }
 
 .landing-page .text-gradient-primary {
-  background: linear-gradient(100deg, hsl(91 96% 32%), hsl(96 90% 42%));
+  background: linear-gradient(100deg, hsl(96 67% 35%), hsl(96 67% 48%));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .landing-page .glow-purple {
-  box-shadow: 0 24px 80px hsl(91 96% 43% / 0.18), 0 8px 30px hsl(96 92% 55% / 0.10);
+  box-shadow: 0 24px 80px hsl(96 67% 48% / 0.18), 0 8px 30px hsl(96 67% 55% / 0.10);
 }
 .landing-page .glow-purple-sm {
-  box-shadow: 0 12px 40px hsl(91 96% 43% / 0.12);
+  box-shadow: 0 12px 40px hsl(96 67% 48% / 0.12);
 }
 
 
@@ -277,7 +277,7 @@
     background: var(--gradient-card);
   }
   .text-gradient-primary {
-    background: linear-gradient(135deg, hsl(96 80% 42%), hsl(96 90% 68%));
+    background: linear-gradient(135deg, hsl(96 67% 48%), hsl(96 67% 68%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -305,18 +305,18 @@
 
   /* Navy glow */
   .glow-purple {
-    box-shadow: 0 0 60px hsl(96 90% 45% / 0.15), 0 0 120px hsl(96 92% 62% / 0.08);
+    box-shadow: 0 0 60px hsl(96 67% 48% / 0.15), 0 0 120px hsl(96 67% 62% / 0.08);
   }
   .glow-purple-sm {
-    box-shadow: 0 0 30px hsl(96 90% 45% / 0.1), 0 0 60px hsl(96 92% 62% / 0.05);
+    box-shadow: 0 0 30px hsl(96 67% 48% / 0.1), 0 0 60px hsl(96 67% 62% / 0.05);
   }
 
   /* Section badge */
   .section-badge {
     @apply inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium;
-    background: hsl(96 90% 45% / 0.1);
-    border: 1px solid hsl(96 90% 45% / 0.2);
-    color: hsl(96 80% 42%);
+    background: hsl(96 67% 48% / 0.1);
+    border: 1px solid hsl(96 67% 48% / 0.2);
+    color: hsl(96 67% 48%);
   }
 
   /* Frosted glass surface */

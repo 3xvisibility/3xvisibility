@@ -63,7 +63,7 @@ export default function BlogPage() {
             <Link
               to={`/blog/${p.slug}`}
               key={p.slug}
-              className={`group flex flex-col overflow-hidden rounded-2xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(250,30%,8%,0.4)] hover:border-[hsl(96,90%,45%,0.35)] transition-all duration-300 ${
+              className={`group flex flex-col overflow-hidden rounded-2xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(250,30%,8%,0.4)] hover:border-[hsl(96,67%,48%,0.35)] transition-all duration-300 ${
                 i === 0 ? "sm:col-span-2" : ""
               }`}
             >
@@ -77,7 +77,7 @@ export default function BlogPage() {
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[hsl(250,30%,6%,0.7)] to-transparent" />
-                <span className="absolute top-3 left-3 rounded-full border border-[hsl(96,90%,45%,0.25)] bg-[hsl(250,30%,6%,0.6)] px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-primary backdrop-blur-sm">
+                <span className="absolute top-3 left-3 rounded-full border border-[hsl(96,67%,48%,0.25)] bg-[hsl(250,30%,6%,0.6)] px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-primary backdrop-blur-sm">
                   {p.category}
                 </span>
               </div>

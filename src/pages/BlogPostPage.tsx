@@ -55,7 +55,7 @@ export default function BlogPostPage() {
           {post.category} · {post.date}
         </p>
 
-        <figure className="not-prose my-6 overflow-hidden rounded-2xl border border-[hsl(96,90%,45%,0.12)]">
+        <figure className="not-prose my-6 overflow-hidden rounded-2xl border border-[hsl(96,67%,48%,0.12)]">
           <img
             src={post.image}
             alt={post.title}
@@ -86,14 +86,14 @@ export default function BlogPostPage() {
         ))}
 
         {related.length > 0 && (
-          <div className="not-prose mt-12 border-t border-[hsl(96,90%,45%,0.08)] pt-8">
+          <div className="not-prose mt-12 border-t border-[hsl(96,67%,48%,0.08)] pt-8">
             <h2 className="text-lg font-semibold tracking-tight">{ui.keepReading}</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {related.map((p) => (
                 <Link
                   to={`/blog/${p.slug}`}
                   key={p.slug}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(250,30%,8%,0.4)] hover:border-[hsl(96,90%,45%,0.35)] transition-all"
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(250,30%,8%,0.4)] hover:border-[hsl(96,67%,48%,0.35)] transition-all"
                 >
                   <div className="relative aspect-[16/9] overflow-hidden">
                     <img src={p.image} alt={p.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
