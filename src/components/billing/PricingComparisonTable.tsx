@@ -671,10 +671,18 @@ export function PricingComparisonTable({
                         onClick={() => setDetailRow({ row, group: group.label })}
                         className="flex w-full min-h-11 items-start justify-between gap-3 border-b border-border/50 px-4 py-3 text-left outline-none active:bg-muted/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60"
                       >
-                        <span className="text-sm font-medium text-foreground">
-                          {row.labelKey ? t(row.labelKey) : row.label}
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium text-foreground">
+                            {row.labelKey ? t(row.labelKey) : row.label}
+                          </span>
+                          {row.hint && (
+                            <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
+                              {row.hint}
+                            </span>
+                          )}
                         </span>
                         <span className="shrink-0 text-right">{renderCell(row, plan)}</span>
+
                       </button>
                     ))}
                   </section>
