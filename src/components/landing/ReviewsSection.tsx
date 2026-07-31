@@ -58,6 +58,8 @@ export function ReviewsSection() {
   const reviews = reviewConfigs.map((review) => ({
     name: review.name,
     avatar: review.avatar,
+    photo: (review as { photo?: string }).photo,
+
     role: t(review.roleKey),
     text: t(review.textKey),
   }));
