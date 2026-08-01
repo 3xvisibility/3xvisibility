@@ -129,27 +129,13 @@ export function WebsiteAnalyzerSection() {
     return () => window.removeEventListener("analyze-website", handler);
   }, [runAnalysis]);
 
-  const analyze = async (e: React.FormEvent) => {
-
+  const analyze = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url.trim() || loading) return;
-    setLoading(true);
-    setError(null);
-    setReport(null);
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke("analyze-website-free", {
-        body: { url },
-      });
-      if (fnError) throw fnError;
-      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-      setReport(data as Report);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Analysis failed.";
-      setError(message.includes("non-2xx") ? "We couldn't analyze that URL. Check it and try again." : message);
-    } finally {
-      setLoading(false);
-    }
+    if (loading) return;
+    pendingRef.current = url.trim();
+    void runAnalysis(url);
   };
+
 
   return (
     <section id="analyze" className="relative py-20 md:py-28">
