@@ -301,9 +301,16 @@ export function WebsiteAnalyzerSection() {
                   </div>
                 )}
               </div>
+
+              <AnalyzerPageRecommendations
+                report={report}
+                open={recsOpen}
+                onOpenChange={setRecsOpen}
+              />
             </motion.div>
           )}
         </AnimatePresence>
+
       </div>
     </section>
   );
