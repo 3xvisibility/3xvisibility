@@ -103,6 +103,7 @@ function TiltCard({ children }: { children: React.ReactNode }) {
 
 export function HeroSection() {
   const { t } = useLanguage();
+  const [heroUrl, setHeroUrl] = useState("");
 
   const sidebarIcons = [Home, BarChart3, Globe, FileText, Settings, Info];
 
