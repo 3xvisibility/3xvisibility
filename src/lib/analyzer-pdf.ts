@@ -154,7 +154,11 @@ export function buildAnalyzerPdf(report: AnalyzerReport): jsPDF {
     y += 16;
 
     cat.checks.forEach((check) => {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
       const labelLines = doc.splitTextToSize(check.label, contentW - 24);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
       const detailLines = doc.splitTextToSize(check.detail, contentW - 24);
       const fixLines = check.status === "good" ? [] : doc.splitTextToSize(`Fix: ${check.fix}`, contentW - 24);
       const blockH = labelLines.length * 12 + detailLines.length * 11 + fixLines.length * 11 + 12;
@@ -198,8 +202,12 @@ export function buildAnalyzerPdf(report: AnalyzerReport): jsPDF {
     y += 18;
 
     report.topFixes.forEach((fix, i) => {
-      const head = doc.splitTextToSize(`${i + 1}. ${fix.label} — ${fix.detail}`, contentW - 16);
-      const body = doc.splitTextToSize(fix.fix, contentW - 16);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      const head = doc.splitTextToSize(`${i + 1}. ${fix.label} — ${fix.detail}`, contentW);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      const body = doc.splitTextToSize(fix.fix, contentW - 14);
       ensureSpace(head.length * 12 + body.length * 11 + 14);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
