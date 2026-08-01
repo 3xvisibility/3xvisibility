@@ -9,10 +9,13 @@ import {
   Loader2,
   Sparkles,
   Search,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { downloadAnalyzerPdf } from "@/lib/analyzer-pdf";
+
 
 type CheckStatus = "good" | "warn" | "bad";
 
@@ -199,11 +202,23 @@ export function WebsiteAnalyzerSection() {
                       <span className="text-muted-foreground">found that are holding back your visibility.</span>
                     </p>
                   </div>
-                  <Button asChild size="lg" className="rounded-xl font-semibold shrink-0">
-                    <Link to="/auth">
-                      Fix these with 3xVisibility <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
+                  <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
+                    <Button asChild size="lg" className="rounded-xl font-semibold">
+                      <Link to="/auth">
+                        Fix these with 3xVisibility <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      className="rounded-xl font-semibold"
+                      onClick={() => downloadAnalyzerPdf(report)}
+                    >
+                      <Download className="mr-2 h-4 w-4" /> Download PDF report
+                    </Button>
+                  </div>
+
                 </div>
 
                 {/* categories */}
