@@ -260,7 +260,23 @@ export function WebsiteAnalyzerSection() {
                     >
                       <Download className="mr-2 h-4 w-4" /> Download PDF report
                     </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="lg"
+                      className="rounded-xl font-semibold"
+                      disabled={rescanning || loading}
+                      onClick={rescan}
+                    >
+                      {rescanning ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                      )}
+                      {rescanning ? "Rescanning…" : "Rescan & compare"}
+                    </Button>
                   </div>
+
 
                 </div>
 
