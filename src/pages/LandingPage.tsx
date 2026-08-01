@@ -1,6 +1,7 @@
 import { Seo } from "@/components/Seo";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { WebsiteAnalyzerSection } from "@/components/landing/WebsiteAnalyzerSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { FeatureShowcaseSection } from "@/components/landing/FeatureShowcaseSection";
 import { UseCasesSection } from "@/components/landing/UseCasesSection";
