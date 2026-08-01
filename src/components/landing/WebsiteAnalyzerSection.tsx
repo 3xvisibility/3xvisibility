@@ -94,8 +94,43 @@ export function WebsiteAnalyzerSection() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
+  const pendingRef = useRef<string | null>(null);
+
+  const runAnalysis = useCallback(async (value: string) => {
+    if (!value.trim()) return;
+    setLoading(true);
+    setError(null);
+    setReport(null);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("analyze-website-free", {
+        body: { url: value },
+      });
+      if (fnError) throw fnError;
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      setReport(data as Report);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Analysis failed.";
+      setError(message.includes("non-2xx") ? "We couldn't analyze that URL. Check it and try again." : message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // The hero URL bar hands off here.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const value = (e as CustomEvent<string>).detail;
+      if (!value || pendingRef.current === value) return;
+      pendingRef.current = value;
+      setUrl(value);
+      void runAnalysis(value);
+    };
+    window.addEventListener("analyze-website", handler);
+    return () => window.removeEventListener("analyze-website", handler);
+  }, [runAnalysis]);
 
   const analyze = async (e: React.FormEvent) => {
+
     e.preventDefault();
     if (!url.trim() || loading) return;
     setLoading(true);
