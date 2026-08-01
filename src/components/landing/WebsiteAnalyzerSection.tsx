@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadAnalyzerPdf } from "@/lib/analyzer-pdf";
 import { AnalyzerPageRecommendations } from "@/components/landing/AnalyzerPageRecommendations";
+import { AnalyzerChangePanel } from "@/components/landing/AnalyzerChangePanel";
+import { diffReports, loadSnapshot, saveSnapshot, type AnalyzerDiff } from "@/lib/analyzer-diff";
 
 
 
