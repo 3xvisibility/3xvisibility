@@ -9,10 +9,13 @@ import {
   Loader2,
   Sparkles,
   Search,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { downloadAnalyzerPdf } from "@/lib/analyzer-pdf";
+
 
 type CheckStatus = "good" | "warn" | "bad";
 
