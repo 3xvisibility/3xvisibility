@@ -101,26 +101,46 @@ export function WebsiteAnalyzerSection() {
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const [recsOpen, setRecsOpen] = useState(false);
+  const [diff, setDiff] = useState<AnalyzerDiff | null>(null);
+  const [comparedAt, setComparedAt] = useState<string | null>(null);
+  const [rescanning, setRescanning] = useState(false);
 
   const pendingRef = useRef<string | null>(null);
 
-  const runAnalysis = useCallback(async (value: string) => {
+  const runAnalysis = useCallback(async (value: string, isRescan = false) => {
     if (!value.trim()) return;
-    setLoading(true);
+    if (isRescan) setRescanning(true);
+    else {
+      setLoading(true);
+      setReport(null);
+      setDiff(null);
+      setComparedAt(null);
+    }
     setError(null);
-    setReport(null);
     try {
       const { data, error: fnError } = await supabase.functions.invoke("analyze-website-free", {
         body: { url: value },
       });
       if (fnError) throw fnError;
       if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-      setReport(data as Report);
+      const fresh = data as Report;
+
+      const snapshot = loadSnapshot(fresh.host);
+      if (snapshot) {
+        setDiff(diffReports(snapshot.report, fresh));
+        setComparedAt(snapshot.savedAt);
+      } else {
+        setDiff(null);
+        setComparedAt(null);
+      }
+      saveSnapshot(fresh);
+      setReport(fresh);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Analysis failed.";
       setError(message.includes("non-2xx") ? "We couldn't analyze that URL. Check it and try again." : message);
     } finally {
       setLoading(false);
+      setRescanning(false);
     }
   }, []);
 
@@ -143,6 +163,12 @@ export function WebsiteAnalyzerSection() {
     pendingRef.current = url.trim();
     void runAnalysis(url);
   };
+
+  const rescan = () => {
+    if (rescanning || loading || !report) return;
+    void runAnalysis(report.url || url, true);
+  };
+
 
 
   return (
