@@ -11,12 +11,16 @@ import {
   Search,
   Download,
   Wand2,
+  RefreshCw,
+
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadAnalyzerPdf } from "@/lib/analyzer-pdf";
 import { AnalyzerPageRecommendations } from "@/components/landing/AnalyzerPageRecommendations";
+import { AnalyzerChangePanel } from "@/components/landing/AnalyzerChangePanel";
+import { diffReports, loadSnapshot, saveSnapshot, type AnalyzerDiff } from "@/lib/analyzer-diff";
 
 
 
@@ -101,26 +105,46 @@ export function WebsiteAnalyzerSection() {
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const [recsOpen, setRecsOpen] = useState(false);
+  const [diff, setDiff] = useState<AnalyzerDiff | null>(null);
+  const [comparedAt, setComparedAt] = useState<string | null>(null);
+  const [rescanning, setRescanning] = useState(false);
 
   const pendingRef = useRef<string | null>(null);
 
-  const runAnalysis = useCallback(async (value: string) => {
+  const runAnalysis = useCallback(async (value: string, isRescan = false) => {
     if (!value.trim()) return;
-    setLoading(true);
+    if (isRescan) setRescanning(true);
+    else {
+      setLoading(true);
+      setReport(null);
+      setDiff(null);
+      setComparedAt(null);
+    }
     setError(null);
-    setReport(null);
     try {
       const { data, error: fnError } = await supabase.functions.invoke("analyze-website-free", {
         body: { url: value },
       });
       if (fnError) throw fnError;
       if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-      setReport(data as Report);
+      const fresh = data as Report;
+
+      const snapshot = loadSnapshot(fresh.host);
+      if (snapshot) {
+        setDiff(diffReports(snapshot.report, fresh));
+        setComparedAt(snapshot.savedAt);
+      } else {
+        setDiff(null);
+        setComparedAt(null);
+      }
+      saveSnapshot(fresh);
+      setReport(fresh);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Analysis failed.";
       setError(message.includes("non-2xx") ? "We couldn't analyze that URL. Check it and try again." : message);
     } finally {
       setLoading(false);
+      setRescanning(false);
     }
   }, []);
 
@@ -143,6 +167,12 @@ export function WebsiteAnalyzerSection() {
     pendingRef.current = url.trim();
     void runAnalysis(url);
   };
+
+  const rescan = () => {
+    if (rescanning || loading || !report) return;
+    void runAnalysis(report.url || url, true);
+  };
+
 
 
   return (
@@ -232,11 +262,30 @@ export function WebsiteAnalyzerSection() {
                     >
                       <Download className="mr-2 h-4 w-4" /> Download PDF report
                     </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="lg"
+                      className="rounded-xl font-semibold"
+                      disabled={rescanning || loading}
+                      onClick={rescan}
+                    >
+                      {rescanning ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                      )}
+                      {rescanning ? "Rescanning…" : "Rescan & compare"}
+                    </Button>
                   </div>
+
 
                 </div>
 
+                {diff && comparedAt && <AnalyzerChangePanel diff={diff} savedAt={comparedAt} />}
+
                 {/* categories */}
+
                 <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
                   {report.categories.map((cat) => (
                     <div key={cat.key} className="p-6">
