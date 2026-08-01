@@ -10,11 +10,14 @@ import {
   Sparkles,
   Search,
   Download,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadAnalyzerPdf } from "@/lib/analyzer-pdf";
+import { AnalyzerPageRecommendations } from "@/components/landing/AnalyzerPageRecommendations";
+
 
 
 type CheckStatus = "good" | "warn" | "bad";
