@@ -215,6 +215,16 @@ export function WebsiteAnalyzerSection() {
                     </Button>
                     <Button
                       type="button"
+                      variant="secondary"
+                      size="lg"
+                      className="rounded-xl font-semibold"
+                      onClick={() => setRecsOpen(true)}
+                    >
+                      <Wand2 className="mr-2 h-4 w-4" /> Generate pages to improve SEO
+                    </Button>
+                    <Button
+
+                      type="button"
                       variant="outline"
                       size="lg"
                       className="rounded-xl font-semibold"
