@@ -10,11 +10,14 @@ import {
   Sparkles,
   Search,
   Download,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadAnalyzerPdf } from "@/lib/analyzer-pdf";
+import { AnalyzerPageRecommendations } from "@/components/landing/AnalyzerPageRecommendations";
+
 
 
 type CheckStatus = "good" | "warn" | "bad";
@@ -97,6 +100,8 @@ export function WebsiteAnalyzerSection() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
+  const [recsOpen, setRecsOpen] = useState(false);
+
   const pendingRef = useRef<string | null>(null);
 
   const runAnalysis = useCallback(async (value: string) => {
@@ -210,6 +215,16 @@ export function WebsiteAnalyzerSection() {
                     </Button>
                     <Button
                       type="button"
+                      variant="secondary"
+                      size="lg"
+                      className="rounded-xl font-semibold"
+                      onClick={() => setRecsOpen(true)}
+                    >
+                      <Wand2 className="mr-2 h-4 w-4" /> Generate pages to improve SEO
+                    </Button>
+                    <Button
+
+                      type="button"
                       variant="outline"
                       size="lg"
                       className="rounded-xl font-semibold"
@@ -286,9 +301,16 @@ export function WebsiteAnalyzerSection() {
                   </div>
                 )}
               </div>
+
+              <AnalyzerPageRecommendations
+                report={report}
+                open={recsOpen}
+                onOpenChange={setRecsOpen}
+              />
             </motion.div>
           )}
         </AnimatePresence>
+
       </div>
     </section>
   );
