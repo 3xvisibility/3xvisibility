@@ -282,7 +282,10 @@ export function WebsiteAnalyzerSection() {
 
                 </div>
 
+                {diff && comparedAt && <AnalyzerChangePanel diff={diff} savedAt={comparedAt} />}
+
                 {/* categories */}
+
                 <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
                   {report.categories.map((cat) => (
                     <div key={cat.key} className="p-6">
