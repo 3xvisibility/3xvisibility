@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.analyze-website-free]
+verify_jwt = false
