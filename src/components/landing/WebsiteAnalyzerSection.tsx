@@ -100,6 +100,8 @@ export function WebsiteAnalyzerSection() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
+  const [recsOpen, setRecsOpen] = useState(false);
+
   const pendingRef = useRef<string | null>(null);
 
   const runAnalysis = useCallback(async (value: string) => {
