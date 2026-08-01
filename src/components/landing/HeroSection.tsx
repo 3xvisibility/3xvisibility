@@ -156,6 +156,39 @@ export function HeroSection() {
           </motion.p>
 
 
+          {/* Instant website analyzer entry point */}
+          <motion.form
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.28, ease }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const value = heroUrl.trim();
+              const target = document.getElementById("analyze");
+              if (value) {
+                window.dispatchEvent(new CustomEvent("analyze-website", { detail: value }));
+              }
+              target?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="mt-9 mx-auto flex w-full max-w-xl items-center gap-2 rounded-2xl border border-[hsl(96,67%,48%,0.3)] bg-white/80 p-2 shadow-lg shadow-primary/10 backdrop-blur"
+          >
+            <label htmlFor="hero-analyze-url" className="sr-only">
+              Website URL
+            </label>
+            <input
+              id="hero-analyze-url"
+              value={heroUrl}
+              onChange={(e) => setHeroUrl(e.target.value)}
+              placeholder="Enter your website URL"
+              className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-[hsl(220,12%,55%)]"
+            />
+            <Button
+              type="submit"
+              className="h-10 shrink-0 rounded-xl bg-foreground px-4 text-xs font-semibold text-background hover:bg-foreground/90 sm:text-sm"
+            >
+              Analyze my website <Sparkles className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          </motion.form>
 
 
           <motion.div
