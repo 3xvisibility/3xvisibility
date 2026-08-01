@@ -36,6 +36,7 @@ export default function LandingPage() {
       <LandingNav />
       <main className="flex-1">
         <HeroSection />
+        <WebsiteAnalyzerSection />
         <FeaturesSection />
         <FeatureShowcaseSection />
         <UseCasesSection />
