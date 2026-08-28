@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const REDIRECT_URI = "https://page-generator-project.lovable.app/api/shopify/callback";
+const REDIRECT_URI = `${(Deno.env.get("APP_ORIGIN") ?? "https://3xvisibility.com").replace(/\/+$/, "")}/api/shopify/callback`;
 
 /**
  * Generates a Shopify OAuth authorization URL.

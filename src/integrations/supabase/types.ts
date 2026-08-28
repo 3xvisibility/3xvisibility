@@ -423,6 +423,39 @@ export type Database = {
         }
         Relationships: []
       }
+      app_config: {
+        Row: {
+          config_key: string
+          config_value: string
+          created_at: string
+          id: string
+          is_secret: boolean
+          updated_at: string
+          updated_by: string | null
+          workspace_id: string
+        }
+        Insert: {
+          config_key: string
+          config_value?: string
+          created_at?: string
+          id?: string
+          is_secret?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          workspace_id: string
+        }
+        Update: {
+          config_key?: string
+          config_value?: string
+          created_at?: string
+          id?: string
+          is_secret?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
