@@ -24,7 +24,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Loader2, Database, Shield
  * (never persisted). Uses each project's REST API to copy rows.
  */
 
-const CLOUD_URL_DEFAULT = "https://qmuxdkxdrxevlnckssuw.supabase.co";
+const CLOUD_URL_DEFAULT = "";
 
 const DEFAULT_TABLES = [
   // parents first — order matters for FK constraints

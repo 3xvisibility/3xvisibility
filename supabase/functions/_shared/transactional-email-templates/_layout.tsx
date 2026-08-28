@@ -15,7 +15,7 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 
 export const LOGO_URL =
-  'https://qmuxdkxdrxevlnckssuw.supabase.co/storage/v1/object/public/ai-images/email%2Flogo-3x.png'
+  'https://qbrqxmtzfbusyspdtojz.supabase.co/storage/v1/object/public/ai-images/email%2Flogo-3x.png'
 
 export const BRAND_NAME = '3Xvisibility'
 export const BRAND_URL = 'https://3xvisibility.com'
