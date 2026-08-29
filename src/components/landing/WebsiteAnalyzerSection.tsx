@@ -111,8 +111,19 @@ export function WebsiteAnalyzerSection() {
 
   const pendingRef = useRef<string | null>(null);
 
-  const runAnalysis = useCallback(async (value: string, isRescan = false) => {
-    if (!value.trim()) return;
+  const runAnalysis = useCallback(async (raw: string, isRescan = false) => {
+    // Normalize: accept "example.com", "www.example.com" or a full URL.
+    const trimmed = raw.trim();
+    if (!trimmed) return;
+    const value = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    try {
+      // Reject obviously invalid input before hitting the network.
+      const host = new URL(value).hostname;
+      if (!host.includes(".")) throw new Error("invalid");
+    } catch {
+      setError("Please enter a valid website address, e.g. example.com");
+      return;
+    }
     if (isRescan) setRescanning(true);
     else {
       setLoading(true);
@@ -140,9 +151,18 @@ export function WebsiteAnalyzerSection() {
       saveSnapshot(fresh);
       setReport(fresh);
     } catch (err) {
+      // Keep the technical detail in the console, show a clean message in the UI.
+      console.error("[analyze-website-free] request failed", err);
       const message = err instanceof Error ? err.message : "Analysis failed.";
-      setError(message.includes("non-2xx") ? "We couldn't analyze that URL. Check it and try again." : message);
+      const friendly =
+        /Failed to send a request|Failed to fetch|NetworkError/i.test(message)
+          ? "We couldn't reach the analysis service. Please refresh and try again."
+          : message.includes("non-2xx")
+            ? "We couldn't analyze that URL. Check it and try again."
+            : message;
+      setError(friendly);
     } finally {
+
       setLoading(false);
       setRescanning(false);
     }
