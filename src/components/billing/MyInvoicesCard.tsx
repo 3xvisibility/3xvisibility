@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, FileArchive, FilePlus2, FileText, Loader2 } from "lucide-react";
+import { Download, FileArchive, FilePlus2, FileText, FileCheck2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   downloadInvoicePdf,
