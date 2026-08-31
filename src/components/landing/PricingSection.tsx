@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Search, Link2, Code, Users, Headphones, Gift, ChevronDown } from "lucide-react";
+import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Search, Link2, Code, Users, Headphones, Gift, ChevronDown, Info } from "lucide-react";
 import { ScrollReveal, useRevealed } from "./ScrollReveal";
 import { OpenAIMark, GeminiMark, ClaudeMark, PerplexityMark } from "@/components/billing/ModelBrandIcons";
 import { Cpu } from "lucide-react";
@@ -15,6 +15,7 @@ import { startPlanCheckout } from "@/lib/checkout";
 import type { PlanName } from "@/lib/plan-features";
 import { useToast } from "@/hooks/use-toast";
 import { BrandIconTooltip, BrandTooltipProvider } from "@/components/billing/BrandIconTooltip";
+import { Tooltip, TooltipArrow, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 const YEARLY_DISCOUNT = 2 / 12; // Save 2 months
@@ -33,6 +34,51 @@ function TableCell({ val }: { val: string | boolean | JSX.Element }) {
   }
   if (typeof val !== "string") return val;
   return <span className="text-sm font-semibold tabular-nums text-foreground">{val}</span>;
+}
+
+const SUPPORT_HINTS = {
+  email: {
+    title: "Email support",
+    body: "Get setup help, troubleshooting, and how-to guidance by email within 1–2 business days.",
+  },
+  priority: {
+    title: "Priority support",
+    body: "Get faster responses within a few business hours, priority issue handling, and hands-on help with templates, keywords, and publishing.",
+  },
+  dedicated: {
+    title: "Dedicated support",
+    body: "Get a named success manager, same-day responses, migration and onboarding assistance, custom template help, and direct engineering escalation.",
+  },
+} as const;
+
+function SupportHint({ label, level }: { label: string; level: keyof typeof SUPPORT_HINTS }) {
+  const hint = SUPPORT_HINTS[level];
+  return (
+    <TooltipProvider delayDuration={100}>
+      <span className="inline-flex items-center gap-2">
+        <span className="text-sm font-semibold text-foreground">{label}</span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label={`What is included with ${label} support?`}
+              className="h-6 w-6 shrink-0 rounded-full border-primary/50 bg-primary/10 text-primary shadow-sm hover:border-primary hover:bg-primary/20 hover:text-primary"
+              onClick={(event) => event.preventDefault()}
+            >
+              <Info className="h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top" sideOffset={8} className="max-w-[280px] px-3 py-2 text-left text-xs leading-relaxed">
+            <p className="font-bold">{hint.title}</p>
+            <p className="mt-1 text-popover-foreground/80">{hint.body}</p>
+            <TooltipArrow />
+          </TooltipContent>
+        </Tooltip>
+      </span>
+    </TooltipProvider>
+  );
 }
 
 const MARK_NAMES = new Map<React.ComponentType<{ className?: string }>, string>([
@@ -128,7 +174,14 @@ export function PricingSection() {
     { label: t("pricing.internalLinks"), icon: <Link2 className="h-4 w-4 text-primary" />, free: false, starter: false, pro: true, agency: true },
     { label: t("pricing.apiAccess"), icon: <Code className="h-4 w-4 text-primary" />, free: false, starter: false, pro: true, agency: true },
     { label: t("pricing.teamCollaboration"), icon: <Users className="h-4 w-4 text-primary" />, free: false, starter: false, pro: false, agency: true },
-    { label: t("pricing.support"), icon: <Headphones className="h-4 w-4 text-primary" />, free: "—", starter: t("pricing.email"), pro: t("pricing.priority"), agency: t("pricing.dedicated") },
+    {
+      label: t("pricing.support"),
+      icon: <Headphones className="h-4 w-4 text-primary" />,
+      free: "—",
+      starter: <SupportHint label={t("pricing.email")} level="email" />,
+      pro: <SupportHint label={t("pricing.priority")} level="priority" />,
+      agency: <SupportHint label={t("pricing.dedicated")} level="dedicated" />,
+    },
   ];
 
 
