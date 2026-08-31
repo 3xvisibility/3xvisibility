@@ -418,18 +418,9 @@ function resolveText(val: string, t: T): string {
 }
 
 const SUPPORT_DETAILS: Record<string, { title: string; body: string }> = {
-  __email__: {
-    title: "Email support",
-    body: "Answers via email within 1–2 business days: setup help, troubleshooting, and how-to guidance.",
-  },
-  __priority__: {
-    title: "Priority support",
-    body: "Faster email responses (within a few hours on business days), priority queue for bug fixes, and help with templates, keywords, and publishing issues.",
-  },
-  __dedicated__: {
-    title: "Dedicated support",
-    body: "A named success manager, same-day responses, migration and onboarding assistance, custom template help, and direct escalation to engineers.",
-  },
+  __email__: { title: "pricing.supportHint.emailTitle", body: "pricing.supportHint.emailBody" },
+  __priority__: { title: "pricing.supportHint.priorityTitle", body: "pricing.supportHint.priorityBody" },
+  __dedicated__: { title: "pricing.supportHint.dedicatedTitle", body: "pricing.supportHint.dedicatedBody" },
 };
 
 export function PricingComparisonTable({
@@ -538,15 +529,15 @@ export function PricingComparisonTable({
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    aria-label={`${resolveText(val, t)} support details`}
+                    aria-label={t("pricing.supportHint.aria")}
                     className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border/60 bg-muted/50 text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 hover:text-primary"
                   >
                     <Info className="h-3 w-3" aria-hidden="true" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={8} collisionPadding={12} className="max-w-xs px-3 py-2 text-xs leading-relaxed">
-                  <p className="font-semibold">{supportDetail.title}</p>
-                  <p className="mt-1 text-muted-foreground">{supportDetail.body}</p>
+                  <p className="font-semibold">{t(supportDetail.title)}</p>
+                  <p className="mt-1 text-muted-foreground">{t(supportDetail.body)}</p>
                   <TooltipArrow />
                 </TooltipContent>
               </Tooltip>

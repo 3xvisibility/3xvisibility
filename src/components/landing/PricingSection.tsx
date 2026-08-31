@@ -36,23 +36,15 @@ function TableCell({ val }: { val: string | boolean | JSX.Element }) {
   return <span className="text-sm font-semibold tabular-nums text-foreground">{val}</span>;
 }
 
-const SUPPORT_HINTS = {
-  email: {
-    title: "Email support",
-    body: "Get setup help, troubleshooting, and how-to guidance by email within 1–2 business days.",
-  },
-  priority: {
-    title: "Priority support",
-    body: "Get faster responses within a few business hours, priority issue handling, and hands-on help with templates, keywords, and publishing.",
-  },
-  dedicated: {
-    title: "Dedicated support",
-    body: "Get a named success manager, same-day responses, migration and onboarding assistance, custom template help, and direct engineering escalation.",
-  },
+const SUPPORT_HINT_KEYS = {
+  email: { title: "pricing.supportHint.emailTitle", body: "pricing.supportHint.emailBody" },
+  priority: { title: "pricing.supportHint.priorityTitle", body: "pricing.supportHint.priorityBody" },
+  dedicated: { title: "pricing.supportHint.dedicatedTitle", body: "pricing.supportHint.dedicatedBody" },
 } as const;
 
-function SupportHint({ label, level }: { label: string; level: keyof typeof SUPPORT_HINTS }) {
-  const hint = SUPPORT_HINTS[level];
+function SupportHint({ label, level }: { label: string; level: keyof typeof SUPPORT_HINT_KEYS }) {
+  const { t } = useLanguage();
+  const hint = SUPPORT_HINT_KEYS[level];
   return (
     <TooltipProvider delayDuration={100}>
       <span className="inline-flex items-center gap-2">
@@ -63,7 +55,7 @@ function SupportHint({ label, level }: { label: string; level: keyof typeof SUPP
               type="button"
               variant="outline"
               size="icon"
-              aria-label={`What is included with ${label} support?`}
+              aria-label={t("pricing.supportHint.aria")}
               className="h-6 w-6 shrink-0 rounded-full border-primary/50 bg-primary/10 text-primary shadow-sm hover:border-primary hover:bg-primary/20 hover:text-primary"
               onClick={(event) => event.preventDefault()}
             >
@@ -71,8 +63,8 @@ function SupportHint({ label, level }: { label: string; level: keyof typeof SUPP
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={8} className="max-w-[280px] px-3 py-2 text-left text-xs leading-relaxed">
-            <p className="font-bold">{hint.title}</p>
-            <p className="mt-1 text-popover-foreground/80">{hint.body}</p>
+            <p className="font-bold">{t(hint.title)}</p>
+            <p className="mt-1 text-popover-foreground/80">{t(hint.body)}</p>
             <TooltipArrow />
           </TooltipContent>
         </Tooltip>
