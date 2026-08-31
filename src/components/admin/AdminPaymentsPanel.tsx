@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminInvoicesPanel } from "./AdminInvoicesPanel";
+import { EinvoicingConfigCard } from "./EinvoicingConfigCard";
 
 interface PaymentItem {
   id: string;
@@ -173,6 +174,8 @@ export function AdminPaymentsPanel() {
 
   return (
     <div className="space-y-6">
+      <EinvoicingConfigCard />
+
       {/* Mode + Methods */}
       <Card>
         <CardHeader>
