@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Search, Link2, Code, Users, Headphones, Gift, ChevronDown } from "lucide-react";
 import { ScrollReveal, useRevealed } from "./ScrollReveal";
-import { OpenAIMark, GeminiMark, ClaudeMark, PerplexityMark, GoogleMark, GrokMark, DeepSeekMark, MistralMark, CopilotMark, MetaMark } from "@/components/billing/ModelBrandIcons";
+import { OpenAIMark, GeminiMark, ClaudeMark, PerplexityMark } from "@/components/billing/ModelBrandIcons";
 import { Cpu } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -40,12 +40,6 @@ const MARK_NAMES = new Map<React.ComponentType<{ className?: string }>, string>(
   [GeminiMark, "Google Gemini"],
   [ClaudeMark, "Anthropic Claude"],
   [PerplexityMark, "Perplexity"],
-  [GoogleMark, "Google AI"],
-  [GrokMark, "Grok (xAI)"],
-  [DeepSeekMark, "DeepSeek"],
-  [MistralMark, "Mistral"],
-  [CopilotMark, "Microsoft Copilot"],
-  [MetaMark, "Meta Llama"],
 ]);
 
 function ModelIcons({ marks }: { marks: React.ComponentType<{ className?: string }>[] }) {
@@ -118,10 +112,10 @@ export function PricingSection() {
     {
       label: "Available models",
       icon: <Cpu className="h-4 w-4 text-primary" />,
-      free: <ModelIcons marks={[GeminiMark, GoogleMark]} />,
-      starter: <ModelIcons marks={[GeminiMark, GoogleMark, OpenAIMark, MistralMark, DeepSeekMark]} />,
-      pro: <ModelIcons marks={[GeminiMark, GoogleMark, OpenAIMark, MistralMark, DeepSeekMark, ClaudeMark, GrokMark, PerplexityMark]} />,
-      agency: <ModelIcons marks={[GeminiMark, GoogleMark, OpenAIMark, MistralMark, DeepSeekMark, ClaudeMark, GrokMark, PerplexityMark, CopilotMark, MetaMark]} />,
+      free: <ModelIcons marks={[GeminiMark]} />,
+      starter: <ModelIcons marks={[GeminiMark, OpenAIMark]} />,
+      pro: <ModelIcons marks={[GeminiMark, OpenAIMark, ClaudeMark, PerplexityMark]} />,
+      agency: <ModelIcons marks={[GeminiMark, OpenAIMark, ClaudeMark, PerplexityMark]} />,
     },
     { label: "Credits / month", icon: <Layers className="h-4 w-4 text-primary" />, free: "10", starter: "100 – 500", pro: "300 – 900", agency: "500 – 1,000" },
     { label: t("pricing.aiGenerations"), icon: <Sparkles className="h-4 w-4 text-primary" />, free: "10", starter: "100", pro: "1,000", agency: "5,000" },
