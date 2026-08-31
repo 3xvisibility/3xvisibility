@@ -15,14 +15,19 @@ export default function MentionsLegalesPage() {
       >
         <h2>1. Website Publisher</h2>
         <p>
-          The website <strong>3xvisibility.com</strong> is published by:
+          The website <strong>verodav-shop.com</strong> is published by:
         </p>
         <ul>
-          <li><strong>Legal name</strong> : 3XVISIBILITY</li>
-          <li><strong>Trading name</strong> : 3X Visibility</li>
-          <li><strong>Website</strong> : <a href="https://3xvisibility.com">3xvisibility.com</a></li>
+          <li><strong>Legal name</strong> : VERODAV GROUP</li>
+          <li><strong>Trading name</strong> : 3xvisibility.com</li>
+          <li><strong>Legal form</strong> : SAS – Société par actions simplifiée</li>
+          <li><strong>Registered address</strong> : 21 rue de Cherbourg, 67100 Strasbourg, France</li>
+          <li><strong>Trade and companies register (RCS)</strong> : Strasbourg 843 715 954</li>
+          <li><strong>National business number (SIREN)</strong> : 843 715 954</li>
+          <li><strong>Headquarters SIRET</strong> : 843 715 954 00023</li>
+          <li><strong>Intra-community VAT number</strong> : FR95 843715954</li>
           <li><strong>Contact email</strong> : <a href="mailto:info@3xvisibility.com">info@3xvisibility.com</a></li>
-          <li><strong>Director of publication</strong> : The legal representative of 3XVISIBILITY</li>
+          <li><strong>Director of publication</strong> : Yannick Humphrey</li>
         </ul>
 
         <h2>2. Hosting & Infrastructure</h2>
