@@ -13,8 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const channels = [
   { icon: Mail, label: "Email", value: "info@3xvisibility.com", href: "mailto:info@3xvisibility.com" },
-  { icon: Phone, label: "Phone", value: "+1 (555) 012-3456", href: "tel:+15550123456" },
-  { icon: MapPin, label: "Address", value: "123 Demo Street, Suite 100, Paris, France", href: undefined },
+  { icon: Phone, label: "Phone", value: "+33 3 67 10 00 00", href: "tel:+33367100000" },
+  { icon: MapPin, label: "Address", value: "21 rue de Cherbourg, 67100 Strasbourg, France", href: undefined },
 ];
 
 export default function ContactPage() {
@@ -76,23 +76,23 @@ export default function ContactPage() {
               <Tag
                 key={label}
                 {...(href ? { href } : {})}
-                className="group rounded-xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 hover:border-[hsl(96,67%,48%,0.3)] hover:bg-[hsl(250,30%,10%,0.5)] transition-all"
+                className="group rounded-xl border border-border bg-card p-6 shadow-sm hover:border-primary/40 hover:shadow-md transition-all"
               >
-                <div className="h-10 w-10 rounded-lg bg-[hsl(96,67%,48%,0.1)] border border-[hsl(96,67%,48%,0.15)] flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Icon className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="mt-3 font-semibold">{label}</h3>
-                <p className="text-xs text-[hsl(250,15%,55%)] mt-1">{value}</p>
+                <h3 className="mt-3 font-semibold text-foreground">{label}</h3>
+                <p className="text-xs text-muted-foreground mt-1 break-words">{value}</p>
               </Tag>
             );
           })}
         </div>
 
-        <div className="not-prose mt-10 rounded-2xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 md:p-8 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(96,67%,48%,0.07),transparent)] pointer-events-none" />
+        <div className="not-prose mt-10 rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(var(--primary)/0.06),transparent)] pointer-events-none" />
           <div className="relative">
-            <h2 className="text-2xl font-bold tracking-tight">{t("contact.formTitle")}</h2>
-            <p className="mt-2 text-sm text-[hsl(250,15%,60%)]">{t("contact.formSubtitle")}</p>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">{t("contact.formTitle")}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">{t("contact.formSubtitle")}</p>
 
             <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
               <div className="grid gap-4 sm:grid-cols-2">
