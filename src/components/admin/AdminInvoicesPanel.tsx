@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import {
   ExternalLink,
   Eye,
   FileText,
+  FileCheck2,
   Loader2,
   RefreshCw,
   Search,
@@ -64,6 +65,7 @@ const RANGES: Record<string, number | null> = {
 };
 
 export function AdminInvoicesPanel() {
+  const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [range, setRange] = useState("all");
@@ -72,6 +74,25 @@ export function AdminInvoicesPanel() {
   const [adjusting, setAdjusting] = useState<InvoiceRecord | null>(null);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+
+  const syncEinvoice = async (inv: InvoiceRecord) => {
+    setSyncingId(inv.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-panel", {
+        body: { action: "sync-einvoice", invoice_id: inv.id },
+      });
+      if (error) throw error;
+      toast.success(
+        `E-invoice status: ${data.einvoicing_status}${data.einvoicing_pa ? ` (${data.einvoicing_pa})` : ""}`,
+      );
+      qc.invalidateQueries({ queryKey: ["admin-invoices"] });
+    } catch (e: any) {
+      toast.error(e.message || "Sync failed");
+    } finally {
+      setSyncingId(null);
+    }
+  };
 
   const invoicesQuery = useQuery({
     queryKey: ["admin-invoices"],
@@ -432,6 +453,21 @@ export function AdminInvoicesPanel() {
                       <Badge variant="outline" className={statusTone(inv.status)}>
                         {inv.status.replace("_", " ")}
                       </Badge>
+                      {inv.einvoicing_status &&
+                        inv.einvoicing_status !== "not_configured" && (
+                          <Badge
+                            variant="outline"
+                            className="ml-1 bg-primary/10 text-primary border-primary/30 text-[10px]"
+                            title={
+                              inv.einvoicing_pa
+                                ? `Factur-X via ${inv.einvoicing_pa}`
+                                : "Factur-X e-invoice"
+                            }
+                          >
+                            <FileCheck2 className="h-3 w-3 mr-0.5" />
+                            {inv.einvoicing_status}
+                          </Badge>
+                        )}
                     </TableCell>
                     <TableCell
                       className="text-right whitespace-nowrap"
@@ -463,6 +499,22 @@ export function AdminInvoicesPanel() {
                       >
                         <Download className="h-3.5 w-3.5 mr-1" /> PDF
                       </Button>
+                      {inv.stripe_invoice_id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          title="Sync Factur-X e-invoice status from the PA"
+                          disabled={syncingId === inv.id}
+                          onClick={() => syncEinvoice(inv)}
+                        >
+                          {syncingId === inv.id ? (
+                            <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                          ) : (
+                            <FileCheck2 className="h-3.5 w-3.5 mr-1" />
+                          )}
+                          Sync
+                        </Button>
+                      )}
                       {inv.hosted_invoice_url && (
                         <Button size="sm" variant="ghost" asChild className="ml-1">
                           <a

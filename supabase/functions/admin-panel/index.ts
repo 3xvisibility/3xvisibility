@@ -874,6 +874,98 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true, settings: data }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ── French e-invoicing (Factur-X) PA connector config ───────────────
+    // The admin records which approved platform (PA) — Pennylane, Billit,
+    // etc. — is converting Stripe invoices into structured Factur-X files.
+    if (action === "get-einvoicing-config") {
+      const { data, error } = await serviceClient.from("system_settings").select("einvoicing_config").eq("id", "global").maybeSingle();
+      if (error) throw error;
+      const cfg = (data?.einvoicing_config as Record<string, any>) || {};
+      const hasWebhookSecret = !!Deno.env.get("EINVOICING_PA_WEBHOOK_SECRET");
+      const projectRef = Deno.env.get("SUPABASE_PROJECT_REF") || Deno.env.get("VITE_SUPABASE_PROJECT_ID") || "";
+      const webhookUrl = projectRef
+        ? `https://${projectRef}.supabase.co/functions/v1/einvoicing-pa-webhook`
+        : null;
+      return new Response(JSON.stringify({
+        config: {
+          provider: cfg.provider || "none",
+          enabled: !!cfg.enabled,
+          pa_name: cfg.pa_name || null,
+          webhook_url: webhookUrl,
+          webhook_secret_configured: hasWebhookSecret,
+        },
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "update-einvoicing-config") {
+      const { provider, enabled, pa_name } = body;
+      const valid = ["none", "pennylane", "billit", "custom"];
+      const providerValue = valid.includes(provider) ? provider : "none";
+      const { data: cur } = await serviceClient.from("system_settings").select("einvoicing_config").eq("id", "global").maybeSingle();
+      const curCfg = (cur?.einvoicing_config as Record<string, any>) || {};
+      const nextConfig = {
+        ...curCfg,
+        provider: providerValue,
+        enabled: enabled !== undefined ? !!enabled : curCfg.enabled ?? false,
+        pa_name: pa_name !== undefined ? pa_name : curCfg.pa_name ?? null,
+        updated_at: new Date().toISOString(),
+      };
+      const { data, error } = await serviceClient
+        .from("system_settings")
+        .upsert({ id: "global", einvoicing_config: nextConfig, updated_by: user.id, updated_at: new Date().toISOString() }, { onConflict: "id" })
+        .select("einvoicing_config")
+        .single();
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true, config: nextConfig }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Re-fetch a Stripe invoice and read the e-invoicing metadata the PA
+    // app attached (Pennylane/Billit write their status into Stripe invoice
+    // metadata), then mirror it onto the local invoices row.
+    if (action === "sync-einvoice") {
+      const { invoice_id } = body;
+      if (!invoice_id) {
+        return new Response(JSON.stringify({ error: "invoice_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+      if (!stripeKey) {
+        return new Response(JSON.stringify({ error: "STRIPE_SECRET_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: inv, error: invErr } = await serviceClient.from("invoices").select("*").eq("id", invoice_id).maybeSingle();
+      if (invErr || !inv) {
+        return new Response(JSON.stringify({ error: "Invoice not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      let status = inv.einvoicing_status || "not_configured";
+      let paName = inv.einvoicing_pa || null;
+      let einvoiceUrl = inv.einvoicing_url || null;
+      let metadata = inv.einvoicing_metadata || {};
+      if (inv.stripe_invoice_id) {
+        try {
+          const resp = await fetch(`https://api.stripe.com/v1/invoices/${inv.stripe_invoice_id}`, {
+            headers: { Authorization: `Bearer ${stripeKey}` },
+          });
+          if (resp.ok) {
+            const si = await resp.json();
+            const md = si.metadata || {};
+            if (md.einvoicing_status) status = String(md.einvoicing_status).toLowerCase();
+            if (md.einvoicing_pa || md.einvoicing_provider) paName = md.einvoicing_pa || md.einvoicing_provider;
+            if (md.einvoicing_url) einvoiceUrl = md.einvoicing_url;
+            metadata = { ...metadata, stripe_invoice_metadata: md };
+          }
+        } catch (e) {
+          // ignore — keep existing local status
+        }
+      }
+      await serviceClient.from("invoices").update({
+        einvoicing_status: status,
+        einvoicing_pa: paName,
+        einvoicing_url: einvoiceUrl,
+        einvoicing_metadata: metadata,
+        updated_at: new Date().toISOString(),
+      }).eq("id", inv.id);
+      return new Response(JSON.stringify({ success: true, einvoicing_status: status, einvoicing_pa: paName, einvoicing_url: einvoiceUrl }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     if (action === "get-ai-access") {
       const { data: access } = await serviceClient.from("user_ai_access").select("*");
       return new Response(JSON.stringify({ access: access || [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });

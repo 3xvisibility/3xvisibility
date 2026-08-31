@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, FileArchive, FilePlus2, FileText, Loader2 } from "lucide-react";
+import { Download, FileArchive, FilePlus2, FileText, FileCheck2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   downloadInvoicePdf,
@@ -115,6 +115,23 @@ export function MyInvoicesCard() {
                   >
                     {inv.status.replace("_", " ")}
                   </Badge>
+                  {inv.einvoicing_status &&
+                    inv.einvoicing_status !== "not_configured" && (
+                      <a
+                        href={inv.einvoicing_url ?? "#"}
+                        target={inv.einvoicing_url ? "_blank" : undefined}
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary hover:bg-primary/15"
+                        title={
+                          inv.einvoicing_pa
+                            ? `Compliant e-invoice via ${inv.einvoicing_pa}`
+                            : "Compliant Factur-X e-invoice"
+                        }
+                      >
+                        <FileCheck2 className="h-3 w-3" />
+                        Factur-X · {inv.einvoicing_status}
+                      </a>
+                    )}
                   {(inv.amount_refunded || 0) > 0 && (
                     <span className="text-[11px] text-destructive">
                       -{formatInvoiceMoney(inv.amount_refunded, inv.currency)} refunded

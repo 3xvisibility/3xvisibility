@@ -184,7 +184,6 @@ async function notifyInvoiceStatus(opts: {
 
 
 // Persist an invoice record for a successful payment. Returns the stored row
-// (or the existing one when the same Stripe object was already recorded).
 async function recordInvoice(input: {
   stripeInvoiceId?: string | null;
   stripeChargeId?: string | null;
@@ -203,6 +202,7 @@ async function recordInvoice(input: {
   lineItems: Array<{ description: string; quantity: number; amount: number }>;
   billingDetails?: Record<string, unknown>;
   issuedAt?: string;
+  einvoicingStatus?: string;
 }) {
   // Idempotency: never create two invoices for the same Stripe object.
   const match = input.stripeInvoiceId
@@ -250,6 +250,7 @@ async function recordInvoice(input: {
       receipt_url: input.receiptUrl ?? null,
       line_items: input.lineItems,
       billing_details: input.billingDetails ?? {},
+      einvoicing_status: input.einvoicingStatus ?? "not_configured",
       issued_at: input.issuedAt ?? new Date().toISOString(),
     })
     .select("*")
@@ -263,8 +264,29 @@ async function recordInvoice(input: {
   return data;
 }
 
+// Read the e-invoicing PA connector config. When a PA is enabled, new
+// invoices start in "pending" so the admin/UI can see they are awaiting
+// Factur-X transmission; otherwise they stay "not_configured".
+async function einvoicingInitialStatus(): Promise<string> {
+  try {
+    const { data } = await supabase
+      .from("system_settings")
+      .select("einvoicing_config")
+      .eq("id", "global")
+      .maybeSingle();
+    const cfg = (data?.einvoicing_config as Record<string, any>) || {};
+    if (cfg.enabled && cfg.provider && cfg.provider !== "none") return "pending";
+    return "not_configured";
+  } catch {
+    return "not_configured";
+  }
+}
+
 // Create the invoice + send the customer receipt and the admin notification.
 async function handleSuccessfulPayment(params: Parameters<typeof recordInvoice>[0]) {
+  if (!params.einvoicingStatus) {
+    params.einvoicingStatus = await einvoicingInitialStatus();
+  }
   const invoice = await recordInvoice(params);
   const amount = (params.amountTotal / 100).toFixed(2);
   const invoiceNumber = invoice?.invoice_number ?? undefined;

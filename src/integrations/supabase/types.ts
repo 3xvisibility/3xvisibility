@@ -1420,6 +1420,12 @@ export type Database = {
           dispute_status: string | null
           disputed_amount: number
           disputed_at: string | null
+          einvoicing_format: string | null
+          einvoicing_metadata: Json
+          einvoicing_pa: string | null
+          einvoicing_status: string
+          einvoicing_transmitted_at: string | null
+          einvoicing_url: string | null
           hosted_invoice_url: string | null
           id: string
           invoice_number: string
@@ -1454,6 +1460,12 @@ export type Database = {
           dispute_status?: string | null
           disputed_amount?: number
           disputed_at?: string | null
+          einvoicing_format?: string | null
+          einvoicing_metadata?: Json
+          einvoicing_pa?: string | null
+          einvoicing_status?: string
+          einvoicing_transmitted_at?: string | null
+          einvoicing_url?: string | null
           hosted_invoice_url?: string | null
           id?: string
           invoice_number: string
@@ -1488,6 +1500,12 @@ export type Database = {
           dispute_status?: string | null
           disputed_amount?: number
           disputed_at?: string | null
+          einvoicing_format?: string | null
+          einvoicing_metadata?: Json
+          einvoicing_pa?: string | null
+          einvoicing_status?: string
+          einvoicing_transmitted_at?: string | null
+          einvoicing_url?: string | null
           hosted_invoice_url?: string | null
           id?: string
           invoice_number?: string
@@ -2990,6 +3008,7 @@ export type Database = {
           ai_provider: string
           ai_provider_content: string | null
           ai_provider_design: string | null
+          einvoicing_config: Json
           feature_flags: Json
           id: string
           maintenance_message: string | null
@@ -3001,6 +3020,7 @@ export type Database = {
           ai_provider?: string
           ai_provider_content?: string | null
           ai_provider_design?: string | null
+          einvoicing_config?: Json
           feature_flags?: Json
           id?: string
           maintenance_message?: string | null
@@ -3012,6 +3032,7 @@ export type Database = {
           ai_provider?: string
           ai_provider_content?: string | null
           ai_provider_design?: string | null
+          einvoicing_config?: Json
           feature_flags?: Json
           id?: string
           maintenance_message?: string | null

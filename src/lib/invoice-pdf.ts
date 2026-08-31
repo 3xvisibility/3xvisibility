@@ -37,6 +37,11 @@ export interface InvoiceRecord {
   manual_status_reason?: string | null;
   manual_status_by?: string | null;
   manual_status_at?: string | null;
+  einvoicing_status?: string | null;
+  einvoicing_pa?: string | null;
+  einvoicing_url?: string | null;
+  einvoicing_format?: string | null;
+  einvoicing_transmitted_at?: string | null;
 }
 
 export const formatInvoiceMoney = (cents: number, currency: string) =>
