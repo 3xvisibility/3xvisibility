@@ -15,11 +15,11 @@ export default function MentionsLegalesPage() {
       >
         <h2>1. Website Publisher</h2>
         <p>
-          The website <strong>verodav-shop.com</strong> is published by:
+          The website <strong>3xvisibility.com</strong> is published by:
         </p>
         <ul>
           <li><strong>Legal name</strong> : VERODAV GROUP</li>
-          <li><strong>Trading name</strong> : 3xvisibility.com</li>
+          <li><strong>Trading name</strong> : 3X Visibility</li>
           <li><strong>Legal form</strong> : SAS – Société par actions simplifiée</li>
           <li><strong>Registered address</strong> : 21 rue de Cherbourg, 67100 Strasbourg, France</li>
           <li><strong>Trade and companies register (RCS)</strong> : Strasbourg 843 715 954</li>
