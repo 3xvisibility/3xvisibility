@@ -172,10 +172,10 @@ const starterModels = [...freeModels, M.gemFlash, M.gptMini, M.imgMini];
 const proModels = [...starterModels, M.gemPro, M.gpt55, M.img2, M.nano2];
 const agencyModels = [...proModels, M.gptSol, M.gem3ProImg, M.voice];
 
-const freeBrands = [BRANDS.openai, BRANDS.gemini];
-const starterBrands = [...freeBrands, BRANDS.google];
-const proBrands = [...starterBrands, BRANDS.deepseek, BRANDS.mistral, BRANDS.perplexity];
-const agencyBrands = [...proBrands, BRANDS.claude, BRANDS.grok, BRANDS.copilot, BRANDS.meta];
+const freeBrands = [BRANDS.gemini];
+const starterBrands = [BRANDS.gemini, BRANDS.openai];
+const proBrands = [BRANDS.gemini, BRANDS.openai, BRANDS.claude, BRANDS.perplexity];
+const agencyBrands = [BRANDS.gemini, BRANDS.openai, BRANDS.claude, BRANDS.perplexity];
 
 const featureGroups: FeatureGroup[] = [
   {
