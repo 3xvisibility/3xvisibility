@@ -29,7 +29,7 @@ export function StaticPageLayout({ title, subtitle, children }: Props) {
         </section>
         <section className="py-8 sm:py-10 md:py-14">
 
-          <div className="container mx-auto px-4 lg:px-8 max-w-4xl prose prose-sm sm:prose-base md:prose-lg prose-invert tracking-normal prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg sm:prose-h2:text-xl md:prose-h2:text-2xl prose-h2:mt-7 sm:prose-h2:mt-9 md:prose-h2:mt-12 prose-h2:mb-3 md:prose-h2:mb-4 prose-p:text-[hsl(250,10%,40%)] prose-p:leading-relaxed prose-p:my-4 md:prose-p:my-5 prose-ul:my-4 md:prose-ul:my-5 prose-ul:space-y-2 prose-li:text-[hsl(250,10%,40%)] prose-li:leading-relaxed prose-li:my-1 prose-a:text-primary">
+          <div className="container mx-auto px-4 lg:px-8 max-w-4xl prose prose-sm sm:prose-base md:prose-lg tracking-normal prose-headings:text-[hsl(250,20%,12%)] prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg sm:prose-h2:text-xl md:prose-h2:text-2xl prose-h2:mt-7 sm:prose-h2:mt-9 md:prose-h2:mt-12 prose-h2:mb-3 md:prose-h2:mb-4 prose-p:text-[hsl(250,10%,32%)] prose-p:leading-relaxed prose-p:my-4 md:prose-p:my-5 prose-ul:my-4 md:prose-ul:my-5 prose-ul:space-y-2 prose-li:text-[hsl(250,10%,32%)] prose-li:leading-relaxed prose-li:my-1 prose-strong:text-[hsl(250,20%,14%)] prose-a:text-primary prose-a:font-medium prose-a:underline-offset-2 hover:prose-a:underline prose-th:text-[hsl(250,20%,14%)] prose-td:text-[hsl(250,10%,32%)]">
 
             {children}
           </div>
