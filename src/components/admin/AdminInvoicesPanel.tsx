@@ -65,6 +65,7 @@ const RANGES: Record<string, number | null> = {
 };
 
 export function AdminInvoicesPanel() {
+  const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [range, setRange] = useState("all");
@@ -73,6 +74,25 @@ export function AdminInvoicesPanel() {
   const [adjusting, setAdjusting] = useState<InvoiceRecord | null>(null);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+
+  const syncEinvoice = async (inv: InvoiceRecord) => {
+    setSyncingId(inv.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-panel", {
+        body: { action: "sync-einvoice", invoice_id: inv.id },
+      });
+      if (error) throw error;
+      toast.success(
+        `E-invoice status: ${data.einvoicing_status}${data.einvoicing_pa ? ` (${data.einvoicing_pa})` : ""}`,
+      );
+      qc.invalidateQueries({ queryKey: ["admin-invoices"] });
+    } catch (e: any) {
+      toast.error(e.message || "Sync failed");
+    } finally {
+      setSyncingId(null);
+    }
+  };
 
   const invoicesQuery = useQuery({
     queryKey: ["admin-invoices"],
