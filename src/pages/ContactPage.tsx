@@ -13,8 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const channels = [
   { icon: Mail, label: "Email", value: "info@3xvisibility.com", href: "mailto:info@3xvisibility.com" },
-  { icon: Phone, label: "Phone", value: "+1 (555) 012-3456", href: "tel:+15550123456" },
-  { icon: MapPin, label: "Address", value: "123 Demo Street, Suite 100, Paris, France", href: undefined },
+  { icon: Phone, label: "Phone", value: "+33 3 67 10 00 00", href: "tel:+33367100000" },
+  { icon: MapPin, label: "Address", value: "21 rue de Cherbourg, 67100 Strasbourg, France", href: undefined },
 ];
 
 export default function ContactPage() {
