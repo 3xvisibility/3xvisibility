@@ -184,7 +184,6 @@ async function notifyInvoiceStatus(opts: {
 
 
 // Persist an invoice record for a successful payment. Returns the stored row
-// (or the existing one when the same Stripe object was already recorded).
 async function recordInvoice(input: {
   stripeInvoiceId?: string | null;
   stripeChargeId?: string | null;
