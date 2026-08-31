@@ -529,15 +529,15 @@ export function PricingComparisonTable({
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    aria-label={`${resolveText(val, t)} support details`}
+                    aria-label={t("pricing.supportHint.aria")}
                     className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border/60 bg-muted/50 text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 hover:text-primary"
                   >
                     <Info className="h-3 w-3" aria-hidden="true" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={8} collisionPadding={12} className="max-w-xs px-3 py-2 text-xs leading-relaxed">
-                  <p className="font-semibold">{supportDetail.title}</p>
-                  <p className="mt-1 text-muted-foreground">{supportDetail.body}</p>
+                  <p className="font-semibold">{t(supportDetail.title)}</p>
+                  <p className="mt-1 text-muted-foreground">{t(supportDetail.body)}</p>
                   <TooltipArrow />
                 </TooltipContent>
               </Tooltip>
