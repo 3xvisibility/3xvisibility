@@ -1,4 +1,3 @@
-import { Seo } from "@/components/Seo";
 import ConfidentialitePage from "@/pages/ConfidentialitePage";
 
 export default function PrivacyPage() {
