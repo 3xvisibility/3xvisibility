@@ -15,19 +15,19 @@ export default function MentionsLegalesPage() {
       >
         <h2>1. Website Publisher</h2>
         <p>
-          The website <strong>3xvisibility.com</strong> is published by:
+          The website <strong translate="no">3xvisibility.com</strong> is published by:
         </p>
         <ul>
-          <li><strong>Legal name</strong> : VERODAV GROUP</li>
-          <li><strong>Trading name</strong> : 3xvisibility</li>
+          <li><strong>Legal name</strong> : <span translate="no">VERODAV GROUP</span></li>
+          <li><strong>Trading name</strong> : <span translate="no">3xvisibility</span></li>
           <li><strong>Legal form</strong> : SAS – Société par actions simplifiée</li>
-          <li><strong>Registered address</strong> : 21 rue de Cherbourg, 67100 Strasbourg, France</li>
+          <li><strong>Registered address</strong> : <span translate="no">21 rue de Cherbourg, 67100 Strasbourg, France</span></li>
           <li><strong>Trade and companies register (RCS)</strong> : Strasbourg 843 715 954</li>
           <li><strong>National business number (SIREN)</strong> : 843 715 954</li>
           <li><strong>Headquarters SIRET</strong> : 843 715 954 00023</li>
           <li><strong>Intra-community VAT number</strong> : FR95 843715954</li>
-          <li><strong>Contact email</strong> : <a href="mailto:info@3xvisibility.com">info@3xvisibility.com</a></li>
-          <li><strong>Director of publication</strong> : Yannick Humphrey</li>
+          <li><strong>Contact email</strong> : <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a></li>
+          <li><strong>Director of publication</strong> : <span translate="no">Yannick Humphrey</span></li>
         </ul>
 
         <h2>2. Hosting & Infrastructure</h2>
@@ -37,8 +37,8 @@ export default function MentionsLegalesPage() {
           network (CDN), reverse proxy and security layer.
         </p>
         <ul>
-          <li><strong>Lovable</strong> — Development and hosting platform — <a href="https://lovable.dev/">lovable.dev</a></li>
-          <li><strong>Cloudflare, Inc.</strong> — CDN, reverse proxy, caching and security (edge network) — 101 Townsend Street, San Francisco, CA 94107, United States — <a href="https://www.cloudflare.com/">cloudflare.com</a></li>
+          <li><strong translate="no">Lovable</strong> — Development and hosting platform — <a href="https://lovable.dev/" translate="no">lovable.dev</a></li>
+          <li><strong translate="no">Cloudflare, Inc.</strong> — CDN, reverse proxy, caching and security (edge network) — 101 Townsend Street, San Francisco, CA 94107, United States — <a href="https://www.cloudflare.com/" translate="no">cloudflare.com</a></li>
         </ul>
 
         <h2>3. Technology and Third-Party Service Providers</h2>
@@ -59,35 +59,35 @@ export default function MentionsLegalesPage() {
             </thead>
             <tbody>
               <tr className="border-b border-[hsl(96,67%,48%,0.08)]">
-                <td className="py-2 pr-4">Supabase, Inc.</td>
+                <td className="py-2 pr-4" translate="no">Supabase, Inc.</td>
                 <td className="py-2 pr-4">Database, authentication, file storage, API</td>
                 <td className="py-2 pr-4">User accounts, workspaces, campaigns, generated pages, invoices</td>
                 <td className="py-2 pr-4">Account data, workspace data, generated content, invoices, contact details</td>
                 <td className="py-2 pr-4">Singapore / USA</td>
               </tr>
               <tr className="border-b border-[hsl(96,67%,48%,0.08)]">
-                <td className="py-2 pr-4">Cloudflare, Inc.</td>
+                <td className="py-2 pr-4" translate="no">Cloudflare, Inc.</td>
                 <td className="py-2 pr-4">CDN, reverse proxy, caching, security</td>
                 <td className="py-2 pr-4">Fast and secure delivery of the website</td>
                 <td className="py-2 pr-4">Technical connection data (IP address, browser characteristics)</td>
                 <td className="py-2 pr-4">USA</td>
               </tr>
               <tr className="border-b border-[hsl(96,67%,48%,0.08)]">
-                <td className="py-2 pr-4">Lovable</td>
+                <td className="py-2 pr-4" translate="no">Lovable</td>
                 <td className="py-2 pr-4">Development and hosting platform</td>
                 <td className="py-2 pr-4">Build, deployment and hosting of the application</td>
                 <td className="py-2 pr-4">Technical hosting data</td>
                 <td className="py-2 pr-4">Sweden / USA</td>
               </tr>
               <tr className="border-b border-[hsl(96,67%,48%,0.08)]">
-                <td className="py-2 pr-4">Resend</td>
+                <td className="py-2 pr-4" translate="no">Resend</td>
                 <td className="py-2 pr-4">Transactional email service</td>
                 <td className="py-2 pr-4">Account, invoice and notification emails</td>
                 <td className="py-2 pr-4">Recipient name and email address, email content</td>
                 <td className="py-2 pr-4">USA</td>
               </tr>
               <tr className="border-b border-[hsl(96,67%,48%,0.08)]">
-                <td className="py-2 pr-4">Google Ireland Ltd.</td>
+                <td className="py-2 pr-4" translate="no">Google Ireland Ltd.</td>
                 <td className="py-2 pr-4">Web font delivery (Google Fonts)</td>
                 <td className="py-2 pr-4">Display of the site's typography</td>
                 <td className="py-2 pr-4">Technical request data (IP address) when fonts are downloaded</td>
@@ -117,7 +117,7 @@ export default function MentionsLegalesPage() {
 
         <h2>6. Personal Data (GDPR)</h2>
         <p>
-          <strong>Data controller</strong> : 3XVISIBILITY — <a href="mailto:info@3xvisibility.com">info@3xvisibility.com</a>
+          <strong>Data controller</strong> : <span translate="no">3XVISIBILITY</span> — <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a>
         </p>
         <p>
           Personal data is processed for the following purposes: creation and management of user
@@ -164,12 +164,12 @@ export default function MentionsLegalesPage() {
           You have the right of access, rectification, erasure, restriction, portability and
           objection regarding your personal data, as well as the right to withdraw consent where
           processing is based on consent. To exercise these rights, contact us at:{" "}
-          <a href="mailto:info@3xvisibility.com">info@3xvisibility.com</a>
+          <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a>
         </p>
         <p>
           You also have the right to lodge a complaint with the competent supervisory authority,
           the CNIL (Commission Nationale de l'Informatique et des Libertés), 3 Place de Fontenoy,
-          TSA 80715, 75334 PARIS CEDEX 07, France — www.cnil.fr.
+          <span translate="no">TSA 80715, 75334 PARIS CEDEX 07, France — www.cnil.fr</span>.
         </p>
 
         <h2>9. Legal & Commercial Documents</h2>
@@ -188,7 +188,7 @@ export default function MentionsLegalesPage() {
 
         <h2>11. Contact</h2>
         <p>
-          For any question: <a href="mailto:info@3xvisibility.com">info@3xvisibility.com</a>
+          For any question: <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a>
         </p>
       </StaticPageLayout>
     </>
