@@ -203,6 +203,7 @@ async function recordInvoice(input: {
   lineItems: Array<{ description: string; quantity: number; amount: number }>;
   billingDetails?: Record<string, unknown>;
   issuedAt?: string;
+  einvoicingStatus?: string;
 }) {
   // Idempotency: never create two invoices for the same Stripe object.
   const match = input.stripeInvoiceId
