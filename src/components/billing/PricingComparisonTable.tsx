@@ -417,6 +417,21 @@ function resolveText(val: string, t: T): string {
   return val;
 }
 
+const SUPPORT_DETAILS: Record<string, { title: string; body: string }> = {
+  __email__: {
+    title: "Email support",
+    body: "Answers via email within 1–2 business days: setup help, troubleshooting, and how-to guidance.",
+  },
+  __priority__: {
+    title: "Priority support",
+    body: "Faster email responses (within a few hours on business days), priority queue for bug fixes, and help with templates, keywords, and publishing issues.",
+  },
+  __dedicated__: {
+    title: "Dedicated support",
+    body: "A named success manager, same-day responses, migration and onboarding assistance, custom template help, and direct escalation to engineers.",
+  },
+};
+
 export function PricingComparisonTable({
   activePlan,
   currentPlan,
