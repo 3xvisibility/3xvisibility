@@ -222,12 +222,12 @@ export function buildJsonLd(
       if (Object.keys(address).length > 0) resolved.address = { "@type": "PostalAddress", ...address };
     }
     if (schemaType === "Product" && resolved.price) {
-      resolved.offers = { "@type": "Offer", price: resolved.price, priceCurrency: resolved.currency || "USD" };
+      resolved.offers = { "@type": "Offer", price: resolved.price, priceCurrency: resolved.currency || "EUR" };
       delete resolved.price; delete resolved.currency;
     }
     if (schemaType === "SoftwareApplication" && resolved.offers?.price) {
       resolved.offers["@type"] = "Offer";
-      if (!resolved.offers.priceCurrency) resolved.offers.priceCurrency = "USD";
+      if (!resolved.offers.priceCurrency) resolved.offers.priceCurrency = "EUR";
     }
     if (schemaType === "FAQPage" && resolved.question) {
       resolved.mainEntity = [{ "@type": "Question", name: resolved.question, acceptedAnswer: { "@type": "Answer", text: resolved.answer || "" } }];

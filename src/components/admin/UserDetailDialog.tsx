@@ -209,7 +209,7 @@ export function UserDetailDialog({ userId, open, onOpenChange }: UserDetailDialo
                           <span className="text-muted-foreground">Total paid</span>
                           <span className="tabular-nums">
                             {payments.filter((p: any) => p.status === "paid").reduce((s: number, p: any) => s + (p.amount || 0), 0).toFixed(2)}{" "}
-                            {payments[0]?.currency || "USD"}
+                            {payments[0]?.currency || "EUR"}
                           </span>
                         </div>
                       </>

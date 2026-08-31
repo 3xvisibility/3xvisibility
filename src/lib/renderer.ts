@@ -326,7 +326,7 @@ export function buildJsonLd(
       resolved.offers = {
         "@type": "Offer",
         price: resolved.price,
-        priceCurrency: resolved.currency || "USD",
+        priceCurrency: resolved.currency || "EUR",
       };
       delete resolved.price;
       delete resolved.currency;
@@ -335,7 +335,7 @@ export function buildJsonLd(
     // SoftwareApplication offers
     if (schemaType === "SoftwareApplication" && resolved.offers?.price) {
       resolved.offers["@type"] = "Offer";
-      if (!resolved.offers.priceCurrency) resolved.offers.priceCurrency = "USD";
+      if (!resolved.offers.priceCurrency) resolved.offers.priceCurrency = "EUR";
     }
 
     // FAQ

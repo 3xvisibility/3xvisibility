@@ -493,7 +493,7 @@ Deno.serve(async (req) => {
             payments = (invJson?.data || []).map((inv: any) => ({
               id: inv.id,
               amount: (inv.amount_paid ?? inv.amount_due ?? 0) / 100,
-              currency: (inv.currency || "usd").toUpperCase(),
+              currency: (inv.currency || "eur").toUpperCase(),
               status: inv.status,
               number: inv.number,
               created: inv.created ? new Date(inv.created * 1000).toISOString() : null,
@@ -514,7 +514,7 @@ Deno.serve(async (req) => {
                 status: s.status,
                 plan: (typeof product === "object" ? product?.name : null) || price?.nickname || price?.id || "—",
                 amount: price?.unit_amount ? price.unit_amount / 100 : null,
-                currency: (price?.currency || "usd").toUpperCase(),
+                currency: (price?.currency || "eur").toUpperCase(),
                 interval: price?.recurring?.interval || null,
                 started: s.start_date ? new Date(s.start_date * 1000).toISOString() : null,
                 current_period_end: s.current_period_end ? new Date(s.current_period_end * 1000).toISOString() : null,

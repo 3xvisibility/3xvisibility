@@ -54,7 +54,7 @@ export function AffiliateSection() {
               </div>
               <div className="h-10 w-px bg-[hsl(96,67%,48%,0.15)]" />
               <div>
-                <p className="text-3xl font-extrabold text-foreground">$25</p>
+                <p className="text-3xl font-extrabold text-foreground">€25</p>
                 <p className="text-xs text-[hsl(220,12%,45%)] mt-1">{t("affiliateLanding.minPayout")}</p>
               </div>
               <div className="h-10 w-px bg-[hsl(96,67%,48%,0.15)]" />

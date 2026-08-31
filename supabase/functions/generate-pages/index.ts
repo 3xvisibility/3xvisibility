@@ -2836,7 +2836,7 @@ Deno.serve(async (req) => {
               resolvedSchema.offers = {
                 "@type": "Offer",
                 price: resolvedSchema.price,
-                priceCurrency: resolvedSchema.currency || "USD",
+                priceCurrency: resolvedSchema.currency || "EUR",
               };
               delete resolvedSchema.price;
               delete resolvedSchema.currency;

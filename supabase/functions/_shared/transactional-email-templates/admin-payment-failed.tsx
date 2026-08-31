@@ -34,7 +34,7 @@ interface AdminPaymentFailedProps {
 
 const formatAmount = (amount?: string, currency?: string) => {
   if (!amount) return '—'
-  const cur = (currency || 'USD').toUpperCase()
+  const cur = (currency || 'EUR').toUpperCase()
   return `${cur} ${amount}`
 }
 
@@ -136,7 +136,7 @@ export const template = {
   component: AdminPaymentFailedEmail,
   subject: (data: Record<string, any>) =>
     `Payment failed${data?.email ? `: ${data.email}` : ''}${
-      data?.amount ? ` (${(data.currency || 'USD').toUpperCase()} ${data.amount})` : ''
+      data?.amount ? ` (${(data.currency || 'EUR').toUpperCase()} ${data.amount})` : ''
     }`,
   displayName: 'Admin: payment failed notification',
   // All payment-failure notifications are delivered to the admin inbox.
@@ -148,7 +148,7 @@ export const template = {
     customerId: 'cus_example123',
     planName: 'Agency Plan',
     amount: '49.00',
-    currency: 'USD',
+    currency: 'EUR',
     reason: 'Your card was declined',
     nextAttemptDate: new Date(Date.now() + 3 * 864e5).toISOString(),
     invoiceUrl: 'https://dashboard.stripe.com/invoices/in_example',

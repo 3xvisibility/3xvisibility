@@ -70,9 +70,9 @@ interface ModeInfo {
 }
 
 const formatMoney = (amount: number, currency: string) =>
-  new Intl.NumberFormat("en-US", {
+  new Intl.NumberFormat("de-DE", {
     style: "currency",
-    currency: (currency || "usd").toUpperCase(),
+    currency: (currency || "eur").toUpperCase(),
   }).format(amount / 100);
 
 const statusBadge = (item: PaymentItem) => {

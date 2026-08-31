@@ -34,7 +34,7 @@ interface AdminPaymentReceivedProps {
 
 const formatAmount = (amount?: string, currency?: string) => {
   if (!amount) return '—'
-  const cur = (currency || 'USD').toUpperCase()
+  const cur = (currency || 'EUR').toUpperCase()
   return `${cur} ${amount}`
 }
 
@@ -134,7 +134,7 @@ export const template = {
   component: AdminPaymentReceivedEmail,
   subject: (data: Record<string, any>) =>
     `Payment received${data?.email ? `: ${data.email}` : ''}${
-      data?.amount ? ` (${(data.currency || 'USD').toUpperCase()} ${data.amount})` : ''
+      data?.amount ? ` (${(data.currency || 'EUR').toUpperCase()} ${data.amount})` : ''
     }`,
   displayName: 'Admin: payment received notification',
   to: '3xvisibility@gmail.com',
@@ -145,7 +145,7 @@ export const template = {
     customerId: 'cus_example123',
     planName: 'Agency Plan',
     amount: '49.00',
-    currency: 'USD',
+    currency: 'EUR',
     invoiceNumber: 'INV-2026-01001',
     paidAt: new Date().toISOString(),
     invoiceUrl: 'https://dashboard.stripe.com/invoices/in_example',

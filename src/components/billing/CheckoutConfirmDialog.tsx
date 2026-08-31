@@ -54,8 +54,8 @@ export function CheckoutConfirmDialog({
   ];
 
   const billedText = isYearly
-    ? `$${(monthlyPrice * 12).toLocaleString()} billed yearly ($${monthlyPrice}/mo)`
-    : `$${monthlyPrice}/month billed monthly`;
+    ? `€${(monthlyPrice * 12).toLocaleString()} billed yearly (€${monthlyPrice}/mo)`
+    : `€${monthlyPrice}/month billed monthly`;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
