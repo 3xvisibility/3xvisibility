@@ -232,7 +232,7 @@ export default function AffiliatePage() {
                 <p className="text-[10px] text-primary/80 mt-0.5">{t("affiliate.yearlyOnly")}</p>
               </div>
               <div className="p-4 rounded-xl bg-muted/50">
-                <p className="text-2xl font-bold text-primary">${PAYOUT_THRESHOLD}</p>
+                <p className="text-2xl font-bold text-primary">€{PAYOUT_THRESHOLD}</p>
                 <p className="text-xs text-muted-foreground">{t("affiliate.minPayout")}</p>
               </div>
               <div className="p-4 rounded-xl bg-muted/50">
@@ -361,7 +361,7 @@ export default function AffiliatePage() {
             <div className="space-y-1 w-full sm:w-64">
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{t("affiliate.payoutProgress")}</span>
-                <span>€{Number(link.pending_balance).toFixed(2)} / ${PAYOUT_THRESHOLD}</span>
+                <span>€{Number(link.pending_balance).toFixed(2)} / €{PAYOUT_THRESHOLD}</span>
               </div>
               <Progress value={Math.min((Number(link.pending_balance) / PAYOUT_THRESHOLD) * 100, 100)} className="h-2" />
               {link.pending_balance < PAYOUT_THRESHOLD && (
