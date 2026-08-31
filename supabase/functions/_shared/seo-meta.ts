@@ -210,7 +210,7 @@ export function buildExtraJsonLd(
       product.offers = {
         "@type": "Offer",
         price: row.price,
-        priceCurrency: row.currency || "USD",
+        priceCurrency: row.currency || "EUR",
         availability: row.availability || "https://schema.org/InStock",
       };
     }

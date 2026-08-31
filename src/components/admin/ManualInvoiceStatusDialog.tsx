@@ -66,7 +66,7 @@ export function ManualInvoiceStatusDialog({ invoice, open, onOpenChange, onUpdat
 
   if (!invoice) return null;
 
-  const currency = invoice.currency || "usd";
+  const currency = invoice.currency || "eur";
   const total = invoice.amount_total ?? 0;
   const partialCents = Math.round((Number(amount) || 0) * 100);
 

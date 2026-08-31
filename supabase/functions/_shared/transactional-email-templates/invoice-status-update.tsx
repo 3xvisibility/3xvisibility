@@ -23,7 +23,7 @@ interface InvoiceStatusUpdateProps {
 
 const formatAmount = (amount?: string, currency?: string) => {
   if (!amount) return ''
-  return `${(currency || 'USD').toUpperCase()} ${amount}`
+  return `${(currency || 'EUR').toUpperCase()} ${amount}`
 }
 
 const HEADLINES: Record<string, { title: string; body: string }> = {
@@ -130,7 +130,7 @@ export const template = {
     statusKey: 'refunded',
     statusLabel: 'Refunded',
     amount: '49.00',
-    currency: 'USD',
+    currency: 'EUR',
     reason: 'Customer request',
     occurredAt: new Date().toISOString(),
     origin: 'https://3xvisibility.com',

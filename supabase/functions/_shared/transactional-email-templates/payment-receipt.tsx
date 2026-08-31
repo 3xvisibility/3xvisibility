@@ -21,7 +21,7 @@ interface PaymentReceiptProps {
 
 const formatAmount = (amount?: string, currency?: string) => {
   if (!amount) return ''
-  const cur = (currency || 'USD').toUpperCase()
+  const cur = (currency || 'EUR').toUpperCase()
   return `${cur} ${amount}`
 }
 
@@ -105,7 +105,7 @@ export const template = {
     email: 'jane@example.com',
     planName: 'Agency Plan',
     amount: '49.00',
-    currency: 'USD',
+    currency: 'EUR',
     invoiceNumber: 'INV-00123',
     paidAt: new Date().toISOString(),
     nextBillingDate: new Date(Date.now() + 30 * 864e5).toISOString(),

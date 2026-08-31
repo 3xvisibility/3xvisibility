@@ -30,7 +30,7 @@ export default function LandingPage() {
           name: "3XVISIBILITY",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
-          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+          offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
         }}
       />
       <LandingNav />

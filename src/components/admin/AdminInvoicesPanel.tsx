@@ -129,7 +129,7 @@ export function AdminInvoicesPanel() {
     return { gross, refunded, net: gross - refunded };
   }, [filtered]);
 
-  const currency = filtered[0]?.currency || "usd";
+  const currency = filtered[0]?.currency || "eur";
 
   const exportCsv = () => {
     const header = [

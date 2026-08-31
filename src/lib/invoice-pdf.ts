@@ -40,9 +40,9 @@ export interface InvoiceRecord {
 }
 
 export const formatInvoiceMoney = (cents: number, currency: string) =>
-  new Intl.NumberFormat("en-US", {
+  new Intl.NumberFormat("de-DE", {
     style: "currency",
-    currency: (currency || "usd").toUpperCase(),
+    currency: (currency || "eur").toUpperCase(),
   }).format((cents || 0) / 100);
 
 interface IssuerDetails {

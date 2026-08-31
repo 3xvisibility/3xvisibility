@@ -538,7 +538,7 @@ export default function ReferralPage() {
                 <Gift className="h-4 w-4 text-yellow-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">${stats.totalEarned.toFixed(2)}</p>
+                <p className="text-2xl font-bold">€{stats.totalEarned.toFixed(2)}</p>
                 <p className="text-xs text-muted-foreground">{t("referral.earned")}</p>
               </div>
             </div>

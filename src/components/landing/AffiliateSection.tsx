@@ -2,13 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ScrollReveal } from "./ScrollReveal";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { DollarSign, Users, TrendingUp, Gift } from "lucide-react";
+import { Euro, Users, TrendingUp, Gift } from "lucide-react";
 
 export function AffiliateSection() {
   const { t } = useLanguage();
 
   const benefits = [
-    { icon: DollarSign, title: t("affiliateLanding.benefit1Title"), desc: t("affiliateLanding.benefit1Desc") },
+    { icon: Euro, title: t("affiliateLanding.benefit1Title"), desc: t("affiliateLanding.benefit1Desc") },
     { icon: Users, title: t("affiliateLanding.benefit2Title"), desc: t("affiliateLanding.benefit2Desc") },
     { icon: TrendingUp, title: t("affiliateLanding.benefit3Title"), desc: t("affiliateLanding.benefit3Desc") },
     { icon: Gift, title: t("affiliateLanding.benefit4Title"), desc: t("affiliateLanding.benefit4Desc") },
@@ -54,7 +54,7 @@ export function AffiliateSection() {
               </div>
               <div className="h-10 w-px bg-[hsl(96,67%,48%,0.15)]" />
               <div>
-                <p className="text-3xl font-extrabold text-foreground">$25</p>
+                <p className="text-3xl font-extrabold text-foreground">€25</p>
                 <p className="text-xs text-[hsl(220,12%,45%)] mt-1">{t("affiliateLanding.minPayout")}</p>
               </div>
               <div className="h-10 w-px bg-[hsl(96,67%,48%,0.15)]" />

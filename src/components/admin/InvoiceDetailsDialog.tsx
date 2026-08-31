@@ -161,7 +161,7 @@ export function InvoiceDetailsDialog({ invoice, open, onOpenChange }: Props) {
               <Field label="Customer" value={invoice.customer_name} />
               <Field label="Email" value={invoice.customer_email} />
               <Field label="Plan / item" value={invoice.plan || invoice.description} />
-              <Field label="Currency" value={(invoice.currency || "usd").toUpperCase()} />
+              <Field label="Currency" value={(invoice.currency || "eur").toUpperCase()} />
               <Field
                 label="Issued at"
                 value={new Date(invoice.issued_at).toLocaleString("en-US", {

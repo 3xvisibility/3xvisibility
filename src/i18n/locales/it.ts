@@ -1115,7 +1115,7 @@ const it: Record<string, string> = {
   "pgpGenerate.custom": "Custom",
   "pgpGenerate.customBrandPlaceholder": "Your Brand Name",
   "pgpGenerate.customDataLabel": "Custom Data",
-  "pgpGenerate.customDataPlaceholder": "e.g. Brand names: Samsung, Apple. Price range: $100-$2000. Free shipping over $50...",
+  "pgpGenerate.customDataPlaceholder": "e.g. Brand names: Samsung, Apple. Price range: €100-€2000. Free shipping over €50...",
   "pgpGenerate.defineMissingKeywords": "Define missing keywords before generating.",
   "pgpGenerate.draft": "Draft",
   "pgpGenerate.dripHint": "Each page is published X hours after the previous one.",

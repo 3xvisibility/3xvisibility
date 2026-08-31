@@ -175,7 +175,7 @@ async function notifyInvoiceStatus(opts: {
           ? `A dispute was opened for this payment${reason ? ` (${reason})` : ""}. We'll update you once it's resolved.`
           : statusKey === "voided"
             ? "This invoice has been voided and is no longer payable."
-            : `${((Math.abs(amountCents ?? 0)) / 100).toFixed(2)} ${(currency ?? invoice.currency ?? "usd").toUpperCase()} has been refunded to your original payment method.`,
+            : `${((Math.abs(amountCents ?? 0)) / 100).toFixed(2)} ${(currency ?? invoice.currency ?? "eur").toUpperCase()} has been refunded to your original payment method.`,
       type: statusKey === "disputed" || statusKey === "voided" ? "warning" : "success",
     });
     if (error) log("notification_insert_error", { error: error.message });

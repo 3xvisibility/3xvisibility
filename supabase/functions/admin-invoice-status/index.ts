@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
           message:
             status === "voided"
               ? `This invoice has been voided. Reason: ${reason}`
-              : `${(amountRefunded / 100).toFixed(2)} ${(invoice.currency ?? "usd").toUpperCase()} has been refunded. Reason: ${reason}`,
+              : `${(amountRefunded / 100).toFixed(2)} ${(invoice.currency ?? "eur").toUpperCase()} has been refunded. Reason: ${reason}`,
           type: status === "voided" ? "warning" : "success",
         });
       }

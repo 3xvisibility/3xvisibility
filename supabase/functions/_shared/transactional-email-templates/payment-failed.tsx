@@ -21,7 +21,7 @@ interface PaymentFailedProps {
 
 const formatAmount = (amount?: string, currency?: string) => {
   if (!amount) return ''
-  const cur = (currency || 'USD').toUpperCase()
+  const cur = (currency || 'EUR').toUpperCase()
   return `${cur} ${amount}`
 }
 
@@ -103,7 +103,7 @@ export const template = {
     email: 'jane@example.com',
     planName: 'Agency Plan',
     amount: '49.00',
-    currency: 'USD',
+    currency: 'EUR',
     reason: 'Your card was declined',
     nextAttemptDate: new Date(Date.now() + 3 * 864e5).toISOString(),
     origin: 'https://3xvisibility.com',
