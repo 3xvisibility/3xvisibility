@@ -1,42 +1,7 @@
-import { Seo } from "@/components/Seo";
-import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
+import ConfidentialitePage from "@/pages/ConfidentialitePage";
 
 export default function PrivacyPage() {
-  return (
-    <>
-      <Seo
-        title="Privacy Policy"
-        description="How 3XVISIBILITY collects, uses and protects your information when you use our service."
-        path="/privacy"
-      />
-    <StaticPageLayout title="Privacy Policy" subtitle="Last updated: May 2026">
-      <h2>Overview</h2>
-      <p>
-        This Privacy Policy explains how 3XVISIBILITY ("we", "us") collects, uses and
-        protects information when you use our service.
-      </p>
-      <h2>Data we collect</h2>
-      <ul>
-        <li>Account information (name, email, workspace)</li>
-        <li>Content you create (templates, campaigns, generated pages)</li>
-        <li>Connection credentials for third-party platforms (encrypted at rest)</li>
-        <li>Usage analytics to improve the product</li>
-      </ul>
-      <h2>How we use data</h2>
-      <p>
-        We use your data to operate the service, generate and publish pages on your
-        behalf, provide support and improve 3XVISIBILITY. We never sell your data.
-      </p>
-      <h2>Data storage</h2>
-      <p>
-        Data is stored on secure cloud infrastructure with row-level access control.
-        You can export or delete your data at any time from workspace settings.
-      </p>
-      <h2>Contact</h2>
-      <p>
-        Privacy questions: <a href="mailto:info@3xvisibility.com">info@3xvisibility.com</a>
-      </p>
-    </StaticPageLayout>
-    </>
-  );
+  // The full professional privacy policy lives in ConfidentialitePage.
+  // This route renders the same content with its own SEO path.
+  return <ConfidentialitePage key="privacy" />;
 }
