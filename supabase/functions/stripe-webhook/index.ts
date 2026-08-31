@@ -251,6 +251,7 @@ async function recordInvoice(input: {
       receipt_url: input.receiptUrl ?? null,
       line_items: input.lineItems,
       billing_details: input.billingDetails ?? {},
+      einvoicing_status: input.einvoicingStatus ?? "not_configured",
       issued_at: input.issuedAt ?? new Date().toISOString(),
     })
     .select("*")
