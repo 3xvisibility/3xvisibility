@@ -55,9 +55,9 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
 
   const getPrice = (plan: PlanName) => {
     const monthly = PLAN_PRICES_MONTHLY[plan];
-    if (monthly === 0) return "$0";
-    if (isYearly) return `$${Math.round(monthly * (1 - YEARLY_DISCOUNT))}`;
-    return `$${monthly}`;
+    if (monthly === 0) return "€0";
+    if (isYearly) return `€${Math.round(monthly * (1 - YEARLY_DISCOUNT))}`;
+    return `€${monthly}`;
   };
 
   const fmt = (v: number) => (v === -1 ? "∞" : v.toLocaleString());
