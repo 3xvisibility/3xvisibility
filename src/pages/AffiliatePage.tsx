@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import {
-  Link2, Copy, DollarSign, Users, MousePointerClick, TrendingUp,
+  Link2, Copy, Euro, Users, MousePointerClick, TrendingUp,
   ArrowUpRight, Gift, CreditCard, Clock, CheckCircle2, XCircle,
   BarChart3, Share2
 } from "lucide-react";
@@ -159,7 +159,7 @@ export default function AffiliatePage() {
     if (error) {
       toast.error("Failed to request payout");
     } else {
-      toast.success(`Credit of $${link.pending_balance.toFixed(2)} requested!`);
+      toast.success(`Credit of €${link.pending_balance.toFixed(2)} requested!`);
       loadData();
     }
     setRequestingPayout(false);
@@ -326,10 +326,10 @@ export default function AffiliatePage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-yellow-500/10">
-                <DollarSign className="h-4 w-4 text-yellow-500" />
+                <Euro className="h-4 w-4 text-yellow-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">${Number(link.total_earned).toFixed(2)}</p>
+                <p className="text-2xl font-bold">€{Number(link.total_earned).toFixed(2)}</p>
                 <p className="text-xs text-muted-foreground">{t("affiliate.totalEarned")}</p>
               </div>
             </div>
@@ -356,17 +356,17 @@ export default function AffiliatePage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">{t("affiliate.pendingBalance")}</p>
-              <p className="text-3xl font-bold">${Number(link.pending_balance).toFixed(2)}</p>
+              <p className="text-3xl font-bold">€{Number(link.pending_balance).toFixed(2)}</p>
             </div>
             <div className="space-y-1 w-full sm:w-64">
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{t("affiliate.payoutProgress")}</span>
-                <span>${Number(link.pending_balance).toFixed(2)} / ${PAYOUT_THRESHOLD}</span>
+                <span>€{Number(link.pending_balance).toFixed(2)} / ${PAYOUT_THRESHOLD}</span>
               </div>
               <Progress value={Math.min((Number(link.pending_balance) / PAYOUT_THRESHOLD) * 100, 100)} className="h-2" />
               {link.pending_balance < PAYOUT_THRESHOLD && (
                 <p className="text-xs text-muted-foreground">
-                  ${(PAYOUT_THRESHOLD - Number(link.pending_balance)).toFixed(2)} {t("affiliate.untilPayout")}
+                  €{(PAYOUT_THRESHOLD - Number(link.pending_balance)).toFixed(2)} {t("affiliate.untilPayout")}
                 </p>
               )}
             </div>
@@ -514,7 +514,7 @@ export default function AffiliatePage() {
                       {payouts.map((p) => (
                         <TableRow key={p.id}>
                           <TableCell className="text-sm">{format(new Date(p.created_at), "MMM dd, yyyy")}</TableCell>
-                          <TableCell className="font-medium">${Number(p.amount).toFixed(2)}</TableCell>
+                          <TableCell className="font-medium">€{Number(p.amount).toFixed(2)}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="text-xs capitalize">{p.type}</Badge>
                           </TableCell>
