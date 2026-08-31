@@ -96,9 +96,9 @@ export function LandingFooter() {
       { label: t("footer.changelog"), href: "/changelog", isHash: false },
     ],
     [t("footer.legal")]: [
-      { label: "CGV", href: "/cgv", isHash: false },
-      { label: "Confidentialité", href: "/confidentialite", isHash: false },
-      { label: "Mentions Légales", href: "/mentions-legales", isHash: false },
+      { label: t("footer.cgv"), href: "/cgv", isHash: false },
+      { label: t("footer.privacyPolicy"), href: "/confidentialite", isHash: false },
+      { label: t("footer.legalNotice"), href: "/mentions-legales", isHash: false },
     ],
   };
 
