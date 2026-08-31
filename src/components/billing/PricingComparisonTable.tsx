@@ -418,18 +418,9 @@ function resolveText(val: string, t: T): string {
 }
 
 const SUPPORT_DETAILS: Record<string, { title: string; body: string }> = {
-  __email__: {
-    title: "Email support",
-    body: "Answers via email within 1–2 business days: setup help, troubleshooting, and how-to guidance.",
-  },
-  __priority__: {
-    title: "Priority support",
-    body: "Faster email responses (within a few hours on business days), priority queue for bug fixes, and help with templates, keywords, and publishing issues.",
-  },
-  __dedicated__: {
-    title: "Dedicated support",
-    body: "A named success manager, same-day responses, migration and onboarding assistance, custom template help, and direct escalation to engineers.",
-  },
+  __email__: { title: "pricing.supportHint.emailTitle", body: "pricing.supportHint.emailBody" },
+  __priority__: { title: "pricing.supportHint.priorityTitle", body: "pricing.supportHint.priorityBody" },
+  __dedicated__: { title: "pricing.supportHint.dedicatedTitle", body: "pricing.supportHint.dedicatedBody" },
 };
 
 export function PricingComparisonTable({
