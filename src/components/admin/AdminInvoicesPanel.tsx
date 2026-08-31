@@ -432,6 +432,21 @@ export function AdminInvoicesPanel() {
                       <Badge variant="outline" className={statusTone(inv.status)}>
                         {inv.status.replace("_", " ")}
                       </Badge>
+                      {inv.einvoicing_status &&
+                        inv.einvoicing_status !== "not_configured" && (
+                          <Badge
+                            variant="outline"
+                            className="ml-1 bg-primary/10 text-primary border-primary/30 text-[10px]"
+                            title={
+                              inv.einvoicing_pa
+                                ? `Factur-X via ${inv.einvoicing_pa}`
+                                : "Factur-X e-invoice"
+                            }
+                          >
+                            <FileCheck2 className="h-3 w-3 mr-0.5" />
+                            {inv.einvoicing_status}
+                          </Badge>
+                        )}
                     </TableCell>
                     <TableCell
                       className="text-right whitespace-nowrap"
