@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.analyze-website-free]
 verify_jwt = false
+
+[functions.einvoicing-pa-webhook]
+verify_jwt = false
