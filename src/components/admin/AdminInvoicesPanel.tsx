@@ -499,6 +499,22 @@ export function AdminInvoicesPanel() {
                       >
                         <Download className="h-3.5 w-3.5 mr-1" /> PDF
                       </Button>
+                      {inv.stripe_invoice_id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          title="Sync Factur-X e-invoice status from the PA"
+                          disabled={syncingId === inv.id}
+                          onClick={() => syncEinvoice(inv)}
+                        >
+                          {syncingId === inv.id ? (
+                            <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                          ) : (
+                            <FileCheck2 className="h-3.5 w-3.5 mr-1" />
+                          )}
+                          Sync
+                        </Button>
+                      )}
                       {inv.hosted_invoice_url && (
                         <Button size="sm" variant="ghost" asChild className="ml-1">
                           <a
