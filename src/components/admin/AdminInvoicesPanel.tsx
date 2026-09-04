@@ -28,6 +28,8 @@ import {
   FileText,
   FileCheck2,
   Loader2,
+  Mail,
+  MailCheck,
   RefreshCw,
   Search,
   Sheet,
@@ -41,6 +43,12 @@ import {
   formatInvoiceMoney,
   type InvoiceRecord,
 } from "@/lib/invoice-pdf";
+import {
+  downloadFrenchInvoicePdf,
+  frenchInvoicePdfBase64,
+} from "@/lib/invoice-pdf-fr";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileArchive, FilePlus2 } from "lucide-react";
 import { InvoiceDetailsDialog } from "./InvoiceDetailsDialog";
