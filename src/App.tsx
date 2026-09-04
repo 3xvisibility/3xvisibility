@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useParams } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
@@ -13,64 +13,65 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
 import LandingPage from "./pages/LandingPage";
-import DocumentationPage from "./pages/DocumentationPage";
-import WordPressGuidePage from "./pages/WordPressGuidePage";
-import ShopifyGuidePage from "./pages/ShopifyGuidePage";
 import AuthPage from "./pages/AuthPage";
-import AdminLoginPage from "./pages/AdminLoginPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import DashboardPage from "./pages/DashboardPage";
 
-import AiSiteBuilderPage from "./pages/AiSiteBuilderPage";
-import CampaignDetailPage from "./pages/CampaignDetailPage";
-import TemplatesPage from "./pages/TemplatesPage";
-import WebsitesPage from "./pages/WebsitesPage";
-import BillingPage from "./pages/BillingPage";
-import SettingsPage from "./pages/SettingsPage";
-import GeneratedPagesPage from "./pages/GeneratedPagesPage";
-import AdminPage from "./pages/AdminPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import TemplateMarketplacePage from "./pages/TemplateMarketplacePage";
-import IndexingPage from "./pages/IndexingPage";
 
-import PagePerformancePage from "./pages/PagePerformancePage";
-import SeoAuditPage from "./pages/SeoAuditPage";
-import AffiliatePage from "./pages/AffiliatePage";
-import ReferralPage from "./pages/ReferralPage";
 
-import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
-import DataCsvPage from "./pages/DataCsvPage";
-import WebsiteContentPage from "./pages/WebsiteContentPage";
 
-import KeywordGroupsPage from "./pages/KeywordGroupsPage";
-import PgpGeneratePage from "./pages/PgpGeneratePage";
-import PgpTermsPage from "./pages/PgpTermsPage";
-import ElementorTestPage from "./pages/ElementorTestPage";
-import RepublishDiffHarnessPage from "./pages/RepublishDiffHarnessPage";
-import SeoAnalysisHarnessPage from "./pages/SeoAnalysisHarnessPage";
-import WpControlPage from "./pages/WpControlPage";
 import NotFound from "./pages/NotFound";
-import SupabaseConnectionTestPage from "./pages/SupabaseConnectionTestPage";
-import MigrateToSupabasePage from "./pages/MigrateToSupabasePage";
-import ShopifyCallbackPage from "./pages/ShopifyCallbackPage";
-import ShopifyOAuthLaunchPage from "./pages/ShopifyOAuthLaunchPage";
-import AboutPage from "./pages/AboutPage";
-import BlogPage from "./pages/BlogPage";
-import BlogPostPage from "./pages/BlogPostPage";
-import ContactPage from "./pages/ContactPage";
-import UnsubscribePage from "./pages/UnsubscribePage";
-import PrivacyPage from "./pages/PrivacyPage";
-import TermsPage from "./pages/TermsPage";
-import CgvPage from "./pages/CgvPage";
-import ConfidentialitePage from "./pages/ConfidentialitePage";
-import MentionsLegalesPage from "./pages/MentionsLegalesPage";
-import ChangelogPage from "./pages/ChangelogPage";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { AutoTranslateProvider } from "./i18n/AutoTranslateProvider";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import ScrollToTop from "./components/ScrollToTop";
 import { BrandingProvider } from "./contexts/BrandingContext";
 import { FeatureGate } from "./components/FeatureGate";
+
+const DocumentationPage = lazy(() => import("./pages/DocumentationPage"));
+const WordPressGuidePage = lazy(() => import("./pages/WordPressGuidePage"));
+const ShopifyGuidePage = lazy(() => import("./pages/ShopifyGuidePage"));
+const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const AiSiteBuilderPage = lazy(() => import("./pages/AiSiteBuilderPage"));
+const CampaignDetailPage = lazy(() => import("./pages/CampaignDetailPage"));
+const TemplatesPage = lazy(() => import("./pages/TemplatesPage"));
+const WebsitesPage = lazy(() => import("./pages/WebsitesPage"));
+const BillingPage = lazy(() => import("./pages/BillingPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const GeneratedPagesPage = lazy(() => import("./pages/GeneratedPagesPage"));
+const AdminPage = lazy(() => import("./pages/AdminPage"));
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
+const TemplateMarketplacePage = lazy(() => import("./pages/TemplateMarketplacePage"));
+const IndexingPage = lazy(() => import("./pages/IndexingPage"));
+const PagePerformancePage = lazy(() => import("./pages/PagePerformancePage"));
+const SeoAuditPage = lazy(() => import("./pages/SeoAuditPage"));
+const AffiliatePage = lazy(() => import("./pages/AffiliatePage"));
+const ReferralPage = lazy(() => import("./pages/ReferralPage"));
+const WorkspaceSettingsPage = lazy(() => import("./pages/WorkspaceSettingsPage"));
+const DataCsvPage = lazy(() => import("./pages/DataCsvPage"));
+const WebsiteContentPage = lazy(() => import("./pages/WebsiteContentPage"));
+const KeywordGroupsPage = lazy(() => import("./pages/KeywordGroupsPage"));
+const PgpGeneratePage = lazy(() => import("./pages/PgpGeneratePage"));
+const PgpTermsPage = lazy(() => import("./pages/PgpTermsPage"));
+const ElementorTestPage = lazy(() => import("./pages/ElementorTestPage"));
+const RepublishDiffHarnessPage = lazy(() => import("./pages/RepublishDiffHarnessPage"));
+const SeoAnalysisHarnessPage = lazy(() => import("./pages/SeoAnalysisHarnessPage"));
+const WpControlPage = lazy(() => import("./pages/WpControlPage"));
+const SupabaseConnectionTestPage = lazy(() => import("./pages/SupabaseConnectionTestPage"));
+const MigrateToSupabasePage = lazy(() => import("./pages/MigrateToSupabasePage"));
+const ShopifyCallbackPage = lazy(() => import("./pages/ShopifyCallbackPage"));
+const ShopifyOAuthLaunchPage = lazy(() => import("./pages/ShopifyOAuthLaunchPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
+const BlogPage = lazy(() => import("./pages/BlogPage"));
+const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
+const ContactPage = lazy(() => import("./pages/ContactPage"));
+const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
+const CgvPage = lazy(() => import("./pages/CgvPage"));
+const ConfidentialitePage = lazy(() => import("./pages/ConfidentialitePage"));
+const MentionsLegalesPage = lazy(() => import("./pages/MentionsLegalesPage"));
+const ChangelogPage = lazy(() => import("./pages/ChangelogPage"));
 
 const getAuthStorageKey = () => {
   try {
@@ -114,6 +115,12 @@ function ProtectedRoute({ children, session }: { children: React.ReactNode; sess
   return <>{children}</>;
 }
 
+const RouteFallback = () => (
+  <div className="flex min-h-[60vh] w-full items-center justify-center">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+  </div>
+);
+
 /** Redirects deep admin paths (e.g. /admin/system/marketplace) to the query-param section */
 function AdminSectionRedirect() {
   const { section } = useParams();
@@ -131,6 +138,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
   );
 
   return (
+    <Suspense fallback={<RouteFallback />}>
     <Routes>
       <Route path="dashboard" element={wrap(<DashboardPage />)} />
       <Route path="campaigns" element={<Navigate to="../pgp-generate" replace />} />
@@ -171,6 +179,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="wp-control" element={wrap(<WpControlPage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
+    </Suspense>
   );
 }
 
@@ -279,6 +288,7 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <ScrollToTop />
+          <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
             <Route path="/auth" element={session ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
@@ -342,6 +352,7 @@ const App = () => {
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
       </BrandingProvider>

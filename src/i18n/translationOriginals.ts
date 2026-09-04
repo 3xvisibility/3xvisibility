@@ -22,6 +22,11 @@ function isBadTranslation(value: unknown): boolean {
   return !normalized || normalized === "[object Object]" || /\[object Object\]/i.test(normalized);
 }
 
+/** Clears the cached reverse dictionary after a locale bundle is loaded. */
+export function resetDictionaryReverse() {
+  dictionaryReverse = null;
+}
+
 function getDictionaryReverse(): Map<string, string> {
   if (dictionaryReverse) return dictionaryReverse;
 
