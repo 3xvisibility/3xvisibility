@@ -37,7 +37,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  downloadInvoicePdf,
   downloadInvoicesZip,
   downloadMergedInvoicePdf,
   formatInvoiceMoney,
