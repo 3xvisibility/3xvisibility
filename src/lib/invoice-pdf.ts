@@ -42,6 +42,10 @@ export interface InvoiceRecord {
   einvoicing_url?: string | null;
   einvoicing_format?: string | null;
   einvoicing_transmitted_at?: string | null;
+  pdf_storage_path?: string | null;
+  pdf_signed_url?: string | null;
+  pdf_sent_at?: string | null;
+  pdf_sent_to?: string | null;
 }
 
 export const formatInvoiceMoney = (cents: number, currency: string) =>
