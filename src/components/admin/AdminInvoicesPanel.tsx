@@ -315,7 +315,20 @@ export function AdminInvoicesPanel() {
             transaction metadata, and export.
           </CardDescription>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 rounded-md border border-border/60 px-2.5 py-1.5">
+            <Switch
+              id="auto-send-invoices"
+              checked={autoSend}
+              onCheckedChange={(v) => {
+                setAutoSend(v);
+                localStorage.setItem("admin-invoice-autosend", v ? "on" : "off");
+              }}
+            />
+            <Label htmlFor="auto-send-invoices" className="text-xs font-normal cursor-pointer">
+              Auto-email PDF invoices
+            </Label>
+          </div>
           <Button size="sm" variant="outline" onClick={exportCsv} disabled={!filtered.length}>
             <Sheet className="h-4 w-4 mr-1" /> CSV
           </Button>
