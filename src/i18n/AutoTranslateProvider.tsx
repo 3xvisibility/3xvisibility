@@ -28,7 +28,7 @@ const CACHE_PREFIX = "autotr:v2:";
 const MAX_BATCH = 100;
 const MAX_CONCURRENCY = 4;
 
-type TrTextNode = Text & { __autoTrOriginal?: string; __autoTrLang?: string };
+type TrTextNode = Text & { __autoTrOriginal?: string; __autoTrLang?: string; __autoTrApplied?: string };
 type TrElement = HTMLElement & Record<string, string | undefined>;
 
 // Very small djb2 hash for cache keys.
@@ -46,8 +46,15 @@ function cacheGet(lang: string, text: string): string | null {
     return null;
   }
 }
+function isUntranslated(text: string, translation: string): boolean {
+  return translation.trim().toLowerCase() === text.trim().toLowerCase();
+}
+
 function cacheSet(lang: string, text: string, translation: string) {
   if (isBadTranslation(translation)) return;
+  // A translation identical to the English source means the service gave up
+  // on this string — never persist it, otherwise the word stays English forever.
+  if (isUntranslated(text, translation)) return;
   try {
     localStorage.setItem(`${CACHE_PREFIX}${lang}:${hash(text)}`, translation);
   } catch {
@@ -66,7 +73,7 @@ function isBadTranslation(value: unknown): boolean {
 function shouldTranslate(text: string): boolean {
   const t = text.trim();
   if (isBadTranslation(t)) return false;
-  if (t.length < 2 || t.length > 500) return false;
+  if (t.length < 2 || t.length > 1500) return false;
   if (!/[A-Za-z]/.test(t)) return false;
   // Skip pure identifiers/urls/emails.
   if (/^https?:\/\//i.test(t)) return false;
@@ -85,6 +92,18 @@ function getNodeOriginal(node: TrTextNode, targetLang?: string): string {
   }
   if (!node.__autoTrOriginal) {
     node.__autoTrOriginal = coerceToEnglishOriginal(current, targetLang);
+  } else if (
+    node.__autoTrLang &&
+    node.__autoTrLang !== "en" &&
+    current !== node.__autoTrOriginal &&
+    node.__autoTrApplied !== undefined &&
+    current !== node.__autoTrApplied
+  ) {
+    // React re-rendered this node with new source text (e.g. a status label
+    // or tab heading changed). Re-capture and translate the new text.
+    node.__autoTrOriginal = coerceToEnglishOriginal(current, targetLang);
+    node.__autoTrLang = undefined;
+    node.__autoTrApplied = undefined;
   } else {
     const restored = resolveEnglishOriginal(node.__autoTrOriginal, node.__autoTrLang ?? targetLang);
     if (restored) node.__autoTrOriginal = restored;
@@ -105,6 +124,16 @@ function getAttrOriginal(el: HTMLElement, attr: (typeof TRANSLATABLE_ATTRS)[numb
     return original;
   }
 
+  const appliedKey = `__autoTr_${attr}_applied` as const;
+  const applied = (el as TrElement)[appliedKey];
+  if (applied !== undefined && value !== applied && value !== stored) {
+    // Attribute was re-rendered with new source text.
+    const original = coerceToEnglishOriginal(value, targetLang);
+    (el as TrElement)[origKey] = original;
+    (el as TrElement)[langKey] = undefined;
+    (el as TrElement)[appliedKey] = undefined;
+    return original;
+  }
   const restored = resolveEnglishOriginal(stored, (el as TrElement)[langKey] ?? targetLang);
   if (restored) (el as TrElement)[origKey] = restored;
   return (el as TrElement)[origKey] ?? stored;
@@ -160,8 +189,8 @@ function collectJobs(root: Node, targetLang: string): Job[] {
 
   // Text nodes.
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  let n: Node | null;
-  while ((n = walker.nextNode())) {
+  let n: Node | null = root.nodeType === 3 ? root : walker.nextNode();
+  for (; n; n = walker.nextNode()) {
     const node = n as TrTextNode;
     if (isInsideSkipped(node)) continue;
     const original = getNodeOriginal(node, targetLang);
@@ -176,7 +205,9 @@ function collectJobs(root: Node, targetLang: string): Job[] {
       apply: (translated) => {
         rememberTranslationPair(targetLang, original, translated);
         // Preserve surrounding whitespace so adjacent inline words don't glue together.
-        node.nodeValue = `${lead}${translated.trim()}${trail}`;
+        const next = `${lead}${translated.trim()}${trail}`;
+        node.__autoTrApplied = next;
+        node.nodeValue = next;
         node.__autoTrLang = targetLang;
       },
     });
@@ -203,6 +234,7 @@ function collectJobs(root: Node, targetLang: string): Job[] {
         text: original,
         apply: (translated) => {
           rememberTranslationPair(targetLang, original, translated);
+          (el as TrElement)[`__autoTr_${attr}_applied`] = translated;
           el.setAttribute(attr, translated);
           (el as TrElement)[langKey] = targetLang;
         },
@@ -514,6 +546,24 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         m.addedNodes.forEach((node) => {
           if (node.nodeType === 1 || node.nodeType === 3) roots.add(node);
         });
+        if (m.type === "characterData" && m.target.nodeType === 3) {
+          // React updated an existing text node in place. Skip the writes we
+          // made ourselves (nodeValue === what we applied) to avoid loops.
+          const node = m.target as TrTextNode;
+          if (node.__autoTrApplied !== undefined && node.nodeValue === node.__autoTrApplied) continue;
+          if (node.__autoTrOriginal && node.nodeValue === node.__autoTrOriginal && node.__autoTrLang !== language) {
+            roots.add(node);
+            continue;
+          }
+          roots.add(node);
+        }
+        if (m.type === "attributes" && m.target.nodeType === 1 && m.attributeName) {
+          const el = m.target as TrElement;
+          const applied = el[`__autoTr_${m.attributeName}_applied`];
+          const current = (el as HTMLElement).getAttribute(m.attributeName);
+          if (applied !== undefined && current === applied) continue;
+          roots.add(m.target);
+        }
       }
       if (roots.size === 0) return;
       if (pendingTimer) window.clearTimeout(pendingTimer);
@@ -528,6 +578,9 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     observer.observe(document.body, {
       childList: true,
       subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: [...TRANSLATABLE_ATTRS],
     });
 
     return () => {
