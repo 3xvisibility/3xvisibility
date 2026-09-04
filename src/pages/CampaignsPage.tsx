@@ -161,7 +161,7 @@ export default function CampaignsPage() {
     onSuccess: (_d, campaign) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["user-campaign-count"] });
-      toast({ title: "Campaign deleted" });
+      toast({ title: t("campaigns.deleted") });
       if (wsId) logAudit(wsId, "campaign_deleted", "campaign", campaign.id);
     },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
@@ -226,7 +226,7 @@ export default function CampaignsPage() {
     onSuccess: (name) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["user-campaign-count"] });
-      toast({ title: "Campaign duplicated", description: `"${name}" cloned.` });
+      toast({ title: t("campaigns.duplicated"), description: t("campaigns.cloned", { name }) });
     },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
@@ -366,7 +366,7 @@ export default function CampaignsPage() {
             <Button variant="outline" size="sm" className="rounded-xl gap-1.5 text-warning border-warning/30 hover:bg-warning/10"
               onClick={() => resetStuckMutation.mutate()} disabled={resetStuckMutation.isPending}>
               <RotateCcw className={cn("h-3.5 w-3.5", resetStuckMutation.isPending && "animate-spin")} />
-              Reset {stuckCampaignIds.length} stuck
+              {t("campaigns.resetStuck", { count: stuckCampaignIds.length })}
             </Button>
           )}
           <Button
@@ -383,14 +383,13 @@ export default function CampaignsPage() {
       {campaignLimitReached && (
         <Alert variant="destructive" className="rounded-xl">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Campaign limit reached</AlertTitle>
+          <AlertTitle>{t("campaigns.limitReached")}</AlertTitle>
           <AlertDescription className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span>
-              Your <strong>{planLabel}</strong> plan allows{" "}
-              <strong>{campaignLimit} campaign{campaignLimit === 1 ? "" : "s"}</strong> and you've used {userCampaignCount}. Upgrade to create more.
+              {t("campaigns.limitDescription", { plan: planLabel, limit: campaignLimit, used: userCampaignCount })}
             </span>
             <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => navigate(`${basePath}/billing`)}>
-              <Crown className="h-3.5 w-3.5" /> Upgrade plan
+              <Crown className="h-3.5 w-3.5" /> {t("campaigns.upgradePlan")}
             </Button>
           </AlertDescription>
         </Alert>
@@ -404,10 +403,10 @@ export default function CampaignsPage() {
       {!isLoading && campaigns.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Total", value: stats.total, icon: FileText, color: "text-foreground" },
-            { label: "Active", value: stats.active, icon: Zap, color: "text-primary" },
-            { label: "Completed", value: stats.completed, icon: TrendingUp, color: "text-success" },
-            { label: "Pages Generated", value: stats.totalPages, icon: Globe, color: "text-primary" },
+            { label: t("campaigns.total"), value: stats.total, icon: FileText, color: "text-foreground" },
+            { label: t("campaigns.active"), value: stats.active, icon: Zap, color: "text-primary" },
+            { label: t("common.completed"), value: stats.completed, icon: TrendingUp, color: "text-success" },
+            { label: t("campaigns.pagesGenerated"), value: stats.totalPages, icon: Globe, color: "text-primary" },
           ].map(s => (
             <Card key={s.label} className="border-0 shadow-surface">
               <CardContent className="p-4 flex items-center gap-3">
@@ -435,12 +434,12 @@ export default function CampaignsPage() {
             {(["all", "seo", "sea", "geo"] as const).map(f => (
               <button key={f} onClick={() => setTypeFilter(f)}
                 className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-all", typeFilter === f ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                {f === "all" ? "All" : f.toUpperCase()}
+                {f === "all" ? t("common.all") : f.toUpperCase()}
               </button>
             ))}
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px] rounded-xl"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="w-[140px] rounded-xl"><SelectValue placeholder={t("common.status")} /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("campaigns.allStatuses")}</SelectItem>
               <SelectItem value="draft">{t("common.draft")}</SelectItem>
@@ -468,10 +467,10 @@ export default function CampaignsPage() {
                 </div>
                 <div className="space-y-2 max-w-xl">
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                    Create your first campaign
+                    {t("campaigns.firstTitle")}
                   </h2>
                   <p className="text-muted-foreground text-sm sm:text-base">
-                    Generate hundreds of SEO-optimized pages in just 3 simple steps. See below what you need and how each part works.
+                    {t("campaigns.firstDescription")}
                   </p>
                 </div>
               </div>
@@ -483,25 +482,25 @@ export default function CampaignsPage() {
                     num: 1,
                     icon: FileText,
                     color: "from-primary/15 to-primary/5 text-primary dark:text-primary ring-primary/20",
-                    title: "CSV rows",
-                    desc: "Upload a CSV file — for example city names, a list of services, or product details. Each row creates one unique page.",
-                    ex: "Example: 100 cities = 100 pages.",
+                    title: t("campaigns.firstCsvTitle"),
+                    desc: t("campaigns.firstCsvDesc"),
+                    ex: t("campaigns.firstCsvExample"),
                   },
                   {
                     num: 2,
                     icon: Sparkles,
                     color: "from-primary/15 to-primary/5 text-primary ring-primary/20",
-                    title: "Template",
-                    desc: "Pick a design or build one with AI. The template uses variables like {{city}} and {{service}} which get filled automatically from your CSV data.",
-                    ex: "One design → unlimited pages.",
+                    title: t("campaigns.template"),
+                    desc: t("campaigns.firstTemplateDesc"),
+                    ex: t("campaigns.firstTemplateExample"),
                   },
                   {
                     num: 3,
                     icon: Globe,
                     color: "from-success/15 to-success/5 text-success ring-success/20",
-                    title: "Connected website",
-                    desc: "Connect your WordPress, Shopify or PrestaShop site. Generated pages publish there directly — no manual copy-paste needed.",
-                    ex: "Live publish in one click.",
+                    title: t("campaigns.firstWebsiteTitle"),
+                    desc: t("campaigns.firstWebsiteDesc"),
+                    ex: t("campaigns.firstWebsiteExample"),
                   },
                 ].map((step) => (
                   <div
@@ -525,11 +524,11 @@ export default function CampaignsPage() {
               <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-6">
                 <span className="px-2 py-0.5 rounded-md bg-muted">CSV</span>
                 <span>+</span>
-                <span className="px-2 py-0.5 rounded-md bg-muted">Template</span>
+                 <span className="px-2 py-0.5 rounded-md bg-muted">{t("campaigns.template")}</span>
                 <span>+</span>
-                <span className="px-2 py-0.5 rounded-md bg-muted">Website</span>
+                 <span className="px-2 py-0.5 rounded-md bg-muted">{t("campaigns.website")}</span>
                 <span>=</span>
-                <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary font-semibold">Published page</span>
+                 <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary font-semibold">{t("campaigns.publishedPage")}</span>
               </div>
 
               {/* CTA */}
@@ -540,10 +539,10 @@ export default function CampaignsPage() {
                   className="rounded-xl bg-gradient-primary hover:brightness-110 shadow-lg gap-2 px-8"
                 >
                   <Sparkles className="h-4 w-4" />
-                  Create your first campaign
+                   {t("campaigns.firstTitle")}
                 </Button>
                 <p className="text-[11px] text-muted-foreground">
-                  The wizard guides you step by step — no technical knowledge required.
+                   {t("campaigns.firstHint")}
                 </p>
               </div>
             </CardContent>
@@ -585,14 +584,14 @@ export default function CampaignsPage() {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => navigate(`${basePath}/campaigns/${c.id}`)}><Eye className="h-3.5 w-3.5 mr-2" /> View Details</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setJobDialogCampaign(c)}><Clock className="h-3.5 w-3.5 mr-2" /> View live log</DropdownMenuItem>
-                          {c.status === "draft" && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id })}><Play className="h-3.5 w-3.5 mr-2" /> Run Now</DropdownMenuItem>}
-                          {canRetryQueuedCampaign(c) && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id, action: getQueuedRetryAction(c) })}><RotateCcw className="h-3.5 w-3.5 mr-2" /> Retry generation</DropdownMenuItem>}
-                          {c.status === "processing" && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id, action: "pause" })}><Pause className="h-3.5 w-3.5 mr-2" /> Pause</DropdownMenuItem>}
-                          <DropdownMenuItem onClick={() => duplicateMutation.mutate(c)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => navigate(`${basePath}/campaigns/${c.id}`)}><Eye className="h-3.5 w-3.5 mr-2" /> {t("campaigns.viewDetails")}</DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => setJobDialogCampaign(c)}><Clock className="h-3.5 w-3.5 mr-2" /> {t("campaigns.viewLiveLog")}</DropdownMenuItem>
+                           {c.status === "draft" && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id })}><Play className="h-3.5 w-3.5 mr-2" /> {t("campaigns.runNow")}</DropdownMenuItem>}
+                           {canRetryQueuedCampaign(c) && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id, action: getQueuedRetryAction(c) })}><RotateCcw className="h-3.5 w-3.5 mr-2" /> {t("campaigns.retryGeneration")}</DropdownMenuItem>}
+                           {c.status === "processing" && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id, action: "pause" })}><Pause className="h-3.5 w-3.5 mr-2" /> {t("common.pause")}</DropdownMenuItem>}
+                           <DropdownMenuItem onClick={() => duplicateMutation.mutate(c)}><Copy className="h-3.5 w-3.5 mr-2" /> {t("campaigns.duplicate")}</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive" onClick={() => { if (window.confirm(`Delete "${c.name}"?`)) deleteMutation.mutate(c); }}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
+                           <DropdownMenuItem className="text-destructive" onClick={() => { if (window.confirm(t("campaigns.confirmDeleteNamed", { name: c.name }))) deleteMutation.mutate(c); }}><Trash2 className="h-3.5 w-3.5 mr-2" /> {t("common.delete")}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -621,11 +620,11 @@ export default function CampaignsPage() {
                   {p.total > 0 && c.status !== "draft" && (
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-muted-foreground">{p.processed}/{p.total} rows</span>
+                         <span className="text-muted-foreground">{p.processed}/{p.total} {t("campaigns.rows")}</span>
                         <span className="font-semibold tabular-nums">{p.percent}%</span>
                       </div>
                       <Progress value={p.percent} className="h-1.5" />
-                      {p.failed > 0 && <p className="text-[10px] text-destructive">{p.failed} failed</p>}
+                       {p.failed > 0 && <p className="text-[10px] text-destructive">{p.failed} {t("common.failed")}</p>}
                     </div>
                   )}
 
@@ -634,7 +633,7 @@ export default function CampaignsPage() {
                     <div onClick={e => e.stopPropagation()}>
                       <Button size="sm" variant="outline" className="w-full rounded-lg h-8 text-xs gap-1.5 border-primary/20 text-primary hover:bg-primary/5"
                         onClick={() => executeMutation.mutate({ id: c.id })} disabled={executeMutation.isPending}>
-                        <Play className="h-3 w-3" /> Run Campaign
+                         <Play className="h-3 w-3" /> {t("campaigns.runCampaign")}
                       </Button>
                     </div>
                   )}
@@ -643,7 +642,7 @@ export default function CampaignsPage() {
                       <Button size="sm" variant="outline" className="w-full rounded-lg h-8 text-xs gap-1.5 border-warning/30 text-warning hover:bg-warning/10"
                         onClick={() => executeMutation.mutate({ id: c.id, action: getQueuedRetryAction(c) })} disabled={executeMutation.isPending}>
                         {executeMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
-                        Retry generation
+                         {t("campaigns.retryGeneration")}
                       </Button>
                     </div>
                   )}

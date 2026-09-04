@@ -133,6 +133,23 @@ function isInsideSkipped(node: Node): boolean {
   return false;
 }
 
+function isInsideSkippedAncestor(node: Node): boolean {
+  let el: Node | null = node.parentNode;
+  while (el && el !== document.body) {
+    if (el.nodeType === 1) {
+      const element = el as Element;
+      if (SKIP_TAGS.has(element.tagName)) return true;
+      if (element.getAttribute("data-no-autotranslate") !== null) return true;
+      if (element.getAttribute("data-page-autotranslate") !== null) return true;
+      if (element.getAttribute("data-no-translate") !== null) return true;
+      if (element.getAttribute("translate") === "no") return true;
+      if ((element as HTMLElement).isContentEditable) return true;
+    }
+    el = el.parentNode;
+  }
+  return false;
+}
+
 interface Job {
   text: string;
   apply: (translated: string) => void;
@@ -173,8 +190,9 @@ function collectJobs(root: Node, targetLang: string): Job[] {
       ? (rootEl as ParentNode).querySelectorAll<HTMLElement>(selector)
       : [];
   els.forEach((el) => {
-    if (isInsideSkipped(el)) return;
-    if (SKIP_TAGS.has(el.tagName)) return;
+    // Form controls do not expose their label as a text node, but their
+    // placeholder/title/aria-label still needs translation.
+    if (isInsideSkippedAncestor(el)) return;
     for (const attr of TRANSLATABLE_ATTRS) {
       const original = getAttrOriginal(el, attr, targetLang);
       if (!original) continue;
