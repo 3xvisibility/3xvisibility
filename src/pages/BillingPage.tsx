@@ -15,6 +15,7 @@ import { CheckoutSuccessOverlay } from "@/components/billing/CheckoutSuccessOver
 import { CheckoutCanceledOverlay } from "@/components/billing/CheckoutCanceledOverlay";
 import { PaymentMethods } from "@/components/billing/PaymentMethods";
 import { MyInvoicesCard } from "@/components/billing/MyInvoicesCard";
+import { BillingDetailsCard } from "@/components/billing/BillingDetailsCard";
 import { TrialStatusWidget } from "@/components/billing/TrialStatusWidget";
 import { DowngradePlanDialog } from "@/components/billing/DowngradePlanDialog";
 import { CheckoutConfirmDialog } from "@/components/billing/CheckoutConfirmDialog";
@@ -309,6 +310,8 @@ export default function BillingPage() {
         onToggleYearly={() => setIsYearly(!isYearly)}
         trialEligible={activePlan === "free" && subStatus !== "canceled" && !isTrialing}
       />
+
+      <BillingDetailsCard />
 
       <MyInvoicesCard />
 
