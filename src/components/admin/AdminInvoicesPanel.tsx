@@ -575,9 +575,10 @@ export function AdminInvoicesPanel() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => {
+                        title="Download the French invoice (facture) with QR code"
+                        onClick={async () => {
                           try {
-                            downloadInvoicePdf(inv);
+                            await downloadFrenchInvoicePdf(inv);
                           } catch (e) {
                             toast.error(
                               e instanceof Error ? e.message : "Could not build the PDF",
@@ -585,7 +586,28 @@ export function AdminInvoicesPanel() {
                           }
                         }}
                       >
-                        <Download className="h-3.5 w-3.5 mr-1" /> PDF
+                        <Download className="h-3.5 w-3.5 mr-1" /> Facture
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="ml-1"
+                        disabled={sendingId === inv.id || !inv.customer_email}
+                        title={
+                          inv.pdf_sent_at
+                            ? `Already emailed on ${new Date(inv.pdf_sent_at).toLocaleDateString("fr-FR")} — click to resend`
+                            : "Generate the French PDF invoice and email it to the customer"
+                        }
+                        onClick={() => sendInvoicePdf(inv)}
+                      >
+                        {sendingId === inv.id ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                        ) : inv.pdf_sent_at ? (
+                          <MailCheck className="h-3.5 w-3.5 mr-1 text-green-500" />
+                        ) : (
+                          <Mail className="h-3.5 w-3.5 mr-1" />
+                        )}
+                        {inv.pdf_sent_at ? "Resend" : "Send"}
                       </Button>
                       {inv.stripe_invoice_id && (
                         <Button
