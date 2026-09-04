@@ -2254,6 +2254,14 @@ export type Database = {
           ai_tone: string
           banned_at: string | null
           banned_reason: string | null
+          billing_address: string | null
+          billing_city: string | null
+          billing_country: string | null
+          billing_email: string | null
+          billing_language: string | null
+          billing_name: string | null
+          billing_postal_code: string | null
+          billing_vat_number: string | null
           company: string | null
           created_at: string
           full_name: string | null
@@ -2270,6 +2278,14 @@ export type Database = {
           ai_tone?: string
           banned_at?: string | null
           banned_reason?: string | null
+          billing_address?: string | null
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_email?: string | null
+          billing_language?: string | null
+          billing_name?: string | null
+          billing_postal_code?: string | null
+          billing_vat_number?: string | null
           company?: string | null
           created_at?: string
           full_name?: string | null
@@ -2286,6 +2302,14 @@ export type Database = {
           ai_tone?: string
           banned_at?: string | null
           banned_reason?: string | null
+          billing_address?: string | null
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_email?: string | null
+          billing_language?: string | null
+          billing_name?: string | null
+          billing_postal_code?: string | null
+          billing_vat_number?: string | null
           company?: string | null
           created_at?: string
           full_name?: string | null
