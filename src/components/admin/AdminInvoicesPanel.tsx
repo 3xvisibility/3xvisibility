@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -28,6 +28,8 @@ import {
   FileText,
   FileCheck2,
   Loader2,
+  Mail,
+  MailCheck,
   RefreshCw,
   Search,
   Sheet,
@@ -35,12 +37,17 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  downloadInvoicePdf,
   downloadInvoicesZip,
   downloadMergedInvoicePdf,
   formatInvoiceMoney,
   type InvoiceRecord,
 } from "@/lib/invoice-pdf";
+import {
+  downloadFrenchInvoicePdf,
+  frenchInvoicePdfBase64,
+} from "@/lib/invoice-pdf-fr";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileArchive, FilePlus2 } from "lucide-react";
 import { InvoiceDetailsDialog } from "./InvoiceDetailsDialog";
@@ -75,6 +82,39 @@ export function AdminInvoicesPanel() {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [autoSend, setAutoSend] = useState(
+    () => localStorage.getItem("admin-invoice-autosend") !== "off",
+  );
+  const autoSentRef = useRef<Set<string>>(new Set());
+
+  /** Builds the French PDF (with QR code) and emails it to the customer. */
+  const sendInvoicePdf = async (inv: InvoiceRecord, silent = false) => {
+    if (!silent) setSendingId(inv.id);
+    try {
+      const pdfBase64 = await frenchInvoicePdfBase64(inv);
+      const { data, error } = await supabase.functions.invoke("send-invoice-pdf", {
+        body: { invoiceId: inv.id, pdfBase64 },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!silent) {
+        toast.success(
+          data?.emailed
+            ? `Invoice ${inv.invoice_number} sent to ${data.recipient}`
+            : `PDF stored — no customer email on this invoice`,
+        );
+      }
+      qc.invalidateQueries({ queryKey: ["admin-invoices"] });
+      return true;
+    } catch (e: any) {
+      if (!silent) toast.error(e?.message || "Could not send the invoice");
+      return false;
+    } finally {
+      if (!silent) setSendingId(null);
+    }
+  };
+
 
   const syncEinvoice = async (inv: InvoiceRecord) => {
     setSyncingId(inv.id);
@@ -108,6 +148,40 @@ export function AdminInvoicesPanel() {
   });
 
   const invoices = useMemo(() => invoicesQuery.data ?? [], [invoicesQuery.data]);
+
+  // Automatically send the French PDF invoice for paid invoices that were
+  // never emailed yet (runs once per invoice per session).
+  useEffect(() => {
+    if (!autoSend || invoices.length === 0) return;
+    const pending = invoices.filter(
+      (i) =>
+        i.status === "paid" &&
+        !i.pdf_sent_at &&
+        i.customer_email &&
+        !autoSentRef.current.has(i.id),
+    );
+    if (pending.length === 0) return;
+
+    let cancelled = false;
+    (async () => {
+      let sent = 0;
+      for (const inv of pending.slice(0, 10)) {
+        if (cancelled) return;
+        autoSentRef.current.add(inv.id);
+        if (await sendInvoicePdf(inv, true)) sent += 1;
+      }
+      if (!cancelled && sent > 0) {
+        toast.success(`${sent} invoice PDF${sent > 1 ? "s" : ""} emailed automatically`);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoices, autoSend]);
+
+
 
   const plans = useMemo(() => {
     const set = new Set<string>();
@@ -240,7 +314,20 @@ export function AdminInvoicesPanel() {
             transaction metadata, and export.
           </CardDescription>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 rounded-md border border-border/60 px-2.5 py-1.5">
+            <Switch
+              id="auto-send-invoices"
+              checked={autoSend}
+              onCheckedChange={(v) => {
+                setAutoSend(v);
+                localStorage.setItem("admin-invoice-autosend", v ? "on" : "off");
+              }}
+            />
+            <Label htmlFor="auto-send-invoices" className="text-xs font-normal cursor-pointer">
+              Auto-email PDF invoices
+            </Label>
+          </div>
           <Button size="sm" variant="outline" onClick={exportCsv} disabled={!filtered.length}>
             <Sheet className="h-4 w-4 mr-1" /> CSV
           </Button>
@@ -487,9 +574,10 @@ export function AdminInvoicesPanel() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => {
+                        title="Download the French invoice (facture) with QR code"
+                        onClick={async () => {
                           try {
-                            downloadInvoicePdf(inv);
+                            await downloadFrenchInvoicePdf(inv);
                           } catch (e) {
                             toast.error(
                               e instanceof Error ? e.message : "Could not build the PDF",
@@ -497,7 +585,28 @@ export function AdminInvoicesPanel() {
                           }
                         }}
                       >
-                        <Download className="h-3.5 w-3.5 mr-1" /> PDF
+                        <Download className="h-3.5 w-3.5 mr-1" /> Facture
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="ml-1"
+                        disabled={sendingId === inv.id || !inv.customer_email}
+                        title={
+                          inv.pdf_sent_at
+                            ? `Already emailed on ${new Date(inv.pdf_sent_at).toLocaleDateString("fr-FR")} — click to resend`
+                            : "Generate the French PDF invoice and email it to the customer"
+                        }
+                        onClick={() => sendInvoicePdf(inv)}
+                      >
+                        {sendingId === inv.id ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                        ) : inv.pdf_sent_at ? (
+                          <MailCheck className="h-3.5 w-3.5 mr-1 text-green-500" />
+                        ) : (
+                          <Mail className="h-3.5 w-3.5 mr-1" />
+                        )}
+                        {inv.pdf_sent_at ? "Resend" : "Send"}
                       </Button>
                       {inv.stripe_invoice_id && (
                         <Button
