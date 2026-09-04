@@ -68,3 +68,7 @@ verify_jwt = false
 
 [functions.einvoicing-pa-webhook]
 verify_jwt = false
+
+[functions.send-invoice-pdf]
+verify_jwt = false
+
