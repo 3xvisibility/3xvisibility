@@ -2,9 +2,6 @@
 // Edit the JSON files in src/i18n/locales-json/ and run: bun scripts/generate-locales.ts
 
 import enLocale from "./locales/en";
-import frLocale from "./locales/fr";
-import deLocale from "./locales/de";
-import esLocale from "./locales/es";
 
 export type Language = "en" | "fr" | "de" | "es";
 
@@ -15,9 +12,34 @@ export const languages: { code: Language; label: string; flag: string }[] = [
   { code: "es", label: "Español", flag: "🇪🇸" },
 ];
 
-export const translations: Record<Language, Record<string, string>> = {
+/**
+ * English ships in the main bundle; the other locales are fetched on demand so
+ * the first page load stays small.
+ */
+export const translations: Record<string, Record<string, string>> = {
   en: enLocale,
-  fr: frLocale,
-  de: deLocale,
-  es: esLocale,
 };
+
+const loaders: Record<Language, () => Promise<{ default: Record<string, string> }>> = {
+  en: async () => ({ default: enLocale }),
+  fr: () => import("./locales/fr"),
+  de: () => import("./locales/de"),
+  es: () => import("./locales/es"),
+};
+
+const pending: Partial<Record<Language, Promise<void>>> = {};
+
+/** Loads a locale bundle once and merges it into `translations`. */
+export function loadLocale(lang: Language): Promise<void> {
+  if (translations[lang]) return Promise.resolve();
+  if (!pending[lang]) {
+    pending[lang] = loaders[lang]()
+      .then((mod) => {
+        translations[lang] = mod.default;
+      })
+      .catch(() => {
+        /* fall back to English */
+      });
+  }
+  return pending[lang]!;
+}
