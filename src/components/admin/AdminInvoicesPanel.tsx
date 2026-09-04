@@ -606,7 +606,7 @@ export function AdminInvoicesPanel() {
                         ) : (
                           <Mail className="h-3.5 w-3.5 mr-1" />
                         )}
-                        {inv.pdf_sent_at ? "Resend" : "Send"}
+                        {inv.pdf_sent_at ? "Resend email" : "Email invoice"}
                       </Button>
                       {inv.stripe_invoice_id && (
                         <Button
