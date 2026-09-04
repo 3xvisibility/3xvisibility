@@ -150,6 +150,40 @@ export function AdminInvoicesPanel() {
 
   const invoices = useMemo(() => invoicesQuery.data ?? [], [invoicesQuery.data]);
 
+  // Automatically send the French PDF invoice for paid invoices that were
+  // never emailed yet (runs once per invoice per session).
+  useEffect(() => {
+    if (!autoSend || invoices.length === 0) return;
+    const pending = invoices.filter(
+      (i) =>
+        i.status === "paid" &&
+        !i.pdf_sent_at &&
+        i.customer_email &&
+        !autoSentRef.current.has(i.id),
+    );
+    if (pending.length === 0) return;
+
+    let cancelled = false;
+    (async () => {
+      let sent = 0;
+      for (const inv of pending.slice(0, 10)) {
+        if (cancelled) return;
+        autoSentRef.current.add(inv.id);
+        if (await sendInvoicePdf(inv, true)) sent += 1;
+      }
+      if (!cancelled && sent > 0) {
+        toast.success(`${sent} invoice PDF${sent > 1 ? "s" : ""} emailed automatically`);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoices, autoSend]);
+
+
+
   const plans = useMemo(() => {
     const set = new Set<string>();
     invoices.forEach((i) => {
