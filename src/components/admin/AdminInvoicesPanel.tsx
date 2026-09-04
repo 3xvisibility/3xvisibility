@@ -83,6 +83,39 @@ export function AdminInvoicesPanel() {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [autoSend, setAutoSend] = useState(
+    () => localStorage.getItem("admin-invoice-autosend") !== "off",
+  );
+  const autoSentRef = useRef<Set<string>>(new Set());
+
+  /** Builds the French PDF (with QR code) and emails it to the customer. */
+  const sendInvoicePdf = async (inv: InvoiceRecord, silent = false) => {
+    if (!silent) setSendingId(inv.id);
+    try {
+      const pdfBase64 = await frenchInvoicePdfBase64(inv);
+      const { data, error } = await supabase.functions.invoke("send-invoice-pdf", {
+        body: { invoiceId: inv.id, pdfBase64 },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!silent) {
+        toast.success(
+          data?.emailed
+            ? `Invoice ${inv.invoice_number} sent to ${data.recipient}`
+            : `PDF stored — no customer email on this invoice`,
+        );
+      }
+      qc.invalidateQueries({ queryKey: ["admin-invoices"] });
+      return true;
+    } catch (e: any) {
+      if (!silent) toast.error(e?.message || "Could not send the invoice");
+      return false;
+    } finally {
+      if (!silent) setSendingId(null);
+    }
+  };
+
 
   const syncEinvoice = async (inv: InvoiceRecord) => {
     setSyncingId(inv.id);
