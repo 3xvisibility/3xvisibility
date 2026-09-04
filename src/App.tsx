@@ -115,6 +115,12 @@ function ProtectedRoute({ children, session }: { children: React.ReactNode; sess
   return <>{children}</>;
 }
 
+const RouteFallback = () => (
+  <div className="flex min-h-[60vh] w-full items-center justify-center">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+  </div>
+);
+
 /** Redirects deep admin paths (e.g. /admin/system/marketplace) to the query-param section */
 function AdminSectionRedirect() {
   const { section } = useParams();
@@ -132,6 +138,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
   );
 
   return (
+    <Suspense fallback={<RouteFallback />}>
     <Routes>
       <Route path="dashboard" element={wrap(<DashboardPage />)} />
       <Route path="campaigns" element={<Navigate to="../pgp-generate" replace />} />
@@ -172,6 +179,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="wp-control" element={wrap(<WpControlPage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
+    </Suspense>
   );
 }
 
@@ -280,6 +288,7 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <ScrollToTop />
+          <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
             <Route path="/auth" element={session ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
@@ -343,6 +352,7 @@ const App = () => {
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
       </BrandingProvider>
