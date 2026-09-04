@@ -3,9 +3,10 @@ import QRCode from "qrcode";
 import type { InvoiceRecord } from "./invoice-pdf";
 
 /**
- * French compliant invoice ("facture") generator.
- * Includes all mentions obligatoires for a French SAS plus a QR code that
- * encodes the invoice reference so it can be verified/downloaded instantly.
+ * Legally compliant invoice generator for a French SAS, localised into the
+ * customer's language (French, German, Spanish, English fallback).
+ * All mandatory French mentions are kept in every language, plus a QR code
+ * encoding the invoice reference so it can be verified/downloaded instantly.
  */
 
 export const ISSUER = {
@@ -27,13 +28,227 @@ export const ISSUER = {
 
 const VAT_RATE = 0.2;
 
-const euro = (cents: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
+export type InvoiceLocale = "fr" | "de" | "es" | "en";
+
+interface InvoiceStrings {
+  intlLocale: string;
+  fileWord: string;
+  issuerCapital: (capital: string) => string;
+  vatLabel: string;
+  title: string;
+  numberLabel: string;
+  issuedLabel: string;
+  serviceDateLabel: string;
+  client: string;
+  clientFallback: string;
+  qrCaption: string;
+  colDescription: string;
+  colQty: string;
+  colUnit: string;
+  colTotal: string;
+  defaultItem: string;
+  serviceFallback: string;
+  totalHt: string;
+  vatRow: (rate: string) => string;
+  totalTtc: string;
+  refunded: string;
+  netPaid: string;
+  paid: string;
+  statusLabel: (status: string) => string;
+  paymentRef: (ref: string) => string;
+  einvoicing: (status: string) => string;
+  legal: string[];
+}
+
+const STRINGS: Record<InvoiceLocale, InvoiceStrings> = {
+  fr: {
+    intlLocale: "fr-FR",
+    fileWord: "Facture",
+    issuerCapital: (c) => `au capital de ${c}`,
+    vatLabel: "TVA intracommunautaire",
+    title: "FACTURE",
+    numberLabel: "N°",
+    issuedLabel: "Date d'émission",
+    serviceDateLabel: "Date de la prestation",
+    client: "CLIENT",
+    clientFallback: "Client",
+    qrCaption: "Vérification facture",
+    colDescription: "DÉSIGNATION",
+    colQty: "QTÉ",
+    colUnit: "PU HT",
+    colTotal: "TOTAL HT",
+    defaultItem: "Abonnement 3xvisibility",
+    serviceFallback: "Prestation",
+    totalHt: "Total HT",
+    vatRow: (r) => `TVA ${r} %`,
+    totalTtc: "Total TTC",
+    refunded: "Remboursé",
+    netPaid: "Net encaissé",
+    paid: "Facture acquittée — payée par carte bancaire (Stripe)",
+    statusLabel: (s) => `Statut : ${s}`,
+    paymentRef: (r) => `Référence de paiement : ${r}`,
+    einvoicing: (s) => `E-facturation (Factur-X) : ${s}`,
+    legal: [
+      "Conditions de règlement : paiement comptant à réception, par prélèvement automatique via Stripe.",
+      "En cas de retard de paiement, pénalités au taux de 3 fois le taux d'intérêt légal, ainsi qu'une indemnité",
+      "forfaitaire pour frais de recouvrement de 40 € (art. L441-10 et D441-5 du Code de commerce).",
+      "Pas d'escompte pour paiement anticipé. TVA acquittée sur les débits.",
+    ],
+  },
+  de: {
+    intlLocale: "de-DE",
+    fileWord: "Rechnung",
+    issuerCapital: (c) => `mit einem Kapital von ${c}`,
+    vatLabel: "USt-IdNr.",
+    title: "RECHNUNG",
+    numberLabel: "Nr.",
+    issuedLabel: "Rechnungsdatum",
+    serviceDateLabel: "Leistungsdatum",
+    client: "KUNDE",
+    clientFallback: "Kunde",
+    qrCaption: "Rechnungsprüfung",
+    colDescription: "BEZEICHNUNG",
+    colQty: "MENGE",
+    colUnit: "EP NETTO",
+    colTotal: "NETTO",
+    defaultItem: "3xvisibility Abonnement",
+    serviceFallback: "Leistung",
+    totalHt: "Nettobetrag",
+    vatRow: (r) => `MwSt. ${r} %`,
+    totalTtc: "Bruttobetrag",
+    refunded: "Erstattet",
+    netPaid: "Netto vereinnahmt",
+    paid: "Rechnung bezahlt — per Kreditkarte (Stripe)",
+    statusLabel: (s) => `Status: ${s}`,
+    paymentRef: (r) => `Zahlungsreferenz: ${r}`,
+    einvoicing: (s) => `E-Rechnung (Factur-X): ${s}`,
+    legal: [
+      "Zahlungsbedingungen: sofort fällig bei Erhalt, automatischer Einzug über Stripe.",
+      "Bei Zahlungsverzug fallen Verzugszinsen in Höhe des dreifachen gesetzlichen Zinssatzes sowie eine",
+      "Pauschale von 40 € für Beitreibungskosten an (Art. L441-10 und D441-5 französisches Handelsgesetzbuch).",
+      "Kein Skonto bei vorzeitiger Zahlung. Umsatzsteuer nach vereinbarten Entgelten.",
+    ],
+  },
+  es: {
+    intlLocale: "es-ES",
+    fileWord: "Factura",
+    issuerCapital: (c) => `con un capital de ${c}`,
+    vatLabel: "NIF-IVA intracomunitario",
+    title: "FACTURA",
+    numberLabel: "N.º",
+    issuedLabel: "Fecha de emisión",
+    serviceDateLabel: "Fecha de la prestación",
+    client: "CLIENTE",
+    clientFallback: "Cliente",
+    qrCaption: "Verificación de factura",
+    colDescription: "DESCRIPCIÓN",
+    colQty: "CANT.",
+    colUnit: "P. UNIT. SIN IVA",
+    colTotal: "TOTAL SIN IVA",
+    defaultItem: "Suscripción 3xvisibility",
+    serviceFallback: "Prestación",
+    totalHt: "Base imponible",
+    vatRow: (r) => `IVA ${r} %`,
+    totalTtc: "Total con IVA",
+    refunded: "Reembolsado",
+    netPaid: "Neto cobrado",
+    paid: "Factura pagada — abonada con tarjeta bancaria (Stripe)",
+    statusLabel: (s) => `Estado: ${s}`,
+    paymentRef: (r) => `Referencia de pago: ${r}`,
+    einvoicing: (s) => `Facturación electrónica (Factur-X): ${s}`,
+    legal: [
+      "Condiciones de pago: pago al contado a la recepción, mediante domiciliación automática vía Stripe.",
+      "En caso de retraso en el pago se aplicarán penalizaciones equivalentes a 3 veces el tipo de interés legal, así",
+      "como una indemnización fija de 40 € por gastos de cobro (art. L441-10 y D441-5 del Código de Comercio francés).",
+      "Sin descuento por pago anticipado. IVA devengado según los cobros.",
+    ],
+  },
+  en: {
+    intlLocale: "en-IE",
+    fileWord: "Invoice",
+    issuerCapital: (c) => `with a share capital of ${c}`,
+    vatLabel: "EU VAT number",
+    title: "INVOICE",
+    numberLabel: "No.",
+    issuedLabel: "Issue date",
+    serviceDateLabel: "Service date",
+    client: "CUSTOMER",
+    clientFallback: "Customer",
+    qrCaption: "Invoice verification",
+    colDescription: "DESCRIPTION",
+    colQty: "QTY",
+    colUnit: "UNIT EXCL. VAT",
+    colTotal: "TOTAL EXCL. VAT",
+    defaultItem: "3xvisibility subscription",
+    serviceFallback: "Service",
+    totalHt: "Subtotal excl. VAT",
+    vatRow: (r) => `VAT ${r}%`,
+    totalTtc: "Total incl. VAT",
+    refunded: "Refunded",
+    netPaid: "Net received",
+    paid: "Invoice paid — settled by card (Stripe)",
+    statusLabel: (s) => `Status: ${s}`,
+    paymentRef: (r) => `Payment reference: ${r}`,
+    einvoicing: (s) => `E-invoicing (Factur-X): ${s}`,
+    legal: [
+      "Payment terms: due on receipt, collected automatically via Stripe.",
+      "Late payment incurs interest at three times the legal rate, plus a fixed recovery fee of €40",
+      "(articles L441-10 and D441-5 of the French Commercial Code).",
+      "No discount for early payment. VAT accounted for on payments.",
+    ],
+  },
+};
+
+const COUNTRY_LOCALE: Record<string, InvoiceLocale> = {
+  FR: "fr",
+  BE: "fr",
+  LU: "fr",
+  MC: "fr",
+  DE: "de",
+  AT: "de",
+  CH: "de",
+  LI: "de",
+  ES: "es",
+  MX: "es",
+  AR: "es",
+  CO: "es",
+  CL: "es",
+  PE: "es",
+};
+
+/**
+ * Picks the customer's invoice language from (in order): an explicit
+ * language/locale on the invoice billing details, their billing country,
+ * then French as the issuer's default.
+ */
+export function resolveInvoiceLocale(invoice: InvoiceRecord): InvoiceLocale {
+  const details = (invoice.billing_details || {}) as Record<string, any>;
+  const address = (details.address || {}) as Record<string, any>;
+
+  const raw = String(
+    details.language ?? details.locale ?? details.preferred_locales?.[0] ?? "",
+  )
+    .slice(0, 2)
+    .toLowerCase();
+  if (raw === "fr" || raw === "de" || raw === "es" || raw === "en") return raw;
+
+  const country = String(details.country ?? address.country ?? "").toUpperCase();
+  if (COUNTRY_LOCALE[country]) return COUNTRY_LOCALE[country];
+
+  return "fr";
+}
+
+const money = (cents: number, locale: string) =>
+  new Intl.NumberFormat(locale, { style: "currency", currency: "EUR" }).format(
     (cents || 0) / 100,
   );
 
-const frDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+const longDate = (iso: string, locale: string) =>
+  new Date(iso).toLocaleDateString(locale, {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 
 /** Payload embedded in the QR code (invoice reference + amount + issuer VAT). */
 export function invoiceQrPayload(invoice: InvoiceRecord) {
@@ -46,8 +261,14 @@ export function invoiceQrPayload(invoice: InvoiceRecord) {
   ].join("\n");
 }
 
-/** Builds the French invoice as a jsPDF document (async: QR code rendering). */
-export async function generateFrenchInvoicePdf(invoice: InvoiceRecord): Promise<jsPDF> {
+/** Builds the invoice as a jsPDF document in the customer's language. */
+export async function generateFrenchInvoicePdf(
+  invoice: InvoiceRecord,
+  locale: InvoiceLocale = resolveInvoiceLocale(invoice),
+): Promise<jsPDF> {
+  const t = STRINGS[locale] ?? STRINGS.fr;
+  const euro = (cents: number) => money(cents, t.intlLocale);
+
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 48;
@@ -62,10 +283,10 @@ export async function generateFrenchInvoicePdf(invoice: InvoiceRecord): Promise<
   doc.setFontSize(8.5);
   doc.setTextColor(110);
   const issuerLines = [
-    `${ISSUER.legalName} — ${ISSUER.form} au capital de ${ISSUER.capital}`,
+    `${ISSUER.legalName} — ${ISSUER.form} ${t.issuerCapital(ISSUER.capital)}`,
     `${ISSUER.address}, ${ISSUER.postalCode} ${ISSUER.city}, ${ISSUER.country}`,
     `${ISSUER.rcs} — SIRET ${ISSUER.siret}`,
-    `TVA intracommunautaire : ${ISSUER.vat}`,
+    `${t.vatLabel} : ${ISSUER.vat}`,
     `${ISSUER.email} — ${ISSUER.website}`,
   ];
   issuerLines.forEach((line, i) => doc.text(line, margin, y + 16 + i * 11));
@@ -74,15 +295,20 @@ export async function generateFrenchInvoicePdf(invoice: InvoiceRecord): Promise<
   doc.setTextColor(20);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
-  doc.text("FACTURE", right, y, { align: "right" });
+  doc.text(t.title, right, y, { align: "right" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
   doc.setTextColor(110);
-  doc.text(`N° ${invoice.invoice_number}`, right, y + 16, { align: "right" });
-  doc.text(`Date d'émission : ${frDate(invoice.issued_at)}`, right, y + 29, { align: "right" });
-  doc.text(`Date de la prestation : ${frDate(invoice.issued_at)}`, right, y + 42, {
+  doc.text(`${t.numberLabel} ${invoice.invoice_number}`, right, y + 16, { align: "right" });
+  doc.text(`${t.issuedLabel} : ${longDate(invoice.issued_at, t.intlLocale)}`, right, y + 29, {
     align: "right",
   });
+  doc.text(
+    `${t.serviceDateLabel} : ${longDate(invoice.issued_at, t.intlLocale)}`,
+    right,
+    y + 42,
+    { align: "right" },
+  );
 
   y += 92;
   doc.setDrawColor(225);
@@ -92,10 +318,10 @@ export async function generateFrenchInvoicePdf(invoice: InvoiceRecord): Promise<
   // ---- Client block ----
   doc.setTextColor(110);
   doc.setFontSize(8.5);
-  doc.text("CLIENT", margin, y);
+  doc.text(t.client, margin, y);
   doc.setTextColor(20);
   doc.setFontSize(11);
-  doc.text(invoice.customer_name || invoice.customer_email || "Client", margin, y + 16);
+  doc.text(invoice.customer_name || invoice.customer_email || t.clientFallback, margin, y + 16);
   if (invoice.customer_email) {
     doc.setFontSize(9.5);
     doc.setTextColor(90);
@@ -112,7 +338,7 @@ export async function generateFrenchInvoicePdf(invoice: InvoiceRecord): Promise<
     doc.addImage(qr, "PNG", right - 78, y - 8, 78, 78);
     doc.setFontSize(7);
     doc.setTextColor(140);
-    doc.text("Vérification facture", right - 39, y + 80, { align: "center" });
+    doc.text(t.qrCaption, right - 39, y + 80, { align: "center" });
   } catch {
     // QR generation failure must never block the invoice
   }
@@ -124,10 +350,10 @@ export async function generateFrenchInvoicePdf(invoice: InvoiceRecord): Promise<
   doc.rect(margin, y, right - margin, 24, "F");
   doc.setFontSize(8.5);
   doc.setTextColor(90);
-  doc.text("DÉSIGNATION", margin + 10, y + 16);
-  doc.text("QTÉ", right - 210, y + 16, { align: "right" });
-  doc.text("PU HT", right - 120, y + 16, { align: "right" });
-  doc.text("TOTAL HT", right - 10, y + 16, { align: "right" });
+  doc.text(t.colDescription, margin + 10, y + 16);
+  doc.text(t.colQty, right - 210, y + 16, { align: "right" });
+  doc.text(t.colUnit, right - 120, y + 16, { align: "right" });
+  doc.text(t.colTotal, right - 10, y + 16, { align: "right" });
   y += 24;
 
   const lines =
@@ -135,7 +361,7 @@ export async function generateFrenchInvoicePdf(invoice: InvoiceRecord): Promise<
       ? invoice.line_items
       : [
           {
-            description: invoice.plan || invoice.description || "Abonnement 3xvisibility",
+            description: invoice.plan || invoice.description || t.defaultItem,
             quantity: 1,
             amount: invoice.amount_total,
           },
@@ -149,7 +375,7 @@ export async function generateFrenchInvoicePdf(invoice: InvoiceRecord): Promise<
     const ht = Math.round(ttc / (1 + VAT_RATE));
     totalHt += ht;
     const qty = item.quantity ?? 1;
-    const wrapped = doc.splitTextToSize(item.description || "Prestation", right - margin - 240);
+    const wrapped = doc.splitTextToSize(item.description || t.serviceFallback, right - margin - 240);
     const rowHeight = Math.max(24, wrapped.length * 13 + 10);
     doc.text(wrapped, margin + 10, y + 16);
     doc.text(String(qty), right - 210, y + 16, { align: "right" });
@@ -176,13 +402,13 @@ export async function generateFrenchInvoicePdf(invoice: InvoiceRecord): Promise<
     y += bold ? 22 : 17;
   };
 
-  totalRow("Total HT", euro(totalHt));
-  totalRow(`TVA ${(VAT_RATE * 100).toFixed(0)} %`, euro(totalVat));
-  totalRow("Total TTC", euro(totalTtc), true);
+  totalRow(t.totalHt, euro(totalHt));
+  totalRow(t.vatRow((VAT_RATE * 100).toFixed(0)), euro(totalVat));
+  totalRow(t.totalTtc, euro(totalTtc), true);
 
   if (invoice.amount_refunded > 0) {
-    totalRow("Remboursé", `- ${euro(invoice.amount_refunded)}`, false, [190, 60, 60]);
-    totalRow("Net encaissé", euro(totalTtc - invoice.amount_refunded), true);
+    totalRow(t.refunded, `- ${euro(invoice.amount_refunded)}`, false, [190, 60, 60]);
+    totalRow(t.netPaid, euro(totalTtc - invoice.amount_refunded), true);
   }
 
   // ---- Payment + legal mentions ----
@@ -190,26 +416,20 @@ export async function generateFrenchInvoicePdf(invoice: InvoiceRecord): Promise<
   doc.setFontSize(9);
   doc.setTextColor(25);
   doc.setFont("helvetica", "bold");
-  doc.text(
-    invoice.status === "paid" ? "Facture acquittée — payée par carte bancaire (Stripe)" : `Statut : ${invoice.status}`,
-    margin,
-    y,
-  );
+  doc.text(invoice.status === "paid" ? t.paid : t.statusLabel(invoice.status), margin, y);
   doc.setFont("helvetica", "normal");
   y += 18;
 
   doc.setFontSize(7.5);
   doc.setTextColor(120);
+  const paymentRef = invoice.stripe_invoice_id || invoice.stripe_charge_id;
   const legal = [
-    "Conditions de règlement : paiement comptant à réception, par prélèvement automatique via Stripe.",
-    "En cas de retard de paiement, pénalités au taux de 3 fois le taux d'intérêt légal, ainsi qu'une indemnité",
-    "forfaitaire pour frais de recouvrement de 40 € (art. L441-10 et D441-5 du Code de commerce).",
-    "Pas d'escompte pour paiement anticipé. TVA acquittée sur les débits.",
-    invoice.stripe_invoice_id || invoice.stripe_charge_id
-      ? `Référence de paiement : ${invoice.stripe_invoice_id || invoice.stripe_charge_id}`
-      : "",
+    ...t.legal,
+    paymentRef ? t.paymentRef(paymentRef) : "",
     invoice.einvoicing_status && invoice.einvoicing_status !== "not_configured"
-      ? `E-facturation (Factur-X) : ${invoice.einvoicing_status}${invoice.einvoicing_pa ? ` — ${invoice.einvoicing_pa}` : ""}`
+      ? t.einvoicing(
+          `${invoice.einvoicing_status}${invoice.einvoicing_pa ? ` — ${invoice.einvoicing_pa}` : ""}`,
+        )
       : "",
   ].filter(Boolean);
   legal.forEach((line, i) => doc.text(line, margin, y + i * 10));
@@ -217,14 +437,27 @@ export async function generateFrenchInvoicePdf(invoice: InvoiceRecord): Promise<
   return doc;
 }
 
-export async function downloadFrenchInvoicePdf(invoice: InvoiceRecord) {
-  const doc = await generateFrenchInvoicePdf(invoice);
-  doc.save(`Facture-${invoice.invoice_number}.pdf`);
+/** Localised file name, e.g. Rechnung-INV-2026-001.pdf */
+export function invoiceFileName(invoice: InvoiceRecord, locale?: InvoiceLocale) {
+  const l = locale ?? resolveInvoiceLocale(invoice);
+  return `${(STRINGS[l] ?? STRINGS.fr).fileWord}-${invoice.invoice_number}.pdf`;
+}
+
+export async function downloadFrenchInvoicePdf(
+  invoice: InvoiceRecord,
+  locale?: InvoiceLocale,
+) {
+  const l = locale ?? resolveInvoiceLocale(invoice);
+  const doc = await generateFrenchInvoicePdf(invoice, l);
+  doc.save(invoiceFileName(invoice, l));
 }
 
 /** Returns the PDF as a base64 string (no data-url prefix) for upload/email. */
-export async function frenchInvoicePdfBase64(invoice: InvoiceRecord): Promise<string> {
-  const doc = await generateFrenchInvoicePdf(invoice);
+export async function frenchInvoicePdfBase64(
+  invoice: InvoiceRecord,
+  locale?: InvoiceLocale,
+): Promise<string> {
+  const doc = await generateFrenchInvoicePdf(invoice, locale);
   const dataUri = doc.output("datauristring");
   return dataUri.slice(dataUri.indexOf(",") + 1);
 }
