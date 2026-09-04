@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import { translations, type Language, languages } from "./translations";
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import { translations, loadLocale, type Language, languages } from "./translations";
+import { resetDictionaryReverse } from "./translationOriginals";
 
 function detectBrowserLanguage(): Language | null {
   if (typeof navigator === "undefined") return null;
@@ -69,7 +70,7 @@ function formatTranslationValue(value: unknown): string {
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     const stored = localStorage.getItem("language") as Language | null;
-    if (stored && translations[stored]) return stored;
+    if (stored && languages.some((l) => l.code === stored)) return stored;
     const detected = detectBrowserLanguage();
     if (detected) {
       localStorage.setItem("language", detected);
@@ -78,6 +79,22 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
     return "en";
   });
+
+  const [localeVersion, setLocaleVersion] = useState(0);
+
+  // Non-English locale bundles are fetched on demand to keep the first load light.
+  useEffect(() => {
+    if (language === "en" || translations[language]) return;
+    let active = true;
+    loadLocale(language).then(() => {
+      if (!active) return;
+      resetDictionaryReverse();
+      setLocaleVersion((v) => v + 1);
+    });
+    return () => {
+      active = false;
+    };
+  }, [language]);
 
   const [translating, setTranslating] = useState(false);
   const [translationProgress, setTranslationProgress] = useState<TranslationProgress>({ done: 0, total: 0 });
@@ -126,7 +143,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         template
       );
     },
-    [language]
+    [language, localeVersion]
   );
 
   return (
