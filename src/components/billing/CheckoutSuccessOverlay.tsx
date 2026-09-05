@@ -3,6 +3,7 @@ import confetti from "canvas-confetti";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface CheckoutSuccessOverlayProps {
   planName?: string;
@@ -10,6 +11,7 @@ interface CheckoutSuccessOverlayProps {
 }
 
 export function CheckoutSuccessOverlay({ planName, onDismiss }: CheckoutSuccessOverlayProps) {
+  const { t } = useLanguage();
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
@@ -67,18 +69,18 @@ export function CheckoutSuccessOverlay({ planName, onDismiss }: CheckoutSuccessO
             <CheckCircle2 className="h-9 w-9 text-success" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold tracking-tight">Payment Successful!</h2>
+            <h2 className="text-2xl font-bold tracking-tight">{t("billing.successTitle")}</h2>
             <p className="text-muted-foreground text-sm">
               {planName
-                ? `Your ${planName} plan is now active. Enjoy all the premium features!`
-                : "Your subscription is now active. Enjoy all the premium features!"}
+                ? t("billing.successPlanActive", { plan: planName })
+                : t("billing.successActive")}
             </p>
           </div>
           <Button
             className="w-full rounded-xl h-11 font-semibold bg-gradient-to-r from-primary to-[hsl(var(--primary-glow))] hover:brightness-110 shadow-lg shadow-primary/20"
             onClick={handleDismiss}
           >
-            Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+            {t("billing.goToDashboard")} <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </CardContent>
       </Card>
