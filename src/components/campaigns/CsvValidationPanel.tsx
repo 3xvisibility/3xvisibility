@@ -220,7 +220,7 @@ export function CsvValidationPanel({
 
       {showPreview && (
         <div className="overflow-x-auto bg-background">
-          <table className="w-full text-[11px] border-collapse">
+          <table data-no-autotranslate className="w-full text-[11px] border-collapse">
             <thead className="bg-muted/40 sticky top-0">
               <tr>
                 <th className="text-left px-2 py-1.5 font-medium text-muted-foreground w-8 border-b">#</th>
