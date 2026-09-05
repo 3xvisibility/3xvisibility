@@ -376,6 +376,7 @@ const pl: Record<string, string> = {
   "billing.mostPopular": "Najpopularniejszy",
   "billing.nextBilling": "Następne rozliczenie",
   "billing.noInvoices": "Brak faktur",
+  "billing.paymentMethodAdded": "Payment method saved.",
   "billing.noPaymentMethods": "No payment methods saved yet.",
   "billing.pageGenerations": "Generowanie stron",
   "billing.pagesCountMonth": "{count} pages/month",

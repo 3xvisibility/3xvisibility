@@ -325,6 +325,7 @@ const de: Record<string, string> = {
   "billing.manageSubscription": "Abonnement verwalten",
   "billing.monthly": "Monatlich",
   "billing.mostPopular": "Am beliebtesten",
+  "billing.paymentMethodAdded": "Zahlungsmethode gespeichert.",
   "billing.noPaymentMethods": "Noch keine Zahlungsmethoden gespeichert.",
   "billing.pageGenerations": "Seitengenerierungen",
   "billing.pagesCountMonth": "{count} Seiten/Monat",

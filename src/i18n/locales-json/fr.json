@@ -375,6 +375,7 @@
   "billing.manageSubscription": "Gérer l'abonnement",
   "billing.monthly": "Mensuel",
   "billing.mostPopular": "Le plus populaire",
+  "billing.paymentMethodAdded": "Mode de paiement enregistr\u00e9.",
   "billing.noPaymentMethods": "Aucun mode de paiement enregistré pour le moment.",
   "billing.pageGenerations": "Générations de Pages",
   "billing.pagesCountMonth": "{count} pages/mois",
