@@ -796,9 +796,130 @@ const sectionLabel = (id: string) =>
 
 
 
-function buildGuideHtml(selectedIds?: string[], forPrint = true): string {
+/** Static UI strings embedded in the printable guide (translated like the rest). */
+const GUIDE_STATIC_STRINGS = [
+  "3XVISIBILITY — Quickstart Guide",
+  "Complete step-by-step guide to every tool. Generated",
+  "Table of contents",
+  "Tips:",
+  "Fields:",
+  "Permissions:",
+  "Test steps:",
+  "Troubleshooting:",
+  "Tip:",
+];
+
+/** Every English string the guide renders, so we can translate them in one pass. */
+function collectGuideStrings(): string[] {
+  const out = new Set<string>(GUIDE_STATIC_STRINGS);
+  GUIDE_SECTIONS.forEach((s) => out.add(s.title));
+  TOOLS.forEach((t) => {
+    out.add(t.group);
+    out.add(t.name);
+    out.add(t.short);
+    t.steps.forEach((s) => out.add(s));
+    t.tips?.forEach((s) => out.add(s));
+  });
+  CONNECT_TUTORIALS.forEach((t) => {
+    out.add(t.name);
+    out.add(t.intro);
+    t.fields.forEach((f) => {
+      out.add(f.label);
+      out.add(f.desc);
+    });
+    t.permissions.forEach((s) => out.add(s));
+    t.test.forEach((s) => out.add(s));
+    t.troubleshoot?.forEach((s) => out.add(s));
+  });
+  E2E_WALKTHROUGH.forEach((s) => {
+    out.add(s.title);
+    out.add(s.detail);
+    if (s.tip) out.add(s.tip);
+  });
+  FAQS.forEach((f) => {
+    out.add(f.q);
+    out.add(f.a);
+  });
+  TROUBLESHOOTING.forEach((c) => {
+    out.add(c.category);
+    c.problems.forEach((p) => {
+      out.add(p.symptom);
+      out.add(p.fix);
+    });
+  });
+  QUICK_FLOW.forEach((s) => {
+    out.add(s.title);
+    out.add(s.desc);
+  });
+  return [...out];
+}
+
+const GUIDE_TR_CACHE_PREFIX = "docs-guide-tr:";
+
+/**
+ * Translate all guide strings into the target language via the translate-ui
+ * edge function, in batches. Results are cached in localStorage so repeat
+ * downloads are instant. Falls back to the English original on any failure.
+ */
+async function translateGuideStrings(target: string): Promise<(s: string) => string> {
+  const identity = (s: string) => s;
+  if (target === "en") return identity;
+
+  const strings = collectGuideStrings();
+  const cacheKey = `${GUIDE_TR_CACHE_PREFIX}${target}`;
+  let map: Record<string, string> = {};
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached) as Record<string, string>;
+      if (parsed && typeof parsed === "object" && strings.every((s) => typeof parsed[s] === "string")) {
+        map = parsed;
+      }
+    }
+  } catch {
+    /* ignore cache errors */
+  }
+
+  const missing = strings.filter((s) => typeof map[s] !== "string");
+  if (missing.length) {
+    const BATCH = 20;
+    for (let i = 0; i < missing.length; i += BATCH) {
+      const slice = missing.slice(i, i + BATCH);
+      try {
+        const { data, error } = await supabase.functions.invoke("translate-ui", {
+          body: { texts: slice, target },
+        });
+        const raw = (data as { translations?: unknown[] })?.translations;
+        if (!error && Array.isArray(raw) && raw.length === slice.length) {
+          slice.forEach((s, j) => {
+            const v = raw[j];
+            map[s] = typeof v === "string" && v.trim() ? v : s;
+          });
+        } else {
+          slice.forEach((s) => {
+            map[s] = s;
+          });
+        }
+      } catch {
+        slice.forEach((s) => {
+          map[s] = s;
+        });
+      }
+    }
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(map));
+    } catch {
+      /* storage full — fine, we still have the in-memory map */
+    }
+  }
+
+  return (s: string) => map[s] ?? s;
+}
+
+function buildGuideHtml(selectedIds?: string[], forPrint = true, tr: (s: string) => string = (s) => s): string {
+  const e = (s: string) => esc(tr(s));
   const li = (items: string[]) =>
-    `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
+    `<ul>${items.map((i) => `<li>${e(i)}</li>`).join("")}</ul>`;
 
   const toolsHtml = GROUPS.map((group) => {
     const tools = TOOLS.filter((t) => t.group === group);
