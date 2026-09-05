@@ -26,7 +26,7 @@ export default function MentionsLegalesPage() {
           <li><strong>National business number (SIREN)</strong> : 843 715 954</li>
           <li><strong>Headquarters SIRET</strong> : 843 715 954 00023</li>
           <li><strong>Intra-community VAT number</strong> : FR95 843715954</li>
-          <li><strong>Contact email</strong> : <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a></li>
+          <li><strong>Contact email</strong> : <a href="mailto:Support@3xvisibility.com" translate="no">Support@3xvisibility.com</a></li>
           <li><strong>Director of publication</strong> : <span translate="no">Yannick Humphrey</span></li>
         </ul>
 
@@ -117,7 +117,7 @@ export default function MentionsLegalesPage() {
 
         <h2>6. Personal Data (GDPR)</h2>
         <p>
-          <strong>Data controller</strong> : <span translate="no">3XVISIBILITY</span> — <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a>
+          <strong>Data controller</strong> : <span translate="no">3XVISIBILITY</span> — <a href="mailto:Support@3xvisibility.com" translate="no">Support@3xvisibility.com</a>
         </p>
         <p>
           Personal data is processed for the following purposes: creation and management of user
@@ -164,7 +164,7 @@ export default function MentionsLegalesPage() {
           You have the right of access, rectification, erasure, restriction, portability and
           objection regarding your personal data, as well as the right to withdraw consent where
           processing is based on consent. To exercise these rights, contact us at:{" "}
-          <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a>
+          <a href="mailto:Support@3xvisibility.com" translate="no">Support@3xvisibility.com</a>
         </p>
         <p>
           You also have the right to lodge a complaint with the competent supervisory authority,
@@ -188,7 +188,7 @@ export default function MentionsLegalesPage() {
 
         <h2>11. Contact</h2>
         <p>
-          For any question: <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a>
+          For any question: <a href="mailto:Support@3xvisibility.com" translate="no">Support@3xvisibility.com</a>
         </p>
       </StaticPageLayout>
     </>

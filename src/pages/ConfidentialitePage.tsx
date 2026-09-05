@@ -25,7 +25,7 @@ export default function ConfidentialitePage() {
         <h2>2. Data controller</h2>
         <p>
           <strong>Data controller</strong> : <span translate="no">VERODAV GROUP / 3XVISIBILITY</span> —{" "}
-          <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a>
+          <a href="mailto:Support@3xvisibility.com" translate="no">Support@3xvisibility.com</a>
         </p>
 
         <h2>3. Data collected</h2>
@@ -131,7 +131,7 @@ export default function ConfidentialitePage() {
         </ul>
         <p>
           To exercise these rights:{" "}
-          <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a>
+          <a href="mailto:Support@3xvisibility.com" translate="no">Support@3xvisibility.com</a>
         </p>
 
         <h2>10. Cookies</h2>
@@ -151,7 +151,7 @@ export default function ConfidentialitePage() {
         <h2>12. Contact</h2>
         <p>
           For any question regarding the protection of your data:{" "}
-          <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a>
+          <a href="mailto:Support@3xvisibility.com" translate="no">Support@3xvisibility.com</a>
         </p>
       </StaticPageLayout>
     </>

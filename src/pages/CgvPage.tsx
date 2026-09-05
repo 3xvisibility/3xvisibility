@@ -30,7 +30,7 @@ export default function CgvPage() {
           <li><strong>Registered address</strong> : <span translate="no">21 rue de Cherbourg, 67100 Strasbourg, France</span></li>
           <li><strong>RCS</strong> : <span translate="no">Strasbourg 843 715 954</span></li>
           <li><strong>Intra-community VAT</strong> : <span translate="no">FR95 843715954</span></li>
-          <li><strong>Contact email</strong> : <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a></li>
+          <li><strong>Contact email</strong> : <a href="mailto:Support@3xvisibility.com" translate="no">Support@3xvisibility.com</a></li>
         </ul>
 
         <h2>3. Services</h2>
@@ -139,7 +139,7 @@ export default function CgvPage() {
         <h2>15. Contact</h2>
         <p>
           For any question relating to these GTCS:{" "}
-          <a href="mailto:info@3xvisibility.com" translate="no">info@3xvisibility.com</a>
+          <a href="mailto:Support@3xvisibility.com" translate="no">Support@3xvisibility.com</a>
         </p>
       </StaticPageLayout>
     </>
