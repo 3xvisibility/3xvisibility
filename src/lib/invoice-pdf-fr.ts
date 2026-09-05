@@ -22,7 +22,7 @@ export const ISSUER = {
   siren: "843 715 954",
   siret: "843 715 954 00027",
   vat: "FR95 843715954",
-  email: "info@3xvisibility.com",
+  email: "Support@3xvisibility.com",
   website: "https://3xvisibility.com",
 };
 
