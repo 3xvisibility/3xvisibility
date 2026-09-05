@@ -82,7 +82,7 @@ async function libreOnce(url: string, texts: string[], target: string, timeoutMs
  * Sequential probing with 15s timeouts used to make a single request take ~17s.
  */
 async function libreBatch(texts: string[], target: string): Promise<string[] | null> {
-  const TIMEOUT_MS = 3_500;
+  const TIMEOUT_MS = 1_200;
   return await new Promise<string[] | null>((resolve) => {
     let pending = LIBRE_ENDPOINTS.length;
     let settled = false;
