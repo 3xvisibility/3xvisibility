@@ -45,7 +45,7 @@ export function BillingDetailsCard() {
   const [form, setForm] = useState<BillingDetails>(EMPTY);
   const [saving, setSaving] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["my-billing-details"],
     queryFn: async () => {
       const { data: auth } = await supabase.auth.getUser();
