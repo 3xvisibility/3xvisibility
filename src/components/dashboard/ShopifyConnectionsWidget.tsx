@@ -26,6 +26,7 @@ interface ConnectionRow {
 }
 
 export function ShopifyConnectionsWidget() {
+  const { t } = useLanguage();
   const { currentWorkspace, basePath } = useWorkspace();
   const wsId = currentWorkspace?.id;
   const queryClient = useQueryClient();

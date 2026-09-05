@@ -36,6 +36,7 @@ interface AiCreditsWidgetProps {
 }
 
 export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { basePath } = useWorkspace();
   const { data: credits, isLoading: creditsLoading, isError: creditsError } = useQuery({
