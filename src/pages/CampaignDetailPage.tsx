@@ -1856,7 +1856,9 @@ export default function CampaignDetailPage() {
         onStart={(options) => {
           executeMutation.mutate({ generation_options: options });
         }}
-      />
+      />}
+      </Suspense>
+
 
       <PublishLogDialog
         open={!!publishLog}
