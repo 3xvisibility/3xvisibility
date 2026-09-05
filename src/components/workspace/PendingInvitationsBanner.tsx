@@ -24,6 +24,8 @@ export function PendingInvitationsBanner() {
   const { data: invitations } = useQuery({
     queryKey: ["my-pending-invitations"],
     queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return [];
       const { data, error } = await supabase.functions.invoke("workspace-settings", {
         body: { action: "my_pending_invitations" },
       });

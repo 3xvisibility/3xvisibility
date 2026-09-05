@@ -42,6 +42,8 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
   const { data: credits, isLoading: creditsLoading, isError: creditsError } = useQuery({
     queryKey: ["ai-credits"],
     queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
       const res = await supabase.functions.invoke("ai-credits", { body: { action: "check" } });
       if (res.error) throw new Error("Failed to fetch credits");
       return res.data?.credits;
