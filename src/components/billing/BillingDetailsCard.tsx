@@ -45,7 +45,7 @@ export function BillingDetailsCard() {
   const [form, setForm] = useState<BillingDetails>(EMPTY);
   const [saving, setSaving] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["my-billing-details"],
     queryFn: async () => {
       const { data: auth } = await supabase.auth.getUser();
@@ -89,11 +89,20 @@ export function BillingDetailsCard() {
         ...form,
         billing_language: form.billing_language === "auto" ? null : form.billing_language,
       };
-      const { error } = await supabase
+      // Update the existing profile row; create one when the buyer has none yet.
+      const { data: updated, error } = await supabase
         .from("profiles")
         .update(payload as never)
-        .eq("user_id", uid);
+        .eq("user_id", uid)
+        .select("id");
       if (error) throw error;
+      if (!updated || updated.length === 0) {
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert({ user_id: uid, ...payload } as never);
+        if (insertError) throw insertError;
+      }
+      await refetch();
       toast.success(t("billing.detailsSaved"));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("billing.detailsSaveFailed"));
@@ -101,6 +110,7 @@ export function BillingDetailsCard() {
       setSaving(false);
     }
   };
+
 
   return (
     <Card className="shadow-surface border-0">

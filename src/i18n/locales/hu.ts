@@ -318,6 +318,7 @@ const hu: Record<string, string> = {
   "billing.manageSubscription": "Manage Subscription",
   "billing.monthly": "Monthly",
   "billing.mostPopular": "Most Popular",
+  "billing.paymentMethodAdded": "Payment method saved.",
   "billing.noPaymentMethods": "No payment methods saved yet.",
   "billing.pageGenerations": "Page Generations",
   "billing.pagesCountMonth": "{count} pages/month",

@@ -22,9 +22,13 @@ export function MyInvoicesCard() {
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["my-invoices"],
     queryFn: async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id;
+      if (!uid) return [] as InvoiceRecord[];
       const { data, error } = await supabase
         .from("invoices")
         .select("*")
+        .eq("user_id", uid)
         .order("issued_at", { ascending: false })
         .limit(50);
       if (error) throw error;
@@ -48,7 +52,7 @@ export function MyInvoicesCard() {
     }
   };
 
-  if (!isLoading && invoices.length === 0) return null;
+  
 
   return (
     <Card className="shadow-surface border-0">
@@ -88,6 +92,11 @@ export function MyInvoicesCard() {
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
           </>
+        ) : invoices.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+            <FileText className="h-8 w-8 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">{t("billing.invoicesEmpty")}</p>
+          </div>
         ) : (
           invoices.map((inv) => (
             <div

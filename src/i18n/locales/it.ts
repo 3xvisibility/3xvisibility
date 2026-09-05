@@ -318,6 +318,7 @@ const it: Record<string, string> = {
   "billing.manageSubscription": "Gestisci abbonamento",
   "billing.monthly": "Mensile",
   "billing.mostPopular": "Il più popolare",
+  "billing.paymentMethodAdded": "Payment method saved.",
   "billing.noPaymentMethods": "No payment methods saved yet.",
   "billing.pageGenerations": "Generazioni di pagine",
   "billing.pagesCountMonth": "{count} pages/month",

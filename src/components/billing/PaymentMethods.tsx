@@ -69,7 +69,17 @@ export function PaymentMethods() {
 
   useEffect(() => {
     load();
+    // Coming back from Stripe after saving a card: confirm and refresh the list.
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("card_added") === "true") {
+      toast({ title: t("billing.paymentMethodAdded") });
+      params.delete("card_added");
+      const rest = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (rest ? `?${rest}` : ""));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const handleAdd = async () => {
     setAdding(true);

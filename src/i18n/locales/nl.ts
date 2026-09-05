@@ -318,6 +318,7 @@ const nl: Record<string, string> = {
   "billing.manageSubscription": "Beheer abonnement",
   "billing.monthly": "Maandelijks",
   "billing.mostPopular": "Meest populair",
+  "billing.paymentMethodAdded": "Payment method saved.",
   "billing.noPaymentMethods": "No payment methods saved yet.",
   "billing.pageGenerations": "Paginageneraties",
   "billing.pagesCountMonth": "{count} pages/month",
