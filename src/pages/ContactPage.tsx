@@ -12,8 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const channels = [
-  { icon: Mail, label: "Email", value: "info@3xvisibility.com", href: "mailto:info@3xvisibility.com" },
-  { icon: Phone, label: "Phone", value: "+33 3 67 10 00 00", href: "tel:+33367100000" },
+  { icon: Mail, label: "Email", value: "Support@3xvisibility.com", href: "mailto:Support@3xvisibility.com" },
   { icon: MapPin, label: "Address", value: "21 rue de Cherbourg, 67100 Strasbourg, France", href: undefined },
 ];
 
@@ -69,7 +68,7 @@ export default function ContactPage() {
     <>
       <Seo title={t("contact.title")} description={t("contact.metaDesc")} path="/contact" />
       <StaticPageLayout title={t("contact.title")} subtitle={t("contact.subtitle")}>
-        <div className="not-prose grid gap-4 sm:grid-cols-3">
+        <div className="not-prose grid gap-4 sm:grid-cols-2">
           {channels.map(({ icon: Icon, label, value, href }) => {
             const Tag = href ? "a" : "div";
             return (
