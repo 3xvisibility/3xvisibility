@@ -49,14 +49,14 @@ export default function ChangelogPage() {
         path="/changelog"
       />
     <StaticPageLayout title="Changelog" subtitle="Recent improvements, fixes and new features.">
-      <div className="not-prose space-y-8">
+      <div className="not-prose space-y-6">
         {releases.map((r) => (
-          <div key={r.version} className="rounded-xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6">
+          <div key={r.version} className="rounded-xl border border-[hsl(96,67%,48%,0.15)] bg-card p-6 shadow-surface hover:shadow-surface-hover transition-shadow duration-200">
             <div className="flex items-baseline gap-3">
-              <h3 className="text-xl font-semibold">{r.version}</h3>
-              <span className="text-xs uppercase tracking-widest text-[hsl(250,15%,45%)]">{r.date}</span>
+              <h3 className="text-xl font-semibold text-[hsl(240,12%,12%)]">{r.version}</h3>
+              <span className="text-xs uppercase tracking-widest text-[hsl(240,8%,45%)]">{r.date}</span>
             </div>
-            <ul className="mt-4 space-y-2 text-sm text-[hsl(250,15%,70%)] list-disc pl-5">
+            <ul className="mt-4 space-y-2 text-sm text-[hsl(240,8%,28%)] leading-relaxed list-disc pl-5">
               {r.items.map((it) => (
                 <li key={it}>{it}</li>
               ))}
