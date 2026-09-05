@@ -52,7 +52,7 @@ export function MyInvoicesCard() {
     }
   };
 
-  if (!isLoading && invoices.length === 0) return null;
+  
 
   return (
     <Card className="shadow-surface border-0">
