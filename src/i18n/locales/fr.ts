@@ -2363,6 +2363,11 @@ const fr: Record<string, string> = {
   "trial.nearCap": "Vous approchez de votre limite : {items}",
   "trial.capNote": "Passez à un forfait supérieur pour des limites plus élevées, ou attendez le {date} pour la remise à zéro.",
   "trial.upgradePlan": "Améliorer le forfait",
+  "auth.errorConnectionTitle": "Échec de la connexion",
+  "auth.errorConnectionDesc": "Votre navigateur n'a pas pu joindre le serveur de connexion.",
+  "auth.errorConnectionHint": "Essayez de désactiver le VPN ou le bloqueur de publicités, ou changez de réseau.",
+  "auth.errorCorsTitle": "Requête bloquée",
+  "auth.errorCorsDesc": "Le serveur de connexion a rejeté la requête en raison d'une règle d'origine croisée. Une extension de navigateur, un proxy ou une URL mal configurée peut en être la cause.",
 };
 
 export default fr;

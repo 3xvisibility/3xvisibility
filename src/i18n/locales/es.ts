@@ -2363,6 +2363,11 @@ const es: Record<string, string> = {
   "trial.nearCap": "Estás cerca de tu límite: {items}",
   "trial.capNote": "Mejora tu plan para tener límites más altos o espera al {date}, cuando se reinicia el uso.",
   "trial.upgradePlan": "Mejorar plan",
+  "auth.errorConnectionTitle": "Error de conexión",
+  "auth.errorConnectionDesc": "Tu navegador no pudo conectar con el servidor de inicio de sesión.",
+  "auth.errorConnectionHint": "Prueba a desactivar la VPN o el bloqueador de anuncios, o cambia de red.",
+  "auth.errorCorsTitle": "Solicitud bloqueada",
+  "auth.errorCorsDesc": "El servidor de inicio de sesión rechazó la solicitud por una política de origen cruzado. Puede deberse a una extensión del navegador, un proxy o una URL mal configurada.",
 };
 
 export default es;

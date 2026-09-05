@@ -107,16 +107,16 @@ export default function AuthPage() {
     if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("timeout")) {
       const iframeHint = typeof window !== "undefined" && window.self !== window.top
         ? " You're viewing this inside the Lovable preview iframe — third-party cookies are often blocked here. Open the preview in a new tab (↗ button at the top of the preview) or use the published URL to sign in."
-        : " Try disabling VPN/ad-blocker or switching networks.";
+        : " " + t("auth.errorConnectionHint");
       return {
-        title: "Connection Failed",
-        description: "Your browser could not reach the login server." + iframeHint,
+        title: t("auth.errorConnectionTitle"),
+        description: t("auth.errorConnectionDesc") + iframeHint,
       };
     }
     if (msg.includes("cors") || msg.includes("access-control")) {
       return {
-        title: "Request Blocked (CORS)",
-        description: "The login server rejected the request due to a cross-origin policy. A browser extension, proxy, or misconfigured URL may be the cause.",
+        title: t("auth.errorCorsTitle"),
+        description: t("auth.errorCorsDesc"),
       };
     }
     if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {

@@ -2363,6 +2363,11 @@ const en: Record<string, string> = {
   "trial.nearCap": "You're close to your {items} limit",
   "trial.capNote": "Upgrade your plan for higher limits, or wait until {date} when usage resets.",
   "trial.upgradePlan": "Upgrade plan",
+  "auth.errorConnectionTitle": "Connection failed",
+  "auth.errorConnectionDesc": "Your browser could not reach the login server.",
+  "auth.errorConnectionHint": "Try disabling VPN/ad-blocker or switching networks.",
+  "auth.errorCorsTitle": "Request blocked",
+  "auth.errorCorsDesc": "The login server rejected the request due to a cross-origin policy. A browser extension, proxy, or misconfigured URL may be the cause.",
 };
 
 export default en;

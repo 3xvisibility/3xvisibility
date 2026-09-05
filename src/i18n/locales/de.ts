@@ -2363,6 +2363,11 @@ const de: Record<string, string> = {
   "trial.nearCap": "Sie nähern sich Ihrem Limit: {items}",
   "trial.capNote": "Wechseln Sie für höhere Limits den Tarif oder warten Sie bis zum {date}, wenn die Nutzung zurückgesetzt wird.",
   "trial.upgradePlan": "Tarif upgraden",
+  "auth.errorConnectionTitle": "Verbindung fehlgeschlagen",
+  "auth.errorConnectionDesc": "Ihr Browser konnte den Anmeldeserver nicht erreichen.",
+  "auth.errorConnectionHint": "Deaktivieren Sie VPN/Werbeblocker oder wechseln Sie das Netzwerk.",
+  "auth.errorCorsTitle": "Anfrage blockiert",
+  "auth.errorCorsDesc": "Der Anmeldeserver hat die Anfrage wegen einer Cross-Origin-Richtlinie abgelehnt. Ursache können eine Browser-Erweiterung, ein Proxy oder eine falsch konfigurierte URL sein.",
 };
 
 export default de;
