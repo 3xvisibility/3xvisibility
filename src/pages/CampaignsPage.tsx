@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { logAudit } from "@/lib/audit";
 import { assertSameWorkspace, logIfAuthorizationFailure } from "@/lib/security-audit";
@@ -15,9 +15,9 @@ import { Progress } from "@/components/ui/progress";
 import { Plus, Play, Trash2, Pause, RotateCcw, Clock, Loader2, MoreHorizontal, Eye, Search as SearchIconLucide, Copy, Globe, Sparkles, Zap, TrendingUp, FileText, Target, MapPin, AlertTriangle, Crown } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
-import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
-import { GenerationJobDialog } from "@/components/campaigns/GenerationJobDialog";
-import { CreateCampaignWizard } from "@/components/campaigns/CreateCampaignWizard";
+const InternalLinkDialog = lazy(() => import("@/components/campaigns/InternalLinkDialog").then(m => ({ default: m.InternalLinkDialog })));
+const GenerationJobDialog = lazy(() => import("@/components/campaigns/GenerationJobDialog").then(m => ({ default: m.GenerationJobDialog })));
+const CreateCampaignWizard = lazy(() => import("@/components/campaigns/CreateCampaignWizard").then(m => ({ default: m.CreateCampaignWizard })));
 import { CampaignHowItWorks } from "@/components/campaigns/CampaignHowItWorks";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { useToast } from "@/hooks/use-toast";
@@ -654,11 +654,15 @@ export default function CampaignsPage() {
       )}
 
       {/* Wizard */}
-      <CreateCampaignWizard open={wizardOpen} onOpenChange={setWizardOpen} onCreated={handleCampaignCreated} />
+      <Suspense fallback={null}>
+        {wizardOpen && <CreateCampaignWizard open={wizardOpen} onOpenChange={setWizardOpen} onCreated={handleCampaignCreated} />}
+      </Suspense>
 
       {/* Dialogs */}
+      <Suspense fallback={null}>
       {linkDialogCampaign && <InternalLinkDialog open={!!linkDialogCampaign} onOpenChange={() => setLinkDialogCampaign(null)} campaignId={linkDialogCampaign.id} campaignName={linkDialogCampaign.name} templateVariables={(linkDialogCampaign as any).templates?.variables || []} />}
       {jobDialogCampaign && <GenerationJobDialog open={!!jobDialogCampaign} onOpenChange={() => setJobDialogCampaign(null)} campaignId={jobDialogCampaign.id} campaignName={jobDialogCampaign.name} />}
+      </Suspense>
     </div>
   );
 }

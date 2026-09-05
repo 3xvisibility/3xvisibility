@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, lazy, Suspense } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { logAudit } from "@/lib/audit";
 import { assertSameWorkspace, logIfAuthorizationFailure } from "@/lib/security-audit";
@@ -6,7 +6,8 @@ import { computeCampaignSeoSummary } from "@/components/SeoAnalysisDialog";
 import { DirectoryStructureBuilder } from "@/components/campaigns/DirectoryStructureBuilder";
 import { SpintaxPreview } from "@/components/campaigns/SpintaxPreview";
 import { SeoImprovementWorkflow } from "@/components/campaigns/SeoImprovementWorkflow";
-import { StartGenerationDialog, type GenerationOptions } from "@/components/campaigns/StartGenerationDialog";
+import type { GenerationOptions } from "@/components/campaigns/StartGenerationDialog";
+const StartGenerationDialog = lazy(() => import("@/components/campaigns/StartGenerationDialog").then(m => ({ default: m.StartGenerationDialog })));
 import { reskinContent, COMMUNITY_TEMPLATES, type TemplatePlatform } from "@/lib/marketplace-templates";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { PublishLogDialog, type PublishLogResult } from "@/components/campaigns/PublishLogDialog";
@@ -1833,7 +1834,8 @@ export default function CampaignDetailPage() {
       </Dialog>
 
       {/* Start Generation Dialog */}
-      <StartGenerationDialog
+      <Suspense fallback={null}>
+      {showStartDialog && <StartGenerationDialog
         open={showStartDialog}
         onOpenChange={setShowStartDialog}
         totalRows={campaign?.total_rows || 0}
