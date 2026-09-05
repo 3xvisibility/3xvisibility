@@ -2,6 +2,8 @@ import { Seo } from "@/components/Seo";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, Globe, Rocket, Layers, FileText, Store, Database,
   KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
