@@ -2,12 +2,14 @@ import { useState } from "react";
 import { XCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface CheckoutCanceledOverlayProps {
   onDismiss: () => void;
 }
 
 export function CheckoutCanceledOverlay({ onDismiss }: CheckoutCanceledOverlayProps) {
+  const { t } = useLanguage();
   const [visible, setVisible] = useState(true);
 
   const handleDismiss = () => {
@@ -32,9 +34,9 @@ export function CheckoutCanceledOverlay({ onDismiss }: CheckoutCanceledOverlayPr
             <XCircle className="h-9 w-9 text-destructive" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold tracking-tight">Checkout Canceled</h2>
+            <h2 className="text-2xl font-bold tracking-tight">{t("billing.canceledTitle")}</h2>
             <p className="text-muted-foreground text-sm">
-              Your payment was not completed. No charges were made. You can try again whenever you're ready.
+              {t("billing.canceledDesc")}
             </p>
           </div>
           <Button
@@ -42,7 +44,7 @@ export function CheckoutCanceledOverlay({ onDismiss }: CheckoutCanceledOverlayPr
             variant="outline"
             onClick={handleDismiss}
           >
-            Back to Plans <ArrowRight className="ml-2 h-4 w-4" />
+            {t("billing.backToPlans")} <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </CardContent>
       </Card>
