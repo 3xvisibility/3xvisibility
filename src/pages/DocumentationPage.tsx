@@ -923,14 +923,14 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true, tr: (s: string)
 
   const toolsHtml = GROUPS.map((group) => {
     const tools = TOOLS.filter((t) => t.group === group);
-    return `<h2>${esc(group)}</h2>${tools
+    return `<h2>${e(group)}</h2>${tools
       .map(
         (t) => `
         <div class="card">
-          <h3>${esc(t.name)}</h3>
-          <p class="muted">${esc(t.short)}</p>
+          <h3>${e(t.name)}</h3>
+          <p class="muted">${e(t.short)}</p>
           ${li(t.steps)}
-          ${t.tips?.length ? `<p class="tip"><strong>Tips:</strong></p>${li(t.tips)}` : ""}
+          ${t.tips?.length ? `<p class="tip"><strong>${e("Tips:")}</strong></p>${li(t.tips)}` : ""}
         </div>`
       )
       .join("")}`;
@@ -939,39 +939,39 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true, tr: (s: string)
   const connectHtml = CONNECT_TUTORIALS.map(
     (t) => `
     <div class="card">
-      <h3>${esc(t.name)}</h3>
-      <p class="muted">${esc(t.intro)}</p>
-      <p><strong>Fields:</strong></p>
-      <ul>${t.fields.map((f) => `<li><strong>${esc(f.label)}:</strong> ${esc(f.desc)}</li>`).join("")}</ul>
-      <p><strong>Permissions:</strong></p>${li(t.permissions)}
-      <p><strong>Test steps:</strong></p><ol>${t.test.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
-      ${t.troubleshoot?.length ? `<p><strong>Troubleshooting:</strong></p>${li(t.troubleshoot)}` : ""}
+      <h3>${e(t.name)}</h3>
+      <p class="muted">${e(t.intro)}</p>
+      <p><strong>${e("Fields:")}</strong></p>
+      <ul>${t.fields.map((f) => `<li><strong>${e(f.label)}:</strong> ${e(f.desc)}</li>`).join("")}</ul>
+      <p><strong>${e("Permissions:")}</strong></p>${li(t.permissions)}
+      <p><strong>${e("Test steps:")}</strong></p><ol>${t.test.map((s) => `<li>${e(s)}</li>`).join("")}</ol>
+      ${t.troubleshoot?.length ? `<p><strong>${e("Troubleshooting:")}</strong></p>${li(t.troubleshoot)}` : ""}
     </div>`
   ).join("");
 
   const walkHtml = `<ol>${E2E_WALKTHROUGH.map(
     (s) =>
-      `<li><strong>${esc(s.title)}</strong><br/>${esc(s.detail)}${
-        s.tip ? `<br/><em>Tip: ${esc(s.tip)}</em>` : ""
+      `<li><strong>${e(s.title)}</strong><br/>${e(s.detail)}${
+        s.tip ? `<br/><em>${e("Tip:")} ${e(s.tip)}</em>` : ""
       }</li>`
   ).join("")}</ol>`;
 
   const faqHtml = FAQS.map(
-    (f) => `<div class="faq"><p><strong>Q: ${esc(f.q)}</strong></p><p>${esc(f.a)}</p></div>`
+    (f) => `<div class="faq"><p><strong>Q: ${e(f.q)}</strong></p><p>${e(f.a)}</p></div>`
   ).join("");
 
   const troubleHtml = TROUBLESHOOTING.map(
     (c) => `
     <div class="card">
-      <h3>${esc(c.category)}</h3>
+      <h3>${e(c.category)}</h3>
       <ul>${c.problems
-        .map((p) => `<li><strong>${esc(p.symptom)}</strong><br/>${esc(p.fix)}</li>`)
+        .map((p) => `<li><strong>${e(p.symptom)}</strong><br/>${e(p.fix)}</li>`)
         .join("")}</ul>
     </div>`
   ).join("");
 
   const quickHtml = `<ol>${QUICK_FLOW.map(
-    (s) => `<li><strong>${esc(s.title)}</strong> — ${esc(s.desc)}</li>`
+    (s) => `<li><strong>${e(s.title)}</strong> — ${e(s.desc)}</li>`
   ).join("")}</ol>`;
 
   const allSections = [
