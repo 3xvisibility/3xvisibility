@@ -184,13 +184,19 @@ interface Job {
   apply: (translated: string) => void;
 }
 
+// Hard cap on how many pieces of text one pass may touch. Screens with very
+// long data lists (big campaigns, CSV previews) used to queue thousands of
+// jobs and lock the tab; the observer picks up whatever is left on the next
+// pass, so nothing is permanently skipped.
+const MAX_JOBS_PER_PASS = 600;
+
 function collectJobs(root: Node, targetLang: string): Job[] {
   const jobs: Job[] = [];
 
   // Text nodes.
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   let n: Node | null = root.nodeType === 3 ? root : walker.nextNode();
-  for (; n; n = walker.nextNode()) {
+  for (; n && jobs.length < MAX_JOBS_PER_PASS; n = walker.nextNode()) {
     const node = n as TrTextNode;
     if (isInsideSkipped(node)) continue;
     const original = getNodeOriginal(node, targetLang);
