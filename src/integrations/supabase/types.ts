@@ -765,6 +765,54 @@ export type Database = {
           },
         ]
       }
+      competitors: {
+        Row: {
+          authority_score: number
+          backlinks: number
+          created_at: string
+          domain: string
+          id: string
+          is_self: boolean
+          label: string | null
+          last_checked_at: string | null
+          organic_keywords: number
+          organic_traffic: number
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          authority_score?: number
+          backlinks?: number
+          created_at?: string
+          domain: string
+          id?: string
+          is_self?: boolean
+          label?: string | null
+          last_checked_at?: string | null
+          organic_keywords?: number
+          organic_traffic?: number
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          authority_score?: number
+          backlinks?: number
+          created_at?: string
+          domain?: string
+          id?: string
+          is_self?: boolean
+          label?: string | null
+          last_checked_at?: string | null
+          organic_keywords?: number
+          organic_traffic?: number
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           created_at: string
@@ -1540,6 +1588,47 @@ export type Database = {
           voided_at?: string | null
         }
         Relationships: []
+      }
+      keyword_rankings: {
+        Row: {
+          clicks: number
+          created_at: string
+          id: string
+          impressions: number
+          keyword_id: string
+          position: number
+          recorded_at: string
+          workspace_id: string
+        }
+        Insert: {
+          clicks?: number
+          created_at?: string
+          id?: string
+          impressions?: number
+          keyword_id: string
+          position: number
+          recorded_at?: string
+          workspace_id: string
+        }
+        Update: {
+          clicks?: number
+          created_at?: string
+          id?: string
+          impressions?: number
+          keyword_id?: string
+          position?: number
+          recorded_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keyword_rankings_keyword_id_fkey"
+            columns: ["keyword_id"]
+            isOneToOne: false
+            referencedRelation: "tracked_keywords"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       locations: {
         Row: {
@@ -3511,6 +3600,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tracked_keywords: {
+        Row: {
+          country: string
+          created_at: string
+          current_position: number | null
+          difficulty: number
+          id: string
+          keyword: string
+          last_checked_at: string | null
+          previous_position: number | null
+          search_volume: number
+          target_url: string | null
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          current_position?: number | null
+          difficulty?: number
+          id?: string
+          keyword: string
+          last_checked_at?: string | null
+          previous_position?: number | null
+          search_volume?: number
+          target_url?: string | null
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          current_position?: number | null
+          difficulty?: number
+          id?: string
+          keyword?: string
+          last_checked_at?: string | null
+          previous_position?: number | null
+          search_volume?: number
+          target_url?: string | null
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
       }
       user_ai_access: {
         Row: {
