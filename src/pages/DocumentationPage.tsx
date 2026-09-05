@@ -2,6 +2,8 @@ import { Seo } from "@/components/Seo";
 import { Link } from "react-router-dom";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard, Globe, Rocket, Layers, FileText, Store, Database,
   KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
@@ -794,20 +796,141 @@ const sectionLabel = (id: string) =>
 
 
 
-function buildGuideHtml(selectedIds?: string[], forPrint = true): string {
+/** Static UI strings embedded in the printable guide (translated like the rest). */
+const GUIDE_STATIC_STRINGS = [
+  "3XVISIBILITY — Quickstart Guide",
+  "Complete step-by-step guide to every tool. Generated",
+  "Table of contents",
+  "Tips:",
+  "Fields:",
+  "Permissions:",
+  "Test steps:",
+  "Troubleshooting:",
+  "Tip:",
+];
+
+/** Every English string the guide renders, so we can translate them in one pass. */
+function collectGuideStrings(): string[] {
+  const out = new Set<string>(GUIDE_STATIC_STRINGS);
+  GUIDE_SECTIONS.forEach((s) => out.add(s.title));
+  TOOLS.forEach((t) => {
+    out.add(t.group);
+    out.add(t.name);
+    out.add(t.short);
+    t.steps.forEach((s) => out.add(s));
+    t.tips?.forEach((s) => out.add(s));
+  });
+  CONNECT_TUTORIALS.forEach((t) => {
+    out.add(t.name);
+    out.add(t.intro);
+    t.fields.forEach((f) => {
+      out.add(f.label);
+      out.add(f.desc);
+    });
+    t.permissions.forEach((s) => out.add(s));
+    t.test.forEach((s) => out.add(s));
+    t.troubleshoot?.forEach((s) => out.add(s));
+  });
+  E2E_WALKTHROUGH.forEach((s) => {
+    out.add(s.title);
+    out.add(s.detail);
+    if (s.tip) out.add(s.tip);
+  });
+  FAQS.forEach((f) => {
+    out.add(f.q);
+    out.add(f.a);
+  });
+  TROUBLESHOOTING.forEach((c) => {
+    out.add(c.category);
+    c.problems.forEach((p) => {
+      out.add(p.symptom);
+      out.add(p.fix);
+    });
+  });
+  QUICK_FLOW.forEach((s) => {
+    out.add(s.title);
+    out.add(s.desc);
+  });
+  return [...out];
+}
+
+const GUIDE_TR_CACHE_PREFIX = "docs-guide-tr:";
+
+/**
+ * Translate all guide strings into the target language via the translate-ui
+ * edge function, in batches. Results are cached in localStorage so repeat
+ * downloads are instant. Falls back to the English original on any failure.
+ */
+async function translateGuideStrings(target: string): Promise<(s: string) => string> {
+  const identity = (s: string) => s;
+  if (target === "en") return identity;
+
+  const strings = collectGuideStrings();
+  const cacheKey = `${GUIDE_TR_CACHE_PREFIX}${target}`;
+  let map: Record<string, string> = {};
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached) as Record<string, string>;
+      if (parsed && typeof parsed === "object" && strings.every((s) => typeof parsed[s] === "string")) {
+        map = parsed;
+      }
+    }
+  } catch {
+    /* ignore cache errors */
+  }
+
+  const missing = strings.filter((s) => typeof map[s] !== "string");
+  if (missing.length) {
+    const BATCH = 20;
+    for (let i = 0; i < missing.length; i += BATCH) {
+      const slice = missing.slice(i, i + BATCH);
+      try {
+        const { data, error } = await supabase.functions.invoke("translate-ui", {
+          body: { texts: slice, target },
+        });
+        const raw = (data as { translations?: unknown[] })?.translations;
+        if (!error && Array.isArray(raw) && raw.length === slice.length) {
+          slice.forEach((s, j) => {
+            const v = raw[j];
+            map[s] = typeof v === "string" && v.trim() ? v : s;
+          });
+        } else {
+          slice.forEach((s) => {
+            map[s] = s;
+          });
+        }
+      } catch {
+        slice.forEach((s) => {
+          map[s] = s;
+        });
+      }
+    }
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(map));
+    } catch {
+      /* storage full — fine, we still have the in-memory map */
+    }
+  }
+
+  return (s: string) => map[s] ?? s;
+}
+
+function buildGuideHtml(selectedIds?: string[], forPrint = true, tr: (s: string) => string = (s) => s): string {
+  const e = (s: string) => esc(tr(s));
   const li = (items: string[]) =>
-    `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
+    `<ul>${items.map((i) => `<li>${e(i)}</li>`).join("")}</ul>`;
 
   const toolsHtml = GROUPS.map((group) => {
     const tools = TOOLS.filter((t) => t.group === group);
-    return `<h2>${esc(group)}</h2>${tools
+    return `<h2>${e(group)}</h2>${tools
       .map(
         (t) => `
         <div class="card">
-          <h3>${esc(t.name)}</h3>
-          <p class="muted">${esc(t.short)}</p>
+          <h3>${e(t.name)}</h3>
+          <p class="muted">${e(t.short)}</p>
           ${li(t.steps)}
-          ${t.tips?.length ? `<p class="tip"><strong>Tips:</strong></p>${li(t.tips)}` : ""}
+          ${t.tips?.length ? `<p class="tip"><strong>${e("Tips:")}</strong></p>${li(t.tips)}` : ""}
         </div>`
       )
       .join("")}`;
@@ -816,39 +939,39 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true): string {
   const connectHtml = CONNECT_TUTORIALS.map(
     (t) => `
     <div class="card">
-      <h3>${esc(t.name)}</h3>
-      <p class="muted">${esc(t.intro)}</p>
-      <p><strong>Fields:</strong></p>
-      <ul>${t.fields.map((f) => `<li><strong>${esc(f.label)}:</strong> ${esc(f.desc)}</li>`).join("")}</ul>
-      <p><strong>Permissions:</strong></p>${li(t.permissions)}
-      <p><strong>Test steps:</strong></p><ol>${t.test.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
-      ${t.troubleshoot?.length ? `<p><strong>Troubleshooting:</strong></p>${li(t.troubleshoot)}` : ""}
+      <h3>${e(t.name)}</h3>
+      <p class="muted">${e(t.intro)}</p>
+      <p><strong>${e("Fields:")}</strong></p>
+      <ul>${t.fields.map((f) => `<li><strong>${e(f.label)}:</strong> ${e(f.desc)}</li>`).join("")}</ul>
+      <p><strong>${e("Permissions:")}</strong></p>${li(t.permissions)}
+      <p><strong>${e("Test steps:")}</strong></p><ol>${t.test.map((s) => `<li>${e(s)}</li>`).join("")}</ol>
+      ${t.troubleshoot?.length ? `<p><strong>${e("Troubleshooting:")}</strong></p>${li(t.troubleshoot)}` : ""}
     </div>`
   ).join("");
 
   const walkHtml = `<ol>${E2E_WALKTHROUGH.map(
     (s) =>
-      `<li><strong>${esc(s.title)}</strong><br/>${esc(s.detail)}${
-        s.tip ? `<br/><em>Tip: ${esc(s.tip)}</em>` : ""
+      `<li><strong>${e(s.title)}</strong><br/>${e(s.detail)}${
+        s.tip ? `<br/><em>${e("Tip:")} ${e(s.tip)}</em>` : ""
       }</li>`
   ).join("")}</ol>`;
 
   const faqHtml = FAQS.map(
-    (f) => `<div class="faq"><p><strong>Q: ${esc(f.q)}</strong></p><p>${esc(f.a)}</p></div>`
+    (f) => `<div class="faq"><p><strong>Q: ${e(f.q)}</strong></p><p>${e(f.a)}</p></div>`
   ).join("");
 
   const troubleHtml = TROUBLESHOOTING.map(
     (c) => `
     <div class="card">
-      <h3>${esc(c.category)}</h3>
+      <h3>${e(c.category)}</h3>
       <ul>${c.problems
-        .map((p) => `<li><strong>${esc(p.symptom)}</strong><br/>${esc(p.fix)}</li>`)
+        .map((p) => `<li><strong>${e(p.symptom)}</strong><br/>${e(p.fix)}</li>`)
         .join("")}</ul>
     </div>`
   ).join("");
 
   const quickHtml = `<ol>${QUICK_FLOW.map(
-    (s) => `<li><strong>${esc(s.title)}</strong> — ${esc(s.desc)}</li>`
+    (s) => `<li><strong>${e(s.title)}</strong> — ${e(s.desc)}</li>`
   ).join("")}</ol>`;
 
   const allSections = [
@@ -868,11 +991,11 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true): string {
       : allSections;
 
   const tocHtml = `<nav class="toc">
-    <h2 class="toc-title">Table of contents</h2>
+    <h2 class="toc-title">${e("Table of contents")}</h2>
     <ol>${sections
       .map(
         (s, i) =>
-          `<li><a href="#${s.id}"><span class="toc-name">${esc(s.title)}</span><span class="toc-dots"></span><span class="toc-page">${i + 1}</span></a></li>`
+          `<li><a href="#${s.id}"><span class="toc-name">${e(s.title)}</span><span class="toc-dots"></span><span class="toc-page">${i + 1}</span></a></li>`
       )
       .join("")}</ol>
   </nav>`;
@@ -880,7 +1003,7 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true): string {
   const sectionsHtml = sections
     .map(
       (s, i) =>
-        `<section id="${s.id}" class="doc-section"><h2><span class="sec-num">${i + 1}.</span> ${esc(
+        `<section id="${s.id}" class="doc-section"><h2><span class="sec-num">${i + 1}.</span> ${e(
           s.title
         )}</h2>${s.body}</section>`
     )
@@ -925,8 +1048,8 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true): string {
     </style></head>
     <body>
       <div class="cover">
-        <h1>3XVISIBILITY — Quickstart Guide</h1>
-        <p>Complete step-by-step guide to every tool. Generated ${new Date().toLocaleDateString()}</p>
+        <h1>${e("3XVISIBILITY — Quickstart Guide")}</h1>
+        <p>${e("Complete step-by-step guide to every tool. Generated")} ${new Date().toLocaleDateString()}</p>
       </div>
       ${tocHtml}
       ${sectionsHtml}
