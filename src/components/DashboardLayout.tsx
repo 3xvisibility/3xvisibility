@@ -95,14 +95,14 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
                 variant="ghost"
                 size="icon"
                 className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
-                title="Restart onboarding tour"
+                title={t("dashboard.restartTour")}
                 onClick={() => {
                   localStorage.removeItem("onboarding-completed");
                   window.dispatchEvent(new Event("onboarding:start"));
                 }}
               >
                 <HelpCircle className="h-4 w-4" />
-                <span className="sr-only">Restart onboarding tour</span>
+                <span className="sr-only">{t("dashboard.restartTour")}</span>
               </Button>
               <Button
                 variant="ghost"

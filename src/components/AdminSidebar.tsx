@@ -1,3 +1,4 @@
+import { useLanguage } from "@/i18n/LanguageContext";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import logo3x from "@/assets/logo-3x.png";
 import {
@@ -73,6 +74,7 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ onLogout }: AdminSidebarProps) {
+  const { t } = useLanguage();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { basePath } = useWorkspace();
@@ -114,7 +116,7 @@ export function AdminSidebar({ onLogout }: AdminSidebarProps) {
           <img src={logo3x} alt="3XVISIBILITY" width={1107} height={261} className="h-8 w-auto object-contain shrink-0" />
           {!collapsed && (
             <div className="min-w-0">
-              <p className="text-sm font-semibold truncate">Admin Panel</p>
+              <p className="text-sm font-semibold truncate">{t("admin.panel")}</p>
             </div>
           )}
         </div>
@@ -135,7 +137,7 @@ export function AdminSidebar({ onLogout }: AdminSidebarProps) {
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              AI Control
+              {t("admin.aiControl")}
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
@@ -166,7 +168,7 @@ export function AdminSidebar({ onLogout }: AdminSidebarProps) {
                     className="flex items-center gap-3 px-3 py-2 rounded-lg w-full text-left text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
                   >
                     <ArrowLeft className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span className="text-sm">Back to App</span>}
+                    {!collapsed && <span className="text-sm">{t("admin.backToApp")}</span>}
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -184,7 +186,7 @@ export function AdminSidebar({ onLogout }: AdminSidebarProps) {
                 className="flex items-center gap-3 px-3 py-2 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-150"
               >
                 <LogOut className="h-4 w-4 shrink-0" />
-                {!collapsed && <span className="text-sm">Log out</span>}
+                {!collapsed && <span className="text-sm">{t("sidebar.logout")}</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
