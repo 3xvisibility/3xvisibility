@@ -50,43 +50,56 @@ function toText(v: unknown, fallback: string, depth = 0): string {
   return fallback;
 }
 
-async function libreBatch(texts: string[], target: string): Promise<string[] | null> {
-  for (const url of LIBRE_ENDPOINTS) {
-    try {
-      const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), 15_000);
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q: texts, source: "auto", target, format: "text" }),
-        signal: ctrl.signal,
-      });
-      clearTimeout(to);
-      if (!res.ok) continue;
-      const data = await res.json();
-      // Some endpoints return array, some return single object when q is array
-      if (Array.isArray(data?.translatedText)) return (data.translatedText as unknown[]).map((v, i) => toText(v, texts[i] ?? ""));
-      if (Array.isArray(data) && data.length === texts.length) {
-        return data.map((d: unknown, i: number) => toText(d, texts[i] ?? ""));
-      }
-      // Fallback: re-issue per item if batch unsupported
-      const out: string[] = [];
-      for (const q of texts) {
-        const r = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q, source: "auto", target, format: "text" }),
-        });
-        if (!r.ok) return null;
-        const d = await r.json();
-        out.push(toText(d?.translatedText ?? d, q));
-      }
-      return out;
-    } catch (_e) {
-      continue;
+/** Query one LibreTranslate endpoint with a short timeout. */
+async function libreOnce(url: string, texts: string[], target: string, timeoutMs: number): Promise<string[] | null> {
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q: texts, source: "auto", target, format: "text" }),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (Array.isArray(data?.translatedText) && data.translatedText.length === texts.length) {
+      return (data.translatedText as unknown[]).map((v, i) => toText(v, texts[i] ?? ""));
     }
+    if (Array.isArray(data) && data.length === texts.length) {
+      return data.map((d: unknown, i: number) => toText(d, texts[i] ?? ""));
+    }
+    return null;
+  } catch (_e) {
+    return null;
+  } finally {
+    clearTimeout(to);
   }
-  return null;
+}
+
+/**
+ * Ask every endpoint at once and keep the first usable answer.
+ * Sequential probing with 15s timeouts used to make a single request take ~17s.
+ */
+async function libreBatch(texts: string[], target: string): Promise<string[] | null> {
+  const TIMEOUT_MS = 3_500;
+  return await new Promise<string[] | null>((resolve) => {
+    let pending = LIBRE_ENDPOINTS.length;
+    let settled = false;
+    for (const url of LIBRE_ENDPOINTS) {
+      libreOnce(url, texts, target, TIMEOUT_MS).then((out) => {
+        if (!settled && out) {
+          settled = true;
+          resolve(out);
+          return;
+        }
+        if (--pending === 0 && !settled) {
+          settled = true;
+          resolve(null);
+        }
+      });
+    }
+  });
 }
 
 async function aiBatch(texts: string[], target: string): Promise<string[] | null> {
