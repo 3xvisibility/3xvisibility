@@ -1,29 +1,47 @@
 // Runs before `vite dev` and `vite build` (predev/prebuild hooks); writes public/sitemap.xml.
 
-import { writeFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
 
 const BASE_URL = "https://3xvisibility.com";
 
 interface SitemapEntry {
   path: string;
-  lastmod?: string;
   changefreq?: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
   priority?: string;
 }
 
-const today = new Date().toISOString().split("T")[0];
+// Blog slugs come from the same source the /blog route reads.
+function blogSlugs(): string[] {
+  try {
+    const src = readFileSync(resolve("src/data/blog.ts"), "utf8");
+    const matches = [...src.matchAll(/^\s*slug:\s*"([^"]+)"/gm)].map((m) => m[1]);
+    return [...new Set(matches)];
+  } catch {
+    return [];
+  }
+}
 
 // Only public, indexable routes. Dashboard/auth/admin routes are intentionally excluded.
+// No <lastmod>: the project has no authoritative per-page change timestamp.
 const entries: SitemapEntry[] = [
-  { path: "/", changefreq: "weekly", priority: "1.0", lastmod: today },
-  { path: "/about", changefreq: "monthly", priority: "0.7", lastmod: today },
-  { path: "/blog", changefreq: "weekly", priority: "0.8", lastmod: today },
-  { path: "/contact", changefreq: "monthly", priority: "0.6", lastmod: today },
-  { path: "/docs", changefreq: "monthly", priority: "0.7", lastmod: today },
-  { path: "/changelog", changefreq: "weekly", priority: "0.5", lastmod: today },
-  { path: "/privacy", changefreq: "yearly", priority: "0.3", lastmod: today },
-  { path: "/terms", changefreq: "yearly", priority: "0.3", lastmod: today },
+  { path: "/", changefreq: "weekly", priority: "1.0" },
+  { path: "/about", changefreq: "monthly", priority: "0.7" },
+  { path: "/blog", changefreq: "weekly", priority: "0.8" },
+  ...blogSlugs().map((slug) => ({
+    path: `/blog/${slug}`,
+    changefreq: "monthly" as const,
+    priority: "0.7",
+  })),
+  { path: "/docs", changefreq: "monthly", priority: "0.8" },
+  { path: "/guides/wordpress", changefreq: "monthly", priority: "0.7" },
+  { path: "/guides/shopify", changefreq: "monthly", priority: "0.7" },
+  { path: "/contact", changefreq: "monthly", priority: "0.6" },
+  { path: "/changelog", changefreq: "weekly", priority: "0.5" },
+  { path: "/terms", changefreq: "yearly", priority: "0.3" },
+  { path: "/cgv", changefreq: "yearly", priority: "0.3" },
+  { path: "/confidentialite", changefreq: "yearly", priority: "0.3" },
+  { path: "/mentions-legales", changefreq: "yearly", priority: "0.3" },
 ];
 
 function generateSitemap(entries: SitemapEntry[]) {
@@ -31,7 +49,6 @@ function generateSitemap(entries: SitemapEntry[]) {
     [
       `  <url>`,
       `    <loc>${BASE_URL}${e.path}</loc>`,
-      e.lastmod ? `    <lastmod>${e.lastmod}</lastmod>` : null,
       e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
       e.priority ? `    <priority>${e.priority}</priority>` : null,
       `  </url>`,
