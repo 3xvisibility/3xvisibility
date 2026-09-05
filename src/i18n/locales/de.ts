@@ -1836,6 +1836,8 @@ const de: Record<string, string> = {
   "showcase.live": "Live",
   "sidebar.abTesting": "A/B-Tests",
   "sidebar.account": "Konto",
+  "sidebar.websiteSection": "Website",
+  "sidebar.seoSection": "SEO",
   "sidebar.admin": "Admin",
   "sidebar.affiliate": "Partnerprogramm",
   "sidebar.aiScanner": "KI-Scanner",

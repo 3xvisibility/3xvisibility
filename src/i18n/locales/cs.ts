@@ -1801,6 +1801,8 @@ const cs: Record<string, string> = {
   "showcase.live": "Online",
   "sidebar.abTesting": "A/B testy",
   "sidebar.account": "Účet",
+  "sidebar.websiteSection": "Web",
+  "sidebar.seoSection": "SEO",
   "sidebar.admin": "Admin",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI skener",

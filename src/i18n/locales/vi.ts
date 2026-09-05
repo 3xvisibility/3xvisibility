@@ -1801,6 +1801,8 @@ const vi: Record<string, string> = {
   "showcase.live": "Trực tuyến",
   "sidebar.abTesting": "Thử nghiệm A/B",
   "sidebar.account": "Tài khoản",
+  "sidebar.websiteSection": "Trang web",
+  "sidebar.seoSection": "SEO",
   "sidebar.admin": "Quản trị",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "Quét AI",

@@ -1801,6 +1801,8 @@ const no: Record<string, string> = {
   "showcase.live": "Live",
   "sidebar.abTesting": "A/B-tester",
   "sidebar.account": "Konto",
+  "sidebar.websiteSection": "Nettside",
+  "sidebar.seoSection": "SEO",
   "sidebar.admin": "Admin",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI-skanner",

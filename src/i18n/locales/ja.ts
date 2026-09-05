@@ -1801,6 +1801,8 @@ const ja: Record<string, string> = {
   "showcase.live": "ライブ",
   "sidebar.abTesting": "A/Bテスト",
   "sidebar.account": "アカウント",
+  "sidebar.websiteSection": "ウェブサイト",
+  "sidebar.seoSection": "SEO",
   "sidebar.admin": "管理者",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AIスキャナー",

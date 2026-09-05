@@ -1801,6 +1801,8 @@ const ar: Record<string, string> = {
   "showcase.live": "مباشر",
   "sidebar.abTesting": "اختبار A/B",
   "sidebar.account": "الحساب",
+  "sidebar.websiteSection": "الموقع",
+  "sidebar.seoSection": "تحسين محركات البحث",
   "sidebar.admin": "المسؤول",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "ماسح AI",

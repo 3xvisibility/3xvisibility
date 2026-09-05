@@ -1836,6 +1836,8 @@ const fr: Record<string, string> = {
   "showcase.live": "En ligne",
   "sidebar.abTesting": "Tests A/B",
   "sidebar.account": "Compte",
+  "sidebar.websiteSection": "Site web",
+  "sidebar.seoSection": "SEO",
   "sidebar.admin": "Admin",
   "sidebar.affiliate": "Affiliation",
   "sidebar.aiScanner": "Scanner IA",

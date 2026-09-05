@@ -1801,6 +1801,8 @@ const he: Record<string, string> = {
   "showcase.live": "חי",
   "sidebar.abTesting": "בדיקות A/B",
   "sidebar.account": "חשבון",
+  "sidebar.websiteSection": "אתר",
+  "sidebar.seoSection": "קידום אתרים",
   "sidebar.admin": "מנהל",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "סורק AI",

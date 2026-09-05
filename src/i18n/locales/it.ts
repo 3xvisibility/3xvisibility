@@ -1810,6 +1810,8 @@ const it: Record<string, string> = {
   "showcase.live": "Vivi",
   "sidebar.abTesting": "Test A/B",
   "sidebar.account": "Conto",
+  "sidebar.websiteSection": "Sito web",
+  "sidebar.seoSection": "SEO",
   "sidebar.admin": "Ammin",
   "sidebar.affiliate": "Affiliato",
   "sidebar.aiScanner": "AI Scanner",
