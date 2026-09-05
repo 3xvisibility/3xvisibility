@@ -52,6 +52,7 @@ const managementNav: AdminNavItem[] = [
   { label: "Generated Pages", section: "pages", icon: FileText },
   { label: "Subscriptions", section: "subscriptions", icon: CreditCard },
   { label: "Payments", section: "payments", icon: CreditCard },
+  { label: "Plans & Pricing", section: "plan-pricing", icon: CreditCard },
 ];
 
 const aiNav: AdminNavItem[] = [
