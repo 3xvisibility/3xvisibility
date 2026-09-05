@@ -1801,6 +1801,8 @@ const bn: Record<string, string> = {
   "showcase.live": "অনলাইন",
   "sidebar.abTesting": "A/B পরীক্ষা",
   "sidebar.account": "অ্যাকাউন্ট",
+  "sidebar.websiteSection": "ওয়েবসাইট",
+  "sidebar.seoSection": "এসইও",
   "sidebar.admin": "অ্যাডমিন",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI স্ক্যানার",

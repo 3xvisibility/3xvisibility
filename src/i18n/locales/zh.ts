@@ -1801,6 +1801,8 @@ const zh: Record<string, string> = {
   "showcase.live": "上线",
   "sidebar.abTesting": "A/B测试",
   "sidebar.account": "账户",
+  "sidebar.websiteSection": "网站",
+  "sidebar.seoSection": "SEO",
   "sidebar.admin": "管理员",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI扫描器",

@@ -1801,6 +1801,8 @@ const ru: Record<string, string> = {
   "showcase.live": "Онлайн",
   "sidebar.abTesting": "A/B тестирование",
   "sidebar.account": "Аккаунт",
+  "sidebar.websiteSection": "Сайт",
+  "sidebar.seoSection": "SEO",
   "sidebar.admin": "Админ",
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "ИИ сканер",
