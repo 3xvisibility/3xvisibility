@@ -368,6 +368,7 @@
   "billing.invoicesPdfFailed": "PDF konnte nicht erstellt werden",
   "billing.invoicesRefunded": "erstattet",
   "billing.invoicesSubscriptionPayment": "Abonnementzahlung",
+  "billing.invoicesEmpty": "Noch keine Rechnungen. Sie erscheinen hier nach Ihrer ersten Zahlung.",
   "billing.invoicesTitle": "Rechnungen",
   "billing.limitReached": "Limit erreicht – upgraden Sie, um fortzufahren",
   "billing.limitReachedAddMore": "Limit erreicht – upgraden Sie, um mehr hinzuzufügen",

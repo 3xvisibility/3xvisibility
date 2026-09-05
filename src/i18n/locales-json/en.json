@@ -368,6 +368,7 @@
   "billing.invoicesPdfFailed": "Could not build the PDF",
   "billing.invoicesRefunded": "refunded",
   "billing.invoicesSubscriptionPayment": "Subscription payment",
+  "billing.invoicesEmpty": "No invoices yet. They will appear here after your first payment.",
   "billing.invoicesTitle": "Invoices",
   "billing.limitReached": "Limit reached — upgrade to continue",
   "billing.limitReachedAddMore": "Limit reached — upgrade to add more",

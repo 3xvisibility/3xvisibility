@@ -2309,6 +2309,7 @@ const es: Record<string, string> = {
   "billing.detailsSaved": "Datos de facturación guardados",
   "billing.detailsSaveFailed": "No se pudieron guardar tus datos de facturación",
   "billing.detailsSignInRequired": "Debes iniciar sesión",
+  "billing.invoicesEmpty": "A\u00fan no hay facturas. Aparecer\u00e1n aqu\u00ed despu\u00e9s de tu primer pago.",
   "billing.invoicesTitle": "Facturas",
   "billing.invoicesDownloadZip": "Descargar todo (ZIP)",
   "billing.invoicesMergedPdf": "PDF combinado",

@@ -2309,6 +2309,7 @@ const de: Record<string, string> = {
   "billing.detailsSaved": "Rechnungsdaten gespeichert",
   "billing.detailsSaveFailed": "Ihre Rechnungsdaten konnten nicht gespeichert werden",
   "billing.detailsSignInRequired": "Sie müssen angemeldet sein",
+  "billing.invoicesEmpty": "Noch keine Rechnungen. Sie erscheinen hier nach Ihrer ersten Zahlung.",
   "billing.invoicesTitle": "Rechnungen",
   "billing.invoicesDownloadZip": "Alle herunterladen (ZIP)",
   "billing.invoicesMergedPdf": "Zusammengeführtes PDF",

@@ -2309,6 +2309,7 @@ const fr: Record<string, string> = {
   "billing.detailsSaved": "Coordonnées de facturation enregistrées",
   "billing.detailsSaveFailed": "Impossible d'enregistrer vos coordonnées de facturation",
   "billing.detailsSignInRequired": "Vous devez être connecté",
+  "billing.invoicesEmpty": "Aucune facture pour le moment. Elles appara\u00eetront ici apr\u00e8s votre premier paiement.",
   "billing.invoicesTitle": "Factures",
   "billing.invoicesDownloadZip": "Tout télécharger (ZIP)",
   "billing.invoicesMergedPdf": "PDF fusionné",

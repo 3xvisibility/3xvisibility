@@ -2309,6 +2309,7 @@ const en: Record<string, string> = {
   "billing.detailsSaved": "Billing details saved",
   "billing.detailsSaveFailed": "Could not save your billing details",
   "billing.detailsSignInRequired": "You need to be signed in",
+  "billing.invoicesEmpty": "No invoices yet. They will appear here after your first payment.",
   "billing.invoicesTitle": "Invoices",
   "billing.invoicesDownloadZip": "Download all (ZIP)",
   "billing.invoicesMergedPdf": "Merged PDF",

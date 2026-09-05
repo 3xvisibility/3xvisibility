@@ -368,6 +368,7 @@
   "billing.invoicesPdfFailed": "Impossible de générer le PDF",
   "billing.invoicesRefunded": "remboursé",
   "billing.invoicesSubscriptionPayment": "Paiement d'abonnement",
+  "billing.invoicesEmpty": "Aucune facture pour le moment. Elles appara\u00eetront ici apr\u00e8s votre premier paiement.",
   "billing.invoicesTitle": "Factures",
   "billing.limitReached": "Limite atteinte — mettez à niveau pour continuer",
   "billing.limitReachedAddMore": "Limite atteinte — mettez à niveau pour en ajouter",
