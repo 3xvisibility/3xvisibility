@@ -22,9 +22,13 @@ export function MyInvoicesCard() {
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["my-invoices"],
     queryFn: async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id;
+      if (!uid) return [] as InvoiceRecord[];
       const { data, error } = await supabase
         .from("invoices")
         .select("*")
+        .eq("user_id", uid)
         .order("issued_at", { ascending: false })
         .limit(50);
       if (error) throw error;
