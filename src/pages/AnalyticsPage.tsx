@@ -42,6 +42,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
+import KeywordRankingsPanel from "@/components/analytics/KeywordRankingsPanel";
+import CompetitorComparisonPanel from "@/components/analytics/CompetitorComparisonPanel";
 
 const CHART_TOOLTIP_STYLE = {
   backgroundColor: "hsl(var(--popover))",
@@ -831,6 +833,10 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Keyword rankings + competitor comparison */}
+      <KeywordRankingsPanel workspaceId={wsId} />
+      <CompetitorComparisonPanel workspaceId={wsId} />
     </div>
   );
 }
