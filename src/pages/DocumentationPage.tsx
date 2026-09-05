@@ -991,11 +991,11 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true, tr: (s: string)
       : allSections;
 
   const tocHtml = `<nav class="toc">
-    <h2 class="toc-title">Table of contents</h2>
+    <h2 class="toc-title">${e("Table of contents")}</h2>
     <ol>${sections
       .map(
         (s, i) =>
-          `<li><a href="#${s.id}"><span class="toc-name">${esc(s.title)}</span><span class="toc-dots"></span><span class="toc-page">${i + 1}</span></a></li>`
+          `<li><a href="#${s.id}"><span class="toc-name">${e(s.title)}</span><span class="toc-dots"></span><span class="toc-page">${i + 1}</span></a></li>`
       )
       .join("")}</ol>
   </nav>`;
@@ -1003,7 +1003,7 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true, tr: (s: string)
   const sectionsHtml = sections
     .map(
       (s, i) =>
-        `<section id="${s.id}" class="doc-section"><h2><span class="sec-num">${i + 1}.</span> ${esc(
+        `<section id="${s.id}" class="doc-section"><h2><span class="sec-num">${i + 1}.</span> ${e(
           s.title
         )}</h2>${s.body}</section>`
     )
@@ -1048,8 +1048,8 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true, tr: (s: string)
     </style></head>
     <body>
       <div class="cover">
-        <h1>3XVISIBILITY — Quickstart Guide</h1>
-        <p>Complete step-by-step guide to every tool. Generated ${new Date().toLocaleDateString()}</p>
+        <h1>${e("3XVISIBILITY — Quickstart Guide")}</h1>
+        <p>${e("Complete step-by-step guide to every tool. Generated")} ${new Date().toLocaleDateString()}</p>
       </div>
       ${tocHtml}
       ${sectionsHtml}
