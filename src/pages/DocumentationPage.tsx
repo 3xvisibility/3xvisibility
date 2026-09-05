@@ -1206,6 +1206,7 @@ export default function DocumentationPage() {
         });
       }
     } catch (err) {
+      printWindow?.close();
       console.error("Guide generation failed", err);
       toast.error("Could not generate the guide", {
         id: toastId,
