@@ -2787,7 +2787,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         })()}
                       </div>
                       <ScrollArea className="max-h-[220px] rounded-lg border border-border/50">
-                        <table className="w-full text-[11px]">
+                        <table data-no-autotranslate className="w-full text-[11px]">
                           <thead className="sticky top-0 bg-muted/60 backdrop-blur">
                             <tr>
                               <th className="text-left font-medium text-muted-foreground px-2 py-1.5 w-8">#</th>
@@ -3138,7 +3138,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                 <span className="ml-auto text-[10px] text-muted-foreground">Click any cell to edit</span>
                               </div>
                               <ScrollArea className="h-[220px] rounded-lg border border-border bg-background">
-                                <table className="w-full text-[11px]">
+                                <table data-no-autotranslate className="w-full text-[11px]">
                                   <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
                                     <tr>
                                       <th className="text-[10px] font-medium text-muted-foreground px-2 py-1.5 text-left w-8">#</th>
@@ -3669,7 +3669,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                               </div>
                             </div>
                             <div className="overflow-x-auto">
-                              <table className="w-full text-[11px]">
+                              <table data-no-autotranslate className="w-full text-[11px]">
                                 <thead className="bg-background border-b border-border">
                                   <tr>
                                     <th className="text-left px-2.5 py-1.5 font-medium text-muted-foreground w-16">Slot</th>
@@ -3790,7 +3790,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                               </div>
                             </div>
                             <div className="overflow-x-auto max-h-72">
-                              <table className="w-full text-[11px]">
+                              <table data-no-autotranslate className="w-full text-[11px]">
                                 <thead className="sticky top-0 bg-background border-b border-border">
                                   <tr>
                                     <th className="text-left px-2.5 py-1.5 font-medium text-muted-foreground w-10">#</th>
