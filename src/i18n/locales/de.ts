@@ -2283,6 +2283,17 @@ const de: Record<string, string> = {
   "campaigns.retryGeneration": "Generierung wiederholen",
   "campaigns.runCampaign": "Kampagne starten",
   "campaigns.confirmDeleteNamed": "Kampagne \"{name}\" löschen? Dies kann nicht rückgängig gemacht werden.",
+  "dashboard.aiCredits": "KI-Guthaben",
+  "dashboard.creditsLow": "Guthaben geht zur Neige. Upgraden Sie, um weiter zu generieren.",
+  "dashboard.usageBreakdown": "Nutzungsübersicht",
+  "dashboard.shopifyStores": "Shopify-Shops",
+  "dashboard.noShopifyStores": "Noch keine Shopify-Shops. Verbinden Sie unten einen.",
+  "dashboard.connectNewShopify": "Neuen Shopify-Shop verbinden",
+  "dashboard.restartTour": "Einführungstour neu starten",
+  "common.toggleSidebar": "Seitenleiste ein-/ausblenden",
+  "admin.panel": "Admin-Bereich",
+  "admin.aiControl": "KI-Steuerung",
+  "admin.backToApp": "Zurück zur App",
 };
 
 export default de;

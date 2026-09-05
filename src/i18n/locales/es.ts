@@ -2283,6 +2283,17 @@ const es: Record<string, string> = {
   "campaigns.retryGeneration": "Reintentar generación",
   "campaigns.runCampaign": "Ejecutar campaña",
   "campaigns.confirmDeleteNamed": "¿Eliminar la campaña \"{name}\"? Esta acción no se puede deshacer.",
+  "dashboard.aiCredits": "Créditos de IA",
+  "dashboard.creditsLow": "Quedan pocos créditos. Mejora tu plan para seguir generando.",
+  "dashboard.usageBreakdown": "Desglose de uso",
+  "dashboard.shopifyStores": "Tiendas de Shopify",
+  "dashboard.noShopifyStores": "Aún no hay tiendas de Shopify. Conecta una abajo.",
+  "dashboard.connectNewShopify": "Conectar una nueva tienda de Shopify",
+  "dashboard.restartTour": "Reiniciar el tour de bienvenida",
+  "common.toggleSidebar": "Mostrar u ocultar el menú",
+  "admin.panel": "Panel de administración",
+  "admin.aiControl": "Control de IA",
+  "admin.backToApp": "Volver a la aplicación",
 };
 
 export default es;
