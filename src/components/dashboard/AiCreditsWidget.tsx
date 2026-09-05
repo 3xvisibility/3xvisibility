@@ -1,3 +1,4 @@
+import { useLanguage } from "@/i18n/LanguageContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +36,7 @@ interface AiCreditsWidgetProps {
 }
 
 export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { basePath } = useWorkspace();
   const { data: credits, isLoading: creditsLoading, isError: creditsError } = useQuery({
@@ -87,7 +89,7 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <Zap className="h-4 w-4 text-primary" />
-          AI Credits
+          {t("dashboard.aiCredits")}
           <Badge variant="outline" className="ml-auto capitalize text-[10px]">{plan}</Badge>
         </CardTitle>
       </CardHeader>
@@ -114,7 +116,7 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
             {pct <= lowThreshold && (
               <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2">
                 <p className="text-xs text-destructive flex-1">
-                  Credits running low. Upgrade to continue generating.
+                  {t("dashboard.creditsLow")}
                 </p>
                 <Button
                   size="sm"
@@ -129,7 +131,7 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
 
             {sortedBreakdown.length > 0 && (
               <div className="pt-1 space-y-1.5">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Usage Breakdown</p>
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t("dashboard.usageBreakdown")}</p>
                 {sortedBreakdown.map(([type, count]) => {
                   const meta = PROMPT_TYPE_META[type] || PROMPT_TYPE_META.default;
                   const Icon = meta.icon;

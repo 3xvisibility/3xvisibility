@@ -1,3 +1,4 @@
+import { useLanguage } from "@/i18n/LanguageContext";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -25,6 +26,7 @@ interface ConnectionRow {
 }
 
 export function ShopifyConnectionsWidget() {
+  const { t } = useLanguage();
   const { currentWorkspace, basePath } = useWorkspace();
   const wsId = currentWorkspace?.id;
   const queryClient = useQueryClient();
@@ -112,7 +114,7 @@ export function ShopifyConnectionsWidget() {
             <ShoppingBag className="h-4 w-4" />
           </div>
           <div className="min-w-0">
-            <CardTitle className="text-base">Shopify Stores</CardTitle>
+            <CardTitle className="text-base">{t("dashboard.shopifyStores")}</CardTitle>
             <p className="text-xs text-muted-foreground">
               {connectedCount} of {totalCount} connected
             </p>
@@ -128,7 +130,7 @@ export function ShopifyConnectionsWidget() {
           <>
             {(sites?.length ?? 0) === 0 ? (
               <div className="rounded-md border border-dashed border-border p-4 text-center">
-                <p className="text-sm text-muted-foreground">No Shopify stores yet. Connect one below.</p>
+                <p className="text-sm text-muted-foreground">{t("dashboard.noShopifyStores")}</p>
               </div>
             ) : (
               <ul className="space-y-2">
@@ -210,7 +212,7 @@ export function ShopifyConnectionsWidget() {
 
             {/* Connect a new store */}
             <div className="border-t border-border pt-3">
-              <p className="text-xs font-medium text-foreground mb-2">Connect a new Shopify store</p>
+              <p className="text-xs font-medium text-foreground mb-2">{t("dashboard.connectNewShopify")}</p>
               <div className="flex gap-2">
                 <Input
                   value={newDomain}
