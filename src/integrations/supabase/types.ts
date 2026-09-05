@@ -2247,6 +2247,60 @@ export type Database = {
           },
         ]
       }
+      plan_pricing: {
+        Row: {
+          active: boolean
+          ai_limit: number
+          base_credits: number
+          created_at: string
+          currency: string
+          label: string
+          monthly_price: number
+          pages_limit: number
+          plan: string
+          popular: boolean
+          sort_order: number
+          stripe_price_id: string | null
+          stripe_product_id: string | null
+          updated_at: string
+          yearly_discount: number
+        }
+        Insert: {
+          active?: boolean
+          ai_limit?: number
+          base_credits?: number
+          created_at?: string
+          currency?: string
+          label: string
+          monthly_price?: number
+          pages_limit?: number
+          plan: string
+          popular?: boolean
+          sort_order?: number
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          updated_at?: string
+          yearly_discount?: number
+        }
+        Update: {
+          active?: boolean
+          ai_limit?: number
+          base_credits?: number
+          created_at?: string
+          currency?: string
+          label?: string
+          monthly_price?: number
+          pages_limit?: number
+          plan?: string
+          popular?: boolean
+          sort_order?: number
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          updated_at?: string
+          yearly_discount?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ai_content_length: string
