@@ -31,6 +31,7 @@ import { AdminOverviewPanel } from "@/components/admin/AdminOverviewPanel";
 import { ContactInboxPanel } from "@/components/admin/ContactInboxPanel";
 import { TemplateSyncPanel } from "@/components/admin/TemplateSyncPanel";
 import { MarketplaceCatalogPanel } from "@/components/admin/MarketplaceCatalogPanel";
+import { PlanPricingPanel } from "@/components/admin/PlanPricingPanel";
 import { UserDetailDialog } from "@/components/admin/UserDetailDialog";
 import { EditUserProfileDialog } from "@/components/admin/EditUserProfileDialog";
 import { AdminPaymentsPanel } from "@/components/admin/AdminPaymentsPanel";
@@ -968,6 +969,7 @@ export default function AdminPage() {
           <TabsTrigger value="ai-access" className="text-xs gap-1"><ShieldCheck className="h-3 w-3" />AI Access</TabsTrigger>
           <TabsTrigger value="template-sync" className="text-xs gap-1"><RefreshCw className="h-3 w-3" />Template Sync</TabsTrigger>
           <TabsTrigger value="marketplace" className="text-xs gap-1"><Store className="h-3 w-3" />Marketplace</TabsTrigger>
+          <TabsTrigger value="plan-pricing" className="text-xs gap-1"><CreditCard className="h-3 w-3" />Plans & Pricing</TabsTrigger>
           <TabsTrigger value="settings" className="text-xs gap-1"><UserCog className="h-3 w-3" />Settings</TabsTrigger>
         </TabsList>
 
@@ -1011,6 +1013,10 @@ export default function AdminPage() {
           <AdminConnectionsPanel />
         </TabsContent>
 
+
+        <TabsContent value="plan-pricing" className="space-y-4">
+          <PlanPricingPanel />
+        </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
           <SystemSettingsPanel />

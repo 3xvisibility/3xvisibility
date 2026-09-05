@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react";
 import { startPlanCheckout } from "@/lib/checkout";
 import type { PlanName } from "@/lib/plan-features";
 import { useToast } from "@/hooks/use-toast";
+import { usePlanPricing } from "@/hooks/usePlanPricing";
 import { BrandIconTooltip, BrandTooltipProvider } from "@/components/billing/BrandIconTooltip";
 import { Tooltip, TooltipArrow, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -139,12 +140,30 @@ export function PricingSection() {
   };
 
 
-  const plans = [
+  const { data: pricingOverrides } = usePlanPricing();
+  const overrideFor = (key: string) => pricingOverrides?.find((p) => p.plan === key);
+
+  const basePlans = [
     { key: "free" as PlanName, name: t("pricing.free"), monthlyPrice: 0, description: t("pricing.freeDesc"), popular: false, icon: <Layers className="h-5 w-5" />, cta: t("pricing.tryFree"), baseCredits: 10, creditSteps: [1], features: ["10 credits to try", "SEO score only (no auto-fix)", `10 ${t("pricing.aiGenerations")}`, `1 ${t("pricing.campaignsPerMonth")}`, `1 ${t("pricing.templates").toLowerCase()}`, `1 ${t("pricing.websites").toLowerCase()}`, `${t("pricing.wordpress")} ${t("pricing.only")}`, t("pricing.noCreditCard")] },
     { key: "starter" as PlanName, name: t("pricing.starter"), monthlyPrice: 19, description: t("pricing.starterDesc"), popular: false, icon: <Zap className="h-5 w-5" />, cta: t("pricing.getStarted"), baseCredits: 100, creditSteps: [1, 3, 5], features: [t("pricing.trialFeature"), "SEO + SEA scoring & auto-fix", `100 ${t("pricing.aiGenerations")}`, `10 ${t("pricing.campaignsPerMonth")}`, `10 ${t("pricing.templates").toLowerCase()}`, `2 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress"), `${t("pricing.email")} ${t("pricing.support").toLowerCase()}`] },
     { key: "pro" as PlanName, name: t("pricing.pro"), monthlyPrice: 59, description: t("pricing.proDesc"), popular: true, icon: <Sparkles className="h-5 w-5" />, cta: t("pricing.startProTrial"), baseCredits: 300, creditSteps: [1, 2, 3], features: [t("pricing.trialFeature"), "SEO + SEA + GEO auto-fix (80+ guaranteed)", `1,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.campaignsPerMonth")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `10 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + ", " + t("pricing.shopify") + " & PrestaShop", t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), `${t("pricing.priority")} ${t("pricing.support").toLowerCase()}`] },
     { key: "agency" as PlanName, name: t("pricing.agency"), monthlyPrice: 149, description: t("pricing.agencyDesc"), popular: false, icon: <Crown className="h-5 w-5" />, cta: t("pricing.contactSales"), baseCredits: 500, creditSteps: [1, 2], features: [t("pricing.trialFeature"), "Bulk SEO + SEA + GEO optimization", `5,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.campaignsPerMonth")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `${t("pricing.unlimited")} ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + ", " + t("pricing.shopify") + " & PrestaShop", t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), t("pricing.teamCollaboration"), `${t("pricing.dedicated")} ${t("pricing.support").toLowerCase()}`] },
   ];
+
+  // Admin-managed prices/labels win over the built-in defaults.
+  const plans = basePlans
+    .filter((p) => !pricingOverrides?.length || !!overrideFor(p.key))
+    .map((p) => {
+      const o = overrideFor(p.key);
+      if (!o) return p;
+      return {
+        ...p,
+        name: o.label || p.name,
+        monthlyPrice: Number(o.monthly_price),
+        popular: o.popular,
+        baseCredits: o.base_credits || p.baseCredits,
+      };
+    });
 
   const comparisonFeatures = [
     {
