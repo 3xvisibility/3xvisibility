@@ -1059,9 +1059,13 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true, tr: (s: string)
   return html;
 }
 
-function buildAndDownloadGuide(selectedIds?: string[]) {
-  const html = buildGuideHtml(selectedIds, true);
-  const w = window.open("", "_blank");
+function buildAndDownloadGuide(
+  selectedIds?: string[],
+  tr: (s: string) => string = (s) => s,
+  preOpenedWindow?: Window | null
+) {
+  const html = buildGuideHtml(selectedIds, true, tr);
+  const w = preOpenedWindow !== undefined ? preOpenedWindow : window.open("", "_blank");
   if (!w) {
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
@@ -1079,6 +1083,7 @@ function buildAndDownloadGuide(selectedIds?: string[]) {
 }
 
 export default function DocumentationPage() {
+  const { language } = useLanguage();
   const [active, setActive] = useState<string>("getting-started");
   const [generating, setGenerating] = useState(false);
   const [selectedSections, setSelectedSections] = useState<string[]>(
@@ -1180,10 +1185,14 @@ export default function DocumentationPage() {
     }
     setGenerating(true);
     const toastId = toast.loading("Generating your guide…");
+    // Open the print window synchronously so the browser doesn't treat it as a
+    // popup after the async translation step.
+    const printWindow = window.open("", "_blank");
     try {
-      // Yield a frame so the loading UI paints before the heavy work.
-      await new Promise((r) => setTimeout(r, 50));
-      const result = buildAndDownloadGuide(ids);
+      // Translate all guide strings into the site's current language first —
+      // the downloaded/printed file matches the UI language (EN/FR/DE/ES…).
+      const tr = await translateGuideStrings(language);
+      const result = buildAndDownloadGuide(ids, tr, printWindow);
       recordExport(ids, presetOverride ?? activePreset);
       if (result === "download") {
         toast.success("Guide downloaded", {
@@ -1197,6 +1206,7 @@ export default function DocumentationPage() {
         });
       }
     } catch (err) {
+      printWindow?.close();
       console.error("Guide generation failed", err);
       toast.error("Could not generate the guide", {
         id: toastId,
