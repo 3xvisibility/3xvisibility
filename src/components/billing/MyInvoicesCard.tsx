@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, FileArchive, FilePlus2, FileText, FileCheck2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/i18n/LanguageContext";
 import {
   downloadInvoicePdf,
   downloadInvoicesZip,
@@ -17,6 +18,7 @@ import {
 
 /** Invoices belonging to the signed-in customer, each downloadable as a PDF. */
 export function MyInvoicesCard() {
+  const { t } = useLanguage();
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["my-invoices"],
     queryFn: async () => {
@@ -38,9 +40,9 @@ export function MyInvoicesCard() {
     try {
       if (mode === "zip") await downloadInvoicesZip(invoices);
       else downloadMergedInvoicePdf(invoices);
-      toast.success(`${invoices.length} invoices downloaded`);
+      toast.success(t("billing.invoicesDownloaded", { count: invoices.length }));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Bulk download failed");
+      toast.error(e instanceof Error ? e.message : t("billing.invoicesBulkFailed"));
     } finally {
       setBulkBusy(false);
     }
@@ -52,7 +54,7 @@ export function MyInvoicesCard() {
     <Card className="shadow-surface border-0">
       <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0 gap-3">
         <CardTitle className="flex items-center gap-2 text-lg">
-          <FileText className="h-4 w-4 text-primary" /> Invoices
+          <FileText className="h-4 w-4 text-primary" /> {t("billing.invoicesTitle")}
         </CardTitle>
         {invoices.length > 1 && (
           <div className="flex flex-wrap gap-2">
@@ -67,7 +69,7 @@ export function MyInvoicesCard() {
               ) : (
                 <FileArchive className="h-3.5 w-3.5 mr-1" />
               )}
-              Download all (ZIP)
+              {t("billing.invoicesDownloadZip")}
             </Button>
             <Button
               size="sm"
@@ -75,7 +77,7 @@ export function MyInvoicesCard() {
               disabled={bulkBusy}
               onClick={() => runBulk("merged")}
             >
-              <FilePlus2 className="h-3.5 w-3.5 mr-1" /> Merged PDF
+              <FilePlus2 className="h-3.5 w-3.5 mr-1" /> {t("billing.invoicesMergedPdf")}
             </Button>
           </div>
         )}
@@ -134,12 +136,12 @@ export function MyInvoicesCard() {
                     )}
                   {(inv.amount_refunded || 0) > 0 && (
                     <span className="text-[11px] text-destructive">
-                      -{formatInvoiceMoney(inv.amount_refunded, inv.currency)} refunded
+                      -{formatInvoiceMoney(inv.amount_refunded, inv.currency)} {t("billing.invoicesRefunded")}
                     </span>
                   )}
                 </div>
                 <p className="text-sm font-medium truncate">
-                  {inv.plan || inv.description || "Subscription payment"}
+                  {inv.plan || inv.description || t("billing.invoicesSubscriptionPayment")}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {new Date(inv.issued_at).toLocaleDateString("en-US", { dateStyle: "medium" })}
@@ -156,11 +158,11 @@ export function MyInvoicesCard() {
                     try {
                       downloadInvoicePdf(inv);
                     } catch (e) {
-                      toast.error(e instanceof Error ? e.message : "Could not build the PDF");
+                      toast.error(e instanceof Error ? e.message : t("billing.invoicesPdfFailed"));
                     }
                   }}
                 >
-                  <Download className="h-3.5 w-3.5 mr-1" /> PDF
+                  <Download className="h-3.5 w-3.5 mr-1" /> {t("billing.invoicesPdf")}
                 </Button>
               </div>
             </div>
