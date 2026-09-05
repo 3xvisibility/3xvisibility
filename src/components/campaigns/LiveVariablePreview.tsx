@@ -294,7 +294,7 @@ export function LiveVariablePreview({ templateVars, patterns, rows, manualMappin
             {matrix.rows.length !== 1 ? "s" : ""} · scroll horizontally to see more.
           </p>
           <div className="overflow-auto max-h-80 rounded-lg border border-border/60">
-            <table className="min-w-full text-[11px]">
+            <table data-no-autotranslate className="min-w-full text-[11px]">
               <thead className="bg-muted/60 sticky top-0 z-10">
                 <tr>
                   <th className="px-2.5 py-1.5 text-left font-semibold sticky left-0 bg-muted/60 border-r border-border/60">

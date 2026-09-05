@@ -139,7 +139,7 @@ export function RowMappingPreview({ csvData = [], templateContent = "", classNam
                 <TableHead className="h-8 text-[11px] uppercase tracking-wider text-muted-foreground">Value in this row</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody data-no-autotranslate>
               {headers.map((header) => {
                 const variableKey = header.toLowerCase();
                 const isUsed = usedVars.has(variableKey);
