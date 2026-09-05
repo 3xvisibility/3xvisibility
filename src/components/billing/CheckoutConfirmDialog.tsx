@@ -12,10 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowRight, CalendarClock, Gift, Loader2, ShieldCheck } from "lucide-react";
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
-
-function fmtLimit(v: number) {
-  return v === -1 ? "Unlimited" : v.toLocaleString();
-}
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface CheckoutConfirmDialogProps {
   open: boolean;
@@ -42,49 +39,55 @@ export function CheckoutConfirmDialog({
   loading,
   onConfirm,
 }: CheckoutConfirmDialogProps) {
+  const { t } = useLanguage();
+  const fmtLimit = (v: number) =>
+    v === -1 ? t("billing.checkoutUnlimited") : v.toLocaleString();
   const from = PLAN_FEATURES[currentPlan];
   const to = PLAN_FEATURES[targetPlan];
 
   const rows: { label: string; from: number; to: number }[] = [
-    { label: "Pages / month", from: from.pagesLimit, to: to.pagesLimit },
-    { label: "AI credits / month", from: from.aiLimit, to: to.aiLimit },
-    { label: "Websites", from: from.websites, to: to.websites },
-    { label: "Templates", from: from.templates, to: to.templates },
-    { label: "Campaigns", from: from.campaigns, to: to.campaigns },
+    { label: t("billing.featurePagesMonth"), from: from.pagesLimit, to: to.pagesLimit },
+    { label: t("billing.featureAiCreditsMonth"), from: from.aiLimit, to: to.aiLimit },
+    { label: t("billing.featureWebsites"), from: from.websites, to: to.websites },
+    { label: t("billing.featureTemplates"), from: from.templates, to: to.templates },
+    { label: t("billing.featureCampaigns"), from: from.campaigns, to: to.campaigns },
   ];
 
   const billedText = isYearly
-    ? `€${(monthlyPrice * 12).toLocaleString()} billed yearly (€${monthlyPrice}/mo)`
-    : `€${monthlyPrice}/month billed monthly`;
+    ? t("billing.checkoutBilledYearly", {
+        total: (monthlyPrice * 12).toLocaleString(),
+        monthly: monthlyPrice,
+      })
+    : t("billing.checkoutBilledMonthly", { monthly: monthlyPrice });
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-lg">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            Confirm {to.label} plan
+            {t("billing.checkoutConfirmTitle", { plan: to.label })}
             {trialEligible && (
               <Badge variant="secondary" className="gap-1">
-                <Gift className="h-3 w-3" /> 30-day trial
+                <Gift className="h-3 w-3" /> {t("billing.checkoutTrialBadge")}
               </Badge>
             )}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Review what you get and how billing works before continuing to secure checkout.
+            {t("billing.checkoutReview")}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="space-y-4">
           <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
             <div className="flex items-baseline justify-between">
-              <span className="text-sm text-muted-foreground">Price</span>
+              <span className="text-sm text-muted-foreground">{t("billing.checkoutPrice")}</span>
               <span className="text-sm font-semibold">{billedText}</span>
             </div>
           </div>
 
           <div className="rounded-xl border border-border/60 overflow-hidden">
             <div className="grid grid-cols-3 gap-2 px-4 py-2 text-[11px] uppercase tracking-wider text-muted-foreground bg-muted/40">
-              <span>Limit</span>
+              <span>{t("billing.checkoutLimit")}</span>
               <span className="text-center">{from.label}</span>
               <span className="text-center">{to.label}</span>
             </div>
@@ -106,31 +109,25 @@ export function CheckoutConfirmDialog({
             {trialEligible && (
               <li className="flex gap-2">
                 <Gift className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <span>
-                  Your first subscription includes a <strong className="text-foreground">30-day free trial</strong>. You
-                  are not charged until the trial ends.
-                </span>
+                <span>{t("billing.checkoutTrialNote")}</span>
               </li>
             )}
             <li className="flex gap-2">
               <CalendarClock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <span>
-                Renews automatically {isYearly ? "every year" : "every month"}. Cancel anytime from the customer
-                portal — you keep access until the end of the paid period.
-              </span>
+              <span>{t(isYearly ? "billing.checkoutRenewsYearly" : "billing.checkoutRenewsMonthly")}</span>
             </li>
             <li className="flex gap-2">
               <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <span>Payment is handled securely by Stripe in a new tab. Downgrades apply limits immediately.</span>
+              <span>{t("billing.checkoutStripeNote")}</span>
             </li>
           </ul>
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={loading}>{t("common.cancel")}</AlertDialogCancel>
           <Button onClick={onConfirm} disabled={loading}>
             {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {trialEligible ? "Start free trial" : "Continue to checkout"}
+            {t(trialEligible ? "billing.checkoutStartTrial" : "billing.checkoutContinue")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

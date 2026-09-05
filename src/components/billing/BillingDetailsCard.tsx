@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Building2, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface BillingDetails {
   billing_name: string;
@@ -40,6 +41,7 @@ const EMPTY: BillingDetails = {
 
 /** Lets the signed-in customer maintain the details printed on their invoices. */
 export function BillingDetailsCard() {
+  const { t } = useLanguage();
   const [form, setForm] = useState<BillingDetails>(EMPTY);
   const [saving, setSaving] = useState(false);
 
@@ -82,7 +84,7 @@ export function BillingDetailsCard() {
     try {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth.user?.id;
-      if (!uid) throw new Error("You need to be signed in");
+      if (!uid) throw new Error(t("billing.detailsSignInRequired"));
       const payload = {
         ...form,
         billing_language: form.billing_language === "auto" ? null : form.billing_language,
@@ -92,9 +94,9 @@ export function BillingDetailsCard() {
         .update(payload as never)
         .eq("user_id", uid);
       if (error) throw error;
-      toast.success("Billing details saved");
+      toast.success(t("billing.detailsSaved"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save your billing details");
+      toast.error(e instanceof Error ? e.message : t("billing.detailsSaveFailed"));
     } finally {
       setSaving(false);
     }
@@ -104,10 +106,10 @@ export function BillingDetailsCard() {
     <Card className="shadow-surface border-0">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
-          <Building2 className="h-4 w-4 text-primary" /> Billing details
+          <Building2 className="h-4 w-4 text-primary" /> {t("billing.detailsTitle")}
         </CardTitle>
         <CardDescription>
-          These details appear on every invoice we issue to you.
+          {t("billing.detailsDesc")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -120,7 +122,7 @@ export function BillingDetailsCard() {
           <>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="billing_name">Company or full name</Label>
+                <Label htmlFor="billing_name">{t("billing.detailsName")}</Label>
                 <Input
                   id="billing_name"
                   value={form.billing_name}
@@ -128,7 +130,7 @@ export function BillingDetailsCard() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="billing_email">Billing email</Label>
+                <Label htmlFor="billing_email">{t("billing.detailsEmail")}</Label>
                 <Input
                   id="billing_email"
                   type="email"
@@ -137,7 +139,7 @@ export function BillingDetailsCard() {
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="billing_address">Address</Label>
+                <Label htmlFor="billing_address">{t("billing.detailsAddress")}</Label>
                 <Input
                   id="billing_address"
                   value={form.billing_address}
@@ -145,7 +147,7 @@ export function BillingDetailsCard() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="billing_postal_code">Postal code</Label>
+                <Label htmlFor="billing_postal_code">{t("billing.detailsPostalCode")}</Label>
                 <Input
                   id="billing_postal_code"
                   value={form.billing_postal_code}
@@ -153,7 +155,7 @@ export function BillingDetailsCard() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="billing_city">City</Label>
+                <Label htmlFor="billing_city">{t("billing.detailsCity")}</Label>
                 <Input
                   id="billing_city"
                   value={form.billing_city}
@@ -161,7 +163,7 @@ export function BillingDetailsCard() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="billing_country">Country</Label>
+                <Label htmlFor="billing_country">{t("billing.detailsCountry")}</Label>
                 <Input
                   id="billing_country"
                   value={form.billing_country}
@@ -169,7 +171,7 @@ export function BillingDetailsCard() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="billing_vat_number">VAT number (optional)</Label>
+                <Label htmlFor="billing_vat_number">{t("billing.detailsVat")}</Label>
                 <Input
                   id="billing_vat_number"
                   value={form.billing_vat_number}
@@ -177,7 +179,7 @@ export function BillingDetailsCard() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="billing_language">Invoice language</Label>
+                <Label htmlFor="billing_language">{t("billing.detailsLanguage")}</Label>
                 <Select
                   value={form.billing_language}
                   onValueChange={set("billing_language")}
@@ -186,7 +188,7 @@ export function BillingDetailsCard() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="auto">Automatic</SelectItem>
+                    <SelectItem value="auto">{t("billing.detailsLanguageAuto")}</SelectItem>
                     <SelectItem value="fr">Français</SelectItem>
                     <SelectItem value="de">Deutsch</SelectItem>
                     <SelectItem value="es">Español</SelectItem>
@@ -202,7 +204,7 @@ export function BillingDetailsCard() {
                 ) : (
                   <Save className="h-4 w-4 mr-2" />
                 )}
-                Save billing details
+                {t("billing.detailsSave")}
               </Button>
             </div>
           </>
