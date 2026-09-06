@@ -90,9 +90,19 @@ const statusBadge = (item: PaymentItem) => {
   return { label: item.status, className: "bg-muted text-muted-foreground border-border" };
 };
 
+const PAYMENT_RANGES: Record<string, number | null> = {
+  all: null,
+  "7d": 7,
+  "30d": 30,
+  "90d": 90,
+  "365d": 365,
+};
+
 export function AdminPaymentsPanel() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [planFilter, setPlanFilter] = useState("all");
+  const [rangeFilter, setRangeFilter] = useState("all");
   const [refunding, setRefunding] = useState<PaymentItem | null>(null);
   const [refundReason, setRefundReason] = useState<
     "duplicate" | "fraudulent" | "requested_by_customer"
@@ -161,16 +171,33 @@ export function AdminPaymentsPanel() {
   });
 
   const items = listQuery.data?.items ?? [];
+
+  const planOptions = Array.from(
+    new Set(
+      items
+        .map((it) => it.app_user?.plan || it.product_name)
+        .filter((p): p is string => !!p),
+    ),
+  ).sort();
+
+  const rangeDays = PAYMENT_RANGES[rangeFilter];
+  const cutoff = rangeDays ? Date.now() - rangeDays * 86_400_000 : null;
+
   const filtered = items.filter((it) => {
+    if (planFilter !== "all" && (it.app_user?.plan || it.product_name) !== planFilter)
+      return false;
+    if (cutoff && it.created * 1000 < cutoff) return false;
     if (!search.trim()) return true;
     const q = search.toLowerCase();
-    return (
+    return Boolean(
       it.customer_email?.toLowerCase().includes(q) ||
-      it.app_user?.full_name?.toLowerCase().includes(q) ||
-      it.product_name?.toLowerCase().includes(q) ||
-      it.id.toLowerCase().includes(q)
+        it.app_user?.full_name?.toLowerCase().includes(q) ||
+        it.product_name?.toLowerCase().includes(q) ||
+        it.id.toLowerCase().includes(q),
     );
   });
+
+  const filteredTotal = filtered.reduce((s, i) => s + (i.amount - (i.amount_refunded || 0)), 0);
 
   return (
     <div className="space-y-6">
@@ -275,15 +302,53 @@ export function AdminPaymentsPanel() {
           </Button>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              className="pl-8"
-              placeholder="Filter by email, name, product…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                className="pl-8"
+                placeholder="Filter by email, name, product…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <Select value={rangeFilter} onValueChange={setRangeFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All time</SelectItem>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+                <SelectItem value="365d">Last 12 months</SelectItem>
+              </SelectContent>
+            </Select>
+            {planOptions.length > 0 && (
+              <Select value={planFilter} onValueChange={setPlanFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All plans</SelectItem>
+                  {planOptions.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
+
+          <div className="text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">{filtered.length}</span> payments ·
+            net{" "}
+            <span className="font-medium text-foreground">
+              {formatMoney(filteredTotal, filtered[0]?.currency || "eur")}
+            </span>
+          </div>
+
 
           {listQuery.isLoading ? (
             <div className="space-y-2">
