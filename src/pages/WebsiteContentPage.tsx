@@ -47,7 +47,7 @@ interface ContentItem {
   title: string;
   slug: string;
   url: string;
-  type: "page" | "product";
+  type: "page" | "product" | "post" | "category";
   status: string;
   content: string;
   excerpt: string;
@@ -74,7 +74,7 @@ export default function WebsiteContentPage() {
   const { toast } = useToast();
   const persistedUiState = useMemo(() => readWebsiteContentUiState(), []);
   const [selectedWebsite, setSelectedWebsite] = useState<string>(() => persistedUiState?.selectedWebsite ?? "");
-  const [activeTab, setActiveTab] = useState<"pages" | "products">(() => persistedUiState?.activeTab ?? "pages");
+  const [activeTab, setActiveTab] = useState<"pages" | "products" | "posts" | "categories">(() => (persistedUiState?.activeTab as "pages" | "products" | "posts" | "categories") ?? "pages");
   const [search, setSearch] = useState(() => persistedUiState?.search ?? "");
   const [templatePage, setTemplatePage] = useState<ContentItem | null>(null);
   const [previewPage, setPreviewPage] = useState<ContentItem | null>(null);
@@ -190,12 +190,57 @@ export default function WebsiteContentPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Fetch blog posts
+  const {
+    data: postsData,
+    isLoading: loadingPosts,
+    refetch: refetchPosts,
+    error: postsError,
+  } = useQuery({
+    queryKey: ["site-content", effectiveWebsite, "posts"],
+    enabled: !!effectiveWebsite,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", {
+        body: { website_id: effectiveWebsite, content_type: "posts" },
+      });
+      if (error) throw new Error(friendlyError(error.message));
+      if (data?.error) throw new Error(friendlyError(data.error));
+      return (data.items || []) as ContentItem[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch categories
+  const {
+    data: categoriesData,
+    isLoading: loadingCategories,
+    refetch: refetchCategories,
+    error: categoriesError,
+  } = useQuery({
+    queryKey: ["site-content", effectiveWebsite, "categories"],
+    enabled: !!effectiveWebsite,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", {
+        body: { website_id: effectiveWebsite, content_type: "categories" },
+      });
+      if (error) throw new Error(friendlyError(error.message));
+      if (data?.error) throw new Error(friendlyError(data.error));
+      return (data.items || []) as ContentItem[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const pages = pagesData || [];
   const products = productsData || [];
-  const allItems = useMemo(() => [...pages, ...products], [pages, products]);
-  const currentItems = activeTab === "pages" ? pages : products;
-  const isLoading = activeTab === "pages" ? loadingPages : loadingProducts;
-  const error = activeTab === "pages" ? pagesError : productsError;
+  const posts = postsData || [];
+  const categories = categoriesData || [];
+  const allItems = useMemo(() => [...pages, ...products, ...posts], [pages, products, posts]);
+  const currentItems =
+    activeTab === "pages" ? pages : activeTab === "products" ? products : activeTab === "posts" ? posts : categories;
+  const isLoading =
+    activeTab === "pages" ? loadingPages : activeTab === "products" ? loadingProducts : activeTab === "posts" ? loadingPosts : loadingCategories;
+  const error =
+    activeTab === "pages" ? pagesError : activeTab === "products" ? productsError : activeTab === "posts" ? postsError : categoriesError;
 
   const filtered = useMemo(() => {
     if (!search) return currentItems;
@@ -227,13 +272,13 @@ export default function WebsiteContentPage() {
     if (!restoredItem) return;
 
     setEditPage(restoredItem);
-    setActiveTab(restoredItem.type === "product" ? "products" : "pages");
+    setActiveTab(restoredItem.type === "product" ? "products" : restoredItem.type === "post" ? "posts" : "pages");
   }, [allItems, editPage, effectiveWebsite, persistedEditPageId]);
 
   const handleEdit = (item: ContentItem) => {
     setEditPage(item);
     setPersistedEditPageId(item.id);
-    setActiveTab(item.type === "product" ? "products" : "pages");
+    setActiveTab(item.type === "product" ? "products" : item.type === "post" ? "posts" : "pages");
   };
 
   const handleEditOpenChange = (open: boolean) => {
@@ -456,7 +501,7 @@ export default function WebsiteContentPage() {
       )}
 
       {/* Tabs + Search */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "pages" | "products")}>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "pages" | "products" | "posts" | "categories")}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <TabsList>
             <TabsTrigger value="pages" className="text-xs gap-1.5">
@@ -466,6 +511,14 @@ export default function WebsiteContentPage() {
             <TabsTrigger value="products" className="text-xs gap-1.5">
               <ShoppingBag className="h-3.5 w-3.5" />
               {t("websiteContent.productsTab")} ({products.length})
+            </TabsTrigger>
+            <TabsTrigger value="posts" className="text-xs gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              Posts ({posts.length})
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="text-xs gap-1.5">
+              <Link2 className="h-3.5 w-3.5" />
+              Categories ({categories.length})
             </TabsTrigger>
           </TabsList>
           <div className="relative w-full sm:w-64">
@@ -498,6 +551,19 @@ export default function WebsiteContentPage() {
             onPreview={setPreviewPage}
             onEdit={handleEdit}
           />
+        </TabsContent>
+        <TabsContent value="posts" className="mt-3">
+          <ContentList
+            items={filtered}
+            isLoading={isLoading}
+            error={error}
+            onDetectTemplate={setTemplatePage}
+            onPreview={setPreviewPage}
+            onEdit={handleEdit}
+          />
+        </TabsContent>
+        <TabsContent value="categories" className="mt-3">
+          <CategoryList items={filtered} isLoading={isLoading} error={error} />
         </TabsContent>
       </Tabs>
 
@@ -533,9 +599,76 @@ export default function WebsiteContentPage() {
           onUpdated={() => {
             refetchPages();
             refetchProducts();
+            refetchPosts();
+            refetchCategories();
           }}
         />
       )}
+    </div>
+  );
+}
+
+// ---- Category List component ----
+
+function CategoryList({
+  items,
+  isLoading,
+  error,
+}: {
+  items: ContentItem[];
+  isLoading: boolean;
+  error: Error | null;
+}) {
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-14 w-full" />
+        ))}
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-sm text-destructive flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4" />
+          {error.message}
+        </CardContent>
+      </Card>
+    );
+  }
+  if (items.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-sm text-muted-foreground">No categories found on this site.</CardContent>
+      </Card>
+    );
+  }
+  return (
+    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((cat) => (
+        <Card key={cat.id}>
+          <CardContent className="p-3 space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium truncate">{decodeHtmlEntities(cat.title)}</span>
+              <Badge variant="secondary" className="text-[10px] shrink-0">{cat.status}</Badge>
+            </div>
+            <div className="text-[11px] text-muted-foreground truncate">/{cat.slug}</div>
+            {cat.content && (
+              <p className="text-[11px] text-muted-foreground line-clamp-2">{decodeHtmlEntities(cat.content)}</p>
+            )}
+            <a
+              href={cat.url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+            >
+              <ExternalLink className="h-3 w-3" /> View
+            </a>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
