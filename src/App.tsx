@@ -14,6 +14,7 @@ import type { Session } from "@supabase/supabase-js";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
+const PricingPage = lazy(() => import("./pages/PricingPage"));
 
 
 
@@ -301,6 +302,7 @@ const App = () => {
             <Route path="/migrate-to-supabase" element={<MigrateToSupabasePage />} />
             <Route path="/guides/wordpress" element={<WordPressGuidePage />} />
             <Route path="/guides/shopify" element={<ShopifyGuidePage />} />
+            <Route path="/pricing" element={<PricingPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />
