@@ -90,9 +90,19 @@ const statusBadge = (item: PaymentItem) => {
   return { label: item.status, className: "bg-muted text-muted-foreground border-border" };
 };
 
+const PAYMENT_RANGES: Record<string, number | null> = {
+  all: null,
+  "7d": 7,
+  "30d": 30,
+  "90d": 90,
+  "365d": 365,
+};
+
 export function AdminPaymentsPanel() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [planFilter, setPlanFilter] = useState("all");
+  const [rangeFilter, setRangeFilter] = useState("all");
   const [refunding, setRefunding] = useState<PaymentItem | null>(null);
   const [refundReason, setRefundReason] = useState<
     "duplicate" | "fraudulent" | "requested_by_customer"
