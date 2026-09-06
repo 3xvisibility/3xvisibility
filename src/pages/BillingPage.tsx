@@ -19,7 +19,7 @@ import { BillingDetailsCard } from "@/components/billing/BillingDetailsCard";
 import { TrialStatusWidget } from "@/components/billing/TrialStatusWidget";
 import { DowngradePlanDialog } from "@/components/billing/DowngradePlanDialog";
 import { CheckoutConfirmDialog } from "@/components/billing/CheckoutConfirmDialog";
-import { PricingComparisonTable } from "@/components/billing/PricingComparisonTable";
+
 
 import { logAudit } from "@/lib/audit";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
