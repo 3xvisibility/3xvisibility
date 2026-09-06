@@ -200,13 +200,13 @@ export function MyInvoicesCard() {
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
           </>
-        ) : invoices.length === 0 ? (
+        ) : allInvoices.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
             <FileText className="h-8 w-8 text-muted-foreground/40" />
             <p className="text-sm text-muted-foreground">{t("billing.invoicesEmpty")}</p>
           </div>
         ) : (
-          invoices.map((inv) => (
+          allInvoices.map((inv) => (
             <div
               key={inv.id}
               className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 px-4 py-3"
