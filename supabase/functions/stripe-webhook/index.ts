@@ -628,7 +628,10 @@ serve(async (req) => {
         }
         const email = charge.billing_details?.email ?? charge.receipt_email ?? undefined;
         const name = charge.billing_details?.name ?? undefined;
-        const userId = await findUserIdByEmail(email);
+        const userId =
+          (charge.metadata?.user_id as string | undefined) ??
+          (await findUserIdByEmail(email));
+
 
         await handleSuccessfulPayment({
           stripeInvoiceId: null,
