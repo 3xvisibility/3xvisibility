@@ -71,6 +71,7 @@ export const seoNav: NavItem[] = [
   { titleKey: "sidebar.seoAudit", path: "seo-audit", icon: ClipboardCheck },
   { titleKey: "sidebar.indexing", path: "indexing", icon: SearchIcon, requiredFeature: "indexing" },
   { titleKey: "sidebar.analytics", path: "analytics", icon: BarChart3 },
+  { titleKey: "sidebar.domainAnalysis", path: "domain-analysis", icon: Globe },
   { titleKey: "sidebar.performance", path: "performance", icon: Activity },
 ];
 

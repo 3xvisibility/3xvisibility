@@ -1807,6 +1807,7 @@ const cs: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI skener",
   "sidebar.analytics": "Analytika",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "Fakturace",
   "sidebar.campaigns": "Kampaně",
   "sidebar.contentCalendar": "Kalendář obsahu",

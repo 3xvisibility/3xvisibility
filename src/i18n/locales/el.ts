@@ -1807,6 +1807,7 @@ const el: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI σαρωτής",
   "sidebar.analytics": "Αναλυτικά",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "Τιμολόγηση",
   "sidebar.campaigns": "Καμπάνιες",
   "sidebar.contentCalendar": "Ημερολόγιο περιεχομένου",

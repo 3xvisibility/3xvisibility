@@ -1807,6 +1807,7 @@ const sv: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI-skanner",
   "sidebar.analytics": "Analys",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "Fakturering",
   "sidebar.campaigns": "Kampanjer",
   "sidebar.contentCalendar": "Innehållskalender",

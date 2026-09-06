@@ -1807,6 +1807,7 @@ const zh: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI扫描器",
   "sidebar.analytics": "分析",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "账单",
   "sidebar.campaigns": "活动",
   "sidebar.contentCalendar": "内容日历",

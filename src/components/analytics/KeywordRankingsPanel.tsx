@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowDown, ArrowUp, Minus, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Minus, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import {
   CartesianGrid,
   Legend,
@@ -180,6 +180,50 @@ export default function KeywordRankingsPanel({ workspaceId }: { workspaceId?: st
     },
   });
 
+  const { data: ownDomain } = useQuery({
+    queryKey: ["own-domain", workspaceId],
+    enabled: !!workspaceId,
+    queryFn: async () => {
+      const { data: self } = await supabase
+        .from("competitors")
+        .select("domain")
+        .eq("workspace_id", workspaceId!)
+        .eq("is_self", true)
+        .maybeSingle();
+      if (self?.domain) return self.domain as string;
+      const { data: site } = await supabase
+        .from("websites")
+        .select("url")
+        .eq("workspace_id", workspaceId!)
+        .limit(1)
+        .maybeSingle();
+      return (site?.url as string) || null;
+    },
+  });
+
+  const refreshRankings = useMutation({
+    mutationFn: async () => {
+      if (!ownDomain) throw new Error("Add your own site first (mark a domain as \"my site\" in Competitor Comparison).");
+      const { data, error } = await supabase.functions.invoke("semrush-seo", {
+        body: { action: "sync_keywords", workspace_id: workspaceId, domain: ownDomain },
+      });
+      if (error) throw new Error((data as any)?.error || error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as { updated: number; checked: number };
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["tracked-keywords", workspaceId] });
+      qc.invalidateQueries({ queryKey: ["keyword-rankings", workspaceId] });
+      toast({
+        title: data.updated
+          ? `Updated ${data.updated} of ${data.checked} keyword(s) with live positions`
+          : "No live positions found for your tracked keywords yet",
+      });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Could not refresh rankings", description: e.message, variant: "destructive" }),
+  });
+
   const tracked = keywords.slice(0, 5);
 
   const chartData = useMemo(() => {
@@ -223,6 +267,15 @@ export default function KeywordRankingsPanel({ workspaceId }: { workspaceId?: st
               <Badge variant="outline" className="text-[10px]">Avg. position {avgPosition}</Badge>
             )}
             <Badge variant="outline" className="text-[10px]">{topTen} in top 10</Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={refreshRankings.isPending || keywords.length === 0}
+              onClick={() => refreshRankings.mutate()}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 mr-1 ${refreshRankings.isPending ? "animate-spin" : ""}`} />
+              {refreshRankings.isPending ? "Refreshing…" : "Refresh live data"}
+            </Button>
             <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
               <Plus className="h-3.5 w-3.5 mr-1" /> Add keyword
             </Button>

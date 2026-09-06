@@ -1807,6 +1807,7 @@ const da: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI Scanner",
   "sidebar.analytics": "Analyse",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "Fakturering",
   "sidebar.campaigns": "Kampagner",
   "sidebar.contentCalendar": "Indholdskalender",

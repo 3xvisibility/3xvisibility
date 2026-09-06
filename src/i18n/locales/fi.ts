@@ -1807,6 +1807,7 @@ const fi: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI-skanneri",
   "sidebar.analytics": "Analytiikka",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "Laskutus",
   "sidebar.campaigns": "Kampanjat",
   "sidebar.contentCalendar": "Sisältökalenteri",

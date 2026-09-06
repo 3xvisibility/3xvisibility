@@ -1807,6 +1807,7 @@ const uk: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI сканер",
   "sidebar.analytics": "Аналітика",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "Оплата",
   "sidebar.campaigns": "Кампанії",
   "sidebar.contentCalendar": "Календар контенту",

@@ -1807,6 +1807,7 @@ const th: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "สแกนเนอร์ AI",
   "sidebar.analytics": "วิเคราะห์",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "การเรียกเก็บเงิน",
   "sidebar.campaigns": "แคมเปญ",
   "sidebar.contentCalendar": "ปฏิทินเนื้อหา",

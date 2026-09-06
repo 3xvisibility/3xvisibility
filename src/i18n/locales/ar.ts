@@ -1807,6 +1807,7 @@ const ar: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "ماسح AI",
   "sidebar.analytics": "التحليلات",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "الفواتير",
   "sidebar.campaigns": "الحملات",
   "sidebar.contentCalendar": "تقويم المحتوى",

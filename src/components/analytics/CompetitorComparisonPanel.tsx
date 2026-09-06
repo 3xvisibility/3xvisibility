@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Users } from "lucide-react";
+import { Plus, RefreshCw, Trash2, Users } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -114,6 +114,23 @@ export default function CompetitorComparisonPanel({ workspaceId }: { workspaceId
     onSuccess: () => qc.invalidateQueries({ queryKey: ["competitors", workspaceId] }),
   });
 
+  const refreshFromSemrush = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("semrush-seo", {
+        body: { action: "sync_all", workspace_id: workspaceId, domain: "placeholder.com" },
+      });
+      if (error) throw new Error((data as any)?.error || error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as { updated: number };
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["competitors", workspaceId] });
+      toast({ title: `Updated ${data.updated} domain(s) with live SEO data` });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Could not refresh SEO data", description: e.message, variant: "destructive" }),
+  });
+
   const chartData = useMemo(
     () =>
       competitors.slice(0, 6).map((c) => ({
@@ -137,6 +154,15 @@ export default function CompetitorComparisonPanel({ workspaceId }: { workspaceId
           </h3>
           <div className="flex items-center gap-2">
             {self && <Badge variant="outline" className="text-[10px]">You: {self.domain}</Badge>}
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={refreshFromSemrush.isPending || competitors.length === 0}
+              onClick={() => refreshFromSemrush.mutate()}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 mr-1 ${refreshFromSemrush.isPending ? "animate-spin" : ""}`} />
+              {refreshFromSemrush.isPending ? "Refreshing…" : "Refresh live data"}
+            </Button>
             <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
               <Plus className="h-3.5 w-3.5 mr-1" /> Add domain
             </Button>

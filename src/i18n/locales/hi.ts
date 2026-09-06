@@ -1807,6 +1807,7 @@ const hi: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI Scanner",
   "sidebar.analytics": "Analytics",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "Billing",
   "sidebar.campaigns": "अभियान",
   "sidebar.contentCalendar": "Content Calendar",

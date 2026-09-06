@@ -1807,6 +1807,7 @@ const ja: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AIスキャナー",
   "sidebar.analytics": "分析",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "請求",
   "sidebar.campaigns": "キャンペーン",
   "sidebar.contentCalendar": "コンテンツカレンダー",

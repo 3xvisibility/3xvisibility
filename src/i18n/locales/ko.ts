@@ -1807,6 +1807,7 @@ const ko: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI 스캐너",
   "sidebar.analytics": "분석",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "청구",
   "sidebar.campaigns": "캠페인",
   "sidebar.contentCalendar": "콘텐츠 캘린더",

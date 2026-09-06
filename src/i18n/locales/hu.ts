@@ -1807,6 +1807,7 @@ const hu: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "AI szkenner",
   "sidebar.analytics": "Analitika",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "Számlázás",
   "sidebar.campaigns": "Kampányok",
   "sidebar.contentCalendar": "Tartalom naptár",

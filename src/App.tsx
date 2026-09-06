@@ -41,6 +41,7 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const GeneratedPagesPage = lazy(() => import("./pages/GeneratedPagesPage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
+const DomainAnalysisPage = lazy(() => import("./pages/DomainAnalysisPage"));
 const TemplateMarketplacePage = lazy(() => import("./pages/TemplateMarketplacePage"));
 const IndexingPage = lazy(() => import("./pages/IndexingPage"));
 const PagePerformancePage = lazy(() => import("./pages/PagePerformancePage"));
@@ -151,6 +152,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="scanner" element={<Navigate to="../website-content" replace />} />
       <Route path="discovery" element={<Navigate to="../website-content" replace />} />
       <Route path="analytics" element={wrap(<AnalyticsPage />)} />
+      <Route path="domain-analysis" element={wrap(<DomainAnalysisPage />)} />
       <Route path="marketplace" element={wrap(<FeatureGate feature="internalLinks"><TemplateMarketplacePage /></FeatureGate>)} />
       <Route path="billing" element={wrap(<BillingPage />)} />
       <Route path="settings" element={wrap(<SettingsPage />)} />
@@ -335,6 +337,7 @@ const App = () => {
             <Route path="/scanner" element={<ProtectedRoute session={session}><WorkspaceRedirect path="scanner" /></ProtectedRoute>} />
             <Route path="/discovery" element={<ProtectedRoute session={session}><WorkspaceRedirect path="discovery" /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute session={session}><WorkspaceRedirect path="analytics" /></ProtectedRoute>} />
+            <Route path="/domain-analysis" element={<ProtectedRoute session={session}><WorkspaceRedirect path="domain-analysis" /></ProtectedRoute>} />
             <Route path="/marketplace" element={<ProtectedRoute session={session}><WorkspaceRedirect path="marketplace" /></ProtectedRoute>} />
             <Route path="/billing" element={<ProtectedRoute session={session}><WorkspaceRedirect path="billing" /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute session={session}><WorkspaceRedirect path="settings" /></ProtectedRoute>} />
