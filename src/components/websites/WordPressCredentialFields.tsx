@@ -15,8 +15,6 @@ interface WordPressCredentialFieldsProps {
   onAppPasswordChange: (v: string) => void;
   jwtToken: string;
   onJwtTokenChange: (v: string) => void;
-  connectorKey?: string;
-  onConnectorKeyChange?: (v: string) => void;
   /** Current site URL — used for inline validation warnings. */
   siteUrl?: string;
   /** Error message from the last failed test connection, if any. */
@@ -59,8 +57,6 @@ export function WordPressCredentialFields({
   onAppPasswordChange,
   jwtToken,
   onJwtTokenChange,
-  connectorKey = "",
-  onConnectorKeyChange,
   siteUrl,
   testError,
 }: WordPressCredentialFieldsProps) {

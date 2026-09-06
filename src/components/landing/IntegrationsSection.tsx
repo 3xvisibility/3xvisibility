@@ -144,21 +144,13 @@ export function IntegrationsSection() {
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[hsl(96,67%,48%,0.12)] border border-[hsl(96,67%,48%,0.25)]">
                   <Plug className="h-5 w-5 text-[hsl(96,67%,35%)]" />
                 </div>
-                <h3 className="text-xl md:text-2xl font-bold tracking-[-0.02em]">3xVisibility WordPress Connector</h3>
+                <h3 className="text-xl md:text-2xl font-bold tracking-[-0.02em]">Connect WordPress in seconds</h3>
                 <p className="mt-2 text-sm text-[hsl(220,12%,42%)] max-w-md mx-auto leading-relaxed">
-                  Install our lightweight companion plugin to publish native Elementor &amp; Gutenberg pages that look exactly like they were built by hand inside WordPress.
+                  No plugin, no install. Just add your site URL, WordPress username and an Application Password in your
+                  dashboard and start publishing straight away.
                 </p>
-                <Button
-                  size="lg"
-                  className="mt-6 bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-xl px-7 text-sm font-semibold shadow-xl shadow-primary/25"
-                  asChild
-                >
-                  <a href="/3xvisibility-wordpress-connector.zip" download>
-                    <Download className="mr-2 h-4 w-4" /> Download WordPress Plugin
-                  </a>
-                </Button>
                 <p className="mt-3 text-[11px] text-[hsl(220,12%,32%)]">
-                  Upload it in WordPress → Plugins → Add New → Upload Plugin, then activate.
+                  Create an Application Password in WordPress &rarr; Users &rarr; Profile.
                 </p>
               </div>
             </div>
