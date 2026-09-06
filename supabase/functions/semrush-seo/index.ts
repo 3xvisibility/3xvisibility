@@ -240,8 +240,9 @@ Deno.serve(async (req) => {
           .eq("id", t.id);
         await supabase.from("keyword_rankings").insert({
           keyword_id: t.id,
+          workspace_id: workspaceId,
           position,
-          checked_at: today,
+          recorded_at: today,
         });
         updated++;
       }
