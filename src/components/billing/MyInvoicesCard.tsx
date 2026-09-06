@@ -147,12 +147,12 @@ export function MyInvoicesCard() {
   const [bulkBusy, setBulkBusy] = useState(false);
 
   const runBulk = async (mode: "zip" | "merged") => {
-    if (invoices.length === 0) return;
+    if (allInvoices.length === 0) return;
     setBulkBusy(true);
     try {
-      if (mode === "zip") await downloadInvoicesZip(invoices);
-      else downloadMergedInvoicePdf(invoices);
-      toast.success(t("billing.invoicesDownloaded", { count: invoices.length }));
+      if (mode === "zip") await downloadInvoicesZip(allInvoices);
+      else downloadMergedInvoicePdf(allInvoices);
+      toast.success(t("billing.invoicesDownloaded", { count: allInvoices.length }));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("billing.invoicesBulkFailed"));
     } finally {
@@ -168,7 +168,7 @@ export function MyInvoicesCard() {
         <CardTitle className="flex items-center gap-2 text-lg">
           <FileText className="h-4 w-4 text-primary" /> {t("billing.invoicesTitle")}
         </CardTitle>
-        {invoices.length > 1 && (
+        {allInvoices.length > 1 && (
           <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
