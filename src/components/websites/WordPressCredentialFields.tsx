@@ -28,11 +28,6 @@ function suggestFixes(error: string): string[] {
   const e = error.toLowerCase();
   const fixes: string[] = [];
 
-  if (e.includes("api key") || e.includes("connector") || e.includes("x-pgp-key")) {
-    fixes.push("Copy the API Key from WordPress → Settings → 3xVisibility WordPress Connector and paste it into the Connector Key field.");
-    fixes.push("If you regenerated the plugin key, update the saved website credentials with the new key.");
-    fixes.push("Update/reinstall the latest connector plugin, then test the connection again.");
-  }
   if (e.includes("auth") || e.includes("401") || e.includes("403") || e.includes("password") || e.includes("forbidden")) {
     fixes.push("Double-check the username and that the Application Password is copied exactly (spaces are fine).");
     fixes.push("Regenerate the Application Password under WordPress → Users → Profile if it may have been revoked.");
@@ -72,8 +67,7 @@ export function WordPressCredentialFields({
   const urlTrimmed = (siteUrl ?? "").trim();
   const urlMissing = siteUrl !== undefined && urlTrimmed.length === 0;
   const urlMalformed = urlTrimmed.length > 0 && !/^https?:\/\/.+\..+/i.test(urlTrimmed);
-  const hasConnectorKey = connectorKey.trim().length > 0;
-  const standardAuthRequired = !hasConnectorKey;
+  const standardAuthRequired = true;
   const usernameMissing = standardAuthRequired && authMethod === "application_password" && username.trim().length === 0;
   const passwordMissing = standardAuthRequired && authMethod === "application_password" && appPassword.trim().length === 0;
   const jwtMissing = standardAuthRequired && authMethod === "jwt" && jwtToken.trim().length === 0;
@@ -94,8 +88,7 @@ export function WordPressCredentialFields({
           <ul className="list-disc pl-4 mt-1 space-y-0.5">
             <li>Permalinks must be set to anything other than "Plain"</li>
             <li>REST API must be accessible (not blocked by security plugins)</li>
-            <li>Application Password/JWT can publish without the connector plugin using compatibility mode</li>
-            <li>Connector plugin is optional; it is only needed for fully editable Elementor publishing</li>
+            <li>No plugin needed — publishing works through the built-in WordPress REST API</li>
             <li>For JWT: install and configure the JWT Authentication plugin</li>
           </ul>
         </AlertDescription>
@@ -166,26 +159,6 @@ export function WordPressCredentialFields({
               Obtain a token from your WordPress JWT Authentication endpoint (usually /wp-json/jwt-auth/v1/token)
             </p>
           )}
-        </div>
-      )}
-
-      {onConnectorKeyChange && (
-        <div className="pt-2 border-t border-muted">
-          <Label htmlFor="wp-connector-key">
-            3xVisibility WordPress Connector Key <span className="text-muted-foreground font-normal">(optional)</span>
-          </Label>
-          <Input
-            id="wp-connector-key"
-            type="password"
-            placeholder="Paste the API key from the plugin settings"
-            value={connectorKey}
-            aria-invalid={false}
-            onChange={(e) => onConnectorKeyChange(e.target.value)}
-          />
-          <p className="text-[11px] text-muted-foreground mt-1">
-            Leave this empty to publish through the standard WordPress REST API. Add the connector only when you need pages
-            to open as fully editable Elementor documents with server-side CSS/cache/media handling.
-          </p>
         </div>
       )}
 
