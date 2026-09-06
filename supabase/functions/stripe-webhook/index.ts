@@ -326,6 +326,7 @@ async function handleSuccessfulPayment(params: Parameters<typeof recordInvoice>[
 // whenever a subscription is created, trialed, updated or cancelled.
 // ───────────────────────────────────────────────────────────────────────────
 
+// Fallback map, used only if public.plan_pricing has no matching row.
 const PRODUCT_TO_PLAN: Record<string, string> = {
   "prod_UALduTYX0c1iq6": "starter",
   "prod_UAMvLB3qPitarV": "pro",
@@ -338,6 +339,37 @@ const PLAN_LIMITS: Record<string, { pages_limit: number; ai_generations_limit: n
   pro: { pages_limit: 1000, ai_generations_limit: 1000 },
   agency: { pages_limit: 10000, ai_generations_limit: 5000 },
 };
+
+/**
+ * Resolve the app plan + quotas for a Stripe price/product using the
+ * admin-managed public.plan_pricing table, so adding or repricing a plan in
+ * the admin panel needs no code change. Falls back to the static map.
+ */
+async function resolvePlanFromStripe(productId: string, priceId: string | null) {
+  try {
+    const { data } = await supabase
+      .from("plan_pricing")
+      .select("plan, pages_limit, ai_limit, stripe_price_id, stripe_product_id");
+    const rows = data || [];
+    const row =
+      (priceId && rows.find((r: any) => r.stripe_price_id === priceId)) ||
+      rows.find((r: any) => r.stripe_product_id === productId);
+    if (row) {
+      return {
+        plan: row.plan as string,
+        limits: {
+          pages_limit: Number(row.pages_limit ?? 0),
+          ai_generations_limit: Number(row.ai_limit ?? 0),
+        },
+      };
+    }
+  } catch (err) {
+    log("plan_pricing_lookup_failed", { error: err instanceof Error ? err.message : String(err) });
+  }
+  const plan = PRODUCT_TO_PLAN[productId] ?? "free";
+  return { plan, limits: PLAN_LIMITS[plan] ?? PLAN_LIMITS.free };
+}
+
 
 // Statuses that should keep the paid plan active for the user.
 const ENTITLED_STATUSES = new Set(["active", "trialing", "past_due"]);
@@ -417,8 +449,10 @@ async function syncSubscriptionRow(stripe: Stripe, sub: Stripe.Subscription) {
   const productId = String(item?.price?.product ?? "");
   const priceId = item?.price?.id ?? null;
   const entitled = ENTITLED_STATUSES.has(sub.status);
-  const plan = entitled ? (PRODUCT_TO_PLAN[productId] ?? "free") : "free";
-  const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+  const resolved = await resolvePlanFromStripe(productId, priceId);
+  const plan = entitled ? resolved.plan : "free";
+  const limits = entitled ? resolved.limits : PLAN_LIMITS.free;
+
   const billingCycle =
     item?.price?.recurring?.interval === "year" ? "yearly" : "monthly";
 
@@ -543,7 +577,13 @@ serve(async (req) => {
           undefined;
         const name =
           invoice.customer_name ?? (invoice as any).customer_details?.name ?? undefined;
-        const userId = await findUserIdByEmail(email);
+        // Checkout stamps the app user on the subscription/invoice metadata,
+        // so invoices are attributed even if the Stripe email differs.
+        const metaUserId =
+          ((invoice as any).subscription_details?.metadata?.user_id as string | undefined) ??
+          ((invoice.metadata?.user_id as string | undefined) || undefined);
+        const userId = metaUserId ?? (await findUserIdByEmail(email));
+
         const lines = (invoice.lines?.data ?? []).map((l) => ({
           description: l.description ?? "Subscription",
           quantity: l.quantity ?? 1,
@@ -588,7 +628,10 @@ serve(async (req) => {
         }
         const email = charge.billing_details?.email ?? charge.receipt_email ?? undefined;
         const name = charge.billing_details?.name ?? undefined;
-        const userId = await findUserIdByEmail(email);
+        const userId =
+          (charge.metadata?.user_id as string | undefined) ??
+          (await findUserIdByEmail(email));
+
 
         await handleSuccessfulPayment({
           stripeInvoiceId: null,

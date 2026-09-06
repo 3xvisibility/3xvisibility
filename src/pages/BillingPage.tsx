@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Sparkles, Loader2, ExternalLink } from "lucide-react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
-import { STRIPE_TIERS } from "@/lib/stripe-config";
+
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -110,15 +110,15 @@ export default function BillingPage() {
   }, []);
 
   const handleCheckout = async (planName: PlanName, sameTab = false) => {
-    const tier = STRIPE_TIERS[planName];
-    if (!tier) return;
+    if (planName === "free") return;
 
     setLoadingPlan(planName);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId: tier.price_id, origin: window.location.origin },
+        body: { plan: planName, origin: window.location.origin },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error as string);
       if (data?.url) {
         if (wsId) logAudit(wsId, "plan_changed", "subscription", null, { from: currentPlan, to: planName, billing: isYearly ? "yearly" : "monthly" });
         if (sameTab) window.location.href = data.url;
@@ -131,6 +131,7 @@ export default function BillingPage() {
     }
   };
 
+
   // Resume a checkout that was started from the public pricing page:
   // /billing?plan=pro opens the Stripe session for that plan automatically.
   const [autoCheckoutDone, setAutoCheckoutDone] = useState(false);
@@ -140,7 +141,7 @@ export default function BillingPage() {
     setAutoCheckoutDone(true);
     searchParams.delete("plan");
     setSearchParams(searchParams, { replace: true });
-    if (!STRIPE_TIERS[requested] || requested === currentPlan) return;
+    if (requested === "free" || requested === currentPlan) return;
     handleCheckout(requested, true);
   }, [searchParams, autoCheckoutDone, subLoading, currentPlan]);
 

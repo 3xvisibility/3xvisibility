@@ -159,8 +159,15 @@ export function PlanPricingPanel() {
                   <TableCell className="text-right tabular-nums">{p.pages_limit}</TableCell>
                   <TableCell className="text-right tabular-nums">{p.ai_limit}</TableCell>
                   <TableCell className="max-w-[180px] truncate text-xs text-muted-foreground">
-                    {p.stripe_price_id || "—"}
+                    {p.stripe_price_id || (
+                      Number(p.monthly_price) > 0 ? (
+                        <Badge variant="outline" className="border-destructive/40 text-destructive text-[10px]">
+                          No Stripe price — not payable
+                        </Badge>
+                      ) : "—"
+                    )}
                   </TableCell>
+
                   <TableCell>
                     <Switch checked={p.active} onCheckedChange={(v) => toggleActive(p, v)} />
                   </TableCell>
