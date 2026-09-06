@@ -60,7 +60,7 @@ export function LandingFooter() {
   const footerLinks: Record<string, FooterLink[]> = {
     [t("footer.product")]: [
       { label: t("footer.features"), href: "/#features", isHash: true },
-      { label: t("footer.pricing"), href: "/#pricing", isHash: true },
+      { label: t("footer.pricing"), href: "/pricing", isHash: false },
       { label: t("footer.faq"), href: "/#faq", isHash: true },
       { label: t("footer.apiDocs"), href: "/docs", isHash: false },
     ],
