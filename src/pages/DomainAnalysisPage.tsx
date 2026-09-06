@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Seo } from "@/components/Seo";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import CompetitorKeywordPositionsPanel from "@/components/analytics/CompetitorKeywordPositionsPanel";
 
 interface Overview {
   domain: string;
@@ -222,6 +223,8 @@ export default function DomainAnalysisPage() {
                 )}
               </CardContent>
             </Card>
+
+            <CompetitorKeywordPositionsPanel workspaceId={currentWorkspace?.id} database={database} />
 
             <Card className="shadow-surface">
               <CardContent className="p-5 space-y-3">

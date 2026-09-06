@@ -15,6 +15,7 @@ import type { Session } from "@supabase/supabase-js";
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
+const PortalPage = lazy(() => import("./pages/PortalPage"));
 
 
 
@@ -304,7 +305,7 @@ const App = () => {
             <Route path="/guides/shopify" element={<ShopifyGuidePage />} />
             <Route path="/pricing" element={<PricingPage />} />
             {/* Public customer portal link — sends buyers straight to their billing area */}
-            <Route path="/portal" element={session ? <WorkspaceRedirect path="billing" /> : <Navigate to="/auth" replace />} />
+            <Route path="/portal" element={<PortalPage />} />
 
             <Route path="/about" element={<AboutPage />} />
             <Route path="/blog" element={<BlogPage />} />
