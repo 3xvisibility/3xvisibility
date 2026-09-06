@@ -97,6 +97,11 @@ export interface PagePayload {
     template: Record<string, unknown>;
     suffix: string;
   };
+  /** Present when the update targets a WordPress blog post instead of a page. */
+  post_data?: {
+    slug?: string;
+    categories?: number[];
+  };
   product_data?: {
     price?: string;
     sku?: string;
@@ -164,12 +169,14 @@ export interface ConnectorResult {
   };
 }
 
+export type ListContentType = "pages" | "products" | "posts" | "categories";
+
 export interface ContentItem {
   id: string;
   title: string;
   slug: string;
   url: string;
-  type: "page" | "product";
+  type: "page" | "product" | "post" | "category";
   status: string;
   content: string;
   excerpt: string;
@@ -209,5 +216,5 @@ export interface CmsConnector {
   createPage(payload: PagePayload): Promise<ConnectorResult>;
   updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult>;
   testConnection(): Promise<boolean>;
-  listContent(contentType: "pages" | "products"): Promise<ContentItem[]>;
+  listContent(contentType: ListContentType): Promise<ContentItem[]>;
 }
