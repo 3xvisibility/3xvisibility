@@ -2320,6 +2320,7 @@ const en: Record<string, string> = {
   "billing.invoicesDownloaded": "{count} invoices downloaded",
   "billing.invoicesBulkFailed": "Bulk download failed",
   "billing.invoicesPdf": "PDF",
+  "billing.invoicesLegacyBadge": "Earlier purchase",
   "billing.invoicesPdfFailed": "Could not build the PDF",
   "billing.invoicesSubscriptionPayment": "Subscription payment",
   "billing.invoicesRefunded": "refunded",

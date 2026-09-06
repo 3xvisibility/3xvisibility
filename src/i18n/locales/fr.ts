@@ -2320,6 +2320,7 @@ const fr: Record<string, string> = {
   "billing.invoicesDownloaded": "{count} factures téléchargées",
   "billing.invoicesBulkFailed": "Échec du téléchargement groupé",
   "billing.invoicesPdf": "PDF",
+  "billing.invoicesLegacyBadge": "Achat précédent",
   "billing.invoicesPdfFailed": "Impossible de générer le PDF",
   "billing.invoicesSubscriptionPayment": "Paiement d'abonnement",
   "billing.invoicesRefunded": "remboursé",

@@ -16,6 +16,62 @@ import {
   type InvoiceRecord,
 } from "@/lib/invoice-pdf";
 
+interface LegacyPurchase {
+  id: string;
+  plan: string;
+  billing_cycle: string | null;
+  created_at: string;
+}
+
+interface PlanPriceRow {
+  plan: string;
+  label: string | null;
+  monthly_price: number | null;
+  yearly_discount: number | null;
+  currency: string | null;
+}
+
+/** Builds a synthetic invoice record for an older purchase that predates invoice records. */
+function legacyPurchaseToInvoice(
+  purchase: LegacyPurchase,
+  pricing: PlanPriceRow | undefined,
+  email: string | null,
+): InvoiceRecord {
+  const cycle = (purchase.billing_cycle || "monthly").toLowerCase();
+  const monthly = Number(pricing?.monthly_price ?? 0);
+  const discount = Number(pricing?.yearly_discount ?? 0);
+  const amount =
+    cycle === "yearly" || cycle === "annual"
+      ? Math.round(monthly * 12 * (1 - discount / 100) * 100)
+      : Math.round(monthly * 100);
+  const planLabel = pricing?.label || purchase.plan;
+  const issuedYear = new Date(purchase.created_at).getFullYear();
+  return {
+    id: `legacy-${purchase.id}`,
+    invoice_number: `INV-${issuedYear}-${purchase.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`,
+    customer_email: email,
+    customer_name: null,
+    description: `${planLabel} plan (${cycle})`,
+    plan: planLabel,
+    amount_total: amount,
+    amount_refunded: 0,
+    currency: (pricing?.currency || "eur").toLowerCase(),
+    status: "paid",
+    hosted_invoice_url: null,
+    invoice_pdf_url: null,
+    receipt_url: null,
+    line_items: [
+      {
+        description: `${planLabel} plan — ${cycle} billing`,
+        quantity: 1,
+        amount,
+      },
+    ],
+    billing_details: email ? { email } : null,
+    issued_at: purchase.created_at,
+  };
+}
+
 /** Invoices belonging to the signed-in customer, each downloadable as a PDF. */
 export function MyInvoicesCard() {
   const { t } = useLanguage();
@@ -36,15 +92,67 @@ export function MyInvoicesCard() {
     },
   });
 
+  // Older plan purchases (made before invoices were recorded) so they can be
+  // turned into downloadable PDF invoices too.
+  const { data: legacyInvoices = [] } = useQuery({
+    queryKey: ["my-legacy-purchases", invoices.length],
+    queryFn: async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      const user = auth.user;
+      if (!user) return [] as InvoiceRecord[];
+
+      const { data: subs, error: subsError } = await supabase
+        .from("subscriptions")
+        .select("id, plan, billing_cycle, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+      if (subsError) throw subsError;
+
+      const purchases = (subs || []) as LegacyPurchase[];
+      if (purchases.length === 0) return [] as InvoiceRecord[];
+
+      const coveredPlans = new Set(
+        invoices.map((inv) => (inv.plan || "").toLowerCase().trim()),
+      );
+      const missing = purchases.filter(
+        (p) => p.plan && !coveredPlans.has(p.plan.toLowerCase().trim()),
+      );
+      if (missing.length === 0) return [] as InvoiceRecord[];
+
+      const { data: pricingRows } = await supabase
+        .from("plan_pricing")
+        .select("plan, label, monthly_price, yearly_discount, currency");
+      const pricingByPlan = new Map(
+        ((pricingRows || []) as PlanPriceRow[]).map((row) => [
+          row.plan.toLowerCase().trim(),
+          row,
+        ]),
+      );
+
+      return missing
+        .map((p) =>
+          legacyPurchaseToInvoice(
+            p,
+            pricingByPlan.get(p.plan.toLowerCase().trim()),
+            user.email ?? null,
+          ),
+        )
+        .filter((inv) => inv.amount_total > 0);
+    },
+    enabled: !isLoading,
+  });
+
+  const allInvoices = [...invoices, ...legacyInvoices];
+
   const [bulkBusy, setBulkBusy] = useState(false);
 
   const runBulk = async (mode: "zip" | "merged") => {
-    if (invoices.length === 0) return;
+    if (allInvoices.length === 0) return;
     setBulkBusy(true);
     try {
-      if (mode === "zip") await downloadInvoicesZip(invoices);
-      else downloadMergedInvoicePdf(invoices);
-      toast.success(t("billing.invoicesDownloaded", { count: invoices.length }));
+      if (mode === "zip") await downloadInvoicesZip(allInvoices);
+      else downloadMergedInvoicePdf(allInvoices);
+      toast.success(t("billing.invoicesDownloaded", { count: allInvoices.length }));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("billing.invoicesBulkFailed"));
     } finally {
@@ -60,7 +168,7 @@ export function MyInvoicesCard() {
         <CardTitle className="flex items-center gap-2 text-lg">
           <FileText className="h-4 w-4 text-primary" /> {t("billing.invoicesTitle")}
         </CardTitle>
-        {invoices.length > 1 && (
+        {allInvoices.length > 1 && (
           <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
@@ -92,13 +200,13 @@ export function MyInvoicesCard() {
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
           </>
-        ) : invoices.length === 0 ? (
+        ) : allInvoices.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
             <FileText className="h-8 w-8 text-muted-foreground/40" />
             <p className="text-sm text-muted-foreground">{t("billing.invoicesEmpty")}</p>
           </div>
         ) : (
-          invoices.map((inv) => (
+          allInvoices.map((inv) => (
             <div
               key={inv.id}
               className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 px-4 py-3"
@@ -108,6 +216,14 @@ export function MyInvoicesCard() {
                   <span className="font-mono text-xs text-muted-foreground">
                     {inv.invoice_number}
                   </span>
+                  {inv.id.startsWith("legacy-") && (
+                    <Badge
+                      variant="outline"
+                      className="bg-primary/10 text-primary border-primary/30"
+                    >
+                      {t("billing.invoicesLegacyBadge")}
+                    </Badge>
+                  )}
                   <Badge
                     variant="outline"
                     className={
