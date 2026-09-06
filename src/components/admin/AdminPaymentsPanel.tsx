@@ -302,15 +302,53 @@ export function AdminPaymentsPanel() {
           </Button>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              className="pl-8"
-              placeholder="Filter by email, name, product…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                className="pl-8"
+                placeholder="Filter by email, name, product…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <Select value={rangeFilter} onValueChange={setRangeFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All time</SelectItem>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+                <SelectItem value="365d">Last 12 months</SelectItem>
+              </SelectContent>
+            </Select>
+            {planOptions.length > 0 && (
+              <Select value={planFilter} onValueChange={setPlanFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All plans</SelectItem>
+                  {planOptions.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
+
+          <div className="text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">{filtered.length}</span> payments ·
+            net{" "}
+            <span className="font-medium text-foreground">
+              {formatMoney(filteredTotal, filtered[0]?.currency || "eur")}
+            </span>
+          </div>
+
 
           {listQuery.isLoading ? (
             <div className="space-y-2">
