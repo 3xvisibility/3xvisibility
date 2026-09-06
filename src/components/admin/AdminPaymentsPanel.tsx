@@ -171,16 +171,33 @@ export function AdminPaymentsPanel() {
   });
 
   const items = listQuery.data?.items ?? [];
+
+  const planOptions = Array.from(
+    new Set(
+      items
+        .map((it) => it.app_user?.plan || it.product_name)
+        .filter((p): p is string => !!p),
+    ),
+  ).sort();
+
+  const rangeDays = PAYMENT_RANGES[rangeFilter];
+  const cutoff = rangeDays ? Date.now() - rangeDays * 86_400_000 : null;
+
   const filtered = items.filter((it) => {
+    if (planFilter !== "all" && (it.app_user?.plan || it.product_name) !== planFilter)
+      return false;
+    if (cutoff && it.created * 1000 < cutoff) return false;
     if (!search.trim()) return true;
     const q = search.toLowerCase();
-    return (
+    return Boolean(
       it.customer_email?.toLowerCase().includes(q) ||
-      it.app_user?.full_name?.toLowerCase().includes(q) ||
-      it.product_name?.toLowerCase().includes(q) ||
-      it.id.toLowerCase().includes(q)
+        it.app_user?.full_name?.toLowerCase().includes(q) ||
+        it.product_name?.toLowerCase().includes(q) ||
+        it.id.toLowerCase().includes(q),
     );
   });
+
+  const filteredTotal = filtered.reduce((s, i) => s + (i.amount - (i.amount_refunded || 0)), 0);
 
   return (
     <div className="space-y-6">
