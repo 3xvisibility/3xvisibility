@@ -594,8 +594,6 @@ export default function WebsitesPage() {
                     onAppPasswordChange={setAppPassword}
                     jwtToken={jwtToken}
                     onJwtTokenChange={setJwtToken}
-                    connectorKey={connectorKey}
-                    onConnectorKeyChange={setConnectorKey}
                     siteUrl={siteUrl}
                     testError={wpTestError}
                   />

@@ -20,7 +20,6 @@ import { Switch } from "@/components/ui/switch";
 import { EditWebsiteDialog } from "./EditWebsiteDialog";
 import { RetranslateSiteDialog } from "./RetranslateSiteDialog";
 import { WpPluginSettings } from "./WpPluginSettings";
-import { WpPluginStatus } from "./WpPluginStatus";
 import { SitemapIndexPanel } from "./SitemapIndexPanel";
 
 
@@ -549,11 +548,6 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
               </>
             )}
           </div>
-
-          {/* WordPress CSS/JS delivery helper — WP deletes <style>/<link>/<script>
-              from page content (wp_kses_post) unless this plugin is active.
-              The status card auto-verifies installation on the live site. */}
-          {site.type === "wordpress" && <WpPluginStatus websiteId={site.id} />}
 
           {site.type === "wordpress" && (
             <WpPluginSettings
