@@ -303,6 +303,9 @@ const App = () => {
             <Route path="/guides/wordpress" element={<WordPressGuidePage />} />
             <Route path="/guides/shopify" element={<ShopifyGuidePage />} />
             <Route path="/pricing" element={<PricingPage />} />
+            {/* Public customer portal link — sends buyers straight to their billing area */}
+            <Route path="/portal" element={session ? <WorkspaceRedirect path="billing" /> : <Navigate to="/auth" replace />} />
+
             <Route path="/about" element={<AboutPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />
