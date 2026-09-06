@@ -326,6 +326,7 @@ async function handleSuccessfulPayment(params: Parameters<typeof recordInvoice>[
 // whenever a subscription is created, trialed, updated or cancelled.
 // ───────────────────────────────────────────────────────────────────────────
 
+// Fallback map, used only if public.plan_pricing has no matching row.
 const PRODUCT_TO_PLAN: Record<string, string> = {
   "prod_UALduTYX0c1iq6": "starter",
   "prod_UAMvLB3qPitarV": "pro",
@@ -338,6 +339,37 @@ const PLAN_LIMITS: Record<string, { pages_limit: number; ai_generations_limit: n
   pro: { pages_limit: 1000, ai_generations_limit: 1000 },
   agency: { pages_limit: 10000, ai_generations_limit: 5000 },
 };
+
+/**
+ * Resolve the app plan + quotas for a Stripe price/product using the
+ * admin-managed public.plan_pricing table, so adding or repricing a plan in
+ * the admin panel needs no code change. Falls back to the static map.
+ */
+async function resolvePlanFromStripe(productId: string, priceId: string | null) {
+  try {
+    const { data } = await supabase
+      .from("plan_pricing")
+      .select("plan, pages_limit, ai_limit, stripe_price_id, stripe_product_id");
+    const rows = data || [];
+    const row =
+      (priceId && rows.find((r: any) => r.stripe_price_id === priceId)) ||
+      rows.find((r: any) => r.stripe_product_id === productId);
+    if (row) {
+      return {
+        plan: row.plan as string,
+        limits: {
+          pages_limit: Number(row.pages_limit ?? 0),
+          ai_generations_limit: Number(row.ai_limit ?? 0),
+        },
+      };
+    }
+  } catch (err) {
+    log("plan_pricing_lookup_failed", { error: err instanceof Error ? err.message : String(err) });
+  }
+  const plan = PRODUCT_TO_PLAN[productId] ?? "free";
+  return { plan, limits: PLAN_LIMITS[plan] ?? PLAN_LIMITS.free };
+}
+
 
 // Statuses that should keep the paid plan active for the user.
 const ENTITLED_STATUSES = new Set(["active", "trialing", "past_due"]);
