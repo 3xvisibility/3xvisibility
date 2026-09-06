@@ -1,1 +1,13 @@
 project_id = "qbrqxmtzfbusyspdtojz"
+
+# Stripe calls this endpoint server-to-server with a signed payload, so it
+# must be reachable without a Supabase JWT. Authenticity is proven by the
+# Stripe signature check inside the function (STRIPE_WEBHOOK_SECRET).
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.shopify-webhooks]
+verify_jwt = false
+
+[functions.einvoicing-pa-webhook]
+verify_jwt = false
