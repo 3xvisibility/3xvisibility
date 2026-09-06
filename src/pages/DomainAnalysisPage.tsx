@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, TrendingUp, Link2, KeyRound, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import Seo from "@/components/Seo";
+import { Seo } from "@/components/Seo";
 
 interface Overview {
   domain: string;
@@ -69,7 +68,7 @@ export default function DomainAnalysisPage() {
     : [];
 
   return (
-    <DashboardLayout>
+    <>
       <Seo
         title="Domain Analysis — Live SEO data | 3XVISIBILITY"
         description="Check any domain's authority, organic keywords, estimated traffic, backlinks and top competitors with live search data."
@@ -209,6 +208,6 @@ export default function DomainAnalysisPage() {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }
