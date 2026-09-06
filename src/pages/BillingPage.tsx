@@ -215,9 +215,17 @@ export default function BillingPage() {
         <CheckoutCanceledOverlay onDismiss={handleCanceledDismiss} />
       )}
       {/* Header */}
-      <div>
-        <h1 className="text-display">{t("billing.title")}</h1>
-        <p className="text-muted-foreground mt-1">{t("billing.description")}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-display">{t("billing.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("billing.description")}</p>
+        </div>
+        <Button variant="outline" size="sm" asChild>
+          <a href="/pricing" target="_blank" rel="noreferrer">
+            <ExternalLink className="h-4 w-4 mr-2" />
+            {t("footer.pricing")}
+          </a>
+        </Button>
       </div>
 
       <TrialStatusWidget hideUpgradeAction />
