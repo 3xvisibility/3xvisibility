@@ -11,6 +11,7 @@ import { Search, TrendingUp, Link2, KeyRound, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Seo } from "@/components/Seo";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface Overview {
   domain: string;
@@ -133,7 +134,7 @@ export default function DomainAnalysisPage() {
                 value={domain}
                 placeholder="example.com"
                 onChange={(e) => setDomain(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && domain.trim() && analyze.mutate()}
+                onKeyDown={(e) => e.key === "Enter" && domain.trim() && analyze.mutate(domain)}
               />
             </div>
             <div className="w-full sm:w-32">
@@ -150,7 +151,7 @@ export default function DomainAnalysisPage() {
                 ))}
               </select>
             </div>
-            <Button disabled={!domain.trim() || analyze.isPending} onClick={() => analyze.mutate()}>
+            <Button disabled={!domain.trim() || analyze.isPending} onClick={() => analyze.mutate(domain)}>
               <Search className="h-4 w-4 mr-1" />
               {analyze.isPending ? "Checking…" : "Analyze"}
             </Button>
