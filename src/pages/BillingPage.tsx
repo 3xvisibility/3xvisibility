@@ -110,15 +110,15 @@ export default function BillingPage() {
   }, []);
 
   const handleCheckout = async (planName: PlanName, sameTab = false) => {
-    const tier = STRIPE_TIERS[planName];
-    if (!tier) return;
+    if (planName === "free") return;
 
     setLoadingPlan(planName);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId: tier.price_id, origin: window.location.origin },
+        body: { plan: planName, origin: window.location.origin },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error as string);
       if (data?.url) {
         if (wsId) logAudit(wsId, "plan_changed", "subscription", null, { from: currentPlan, to: planName, billing: isYearly ? "yearly" : "monthly" });
         if (sameTab) window.location.href = data.url;
@@ -130,6 +130,7 @@ export default function BillingPage() {
       setLoadingPlan(null);
     }
   };
+
 
   // Resume a checkout that was started from the public pricing page:
   // /billing?plan=pro opens the Stripe session for that plan automatically.
