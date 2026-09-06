@@ -122,7 +122,7 @@ export default function TranslationsAdminPanel() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {languages.map((l) => (
-                  <SelectItem key={l.code} value={l.code}>{l.name} ({l.code})</SelectItem>
+                  <SelectItem key={l.code} value={l.code}>{l.flag} {l.label} ({l.code})</SelectItem>
                 ))}
               </SelectContent>
             </Select>
