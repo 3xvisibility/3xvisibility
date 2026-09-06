@@ -449,8 +449,10 @@ async function syncSubscriptionRow(stripe: Stripe, sub: Stripe.Subscription) {
   const productId = String(item?.price?.product ?? "");
   const priceId = item?.price?.id ?? null;
   const entitled = ENTITLED_STATUSES.has(sub.status);
-  const plan = entitled ? (PRODUCT_TO_PLAN[productId] ?? "free") : "free";
-  const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+  const resolved = await resolvePlanFromStripe(productId, priceId);
+  const plan = entitled ? resolved.plan : "free";
+  const limits = entitled ? resolved.limits : PLAN_LIMITS.free;
+
   const billingCycle =
     item?.price?.recurring?.interval === "year" ? "yearly" : "monthly";
 
