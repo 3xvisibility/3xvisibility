@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Search, TrendingUp, Link2, KeyRound, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Seo } from "@/components/Seo";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface Overview {
   domain: string;
@@ -38,16 +39,30 @@ interface Overview {
 
 const DATABASES = ["us", "uk", "de", "fr", "es", "it", "nl", "ca", "au"];
 
+/** Fallback when the workspace has no connected site yet. */
+const OWN_DOMAIN = "3xvisibility.com";
+
+function toDomain(raw: string): string {
+  return raw
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .split("/")[0];
+}
+
 export default function DomainAnalysisPage() {
   const { toast } = useToast();
+  const { currentWorkspace } = useWorkspace();
   const [domain, setDomain] = useState("");
   const [database, setDatabase] = useState("us");
   const [result, setResult] = useState<Overview | null>(null);
+  const [myDomain, setMyDomain] = useState(OWN_DOMAIN);
+  const autoRan = useRef(false);
 
   const analyze = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (target: string) => {
       const { data, error } = await supabase.functions.invoke("semrush-seo", {
-        body: { action: "domain_overview", domain, database },
+        body: { action: "domain_overview", domain: toDomain(target), database },
       });
       if (error) throw new Error((data as any)?.error || error.message);
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -57,6 +72,35 @@ export default function DomainAnalysisPage() {
     onError: (e: Error) =>
       toast({ title: "Could not load SEO data", description: e.message, variant: "destructive" }),
   });
+
+  // Open straight onto the buyer's own site: use their first connected website
+  // when there is one, otherwise the platform domain, and run the report once.
+  useEffect(() => {
+    if (autoRan.current) return;
+    autoRan.current = true;
+    let cancelled = false;
+    (async () => {
+      let target = OWN_DOMAIN;
+      if (currentWorkspace?.id) {
+        const { data } = await supabase
+          .from("websites")
+          .select("url")
+          .eq("workspace_id", currentWorkspace.id)
+          .order("created_at", { ascending: true })
+          .limit(1);
+        const url = data?.[0]?.url;
+        if (url) target = toDomain(url);
+      }
+      if (cancelled) return;
+      setMyDomain(target);
+      setDomain(target);
+      analyze.mutate(target);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentWorkspace?.id]);
+
 
   const stats = result
     ? [
@@ -90,7 +134,7 @@ export default function DomainAnalysisPage() {
                 value={domain}
                 placeholder="example.com"
                 onChange={(e) => setDomain(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && domain.trim() && analyze.mutate()}
+                onKeyDown={(e) => e.key === "Enter" && domain.trim() && analyze.mutate(domain)}
               />
             </div>
             <div className="w-full sm:w-32">
@@ -107,10 +151,21 @@ export default function DomainAnalysisPage() {
                 ))}
               </select>
             </div>
-            <Button disabled={!domain.trim() || analyze.isPending} onClick={() => analyze.mutate()}>
+            <Button
+              variant="outline"
+              disabled={analyze.isPending}
+              onClick={() => {
+                setDomain(myDomain);
+                analyze.mutate(myDomain);
+              }}
+            >
+              My site
+            </Button>
+            <Button disabled={!domain.trim() || analyze.isPending} onClick={() => analyze.mutate(domain)}>
               <Search className="h-4 w-4 mr-1" />
               {analyze.isPending ? "Checking…" : "Analyze"}
             </Button>
+
           </CardContent>
         </Card>
 
