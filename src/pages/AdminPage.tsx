@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TranslationsAdminPanel from "@/components/admin/TranslationsAdminPanel";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play, Mail, RefreshCw, Store, CreditCard, Gift, Cpu } from "lucide-react";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play, Mail, RefreshCw, Store, CreditCard, Gift, Cpu, Languages } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
@@ -967,6 +968,7 @@ export default function AdminPage() {
           <TabsTrigger value="ai-usage" className="text-xs gap-1"><Activity className="h-3 w-3" />Usage Report</TabsTrigger>
           <TabsTrigger value="connections" className="text-xs gap-1"><AlertCircle className="h-3 w-3" />Connections</TabsTrigger>
           <TabsTrigger value="ai-access" className="text-xs gap-1"><ShieldCheck className="h-3 w-3" />AI Access</TabsTrigger>
+          <TabsTrigger value="translations" className="text-xs gap-1"><Languages className="h-3 w-3" />Translations</TabsTrigger>
           <TabsTrigger value="template-sync" className="text-xs gap-1"><RefreshCw className="h-3 w-3" />Template Sync</TabsTrigger>
           <TabsTrigger value="marketplace" className="text-xs gap-1"><Store className="h-3 w-3" />Marketplace</TabsTrigger>
           <TabsTrigger value="plan-pricing" className="text-xs gap-1"><CreditCard className="h-3 w-3" />Plans & Pricing</TabsTrigger>
@@ -1024,6 +1026,10 @@ export default function AdminPage() {
 
         <TabsContent value="payments" className="space-y-4">
           <AdminPaymentsPanel />
+        </TabsContent>
+
+        <TabsContent value="translations" className="space-y-4">
+          <TranslationsAdminPanel />
         </TabsContent>
 
         <TabsContent value="template-sync" className="space-y-4">

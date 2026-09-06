@@ -3649,6 +3649,33 @@ export type Database = {
         }
         Relationships: []
       }
+      translation_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          language: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          language: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          language?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       user_ai_access: {
         Row: {
           created_at: string
