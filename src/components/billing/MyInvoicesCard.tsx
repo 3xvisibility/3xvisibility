@@ -16,6 +16,62 @@ import {
   type InvoiceRecord,
 } from "@/lib/invoice-pdf";
 
+interface LegacyPurchase {
+  id: string;
+  plan: string;
+  billing_cycle: string | null;
+  created_at: string;
+}
+
+interface PlanPriceRow {
+  plan: string;
+  label: string | null;
+  monthly_price: number | null;
+  yearly_discount: number | null;
+  currency: string | null;
+}
+
+/** Builds a synthetic invoice record for an older purchase that predates invoice records. */
+function legacyPurchaseToInvoice(
+  purchase: LegacyPurchase,
+  pricing: PlanPriceRow | undefined,
+  email: string | null,
+): InvoiceRecord {
+  const cycle = (purchase.billing_cycle || "monthly").toLowerCase();
+  const monthly = Number(pricing?.monthly_price ?? 0);
+  const discount = Number(pricing?.yearly_discount ?? 0);
+  const amount =
+    cycle === "yearly" || cycle === "annual"
+      ? Math.round(monthly * 12 * (1 - discount / 100) * 100)
+      : Math.round(monthly * 100);
+  const planLabel = pricing?.label || purchase.plan;
+  const issuedYear = new Date(purchase.created_at).getFullYear();
+  return {
+    id: `legacy-${purchase.id}`,
+    invoice_number: `INV-${issuedYear}-${purchase.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`,
+    customer_email: email,
+    customer_name: null,
+    description: `${planLabel} plan (${cycle})`,
+    plan: planLabel,
+    amount_total: amount,
+    amount_refunded: 0,
+    currency: (pricing?.currency || "eur").toLowerCase(),
+    status: "paid",
+    hosted_invoice_url: null,
+    invoice_pdf_url: null,
+    receipt_url: null,
+    line_items: [
+      {
+        description: `${planLabel} plan — ${cycle} billing`,
+        quantity: 1,
+        amount,
+      },
+    ],
+    billing_details: email ? { email } : null,
+    issued_at: purchase.created_at,
+  };
+}
+
 /** Invoices belonging to the signed-in customer, each downloadable as a PDF. */
 export function MyInvoicesCard() {
   const { t } = useLanguage();
@@ -35,6 +91,58 @@ export function MyInvoicesCard() {
       return (data || []) as unknown as InvoiceRecord[];
     },
   });
+
+  // Older plan purchases (made before invoices were recorded) so they can be
+  // turned into downloadable PDF invoices too.
+  const { data: legacyInvoices = [] } = useQuery({
+    queryKey: ["my-legacy-purchases", invoices.length],
+    queryFn: async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      const user = auth.user;
+      if (!user) return [] as InvoiceRecord[];
+
+      const { data: subs, error: subsError } = await supabase
+        .from("subscriptions")
+        .select("id, plan, billing_cycle, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+      if (subsError) throw subsError;
+
+      const purchases = (subs || []) as LegacyPurchase[];
+      if (purchases.length === 0) return [] as InvoiceRecord[];
+
+      const coveredPlans = new Set(
+        invoices.map((inv) => (inv.plan || "").toLowerCase().trim()),
+      );
+      const missing = purchases.filter(
+        (p) => p.plan && !coveredPlans.has(p.plan.toLowerCase().trim()),
+      );
+      if (missing.length === 0) return [] as InvoiceRecord[];
+
+      const { data: pricingRows } = await supabase
+        .from("plan_pricing")
+        .select("plan, label, monthly_price, yearly_discount, currency");
+      const pricingByPlan = new Map(
+        ((pricingRows || []) as PlanPriceRow[]).map((row) => [
+          row.plan.toLowerCase().trim(),
+          row,
+        ]),
+      );
+
+      return missing
+        .map((p) =>
+          legacyPurchaseToInvoice(
+            p,
+            pricingByPlan.get(p.plan.toLowerCase().trim()),
+            user.email ?? null,
+          ),
+        )
+        .filter((inv) => inv.amount_total > 0);
+    },
+    enabled: !isLoading,
+  });
+
+  const allInvoices = [...invoices, ...legacyInvoices];
 
   const [bulkBusy, setBulkBusy] = useState(false);
 
