@@ -577,7 +577,13 @@ serve(async (req) => {
           undefined;
         const name =
           invoice.customer_name ?? (invoice as any).customer_details?.name ?? undefined;
-        const userId = await findUserIdByEmail(email);
+        // Checkout stamps the app user on the subscription/invoice metadata,
+        // so invoices are attributed even if the Stripe email differs.
+        const metaUserId =
+          ((invoice as any).subscription_details?.metadata?.user_id as string | undefined) ??
+          ((invoice.metadata?.user_id as string | undefined) || undefined);
+        const userId = metaUserId ?? (await findUserIdByEmail(email));
+
         const lines = (invoice.lines?.data ?? []).map((l) => ({
           description: l.description ?? "Subscription",
           quantity: l.quantity ?? 1,
