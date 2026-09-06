@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { translations, loadLocale, type Language, languages } from "./translations";
 import { resetDictionaryReverse } from "./translationOriginals";
+import { fetchOverrides, getCachedOverrides, type OverrideMap } from "./overrides";
 
 function detectBrowserLanguage(): Language | null {
   if (typeof navigator === "undefined") return null;
@@ -81,6 +82,18 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   });
 
   const [localeVersion, setLocaleVersion] = useState(0);
+  const [overrides, setOverrides] = useState<OverrideMap>(() => getCachedOverrides());
+
+  // Admin-defined text overrides replace bundled wording when present.
+  useEffect(() => {
+    let active = true;
+    fetchOverrides().then((map) => {
+      if (active) setOverrides(map);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Non-English locale bundles are fetched on demand to keep the first load light.
   useEffect(() => {
@@ -134,7 +147,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: string, vars?: Record<string, unknown>) => {
-      const template = translations[language]?.[key] ?? translations.en[key] ?? key;
+      const template =
+        overrides[language]?.[key] ??
+        translations[language]?.[key] ??
+        overrides.en?.[key] ??
+        translations.en[key] ??
+        key;
 
       if (!vars) return template;
 
@@ -143,7 +161,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         template
       );
     },
-    [language, localeVersion]
+    [language, localeVersion, overrides]
   );
 
   return (
