@@ -3128,13 +3128,13 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                           <ChevronRight className="h-3.5 w-3.5 rotate-180" />
                         </Button>
                         <Select value={String(safeIdx)} onValueChange={(v) => setSampleRowIndex(Number(v))}>
-                          <SelectTrigger className="h-7 text-xs w-52">
+                          <SelectTrigger className="h-7 text-xs w-auto min-w-[16rem] max-w-[30rem] [&>span]:overflow-visible [&>span]:whitespace-nowrap">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="max-w-[32rem]">
                             {rows.slice(0, 200).map((r, i) => (
                               <SelectItem key={i} value={String(i)} className="text-xs">
-                                Row {i + 1} — {String(Object.values(r)[0] ?? "").slice(0, 30) || "(empty)"}
+                                Row {i + 1} — {String(Object.values(r)[0] ?? "") || "(empty)"}
                               </SelectItem>
                             ))}
                           </SelectContent>
