@@ -38,7 +38,7 @@ interface ContentItem {
   title: string;
   slug: string;
   url: string;
-  type: "page" | "product";
+  type: "page" | "product" | "post" | "category";
   status: string;
   content: string;
   excerpt: string;
