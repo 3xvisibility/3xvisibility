@@ -2,7 +2,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { Seo } from "@/components/Seo";
 import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
-import { Mail, Phone, MapPin, Send } from "lucide-react";
+import { Mail, Phone, MapPin, Send, Facebook, Linkedin } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,11 @@ import { supabase } from "@/integrations/supabase/client";
 const channels = [
   { icon: Mail, label: "Email", value: "Support@3xvisibility.com", href: "mailto:Support@3xvisibility.com" },
   { icon: MapPin, label: "Address", value: "21 rue de Cherbourg, 67100 Strasbourg, France", href: undefined },
+];
+
+const socials = [
+  { icon: Facebook, label: "Facebook", href: "https://www.facebook.com/profile.php?id=61593932319163" },
+  { icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/company/146284032" },
 ];
 
 export default function ContactPage() {
