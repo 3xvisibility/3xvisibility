@@ -1807,6 +1807,7 @@ const id: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "Pemindai AI",
   "sidebar.analytics": "Analitik",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "Tagihan",
   "sidebar.campaigns": "Kampanye",
   "sidebar.contentCalendar": "Kalender konten",

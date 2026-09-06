@@ -1807,6 +1807,7 @@ const vi: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "Quét AI",
   "sidebar.analytics": "Phân tích",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "Thanh toán",
   "sidebar.campaigns": "Chiến dịch",
   "sidebar.contentCalendar": "Lịch nội dung",

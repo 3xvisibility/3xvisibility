@@ -1807,6 +1807,7 @@ const ru: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "ИИ сканер",
   "sidebar.analytics": "Аналитика",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "Оплата",
   "sidebar.campaigns": "Кампании",
   "sidebar.contentCalendar": "Календарь контента",

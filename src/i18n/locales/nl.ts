@@ -1817,6 +1817,7 @@ const nl: Record<string, string> = {
   "sidebar.aiScanner": "AI Scanner",
   "sidebar.aiSiteBuilder": "AI Site Builder",
   "sidebar.analytics": "Analyses",
+  "sidebar.domainAnalysis": "Domeinanalyse",
   "sidebar.billing": "Facturering",
   "sidebar.campaigns": "Campagnes",
   "sidebar.contentCalendar": "Inhoud Kalender",

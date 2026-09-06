@@ -1807,6 +1807,7 @@ const ro: Record<string, string> = {
   "sidebar.affiliate": "Affiliate",
   "sidebar.aiScanner": "Scanner AI",
   "sidebar.analytics": "Analitică",
+  "sidebar.domainAnalysis": "Domain Analysis",
   "sidebar.billing": "Facturare",
   "sidebar.campaigns": "Campanii",
   "sidebar.contentCalendar": "Calendar conținut",
