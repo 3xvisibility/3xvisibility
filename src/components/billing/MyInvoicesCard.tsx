@@ -216,6 +216,14 @@ export function MyInvoicesCard() {
                   <span className="font-mono text-xs text-muted-foreground">
                     {inv.invoice_number}
                   </span>
+                  {inv.id.startsWith("legacy-") && (
+                    <Badge
+                      variant="outline"
+                      className="bg-primary/10 text-primary border-primary/30"
+                    >
+                      {t("billing.invoicesLegacyBadge")}
+                    </Badge>
+                  )}
                   <Badge
                     variant="outline"
                     className={
