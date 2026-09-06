@@ -1,4 +1,4 @@
-export type WebsiteContentListTab = "pages" | "products";
+export type WebsiteContentListTab = "pages" | "products" | "posts" | "categories";
 export type PageEditorTab = "edit" | "seo" | "preview" | "changes" | "source";
 export type PageEditorMode = "visual" | "html" | "split";
 

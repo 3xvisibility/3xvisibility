@@ -438,6 +438,7 @@ async function handleOptimizeSeoContent(req: Request, functionStartedAt = Date.n
           status: "publish",
         };
         if (isProductContent) updatePayload.product_data = { handle: page_slug || undefined };
+        else if (page_type === "post") updatePayload.post_data = { slug: page_slug || undefined };
         if (preserveDesign) updatePayload.preserve_design = true;
         if (forceRepublish) updatePayload.publish_format = "html";
         if (manual_excerpt) updatePayload.excerpt = manual_excerpt;
@@ -1181,6 +1182,7 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
         };
 
         if (isProductContent) updatePayload.product_data = { handle: page_slug || undefined };
+        else if (page_type === "post") updatePayload.post_data = { slug: page_slug || undefined };
         // Only push rewritten body content when the caller explicitly opted into
         // a design overwrite — preserves builder layouts on republish.
         if (rewrittenContent && !preserveDesign) {

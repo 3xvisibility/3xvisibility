@@ -614,7 +614,7 @@ export class WordPressConnector implements CmsConnector {
 
   async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
     const body: Record<string, unknown> = {};
-    const resourcePath = payload.product_data ? "product" : "pages";
+    const resourcePath = payload.product_data ? "product" : payload.post_data ? "posts" : "pages";
     const preserveDesign = payload.preserve_design === true;
 
     // Design-preservation / pure-SEO updates must NEVER rename the live page.
@@ -742,13 +742,49 @@ export class WordPressConnector implements CmsConnector {
   }
 
 
-  async listContent(contentType: "pages" | "products"): Promise<ContentItem[]> {
+  /** Read WordPress categories (read-only taxonomy view for the dashboard). */
+  private async listCategories(): Promise<ContentItem[]> {
+    const items: ContentItem[] = [];
+    let page = 1;
+    while (true) {
+      const url = `${this.baseUrl}/wp-json/wp/v2/categories?per_page=100&page=${page}&context=edit`;
+      const response = await wordpressFetch(url, { headers: this.headers }, 15_000);
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`WordPress API error [${response.status}]: ${err}`);
+      }
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) break;
+      for (const cat of data) {
+        items.push({
+          id: String(cat.id),
+          title: cat.name || "",
+          slug: cat.slug || "",
+          url: cat.link || `${this.baseUrl}/category/${cat.slug}`,
+          type: "category",
+          status: `${cat.count ?? 0} posts`,
+          content: cat.description || "",
+          excerpt: cat.description || "",
+          modified: "",
+          raw_meta: { count: cat.count ?? 0, parent: cat.parent ?? 0 },
+        });
+      }
+      const totalPages = parseInt(response.headers.get("X-WP-TotalPages") || "1");
+      if (page >= totalPages) break;
+      page++;
+    }
+    return items;
+  }
+
+  async listContent(contentType: "pages" | "products" | "posts" | "categories"): Promise<ContentItem[]> {
+    if (contentType === "categories") return await this.listCategories();
     const items: ContentItem[] = [];
     let page = 1;
     const perPage = 100;
 
     while (true) {
-      const url = `${this.baseUrl}/wp-json/wp/v2/${contentType === "products" ? "product" : "pages"}?per_page=${perPage}&page=${page}&_embed&context=edit`;
+      const restBase = contentType === "products" ? "product" : contentType === "posts" ? "posts" : "pages";
+      const url = `${this.baseUrl}/wp-json/wp/v2/${restBase}?per_page=${perPage}&page=${page}&_embed&context=edit`;
       const response = await wordpressFetch(url, { headers: this.headers }, 15_000);
 
       if (!response.ok) {
@@ -768,7 +804,7 @@ export class WordPressConnector implements CmsConnector {
           title: item.title?.rendered || item.title?.raw || item.name || "",
           slug: item.slug || "",
           url: item.link || `${this.baseUrl}/${item.slug}`,
-          type: contentType === "products" ? "product" : "page",
+          type: contentType === "products" ? "product" : contentType === "posts" ? "post" : "page",
           status: item.status || "publish",
           content: item.content?.rendered || item.content?.raw || item.description || "",
           excerpt: item.excerpt?.rendered || item.excerpt?.raw || item.short_description || "",

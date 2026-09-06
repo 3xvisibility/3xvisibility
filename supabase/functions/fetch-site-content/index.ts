@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
         { id: "demo-p1", title: "Starter Product", slug: "starter-product", url: `${fullUrl}/product/starter-product`, type: "product" as const, status: "publish", content: "<h1>{product_name}</h1><p>Starting at {price}. SKU: {sku}. Built for {audience}.</p>", excerpt: "Starter product details", modified: new Date().toISOString() },
         { id: "demo-p2", title: "Premium Product", slug: "premium-product", url: `${fullUrl}/product/premium-product`, type: "product" as const, status: "publish", content: "<h1>{product_name}</h1><p>Our premium {category_name} option in {color} with {material} finish.</p>", excerpt: "Premium product details", modified: new Date().toISOString() },
       ];
-      const items = type === "products" ? demoProducts : demoPages;
+      const items = type === "products" ? demoProducts : type === "posts" || type === "categories" ? [] : demoPages;
       return new Response(
         JSON.stringify({ success: true, items, total: items.length, demo: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -93,6 +93,13 @@ Deno.serve(async (req) => {
         type: website.type,
         credentials: website.credentials as Record<string, string> | null,
       };
+      if ((type === "posts" || type === "categories") && website.type !== "wordpress" && website.type !== "woocommerce") {
+        return new Response(
+          JSON.stringify({ success: true, items: [], total: 0, unsupported: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       const connector = await createConnector(record);
       const items = await connector.listContent(type);
 
