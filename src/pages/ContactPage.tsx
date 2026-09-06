@@ -127,6 +127,24 @@ export default function ContactPage() {
           </div>
         </div>
 
+        <div className="not-prose flex items-center gap-4">
+          <span className="text-sm font-medium text-foreground">{t("contact.followUs") || "Follow us"}</span>
+          <div className="flex items-center gap-3">
+            {socials.map(({ icon: Icon, label, href }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className="h-10 w-10 rounded-lg border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+              >
+                <Icon className="h-5 w-5" />
+              </a>
+            ))}
+          </div>
+        </div>
+
         <h2>{t("contact.responseTime")}</h2>
         <p>{t("contact.responseTimeDesc")}</p>
       </StaticPageLayout>
