@@ -151,10 +151,21 @@ export default function DomainAnalysisPage() {
                 ))}
               </select>
             </div>
+            <Button
+              variant="outline"
+              disabled={analyze.isPending}
+              onClick={() => {
+                setDomain(myDomain);
+                analyze.mutate(myDomain);
+              }}
+            >
+              My site
+            </Button>
             <Button disabled={!domain.trim() || analyze.isPending} onClick={() => analyze.mutate(domain)}>
               <Search className="h-4 w-4 mr-1" />
               {analyze.isPending ? "Checking…" : "Analyze"}
             </Button>
+
           </CardContent>
         </Card>
 
