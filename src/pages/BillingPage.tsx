@@ -310,16 +310,6 @@ export default function BillingPage() {
       {/* Payment methods */}
       <PaymentMethods />
 
-      <PricingComparisonTable
-        activePlan={activePlan}
-        currentPlan={currentPlan}
-        isYearly={isYearly}
-        loadingPlan={loadingPlan}
-        onPlanClick={handlePlanClick}
-        onToggleYearly={() => setIsYearly(!isYearly)}
-        trialEligible={activePlan === "free" && subStatus !== "canceled" && !isTrialing}
-      />
-
       <BillingDetailsCard />
 
       <MyInvoicesCard />
