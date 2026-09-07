@@ -334,6 +334,29 @@ export default function PgpGeneratePage() {
     toast({ title: `Applied "${g.name}"`, description: `${Object.keys(overrides).length} variable(s) filled from group.` });
   };
 
+  // Auto-apply the newest saved Keyword Group that belongs to the selected
+  // template, so the freshly generated terms (not stale workspace-level
+  // pgp_keywords rows) drive previews and generation.
+  const autoAppliedGroupFor = useRef<string>("");
+  useEffect(() => {
+    if (!selectedGroupId || selectedKeywordGroupId) return;
+    if (autoAppliedGroupFor.current === selectedGroupId) return;
+    const g = keywordGroups.find(
+      (x) => x.template_id === selectedGroupId && (x.variables || []).some((v) => (v.terms || []).length > 0),
+    );
+    if (!g) return;
+    autoAppliedGroupFor.current = selectedGroupId;
+    const overrides: Record<string, { terms: string[]; term_count: number }> = {};
+    for (const v of (g.variables || [])) {
+      const terms = (v.terms || []).filter(Boolean);
+      if (terms.length > 0) overrides[v.name] = { terms, term_count: terms.length };
+    }
+    setSelectedKeywordGroupId(g.id);
+    setKeywordOverrides(overrides);
+  }, [selectedGroupId, selectedKeywordGroupId, keywordGroups]);
+
+
+
   const { data: keywords = [] } = useQuery({
     queryKey: ["pgp-keywords-full", wsId],
     enabled: !!wsId,
