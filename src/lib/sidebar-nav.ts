@@ -17,7 +17,6 @@ import {
   Columns3,
   Boxes,
   Link2,
-  SlidersHorizontal,
   Search as SearchIcon,
   Zap,
   Activity,
