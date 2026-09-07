@@ -59,7 +59,6 @@ const PgpTermsPage = lazy(() => import("./pages/PgpTermsPage"));
 const ElementorTestPage = lazy(() => import("./pages/ElementorTestPage"));
 const RepublishDiffHarnessPage = lazy(() => import("./pages/RepublishDiffHarnessPage"));
 const SeoAnalysisHarnessPage = lazy(() => import("./pages/SeoAnalysisHarnessPage"));
-const WpControlPage = lazy(() => import("./pages/WpControlPage"));
 const SupabaseConnectionTestPage = lazy(() => import("./pages/SupabaseConnectionTestPage"));
 const MigrateToSupabasePage = lazy(() => import("./pages/MigrateToSupabasePage"));
 const ShopifyCallbackPage = lazy(() => import("./pages/ShopifyCallbackPage"));
@@ -180,7 +179,6 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="template-mapping" element={<Navigate to="../dashboard" replace />} />
       <Route path="template-kit" element={<Navigate to="../dashboard" replace />} />
       <Route path="elementor-test" element={wrap(<ElementorTestPage />)} />
-      <Route path="wp-control" element={wrap(<WpControlPage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
     </Suspense>

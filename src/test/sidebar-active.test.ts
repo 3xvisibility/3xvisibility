@@ -17,7 +17,6 @@ const mainNav = [
 const websiteNav = [
   { path: "websites" },
   { path: "website-content" },
-  { path: "wp-control" },
   { path: "marketplace" },
   { path: "data" },
 ];

@@ -17,7 +17,6 @@ import {
   Columns3,
   Boxes,
   Link2,
-  SlidersHorizontal,
   Search as SearchIcon,
   Zap,
   Activity,
@@ -58,7 +57,6 @@ export const mainNav: NavItem[] = [
 export const websiteNav: NavItem[] = [
   { titleKey: "sidebar.websites", path: "websites", icon: Globe },
   { titleKey: "sidebar.websiteContent", path: "website-content", icon: Boxes, requiredFeature: "discovery" },
-  { titleKey: "sidebar.wpControl", path: "wp-control", icon: SlidersHorizontal },
   { titleKey: "sidebar.marketplace", path: "marketplace", icon: Store, requiredFeature: "internalLinks" },
   { titleKey: "sidebar.dataCsv", path: "data", icon: Database },
 ];
