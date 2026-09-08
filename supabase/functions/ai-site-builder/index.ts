@@ -357,7 +357,21 @@ function slotImg(slotKeyword: string | undefined, fallbackTitle: string, baseQue
   return [title, baseQuery].filter(Boolean).join(" ").trim() || baseQuery;
 }
 
-function renderHtml(p: PageJson, imgQuery = ""): string {
+/** A link in the shared site navigation shown on every generated page. */
+interface NavItem { label: string; href: string }
+
+/** Build the shared nav for a multi-page site from the requested page names. */
+function buildNav(pageNames: string[]): NavItem[] {
+  return (pageNames || [])
+    .map((n) => String(n).trim())
+    .filter(Boolean)
+    .map((name) => ({
+      label: name,
+      href: /^(home|homepage|landing|main|index)$/i.test(name) ? "/" : `/${slugify(name)}`,
+    }));
+}
+
+function renderHtml(p: PageJson, imgQuery = "", nav: NavItem[] = []): string {
   const t = p.theme || { primary: "#6d28d9", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
   // Derive a soft surface + subtle border from the text color for depth.
   const surface = "#ffffff";
