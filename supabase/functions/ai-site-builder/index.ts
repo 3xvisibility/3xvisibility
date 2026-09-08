@@ -164,13 +164,14 @@ const CHAT_JSON_SCHEMA = {
         collected: {
           type: "object",
           additionalProperties: false,
-          required: ["brand", "category", "niche", "referenceUrl", "freeText"],
+          required: ["brand", "category", "niche", "referenceUrl", "freeText", "pages"],
           properties: {
             brand: { type: ["string", "null"] },
             category: { type: ["string", "null"] },
             niche: { type: ["string", "null"] },
             referenceUrl: { type: ["string", "null"] },
             freeText: { type: ["string", "null"] },
+            pages: { type: "array", items: { type: "string" } },
           },
         },
         ready: { type: "boolean" },
