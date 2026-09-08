@@ -464,8 +464,9 @@ function renderHtml(p: PageJson, imgQuery = "", nav: NavItem[] = []): string {
   const brandName = esc(p.brand || p.title || "Brand");
   const placement = (t as { logoPlacement?: string }).logoPlacement || "left";
   const logo = `<span style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:${esc(t.primary)};">${brandName}</span>`;
-  const navLinks = `<nav style="display:flex;gap:24px;font-size:14px;font-weight:600;color:${muted};">
-        <span>Home</span><span>Services</span><span>About</span><span>Contact</span>
+  const navItems = nav.length ? nav : buildNav(["Home", "Services", "About", "Contact"]);
+  const navLinks = `<nav style="display:flex;gap:24px;font-size:14px;font-weight:600;color:${muted};flex-wrap:wrap;">
+        ${navItems.map((n) => `<a href="${esc(n.href)}" style="color:${muted};text-decoration:none;">${esc(n.label)}</a>`).join("")}
       </nav>`;
   const headerInner =
     placement === "center"
