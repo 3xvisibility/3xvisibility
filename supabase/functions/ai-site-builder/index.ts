@@ -770,28 +770,7 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      // Resolve the list of pages to build (default: a single Home page).
-      const pageNames = Array.isArray(input.pages) && input.pages.length
-        ? input.pages.map((s) => String(s).trim()).filter(Boolean).slice(0, 8)
-        : ["Home"];
-
-      // Fetch the reference site once and reuse it for every page.
-      let sharedRef: ReferenceAnalysis | null = null;
-      if (input.referenceUrl) sharedRef = await fetchReference(input.referenceUrl);
-
-      const builtPages: any[] = [];
-      const plans: PageJson[] = [];
-      let firstError: string | undefined;
-
-      for (const name of pageNames) {
-        const out = await generatePage({ ...input, pageName: name }, authToken, sharedRef);
-        if (!out.ok || !out.page) {
-          if (!firstError) firstError = out.error;
-          continue;
-        }
-        plans.push(out.page);
-        builtPages.push(await buildPagePayload(out.page, input, out.hints ?? []));
-      }
+      const { builtPages, plans, firstError } = await buildSite(input, authToken);
 
       if (!builtPages.length) {
         const err = firstError || "Failed to build any pages.";
