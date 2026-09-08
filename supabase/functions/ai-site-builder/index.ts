@@ -164,13 +164,14 @@ const CHAT_JSON_SCHEMA = {
         collected: {
           type: "object",
           additionalProperties: false,
-          required: ["brand", "category", "niche", "referenceUrl", "freeText"],
+          required: ["brand", "category", "niche", "referenceUrl", "freeText", "pages"],
           properties: {
             brand: { type: ["string", "null"] },
             category: { type: ["string", "null"] },
             niche: { type: ["string", "null"] },
             referenceUrl: { type: ["string", "null"] },
             freeText: { type: ["string", "null"] },
+            pages: { type: "array", items: { type: "string" } },
           },
         },
         ready: { type: "boolean" },
@@ -356,7 +357,21 @@ function slotImg(slotKeyword: string | undefined, fallbackTitle: string, baseQue
   return [title, baseQuery].filter(Boolean).join(" ").trim() || baseQuery;
 }
 
-function renderHtml(p: PageJson, imgQuery = ""): string {
+/** A link in the shared site navigation shown on every generated page. */
+interface NavItem { label: string; href: string }
+
+/** Build the shared nav for a multi-page site from the requested page names. */
+function buildNav(pageNames: string[]): NavItem[] {
+  return (pageNames || [])
+    .map((n) => String(n).trim())
+    .filter(Boolean)
+    .map((name) => ({
+      label: name,
+      href: /^(home|homepage|landing|main|index)$/i.test(name) ? "/" : `/${slugify(name)}`,
+    }));
+}
+
+function renderHtml(p: PageJson, imgQuery = "", nav: NavItem[] = []): string {
   const t = p.theme || { primary: "#6d28d9", accent: "#f59e0b", bg: "#ffffff", text: "#0f172a" };
   // Derive a soft surface + subtle border from the text color for depth.
   const surface = "#ffffff";
@@ -449,8 +464,9 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
   const brandName = esc(p.brand || p.title || "Brand");
   const placement = (t as { logoPlacement?: string }).logoPlacement || "left";
   const logo = `<span style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:${esc(t.primary)};">${brandName}</span>`;
-  const navLinks = `<nav style="display:flex;gap:24px;font-size:14px;font-weight:600;color:${muted};">
-        <span>Home</span><span>Services</span><span>About</span><span>Contact</span>
+  const navItems = nav.length ? nav : buildNav(["Home", "Services", "About", "Contact"]);
+  const navLinks = `<nav style="display:flex;gap:24px;font-size:14px;font-weight:600;color:${muted};flex-wrap:wrap;">
+        ${navItems.map((n) => `<a href="${esc(n.href)}" style="color:${muted};text-decoration:none;">${esc(n.label)}</a>`).join("")}
       </nav>`;
   const headerInner =
     placement === "center"
@@ -498,12 +514,12 @@ function renderHtml(p: PageJson, imgQuery = ""): string {
 // Routing priority: (1) a matching stored master Elementor template, content
 // overlaid onto its editable fields for a 1:1 native design; (2) HTML→native
 // Elementor conversion; (3) raw HTML fallback.
-async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: string[]) {
+async function buildPagePayload(p: PageJson, input: BuildInput, sectionHints: string[], nav: NavItem[] = []) {
   const imgQuery = [input.niche, input.category, input.brand]
     .filter(Boolean)
     .join(" ")
     .trim() || p.title;
-  const html = renderHtml(p, imgQuery);
+  const html = renderHtml(p, imgQuery, nav);
   const platform = input.platform === "shopify" ? "shopify" : "wordpress";
 
   // Shopify pages do NOT use Elementor — they publish into Shopify's own
@@ -705,6 +721,39 @@ Generate the ${pageName || "landing"} page JSON now.`;
   return { ok: true, page: parsed, hints };
 }
 
+/**
+ * Build an entire multi-page website: one AI-generated page per requested page
+ * name, all sharing the same reference analysis, theme and site navigation.
+ */
+async function buildSite(input: BuildInput, authToken?: string) {
+  const pageNames = Array.isArray(input.pages) && input.pages.length
+    ? input.pages.map((s) => String(s).trim()).filter(Boolean).slice(0, 8)
+    : ["Home"];
+  const nav = buildNav(pageNames);
+
+  // Fetch the reference site once and reuse it for every page.
+  let sharedRef: ReferenceAnalysis | null = null;
+  if (input.referenceUrl) sharedRef = await fetchReference(input.referenceUrl);
+
+  const builtPages: any[] = [];
+  const plans: PageJson[] = [];
+  let firstError: string | undefined;
+
+  for (const name of pageNames) {
+    const out = await generatePage({ ...input, pageName: name }, authToken, sharedRef);
+    if (!out.ok || !out.page) {
+      if (!firstError) firstError = out.error;
+      continue;
+    }
+    // Keep the whole site on one palette: reuse the home page theme everywhere.
+    if (plans.length) out.page.theme = { ...plans[0].theme };
+    plans.push(out.page);
+    builtPages.push(await buildPagePayload(out.page, input, out.hints ?? [], nav));
+  }
+
+  return { builtPages, plans, firstError, pageNames };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -721,28 +770,7 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      // Resolve the list of pages to build (default: a single Home page).
-      const pageNames = Array.isArray(input.pages) && input.pages.length
-        ? input.pages.map((s) => String(s).trim()).filter(Boolean).slice(0, 8)
-        : ["Home"];
-
-      // Fetch the reference site once and reuse it for every page.
-      let sharedRef: ReferenceAnalysis | null = null;
-      if (input.referenceUrl) sharedRef = await fetchReference(input.referenceUrl);
-
-      const builtPages: any[] = [];
-      const plans: PageJson[] = [];
-      let firstError: string | undefined;
-
-      for (const name of pageNames) {
-        const out = await generatePage({ ...input, pageName: name }, authToken, sharedRef);
-        if (!out.ok || !out.page) {
-          if (!firstError) firstError = out.error;
-          continue;
-        }
-        plans.push(out.page);
-        builtPages.push(await buildPagePayload(out.page, input, out.hints ?? []));
-      }
+      const { builtPages, plans, firstError } = await buildSite(input, authToken);
 
       if (!builtPages.length) {
         const err = firstError || "Failed to build any pages.";
