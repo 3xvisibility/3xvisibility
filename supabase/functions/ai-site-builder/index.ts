@@ -721,6 +721,39 @@ Generate the ${pageName || "landing"} page JSON now.`;
   return { ok: true, page: parsed, hints };
 }
 
+/**
+ * Build an entire multi-page website: one AI-generated page per requested page
+ * name, all sharing the same reference analysis, theme and site navigation.
+ */
+async function buildSite(input: BuildInput, authToken?: string) {
+  const pageNames = Array.isArray(input.pages) && input.pages.length
+    ? input.pages.map((s) => String(s).trim()).filter(Boolean).slice(0, 8)
+    : ["Home"];
+  const nav = buildNav(pageNames);
+
+  // Fetch the reference site once and reuse it for every page.
+  let sharedRef: ReferenceAnalysis | null = null;
+  if (input.referenceUrl) sharedRef = await fetchReference(input.referenceUrl);
+
+  const builtPages: any[] = [];
+  const plans: PageJson[] = [];
+  let firstError: string | undefined;
+
+  for (const name of pageNames) {
+    const out = await generatePage({ ...input, pageName: name }, authToken, sharedRef);
+    if (!out.ok || !out.page) {
+      if (!firstError) firstError = out.error;
+      continue;
+    }
+    // Keep the whole site on one palette: reuse the home page theme everywhere.
+    if (plans.length) out.page.theme = { ...plans[0].theme };
+    plans.push(out.page);
+    builtPages.push(await buildPagePayload(out.page, input, out.hints ?? [], nav));
+  }
+
+  return { builtPages, plans, firstError, pageNames };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
