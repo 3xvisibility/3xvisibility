@@ -14,6 +14,7 @@ import { template as subscriptionConfirmation } from './subscription-confirmatio
 import { template as subscriptionCancelled } from './subscription-cancelled.tsx'
 import { template as invoiceStatusUpdate } from './invoice-status-update.tsx'
 import { template as invoiceDocument } from './invoice-document.tsx'
+import { template as adminAnalyzerLead } from './admin-analyzer-lead.tsx'
 
 
 
@@ -42,4 +43,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'subscription-cancelled': subscriptionCancelled,
   'invoice-status-update': invoiceStatusUpdate,
   'invoice-document': invoiceDocument,
+  'admin-analyzer-lead': adminAnalyzerLead,
 }
