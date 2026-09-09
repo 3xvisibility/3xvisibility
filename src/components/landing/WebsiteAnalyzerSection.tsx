@@ -134,7 +134,11 @@ export function WebsiteAnalyzerSection() {
     setError(null);
     try {
       const { data, error: fnError } = await supabase.functions.invoke("analyze-website-free", {
-        body: { url: value },
+        body: {
+          url: value,
+          email: emailRef.current.trim() || undefined,
+          referrer: typeof document !== "undefined" ? document.referrer || undefined : undefined,
+        },
       });
       if (fnError) throw fnError;
       if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
