@@ -2,6 +2,8 @@
 // Fetches a public URL, extracts on-page SEO / AI-visibility signals and
 // returns a scored report used by the landing page "Analyze my website" widget.
 
+import { createClient } from "npm:@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
