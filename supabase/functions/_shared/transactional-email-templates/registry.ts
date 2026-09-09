@@ -43,4 +43,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'subscription-cancelled': subscriptionCancelled,
   'invoice-status-update': invoiceStatusUpdate,
   'invoice-document': invoiceDocument,
+  'admin-analyzer-lead': adminAnalyzerLead,
 }
