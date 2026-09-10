@@ -685,20 +685,22 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
       let result: any = {};
       try { result = JSON.parse(raw); } catch { result = {}; }
 
-      await supabase.from("pgp_keywords").insert({
+      const { error: svcErr } = await supabase.from("pgp_keywords").upsert({
         name: "service", source: "ai", terms: serviceTerms, term_count: serviceTerms.length,
         columns: [], delimiter: null, source_config: { auto_generated: true, topic: wizService }, workspace_id: wsId, user_id: user.id,
-      } as any);
+      } as any, { onConflict: "workspace_id,name" });
+      if (svcErr) throw svcErr;
 
       // Do NOT AI-fabricate city terms. The Campaign wizard pulls real cities
       // from the Location Database. Create the group empty so the user knows to
       // attach locations at campaign time.
-      await supabase.from("pgp_keywords").insert({
+      const { error: cityErr } = await supabase.from("pgp_keywords").upsert({
         name: "city", source: "location", terms: [], term_count: 0,
         columns: [], delimiter: null,
         source_config: { auto_generated: true, note: "Attach real cities via Campaign wizard → Attach Locations" },
         workspace_id: wsId, user_id: user.id,
-      } as any);
+      } as any, { onConflict: "workspace_id,name", ignoreDuplicates: true });
+      if (cityErr) throw cityErr;
 
       const variables = [...new Set((result.template_content || "").match(/\{[^}]+\}/g) || [])];
       await supabase.from("templates").insert({

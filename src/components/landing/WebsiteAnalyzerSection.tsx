@@ -109,7 +109,13 @@ export function WebsiteAnalyzerSection() {
   const [comparedAt, setComparedAt] = useState<string | null>(null);
   const [rescanning, setRescanning] = useState(false);
 
+  const [email, setEmail] = useState("");
+
   const pendingRef = useRef<string | null>(null);
+  const emailRef = useRef("");
+  useEffect(() => {
+    emailRef.current = email;
+  }, [email]);
 
   const runAnalysis = useCallback(async (raw: string, isRescan = false) => {
     // Normalize: accept "example.com", "www.example.com" or a full URL.
@@ -226,6 +232,14 @@ export function WebsiteAnalyzerSection() {
                 className="h-12 pl-10 rounded-xl"
               />
             </div>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Your email (optional)"
+              aria-label="Your email (optional)"
+              className="h-12 rounded-xl sm:w-56"
+            />
             <Button type="submit" size="lg" disabled={loading} className="h-12 rounded-xl px-6 font-semibold">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Analyze my website <ArrowRight className="ml-2 h-4 w-4" /></>}
             </Button>
