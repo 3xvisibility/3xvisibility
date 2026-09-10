@@ -14,6 +14,7 @@ import {
   Plug,
   KeyRound,
   Sparkles,
+  Search,
 
   Settings,
   Store,
@@ -46,6 +47,7 @@ interface AdminNavItem {
 const managementNav: AdminNavItem[] = [
   { label: "Overview", section: "overview", icon: BarChart3 },
   { label: "Inbox", section: "inbox", icon: Mail },
+  { label: "Analyzer Leads", section: "analyzer-leads", icon: Search },
   { label: "Activity", section: "activity", icon: Activity },
   { label: "Users", section: "users", icon: Users },
   { label: "Campaigns", section: "campaigns", icon: Rocket },

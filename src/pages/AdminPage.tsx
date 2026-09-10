@@ -30,6 +30,7 @@ import AiProvidersAdminPanel from "@/components/admin/AiProvidersAdminPanel";
 import { AiUsageReportPanel } from "@/components/admin/AiUsageReportPanel";
 import { AdminOverviewPanel } from "@/components/admin/AdminOverviewPanel";
 import { ContactInboxPanel } from "@/components/admin/ContactInboxPanel";
+import { AnalyzerLeadsPanel } from "@/components/admin/AnalyzerLeadsPanel";
 import { TemplateSyncPanel } from "@/components/admin/TemplateSyncPanel";
 import { MarketplaceCatalogPanel } from "@/components/admin/MarketplaceCatalogPanel";
 import { PlanPricingPanel } from "@/components/admin/PlanPricingPanel";
@@ -990,6 +991,10 @@ export default function AdminPage() {
 
         <TabsContent value="inbox" className="space-y-4">
           <ContactInboxPanel />
+        </TabsContent>
+
+        <TabsContent value="analyzer-leads" className="space-y-4">
+          <AnalyzerLeadsPanel />
         </TabsContent>
 
         <TabsContent value="ai-access" className="space-y-4">
