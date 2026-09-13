@@ -21,6 +21,7 @@ import { downloadAnalyzerPdf } from "@/lib/analyzer-pdf";
 import { AnalyzerPageRecommendations } from "@/components/landing/AnalyzerPageRecommendations";
 import { AnalyzerChangePanel } from "@/components/landing/AnalyzerChangePanel";
 import { diffReports, loadSnapshot, saveSnapshot, type AnalyzerDiff } from "@/lib/analyzer-diff";
+import { isValidEmail } from "@/lib/normalize-email";
 
 
 
@@ -121,6 +122,10 @@ export function WebsiteAnalyzerSection() {
     // Normalize: accept "example.com", "www.example.com" or a full URL.
     const trimmed = raw.trim();
     if (!trimmed) return;
+    if (!isValidEmail(emailRef.current)) {
+      setError("Please enter your email address so we can send you the report and follow up.");
+      return;
+    }
     const value = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
     try {
       // Reject obviously invalid input before hitting the network.
