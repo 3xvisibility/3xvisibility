@@ -41,7 +41,7 @@ export default function BlogPostPage() {
           image: post.image,
           datePublished: post.date,
           url: `https://3xvisibility.com/blog/${post.slug}`,
-          author: { "@type": "Organization", name: "3XVISIBILITY" },
+          author: { "@type": "Organization", name: "3x Visibility" },
         }}
       />
       <StaticPageLayout title={post.title} subtitle={post.excerpt}>

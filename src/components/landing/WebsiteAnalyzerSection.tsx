@@ -260,7 +260,7 @@ export function WebsiteAnalyzerSection() {
                   <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
                     <Button asChild size="lg" className="rounded-xl font-semibold">
                       <Link to="/auth">
-                        Fix these with 3xVisibility <ArrowRight className="ml-2 h-4 w-4" />
+                        Fix these with 3x Visibility <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
                     <Button

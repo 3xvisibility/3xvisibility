@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { BRAND_NAME } from "@/lib/brand";
 
 const BASE_URL = "https://3xvisibility.com";
 
@@ -20,7 +21,7 @@ export interface SeoProps {
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
-const BRAND = "3XVISIBILITY";
+const BRAND = BRAND_NAME;
 
 export function Seo({
   title,

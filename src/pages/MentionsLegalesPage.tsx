@@ -6,7 +6,7 @@ export default function MentionsLegalesPage() {
     <>
       <Seo
         title="Legal Notice"
-        description="Legal information about the publisher and hosting of the 3XVISIBILITY website."
+        description="Legal information about the publisher and hosting of the 3x Visibility website."
         path="/mentions-legales"
       />
       <StaticPageLayout
@@ -19,7 +19,7 @@ export default function MentionsLegalesPage() {
         </p>
         <ul>
           <li><strong>Legal name</strong> : <span translate="no">VERODAV GROUP</span></li>
-          <li><strong>Trading name</strong> : <span translate="no">3xvisibility</span></li>
+          <li><strong>Trading name</strong> : <span translate="no">3x Visibility</span></li>
           <li><strong>Legal form</strong> : SAS – Société par actions simplifiée</li>
           <li><strong>Registered address</strong> : <span translate="no">21 rue de Cherbourg, 67100 Strasbourg, France</span></li>
           <li><strong>Trade and companies register (RCS)</strong> : Strasbourg 843 715 954</li>
@@ -117,7 +117,7 @@ export default function MentionsLegalesPage() {
 
         <h2>6. Personal Data (GDPR)</h2>
         <p>
-          <strong>Data controller</strong> : <span translate="no">3XVISIBILITY</span> — <a href="mailto:Support@3xvisibility.com" translate="no">Support@3xvisibility.com</a>
+          <strong>Data controller</strong> : <span translate="no">3x Visibility</span> — <a href="mailto:Support@3xvisibility.com" translate="no">Support@3xvisibility.com</a>
         </p>
         <p>
           Personal data is processed for the following purposes: creation and management of user

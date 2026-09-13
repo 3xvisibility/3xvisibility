@@ -9,25 +9,25 @@ import type { Language } from "@/i18n/translations";
 const UI: Partial<Record<Language, { title: string; subtitle: string; readMore: string; more: string }>> = {
   en: {
     title: "Blog",
-    subtitle: "Product updates, SEO playbooks and engineering notes from the 3XVISIBILITY team.",
+    subtitle: "Product updates, SEO playbooks and engineering notes from the 3x Visibility team.",
     readMore: "Read more",
     more: "More posts coming soon — follow us for updates.",
   },
   fr: {
     title: "Blog",
-    subtitle: "Nouveautés produit, guides SEO et notes d'ingénierie de l'équipe 3XVISIBILITY.",
+    subtitle: "Nouveautés produit, guides SEO et notes d'ingénierie de l'équipe 3x Visibility.",
     readMore: "Lire la suite",
     more: "D'autres articles arrivent bientôt — suivez-nous pour les mises à jour.",
   },
   de: {
     title: "Blog",
-    subtitle: "Produkt-Updates, SEO-Playbooks und Engineering-Notizen vom 3XVISIBILITY-Team.",
+    subtitle: "Produkt-Updates, SEO-Playbooks und Engineering-Notizen vom 3x Visibility-Team.",
     readMore: "Weiterlesen",
     more: "Weitere Beiträge folgen bald — folgen Sie uns für Updates.",
   },
   es: {
     title: "Blog",
-    subtitle: "Novedades de producto, guías de SEO y notas de ingeniería del equipo de 3XVISIBILITY.",
+    subtitle: "Novedades de producto, guías de SEO y notas de ingeniería del equipo de 3x Visibility.",
     readMore: "Leer más",
     more: "Pronto más artículos — síguenos para novedades.",
   },
@@ -47,7 +47,7 @@ export default function BlogPage() {
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Blog",
-          name: "3XVISIBILITY Blog",
+          name: "3x Visibility Blog",
           url: "https://3xvisibility.com/blog",
           blogPost: posts.map((p) => ({
             "@type": "BlogPosting",

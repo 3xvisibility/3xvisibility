@@ -6,7 +6,7 @@ export default function ConfidentialitePage() {
     <>
       <Seo
         title="Privacy Policy"
-        description="How 3XVISIBILITY collects, uses and protects your personal data in accordance with the GDPR."
+        description="How 3x Visibility collects, uses and protects your personal data in accordance with the GDPR."
         path="/confidentialite"
       />
       <StaticPageLayout
@@ -15,7 +15,7 @@ export default function ConfidentialitePage() {
       >
         <h2>1. Introduction</h2>
         <p>
-          This privacy policy describes how <span translate="no">3XVISIBILITY</span>{" "}
+          This privacy policy describes how <span translate="no">3x Visibility</span>{" "}
           (« we »), published by <span translate="no">VERODAV GROUP</span> (SAS,
           <span translate="no"> 21 rue de Cherbourg, 67100 Strasbourg, France</span>),
           collects, uses, stores and protects the personal data of users of its SaaS
@@ -24,7 +24,7 @@ export default function ConfidentialitePage() {
 
         <h2>2. Data controller</h2>
         <p>
-          <strong>Data controller</strong> : <span translate="no">VERODAV GROUP / 3XVISIBILITY</span> —{" "}
+          <strong>Data controller</strong> : <span translate="no">VERODAV GROUP / 3x Visibility</span> —{" "}
           <a href="mailto:Support@3xvisibility.com" translate="no">Support@3xvisibility.com</a>
         </p>
 

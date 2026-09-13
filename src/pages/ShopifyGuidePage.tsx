@@ -19,16 +19,16 @@ export default function ShopifyGuidePage() {
   const c = shopifyGuide[language] ?? shopifyGuide.en;
 
   useEffect(() => {
-    document.title = "Connect Shopify — 3XVISIBILITY";
+    document.title = "Connect Shopify — 3x Visibility";
     const m = document.querySelector('meta[name="description"]');
-    if (m) m.setAttribute("content", "Step-by-step guide to connect your Shopify store to 3XVISIBILITY via OAuth and publish pages and product SEO at scale.");
+    if (m) m.setAttribute("content", "Step-by-step guide to connect your Shopify store to 3x Visibility via OAuth and publish pages and product SEO at scale.");
   }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Seo
         title="Connect Shopify"
-        description="A step-by-step guide to connecting your Shopify store to 3XVISIBILITY through secure OAuth, then publishing pages and optimizing product SEO."
+        description="A step-by-step guide to connecting your Shopify store to 3x Visibility through secure OAuth, then publishing pages and optimizing product SEO."
         path="/guides/shopify"
       />
       <LandingNav />

@@ -45,7 +45,7 @@ export default function ChangelogPage() {
     <>
       <Seo
         title="Changelog"
-        description="Recent improvements, fixes and new features shipped to 3XVISIBILITY."
+        description="Recent improvements, fixes and new features shipped to 3x Visibility."
         path="/changelog"
       />
     <StaticPageLayout title="Changelog" subtitle="Recent improvements, fixes and new features.">

@@ -86,7 +86,7 @@ export const posts: BlogPost[] = [
         heading: "Why you need all three",
         paragraphs: [
           "SEO gets your business found. AEO gets your expertise quoted. GEO gets your name recommended. Ignore any one of them and you hand that layer of discovery to a competitor.",
-          "The good news: the same foundational work — clear, authoritative, well-structured content mapped to real questions your customers ask — feeds all three engines at once. That's exactly what 3XVISIBILITY is built to help you produce at scale.",
+          "The good news: the same foundational work — clear, authoritative, well-structured content mapped to real questions your customers ask — feeds all three engines at once. That's exactly what 3x Visibility is built to help you produce at scale.",
         ],
       },
     ],
@@ -146,7 +146,7 @@ export const posts: BlogPost[] = [
             heading: "Pourquoi vous avez besoin des trois",
             paragraphs: [
               "Le SEO fait trouver votre entreprise. L'AEO fait citer votre expertise. Le GEO fait recommander votre nom. Ignorez l'un d'eux et vous offrez cette couche de découverte à un concurrent.",
-              "La bonne nouvelle : le même travail de fond — un contenu clair, faisant autorité et bien structuré, aligné sur les vraies questions de vos clients — alimente les trois moteurs à la fois. C'est exactement ce que 3XVISIBILITY est conçu pour vous aider à produire à grande échelle.",
+              "La bonne nouvelle : le même travail de fond — un contenu clair, faisant autorité et bien structuré, aligné sur les vraies questions de vos clients — alimente les trois moteurs à la fois. C'est exactement ce que 3x Visibility est conçu pour vous aider à produire à grande échelle.",
             ],
           },
         ],
@@ -206,7 +206,7 @@ export const posts: BlogPost[] = [
             heading: "Warum Sie alle drei brauchen",
             paragraphs: [
               "SEO macht Ihr Unternehmen auffindbar. AEO lässt Ihre Expertise zitieren. GEO lässt Ihren Namen empfehlen. Ignorieren Sie eines davon, überlassen Sie diese Entdeckungsebene einem Wettbewerber.",
-              "Die gute Nachricht: Dieselbe Grundlagenarbeit — klare, autoritative, gut strukturierte Inhalte, die auf echte Kundenfragen abgestimmt sind — speist alle drei Engines zugleich. Genau dabei hilft Ihnen 3XVISIBILITY, das im großen Maßstab zu produzieren.",
+              "Die gute Nachricht: Dieselbe Grundlagenarbeit — klare, autoritative, gut strukturierte Inhalte, die auf echte Kundenfragen abgestimmt sind — speist alle drei Engines zugleich. Genau dabei hilft Ihnen 3x Visibility, das im großen Maßstab zu produzieren.",
             ],
           },
         ],
@@ -266,7 +266,7 @@ export const posts: BlogPost[] = [
             heading: "Por qué necesitas los tres",
             paragraphs: [
               "El SEO hace que encuentren tu negocio. El AEO hace que citen tu experiencia. El GEO hace que recomienden tu nombre. Ignora cualquiera de ellos y entregarás esa capa de descubrimiento a un competidor.",
-              "La buena noticia: el mismo trabajo de base — contenido claro, con autoridad y bien estructurado, alineado con las preguntas reales de tus clientes — alimenta los tres motores a la vez. Eso es exactamente lo que 3XVISIBILITY está diseñado para ayudarte a producir a escala.",
+              "La buena noticia: el mismo trabajo de base — contenido claro, con autoridad y bien estructurado, alineado con las preguntas reales de tus clientes — alimenta los tres motores a la vez. Eso es exactamente lo que 3x Visibility está diseñado para ayudarte a producir a escala.",
             ],
           },
         ],
@@ -411,7 +411,7 @@ export const posts: BlogPost[] = [
     date: "April 2026",
     category: "Publishing",
     excerpt:
-      "How 3XVISIBILITY's theme adapter keeps generated pages pixel-perfect inside any Shopify theme.",
+      "How 3x Visibility's theme adapter keeps generated pages pixel-perfect inside any Shopify theme.",
     image: shopifyPublishing,
     readTime: "5 min read",
     intro: [
@@ -438,7 +438,7 @@ export const posts: BlogPost[] = [
         date: "Avril 2026",
         category: "Publication",
         excerpt:
-          "Comment l'adaptateur de thème de 3XVISIBILITY garde les pages générées au pixel près dans n'importe quel thème Shopify.",
+          "Comment l'adaptateur de thème de 3x Visibility garde les pages générées au pixel près dans n'importe quel thème Shopify.",
         readTime: "5 min de lecture",
         intro: [
           "Le moyen le plus rapide de ruiner une belle boutique Shopify est d'y injecter des pages générées qui ignorent le thème. Polices incohérentes, espacements cassés et styles orphelins font paraître même un excellent contenu peu fiable.",
@@ -464,7 +464,7 @@ export const posts: BlogPost[] = [
         date: "April 2026",
         category: "Veröffentlichung",
         excerpt:
-          "Wie der Theme-Adapter von 3XVISIBILITY generierte Seiten in jedem Shopify-Theme pixelgenau hält.",
+          "Wie der Theme-Adapter von 3x Visibility generierte Seiten in jedem Shopify-Theme pixelgenau hält.",
         readTime: "5 Min. Lesezeit",
         intro: [
           "Der schnellste Weg, einen schönen Shopify-Shop zu ruinieren, ist das Einfügen generierter Seiten, die das Theme ignorieren. Unpassende Schriften, kaputte Abstände und verwaiste Stile lassen selbst großartige Inhalte unseriös wirken.",
@@ -490,7 +490,7 @@ export const posts: BlogPost[] = [
         date: "Abril 2026",
         category: "Publicación",
         excerpt:
-          "Cómo el adaptador de temas de 3XVISIBILITY mantiene las páginas generadas perfectas al píxel dentro de cualquier tema de Shopify.",
+          "Cómo el adaptador de temas de 3x Visibility mantiene las páginas generadas perfectas al píxel dentro de cualquier tema de Shopify.",
         readTime: "5 min de lectura",
         intro: [
           "La forma más rápida de arruinar una bonita tienda Shopify es inyectar páginas generadas que ignoran el tema. Fuentes discordantes, espaciados rotos y estilos huérfanos hacen que incluso un gran contenido parezca poco fiable.",

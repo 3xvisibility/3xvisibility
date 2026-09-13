@@ -75,7 +75,7 @@ const PersistentChrome: React.FC = () => {
       {/* Top bar with logo */}
       <div style={{ position: "absolute", top: 40, left: 60, display: "flex", alignItems: "center", gap: 14, fontFamily: FONT_DISPLAY }}>
         <Img src={staticFile("images/logo-3x.png")} style={{ width: 44, height: 44, objectFit: "contain", filter: `drop-shadow(0 0 16px ${C.primary}66)` }} />
-        <span style={{ color: C.text, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 20 }}>3XVISIBILITY</span>
+        <span style={{ color: C.text, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 20 }}>3x Visibility</span>
       </div>
       {/* Bottom progress bar */}
       <div style={{ position: "absolute", bottom: 30, left: 60, right: 60, height: 2, background: "rgba(255,255,255,0.06)", borderRadius: 999 }}>

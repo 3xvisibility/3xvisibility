@@ -16,7 +16,7 @@ export default function PricingPage() {
       <Seo
         path="/pricing"
         title="Pricing & Plans"
-        description="Compare 3XVISIBILITY plans: pages, AI generations, connected sites and support. Simple monthly or yearly pricing, cancel anytime."
+        description="Compare 3x Visibility plans: pages, AI generations, connected sites and support. Simple monthly or yearly pricing, cancel anytime."
       />
       <LandingNav />
       <main className="flex-1 pt-20">

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { BRAND_NAME } from "@/lib/brand";
 
 export interface BrandingConfig {
   app_name?: string;
@@ -19,7 +20,7 @@ interface BrandingContextType {
 
 const BrandingContext = createContext<BrandingContextType>({
   branding: {},
-  appName: "3XVISIBILITY",
+  appName: BRAND_NAME,
   logoUrl: null,
   isWhitelabeled: false,
 });
@@ -37,7 +38,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     return {};
   }, [currentWorkspace]);
 
-  const appName = branding.app_name?.trim() || "3XVISIBILITY";
+  const appName = branding.app_name?.trim() || BRAND_NAME;
   const logoUrl = branding.logo_url?.trim() || null;
   const isWhitelabeled = !!(branding.app_name || branding.logo_url || branding.primary_color);
 

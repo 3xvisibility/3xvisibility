@@ -21,10 +21,11 @@
 import { useEffect, useRef } from "react";
 import { useLanguage } from "./LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { isBrandOnlyText, restoreBrandName } from "@/lib/brand";
 import { coerceToEnglishOriginal, rememberTranslationPair, resolveEnglishOriginal } from "./translationOriginals";
 
 const TRANSLATABLE_ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
-const CACHE_PREFIX = "autotr:v2:";
+const CACHE_PREFIX = "autotr:v3:";
 const MAX_BATCH = 100;
 const MAX_CONCURRENCY = 4;
 
@@ -41,7 +42,8 @@ function hash(str: string): string {
 function cacheGet(lang: string, text: string): string | null {
   try {
     const cached = localStorage.getItem(`${CACHE_PREFIX}${lang}:${hash(text)}`);
-    return isBadTranslation(cached) ? null : cached;
+    if (isBadTranslation(cached) || !cached) return null;
+    return restoreBrandName(cached);
   } catch {
     return null;
   }
@@ -51,12 +53,13 @@ function isUntranslated(text: string, translation: string): boolean {
 }
 
 function cacheSet(lang: string, text: string, translation: string) {
-  if (isBadTranslation(translation)) return;
+  const safe = restoreBrandName(translation);
+  if (isBadTranslation(safe)) return;
   // A translation identical to the English source means the service gave up
   // on this string — never persist it, otherwise the word stays English forever.
-  if (isUntranslated(text, translation)) return;
+  if (isUntranslated(text, safe)) return;
   try {
-    localStorage.setItem(`${CACHE_PREFIX}${lang}:${hash(text)}`, translation);
+    localStorage.setItem(`${CACHE_PREFIX}${lang}:${hash(text)}`, safe);
   } catch {
     /* quota — ignore */
   }
@@ -75,6 +78,8 @@ function shouldTranslate(text: string): boolean {
   if (isBadTranslation(t)) return false;
   if (t.length < 2 || t.length > 1500) return false;
   if (!/[A-Za-z]/.test(t)) return false;
+  // Never translate the product brand (prevents "VISIBILITÉ x3" etc.).
+  if (isBrandOnlyText(t)) return false;
   // Skip pure identifiers/urls/emails.
   if (/^https?:\/\//i.test(t)) return false;
   if (/^[\w.-]+@[\w.-]+$/.test(t)) return false;
@@ -209,9 +214,10 @@ function collectJobs(root: Node, targetLang: string): Job[] {
     jobs.push({
       text: original,
       apply: (translated) => {
-        rememberTranslationPair(targetLang, original, translated);
+        const safe = restoreBrandName(translated);
+        rememberTranslationPair(targetLang, original, safe);
         // Preserve surrounding whitespace so adjacent inline words don't glue together.
-        const next = `${lead}${translated.trim()}${trail}`;
+        const next = `${lead}${safe.trim()}${trail}`;
         node.__autoTrApplied = next;
         node.nodeValue = next;
         node.__autoTrLang = targetLang;
@@ -239,9 +245,10 @@ function collectJobs(root: Node, targetLang: string): Job[] {
       jobs.push({
         text: original,
         apply: (translated) => {
-          rememberTranslationPair(targetLang, original, translated);
-          (el as TrElement)[`__autoTr_${attr}_applied`] = translated;
-          el.setAttribute(attr, translated);
+          const safe = restoreBrandName(translated);
+          rememberTranslationPair(targetLang, original, safe);
+          (el as TrElement)[`__autoTr_${attr}_applied`] = safe;
+          el.setAttribute(attr, safe);
           (el as TrElement)[langKey] = targetLang;
         },
       });

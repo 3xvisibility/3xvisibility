@@ -67,7 +67,7 @@ function renderInvoice(doc: jsPDF, invoice: InvoiceRecord, issuer: IssuerDetails
   const right = pageWidth - margin;
   let y = margin;
 
-  const company = issuer.name || "3Xvisibility";
+  const company = issuer.name || "3x Visibility";
   const companyEmail = issuer.email || "3xvisibility@gmail.com";
   const companySite = issuer.website || "https://3xvisibility.com";
 

@@ -192,7 +192,7 @@ const TOOLS: ToolDoc[] = [
       "Trigger content sync or re-publish without leaving the app.",
       "Elementor metadata is cleared on publish so SEO optimizations propagate to the live page.",
     ],
-    tips: ["Keep the 3XVISIBILITY WordPress connector plugin updated — publishing fidelity depends on it."],
+    tips: ["Keep the 3x Visibility WordPress connector plugin updated — publishing fidelity depends on it."],
   },
   {
     id: "data", icon: Database, group: "Core", name: "Data CSV",
@@ -395,7 +395,7 @@ const INTEGRATIONS: Integration[] = [
     name: "WordPress",
     connects: "Websites · WP Control",
     used: "Publish generated pages, sync content, remote-manage the site",
-    how: "Install the 3XVISIBILITY connector plugin, then add the site with an Application Password.",
+    how: "Install the 3x Visibility connector plugin, then add the site with an Application Password.",
   },
   {
     name: "WooCommerce",
@@ -461,7 +461,7 @@ const CONNECT_TUTORIALS: ConnectTutorial[] = [
       { label: "Site URL", desc: "Your full site address, e.g. https://yoursite.com — include https:// and the www prefix only if your site uses it." },
       { label: "Username", desc: "The WordPress admin/editor username the pages will be published as." },
       { label: "Application Password", desc: "A dedicated password (not your login password). Create it in WordPress: Users → Profile → Application Passwords → enter a name → Add New." },
-      { label: "Connector plugin", desc: "Install & activate the 3XVISIBILITY WordPress connector plugin for best publishing fidelity (Elementor, critical CSS, media)." },
+      { label: "Connector plugin", desc: "Install & activate the 3x Visibility WordPress connector plugin for best publishing fidelity (Elementor, critical CSS, media)." },
     ],
     permissions: [
       "The account must have Editor or Administrator role to create and update pages.",
@@ -609,7 +609,7 @@ const FAQS: FaqItem[] = [
   },
   {
     q: "My generated pages look different from the preview — how do I fix it?",
-    a: "Make sure the 3XVISIBILITY WordPress connector plugin is installed and active. It preserves Elementor layout, container widths and critical CSS. Without it, styling may fall back to default theme styles.",
+    a: "Make sure the 3x Visibility WordPress connector plugin is installed and active. It preserves Elementor layout, container widths and critical CSS. Without it, styling may fall back to default theme styles.",
   },
   {
     q: "Can I undo a bulk delete or republish?",
@@ -712,7 +712,7 @@ const TROUBLESHOOTING: TroubleshootItem[] = [
       },
       {
         symptom: "Published page layout is broken or styles missing",
-        fix: "Install and activate the 3XVISIBILITY WordPress connector plugin. It sends Elementor/container settings and critical-CSS fallback needed for fidelity.",
+        fix: "Install and activate the 3x Visibility WordPress connector plugin. It sends Elementor/container settings and critical-CSS fallback needed for fidelity.",
       },
       {
         symptom: "Some rows failed while others succeeded",
@@ -798,7 +798,7 @@ const sectionLabel = (id: string) =>
 
 /** Static UI strings embedded in the printable guide (translated like the rest). */
 const GUIDE_STATIC_STRINGS = [
-  "3XVISIBILITY — Quickstart Guide",
+  "3x Visibility — Quickstart Guide",
   "Complete step-by-step guide to every tool. Generated",
   "Table of contents",
   "Tips:",
@@ -1010,7 +1010,7 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true, tr: (s: string)
     .join("");
 
   const html = `<!doctype html><html><head><meta charset="utf-8"/>
-    <title>3XVISIBILITY — Quickstart Guide</title>
+    <title>3x Visibility — Quickstart Guide</title>
     <style>
       @page{size:A4;margin:18mm 16mm}
       *{box-sizing:border-box}
@@ -1048,7 +1048,7 @@ function buildGuideHtml(selectedIds?: string[], forPrint = true, tr: (s: string)
     </style></head>
     <body>
       <div class="cover">
-        <h1>${e("3XVISIBILITY — Quickstart Guide")}</h1>
+        <h1>${e("3x Visibility — Quickstart Guide")}</h1>
         <p>${e("Complete step-by-step guide to every tool. Generated")} ${new Date().toLocaleDateString()}</p>
       </div>
       ${tocHtml}
@@ -1071,7 +1071,7 @@ function buildAndDownloadGuide(
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "3XVISIBILITY-Quickstart-Guide.html";
+    a.download = "3x Visibility-Quickstart-Guide.html";
     a.click();
     URL.revokeObjectURL(url);
     return "download";
@@ -1229,16 +1229,16 @@ export default function DocumentationPage() {
   };
 
   useEffect(() => {
-    document.title = "Documentation — 3XVISIBILITY";
+    document.title = "Documentation — 3x Visibility";
     const m = document.querySelector('meta[name="description"]');
-    if (m) m.setAttribute("content", "Complete guide to 3XVISIBILITY tools — learn how to use campaigns, templates, websites and AI features.");
+    if (m) m.setAttribute("content", "Complete guide to 3x Visibility tools — learn how to use campaigns, templates, websites and AI features.");
   }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground" ref={pageRef}>
       <Seo
         title="Documentation"
-        description="Step-by-step guides for every 3XVISIBILITY tool — from connecting websites and building templates to generating and publishing pages at scale."
+        description="Step-by-step guides for every 3x Visibility tool — from connecting websites and building templates to generating and publishing pages at scale."
         path="/docs"
       />
       <LandingNav />

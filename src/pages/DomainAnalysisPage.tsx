@@ -115,7 +115,7 @@ export default function DomainAnalysisPage() {
   return (
     <>
       <Seo
-        title="Domain Analysis — Live SEO data | 3XVISIBILITY"
+        title="Domain Analysis — Live SEO data | 3x Visibility"
         path="/domain-analysis"
         description="Check any domain's authority, organic keywords, estimated traffic, backlinks and top competitors with live search data."
       />

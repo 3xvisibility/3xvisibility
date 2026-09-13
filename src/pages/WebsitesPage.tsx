@@ -223,10 +223,10 @@ export default function WebsitesPage() {
     if (siteType === "wordpress") {
       if (connectorKey.trim()) return null;
       if (wpAuthMethod === "jwt") {
-        return jwtToken.trim() ? null : "Enter a WordPress JWT token, or add the 3xVisibility Connector Key.";
+        return jwtToken.trim() ? null : "Enter a WordPress JWT token, or add the 3x Visibility Connector Key.";
       }
       if (!username.trim() || !appPassword.trim()) {
-        return "Enter the WordPress username and Application Password, or add the 3xVisibility Connector Key.";
+        return "Enter the WordPress username and Application Password, or add the 3x Visibility Connector Key.";
       }
     }
     if (siteType === "woocommerce" && (!wooConsumerKey.trim() || !wooConsumerSecret.trim())) {

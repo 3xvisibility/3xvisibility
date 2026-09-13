@@ -87,7 +87,7 @@ export function AnalyzerPageRecommendations({ report, open, onOpenChange }: Prop
         <div className="border-t bg-muted/30 p-6 flex flex-col sm:flex-row sm:items-center gap-3">
           <p className="text-sm text-muted-foreground flex-1">
             <Sparkles className="inline h-4 w-4 text-primary mr-1" />
-            Create these as a campaign and 3xVisibility writes, scores and publishes each page for you.
+            Create these as a campaign and 3x Visibility writes, scores and publishes each page for you.
           </p>
           <Button asChild className="rounded-xl font-semibold shrink-0">
             <Link to="/auth">

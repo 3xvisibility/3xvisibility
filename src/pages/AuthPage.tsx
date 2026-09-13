@@ -339,7 +339,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen relative flex overflow-hidden">
-      <Seo title="Sign in" description="Sign in or create your 3XVISIBILITY account." path="/auth" noindex />
+      <Seo title="Sign in" description="Sign in or create your 3x Visibility account." path="/auth" noindex />
       {/* Background effects */}
       <div className="absolute inset-0 bg-background" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[140%] h-[600px] bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--primary)/.12),transparent)] pointer-events-none" />
@@ -401,7 +401,7 @@ export default function AuthPage() {
                   transition={{ duration: 0.5, delay: 0.15, ease }}
                   className="inline-flex items-center justify-center h-14 px-5 rounded-2xl bg-primary/10 border border-primary/20 mb-3"
                 >
-                  <img src={logo3x} alt="3XVISIBILITY" width={1107} height={261} className="h-8 w-auto object-contain" />
+                  <img src={logo3x} alt="3x Visibility" width={1107} height={261} className="h-8 w-auto object-contain" />
                 </motion.div>
                 <h1 className="text-2xl md:text-3xl font-extrabold tracking-[-0.03em]">
                   {mode === "login" ? t("auth.welcomeBack") : t("auth.createAccount")}

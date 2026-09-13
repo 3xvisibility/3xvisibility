@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { isBrandOnlyText, restoreBrandName } from "@/lib/brand";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "./LanguageContext";
 import { coerceToEnglishOriginal, rememberTranslationPair, resolveEnglishOriginal } from "./translationOriginals";
@@ -77,6 +78,8 @@ function collectTextNodes(root: HTMLElement): Text[] {
       if (text.trim().length < 2) return NodeFilter.FILTER_REJECT;
       if (!/[A-Za-z\u00C0-\u024F]/.test(text)) return NodeFilter.FILTER_REJECT;
       if (/^[a-z]+(?:-[a-z0-9]+)+$/i.test(text.trim())) return NodeFilter.FILTER_REJECT;
+      // Never send brand-only tokens to the translator.
+      if (isBrandOnlyText(text)) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     },
   });
@@ -177,8 +180,8 @@ export function usePageAutoTranslate(
     // Clear any prior error at the start of a fresh attempt.
     setTranslationError(null);
 
-
-    const cacheKey = `autotr:v2:${language}:${hashStrings(origTexts)}`;
+    // v3: brand name must stay "3x Visibility" (invalidate older mangled caches).
+    const cacheKey = `autotr:v3:${language}:${hashStrings(origTexts)}`;
 
     const applyRange = (translations: string[], start: number) => {
       if (cancelled) return;
@@ -186,11 +189,12 @@ export function usePageAutoTranslate(
         const node = nodes[start + offset];
         const original = origTexts[start + offset];
         if (node && typeof tr === "string" && tr.length > 0 && !isBadTranslation(tr)) {
-          rememberTranslationPair(language, original, tr);
+          const safe = restoreBrandName(tr);
+          rememberTranslationPair(language, original, safe);
           const raw = node.textContent ?? "";
           const lead = /^\s*/.exec(raw)?.[0] ?? "";
           const trail = /\s*$/.exec(raw)?.[0] ?? "";
-          node.textContent = `${lead}${tr.trim()}${trail}`;
+          node.textContent = `${lead}${safe.trim()}${trail}`;
         }
       });
     };
@@ -201,7 +205,7 @@ export function usePageAutoTranslate(
       if (cached) {
         const parsed = JSON.parse(cached) as string[];
         if (Array.isArray(parsed) && parsed.length === origTexts.length && parsed.every((item) => !isBadTranslation(item))) {
-          applyRange(parsed, 0);
+          applyRange(parsed.map(restoreBrandName), 0);
           setTranslating(false);
           setTranslationProgress({ done: 0, total: 0 });
           return;
@@ -244,8 +248,9 @@ export function usePageAutoTranslate(
               ? raw.map((v, i) => coerceTranslation(v, slice[i]))
               : undefined;
             if (!error && Array.isArray(translations) && translations.length === slice.length) {
-              applyRange(translations, start);
-              translations.forEach((tr, offset) => {
+              const safeTranslations = translations.map(restoreBrandName);
+              applyRange(safeTranslations, start);
+              safeTranslations.forEach((tr, offset) => {
                 collected[start + offset] = tr;
               });
               applied = true;

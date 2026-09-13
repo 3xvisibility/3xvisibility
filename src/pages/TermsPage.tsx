@@ -6,13 +6,13 @@ export default function TermsPage() {
     <>
       <Seo
         title="Terms of Service"
-        description="The terms that govern your use of 3XVISIBILITY's page generation and publishing service."
+        description="The terms that govern your use of 3x Visibility's page generation and publishing service."
         path="/terms"
       />
     <StaticPageLayout title="Terms of Service" subtitle="Last updated: May 2026">
       <h2>Acceptance</h2>
       <p>
-        By using 3XVISIBILITY you agree to these Terms. If you do not agree, do not use
+        By using 3x Visibility you agree to these Terms. If you do not agree, do not use
         the service.
       </p>
       <h2>Account</h2>
@@ -33,7 +33,7 @@ export default function TermsPage() {
       </p>
       <h2>Liability</h2>
       <p>
-        3XVISIBILITY is provided "as is". We are not liable for indirect or consequential
+        3x Visibility is provided "as is". We are not liable for indirect or consequential
         damages arising from use of the service.
       </p>
       <h2>Contact</h2>

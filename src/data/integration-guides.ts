@@ -35,7 +35,7 @@ export const wordpressGuide: LocalizedGuide = {
     badge: "WordPress Integration",
     heroTitle: "Connect your WordPress site",
     heroSubtitle:
-      "Link WordPress in under 5 minutes and start publishing pages directly from 3XVISIBILITY — no plugins to install.",
+      "Link WordPress in under 5 minutes and start publishing pages directly from 3x Visibility — no plugins to install.",
     beforeYouStart: "Before you start",
     prereqs: [
       "A self-hosted WordPress site (version 5.6 or newer).",
@@ -47,17 +47,17 @@ export const wordpressGuide: LocalizedGuide = {
     steps: [
       {
         title: "Create a WordPress Application Password",
-        desc: "Application Passwords let 3XVISIBILITY publish pages securely without sharing your main login.",
+        desc: "Application Passwords let 3x Visibility publish pages securely without sharing your main login.",
         bullets: [
           "Log in to your WordPress admin dashboard (yoursite.com/wp-admin).",
           "Go to Users → Profile (or Users → Your Profile).",
           "Scroll down to the Application Passwords section.",
-          "Type a name like “3XVISIBILITY” and click Add New Application Password.",
+          "Type a name like “3x Visibility” and click Add New Application Password.",
           "Copy the generated password immediately — WordPress shows it only once.",
         ],
       },
       {
-        title: "Open the Websites page in 3XVISIBILITY",
+        title: "Open the Websites page in 3x Visibility",
         desc: "This is where every connected site lives.",
         bullets: [
           "From the sidebar, click Websites.",
@@ -123,7 +123,7 @@ export const wordpressGuide: LocalizedGuide = {
     badge: "Intégration WordPress",
     heroTitle: "Connectez votre site WordPress",
     heroSubtitle:
-      "Reliez WordPress en moins de 5 minutes et commencez à publier des pages directement depuis 3XVISIBILITY — sans aucun plugin à installer.",
+      "Reliez WordPress en moins de 5 minutes et commencez à publier des pages directement depuis 3x Visibility — sans aucun plugin à installer.",
     beforeYouStart: "Avant de commencer",
     prereqs: [
       "Un site WordPress auto-hébergé (version 5.6 ou plus récente).",
@@ -135,17 +135,17 @@ export const wordpressGuide: LocalizedGuide = {
     steps: [
       {
         title: "Créer un mot de passe d'application WordPress",
-        desc: "Les mots de passe d'application permettent à 3XVISIBILITY de publier des pages en toute sécurité sans partager votre identifiant principal.",
+        desc: "Les mots de passe d'application permettent à 3x Visibility de publier des pages en toute sécurité sans partager votre identifiant principal.",
         bullets: [
           "Connectez-vous au tableau de bord d'administration WordPress (votresite.com/wp-admin).",
           "Allez dans Utilisateurs → Profil (ou Utilisateurs → Votre profil).",
           "Faites défiler jusqu'à la section Mots de passe d'application.",
-          "Saisissez un nom comme « 3XVISIBILITY » et cliquez sur Ajouter un nouveau mot de passe d'application.",
+          "Saisissez un nom comme « 3x Visibility » et cliquez sur Ajouter un nouveau mot de passe d'application.",
           "Copiez immédiatement le mot de passe généré — WordPress ne l'affiche qu'une seule fois.",
         ],
       },
       {
-        title: "Ouvrez la page Sites web dans 3XVISIBILITY",
+        title: "Ouvrez la page Sites web dans 3x Visibility",
         desc: "C'est là que se trouvent tous les sites connectés.",
         bullets: [
           "Dans la barre latérale, cliquez sur Sites web.",
@@ -211,7 +211,7 @@ export const wordpressGuide: LocalizedGuide = {
     badge: "WordPress-Integration",
     heroTitle: "Verbinden Sie Ihre WordPress-Website",
     heroSubtitle:
-      "Verbinden Sie WordPress in unter 5 Minuten und veröffentlichen Sie Seiten direkt aus 3XVISIBILITY — ohne Plugins zu installieren.",
+      "Verbinden Sie WordPress in unter 5 Minuten und veröffentlichen Sie Seiten direkt aus 3x Visibility — ohne Plugins zu installieren.",
     beforeYouStart: "Bevor Sie beginnen",
     prereqs: [
       "Eine selbst gehostete WordPress-Website (Version 5.6 oder neuer).",
@@ -223,17 +223,17 @@ export const wordpressGuide: LocalizedGuide = {
     steps: [
       {
         title: "Ein WordPress-Anwendungspasswort erstellen",
-        desc: "Anwendungspasswörter ermöglichen es 3XVISIBILITY, Seiten sicher zu veröffentlichen, ohne Ihren Haupt-Login zu teilen.",
+        desc: "Anwendungspasswörter ermöglichen es 3x Visibility, Seiten sicher zu veröffentlichen, ohne Ihren Haupt-Login zu teilen.",
         bullets: [
           "Melden Sie sich im WordPress-Admin-Dashboard an (ihreseite.com/wp-admin).",
           "Gehen Sie zu Benutzer → Profil (oder Benutzer → Ihr Profil).",
           "Scrollen Sie nach unten zum Abschnitt Anwendungspasswörter.",
-          "Geben Sie einen Namen wie „3XVISIBILITY“ ein und klicken Sie auf Neues Anwendungspasswort hinzufügen.",
+          "Geben Sie einen Namen wie „3x Visibility“ ein und klicken Sie auf Neues Anwendungspasswort hinzufügen.",
           "Kopieren Sie das generierte Passwort sofort — WordPress zeigt es nur einmal an.",
         ],
       },
       {
-        title: "Öffnen Sie die Seite Websites in 3XVISIBILITY",
+        title: "Öffnen Sie die Seite Websites in 3x Visibility",
         desc: "Hier befinden sich alle verbundenen Websites.",
         bullets: [
           "Klicken Sie in der Seitenleiste auf Websites.",
@@ -299,7 +299,7 @@ export const wordpressGuide: LocalizedGuide = {
     badge: "Integración con WordPress",
     heroTitle: "Conecta tu sitio WordPress",
     heroSubtitle:
-      "Conecta WordPress en menos de 5 minutos y empieza a publicar páginas directamente desde 3XVISIBILITY — sin plugins que instalar.",
+      "Conecta WordPress en menos de 5 minutos y empieza a publicar páginas directamente desde 3x Visibility — sin plugins que instalar.",
     beforeYouStart: "Antes de empezar",
     prereqs: [
       "Un sitio WordPress autoalojado (versión 5.6 o más reciente).",
@@ -311,17 +311,17 @@ export const wordpressGuide: LocalizedGuide = {
     steps: [
       {
         title: "Crear una contraseña de aplicación de WordPress",
-        desc: "Las contraseñas de aplicación permiten a 3XVISIBILITY publicar páginas de forma segura sin compartir tu inicio de sesión principal.",
+        desc: "Las contraseñas de aplicación permiten a 3x Visibility publicar páginas de forma segura sin compartir tu inicio de sesión principal.",
         bullets: [
           "Inicia sesión en el panel de administración de WordPress (tusitio.com/wp-admin).",
           "Ve a Usuarios → Perfil (o Usuarios → Tu perfil).",
           "Desplázate hasta la sección Contraseñas de aplicación.",
-          "Escribe un nombre como «3XVISIBILITY» y haz clic en Añadir nueva contraseña de aplicación.",
+          "Escribe un nombre como «3x Visibility» y haz clic en Añadir nueva contraseña de aplicación.",
           "Copia la contraseña generada inmediatamente — WordPress solo la muestra una vez.",
         ],
       },
       {
-        title: "Abre la página Sitios web en 3XVISIBILITY",
+        title: "Abre la página Sitios web en 3x Visibility",
         desc: "Aquí se encuentran todos los sitios conectados.",
         bullets: [
           "En la barra lateral, haz clic en Sitios web.",
@@ -390,12 +390,12 @@ export const shopifyGuide: LocalizedGuide = {
     badge: "Shopify Integration",
     heroTitle: "Connect your Shopify store",
     heroSubtitle:
-      "Authorize Shopify securely with one click — no API keys to copy — and publish pages and product SEO straight from 3XVISIBILITY.",
+      "Authorize Shopify securely with one click — no API keys to copy — and publish pages and product SEO straight from 3x Visibility.",
     beforeYouStart: "Before you start",
     prereqs: [
       "An active Shopify store (any paid plan or trial).",
       "Admin / owner access to that store.",
-      "A Pro plan on 3XVISIBILITY (Shopify is a Pro feature).",
+      "A Pro plan on 3x Visibility (Shopify is a Pro feature).",
     ],
     stepByStep: "Step-by-step setup",
     stepLabel: "Step",
@@ -410,7 +410,7 @@ export const shopifyGuide: LocalizedGuide = {
         ],
       },
       {
-        title: "Open the Websites page in 3XVISIBILITY",
+        title: "Open the Websites page in 3x Visibility",
         desc: "All your connected stores and sites are managed here.",
         bullets: [
           "From the sidebar, click Websites.",
@@ -433,7 +433,7 @@ export const shopifyGuide: LocalizedGuide = {
         bullets: [
           "Click Connect — you'll be redirected to Shopify.",
           "Review the requested permissions and click Install app / Authorize.",
-          "You'll be sent back to 3XVISIBILITY automatically once approved.",
+          "You'll be sent back to 3x Visibility automatically once approved.",
         ],
       },
       {
@@ -483,12 +483,12 @@ export const shopifyGuide: LocalizedGuide = {
     badge: "Intégration Shopify",
     heroTitle: "Connectez votre boutique Shopify",
     heroSubtitle:
-      "Autorisez Shopify en toute sécurité en un clic — aucune clé API à copier — et publiez des pages et le SEO produit directement depuis 3XVISIBILITY.",
+      "Autorisez Shopify en toute sécurité en un clic — aucune clé API à copier — et publiez des pages et le SEO produit directement depuis 3x Visibility.",
     beforeYouStart: "Avant de commencer",
     prereqs: [
       "Une boutique Shopify active (offre payante ou période d'essai).",
       "Un accès administrateur / propriétaire à cette boutique.",
-      "Un forfait Pro sur 3XVISIBILITY (Shopify est une fonctionnalité Pro).",
+      "Un forfait Pro sur 3x Visibility (Shopify est une fonctionnalité Pro).",
     ],
     stepByStep: "Configuration étape par étape",
     stepLabel: "Étape",
@@ -503,7 +503,7 @@ export const shopifyGuide: LocalizedGuide = {
         ],
       },
       {
-        title: "Ouvrez la page Sites web dans 3XVISIBILITY",
+        title: "Ouvrez la page Sites web dans 3x Visibility",
         desc: "Toutes vos boutiques et sites connectés sont gérés ici.",
         bullets: [
           "Dans la barre latérale, cliquez sur Sites web.",
@@ -526,7 +526,7 @@ export const shopifyGuide: LocalizedGuide = {
         bullets: [
           "Cliquez sur Connecter — vous serez redirigé vers Shopify.",
           "Vérifiez les autorisations demandées et cliquez sur Installer l'application / Autoriser.",
-          "Vous serez automatiquement renvoyé vers 3XVISIBILITY une fois approuvé.",
+          "Vous serez automatiquement renvoyé vers 3x Visibility une fois approuvé.",
         ],
       },
       {
@@ -576,12 +576,12 @@ export const shopifyGuide: LocalizedGuide = {
     badge: "Shopify-Integration",
     heroTitle: "Verbinden Sie Ihren Shopify-Shop",
     heroSubtitle:
-      "Autorisieren Sie Shopify sicher mit einem Klick — keine API-Schlüssel zum Kopieren — und veröffentlichen Sie Seiten und Produkt-SEO direkt aus 3XVISIBILITY.",
+      "Autorisieren Sie Shopify sicher mit einem Klick — keine API-Schlüssel zum Kopieren — und veröffentlichen Sie Seiten und Produkt-SEO direkt aus 3x Visibility.",
     beforeYouStart: "Bevor Sie beginnen",
     prereqs: [
       "Ein aktiver Shopify-Shop (beliebiger kostenpflichtiger Plan oder Testversion).",
       "Admin-/Inhaberzugriff auf diesen Shop.",
-      "Ein Pro-Plan bei 3XVISIBILITY (Shopify ist eine Pro-Funktion).",
+      "Ein Pro-Plan bei 3x Visibility (Shopify ist eine Pro-Funktion).",
     ],
     stepByStep: "Schritt-für-Schritt-Einrichtung",
     stepLabel: "Schritt",
@@ -596,7 +596,7 @@ export const shopifyGuide: LocalizedGuide = {
         ],
       },
       {
-        title: "Öffnen Sie die Seite Websites in 3XVISIBILITY",
+        title: "Öffnen Sie die Seite Websites in 3x Visibility",
         desc: "Alle Ihre verbundenen Shops und Websites werden hier verwaltet.",
         bullets: [
           "Klicken Sie in der Seitenleiste auf Websites.",
@@ -619,7 +619,7 @@ export const shopifyGuide: LocalizedGuide = {
         bullets: [
           "Klicken Sie auf Verbinden — Sie werden zu Shopify weitergeleitet.",
           "Überprüfen Sie die angeforderten Berechtigungen und klicken Sie auf App installieren / Autorisieren.",
-          "Nach der Genehmigung werden Sie automatisch zu 3XVISIBILITY zurückgeleitet.",
+          "Nach der Genehmigung werden Sie automatisch zu 3x Visibility zurückgeleitet.",
         ],
       },
       {
@@ -669,12 +669,12 @@ export const shopifyGuide: LocalizedGuide = {
     badge: "Integración con Shopify",
     heroTitle: "Conecta tu tienda Shopify",
     heroSubtitle:
-      "Autoriza Shopify de forma segura con un clic — sin claves API que copiar — y publica páginas y SEO de productos directamente desde 3XVISIBILITY.",
+      "Autoriza Shopify de forma segura con un clic — sin claves API que copiar — y publica páginas y SEO de productos directamente desde 3x Visibility.",
     beforeYouStart: "Antes de empezar",
     prereqs: [
       "Una tienda Shopify activa (cualquier plan de pago o prueba).",
       "Acceso de administrador / propietario a esa tienda.",
-      "Un plan Pro en 3XVISIBILITY (Shopify es una función Pro).",
+      "Un plan Pro en 3x Visibility (Shopify es una función Pro).",
     ],
     stepByStep: "Configuración paso a paso",
     stepLabel: "Paso",
@@ -689,7 +689,7 @@ export const shopifyGuide: LocalizedGuide = {
         ],
       },
       {
-        title: "Abre la página Sitios web en 3XVISIBILITY",
+        title: "Abre la página Sitios web en 3x Visibility",
         desc: "Todas tus tiendas y sitios conectados se gestionan aquí.",
         bullets: [
           "En la barra lateral, haz clic en Sitios web.",
@@ -712,7 +712,7 @@ export const shopifyGuide: LocalizedGuide = {
         bullets: [
           "Haz clic en Conectar — se te redirigirá a Shopify.",
           "Revisa los permisos solicitados y haz clic en Instalar app / Autorizar.",
-          "Volverás a 3XVISIBILITY automáticamente una vez aprobado.",
+          "Volverás a 3x Visibility automáticamente una vez aprobado.",
         ],
       },
       {

@@ -57,7 +57,7 @@ export default function UnsubscribePage() {
         {(state === "valid" || state === "submitting") && (
           <div className="not-prose">
             <p className="mb-4 text-sm text-[hsl(250,15%,60%)]">
-              Click below to stop receiving emails from 3Xvisibility.
+              Click below to stop receiving emails from 3x Visibility.
             </p>
             <Button onClick={confirm} disabled={state === "submitting"}>
               {state === "submitting" ? "Processing…" : "Confirm Unsubscribe"}

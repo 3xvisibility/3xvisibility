@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
 import logo3x from "@/assets/logo-3x.png";
+import { BRAND_NAME } from "@/lib/brand";
 
 const socials = [
   {
@@ -134,7 +135,8 @@ export function LandingFooter() {
 
         <div className="mt-12 pt-6 border-t border-[hsl(96,67%,48%,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-[hsl(250,10%,25%)]">
-            &copy; {new Date().getFullYear()} 3XVISIBILITY. {t("footer.rights")}
+            &copy; {new Date().getFullYear()}{" "}
+            <span data-no-translate translate="no">{BRAND_NAME}</span>. {t("footer.rights")}
           </p>
           <div className="flex items-center gap-4">
             {socials.map((s) => (

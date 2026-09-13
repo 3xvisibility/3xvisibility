@@ -71,7 +71,7 @@ export function buildAnalyzerPdf(report: AnalyzerReport): jsPDF {
   doc.setTextColor(...BRAND);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("3XVISIBILITY", MARGIN, 40);
+  doc.text("3x Visibility", MARGIN, 40);
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(20);
@@ -229,7 +229,7 @@ export function buildAnalyzerPdf(report: AnalyzerReport): jsPDF {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(...MUTED);
-    doc.text("Report by 3xVisibility — 3xvisibility.com", MARGIN, pageH - 28);
+    doc.text("Report by 3x Visibility — 3xvisibility.com", MARGIN, pageH - 28);
     doc.text(`Page ${p} of ${pages}`, pageW - MARGIN, pageH - 28, { align: "right" });
   }
 

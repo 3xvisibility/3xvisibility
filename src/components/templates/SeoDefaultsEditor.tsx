@@ -45,7 +45,7 @@ export function SeoDefaultsEditor({ template }: SeoDefaultsEditorProps) {
   const defaults = useMemo(() => {
     // Only override the template's placeholder brand defaults with the user's own
     // brand name when they have actually set one (whitelabel). Otherwise keep the
-    // template's default brand values so the platform name (e.g. "3XVISIBILITY")
+    // template's default brand values so the platform name (e.g. "3x Visibility")
     // is never injected as the user's business name.
     const brandName = isWhitelabeled ? (appName || "").trim() : "";
     const dv = { ...template.defaultValues } as Record<string, string>;

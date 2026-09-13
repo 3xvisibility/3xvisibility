@@ -45,7 +45,7 @@ function normalize(raw: unknown): WpPluginSettingsValue {
 }
 
 /**
- * Per-site controls for the "3xVisibility HTML Assets" WordPress plugin:
+ * Per-site controls for the "3x Visibility HTML Assets" WordPress plugin:
  * which HTML tags survive `wp_kses_post()` and whether `wpautop` is disabled
  * on generated pages. Values are shipped as post meta on every publish, so no
  * code change is needed to fine-tune compatibility with a theme/host.

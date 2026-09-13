@@ -209,7 +209,7 @@ export default function CampaignDetailPage() {
     const raw = data?.results?.find((result: any) => result.status === "failed")?.error || data?.error || fallback;
     const msg = String(raw);
     if (msg.toLowerCase().includes("connector pre-flight failed")) {
-      return `${msg} Download/reinstall the latest 3xVisibility WordPress Connector plugin, confirm Elementor is active, then retry.`;
+      return `${msg} Download/reinstall the latest 3x Visibility WordPress Connector plugin, confirm Elementor is active, then retry.`;
     }
     if (msg.includes("_elementor_data")) {
       return `${msg} The page was rolled back so broken Elementor JSON is not published.`;

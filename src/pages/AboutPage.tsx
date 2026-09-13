@@ -27,6 +27,7 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { BackToTop } from "@/components/BackToTop";
 import { Button } from "@/components/ui/button";
+import { BRAND_NAME } from "@/lib/brand";
 
 interface BuildItem {
   icon: LucideIcon;
@@ -70,7 +71,7 @@ const testimonials = [
     role: "Head of SEO",
     company: "BrightLeaf Agency",
     quote:
-      "We went from manually building 20 landing pages a week to generating over 800 localized pages in a single campaign. 3XVISIBILITY cut our production time by 90%.",
+      "We went from manually building 20 landing pages a week to generating over 800 localized pages in a single campaign. 3x Visibility cut our production time by 90%.",
     stars: 5,
   },
   {
@@ -94,7 +95,7 @@ const testimonials = [
     role: "Performance Marketing Lead",
     company: "NexGen Media",
     quote:
-      "Multilingual content at scale used to be a pipe dream. With 3XVISIBILITY we run GEO campaigns across 4 languages without hiring translators.",
+      "Multilingual content at scale used to be a pipe dream. With 3x Visibility we run GEO campaigns across 4 languages without hiring translators.",
     stars: 5,
   },
 ];
@@ -114,7 +115,7 @@ export default function AboutPage() {
     <div className="min-h-screen flex flex-col landing-page" ref={pageRef}>
       <Seo
         title="About us"
-        description="3XVISIBILITY helps marketers, agencies and ecommerce teams turn structured data into thousands of high-quality, SEO-optimized pages published to WordPress, Shopify, WooCommerce and PrestaShop."
+        description={`${BRAND_NAME} helps marketers, agencies and ecommerce teams turn structured data into thousands of high-quality, SEO-optimized pages published to WordPress, Shopify, WooCommerce and PrestaShop.`}
         path="/about"
       />
       <LandingNav />
@@ -136,7 +137,9 @@ export default function AboutPage() {
               </span>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-[-0.03em] leading-tight">
                 About{" "}
-                <span className="text-gradient-primary">3XVISIBILITY</span>
+                <span className="text-gradient-primary" data-no-translate translate="no">
+                  {BRAND_NAME}
+                </span>
               </h1>
               <p className="mt-6 text-base md:text-lg text-[hsl(250,15%,65%)] max-w-2xl mx-auto leading-relaxed">
                 We help marketers, agencies, and ecommerce teams turn structured data into
@@ -188,7 +191,7 @@ export default function AboutPage() {
               </div>
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-[-0.02em]">Our mission</h2>
               <p className="mt-4 text-[hsl(250,15%,65%)] leading-relaxed">
-                3XVISIBILITY exists to remove the manual grind from programmatic SEO. We combine
+                <span data-no-translate translate="no">{BRAND_NAME}</span> exists to remove the manual grind from programmatic SEO. We combine
                 AI-powered content generation, theme-aware publishing and a robust template
                 engine so teams can scale local landing pages, product pages and content hubs
                 in days instead of months.
@@ -324,7 +327,8 @@ export default function AboutPage() {
                   Built for scale
                 </h2>
                 <p className="mt-4 text-[hsl(220,10%,70%)] max-w-md mx-auto text-sm leading-relaxed">
-                  From solo founders to enterprise SEO teams — 3XVISIBILITY scales from a handful of
+                  From solo founders to enterprise SEO teams —{" "}
+                  <span data-no-translate translate="no">{BRAND_NAME}</span> scales from a handful of
                   pages to tens of thousands without breaking your design system.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">

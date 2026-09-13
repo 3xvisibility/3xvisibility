@@ -71,7 +71,7 @@ export default function PortalPage() {
       <Seo
         title="Customer Portal"
         path="/portal"
-        description="Sign in to manage your 3XVISIBILITY subscription, invoices, payments and connected sites in one place."
+        description="Sign in to manage your 3x Visibility subscription, invoices, payments and connected sites in one place."
       />
       <main className="min-h-screen bg-background px-4 py-16">
         <div className="mx-auto max-w-4xl space-y-8">

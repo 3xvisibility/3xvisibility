@@ -19,16 +19,16 @@ export default function WordPressGuidePage() {
   const c = wordpressGuide[language] ?? wordpressGuide.en;
 
   useEffect(() => {
-    document.title = "Connect WordPress — 3XVISIBILITY";
+    document.title = "Connect WordPress — 3x Visibility";
     const m = document.querySelector('meta[name="description"]');
-    if (m) m.setAttribute("content", "Step-by-step guide to connect your WordPress site to 3XVISIBILITY and publish pages at scale.");
+    if (m) m.setAttribute("content", "Step-by-step guide to connect your WordPress site to 3x Visibility and publish pages at scale.");
   }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Seo
         title="Connect WordPress"
-        description="A step-by-step guide to connecting your WordPress website to 3XVISIBILITY using Application Passwords, then publishing programmatic pages."
+        description="A step-by-step guide to connecting your WordPress website to 3x Visibility using Application Passwords, then publishing programmatic pages."
         path="/guides/wordpress"
       />
       <LandingNav />

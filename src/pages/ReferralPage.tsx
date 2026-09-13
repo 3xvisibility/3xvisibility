@@ -281,7 +281,7 @@ export default function ReferralPage() {
         break;
       default:
         if (navigator.share) {
-          navigator.share({ title: "3XVISIBILITY", text: t("referral.shareText"), url });
+          navigator.share({ title: "3x Visibility", text: t("referral.shareText"), url });
         } else {
           copyLink();
         }

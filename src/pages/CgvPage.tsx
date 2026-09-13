@@ -6,17 +6,17 @@ export default function CgvPage() {
     <>
       <Seo
         title="General Terms and Conditions of Sale (GTCS)"
-        description="General terms and conditions governing the use of 3XVISIBILITY page generation and publishing services."
+        description="General terms and conditions governing the use of 3x Visibility page generation and publishing services."
         path="/cgv"
       />
       <StaticPageLayout
         title="General Terms and Conditions of Sale"
-        subtitle="Last updated: August 2026 — These terms govern the sale and use of the 3XVISIBILITY SaaS platform."
+        subtitle="Last updated: August 2026 — These terms govern the sale and use of the 3x Visibility SaaS platform."
       >
         <h2>1. Purpose</h2>
         <p>
           These General Terms and Conditions of Sale (« GTCS ») govern the provision by
-          <span translate="no"> 3XVISIBILITY</span> of its SaaS platform for generating,
+          <span translate="no"> 3x Visibility</span> of its SaaS platform for generating,
           SEO-optimizing and automatically publishing web pages on WordPress, Shopify,
           PrestaShop, WooCommerce and via HTML/CSS export. Any subscription to the service
           implies full and unreserved acceptance of these GTCS.
@@ -25,7 +25,7 @@ export default function CgvPage() {
         <h2>2. Publisher</h2>
         <ul>
           <li><strong>Legal name</strong> : <span translate="no">VERODAV GROUP</span></li>
-          <li><strong>Trading name</strong> : <span translate="no">3xvisibility</span></li>
+          <li><strong>Trading name</strong> : <span translate="no">3x Visibility</span></li>
           <li><strong>Legal form</strong> : SAS – Société par actions simplifiée</li>
           <li><strong>Registered address</strong> : <span translate="no">21 rue de Cherbourg, 67100 Strasbourg, France</span></li>
           <li><strong>RCS</strong> : <span translate="no">Strasbourg 843 715 954</span></li>
@@ -107,7 +107,7 @@ export default function CgvPage() {
 
         <h2>11. Liability</h2>
         <p>
-          The service is provided « as is ». <span translate="no">3XVISIBILITY</span> uses
+          The service is provided « as is ». <span translate="no">3x Visibility</span> uses
           its best efforts to guarantee availability and performance, but cannot be held
           liable for indirect damages (loss of traffic, loss of business, SEO penalties
           resulting from user practices, actions of third-party platforms) arising from
@@ -118,7 +118,7 @@ export default function CgvPage() {
         <h2>12. Intellectual property</h2>
         <p>
           The user remains the owner of the content they create and publish via
-          <span translate="no"> 3XVISIBILITY</span>. The platform, its templates, its code
+          <span translate="no"> 3x Visibility</span>. The platform, its templates, its code
           and its brand remain the exclusive property of <span translate="no">VERODAV GROUP</span>.
         </p>
 
