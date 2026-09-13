@@ -247,7 +247,12 @@ export function WebsiteAnalyzerSection() {
                   className="h-12 pl-10 rounded-xl"
                 />
               </div>
-              <Button type="submit" size="lg" disabled={loading} className="h-12 rounded-xl px-6 font-semibold">
+              <Button
+                type="submit"
+                size="lg"
+                disabled={loading || !isValidEmail(email) || !url.trim()}
+                className="h-12 rounded-xl px-6 font-semibold"
+              >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Analyze my website <ArrowRight className="ml-2 h-4 w-4" /></>}
               </Button>
             </div>
