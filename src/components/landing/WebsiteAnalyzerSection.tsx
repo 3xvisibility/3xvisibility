@@ -226,28 +226,31 @@ export function WebsiteAnalyzerSection() {
             tool inside the platform fixes each issue.
           </p>
 
-          <form onSubmit={analyze} className="mt-8 flex flex-col sm:flex-row items-stretch gap-3 max-w-xl mx-auto">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="Enter your website URL"
-                aria-label="Website URL"
-                className="h-12 pl-10 rounded-xl"
-              />
-            </div>
+          <form onSubmit={analyze} className="mt-8 flex flex-col gap-3 max-w-xl mx-auto">
             <Input
               type="email"
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Your email (optional)"
-              aria-label="Your email (optional)"
-              className="h-12 rounded-xl sm:w-56"
+              placeholder="Your email address (required)"
+              aria-label="Your email address (required)"
+              className="h-12 rounded-xl"
             />
-            <Button type="submit" size="lg" disabled={loading} className="h-12 rounded-xl px-6 font-semibold">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Analyze my website <ArrowRight className="ml-2 h-4 w-4" /></>}
-            </Button>
+            <div className="flex flex-col sm:flex-row items-stretch gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="Enter your website URL"
+                  aria-label="Website URL"
+                  className="h-12 pl-10 rounded-xl"
+                />
+              </div>
+              <Button type="submit" size="lg" disabled={loading} className="h-12 rounded-xl px-6 font-semibold">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Analyze my website <ArrowRight className="ml-2 h-4 w-4" /></>}
+              </Button>
+            </div>
           </form>
           {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
           {loading && (
