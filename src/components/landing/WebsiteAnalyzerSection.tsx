@@ -234,17 +234,17 @@ export function WebsiteAnalyzerSection() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Your email address (required)"
               aria-label="Your email address (required)"
-              className="h-12 rounded-xl"
+              className="h-12 rounded-xl bg-[hsl(96,67%,48%,0.05)] border-[hsl(96,67%,48%,0.3)] focus-visible:ring-[hsl(96,67%,48%,0.45)]"
             />
             <div className="flex flex-col sm:flex-row items-stretch gap-3">
               <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(96,67%,35%)]" />
                 <Input
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="Enter your website URL"
                   aria-label="Website URL"
-                  className="h-12 pl-10 rounded-xl"
+                  className="h-12 pl-10 rounded-xl bg-[hsl(96,67%,48%,0.05)] border-[hsl(96,67%,48%,0.3)] focus-visible:ring-[hsl(96,67%,48%,0.45)]"
                 />
               </div>
               <Button
