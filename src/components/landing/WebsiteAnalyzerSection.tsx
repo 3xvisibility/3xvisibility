@@ -21,6 +21,7 @@ import { downloadAnalyzerPdf } from "@/lib/analyzer-pdf";
 import { AnalyzerPageRecommendations } from "@/components/landing/AnalyzerPageRecommendations";
 import { AnalyzerChangePanel } from "@/components/landing/AnalyzerChangePanel";
 import { diffReports, loadSnapshot, saveSnapshot, type AnalyzerDiff } from "@/lib/analyzer-diff";
+import { isValidEmail } from "@/lib/normalize-email";
 
 
 
@@ -109,12 +110,22 @@ export function WebsiteAnalyzerSection() {
   const [comparedAt, setComparedAt] = useState<string | null>(null);
   const [rescanning, setRescanning] = useState(false);
 
+  const [email, setEmail] = useState("");
+
   const pendingRef = useRef<string | null>(null);
+  const emailRef = useRef("");
+  useEffect(() => {
+    emailRef.current = email;
+  }, [email]);
 
   const runAnalysis = useCallback(async (raw: string, isRescan = false) => {
     // Normalize: accept "example.com", "www.example.com" or a full URL.
     const trimmed = raw.trim();
     if (!trimmed) return;
+    if (!isValidEmail(emailRef.current)) {
+      setError("Please enter your email address so we can send you the report and follow up.");
+      return;
+    }
     const value = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
     try {
       // Reject obviously invalid input before hitting the network.
@@ -134,7 +145,11 @@ export function WebsiteAnalyzerSection() {
     setError(null);
     try {
       const { data, error: fnError } = await supabase.functions.invoke("analyze-website-free", {
-        body: { url: value },
+        body: {
+          url: value,
+          email: emailRef.current.trim() || undefined,
+          referrer: typeof document !== "undefined" ? document.referrer || undefined : undefined,
+        },
       });
       if (fnError) throw fnError;
       if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
@@ -211,20 +226,36 @@ export function WebsiteAnalyzerSection() {
             tool inside the platform fixes each issue.
           </p>
 
-          <form onSubmit={analyze} className="mt-8 flex flex-col sm:flex-row items-stretch gap-3 max-w-xl mx-auto">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="Enter your website URL"
-                aria-label="Website URL"
-                className="h-12 pl-10 rounded-xl"
-              />
+          <form onSubmit={analyze} className="mt-8 flex flex-col gap-3 max-w-xl mx-auto">
+            <Input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Your email address (required)"
+              aria-label="Your email address (required)"
+              className="h-12 rounded-xl bg-[hsl(96,67%,48%,0.05)] border-[hsl(96,67%,48%,0.3)] focus-visible:ring-[hsl(96,67%,48%,0.45)]"
+            />
+            <div className="flex flex-col sm:flex-row items-stretch gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(96,67%,35%)]" />
+                <Input
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="Enter your website URL"
+                  aria-label="Website URL"
+                  className="h-12 pl-10 rounded-xl bg-[hsl(96,67%,48%,0.05)] border-[hsl(96,67%,48%,0.3)] focus-visible:ring-[hsl(96,67%,48%,0.45)]"
+                />
+              </div>
+              <Button
+                type="submit"
+                size="lg"
+                disabled={loading || !isValidEmail(email) || !url.trim()}
+                className="h-12 rounded-xl px-6 font-semibold"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Analyze my website <ArrowRight className="ml-2 h-4 w-4" /></>}
+              </Button>
             </div>
-            <Button type="submit" size="lg" disabled={loading} className="h-12 rounded-xl px-6 font-semibold">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Analyze my website <ArrowRight className="ml-2 h-4 w-4" /></>}
-            </Button>
           </form>
           {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
           {loading && (

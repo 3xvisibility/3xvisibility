@@ -423,6 +423,75 @@ export type Database = {
         }
         Relationships: []
       }
+      analyzer_leads: {
+        Row: {
+          ai_score: number | null
+          created_at: string
+          email: string | null
+          host: string | null
+          id: string
+          issue_count: number | null
+          language: string | null
+          notes: string | null
+          overall_score: number | null
+          page_title: string | null
+          referrer: string | null
+          seo_score: number | null
+          status: string
+          technical_score: number | null
+          top_issues: Json
+          updated_at: string
+          url: string
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_score?: number | null
+          created_at?: string
+          email?: string | null
+          host?: string | null
+          id?: string
+          issue_count?: number | null
+          language?: string | null
+          notes?: string | null
+          overall_score?: number | null
+          page_title?: string | null
+          referrer?: string | null
+          seo_score?: number | null
+          status?: string
+          technical_score?: number | null
+          top_issues?: Json
+          updated_at?: string
+          url: string
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_score?: number | null
+          created_at?: string
+          email?: string | null
+          host?: string | null
+          id?: string
+          issue_count?: number | null
+          language?: string | null
+          notes?: string | null
+          overall_score?: number | null
+          page_title?: string | null
+          referrer?: string | null
+          seo_score?: number | null
+          status?: string
+          technical_score?: number | null
+          top_issues?: Json
+          updated_at?: string
+          url?: string
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       app_config: {
         Row: {
           config_key: string

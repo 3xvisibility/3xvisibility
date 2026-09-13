@@ -2,6 +2,8 @@
 // Fetches a public URL, extracts on-page SEO / AI-visibility signals and
 // returns a scored report used by the landing page "Analyze my website" widget.
 
+import { createClient } from "npm:@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -276,6 +278,80 @@ Deno.serve(async (req) => {
     const overall = Math.round(seoScore * 0.4 + aiScore * 0.3 + techScore * 0.3);
 
     const issues = [...seo, ...aiVisibility, ...technical].filter((c) => c.status !== "good");
+
+    // ---- capture the lead (admin dashboard + admin email) ----------------
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      if (supabaseUrl && serviceKey) {
+        const service = createClient(supabaseUrl, serviceKey, {
+          auth: { persistSession: false },
+        });
+
+        // Identify the signed-in visitor when we have a token.
+        let userId: string | null = null;
+        let userEmail: string | null = null;
+        const authHeader = req.headers.get("Authorization") ?? "";
+        const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+        if (token && token !== Deno.env.get("SUPABASE_ANON_KEY")) {
+          const { data } = await service.auth.getUser(token);
+          userId = data?.user?.id ?? null;
+          userEmail = data?.user?.email ?? null;
+        }
+
+        const visitorEmail = typeof body?.email === "string" && body.email.includes("@")
+          ? String(body.email).trim().toLowerCase().slice(0, 255)
+          : null;
+        const topIssues = issues.slice(0, 5).map((c) => `${c.label} — ${c.detail}`);
+
+        const lead = {
+          url: target,
+          host,
+          page_title: title || null,
+          overall_score: overall,
+          seo_score: seoScore,
+          ai_score: aiScore,
+          technical_score: techScore,
+          issue_count: issues.length,
+          top_issues: topIssues,
+          email: visitorEmail,
+          user_id: userId,
+          user_email: userEmail,
+          referrer: (typeof body?.referrer === "string" ? body.referrer : req.headers.get("referer")) ?? null,
+          user_agent: req.headers.get("user-agent"),
+          language: req.headers.get("accept-language"),
+        };
+
+        const { error: insertError } = await service.from("analyzer_leads").insert(lead);
+        if (insertError) console.error("analyzer lead insert failed", insertError.message);
+
+        await service.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "admin-analyzer-lead",
+            idempotencyKey: `analyzer-${host}-${Date.now()}`,
+            templateData: {
+              url: target,
+              host,
+              pageTitle: title,
+              overallScore: overall,
+              seoScore,
+              aiScore,
+              technicalScore: techScore,
+              issueCount: issues.length,
+              topIssues,
+              email: visitorEmail ?? "",
+              userEmail: userEmail ?? "",
+              referrer: lead.referrer ?? "",
+              userAgent: lead.user_agent ?? "",
+              analyzedAt: new Date().toISOString(),
+            },
+          },
+          headers: { Authorization: `Bearer ${serviceKey}` },
+        });
+      }
+    } catch (leadErr) {
+      console.error("analyzer lead capture failed", leadErr);
+    }
 
     return new Response(
       JSON.stringify({

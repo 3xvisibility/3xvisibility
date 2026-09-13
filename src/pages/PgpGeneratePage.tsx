@@ -573,14 +573,15 @@ Only return valid JSON. No markdown fences.`;
       for (const varName of varNames) {
         const terms = parsed[varName];
         if (!terms || !Array.isArray(terms) || terms.length === 0) continue;
-        await supabase.from("pgp_keywords").insert({
+        const { error: upErr } = await supabase.from("pgp_keywords").upsert({
           name: varName,
           terms: terms.map(t => String(t).trim()).filter(Boolean),
           term_count: terms.length,
           source: "ai",
           user_id: user.id,
           workspace_id: wsId,
-        });
+        }, { onConflict: "workspace_id,name" });
+        if (upErr) throw upErr;
       }
 
       queryClient.invalidateQueries({ queryKey: ["pgp-keywords-full", wsId] });
