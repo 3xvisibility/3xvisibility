@@ -15,7 +15,7 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 
 export const LOGO_URL =
-  'https://qbrqxmtzfbusyspdtojz.supabase.co/storage/v1/object/public/ai-images/email%2Flogo-3x.png'
+  'https://3xvisibility.com/__l5e/assets-v1/6df04705-bbe1-4609-bbd1-387b5186a974/3xvisibility-logo.png'
 
 export const BRAND_NAME = '3Xvisibility'
 export const BRAND_URL = 'https://3xvisibility.com'
@@ -35,8 +35,8 @@ export const EmailLayout = ({ preview, children }: EmailLayoutProps) => (
         <Section style={header}>
           <Img
             src={LOGO_URL}
-            width="44"
-            height="44"
+            width="260"
+            height="83"
             alt={BRAND_NAME}
             style={headerLogo}
           />
@@ -93,9 +93,11 @@ const header = {
 }
 
 const headerLogo = {
-  borderRadius: '12px',
   margin: '0 auto',
   display: 'block',
+  width: '100%',
+  maxWidth: '260px',
+  height: 'auto',
 }
 
 const headerBrand = {
