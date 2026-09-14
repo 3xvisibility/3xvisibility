@@ -12,14 +12,18 @@
  *    always restore it when the user switches back to `en`.
  *  - Translations are cached in `localStorage` keyed by `${lang}:${hash(text)}`
  *    so repeat visits are instant and offline-friendly.
+ *  - Dictionary (`translations[lang]`) is checked first — gives instant 0ms
+ *    result for any string that exists in the bundled JSON (no network).
  *  - A single `MutationObserver` debounces DOM changes and re-translates only
  *    the new/changed nodes.
- *  - Errors surface via the existing `translationError` state so the toast in
- *    the JSX below stays in sync.
+ *  - The UI is now non-blocking: a small corner pill shows progress only when
+ *    a network fetch is actually required. Cache/dictionary hits never flash
+ *    an overlay, so the language switch feels instant (<100ms).
  */
 
 import { useEffect, useRef } from "react";
 import { useLanguage } from "./LanguageContext";
+import { translations } from "./translations";
 import { supabase } from "@/integrations/supabase/client";
 import { isBrandOnlyText, restoreBrandName } from "@/lib/brand";
 import { coerceToEnglishOriginal, rememberTranslationPair, resolveEnglishOriginal } from "./translationOriginals";
@@ -55,8 +59,6 @@ function isUntranslated(text: string, translation: string): boolean {
 function cacheSet(lang: string, text: string, translation: string) {
   const safe = restoreBrandName(translation);
   if (isBadTranslation(safe)) return;
-  // A translation identical to the English source means the service gave up
-  // on this string — never persist it, otherwise the word stays English forever.
   if (isUntranslated(text, safe)) return;
   try {
     localStorage.setItem(`${CACHE_PREFIX}${lang}:${hash(text)}`, safe);
@@ -78,14 +80,36 @@ function shouldTranslate(text: string): boolean {
   if (isBadTranslation(t)) return false;
   if (t.length < 2 || t.length > 1500) return false;
   if (!/[A-Za-z]/.test(t)) return false;
-  // Never translate the product brand (prevents "VISIBILITÉ x3" etc.).
   if (isBrandOnlyText(t)) return false;
-  // Skip pure identifiers/urls/emails.
   if (/^https?:\/\//i.test(t)) return false;
   if (/^[\w.-]+@[\w.-]+$/.test(t)) return false;
-  if (/^[A-Z_][A-Z0-9_]{2,}$/.test(t)) return false; // SCREAMING_SNAKE
-  if (/^[a-z]+(?:-[a-z0-9]+)+$/i.test(t)) return false; // internal/kebab-case labels
+  if (/^[A-Z_][A-Z0-9_]{2,}$/.test(t)) return false;
+  if (/^[a-z]+(?:-[a-z0-9]+)+$/i.test(t)) return false;
   return true;
+}
+
+// --- Instant dictionary path (0ms, no network) ---
+function normalizeForDict(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+const dictReverseCache = new Map<string, Map<string, string>>();
+function getDictTranslation(text: string, lang: string): string | null {
+  let map = dictReverseCache.get(lang);
+  if (!map) {
+    map = new Map();
+    const locale = (translations as Record<string, Record<string, string>>)[lang];
+    if (locale) {
+      for (const [key, locVal] of Object.entries(locale)) {
+        const enVal = translations.en[key];
+        if (typeof enVal === "string" && typeof locVal === "string" && normalizeForDict(enVal) !== normalizeForDict(locVal)) {
+          map.set(normalizeForDict(enVal), locVal);
+        }
+      }
+    }
+    dictReverseCache.set(lang, map);
+  }
+  const hit = map.get(normalizeForDict(text));
+  return hit ? restoreBrandName(hit) : null;
 }
 
 function getNodeOriginal(node: TrTextNode, targetLang?: string): string {
@@ -104,8 +128,6 @@ function getNodeOriginal(node: TrTextNode, targetLang?: string): string {
     node.__autoTrApplied !== undefined &&
     current !== node.__autoTrApplied
   ) {
-    // React re-rendered this node with new source text (e.g. a status label
-    // or tab heading changed). Re-capture and translate the new text.
     node.__autoTrOriginal = coerceToEnglishOriginal(current, targetLang);
     node.__autoTrLang = undefined;
     node.__autoTrApplied = undefined;
@@ -132,7 +154,6 @@ function getAttrOriginal(el: HTMLElement, attr: (typeof TRANSLATABLE_ATTRS)[numb
   const appliedKey = `__autoTr_${attr}_applied` as const;
   const applied = (el as TrElement)[appliedKey];
   if (applied !== undefined && value !== applied && value !== stored) {
-    // Attribute was re-rendered with new source text.
     const original = coerceToEnglishOriginal(value, targetLang);
     (el as TrElement)[origKey] = original;
     (el as TrElement)[langKey] = undefined;
@@ -189,16 +210,11 @@ interface Job {
   apply: (translated: string) => void;
 }
 
-// Hard cap on how many pieces of text one pass may touch. Screens with very
-// long data lists (big campaigns, CSV previews) used to queue thousands of
-// jobs and lock the tab; the observer picks up whatever is left on the next
-// pass, so nothing is permanently skipped.
 const MAX_JOBS_PER_PASS = 600;
 
 function collectJobs(root: Node, targetLang: string): Job[] {
   const jobs: Job[] = [];
 
-  // Text nodes.
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   let n: Node | null = root.nodeType === 3 ? root : walker.nextNode();
   for (; n && jobs.length < MAX_JOBS_PER_PASS; n = walker.nextNode()) {
@@ -206,7 +222,6 @@ function collectJobs(root: Node, targetLang: string): Job[] {
     if (isInsideSkipped(node)) continue;
     const original = getNodeOriginal(node, targetLang);
     if (!shouldTranslate(original)) continue;
-    // Skip if already applied for this language.
     if (node.__autoTrLang === targetLang && node.nodeValue !== original && !isBadTranslation(node.nodeValue)) continue;
     const rawValue = node.nodeValue ?? "";
     const lead = /^\s*/.exec(rawValue)?.[0] ?? "";
@@ -216,7 +231,6 @@ function collectJobs(root: Node, targetLang: string): Job[] {
       apply: (translated) => {
         const safe = restoreBrandName(translated);
         rememberTranslationPair(targetLang, original, safe);
-        // Preserve surrounding whitespace so adjacent inline words don't glue together.
         const next = `${lead}${safe.trim()}${trail}`;
         node.__autoTrApplied = next;
         node.nodeValue = next;
@@ -225,7 +239,6 @@ function collectJobs(root: Node, targetLang: string): Job[] {
     });
   }
 
-  // Attributes.
   const rootEl = root.nodeType === 1 ? (root as Element) : (root as ParentNode);
   const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
   const els =
@@ -233,8 +246,6 @@ function collectJobs(root: Node, targetLang: string): Job[] {
       ? (rootEl as ParentNode).querySelectorAll<HTMLElement>(selector)
       : [];
   els.forEach((el) => {
-    // Form controls do not expose their label as a text node, but their
-    // placeholder/title/aria-label still needs translation.
     if (isInsideSkippedAncestor(el)) return;
     for (const attr of TRANSLATABLE_ATTRS) {
       const original = getAttrOriginal(el, attr, targetLang);
@@ -312,8 +323,6 @@ function sanitizeBadRenderedText(root: Node = typeof document !== "undefined" ? 
       const node = n as TrTextNode;
       if (!isInsideSkipped(node) && isBadTranslation(node.nodeValue)) {
         const restored = node.__autoTrOriginal || resolveEnglishOriginal(node.nodeValue ?? "", node.__autoTrLang) || "";
-        // Only write when the value actually changes — re-assigning the same
-        // string still fires a characterData mutation and can loop forever.
         if (node.nodeValue !== restored) node.nodeValue = restored;
       }
       n = walker.nextNode();
@@ -344,7 +353,6 @@ function sanitizeBadRenderedText(root: Node = typeof document !== "undefined" ? 
 }
 
 
-/** Never let a non-string provider payload leak into the DOM as "[object Object]". */
 function coerceTranslation(value: unknown, fallback: string): string {
   if (typeof value === "string") return isBadTranslation(value) ? fallback : value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
@@ -394,15 +402,10 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (typeof document === "undefined") return;
 
-    // English → restore any prior translations immediately, then re-run a few
-    // times (and watch the DOM briefly) because React re-renders after the
-    // language change can re-mount nodes that still hold translated text.
     if (language === "en") {
       ++runIdRef.current;
       setTranslationError(null);
       setTranslationProgress({ done: 0, total: 1 });
-
-      // Synchronous first pass so the UI flips back to English right away.
       restoreOriginals();
       sanitizeBadRenderedText();
       setTranslationProgress({ done: 1, total: 1 });
@@ -415,9 +418,6 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         }, delay));
       });
 
-      // Catch nodes mounted by late re-renders / route transitions.
-      // Only childList is observed: observing characterData/attributes here
-      // makes our own restore writes re-trigger the callback (freeze loop).
       let enPending: number | null = null;
       const enRoots = new Set<Node>();
       const enObserver = new MutationObserver((mutations) => {
@@ -445,7 +445,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       const done = window.setTimeout(() => {
         setTranslating(false);
         setTranslationProgress({ done: 0, total: 0 });
-      }, 350);
+      }, 100);
       return () => {
         timers.forEach((t) => window.clearTimeout(t));
         window.clearTimeout(stopObserver);
@@ -462,12 +462,11 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     let pendingTimer: number | null = null;
 
     async function processRoot(root: Node) {
-      if (cancelled || runId !== runIdRef.current) return;
+      if (cancelled || runId !== runIdRef.current) return false;
       sanitizeBadRenderedText(root);
       const jobs = collectJobs(root, language);
-      if (jobs.length === 0) return;
+      if (jobs.length === 0) return false;
 
-      // Group jobs by unique source text.
       const byText = new Map<string, Job[]>();
       jobs.forEach((j) => {
         const list = byText.get(j.text) ?? [];
@@ -475,23 +474,27 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         byText.set(j.text, list);
       });
 
-      // Apply cached translations first, collect misses.
+      // 1) instant path: cache + bundled dictionary (0ms)
       const misses: string[] = [];
       byText.forEach((list, text) => {
         const cached = cacheGet(language, text);
         if (cached) {
           list.forEach((j) => j.apply(cached));
-        } else {
-          misses.push(text);
+          return;
         }
+        const dictTr = getDictTranslation(text, language);
+        if (dictTr) {
+          list.forEach((j) => j.apply(dictTr));
+          cacheSet(language, text, dictTr);
+          return;
+        }
+        misses.push(text);
       });
 
-      if (misses.length === 0) return;
+      if (misses.length === 0) return false;
 
-      // NOTE: don't flip `translating` back on from within the observer-driven
-      // re-runs — the initial run (line ~473) already owns the overlay lifecycle.
-      // Re-setting it here caused the spinner to be stuck at "Batch 1 of N / 0%"
-      // whenever our own DOM writes re-triggered the MutationObserver.
+      // 2) network required — show non-blocking progress
+      setTranslating(true);
       const total = Math.ceil(misses.length / MAX_BATCH);
       setTranslationProgress({ done: 0, total });
 
@@ -528,31 +531,36 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         Array.from({ length: Math.min(MAX_CONCURRENCY, chunks.length) }, () => worker())
       );
 
-      if (cancelled || runId !== runIdRef.current) return;
+      if (cancelled || runId !== runIdRef.current) return true;
       if (failed) {
         setTranslationError("Translation service is unavailable. Please retry.");
-        return;
+        return true;
       }
 
       setTranslationError(null);
+      return true;
     }
 
     setTranslationError(null);
-    setTranslating(true);
-    const startedAt = Date.now();
-    void processRoot(document.body).finally(() => {
-      // Keep the spinner up briefly (even when everything is served from cache)
-      // so the switch is always visibly acknowledged.
-      const wait = Math.max(0, 350 - (Date.now() - startedAt));
-      window.setTimeout(() => {
-        if (!cancelled && runId === runIdRef.current) setTranslating(false);
-      }, wait);
-    });
+    setTranslationProgress({ done: 0, total: 0 });
 
-    // Watch for new content (route changes, dialogs, dynamic tables).
-    // Only childList/subtree is observed: watching characterData/attributes
-    // makes our own `apply()` writes re-trigger the callback, which caused
-    // the loading overlay to lock at "Batch 1 of N / 0%".
+    // Kick off — only shows overlay if network is actually needed
+    void (async () => {
+      const hadNetwork = await processRoot(document.body);
+      if (!hadNetwork) {
+        setTranslating(false);
+        setTranslationProgress({ done: 0, total: 0 });
+      } else {
+        // network path finished — dismiss shortly
+        window.setTimeout(() => {
+          if (!cancelled && runId === runIdRef.current) {
+            setTranslating(false);
+            setTranslationProgress({ done: 0, total: 0 });
+          }
+        }, 300);
+      }
+    })();
+
     observer = new MutationObserver((mutations) => {
       const roots = new Set<Node>();
       for (const m of mutations) {
@@ -560,8 +568,6 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           if (node.nodeType === 1 || node.nodeType === 3) roots.add(node);
         });
         if (m.type === "characterData" && m.target.nodeType === 3) {
-          // React updated an existing text node in place. Skip the writes we
-          // made ourselves (nodeValue === what we applied) to avoid loops.
           const node = m.target as TrTextNode;
           if (node.__autoTrApplied !== undefined && node.nodeValue === node.__autoTrApplied) continue;
           if (node.__autoTrOriginal && node.nodeValue === node.__autoTrOriginal && node.__autoTrLang !== language) {
@@ -584,9 +590,18 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         roots.forEach((r) => {
           if (!(r as Node).isConnected) return;
           sanitizeBadRenderedText(r);
-          void processRoot(r);
+          void processRoot(r).then((hadNet) => {
+            if (hadNet) {
+              window.setTimeout(() => {
+                if (!cancelled && runId === runIdRef.current) setTranslating(false);
+              }, 300);
+            } else if (!hadNet) {
+              // instant path — no overlay needed, but ensure progress cleared
+              setTranslationProgress({ done: 0, total: 0 });
+            }
+          });
         });
-      }, 250);
+      }, 120);
     });
     observer.observe(document.body, {
       childList: true,
@@ -600,22 +615,21 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       cancelled = true;
       if (observer) observer.disconnect();
       if (pendingTimer) window.clearTimeout(pendingTimer);
+      setTranslating(false);
     };
   }, [language, translationRetryNonce, setTranslating, setTranslationProgress, setTranslationError]);
 
   const { done, total } = translationProgress;
   const percent = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
 
-  // Safety net so the overlay can never get stuck:
-  //  - dismiss shortly after progress hits 100%
-  //  - hard-cap the overlay at 15s regardless of progress state
+  // Safety net: hard-cap overlay at 8s (down from 15s) and quick-dismiss at 100%
   useEffect(() => {
     if (!translating) return;
     const timers: number[] = [];
     if (total > 0 && done >= total) {
-      timers.push(window.setTimeout(() => setTranslating(false), 400));
+      timers.push(window.setTimeout(() => setTranslating(false), 300));
     }
-    timers.push(window.setTimeout(() => setTranslating(false), 15000));
+    timers.push(window.setTimeout(() => setTranslating(false), 8000));
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [translating, done, total, setTranslating]);
 
@@ -629,33 +643,15 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           aria-live="polite"
           aria-busy="true"
           data-no-autotranslate
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/70 backdrop-blur-sm animate-fade-in"
+          className="fixed bottom-4 right-4 z-[9999] flex items-center gap-3 rounded-full border border-border/60 bg-card/95 px-4 py-2.5 shadow-xl backdrop-blur supports-[backdrop-filter]:bg-card/90 animate-in fade-in slide-in-from-bottom-2 pointer-events-none"
         >
-          <div className="w-[min(20rem,90vw)] rounded-2xl border border-border/60 bg-card/95 px-7 py-8 text-center shadow-2xl animate-scale-in">
-            <div className="relative mx-auto h-16 w-16">
-              <span className="absolute inset-0 rounded-full border-2 border-primary/20" />
-              <span className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary border-r-primary animate-spin" />
-              <span
-                className="absolute inset-2 rounded-full border-2 border-transparent border-b-primary/60 animate-spin"
-                style={{ animationDirection: "reverse", animationDuration: "1.4s" }}
-              />
-              <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold tabular-nums text-primary">
-                {total > 0 ? `${percent}%` : ""}
-              </span>
-            </div>
-            <p className="mt-5 text-sm font-semibold text-foreground">Translating…</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {total > 0
-                ? `Batch ${Math.min(done + (done < total ? 1 : 0), total)} of ${total}`
-                : "Preparing your language"}
-            </p>
-            <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary transition-all duration-300"
-                style={{ width: total > 0 ? `${Math.max(percent, 8)}%` : "35%" }}
-              />
-            </div>
-          </div>
+          <span className="relative flex h-4 w-4 shrink-0 items-center justify-center">
+            <span className="absolute inset-0 rounded-full border-2 border-primary/20" />
+            <span className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
+          </span>
+          <span className="text-xs font-medium text-foreground">
+            Translating{total > 1 ? ` ${done + 1}/${total}` : ""}{total > 0 ? ` ${percent}%` : "…"}
+          </span>
         </div>
       )}
       {!translating && translationError && (

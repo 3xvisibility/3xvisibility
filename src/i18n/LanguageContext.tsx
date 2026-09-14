@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
-import { translations, loadLocale, type Language, languages } from "./translations";
-import { resetDictionaryReverse } from "./translationOriginals";
+import { translations, type Language, languages } from "./translations";
 import { fetchOverrides, getCachedOverrides, type OverrideMap } from "./overrides";
 
 function detectBrowserLanguage(): Language | null {
@@ -81,7 +80,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return "en";
   });
 
-  const [localeVersion, setLocaleVersion] = useState(0);
   const [overrides, setOverrides] = useState<OverrideMap>(() => getCachedOverrides());
 
   // Admin-defined text overrides replace bundled wording when present.
@@ -94,20 +92,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       active = false;
     };
   }, []);
-
-  // Non-English locale bundles are fetched on demand to keep the first load light.
-  useEffect(() => {
-    if (language === "en" || translations[language]) return;
-    let active = true;
-    loadLocale(language).then(() => {
-      if (!active) return;
-      resetDictionaryReverse();
-      setLocaleVersion((v) => v + 1);
-    });
-    return () => {
-      active = false;
-    };
-  }, [language]);
 
   const [translating, setTranslating] = useState(false);
   const [translationProgress, setTranslationProgress] = useState<TranslationProgress>({ done: 0, total: 0 });
@@ -135,11 +119,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // No longer force a global `translating=true` here — the AutoTranslateProvider
+    // now decides whether to show any indicator based on whether a network
+    // fetch is actually required (cache/dict hits are 0ms, no overlay).
     setLanguageState((current) => {
       if (current !== lang) {
         setTranslationError(null);
         setTranslationProgress({ done: 0, total: 0 });
-        setTranslating(true);
+        // let the provider set `translating` only when network is needed
+        setTranslating(false);
       }
       return lang;
     });
@@ -161,7 +149,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         template
       );
     },
-    [language, localeVersion, overrides]
+    [language, overrides]
   );
 
   return (

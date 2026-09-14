@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { isBrandOnlyText, restoreBrandName } from "@/lib/brand";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "./LanguageContext";
+import { translations } from "./translations";
 import { coerceToEnglishOriginal, rememberTranslationPair, resolveEnglishOriginal } from "./translationOriginals";
 
 function isBadTranslation(value: unknown): boolean {
@@ -43,6 +44,8 @@ function coerceTranslation(value: unknown, fallback: string): string {
  *    text.
  *  - Results are cached in localStorage per (language + content hash) so we don't
  *    re-hit the network on every navigation.
+ *  - Dictionary is checked first for instant 0ms result when the string exists
+ *    in the bundled JSON (no network, no overlay).
  */
 
 function hashStrings(strings: string[]): string {
@@ -53,6 +56,30 @@ function hashStrings(strings: string[]): string {
     h = Math.imul(h, 16777619);
   }
   return (h >>> 0).toString(36);
+}
+
+// Instant dictionary path — same as AutoTranslateProvider
+function normalizeForDict(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+const dictReverseCache = new Map<string, Map<string, string>>();
+function getDictTranslation(text: string, lang: string): string | null {
+  let map = dictReverseCache.get(lang);
+  if (!map) {
+    map = new Map();
+    const locale = (translations as Record<string, Record<string, string>>)[lang];
+    if (locale) {
+      for (const [key, locVal] of Object.entries(locale)) {
+        const enVal = translations.en[key];
+        if (typeof enVal === "string" && typeof locVal === "string" && normalizeForDict(enVal) !== normalizeForDict(locVal)) {
+          map.set(normalizeForDict(enVal), locVal);
+        }
+      }
+    }
+    dictReverseCache.set(lang, map);
+  }
+  const hit = map.get(normalizeForDict(text));
+  return hit ? restoreBrandName(hit) : null;
 }
 
 function collectTextNodes(root: HTMLElement): Text[] {
@@ -183,9 +210,9 @@ export function usePageAutoTranslate(
     // v3: brand name must stay "3x Visibility" (invalidate older mangled caches).
     const cacheKey = `autotr:v3:${language}:${hashStrings(origTexts)}`;
 
-    const applyRange = (translations: string[], start: number) => {
+    const applyRange = (translationsArr: string[], start: number) => {
       if (cancelled) return;
-      translations.forEach((tr, offset) => {
+      translationsArr.forEach((tr, offset) => {
         const node = nodes[start + offset];
         const original = origTexts[start + offset];
         if (node && typeof tr === "string" && tr.length > 0 && !isBadTranslation(tr)) {
@@ -197,6 +224,20 @@ export function usePageAutoTranslate(
           node.textContent = `${lead}${safe.trim()}${trail}`;
         }
       });
+    };
+
+    const applySingle = (idx: number, translated: string) => {
+      if (cancelled) return;
+      const node = nodes[idx];
+      const original = origTexts[idx];
+      if (node && typeof translated === "string" && translated.length > 0 && !isBadTranslation(translated)) {
+        const safe = restoreBrandName(translated);
+        rememberTranslationPair(language, original, safe);
+        const raw = node.textContent ?? "";
+        const lead = /^\s*/.exec(raw)?.[0] ?? "";
+        const trail = /\s*$/.exec(raw)?.[0] ?? "";
+        node.textContent = `${lead}${safe.trim()}${trail}`;
+      }
     };
 
     // Serve from cache when available (instant — no spinner needed).
@@ -215,23 +256,50 @@ export function usePageAutoTranslate(
       /* ignore cache errors */
     }
 
-    // No cache — hit the network in sections so we can report real progress.
-    const totalBatches = Math.max(1, Math.ceil(origTexts.length / BATCH_SIZE));
+    // Instant dictionary path: apply any string that exists in bundled JSON (0ms)
+    const collected: string[] = new Array(origTexts.length);
+    const pendingIndices: number[] = [];
+    const pendingTexts: string[] = [];
+    origTexts.forEach((text, idx) => {
+      const dictTr = getDictTranslation(text, language);
+      if (dictTr) {
+        applySingle(idx, dictTr);
+        collected[idx] = dictTr;
+      } else {
+        pendingIndices.push(idx);
+        pendingTexts.push(text);
+      }
+    });
+
+    if (pendingTexts.length === 0) {
+      // Everything was served from dictionary — instant, no network, no overlay
+      try {
+        if (collected.every((item) => !isBadTranslation(item))) {
+          localStorage.setItem(cacheKey, JSON.stringify(collected));
+        }
+      } catch { /* ignore */ }
+      setTranslating(false);
+      setTranslationProgress({ done: 0, total: 0 });
+      setTranslationError(null);
+      return;
+    }
+
+    // Some strings need network — only then show progress
+    const totalBatches = Math.max(1, Math.ceil(pendingTexts.length / BATCH_SIZE));
     setTranslating(true);
     setTranslationProgress({ done: 0, total: totalBatches });
 
     (async () => {
-      const collected: string[] = new Array(origTexts.length);
       let anyFailure = false;
       let lastErrorMessage = "";
 
       for (let batch = 0; batch < totalBatches; batch++) {
         if (cancelled) return;
         const start = batch * BATCH_SIZE;
-        const slice = origTexts.slice(start, start + BATCH_SIZE);
+        const slice = pendingTexts.slice(start, start + BATCH_SIZE);
+        const sliceIndices = pendingIndices.slice(start, start + BATCH_SIZE);
 
         let applied = false;
-        // Retry each batch a few times with exponential backoff before giving up.
         for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
           if (cancelled) return;
           try {
@@ -244,14 +312,15 @@ export function usePageAutoTranslate(
             if (cancelled) return;
 
             const raw = (data as { translations?: unknown[] })?.translations;
-            const translations = Array.isArray(raw)
+            const translationsArr = Array.isArray(raw)
               ? raw.map((v, i) => coerceTranslation(v, slice[i]))
               : undefined;
-            if (!error && Array.isArray(translations) && translations.length === slice.length) {
-              const safeTranslations = translations.map(restoreBrandName);
-              applyRange(safeTranslations, start);
+            if (!error && Array.isArray(translationsArr) && translationsArr.length === slice.length) {
+              const safeTranslations = translationsArr.map(restoreBrandName);
               safeTranslations.forEach((tr, offset) => {
-                collected[start + offset] = tr;
+                const globalIdx = sliceIndices[offset];
+                applySingle(globalIdx, tr);
+                collected[globalIdx] = tr;
               });
               applied = true;
               break;
@@ -268,9 +337,9 @@ export function usePageAutoTranslate(
 
         if (!applied) {
           anyFailure = true;
-          // Keep originals for this section so lengths stay aligned.
           slice.forEach((orig, offset) => {
-            collected[start + offset] = orig;
+            const globalIdx = sliceIndices[offset];
+            collected[globalIdx] = orig;
           });
         }
 
@@ -279,7 +348,6 @@ export function usePageAutoTranslate(
 
       if (cancelled) return;
 
-      // Only cache a fully-successful translation set.
       if (!anyFailure) {
         try {
           if (collected.every((item) => !isBadTranslation(item))) {
@@ -304,9 +372,6 @@ export function usePageAutoTranslate(
 
     return () => {
       cancelled = true;
-      // Ensure the overlay never gets stuck if this run is cancelled mid-flight
-      // (unmount, language switch, or retry). A new run — if one starts — will
-      // set translating=true again synchronously right after this cleanup.
       setTranslating(false);
       setTranslationProgress({ done: 0, total: 0 });
     };
