@@ -5,13 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/favicon.png" type="image/png" />
 
-    <!--
-      Per-page head metadata is intentionally NOT hardcoded in this file.
-      Every route renders its own Seo element (react-helmet-async), and the
-      build-time prerender step writes the correct tags into each static
-      document. Hardcoding them here would make every page advertise the
-      homepage canonical URL and description (duplicate-content bug).
-    -->
+    <!-- Fallback title/description for crawlers when prerendering is unavailable. -->
+    <title data-fallback-seo>3xVisibility — Mass-build SEO, GEO &amp; programmatic pages</title>
+    <meta data-fallback-seo
+      name="description"
+      content="Automatically mass-build local SEO, programmatic SEO, GEO sites, directories and content at scale with one-click deployment. Save 40 hours per site."
+    />
+    <meta data-fallback-seo name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <link data-fallback-seo rel="canonical" href="https://3xvisibility.com/" />
+    <meta data-fallback-seo property="og:type" content="website" />
+    <meta data-fallback-seo property="og:site_name" content="3x Visibility" />
+    <meta data-fallback-seo property="og:url" content="https://3xvisibility.com/" />
+    <meta data-fallback-seo property="og:title" content="3xVisibility — Mass-build SEO, GEO & programmatic pages" />
+    <meta data-fallback-seo
+      property="og:description"
+      content="Automatically mass-build local SEO, programmatic SEO, GEO sites, directories and content at scale with one-click deployment."
+    />
+    <meta data-fallback-seo property="og:image" content="https://3xvisibility.com/og-image.png" />
+    <meta data-fallback-seo name="twitter:card" content="summary_large_image" />
+    <meta data-fallback-seo name="twitter:image" content="https://3xvisibility.com/og-image.png" />
+
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -35,6 +48,70 @@
   </head>
 
   <body>
+    <!--
+      Crawler-visible summary of the landing page. React replaces #root
+      instantly for real users, so this is never seen by browsers; it exists
+      so search engines and AI systems see real content if the prerender step
+      cannot run on the build server.
+    -->
+    <noscript>
+      <div>
+        <h1>3xVisibility — Mass-build SEO, GEO &amp; programmatic pages at scale</h1>
+        <p>
+          3x Visibility is a programmatic SEO platform that turns structured data
+          into thousands of unique, search-optimized pages and publishes them
+          directly to WordPress, Shopify, WooCommerce and PrestaShop.
+        </p>
+        <h2>What is 3x Visibility?</h2>
+        <p>
+          A page-generation platform for agencies, ecommerce teams and
+          multi-location businesses that need many landing pages — one per city,
+          service or product combination — without writing each page by hand.
+        </p>
+        <h2>How does it work?</h2>
+        <p>
+          Upload a CSV or connect a data source, map its columns to a template
+          built from your own design system, then generate and publish an entire
+          campaign in one click. Every page ships with SEO scoring, internal
+          linking and structured data built in.
+        </p>
+        <h2>Features</h2>
+        <ul>
+          <li>CSV and data-source import with smart column mapping</li>
+          <li>Dynamic templates generated from your existing design system</li>
+          <li>AI-powered content generation with spintax and variable support</li>
+          <li>Bulk page generation with per-page SEO scoring</li>
+          <li>One-click publishing to WordPress, Shopify, WooCommerce, PrestaShop</li>
+          <li>Campaign analytics and indexing status tracking</li>
+        </ul>
+        <h2>Use cases</h2>
+        <ul>
+          <li>Programmatic SEO at scale for hundreds of keyword combinations</li>
+          <li>Local SEO with one landing page per location or service area</li>
+          <li>GEO and AEO — content structured for AI search and answer engines</li>
+          <li>Ecommerce product and collection pages generated from a feed</li>
+        </ul>
+        <h2>Frequently asked questions</h2>
+        <h3>What websites can I connect?</h3>
+        <p>WordPress (via REST API with Application Passwords) and Shopify (via Admin API). More integrations coming soon.</p>
+        <h3>How does CSV processing work?</h3>
+        <p>Upload any CSV — the system auto-detects columns. Map each column to a template variable. Each row becomes one page.</p>
+        <h3>Can I preview before publishing?</h3>
+        <p>Yes. Use Dry Run to generate a preview page before executing the full campaign.</p>
+        <h3>Is there an API?</h3>
+        <p>Yes, Pro and Agency plans include API access for programmatic campaign creation.</p>
+        <h3>Can I cancel anytime?</h3>
+        <p>Yes. No contracts, no commitments. Cancel your subscription at any time.</p>
+        <ul>
+          <li><a href="/about">About 3x Visibility</a></li>
+          <li><a href="/pricing">Pricing &amp; plans</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/docs">Documentation</a></li>
+          <li><a href="/changelog">Changelog</a></li>
+        </ul>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

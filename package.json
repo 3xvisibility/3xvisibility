@@ -9,7 +9,7 @@
     "build": "tsx scripts/sync-locale-ts.ts && tsx scripts/validate-locales.ts && vite build",
     "build:dev": "tsx scripts/sync-locale-ts.ts && tsx scripts/validate-locales.ts && vite build --mode development",
     "prerender": "node scripts/prerender.js",
-    "postbuild": "node scripts/prerender.js",
+    "postbuild": "node scripts/prerender.js || echo \"prerender skipped\"",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",

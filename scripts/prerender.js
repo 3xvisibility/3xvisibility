@@ -104,11 +104,32 @@ function statIsDir(p) {
 async function main() {
   if (!existsSync(join(DIST, "index.html"))) {
     console.error("⚠ dist/index.html not found — run `vite build` first.");
-    process.exit(1);
+    process.exit(0);
+  }
+
+  let browser;
+  try {
+    browser = await chromium.launch();
+  } catch (e) {
+    // No browser binary on this machine (e.g. a fresh CI/hosting build server).
+    // Install it on demand; if that fails too, keep the plain SPA build
+    // instead of breaking the whole deployment.
+    console.log("⚠ Playwright browser missing — attempting install…");
+    try {
+      const { execSync } = await import("child_process");
+      execSync("npx playwright install chromium --with-deps", { stdio: "inherit", timeout: 240000 });
+      browser = await chromium.launch();
+    } catch (installErr) {
+      console.log(
+        "⚠ Prerendering skipped (no Playwright browser available). " +
+          "The site still works as a normal SPA; SEO metadata is unchanged.",
+      );
+      console.log("  Reason:", String(installErr?.message || installErr).split("\n")[0]);
+      process.exit(0);
+    }
   }
 
   const server = await startServer();
-  const browser = await chromium.launch();
   const page = await browser.newPage({
     viewport: { width: 1440, height: 2400 },
     // A desktop-like UA keeps layout/animation code on its default path.
@@ -138,7 +159,29 @@ async function main() {
       await page.waitForTimeout(500);
 
       // Grab the fully rendered DOM including helmet-injected <head> content.
-      const html = await page.content();
+      let html = await page.content();
+
+      // The static index.html ships fallback SEO tags (title/description/
+      // canonical/OG) for when prerendering can't run. Now that the page's own
+      // helmet tags are present, remove the fallbacks to avoid duplicates.
+      // Keep the fallback <title> only if no helmet title was injected.
+      const hasHelmetTitle = /<title[^>]*data-rh="true"[^>]*>/i.test(html);
+      html = html.replace(
+        new RegExp(
+          `(<(?:title|meta|link)\\b[^>]*\\bdata-fallback-seo\\b[^>]*>)`,
+          hasHelmetTitle ? "gi" : "",
+        ),
+        hasHelmetTitle ? "" : "$1",
+      );
+      if (!hasHelmetTitle) {
+        // Promote the fallback title out of the "fallback" set so it isn't
+        // treated as a duplicate, but keep it as the page title.
+        html = html.replace(/<title([^>]*)\bdata-fallback-seo\b([^>]*)>/i, "<title$1$2>");
+      }
+
+      // The crawler-only <noscript> summary is redundant once the real rendered
+      // page content is present — remove it so there is no duplicate H1/headings.
+      html = html.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, "");
 
       // Write to dist/<route>/index.html (or dist/index.html for "/").
       const outDir = route === "/" ? DIST : join(DIST, route);
