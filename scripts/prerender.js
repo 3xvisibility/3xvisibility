@@ -11,9 +11,11 @@
  * hydrates/re-renders on the client exactly as before — the design,
  * animations and interactivity are unchanged.
  *
- * Runs as a `postbuild` step.
+ * Runs as a `postbuild` step. Designed to NEVER break a deployment:
+ * Playwright is imported lazily, so a build server without the browser
+ * binary simply skips prerendering and ships the crawler fallback content
+ * baked into index.html instead.
  */
-import { chromium } from "playwright";
 import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync } from "fs";
 import { resolve, dirname, join } from "path";
 import { createServer } from "http";
@@ -107,22 +109,31 @@ async function main() {
     process.exit(0);
   }
 
+  // Lazily import Playwright: on build servers where it isn't installed
+  // (or the browser binary is missing) we degrade gracefully instead of
+  // crashing the whole deployment.
+  let chromium;
+  try {
+    chromium = (await import("playwright")).chromium;
+  } catch (e) {
+    console.log("⚠ Playwright module unavailable — skipping prerender. The site ships with crawler fallback content in index.html.");
+    console.log("  Reason:", String(e?.message || e).split("\n")[0]);
+    process.exit(0);
+  }
+
   let browser;
   try {
     browser = await chromium.launch();
   } catch (e) {
-    // No browser binary on this machine (e.g. a fresh CI/hosting build server).
-    // Install it on demand; if that fails too, keep the plain SPA build
-    // instead of breaking the whole deployment.
     console.log("⚠ Playwright browser missing — attempting install…");
     try {
       const { execSync } = await import("child_process");
-      execSync("npx playwright install chromium --with-deps", { stdio: "inherit", timeout: 240000 });
+      execSync("npx playwright install chromium", { stdio: "inherit", timeout: 240000 });
       browser = await chromium.launch();
     } catch (installErr) {
       console.log(
         "⚠ Prerendering skipped (no Playwright browser available). " +
-          "The site still works as a normal SPA; SEO metadata is unchanged.",
+          "The site still works as a normal SPA; crawler fallback content is in index.html.",
       );
       console.log("  Reason:", String(installErr?.message || installErr).split("\n")[0]);
       process.exit(0);
@@ -199,10 +210,14 @@ async function main() {
   await new Promise((r) => server.close(r));
 
   console.log(`\nPrerendered ${ok} route(s), ${failed} failed.`);
-  process.exit(failed > 0 ? 1 : 0);
+  // Never fail the deployment itself: prerendering is an enhancement.
+  process.exit(0);
 }
 
 main().catch((e) => {
-  console.error(e);
-  process.exit(1);
+  // Prerendering is best-effort. Any unexpected failure must not break the
+  // real deployment — the crawler fallback content in index.html covers it.
+  console.log("⚠ Prerendering skipped due to an unexpected error. Deployment continues.");
+  console.log("  Reason:", String(e?.message || e).split("\n")[0]);
+  process.exit(0);
 });
