@@ -71,7 +71,7 @@ export default function ContactPage() {
 
   return (
     <>
-      <Seo title={t("contact.title")} description={t("contact.metaDesc")} path="/contact" />
+      <Seo title={t("contact.title")} titleFull="Contact 3xVisibility — sales & support" description={t("contact.metaDesc")} path="/contact" image="https://3xvisibility.com/og-image.png" />
       <StaticPageLayout title={t("contact.title")} subtitle={t("contact.subtitle")}>
         <div className="not-prose grid gap-4 sm:grid-cols-2">
           {channels.map(({ icon: Icon, label, value, href }) => {
@@ -147,6 +147,35 @@ export default function ContactPage() {
 
         <h2>{t("contact.responseTime")}</h2>
         <p>{t("contact.responseTimeDesc")}</p>
+
+        <h2>Common questions before getting started</h2>
+        <p>
+          Most enquiries fall into a few categories. Here is what we are most often asked,
+          so you can get an answer immediately.
+        </p>
+        <h3>Can I try 3x Visibility before paying?</h3>
+        <p>
+          Yes. A 7-day free trial is available on every plan and does not require a credit
+          card. You can generate pages and publish to a connected site during the trial.
+        </p>
+        <h3>Which platforms can I publish to?</h3>
+        <p>
+          Pages can be published directly to WordPress, Shopify, WooCommerce and PrestaShop.
+          Each platform uses its own native publishing path, so your existing theme and
+          design system are preserved.
+        </p>
+        <h3>How many pages can I generate?</h3>
+        <p>
+          Page allowances are per plan and reset monthly. If you expect a large one-off
+          campaign, contact us and we will help you choose the right plan rather than
+          leaving you short partway through a launch.
+        </p>
+        <h3>Do you offer support for agencies?</h3>
+        <p>
+          Yes. Agency plans support multiple client workspaces, higher page volumes and
+          priority support. Tell us how many clients and sites you manage and we will
+          recommend the most suitable plan.
+        </p>
       </StaticPageLayout>
     </>
   );

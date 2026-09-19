@@ -36,10 +36,12 @@ const entries: SitemapEntry[] = [
   { path: "/docs", changefreq: "monthly", priority: "0.8" },
   { path: "/guides/wordpress", changefreq: "monthly", priority: "0.7" },
   { path: "/guides/shopify", changefreq: "monthly", priority: "0.7" },
+  { path: "/pricing", changefreq: "monthly", priority: "0.8" },
   { path: "/contact", changefreq: "monthly", priority: "0.6" },
   { path: "/changelog", changefreq: "weekly", priority: "0.5" },
   { path: "/terms", changefreq: "yearly", priority: "0.3" },
   { path: "/cgv", changefreq: "yearly", priority: "0.3" },
+  { path: "/privacy", changefreq: "yearly", priority: "0.3" },
   { path: "/confidentialite", changefreq: "yearly", priority: "0.3" },
   { path: "/mentions-legales", changefreq: "yearly", priority: "0.3" },
 ];

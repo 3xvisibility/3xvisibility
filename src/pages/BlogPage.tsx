@@ -6,30 +6,38 @@ import { getLocalizedPosts } from "@/data/blog";
 import { useLanguage } from "@/i18n/LanguageContext";
 import type { Language } from "@/i18n/translations";
 
-const UI: Partial<Record<Language, { title: string; subtitle: string; readMore: string; more: string }>> = {
+const UI: Partial<Record<Language, { title: string; subtitle: string; readMore: string; more: string; listHeading: string; intro: string }>> = {
   en: {
     title: "Blog",
     subtitle: "Product updates, SEO playbooks and engineering notes from the 3x Visibility team.",
     readMore: "Read more",
     more: "More posts coming soon — follow us for updates.",
+    listHeading: "Latest articles on programmatic SEO, local SEO, GEO and AEO",
+    intro: "We write about what we ship and what we learn while scaling pages: how to structure data for programmatic SEO, how to keep generated pages useful for readers and search engines, and how to make content answer-engine friendly. New articles are published regularly.",
   },
   fr: {
     title: "Blog",
     subtitle: "Nouveautés produit, guides SEO et notes d'ingénierie de l'équipe 3x Visibility.",
     readMore: "Lire la suite",
     more: "D'autres articles arrivent bientôt — suivez-nous pour les mises à jour.",
+    listHeading: "Derniers articles sur le SEO programmatique, le SEO local, le GEO et l'AEO",
+    intro: "Nous écrivons sur ce que nous livrons et sur ce que nous apprenons en mettant des pages à l'échelle : comment structurer les données pour le SEO programmatique, comment garder les pages générées utiles pour les lecteurs et les moteurs de recherche, et comment rendre le contenu adapté aux moteurs de réponses.",
   },
   de: {
     title: "Blog",
     subtitle: "Produkt-Updates, SEO-Playbooks und Engineering-Notizen vom 3x Visibility-Team.",
     readMore: "Weiterlesen",
     more: "Weitere Beiträge folgen bald — folgen Sie uns für Updates.",
+    listHeading: "Neueste Artikel zu programmatischem SEO, lokalem SEO, GEO und AEO",
+    intro: "Wir schreiben über das, was wir veröffentlichen, und was wir beim Skalieren von Seiten lernen: wie man Daten für programmatisches SEO strukturiert, wie generierte Seiten für Leser und Suchmaschinen nützlich bleiben und wie man Inhalte antwortmaschinenfreundlich macht.",
   },
   es: {
     title: "Blog",
     subtitle: "Novedades de producto, guías de SEO y notas de ingeniería del equipo de 3x Visibility.",
     readMore: "Leer más",
     more: "Pronto más artículos — síguenos para novedades.",
+    listHeading: "Últimos artículos sobre SEO programático, SEO local, GEO y AEO",
+    intro: "Escribimos sobre lo que publicamos y lo que aprendimos al escalar páginas: cómo estructurar datos para SEO programático, cómo mantener las páginas generadas útiles para lectores y motores de búsqueda, y cómo hacer el contenido amigable para motores de respuestas.",
   },
 };
 
@@ -42,8 +50,10 @@ export default function BlogPage() {
     <>
       <Seo
         title={ui.title}
+        titleFull="3xVisibility blog — SEO, GEO & AEO playbooks"
         description={ui.subtitle}
         path="/blog"
+        image="https://3xvisibility.com/og-image.png"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Blog",
@@ -58,6 +68,8 @@ export default function BlogPage() {
         }}
       />
       <StaticPageLayout title={ui.title} subtitle={ui.subtitle}>
+        <h2 className="sr-only">{ui.listHeading}</h2>
+        <p>{ui.intro}</p>
         <div className="not-prose grid gap-6 sm:grid-cols-2">
           {posts.map((p, i) => (
             <Link

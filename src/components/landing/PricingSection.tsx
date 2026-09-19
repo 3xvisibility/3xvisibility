@@ -206,7 +206,6 @@ export function PricingSection() {
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em]">{t("pricing.title")}</h2>
           <p className="mt-3 text-sm text-[hsl(220,12%,42%)] max-w-md mx-auto">{t("pricing.description")}</p>
         </ScrollReveal>
-
         <div className="flex items-center justify-center gap-3 mb-10">
           <button
             onClick={() => setIsYearly(!isYearly)}
@@ -316,8 +315,7 @@ export function PricingSection() {
           <div className="mb-10 text-center">
             <span className="section-badge mb-5">{t("pricing.feature")}</span>
             <h3 className="text-3xl font-extrabold text-foreground md:text-5xl">{t("pricing.comparePlans")}</h3>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground md:text-base">{t("pricing.compareDesc")}</p>
-          </div>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground md:text-base">{t("pricing.compareDesc")}</p>          </div>
 
           {/* Mobile: tap-to-expand feature list */}
           <div className="md:hidden overflow-hidden rounded-2xl border border-border bg-card">

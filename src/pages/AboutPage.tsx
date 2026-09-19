@@ -26,6 +26,7 @@ import { Seo } from "@/components/Seo";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { BackToTop } from "@/components/BackToTop";
+import { ScrollReveal } from "@/components/landing/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { BRAND_NAME } from "@/lib/brand";
 
@@ -114,9 +115,19 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen flex flex-col landing-page" ref={pageRef}>
       <Seo
-        title="About us"
-        description={`${BRAND_NAME} helps marketers, agencies and ecommerce teams turn structured data into thousands of high-quality, SEO-optimized pages published to WordPress, Shopify, WooCommerce and PrestaShop.`}
+        title="About 3xVisibility: programmatic SEO platform"
+        titleFull="About 3xVisibility — programmatic SEO & page generation"
+        description="3xVisibility turns structured data into thousands of SEO-optimized pages published to WordPress, Shopify, WooCommerce & PrestaShop."
         path="/about"
+        image="https://3xvisibility.com/og-image.png"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          name: "About 3x Visibility",
+          url: "https://3xvisibility.com/about",
+          description: "3x Visibility turns structured data into thousands of high-quality, SEO-optimized pages published to WordPress, Shopify, WooCommerce and PrestaShop.",
+          isPartOf: { "@type": "WebSite", name: "3x Visibility", url: "https://3xvisibility.com/" },
+        }}
       />
       <LandingNav />
 
@@ -197,6 +208,55 @@ export default function AboutPage() {
                 in days instead of months.
               </p>
             </motion.div>
+          </div>
+        </section>
+
+        {/* What is 3x Visibility — entity & AEO clarity */}
+        <section className="py-16 md:py-24 relative">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_0%,hsl(96,67%,48%,0.06),transparent)] pointer-events-none" />
+          <div className="container mx-auto px-4 lg:px-8 relative z-10 max-w-4xl">
+            <ScrollReveal className="mb-10">
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-[-0.02em]">
+                What is <span className="text-gradient-primary" data-no-translate translate="no">{BRAND_NAME}</span>?
+              </h2>
+              <p className="mt-4 text-[hsl(250,15%,65%)] leading-relaxed">
+                <span data-no-translate translate="no">{BRAND_NAME}</span> is a programmatic SEO platform that turns structured
+                data — a CSV, a product feed or a sitemap — into hundreds or thousands of
+                unique, search-optimized pages and publishes them directly to your CMS. It is
+                built for marketing teams, agencies and ecommerce businesses that need to cover
+                many locations, keywords or product combinations without hand-writing each page.
+              </p>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.05}>
+              <div className="grid gap-4">
+                <div className="rounded-2xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(220,40%,8%)] p-6">
+                  <h3 className="font-bold text-base mb-2 text-foreground">Who is it for?</h3>
+                  <p className="text-sm text-[hsl(250,15%,65%)] leading-relaxed">
+                    Agencies managing many client sites, ecommerce teams with large product
+                    catalogs, and multi-location businesses that need one landing page per city,
+                    service or store.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(220,40%,8%)] p-6">
+                  <h3 className="font-bold text-base mb-2 text-foreground">How does it work?</h3>
+                  <p className="text-sm text-[hsl(250,15%,65%)] leading-relaxed">
+                    Upload a data source, map its columns to a template built from your own
+                    design system, generate a campaign and publish to WordPress, Shopify,
+                    WooCommerce or PrestaShop in one click. Every page ships with SEO scoring,
+                    internal linking and structured data built in.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(220,40%,8%)] p-6">
+                  <h3 className="font-bold text-base mb-2 text-foreground">Which problems does it solve?</h3>
+                  <p className="text-sm text-[hsl(250,15%,65%)] leading-relaxed">
+                    It removes the bottleneck of building pages by hand, keeps generated pages
+                    consistent with your existing design, and makes large-scale content
+                    campaigns fast enough to keep up with a changing keyword set.
+                  </p>
+                </div>
+              </div>
+            </ScrollReveal>
           </div>
         </section>
 

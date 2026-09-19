@@ -619,41 +619,18 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     };
   }, [language, translationRetryNonce, setTranslating, setTranslationProgress, setTranslationError]);
 
-  const { done, total } = translationProgress;
-  const percent = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
-
-  // Safety net: hard-cap overlay at 8s (down from 15s) and quick-dismiss at 100%
+  // Silent mode: translation runs in background with no blocking UI.
+  // Cache + bundled dictionary hits apply in 0ms; network misses fill in
+  // shortly after without any spinner/modal, so language switch feels instant.
   useEffect(() => {
     if (!translating) return;
-    const timers: number[] = [];
-    if (total > 0 && done >= total) {
-      timers.push(window.setTimeout(() => setTranslating(false), 300));
-    }
-    timers.push(window.setTimeout(() => setTranslating(false), 8000));
-    return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [translating, done, total, setTranslating]);
-
+    const t = window.setTimeout(() => setTranslating(false), 8000);
+    return () => window.clearTimeout(t);
+  }, [translating, setTranslating]);
 
   return (
     <>
       {children}
-      {translating && (
-        <div
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-          data-no-autotranslate
-          className="fixed bottom-4 right-4 z-[9999] flex items-center gap-3 rounded-full border border-border/60 bg-card/95 px-4 py-2.5 shadow-xl backdrop-blur supports-[backdrop-filter]:bg-card/90 animate-in fade-in slide-in-from-bottom-2 pointer-events-none"
-        >
-          <span className="relative flex h-4 w-4 shrink-0 items-center justify-center">
-            <span className="absolute inset-0 rounded-full border-2 border-primary/20" />
-            <span className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
-          </span>
-          <span className="text-xs font-medium text-foreground">
-            Translating{total > 1 ? ` ${done + 1}/${total}` : ""}{total > 0 ? ` ${percent}%` : "…"}
-          </span>
-        </div>
-      )}
       {!translating && translationError && (
         <div
           role="alert"

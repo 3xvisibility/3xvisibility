@@ -6,8 +6,10 @@ export default function TermsPage() {
     <>
       <Seo
         title="Terms of Service"
-        description="The terms that govern your use of 3x Visibility's page generation and publishing service."
+        titleFull="3xVisibility terms of service"
+        description="The terms that govern your use of 3x Visibility's page generation and publishing service, including billing, acceptable use and liability."
         path="/terms"
+        image="https://3xvisibility.com/og-image.png"
       />
     <StaticPageLayout title="Terms of Service" subtitle="Last updated: May 2026">
       <h2>Acceptance</h2>

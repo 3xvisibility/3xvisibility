@@ -45,10 +45,18 @@ export default function ChangelogPage() {
     <>
       <Seo
         title="Changelog"
-        description="Recent improvements, fixes and new features shipped to 3x Visibility."
+        titleFull="3xVisibility changelog — updates & new features"
+        description="Recent improvements, fixes and new features shipped to 3x Visibility — product releases listed newest first."
         path="/changelog"
+        image="https://3xvisibility.com/og-image.png"
       />
     <StaticPageLayout title="Changelog" subtitle="Recent improvements, fixes and new features.">
+      <h2>What we shipped</h2>
+      <p>
+        Every release of <span translate="no">3x Visibility</span> is listed here, newest
+        first. Each entry reflects work that is already live in the product — no roadmap
+        promises, just what you can use today.
+      </p>
       <div className="not-prose space-y-6">
         {releases.map((r) => (
           <div key={r.version} className="rounded-xl border border-[hsl(96,67%,48%,0.15)] bg-card p-6 shadow-surface hover:shadow-surface-hover transition-shadow duration-200">

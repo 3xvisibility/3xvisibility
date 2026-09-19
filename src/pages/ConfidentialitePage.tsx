@@ -1,14 +1,18 @@
 import { Seo } from "@/components/Seo";
 import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
 
-export default function ConfidentialitePage() {
+export default function ConfidentialitePage({ suppressSeo }: { suppressSeo?: boolean } = {}) {
   return (
     <>
+      {!suppressSeo && (
       <Seo
         title="Privacy Policy"
-        description="How 3x Visibility collects, uses and protects your personal data in accordance with the GDPR."
+        titleFull="3xVisibility privacy policy (GDPR)"
+        description="How 3x Visibility collects, uses and protects your personal data in accordance with the GDPR (EU) 2016/679 and the French Data Protection Act."
         path="/confidentialite"
+        image="https://3xvisibility.com/og-image.png"
       />
+      )}
       <StaticPageLayout
         title="Privacy Policy"
         subtitle="Last updated: August 2026 — In accordance with the GDPR (EU) 2016/679 and the French Data Protection Act."

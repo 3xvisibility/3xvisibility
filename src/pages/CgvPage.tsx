@@ -6,8 +6,10 @@ export default function CgvPage() {
     <>
       <Seo
         title="General Terms and Conditions of Sale (GTCS)"
-        description="General terms and conditions governing the use of 3x Visibility page generation and publishing services."
+        titleFull="3xVisibility general terms & conditions of sale"
+        description="General terms and conditions governing the use of 3x Visibility page generation and publishing services, including subscriptions, licences and liability."
         path="/cgv"
+        image="https://3xvisibility.com/og-image.png"
       />
       <StaticPageLayout
         title="General Terms and Conditions of Sale"
