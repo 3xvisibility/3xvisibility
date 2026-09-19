@@ -57,6 +57,18 @@ export default function ChangelogPage() {
         first. Each entry reflects work that is already live in the product — no roadmap
         promises, just what you can use today.
       </p>
+      <h2>How do I know what changed?</h2>
+      <p>
+        Each release below lists the changes that shipped with it. Feature additions,
+        improvements and fixes are grouped per version so you can see exactly when a
+        capability arrived or a bug was resolved.
+      </p>
+      <h2>Where do I request a feature?</h2>
+      <p>
+        Send suggestions from the in-app feedback option or contact us directly. Requests
+        that would benefit many users are prioritised — and the most requested ones tend
+        to appear in the releases below.
+      </p>
       <div className="not-prose space-y-6">
         {releases.map((r) => (
           <div key={r.version} className="rounded-xl border border-[hsl(96,67%,48%,0.15)] bg-card p-6 shadow-surface hover:shadow-surface-hover transition-shadow duration-200">

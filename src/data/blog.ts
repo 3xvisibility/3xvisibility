@@ -31,7 +31,7 @@ export interface BlogPost extends BlogPostContent {
 export const posts: BlogPost[] = [
   {
     slug: "seo-vs-aeo-vs-geo",
-    title: "SEO vs AEO vs GEO: the three engines of search in 2026",
+    title: "SEO vs AEO vs GEO: three engines of search",
     date: "June 2026",
     category: "AI Search",
     excerpt:
@@ -87,6 +87,30 @@ export const posts: BlogPost[] = [
         paragraphs: [
           "SEO gets your business found. AEO gets your expertise quoted. GEO gets your name recommended. Ignore any one of them and you hand that layer of discovery to a competitor.",
           "The good news: the same foundational work — clear, authoritative, well-structured content mapped to real questions your customers ask — feeds all three engines at once. That's exactly what 3x Visibility is built to help you produce at scale.",
+        ],
+      },
+      {
+        heading: "Frequently asked questions",
+        paragraphs: [
+          "Quick answers to the questions we hear most about how the three engines relate.",
+        ],
+      },
+      {
+        heading: "What is the difference between SEO, AEO and GEO?",
+        paragraphs: [
+          "SEO earns placement in the classic list of search results. AEO earns placement inside an answer box or AI Overview. GEO earns a named citation inside a generative AI recommendation. They overlap in practice — well-structured, useful content helps all three — but each rewards a different signal.",
+        ],
+      },
+      {
+        heading: "Which one should I focus on first?",
+        paragraphs: [
+          "Start with SEO, because it is still the largest source of intent-driven traffic and the foundation the other two build on. Add AEO once your key pages answer real questions clearly. Invest in GEO when your brand needs to appear in AI recommendations, not just in search results.",
+        ],
+      },
+      {
+        heading: "Does the same content work for all three?",
+        paragraphs: [
+          "Largely yes. Clear headings, concise answers under each one, structured data, and genuinely useful detail are rewarded by all three engines. What changes is the emphasis: classic results reward depth and links, answer engines reward brevity and structure, generative engines reward credibility and consistency across the web.",
         ],
       },
     ],
@@ -288,21 +312,38 @@ export const posts: BlogPost[] = [
     ],
     sections: [
       {
-        heading: "Start with a real data advantage",
+        heading: "What is programmatic SEO?",
         paragraphs: [
-          "Programmatic pages only work when each one answers a distinct, searched-for question. That requires a dataset rich enough to make every page meaningfully different — locations, products, comparisons, or use cases with their own facts.",
+          "Programmatic SEO is the practice of building large sets of pages automatically from a structured data source, where each page targets a specific, searchable intent. Instead of writing one page at a time by hand, you build one template and let data fill it — a location page for every city you serve, a comparison page for every product pair, a use-case page for every industry.",
+          "The goal is not more pages for their own sake. It is coverage: making sure that every question your customers actually search has a page that answers it.",
         ],
       },
       {
-        heading: "Make every page genuinely unique",
+        heading: "Start with a real data advantage",
+        paragraphs: [
+          "Programmatic pages only work when each one answers a distinct, searched-for question. That requires a dataset rich enough to make every page meaningfully different — locations, products, comparisons, or use cases with their own facts.",
+          "Before generating anything, ask whether your data passes this test: would a reader on page 400 find information that was not on page 40? If the answer is no, no amount of spintax will fix it.",
+        ],
+      },
+      {
+        heading: "How do you make every page genuinely unique?",
         paragraphs: [
           "Spintax and variable substitution are tools, not strategies. The winning pages combine structured data with original analysis, real imagery and intent-matched copy so they read like they were written by a human who cares.",
+          "Practically, that means each page needs at least one element that cannot be generated from a column alone: a recommendation, a local fact, a comparison table, or an answer to a question the data alone does not address.",
         ],
       },
       {
         heading: "Publish responsibly",
         paragraphs: [
           "Roll out in batches, monitor indexation, and prune pages that don't earn impressions. Search engines reward restraint and consistency far more than a single massive dump.",
+          "A sensible cadence is hundreds of pages per batch, not tens of thousands at once, with indexation rate tracked per batch before the next one ships.",
+        ],
+      },
+      {
+        heading: "How does 3x Visibility fit in?",
+        paragraphs: [
+          "3x Visibility handles the mechanics of this workflow: importing the data source, mapping columns to a template built from your own design system, generating variation that reads naturally, scoring each page for SEO before it ships, and publishing to your CMS in one click.",
+          "The judgment calls — which intents to target, what makes each page worth reading — stay with you. The platform removes the manual labour in between.",
         ],
       },
     ],
@@ -420,15 +461,40 @@ export const posts: BlogPost[] = [
     ],
     sections: [
       {
-        heading: "Adapt, don't override",
+        heading: "Why does generated content break Shopify themes?",
         paragraphs: [
-          "Instead of shipping its own CSS, the adapter maps your content onto the theme's existing layout primitives — so pages inherit your colours, type scale and spacing automatically.",
+          "Most page generators output their own HTML and CSS, then force it into your storefront with an app block or a custom page template. The result looks correct in isolation but wrong in context: a heading styled for another design system, buttons with the wrong radius, and spacing that fights your theme's rhythm.",
+          "Shopify themes are built from a consistent set of layout primitives — sections, grid wrappers, typography scales and colour tokens. When injected content does not use those primitives, the page looks bolted on. Shoppers notice, and so do search engines measuring page quality.",
         ],
       },
       {
-        heading: "Preview before you publish",
+        heading: "Adapt, don't override",
+        paragraphs: [
+          "Instead of shipping its own CSS, the adapter maps your content onto the theme's existing layout primitives — so pages inherit your colours, type scale and spacing automatically.",
+          "This matters for more than aesthetics. When generated pages share your theme's structure, they load faster (no extra stylesheet to download or parse) and they stay consistent when you switch or upgrade your theme later.",
+        ],
+      },
+      {
+        heading: "How does the preview keep you safe?",
         paragraphs: [
           "Every page renders in a live preview using your real theme assets, so you catch any visual drift before it goes live to customers.",
+          "The preview is not a mockup — it loads the same stylesheets and sections your live store uses. If a generated page would look wrong on a product template or a collection layout, you see it during generation, not after publishing.",
+        ],
+      },
+      {
+        heading: "What about structured data and speed?",
+        paragraphs: [
+          "Each generated page carries its own structured data — product, article or FAQ schema depending on the page type — so search engines and AI answer systems can parse it without guessing.",
+          "Because the pages reuse your theme's assets rather than adding new ones, they keep your store's Core Web Vitals intact. Images are served at the sizes your theme already requests, and no render-blocking CSS is added per page.",
+        ],
+      },
+      {
+        heading: "Publishing workflow",
+        bullets: [
+          "Connect your Shopify store once via the Admin API.",
+          "Generate pages from a CSV, a template and your data mapping.",
+          "Preview each page inside your real theme before anything goes live.",
+          "Publish in batches and monitor which pages earn impressions.",
         ],
       },
     ],
@@ -527,21 +593,37 @@ export const posts: BlogPost[] = [
     ],
     sections: [
       {
-        heading: "Upload and map",
+        heading: "What is the AI Template Builder?",
         paragraphs: [
-          "Drop in your CSV and the builder detects your columns, turning each one into a variable you can place anywhere in your template.",
+          "The AI Template Builder is the part of 3x Visibility that turns a data file into a reusable page template. You describe the page you want once — its sections, its tone, the variables that change per page — and the builder produces a template you can reuse across an entire campaign.",
+          "It exists because the slow step in programmatic SEO is rarely the writing. It is the setup: deciding how each column maps to a layout, keeping the structure consistent across hundreds of pages, and making sure no two pages read as duplicates.",
         ],
       },
       {
-        heading: "Spin and generate",
+        heading: "Upload and map",
+        paragraphs: [
+          "Drop in your CSV and the builder detects your columns, turning each one into a variable you can place anywhere in your template.",
+          "A city column becomes a location variable, a service column becomes the offering in the headline, and a unique fact column becomes the detail that makes each page genuinely different. You stay in control of the mapping — the builder suggests, you confirm.",
+        ],
+      },
+      {
+        heading: "How does spintax keep pages unique?",
         paragraphs: [
           "The spintax engine creates natural variation across every page so no two read the same, while keeping your core message and structure intact.",
+          "Instead of swapping a single synonym, it varies sentence structure across paragraphs, so the resulting pages differ in wording and rhythm rather than in one token. That distinction matters: search engines compare pages semantically, and surface-level synonym swaps are easy to flag as duplicate content.",
         ],
       },
       {
         heading: "Publish anywhere",
         paragraphs: [
           "One click pushes your pages to WordPress, Shopify, WooCommerce or PrestaShop with theme-aware formatting baked in.",
+          "Each page lands inside your existing design system rather than bringing its own stylesheet, so a hundred generated pages look like one coherent site.",
+        ],
+      },
+      {
+        heading: "Who is this for?",
+        paragraphs: [
+          "Teams that already have the data — a product feed, a location list, a service catalogue — and need that data to become pages. If you have ever copy-pasted a spreadsheet row into a CMS by hand, that is the exact workflow this replaces.",
         ],
       },
     ],
