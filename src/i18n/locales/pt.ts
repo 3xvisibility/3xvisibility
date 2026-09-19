@@ -938,7 +938,7 @@ const pt: Record<string, string> = {
   "hero.mockTotalViews": "Total de visualizações",
   "hero.mockWelcomeBack": "Bem vindo de volta, {name}",
   "hero.noCreditCard": "✓ Sem cartão de crédito",
-  "hero.oneClick": "Generate hundreds of SEO-optimized pages and publish them directly to WordPress (Elementor/Gutenberg) and Shopify in one click.",
+  "hero.oneClick": "Bulk-generate local SEO, programmatic SEO and GEO landing pages from one dataset — then publish them to WordPress (Elementor/Gutenberg), Shopify, WooCommerce or PrestaShop in a single click, each page scored for search readiness before it goes live.",
   "hero.pagesPerMonth": "✓ 100 páginas/mês",
   "hero.title1": "Transforme seus dados em",
   "hero.title2": "páginas publicadas",
