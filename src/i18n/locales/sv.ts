@@ -935,7 +935,7 @@ const sv: Record<string, string> = {
   "hero.mockTotalViews": "Total Views",
   "hero.mockWelcomeBack": "Welcome back, {name}",
   "hero.noCreditCard": "✓ Inget kreditkort",
-  "hero.oneClick": "Generate hundreds of SEO-optimized pages and publish them directly to WordPress (Elementor/Gutenberg) and Shopify in one click.",
+  "hero.oneClick": "Bulk-generate local SEO, programmatic SEO and GEO landing pages from one dataset — then publish them to WordPress (Elementor/Gutenberg), Shopify, WooCommerce or PrestaShop in a single click, each page scored for search readiness before it goes live.",
   "hero.pagesPerMonth": "✓ 100 sidor/månad",
   "hero.title1": "Förvandla din data till",
   "hero.title2": "publicerade sidor",
