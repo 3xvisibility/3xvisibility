@@ -103,9 +103,139 @@ function statIsDir(p) {
   }
 }
 
+const ROUTE_META = {
+  "/": {
+    title: "3xVisibility — Mass-build SEO, GEO & programmatic pages",
+    desc: "Automatically mass-build local SEO, programmatic SEO, GEO sites, directories and content at scale with one-click deployment. Save 40 hours per site.",
+    intro: "3x Visibility is a programmatic SEO platform that turns structured data into thousands of unique, search-optimized pages and publishes them directly to WordPress, Shopify, WooCommerce and PrestaShop.",
+  },
+  "/about": {
+    title: "About 3xVisibility — programmatic SEO & page generation",
+    desc: "3xVisibility turns structured data into thousands of SEO-optimized pages published to WordPress, Shopify, WooCommerce and PrestaShop.",
+    intro: "3x Visibility builds the page-generation layer for marketing teams: import a data source, map it to a template from your own design system, and publish hundreds of locally-optimized pages in one campaign.",
+  },
+  "/pricing": {
+    title: "3xVisibility pricing — plans for programmatic SEO",
+    desc: "Compare 3x Visibility plans: pages, AI generations, connected sites and support. Simple monthly or yearly pricing, cancel anytime.",
+    intro: "Every plan includes the full generation engine: CSV import, template mapping, AI content and one-click publishing. Paid tiers raise the monthly page allowance, the number of connected sites and the support level.",
+  },
+  "/blog": {
+    title: "3xVisibility blog — SEO, GEO & AEO playbooks",
+    desc: "Product updates, SEO playbooks and engineering notes from the 3x Visibility team.",
+    intro: "Articles on programmatic SEO, local SEO, answer-engine optimization and generative engine optimization, plus release notes from the 3x Visibility platform.",
+  },
+  "/contact": {
+    title: "Contact 3xVisibility — sales & support",
+    desc: "Get in touch with the 3x Visibility team for sales questions, onboarding help or support with your page-generation campaigns.",
+    intro: "Reach the 3x Visibility team by email or the contact form. Tell us about your data source and target platforms and we will recommend the shortest path to published pages.",
+  },
+  "/changelog": {
+    title: "3xVisibility changelog — updates & new features",
+    desc: "Recent improvements, fixes and new features shipped to 3x Visibility — product releases listed newest first.",
+    intro: "Every 3x Visibility release, newest first: what shipped, what improved and what was fixed in the page-generation platform.",
+  },
+  "/docs": {
+    title: "3xVisibility documentation & publishing guides",
+    desc: "Guides for connecting WordPress and Shopify, campaign setup, template variables and the 3x Visibility API.",
+    intro: "Documentation for the 3x Visibility platform: connecting websites, building templates, mapping CSV columns, generating campaigns and publishing pages.",
+  },
+  "/terms": {
+    title: "3xVisibility terms of service",
+    desc: "The terms that govern your use of the 3x Visibility page generation and publishing service, including billing, acceptable use and liability.",
+    intro: "The agreement between you and 3x Visibility covering accounts, acceptable use, billing, liability and changes to the service.",
+  },
+  "/cgv": {
+    title: "3xVisibility general terms & conditions of sale",
+    desc: "General terms and conditions governing the use of 3x Visibility page generation and publishing services, including subscriptions, licences and liability.",
+    intro: "Sales terms for the 3x Visibility SaaS platform: subscriptions, licences, pricing, liability and applicable law.",
+  },
+  "/confidentialite": {
+    title: "3xVisibility privacy policy (GDPR)",
+    desc: "How 3x Visibility collects, uses and protects your personal data in accordance with the GDPR (EU) 2016/679 and the French Data Protection Act.",
+    intro: "Our privacy policy: what data we collect, why we collect it, how long we keep it and your rights under the GDPR.",
+  },
+  "/privacy": {
+    title: "3xVisibility privacy policy (GDPR)",
+    desc: "How 3x Visibility collects, uses and protects your personal data in accordance with the GDPR (EU) 2016/679 and the French Data Protection Act.",
+    intro: "Our privacy policy: what data we collect, why we collect it, how long we keep it and your rights under the GDPR.",
+  },
+  "/mentions-legales": {
+    title: "3xVisibility legal notice",
+    desc: "Legal information about the publisher and hosting of the 3x Visibility website, in accordance with French and European legislation (LCEN, GDPR).",
+    intro: "Publisher, hosting and legal information for the 3x Visibility website.",
+  },
+  "/guides/wordpress": {
+    title: "Publish 3xVisibility pages to WordPress",
+    desc: "Step-by-step guide to connecting WordPress with Application Passwords and publishing generated pages to Elementor or Gutenberg.",
+    intro: "Connect WordPress to 3x Visibility with REST API Application Passwords, choose Elementor or Gutenberg output, and publish generated pages without touching your theme.",
+  },
+  "/guides/shopify": {
+    title: "Publish 3xVisibility pages to Shopify",
+    desc: "Step-by-step guide to connecting a Shopify store via the Admin API and publishing theme-aware generated pages.",
+    intro: "Connect a Shopify store through the Admin API, preview generated pages inside your live theme, and publish without breaking your storefront design.",
+  },
+  "/blog/seo-vs-aeo-vs-geo": {
+    title: "SEO vs AEO vs GEO: three engines of search — 3xVisibility",
+    desc: "Search is no longer one game. Learn how Search, Answer and Generative engine optimisation work — and how to win all three at once.",
+    intro: "SEO earns the blue link, AEO earns the answer box, GEO earns the named citation in generative AI recommendations. Here is what each engine rewards.",
+  },
+  "/blog/programmatic-seo-2026": {
+    title: "Programmatic SEO in 2026: what actually works — 3xVisibility",
+    desc: "A field guide to building thousands of pages that rank — without getting flagged.",
+    intro: "Quality at scale: how to build programmatic page sets that genuinely help users and survive algorithm updates.",
+  },
+  "/blog/shopify-publishing": {
+    title: "Publishing to Shopify without breaking your theme — 3xVisibility",
+    desc: "How 3x Visibility's theme adapter keeps generated pages pixel-perfect inside any Shopify theme.",
+    intro: "Why generated content usually breaks Shopify themes, and how a theme-aware adapter keeps every published page on-brand.",
+  },
+  "/blog/ai-templates": {
+    title: "AI templates: from CSV to live page in 60 seconds — 3xVisibility",
+    desc: "Walkthrough of the AI Template Builder and the spintax engine behind it.",
+    intro: "How a single CSV becomes a fleet of unique, on-brand pages through the AI Template Builder and spintax engine.",
+  },
+};
+
+function escHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function escAttr(s) {
+  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+
+function generateFallbackRoutes() {
+  const template = readFileSync(join(DIST, "index.html"), "utf8");
+  let written = 0;
+  for (const route of routes) {
+    const meta = ROUTE_META[route];
+    if (!meta) continue;
+    const url = `https://3xvisibility.com${route === "/" ? "/" : route}`;
+    let html = template;
+    html = html.replace(/(<title data-fallback-seo>)[\s\S]*?(<\/title>)/, `$1${escHtml(meta.title)}$2`);
+    html = html.replace(/(<meta data-fallback-seo\s+name="description"\s+content=")[\s\S]*?("\s*\/>)/, `$1${escAttr(meta.desc)}$2`);
+    html = html.replace(/(<link data-fallback-seo rel="canonical" href=")[^"]*(")/, `$1${url}$2`);
+    html = html.replace(/(<meta data-fallback-seo property="og:url" content=")[^"]*(")/, `$1${url}$2`);
+    html = html.replace(/(<meta data-fallback-seo property="og:title" content=")[^"]*(")/, `$1${escAttr(meta.title)}$2`);
+    html = html.replace(/(<meta data-fallback-seo\s+property="og:description"\s+content=")[\s\S]*?("\s*\/>)/, `$1${escAttr(meta.desc)}$2`);
+    html = html.replace(/(<noscript>\s*<div>\s*<h1>)[\s\S]*?(<\/h1>)/, `$1${escHtml(meta.title)}$2`);
+    html = html.replace(/(<\/h1>\s*<p>\s*<img[\s\S]*?\/>\s*<\/p>\s*<p>)[\s\S]*?(<\/p>)/, `$1${escHtml(meta.intro)}$2`);
+    const outDir = route === "/" ? DIST : join(DIST, route);
+    mkdirSync(outDir, { recursive: true });
+    writeFileSync(join(outDir, "index.html"), html, "utf8");
+    written++;
+  }
+  console.log(`✓ wrote crawler fallback HTML for ${written} route(s)`);
+}
+
 async function main() {
   if (!existsSync(join(DIST, "index.html"))) {
     console.error("⚠ dist/index.html not found — run `vite build` first.");
+    process.exit(0);
+  }
+
+  if (process.env.VERCEL || process.env.FORCE_FALLBACK) {
+    generateFallbackRoutes();
     process.exit(0);
   }
 
@@ -116,8 +246,9 @@ async function main() {
   try {
     chromium = (await import("playwright")).chromium;
   } catch (e) {
-    console.log("⚠ Playwright module unavailable — skipping prerender. The site ships with crawler fallback content in index.html.");
+    console.log("⚠ Playwright module unavailable — writing per-route crawler fallback HTML instead.");
     console.log("  Reason:", String(e?.message || e).split("\n")[0]);
+    generateFallbackRoutes();
     process.exit(0);
   }
 
@@ -136,6 +267,7 @@ async function main() {
           "The site still works as a normal SPA; crawler fallback content is in index.html.",
       );
       console.log("  Reason:", String(installErr?.message || installErr).split("\n")[0]);
+      generateFallbackRoutes();
       process.exit(0);
     }
   }
