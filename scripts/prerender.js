@@ -218,7 +218,7 @@ function generateFallbackRoutes() {
     html = html.replace(/(<meta data-fallback-seo property="og:url" content=")[^"]*(")/, `$1${url}$2`);
     html = html.replace(/(<meta data-fallback-seo property="og:title" content=")[^"]*(")/, `$1${escAttr(meta.title)}$2`);
     html = html.replace(/(<meta data-fallback-seo\s+property="og:description"\s+content=")[\s\S]*?("\s*\/>)/, `$1${escAttr(meta.desc)}$2`);
-    html = html.replace(/(<noscript>\s*<div>\s*<h1>)[\s\S]*?(<\/h1>)/, `$1${escHtml(meta.title)}$2`);
+    html = html.replace(/(<h1 data-fallback-h1>)[\s\S]*?(<\/h1>)/, `$1${escHtml(meta.title)}$2`);
     html = html.replace(/(<\/h1>\s*<p>\s*<img[\s\S]*?\/>\s*<\/p>\s*<p>)[\s\S]*?(<\/p>)/, `$1${escHtml(meta.intro)}$2`);
     const outDir = route === "/" ? DIST : join(DIST, route);
     mkdirSync(outDir, { recursive: true });

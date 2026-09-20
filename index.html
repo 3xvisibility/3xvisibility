@@ -86,15 +86,9 @@
   </head>
 
   <body>
-    <!--
-      Crawler-visible summary of the landing page. React replaces #root
-      instantly for real users, so this is never seen by browsers; it exists
-      so search engines and AI systems see real content if the prerender step
-      cannot run on the build server.
-    -->
-    <noscript>
-      <div>
-        <h1>3xVisibility — Mass-build SEO, GEO &amp; programmatic pages at scale</h1>
+    
+    <div id="root"><div data-fallback-content style="min-height:100vh;background:#09090b;color:#e4e4e7;font-family:system-ui,-apple-system,sans-serif;padding:56px 24px;max-width:860px;margin:0 auto;line-height:1.6">
+        <h1 data-fallback-h1>3xVisibility — Mass-build SEO, GEO &amp; programmatic pages at scale</h1>
         <p>
           <img src="/og-image.png" alt="3x Visibility — mass-build SEO, GEO and programmatic pages at scale" width="1200" height="630" />
         </p>
@@ -292,9 +286,7 @@
           <li><a href="/terms">Terms of service</a></li>
           <li><a href="/confidentialite">Privacy policy</a></li>
         </ul>
-      </div>
-    </noscript>
-    <div id="root"></div>
+      </div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
