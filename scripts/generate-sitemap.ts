@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
 
-const BASE_URL = "https://3xvisibility.com";
+const BASE_URL = "https://www.3xvisibility.com";
 
 interface SitemapEntry {
   path: string;

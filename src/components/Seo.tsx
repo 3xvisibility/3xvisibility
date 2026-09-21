@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { BRAND_NAME } from "@/lib/brand";
 
-const BASE_URL = "https://3xvisibility.com";
+const BASE_URL = "https://www.3xvisibility.com";
 
 export interface SeoProps {
   /** Page title (will be suffixed with the brand name unless titleFull is set) */

@@ -33,23 +33,23 @@ export default function BlogPostPage() {
         titleFull={`${post.title} — 3xVisibility`}
         description={post.excerpt}
         path={`/blog/${post.slug}`}
-        image="https://3xvisibility.com/og-image.png"
+        image="https://www.3xvisibility.com/og-image.png"
         type="article"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "BlogPosting",
           headline: post.title,
           description: post.excerpt,
-          image: "https://3xvisibility.com/og-image.png",
+          image: "https://www.3xvisibility.com/og-image.png",
           datePublished: post.date,
-          url: `https://3xvisibility.com/blog/${post.slug}`,
+          url: `https://www.3xvisibility.com/blog/${post.slug}`,
           author: { "@type": "Organization", name: "3x Visibility" },
           publisher: {
             "@type": "Organization",
             name: "3x Visibility",
-            url: "https://3xvisibility.com/",
+            url: "https://www.3xvisibility.com/",
           },
-          mainEntityOfPage: `https://3xvisibility.com/blog/${post.slug}`,
+          mainEntityOfPage: `https://www.3xvisibility.com/blog/${post.slug}`,
         }}
       />
       <StaticPageLayout title={post.title} subtitle={post.excerpt}>

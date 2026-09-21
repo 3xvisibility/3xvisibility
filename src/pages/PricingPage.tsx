@@ -18,7 +18,7 @@ export default function PricingPage() {
         title="Pricing & plans for 3xVisibility"
         titleFull="3xVisibility pricing — plans for programmatic SEO"
         description="Compare 3x Visibility plans: pages, AI generations, connected sites and support. Simple monthly or yearly pricing, cancel anytime."
-        image="https://3xvisibility.com/og-image.png"
+        image="https://www.3xvisibility.com/og-image.png"
       />
       <LandingNav />
       <main className="flex-1 pt-20">

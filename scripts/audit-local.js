@@ -82,7 +82,7 @@ function analyzeHtml(html, target) {
     { id: "schema", label: "Structured data (JSON-LD)", status: jsonLd.length ? "good" : "bad", detail: jsonLd.length ? `${jsonLd.length} JSON-LD block(s)` : "No schema markup" },
     { id: "og", label: "Social / AI preview tags", status: ogTitle && ogImage ? "good" : ogTitle || ogImage ? "warn" : "bad", detail: `og:title ${ogTitle ? "✓" : "✗"} · og:image ${ogImage ? "✓" : "✗"}` },
     { id: "answers", label: "Answer-ready content", status: /<h[23][^>]*>[^<]*\?/i.test(html) ? "good" : "warn", detail: /<h[23][^>]*>[^<]*\?/i.test(html) ? "Question-style headings found" : "No question-based (FAQ) headings" },
-    { id: "entity", label: "Brand entity clarity", status: new RegExp(host.split(".")[0], "i").test(title) ? "good" : "warn", detail: new RegExp(host.split(".")[0], "i").test(title) ? "Brand name present in the title" : "Brand name missing from the title tag" },
+    { id: "entity", label: "Brand entity clarity", status: new RegExp(host.replace(/^www\./i, "").split(".")[0], "i").test(title) ? "good" : "warn", detail: new RegExp(host.replace(/^www\./i, "").split(".")[0], "i").test(title) ? "Brand name present in the title" : "Brand name missing from the title tag" },
   ];
 
   const technical = [
@@ -116,7 +116,7 @@ function analyzeHtml(html, target) {
 
 // CLI: node scripts/audit-local.js [path-to-html] [url]
 const htmlPath = process.argv[2] || "dist/index.html";
-const url = process.argv[3] || "https://3xvisibility.com/";
+const url = process.argv[3] || "https://www.3xvisibility.com/";
 
 if (!existsSync(resolve(htmlPath))) {
   console.error(`File not found: ${htmlPath}`);

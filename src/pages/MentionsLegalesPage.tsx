@@ -9,7 +9,7 @@ export default function MentionsLegalesPage() {
         titleFull="3xVisibility legal notice"
         description="Legal information about the publisher and hosting of the 3x Visibility website, in accordance with French and European legislation (LCEN, GDPR)."
         path="/mentions-legales"
-        image="https://3xvisibility.com/og-image.png"
+        image="https://www.3xvisibility.com/og-image.png"
       />
       <StaticPageLayout
         title="Legal Notice"

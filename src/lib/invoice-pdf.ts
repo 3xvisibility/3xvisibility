@@ -69,7 +69,7 @@ function renderInvoice(doc: jsPDF, invoice: InvoiceRecord, issuer: IssuerDetails
 
   const company = issuer.name || "3x Visibility";
   const companyEmail = issuer.email || "3xvisibility@gmail.com";
-  const companySite = issuer.website || "https://3xvisibility.com";
+  const companySite = issuer.website || "https://www.3xvisibility.com";
 
   // Header
   doc.setFont("helvetica", "bold");

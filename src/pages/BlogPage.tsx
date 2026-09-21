@@ -105,17 +105,17 @@ export default function BlogPage() {
         titleFull="3xVisibility blog — SEO, GEO & AEO playbooks"
         description={ui.subtitle}
         path="/blog"
-        image="https://3xvisibility.com/og-image.png"
+        image="https://www.3xvisibility.com/og-image.png"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Blog",
           name: "3x Visibility Blog",
-          url: "https://3xvisibility.com/blog",
+          url: "https://www.3xvisibility.com/blog",
           blogPost: posts.map((p) => ({
             "@type": "BlogPosting",
             headline: p.title,
             description: p.excerpt,
-            url: `https://3xvisibility.com/blog/${p.slug}`,
+            url: `https://www.3xvisibility.com/blog/${p.slug}`,
           })),
         }}
       />

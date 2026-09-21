@@ -48,7 +48,7 @@ export default function ChangelogPage() {
         titleFull="3xVisibility changelog — updates & new features"
         description="Recent improvements, fixes and new features shipped to 3x Visibility — product releases listed newest first."
         path="/changelog"
-        image="https://3xvisibility.com/og-image.png"
+        image="https://www.3xvisibility.com/og-image.png"
       />
     <StaticPageLayout title="Changelog" subtitle="Recent improvements, fixes and new features.">
       <h2>What we shipped</h2>

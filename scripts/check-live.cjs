@@ -1,5 +1,5 @@
-﻿const https=require('https');const fs=require('fs');
-https.get('https://3xvisibility.com/',(r)=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>{
+const https=require('https');const fs=require('fs');
+https.get('https://www.3xvisibility.com/',(r)=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>{
 const m=d.match(/\/assets\/index-[^"']+\.js/);
 console.log('live bytes:',d.length);
 console.log('live asset:',m?m[0]:'none');

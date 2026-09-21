@@ -119,14 +119,14 @@ export default function AboutPage() {
         titleFull="About 3xVisibility — programmatic SEO & page generation"
         description="3xVisibility turns structured data into thousands of SEO-optimized pages published to WordPress, Shopify, WooCommerce & PrestaShop."
         path="/about"
-        image="https://3xvisibility.com/og-image.png"
+        image="https://www.3xvisibility.com/og-image.png"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "AboutPage",
           name: "About 3x Visibility",
-          url: "https://3xvisibility.com/about",
+          url: "https://www.3xvisibility.com/about",
           description: "3x Visibility turns structured data into thousands of high-quality, SEO-optimized pages published to WordPress, Shopify, WooCommerce and PrestaShop.",
-          isPartOf: { "@type": "WebSite", name: "3x Visibility", url: "https://3xvisibility.com/" },
+          isPartOf: { "@type": "WebSite", name: "3x Visibility", url: "https://www.3xvisibility.com/" },
         }}
       />
       <LandingNav />

@@ -210,7 +210,7 @@ function generateFallbackRoutes() {
   for (const route of routes) {
     const meta = ROUTE_META[route];
     if (!meta) continue;
-    const url = `https://3xvisibility.com${route === "/" ? "/" : route}`;
+    const url = `https://www.3xvisibility.com${route === "/" ? "/" : route}`;
     let html = template;
     html = html.replace(/(<title data-fallback-seo>)[\s\S]*?(<\/title>)/, `$1${escHtml(meta.title)}$2`);
     html = html.replace(/(<meta data-fallback-seo\s+name="description"\s+content=")[\s\S]*?("\s*\/>)/, `$1${escAttr(meta.desc)}$2`);

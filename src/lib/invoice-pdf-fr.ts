@@ -23,7 +23,7 @@ export const ISSUER = {
   siret: "843 715 954 00027",
   vat: "FR95 843715954",
   email: "Support@3xvisibility.com",
-  website: "https://3xvisibility.com",
+  website: "https://www.3xvisibility.com",
 };
 
 const VAT_RATE = 0.2;

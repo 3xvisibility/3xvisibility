@@ -12,7 +12,7 @@ export default function PrivacyPage() {
         titleFull="3xVisibility privacy policy (GDPR)"
         description="How 3x Visibility collects, uses and protects your personal data in accordance with the GDPR (EU) 2016/679 and the French Data Protection Act."
         path="/privacy"
-        image="https://3xvisibility.com/og-image.png"
+        image="https://www.3xvisibility.com/og-image.png"
       />
       <ConfidentialitePage suppressSeo />
     </>

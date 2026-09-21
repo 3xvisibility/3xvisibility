@@ -40,7 +40,7 @@ export default function LandingPage() {
         titleFull="3xVisibility — Mass-build SEO, GEO & programmatic pages"
         description="Automatically mass-build local SEO, programmatic SEO, GEO sites, directories and content at scale with one-click deployment. Save 40 hours per site."
         path="/"
-        image="https://3xvisibility.com/og-image.png"
+        image="https://www.3xvisibility.com/og-image.png"
         jsonLd={[
           {
             "@context": "https://schema.org",
@@ -54,9 +54,9 @@ export default function LandingPage() {
             "@context": "https://schema.org",
             "@type": "WebPage",
             name: "3xVisibility — Mass-build SEO, GEO & programmatic pages",
-            url: "https://3xvisibility.com/",
+            url: "https://www.3xvisibility.com/",
             description: "Automatically mass-build local SEO, programmatic SEO, GEO sites, directories and content at scale with one-click deployment.",
-            isPartOf: { "@type": "WebSite", name: "3x Visibility", url: "https://3xvisibility.com/" },
+            isPartOf: { "@type": "WebSite", name: "3x Visibility", url: "https://www.3xvisibility.com/" },
           },
           {
             "@context": "https://schema.org",

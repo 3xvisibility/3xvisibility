@@ -219,8 +219,8 @@ Deno.serve(async (req) => {
       {
         id: "entity",
         label: "Brand entity clarity",
-        status: new RegExp(host.split(".")[0], "i").test(title) ? "good" : "warn",
-        detail: new RegExp(host.split(".")[0], "i").test(title)
+        status: new RegExp(host.replace(/^www\./i, "").split(".")[0], "i").test(title) ? "good" : "warn",
+        detail: new RegExp(host.replace(/^www\./i, "").split(".")[0], "i").test(title)
           ? "Brand name present in the title"
           : "Brand name missing from the title tag",
         fix: "Brand variables keep your name consistent on every page.",

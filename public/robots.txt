@@ -40,4 +40,4 @@ Disallow: /w/
 Disallow: /shopify/
 Disallow: /api/
 
-Sitemap: https://3xvisibility.com/sitemap.xml
+Sitemap: https://www.3xvisibility.com/sitemap.xml

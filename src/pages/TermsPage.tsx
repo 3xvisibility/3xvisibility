@@ -9,7 +9,7 @@ export default function TermsPage() {
         titleFull="3xVisibility terms of service"
         description="The terms that govern your use of the 3x Visibility page generation and publishing service, including billing, acceptable use and liability."
         path="/terms"
-        image="https://3xvisibility.com/og-image.png"
+        image="https://www.3xvisibility.com/og-image.png"
       />
     <StaticPageLayout title="Terms of Service" subtitle="Last updated: May 2026">
       <h2>Acceptance</h2>

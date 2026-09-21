@@ -71,7 +71,7 @@ export default function ContactPage() {
 
   return (
     <>
-      <Seo title={t("contact.title")} titleFull="Contact 3xVisibility — sales & support" description={t("contact.metaDesc")} path="/contact" image="https://3xvisibility.com/og-image.png" />
+      <Seo title={t("contact.title")} titleFull="Contact 3xVisibility — sales & support" description={t("contact.metaDesc")} path="/contact" image="https://www.3xvisibility.com/og-image.png" />
       <StaticPageLayout title={t("contact.title")} subtitle={t("contact.subtitle")}>
         <div className="not-prose grid gap-4 sm:grid-cols-2">
           {channels.map(({ icon: Icon, label, value, href }) => {
