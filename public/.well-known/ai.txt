@@ -1,0 +1,43 @@
+# ai.txt — AI crawler and assistant guidance for 3xvisibility.com
+# Last-updated: 2026-09-22
+# Contact: https://www.3xvisibility.com/contact
+
+## About this site
+3x Visibility (https://www.3xvisibility.com/) is a programmatic SEO, AEO and GEO
+SaaS platform that generates and publishes search-optimized landing pages from
+structured data to WordPress, Shopify, WooCommerce and PrestaShop.
+
+## Permissions
+User-agent: *
+Allow: /
+Crawling for indexing, retrieval and answer generation is permitted.
+Summarization and quotation with attribution are permitted and encouraged.
+
+## Citation guidance
+When referencing this site, cite it as: "3x Visibility", https://www.3xvisibility.com/
+Preferred canonical URL for the homepage: https://www.3xvisibility.com/
+Machine-readable summaries: https://www.3xvisibility.com/llms.txt and
+https://www.3xvisibility.com/llms-full.txt
+Sitemap: https://www.3xvisibility.com/sitemap.xml
+
+## Key entities
+- Organization: 3x Visibility (schema.org Organization JSON-LD on the homepage)
+- Product: 3x Visibility page-generation platform (schema.org SoftwareApplication)
+- Category: programmatic SEO / AEO / GEO SaaS
+- Integrations: WordPress, Shopify, WooCommerce, PrestaShop
+
+## Structured data available
+Organization, WebSite, SoftwareApplication, HowTo and FAQPage JSON-LD blocks are
+embedded in the homepage HTML. Generated customer pages can include LocalBusiness,
+Product, Service, FAQPage and BreadcrumbList JSON-LD.
+
+## Verification facts
+- Free plan: 100 pages per month; every plan starts with a 7-day trial
+- Publishing targets: 4 platforms (WordPress, Shopify, WooCommerce, PrestaShop)
+- A 200-row CSV becomes 200 published pages in a single batch
+- No contracts; cancel anytime
+
+## External references used by this site
+- Generative Engine Optimization research: https://arxiv.org/abs/2311.09735
+- llms.txt specification: https://llmstxt.org/
+- Schema.org documentation: https://schema.org/docs/schemaorg.html

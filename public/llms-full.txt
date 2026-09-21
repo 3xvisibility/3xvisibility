@@ -1,0 +1,77 @@
+# 3x Visibility — full site summary for language models
+
+Last updated: 2026-09-22
+Canonical URL: https://www.3xvisibility.com/
+Sitemap: https://www.3xvisibility.com/sitemap.xml
+Crawler guidance: https://www.3xvisibility.com/.well-known/ai.txt
+
+## What is 3x Visibility?
+
+3x Visibility is a programmatic SEO, AEO and GEO platform for agencies, ecommerce teams and multi-location businesses. It converts structured data (CSV files, spreadsheets, product feeds) into unique, search-optimized landing pages at scale: one row of data becomes one published page. A 200-row CSV becomes 200 published pages in a single batch. Each page ships with clean heading structure, question-and-answer blocks, JSON-LD structured data, internal links and a per-page SEO score computed before publishing.
+
+## How it works
+
+1. Prepare a structured data source such as a CSV file with one row per page you need.
+2. Build a template that defines the page structure, variables and content blocks, or generate one from an existing design system.
+3. Map data columns to template variables so each row fills the template with its own unique information.
+4. Generate and publish the entire batch to WordPress, Shopify, WooCommerce or PrestaShop in one operation. Dry Run previews are available before publishing, and failed pages can be retried individually or in bulk.
+
+## Features
+
+- CSV and data-source import with smart column mapping
+- Dynamic templates generated from an existing design system
+- AI-powered content generation with spintax and variable support
+- Bulk page generation with per-page SEO scoring
+- One-click publishing to WordPress, Shopify, WooCommerce and PrestaShop
+- Campaign analytics and indexing status tracking
+- Structured data (LocalBusiness, FAQPage, Product, Service, BreadcrumbList) generated automatically
+- Internal linking automation based on template rules
+
+## Use cases
+
+- Programmatic SEO at scale for hundreds of keyword combinations
+- Local SEO with one landing page per location or service area
+- GEO and AEO: content structured for AI search and answer engines
+- Ecommerce product and collection pages generated from a feed
+- Directories and content hubs built from structured data
+
+## SEO, AEO and GEO explained
+
+SEO earns placement in the classic list of search results. AEO (Answer Engine Optimization) earns placement inside an answer box or AI Overview by structuring content with question-based headings and concise direct answers. GEO (Generative Engine Optimization) earns a named citation inside a generative AI recommendation; the signals that help are clear entity definitions, consistent brand terminology, structured data and verifiable, authoritative content.
+
+## Research and data behind the approach
+
+- An Ahrefs analysis of roughly 1.9 billion keywords found that 91.8% of search queries are long-tail, which is why one page per city-plus-service or product-plus-use-case combination outperforms a handful of broad pages. Source: https://ahrefs.com/blog/search-traffic-study/
+- Peer-reviewed research on Generative Engine Optimization (Aggarwal et al., 2023, arXiv:2311.09735) measured up to a 40% improvement in visibility in generative engine responses when answers include citable sources, statistics and quotations, compared with unattributed text. Source: https://arxiv.org/abs/2311.09735
+- Clickstream analyses of Google results (Backlinko/SparkToro) show that only about 0.63% of searchers click a result on the second page, which is why per-page SEO scoring gates publication. Source: https://backlinko.com/google-ctr-study
+
+## Pricing
+
+Plans start free with 100 pages per month. Paid tiers raise the monthly page allowance, the number of connected sites and the support level. Every plan includes the full generation engine. Billing is monthly or yearly, with no contracts and no commitments; subscriptions can be cancelled at any time. Pro and Agency plans include API access for programmatic campaign creation.
+
+## Frequently asked questions
+
+- What websites can I connect? WordPress (via REST API with Application Passwords) and Shopify (via Admin API). WooCommerce and PrestaShop publishing paths are also supported.
+- How does CSV processing work? Upload any CSV — the system auto-detects columns. Map each column to a template variable. Each row becomes one page.
+- Can I preview before publishing? Yes. Use Dry Run to generate a preview page before executing the full campaign.
+- What if a page fails to publish? Failed pages are logged with detailed errors. Retry individual pages or the entire batch with one click.
+- Is there an API? Yes, Pro and Agency plans include API access for programmatic campaign creation.
+- Can I cancel anytime? Yes. No contracts, no commitments. Cancel your subscription at any time.
+
+## Site structure
+
+- /about — company and product overview
+- /pricing — plans and billing terms
+- /blog — articles on programmatic SEO, AEO and GEO
+- /docs — product documentation
+- /changelog — release history
+- /guides/wordpress and /guides/shopify — integration guides
+- /contact — support and sales
+- /terms, /confidentialite — legal pages
+
+## External references
+
+- llms.txt specification — https://llmstxt.org/
+- Schema.org vocabulary documentation — https://schema.org/docs/schemaorg.html
+- Google Search Central, introduction to structured data — https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data
+- Aggarwal et al., "Generative Engine Optimization" — https://arxiv.org/abs/2311.09735

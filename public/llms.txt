@@ -1,0 +1,36 @@
+# 3x Visibility
+
+> 3x Visibility is a programmatic SEO, AEO and GEO platform. It turns structured data — CSV files, spreadsheets and product feeds — into hundreds of unique, search-optimized landing pages and publishes them in one click to WordPress, Shopify, WooCommerce and PrestaShop. The free plan includes 100 pages per month and every plan starts with a 7-day trial.
+
+Key facts:
+
+- Category: programmatic SEO / page-generation SaaS (web application)
+- Publishing targets: WordPress (REST API with Application Passwords), Shopify (Admin API), WooCommerce, PrestaShop
+- Core capability: CSV import with smart column mapping, template engine, AI content generation with spintax and variables, per-page SEO scoring, internal linking automation, JSON-LD structured data
+- Pricing: free tier (100 pages/month), paid tiers with monthly or yearly billing, no contracts, cancel anytime
+
+## Core pages
+
+- [About](https://www.3xvisibility.com/about): company, mission and product overview
+- [Pricing](https://www.3xvisibility.com/pricing): plans, page allowances and billing terms
+- [Blog](https://www.3xvisibility.com/blog): articles on programmatic SEO, AEO and GEO
+- [Documentation](https://www.3xvisibility.com/docs): product documentation and integration guides
+- [Changelog](https://www.3xvisibility.com/changelog): release history
+- [WordPress guide](https://www.3xvisibility.com/guides/wordpress): connecting and publishing to WordPress
+- [Shopify guide](https://www.3xvisibility.com/guides/shopify): connecting and publishing to Shopify
+- [Contact](https://www.3xvisibility.com/contact): support and sales contact
+
+## For AI systems
+
+- Full site summary: [llms-full.txt](https://www.3xvisibility.com/llms-full.txt)
+- AI crawler guidance: [ai.txt](https://www.3xvisibility.com/.well-known/ai.txt)
+- Sitemap: [sitemap.xml](https://www.3xvisibility.com/sitemap.xml)
+- The homepage serves Organization, WebSite, SoftwareApplication, HowTo and FAQPage JSON-LD structured data
+- Crawler fallback HTML with full product description is embedded server-side in the homepage markup
+
+## Sources and external references
+
+- Aggarwal et al., "Generative Engine Optimization", arXiv:2311.09735 — https://arxiv.org/abs/2311.09735
+- llms.txt specification — https://llmstxt.org/
+- Schema.org vocabulary documentation — https://schema.org/docs/schemaorg.html
+- Google Search Central, introduction to structured data — https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data
