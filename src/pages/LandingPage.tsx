@@ -12,6 +12,7 @@ import { ReviewsSection } from "@/components/landing/ReviewsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { AffiliateSection } from "@/components/landing/AffiliateSection";
 import { FAQSection } from "@/components/landing/FAQSection";
+import { ResearchSection } from "@/components/landing/ResearchSection";
 import { CTASection } from "@/components/landing/CTASection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { BackToTop } from "@/components/BackToTop";
@@ -94,6 +95,7 @@ export default function LandingPage() {
         <PricingSection />
         <AffiliateSection />
         <FAQSection />
+        <ResearchSection />
         <CTASection />
       </main>
       <LandingFooter />
