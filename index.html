@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/favicon.png" type="image/png" />
 
+    <!--
+      The crawler fallback content inside #root must never flash for real
+      visitors: hide it before the first paint (React replaces #root on mount
+      anyway). Bots that read raw HTML still see the markup, and visitors with
+      JavaScript disabled get it back through the noscript override.
+    -->
+    <style>#root > [data-fallback-content]{display:none}</style>
+    <noscript><style>#root > [data-fallback-content]{display:block}</style></noscript>
+
     <!-- Fallback title/description for crawlers when prerendering is unavailable. -->
     <title data-fallback-seo>3xVisibility — Mass-build SEO, GEO &amp; programmatic pages</title>
     <meta data-fallback-seo
