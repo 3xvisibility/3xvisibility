@@ -171,7 +171,7 @@ export function HeroSection() {
               }
               target?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
-            className="mt-9 mx-auto flex w-full max-w-xl items-center gap-2 rounded-2xl border border-[hsl(96,67%,48%,0.3)] bg-white/80 p-2 shadow-lg shadow-primary/10 backdrop-blur"
+            className="mt-9 mx-auto flex w-full max-w-xl flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-2xl border border-[hsl(96,67%,48%,0.3)] bg-white/80 p-2 shadow-lg shadow-primary/10 backdrop-blur"
           >
             <label htmlFor="hero-analyze-url" className="sr-only">
               Website URL
@@ -181,11 +181,11 @@ export function HeroSection() {
               value={heroUrl}
               onChange={(e) => setHeroUrl(e.target.value)}
               placeholder="Enter your website URL"
-              className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-[hsl(220,12%,55%)]"
+              className="w-full min-w-0 sm:flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-[hsl(220,12%,55%)]"
             />
             <Button
               type="submit"
-              className="h-10 shrink-0 rounded-xl bg-foreground px-4 text-xs font-semibold text-background hover:bg-foreground/90 sm:text-sm"
+              className="h-10 w-full sm:w-auto shrink-0 justify-center rounded-xl bg-foreground px-4 text-xs font-semibold text-background hover:bg-foreground/90 sm:text-sm"
             >
               Analyze my website <Sparkles className="ml-1.5 h-3.5 w-3.5" />
             </Button>
