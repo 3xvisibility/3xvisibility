@@ -120,24 +120,13 @@ export default function BlogPage() {
         }}
       />
       <StaticPageLayout title={ui.title} subtitle={ui.subtitle}>
-        <h2 className="sr-only">{ui.listHeading}</h2>
-        <p>{ui.intro}</p>
-        <h2>{ui.glossaryTitle}</h2>
-        <p>{ui.glossaryIntro}</p>
-        <ul>
-          {ui.glossary.map((term) => (
-            <li key={term.name}>
-              <strong>{term.name}</strong> — {term.definition}
-            </li>
-          ))}
-        </ul>
         <h2>{ui.listHeading}</h2>
         <div className="not-prose grid gap-6 sm:grid-cols-2">
           {posts.map((p, i) => (
             <Link
               to={`/blog/${p.slug}`}
               key={p.slug}
-              className={`group flex flex-col overflow-hidden rounded-2xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(250,30%,8%,0.4)] hover:border-[hsl(96,67%,48%,0.35)] transition-all duration-300 ${
+              className={`group flex flex-col overflow-hidden rounded-2xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(250,30%,98%)] hover:border-[hsl(96,67%,48%,0.35)] transition-all duration-300 ${
                 i === 0 ? "sm:col-span-2" : ""
               }`}
             >
@@ -156,9 +145,8 @@ export default function BlogPage() {
                 </span>
               </div>
               <div className="flex flex-1 flex-col p-6">
-                <p className="text-xs uppercase tracking-widest text-[hsl(250,15%,45%)]">{p.date} · {p.readTime}</p>
-                <h3 className="mt-2 text-xl font-semibold leading-snug group-hover:text-primary transition-colors">{p.title}</h3>
-                <p className="mt-2 text-sm text-[hsl(250,15%,65%)]">{p.excerpt}</p>
+                <h3 className="mt-2 text-xl font-semibold leading-snug text-foreground group-hover:text-primary transition-colors">{p.title}</h3>
+                <p className="mt-2 text-sm text-[hsl(220,12%,45%)]">{p.excerpt}</p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
                   {ui.readMore} <ArrowRight className="h-4 w-4" />
                 </span>

@@ -107,7 +107,7 @@ const ROUTE_META = {
   "/": {
     title: "3xVisibility — Mass-build SEO, GEO & programmatic pages",
     desc: "Automatically mass-build local SEO, programmatic SEO, GEO sites, directories and content at scale with one-click deployment. Save 40 hours per site.",
-    intro: "3x Visibility is a programmatic SEO platform that turns structured data into thousands of unique, search-optimized pages and publishes them directly to WordPress, Shopify, WooCommerce and PrestaShop.",
+    intro: "3x Visibility is a programmatic SEO platform. It turns structured data into unique, search-optimized pages at scale. Upload one CSV, map its columns to a template, and bulk-generate local SEO, AEO and GEO landing pages. Then publish them to WordPress, Shopify, WooCommerce or PrestaShop in one click. Each page ships with structured data, internal links and an SEO score.",
   },
   "/about": {
     title: "About 3xVisibility — programmatic SEO & page generation",

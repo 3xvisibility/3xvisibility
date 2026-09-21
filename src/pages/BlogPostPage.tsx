@@ -101,14 +101,14 @@ export default function BlogPostPage() {
                 <Link
                   to={`/blog/${p.slug}`}
                   key={p.slug}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(250,30%,8%,0.4)] hover:border-[hsl(96,67%,48%,0.35)] transition-all"
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-[hsl(96,67%,48%,0.12)] bg-[hsl(250,30%,98%)] hover:border-[hsl(96,67%,48%,0.35)] transition-all"
                 >
                   <div className="relative aspect-[16/9] overflow-hidden">
                     <img src={p.image} alt={p.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   </div>
                   <div className="p-4">
-                    <h3 className="text-base font-semibold leading-snug group-hover:text-primary transition-colors">{p.title}</h3>
-                    <p className="mt-1 text-sm text-[hsl(250,15%,65%)]">{p.excerpt}</p>
+                    <h3 className="text-base font-semibold leading-snug text-foreground group-hover:text-primary transition-colors">{p.title}</h3>
+                    <p className="mt-1 text-sm text-[hsl(220,12%,45%)]">{p.excerpt}</p>
                   </div>
                 </Link>
               ))}

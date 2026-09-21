@@ -67,6 +67,17 @@ export default function LandingPage() {
               acceptedAnswer: { "@type": "Answer", text: f.a },
             })),
           },
+          {
+            "@context": "https://schema.org",
+            "@type": "HowTo",
+            name: "How to generate SEO pages with 3x Visibility",
+            step: [
+              { "@type": "HowToStep", position: 1, name: "Prepare your data", text: "Prepare a structured data source such as a CSV file with one row per page you need." },
+              { "@type": "HowToStep", position: 2, name: "Build a template", text: "Build a template that defines the page structure, variables and content blocks." },
+              { "@type": "HowToStep", position: 3, name: "Map columns to variables", text: "Map your data columns to template variables so each row fills the template with its own unique information." },
+              { "@type": "HowToStep", position: 4, name: "Generate and publish", text: "Generate the entire batch and publish it to WordPress, Shopify, WooCommerce or PrestaShop in one operation." },
+            ],
+          },
         ]}
       />
       <LandingNav />
