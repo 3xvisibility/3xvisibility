@@ -46,10 +46,21 @@ export default function LandingPage() {
           {
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
+            "@id": "https://www.3xvisibility.com/#software",
             name: "3x Visibility",
+            url: "https://www.3xvisibility.com/",
+            image: "https://www.3xvisibility.com/og-image.png",
             applicationCategory: "BusinessApplication",
             operatingSystem: "Web",
-            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+            description:
+              "Programmatic SEO platform that turns structured data into hundreds of unique, search-optimized landing pages published to WordPress, Shopify, WooCommerce and PrestaShop.",
+            offers: {
+              "@type": "Offer",
+              url: "https://www.3xvisibility.com/pricing",
+              price: "0",
+              priceCurrency: "EUR",
+              availability: "https://schema.org/InStock",
+            },
           },
           {
             "@context": "https://schema.org",
