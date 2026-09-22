@@ -33,6 +33,7 @@ Disallow: /performance
 Disallow: /seo-audit
 Disallow: /affiliate
 Disallow: /pgp-keywords
+Disallow: /*?lang=
 Disallow: /pgp-generate
 Disallow: /pgp-terms
 Disallow: /template-mapping
