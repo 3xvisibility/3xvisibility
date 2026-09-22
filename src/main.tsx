@@ -7,7 +7,10 @@ import { initEmojiIconOverrides } from "@/lib/emoji-icon-overrides";
 // Hydrate custom emoji→icon mappings before any Elementor conversion runs.
 initEmojiIconOverrides();
 
-createRoot(document.getElementById("root")!).render(
+const rootEl = document.getElementById("root")!;
+rootEl.classList.add("react-mounted");
+
+createRoot(rootEl).render(
   <HelmetProvider>
     <App />
   </HelmetProvider>

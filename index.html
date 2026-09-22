@@ -25,8 +25,18 @@
       anyway). Bots that read raw HTML still see the markup, and visitors with
       JavaScript disabled get it back through the noscript override.
     -->
-    <style>#root > [data-fallback-content]{display:none}</style>
-    <noscript><style>#root > [data-fallback-content]{display:block}</style></noscript>
+    <style>#root.react-mounted > [data-fallback-content]{display:none}</style>
+    <noscript><style>#root > [data-fallback-content]{display:block !important}</style></noscript>
+    <script>
+      setTimeout(function(){
+        var r=document.getElementById('root');
+        if(r&&!r.classList.contains('react-mounted')){
+          var s=document.createElement('style');
+          s.textContent='#root > [data-fallback-content]{display:block !important}';
+          document.head.appendChild(s);
+        }
+      },8000);
+    </script>
 
     <!-- Fallback title/description for crawlers when prerendering is unavailable. -->
     <title data-fallback-seo>3xVisibility — Mass-build SEO, GEO &amp; programmatic pages</title>
