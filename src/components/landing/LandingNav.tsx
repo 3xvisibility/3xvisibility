@@ -196,7 +196,7 @@ export function LandingNav() {
       >
         <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-8">
           <Link to="/" className="flex items-center">
-            <img src={logo3x} alt="3XVISIBILITY" width={1189} height={378} className="h-7 sm:h-8 w-auto object-contain" />
+            <img src={logo3x} alt="3XVISIBILITY" width={1189} height={378} decoding="async" className="h-7 sm:h-8 w-auto object-contain" />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">

@@ -272,6 +272,10 @@ async function main() {
     }
   }
 
+  const entryPreloads = new Set(
+    [...readFileSync(join(DIST, "index.html"), "utf8").matchAll(/<link\b[^>]*rel="modulepreload"[^>]*href="([^"]+)"/g)].map((m) => m[1]),
+  );
+
   const server = await startServer();
   const page = await browser.newPage({
     viewport: { width: 1440, height: 2400 },
@@ -325,6 +329,10 @@ async function main() {
       // The crawler-only <noscript> summary is redundant once the real rendered
       // page content is present — remove it so there is no duplicate H1/headings.
       html = html.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, "");
+
+      html = html.replace(/<link\b[^>]*rel="modulepreload"[^>]*>/gi, (tag) =>
+        entryPreloads.has((tag.match(/href="([^"]+)"/) || [])[1]) ? tag : "",
+      );
 
       // Write to dist/<route>/index.html (or dist/index.html for "/").
       const outDir = route === "/" ? DIST : join(DIST, route);

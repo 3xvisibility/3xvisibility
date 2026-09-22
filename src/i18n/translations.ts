@@ -2,9 +2,6 @@
 // Edit the JSON files in src/i18n/locales-json/ and run: bun scripts/generate-locales.ts
 
 import enLocale from "./locales/en";
-import frLocale from "./locales/fr";
-import deLocale from "./locales/de";
-import esLocale from "./locales/es";
 
 export type Language = "en" | "fr" | "de" | "es";
 
@@ -16,22 +13,19 @@ export const languages: { code: Language; label: string; flag: string }[] = [
 ];
 
 /**
- * All primary locales are now eager-bundled so a language switch is
- * synchronous (no network, no lazy chunk). The extra gzip cost is
- * ~35-45 KB per locale and saves ~300-800ms on first switch.
+ * English ships in the main bundle; other primary locales are lazy chunks
+ * prefetched during idle time so first paint stays light and language
+ * switches remain instant.
  */
 export const translations: Record<string, Record<string, string>> = {
   en: enLocale,
-  fr: frLocale,
-  de: deLocale,
-  es: esLocale,
 };
 
 const loaders: Record<Language, () => Promise<{ default: Record<string, string> }>> = {
   en: async () => ({ default: enLocale }),
-  fr: async () => ({ default: frLocale }),
-  de: async () => ({ default: deLocale }),
-  es: async () => ({ default: esLocale }),
+  fr: () => import("./locales/fr"),
+  de: () => import("./locales/de"),
+  es: () => import("./locales/es"),
 };
 
 const pending: Partial<Record<Language, Promise<void>>> = {};
@@ -49,4 +43,17 @@ export function loadLocale(lang: Language): Promise<void> {
       });
   }
   return pending[lang]!;
+}
+
+/** Prefetches non-English locales during idle time so switches stay instant without paying the cost at first paint. */
+export function prefetchLocales(): void {
+  if (typeof window === "undefined") return;
+  const run = () => {
+    for (const l of languages) {
+      if (l.code !== "en") void loadLocale(l.code);
+    }
+  };
+  const w = window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
+  if (typeof w.requestIdleCallback === "function") w.requestIdleCallback(run, { timeout: 5000 });
+  else window.setTimeout(run, 2500);
 }

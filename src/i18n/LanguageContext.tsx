@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
-import { translations, type Language, languages } from "./translations";
+import { translations, loadLocale, prefetchLocales, type Language, languages } from "./translations";
 import { fetchOverrides, getCachedOverrides, type OverrideMap } from "./overrides";
 
 function detectBrowserLanguage(): Language | null {
@@ -93,6 +93,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const [localeVersion, setLocaleVersion] = useState(0);
+
+  useEffect(() => {
+    prefetchLocales();
+  }, []);
+
   const [translating, setTranslating] = useState(false);
   const [translationProgress, setTranslationProgress] = useState<TranslationProgress>({ done: 0, total: 0 });
   const [translationError, setTranslationError] = useState<string | null>(null);
@@ -122,6 +128,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     // No longer force a global `translating=true` here — the AutoTranslateProvider
     // now decides whether to show any indicator based on whether a network
     // fetch is actually required (cache/dict hits are 0ms, no overlay).
+    if (!translations[lang]) {
+      loadLocale(lang).then(() => setLocaleVersion((v) => v + 1));
+    }
+
     setLanguageState((current) => {
       if (current !== lang) {
         setTranslationError(null);
@@ -135,6 +145,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: string, vars?: Record<string, unknown>) => {
+      void localeVersion;
       const template =
         overrides[language]?.[key] ??
         translations[language]?.[key] ??
@@ -149,7 +160,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         template
       );
     },
-    [language, overrides]
+    [language, overrides, localeVersion]
   );
 
   return (

@@ -1,7 +1,7 @@
 import { ScrollReveal } from "./ScrollReveal";
 import { Play } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 // Bump this when the rendered video changes to bust browser/CDN caches.
@@ -10,7 +10,29 @@ const DEFAULT_VIDEO = `/pagegen-demo.mp4?v=${VIDEO_VERSION}`;
 
 export function VideoSection() {
   const [playing, setPlaying] = useState(false);
+  const [inView, setInView] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const { t, language } = useLanguage();
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    if (!("IntersectionObserver" in window)) {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   // Try /pagegen-demo-{lang}.mp4; fall back to default if not present.
   const candidate = useMemo(
@@ -48,12 +70,14 @@ export function VideoSection() {
 
         <ScrollReveal delay={0.1} className="max-w-4xl mx-auto">
           <div className="relative rounded-2xl overflow-hidden border border-[hsl(96,67%,48%,0.15)] shadow-2xl glow-purple-sm">
-            <div className="relative aspect-video bg-[hsl(250,30%,98%)]">
+            <div ref={wrapRef} className="relative aspect-video bg-[hsl(250,30%,98%)]">
               {playing ? (
                 <video key={`play-${videoSrc}`} className="absolute inset-0 w-full h-full object-cover" src={videoSrc} autoPlay controls playsInline />
               ) : (
                 <>
-                  <video key={`preview-${videoSrc}`} className="absolute inset-0 w-full h-full object-cover" src={videoSrc} muted loop autoPlay playsInline preload="metadata" />
+                  {inView && (
+                    <video key={`preview-${videoSrc}`} className="absolute inset-0 w-full h-full object-cover" src={videoSrc} muted loop autoPlay playsInline preload="metadata" />
+                  )}
                   <div className="absolute inset-0 cursor-pointer group bg-gradient-to-br from-[hsl(250,30%,99%,0.55)] to-[hsl(250,30%,99%,0.25)] flex flex-col items-center justify-center gap-4" onClick={() => setPlaying(true)}>
                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl shadow-primary/30 group-hover:shadow-primary/40">
                       <Play className="h-6 w-6 ml-1 fill-current" />

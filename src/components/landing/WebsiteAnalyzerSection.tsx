@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { downloadAnalyzerPdf } from "@/lib/analyzer-pdf";
+
 import { AnalyzerPageRecommendations } from "@/components/landing/AnalyzerPageRecommendations";
 import { AnalyzerChangePanel } from "@/components/landing/AnalyzerChangePanel";
 import { diffReports, loadSnapshot, saveSnapshot, type AnalyzerDiff } from "@/lib/analyzer-diff";
@@ -309,7 +309,9 @@ export function WebsiteAnalyzerSection() {
                       variant="outline"
                       size="lg"
                       className="rounded-xl font-semibold"
-                      onClick={() => downloadAnalyzerPdf(report)}
+                      onClick={() => {
+                        void import("@/lib/analyzer-pdf").then((m) => m.downloadAnalyzerPdf(report));
+                      }}
                     >
                       <Download className="mr-2 h-4 w-4" /> Download PDF report
                     </Button>
