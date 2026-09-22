@@ -32,24 +32,33 @@
         var r=document.getElementById('root');
         if(r&&!r.classList.contains('react-mounted'))r.classList.add('react-failed');
       }
+      function bustReload(){
+        try{
+          if(sessionStorage.getItem('cbReload'))return false;
+          sessionStorage.setItem('cbReload','1');
+        }catch(_){return false}
+        try{
+          var u=new URL(location.href);
+          u.searchParams.set('cb',Date.now().toString(36));
+          location.replace(u.href);
+          return true;
+        }catch(_){location.reload();return true}
+      }
       window.addEventListener('error',function(e){
         var t=e.target;
         if(t&&t.tagName==='SCRIPT'&&/\/assets\//.test(t.src||'')){
           var r=document.getElementById('root');
           if(r&&!r.classList.contains('react-mounted')){
-            try{
-              if(!sessionStorage.getItem('chunkRetry')){
-                sessionStorage.setItem('chunkRetry','1');
-                location.reload();
-                return;
-              }
-              sessionStorage.removeItem('chunkRetry');
-            }catch(_){}
-            markFailed();
+            if(!bustReload())markFailed();
           }
         }
       },true);
-      setTimeout(markFailed,15000);
+      setTimeout(function(){
+        var r=document.getElementById('root');
+        if(r&&!r.classList.contains('react-mounted')){
+          if(!bustReload())markFailed();
+        }
+      },15000);
     </script>
 
     <!-- Fallback title/description for crawlers when prerendering is unavailable. -->

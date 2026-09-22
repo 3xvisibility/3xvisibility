@@ -9,6 +9,11 @@ initEmojiIconOverrides();
 
 const rootEl = document.getElementById("root")!;
 rootEl.classList.add("react-mounted");
+try {
+  sessionStorage.removeItem("cbReload");
+  sessionStorage.removeItem("chunkRetry");
+} catch {
+}
 
 try {
   createRoot(rootEl).render(
