@@ -13,7 +13,7 @@ export const BRAND_DOMAIN = "3xvisibility.com";
  * Negative lookarounds keep domains/emails (3xvisibility.com) untouched.
  */
 const BRAND_ALIAS_RE =
-  /(?<![\w.-])(?:3[\s\-]?[x×][\s\-]?visibilit(?:y|é|e)|visibilit(?:y|é|e)[\s\-]?[x×]?[\s\-]?3|3xvisibility)(?![\w.-])/gi;
+  /(^|[^\w.-])(?:3[\s\-]?[x×][\s\-]?visibilit(?:y|é|e)|visibilit(?:y|é|e)[\s\-]?[x×]?[\s\-]?3|3xvisibility)(?![\w.-])/gi;
 
 /** True when the whole string is only a brand-name token. */
 export function isBrandOnlyText(text: string): boolean {
@@ -26,5 +26,5 @@ export function isBrandOnlyText(text: string): boolean {
 
 /** Force any brand alias / mangled translation back to the canonical name. */
 export function restoreBrandName(text: string): string {
-  return text.replace(BRAND_ALIAS_RE, BRAND_NAME);
+  return text.replace(BRAND_ALIAS_RE, (_m, prefix: string) => prefix + BRAND_NAME);
 }

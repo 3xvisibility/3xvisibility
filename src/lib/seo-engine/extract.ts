@@ -31,10 +31,12 @@ function attr(tag: string, name: string): string | undefined {
 }
 
 function splitSentences(text: string): string[] {
-  return text
-    .split(/(?<=[.!?…])\s+|\n+/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 1);
+  const sentences: string[] = [];
+  for (const block of text.split(/\n+/)) {
+    const parts = block.match(/[^.!?…]+[.!?…]*/g);
+    if (parts) for (const part of parts) sentences.push(part.trim());
+  }
+  return sentences.filter((s) => s.length > 1);
 }
 
 export function tokenize(text: string): string[] {
