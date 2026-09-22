@@ -19,23 +19,37 @@
       />
     </noscript>
 
-    <!--
-      The crawler fallback content inside #root must never flash for real
-      visitors: hide it before the first paint (React replaces #root on mount
-      anyway). Bots that read raw HTML still see the markup, and visitors with
-      JavaScript disabled get it back through the noscript override.
-    -->
-    <style>#root.react-mounted > [data-fallback-content]{display:none}</style>
-    <noscript><style>#root > [data-fallback-content]{display:block !important}</style></noscript>
+    <style>
+      #root > [data-fallback-content]{display:none}
+      #root:not(.react-mounted):not(.react-failed)::after{content:"";display:block;width:42px;height:42px;margin:24vh auto;border:3px solid hsl(96 67% 48% / .25);border-top-color:hsl(96 67% 48%);border-radius:50%;animation:root-spin 1s linear infinite}
+      @keyframes root-spin{to{transform:rotate(360deg)}}
+      #root.react-failed > [data-fallback-content]{display:block}
+      #root.react-failed::after{display:none}
+    </style>
+    <noscript><style>#root > [data-fallback-content]{display:block !important}#root::after{display:none !important}</style></noscript>
     <script>
-      setTimeout(function(){
+      function markFailed(){
         var r=document.getElementById('root');
-        if(r&&!r.classList.contains('react-mounted')){
-          var s=document.createElement('style');
-          s.textContent='#root > [data-fallback-content]{display:block !important}';
-          document.head.appendChild(s);
+        if(r&&!r.classList.contains('react-mounted'))r.classList.add('react-failed');
+      }
+      window.addEventListener('error',function(e){
+        var t=e.target;
+        if(t&&t.tagName==='SCRIPT'&&/\/assets\//.test(t.src||'')){
+          var r=document.getElementById('root');
+          if(r&&!r.classList.contains('react-mounted')){
+            try{
+              if(!sessionStorage.getItem('chunkRetry')){
+                sessionStorage.setItem('chunkRetry','1');
+                location.reload();
+                return;
+              }
+              sessionStorage.removeItem('chunkRetry');
+            }catch(_){}
+            markFailed();
+          }
         }
-      },8000);
+      },true);
+      setTimeout(markFailed,15000);
     </script>
 
     <!-- Fallback title/description for crawlers when prerendering is unavailable. -->
@@ -147,7 +161,7 @@
 
   <body>
     
-    <div id="root"><div data-fallback-content style="min-height:100vh;background:#09090b;color:#e4e4e7;font-family:system-ui,-apple-system,sans-serif;padding:56px 24px;max-width:860px;margin:0 auto;line-height:1.6">
+    <div id="root"><div data-fallback-content style="min-height:100vh;background:#ffffff;color:#18181b;font-family:system-ui,-apple-system,sans-serif;padding:56px 24px;max-width:860px;margin:0 auto;line-height:1.6">
         <h1 data-fallback-h1>3xVisibility — Mass-build SEO, GEO &amp; programmatic pages at scale</h1>
         <p>
           <img src="/og-image.png" alt="3x Visibility — mass-build SEO, GEO and programmatic pages at scale" width="1200" height="630" />

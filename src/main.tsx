@@ -10,8 +10,13 @@ initEmojiIconOverrides();
 const rootEl = document.getElementById("root")!;
 rootEl.classList.add("react-mounted");
 
-createRoot(rootEl).render(
-  <HelmetProvider>
-    <App />
-  </HelmetProvider>
-);
+try {
+  createRoot(rootEl).render(
+    <HelmetProvider>
+      <App />
+    </HelmetProvider>
+  );
+} catch {
+  rootEl.classList.remove("react-mounted");
+  rootEl.classList.add("react-failed");
+}
