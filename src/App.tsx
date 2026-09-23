@@ -210,10 +210,20 @@ const App = () => {
         return;
       }
       lastUserIdRef.current = newUserId;
-      setSession(session);
-      setLoading(false);
       if (session?.user && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
-        setTimeout(() => { attributeReferralIfPending(); }, 0);
+        supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" }).then(({ data: isAdmin }) => {
+          if (isAdmin && !window.location.pathname.startsWith("/admin")) {
+            supabase.auth.signOut();
+            window.location.href = "/admin-login";
+            return;
+          }
+          setSession(session);
+          setLoading(false);
+          setTimeout(() => { attributeReferralIfPending(); }, 0);
+        });
+      } else {
+        setSession(session);
+        setLoading(false);
       }
     });
     supabase.auth.getSession()

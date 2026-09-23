@@ -161,14 +161,16 @@ export default function AuthPage() {
     console.log("[Auth Debug] Attempting login to:", authUrl, "inIframe:", inIframe);
 
     // Step 2: Actual login via SDK with retries
-    let error: Error | null = null;
+        let error: Error | null = null;
+    let loginUserId = "";
     for (let attempt = 0; attempt < LOGIN_RETRY_DELAYS_MS.length; attempt += 1) {
       if (LOGIN_RETRY_DELAYS_MS[attempt] > 0) await wait(LOGIN_RETRY_DELAYS_MS[attempt]);
       console.log(`[Auth Debug] Login attempt ${attempt + 1}/${LOGIN_RETRY_DELAYS_MS.length}`);
       const result = await supabase.auth.signInWithPassword({ email: normalizeEmail(email), password });
       error = result.error;
+      if (!error && result.data.user) loginUserId = result.data.user.id;
       if (error) {
-        console.error(`[Auth Debug] Attempt ${attempt + 1} error:`, error.message, (error as any).status, (error as any).__isAuthError);
+        console.error(`[Auth Debug] Attempt ${attempt + 1} error:`, error.message, (error as unknown as Record<string, unknown>).status, (error as unknown as Record<string, boolean>).__isAuthError);
       } else {
         console.log("[Auth Debug] Login succeeded on attempt", attempt + 1);
       }
@@ -179,16 +181,21 @@ export default function AuthPage() {
       if (/failed to fetch|network|timeout/i.test(error.message)) {
         setLoginCooldownUntil(Date.now() + LOGIN_COOLDOWN_MS);
       }
-      const mapped = mapAuthError(error.message);
+            const mapped = mapAuthError(error.message);
       toast({ title: mapped.title, description: mapped.description, variant: "destructive" });
     } else {
-      // When "Remember me" is unchecked, sign out on tab/browser close
+      const { data: roleData } = await supabase.rpc("has_role", { _user_id: loginUserId, _role: "admin" });
+      if (roleData) {
+        await supabase.auth.signOut();
+        toast({ title: "Access denied", description: "Admin accounts must use the admin login page.", variant: "destructive" });
+        navigate("/admin-login", { replace: true });
+        return;
+      }
       if (!rememberMe) {
         localStorage.setItem("sessionEphemeral", "true");
       } else {
         localStorage.removeItem("sessionEphemeral");
       }
-      // Resume a plan checkout started from the public pricing section
       const pendingPlan = takePendingCheckoutPlan();
       navigate(pendingPlan ? `/billing?plan=${pendingPlan}` : "/dashboard");
     }

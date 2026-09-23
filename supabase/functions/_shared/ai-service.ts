@@ -253,6 +253,29 @@ const PROVIDERS: Record<Exclude<AiProvider, "lovable">, ProviderConfig> = {
   },
 };
 
+async function getDynamicProviderConfig(provider: string): Promise<ProviderConfig | null> {
+  if (PROVIDERS[provider as Exclude<AiProvider, "lovable">]) {
+    return PROVIDERS[provider as Exclude<AiProvider, "lovable">];
+  }
+  try {
+    const sb = getServiceClient();
+    if (!sb) return null;
+    const { data } = await sb
+      .from("ai_provider_keys")
+      .select("base_url, default_model")
+      .eq("provider", provider)
+      .maybeSingle();
+    if (data?.base_url) {
+      return {
+        url: `${(data.base_url as string).replace(/\/+$/, "")}/chat/completions`,
+        keyEnv: "",
+        defaultModel: (data.default_model as string) || "gpt-4o-mini",
+      };
+    }
+  } catch (_) {}
+  return null;
+}
+
 // ── Timed fetch ──────────────────────────────────────────────────────────────
 // The edge runtime aborts the whole request at a 150s idle timeout, producing a
 // hard 504 / blank screen. Keep each provider attempt short enough that an
@@ -334,10 +357,12 @@ async function resolveProviderKey(provider: string, keyEnv: string): Promise<str
 
 
 async function callExternal(
-  provider: Exclude<AiProvider, "lovable">,
+  provider: AiProvider,
   opts: AiGenerateOptions,
 ): Promise<Response> {
-  const cfg = PROVIDERS[provider];
+  let cfg: ProviderConfig | null = PROVIDERS[provider as Exclude<AiProvider, "lovable">] ?? null;
+  if (!cfg) cfg = await getDynamicProviderConfig(provider);
+  if (!cfg) throw new Error(`Unknown provider "${provider}"`);
   const key = await resolveProviderKey(provider, cfg.keyEnv);
   if (!key) throw new Error(`No API key configured for provider "${provider}" (set it in Admin → AI Providers, or as ${cfg.keyEnv}).`);
 
