@@ -63,17 +63,18 @@ DESIGN REQUIREMENTS:
 - Use class="btn cta" on call-to-action links/buttons
 - Include a hero section with class="hero-section" or class="hero"
 
-MANDATORY SEO REQUIREMENTS (Rank Math / Yoast aligned):
-1. <h1> with the primary keyword in the first 3 words
-2. 650+ words minimum of quality content
-3. Multiple <h2>/<h3> subheadings — at least ONE must contain the primary keyword
-4. <img> tags with alt text containing the primary keyword (at least 1 image)
-5. Internal links (at least 1 <a href="/...">) and outbound links (at least 1 <a href="https://...">)
-6. Keyword density 0.5-2.5% — use the keyword naturally 4-8 times in 650+ words
-7. Short paragraphs (under 150 words each)
-8. Transition words: use "however", "additionally", "furthermore", "moreover", "because", "for example", "therefore" (at least 3 occurrences)
-9. Active voice predominantly — avoid "is/was/were + verb-ed" passive constructions
-10. JSON-LD structured data: include <script type="application/ld+json"> with LocalBusiness or WebPage schema
+MANDATORY SEO REQUIREMENTS (Rank Math / Yoast aligned — MUST match engine scoring):
+1. EXACTLY ONE <h1> — never zero and never two or more
+2. <h1> must contain the exact primary keyword as its first 1-3 words (e.g. "<h1>Lead Generation Paris — ...")
+3. 700+ words (tool-measured after tags stripped) — target 800+ to survive connector asset stripping
+4. At least 3 <h2> subheadings, sequential hierarchy (H1→H2→H3, never skip levels). At least ONE H2 must contain the exact primary keyword
+5. <img> alt with primary keyword (at least 1, all images have alt, none lazy for first image)
+6. At least 1 internal link (<a href="/...">) and 1 outbound authoritative link (<a href="https://...">)
+7. Keyword density 0.8–2.0% (use keyword 6–10 times naturally in 700+ words). FIRST PARAGRAPH must contain it
+8. Every <p> must stay under 130 words — add multiple short paragraphs
+9. Transition words (however, additionally, furthermore, therefore, for example) — at least 3 occurrences
+10. Active voice — maximum 20% passive sentences
+11. JSON-LD BreadcrumbList + WebPage + Organization and, for campaigns, an auto FAQ block (added server-side so do not hand-write FAQPage — the pipeline will generate it from headings)
 
 SEA REQUIREMENTS:
 - CTA words: buy, get, shop, order, contact, call, book, reserve, discover, subscribe
@@ -103,7 +104,10 @@ ${platform === "prestashop" ? "PLATFORM: PrestaShop — use Bootstrap container/
       model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: `Generate a high-scoring SEO/SEA/GEO optimized HTML page template for: ${kwList}. Type: "${cType}". All scores above 80.` },
+        {
+          role: "user",
+          content: `Generate a high-scoring SEO/SEA/GEO optimized HTML page template for: ${kwList}. Type: "${cType}". REQUIREMENTS FOR 100%:\nAEO: single question in first paragraph answered in sentence two; every H2 phrased as a question users actually ask; FAQ section with 3-6 Q&A pairs; stats/numbers in at least 3 paragraphs (e.g. %, dates, €). GEO: every paragraph answerable in 25-120 words (self-contained). SEO: unified-engine 100% on first generation. Scores above 90.`,
+        },
       ],
     });
 

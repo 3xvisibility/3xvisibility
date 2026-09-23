@@ -45,12 +45,17 @@ async function callFn(body?: Record<string, unknown>) {
   if (error) {
     let msg = error.message;
     try {
-      const j = await (error as any)?.context?.json?.();
-      if (j?.error) msg = j.error;
-    } catch {}
+      const ctx = (error as unknown as { context?: { json?: () => Promise<{ error?: string }> } }).context;
+      if (ctx?.json) {
+        const j = await ctx.json();
+        if (j?.error) msg = j.error;
+      }
+    } catch {
+      // Ignore JSON parsing failures; use the original message.
+    }
     throw new Error(msg);
   }
-  if ((data as any)?.error) throw new Error((data as any).error);
+  if ((data as unknown as { error?: string })?.error) throw new Error((data as unknown as { error?: string }).error!);
   return data as ProvidersState & { models?: string[] };
 }
 
@@ -75,7 +80,7 @@ export default function AiProvidersAdminPanel() {
       qc.invalidateQueries({ queryKey: ["active-ai-provider"] });
       const action = String(vars.action);
       if (action === "fetch-models") {
-        setFetchedModels((res as any).models || []);
+        setFetchedModels((res as unknown as { models?: string[] }).models || []);
         setFetchingModels(false);
         return;
       }

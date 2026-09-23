@@ -643,7 +643,8 @@ Image rules (CRITICAL — images MUST match the content 100%):
 Design rules:
 - Pick a bold, cohesive, modern color theme that fits the brand/niche. "primary" and "accent" should be two harmonious colors that look great in a gradient (avoid generic blue+orange unless it truly fits). "bg" should be a near-white or soft tinted background; "text" a dark slate.
 - Choose colors with real contrast and personality — luxury = deep + gold, wellness = sage + cream, tech = indigo + cyan, food = warm terracotta, etc.
-- Copy must be specific, confident and benefit-driven. Never generic placeholder text. Always fill "eyebrow" and "stats".
+ - Copy must be specific, confident and benefit-driven. Never generic placeholder text. Always fill "eyebrow" and "stats".
+ - Write for 100% AEO/GEO: H2/H3 as real questions users ask; the paragraph under each directly answers the heading question in its first sentence (inverted pyramid, 25-120 words, self-contained). Include 2-3 stats/numbers (%) and 2 external authoritative citations across the page.
 Write all text in language code "${lang}".
 Page context: ${pageBrief}
 Design fidelity: ${designBrief}

@@ -150,9 +150,10 @@ Deno.serve(async (req) => {
         try {
           design = norm(body.design);
           content = norm(body.content);
-        } catch (e: any) {
-          return json({ error: e.message }, 400);
-        }
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      return json({ error: message }, 400);
+    }
 
         for (const p of [design, content]) {
           if (!p || p === "lovable") continue;

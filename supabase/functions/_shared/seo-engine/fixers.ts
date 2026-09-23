@@ -255,6 +255,38 @@ export function applySeoFixes(input: SeoEngineInput, options: SeoFixOptions = {}
       }
     }
 
+    if (!existingTypes.has("breadcrumblist")) {
+      const homeUrl = (options.siteUrl || canonical || "/").replace(/\/+$/, "") || "/";
+      const pageUrl = canonical || (options.siteUrl ? joinUrl(options.siteUrl, options.path ?? input.slug ?? "") : undefined);
+      schema.push({
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: homeUrl || "/" },
+          ...(pageUrl && pageUrl !== homeUrl
+            ? [{ "@type": "ListItem", position: 2, name: effectiveTitle.slice(0, 60) || "Page", item: pageUrl }]
+            : []),
+        ],
+      });
+    }
+
+    if (!existingTypes.has("howto") && signals.headings.length >= 2) {
+      const steps = signals.headings.slice(0, 4).map((h, idx) => ({
+        "@type": "HowToStep",
+        position: idx + 1,
+        name: h.text.slice(0, 80),
+        text: (signals.paragraphs[idx] || h.text).slice(0, 200),
+      }));
+      if (steps.length >= 2) {
+        schema.push({
+          "@context": "https://schema.org",
+          "@type": "HowTo",
+          name: effectiveTitle || "How to " + (focus || "complete this guide"),
+          step: steps,
+        });
+      }
+    }
+
     if (schema.length) {
       const types = schema.map((s) => s["@type"]).join(", ");
       mark("schema", `Structured data added (${types})`);
