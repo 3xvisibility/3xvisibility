@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle2, ExternalLink, FileText, Globe, KeyRound, Loader2, Palette, Plus, RefreshCw, Sparkles, Split, Trash2, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, ExternalLink, FileText, Globe, KeyRound, Loader2, Palette, Plus, RefreshCw, Sparkles, Split, Trash2 } from "lucide-react";
 
 interface ProviderRow {
   id: string;
@@ -63,6 +63,7 @@ export default function AiProvidersAdminPanel() {
   const qc = useQueryClient();
   const [drafts, setDrafts] = useState<Record<string, { key: string; model: string }>>({});
   const [routing, setRouting] = useState<{ design?: string; content?: string }>({});
+  const [expanded, setExpanded] = useState<string | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [newProvider, setNewProvider] = useState({ id: "", name: "", base_url: "", api_key: "", default_model: "" });
   const [fetchedModels, setFetchedModels] = useState<string[]>([]);
@@ -100,6 +101,7 @@ export default function AiProvidersAdminPanel() {
         setAddDialogOpen(false);
         setNewProvider({ id: "", name: "", base_url: "", api_key: "", default_model: "" });
         setFetchedModels([]);
+        if (action === "delete-provider") setExpanded(null);
       }
     },
     onError: (e: Error) => {
@@ -135,7 +137,7 @@ export default function AiProvidersAdminPanel() {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        {[0, 1, 2].map((i) => <Skeleton key={i} className="h-32 w-full" />)}
+        {[0, 1, 2].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
       </div>
     );
   }
@@ -153,25 +155,25 @@ export default function AiProvidersAdminPanel() {
   const providers = data?.providers || [];
   const designProvider = routing.design ?? data?.routing?.design ?? "inherit";
   const contentProvider = routing.content ?? data?.routing?.content ?? "inherit";
+  const routable = providers.filter((p) => p.has_key || p.id === "lovable");
 
   return (
     <div className="space-y-4">
       <Card className="shadow-surface">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
                 AI Providers
               </CardTitle>
               <CardDescription>
-                Add any OpenAI-compatible AI provider by entering its Base URL, API Key and name.
-                Assign providers to design or content tasks via split routing below.
+                All configured providers in one list. Add any OpenAI-compatible provider by its Base URL, API Key and name, then activate exactly one.
               </CardDescription>
             </div>
             <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="gap-1.5">
+                <Button size="sm" className="gap-1.5 shrink-0">
                   <Plus className="h-4 w-4" /> Add Provider
                 </Button>
               </DialogTrigger>
@@ -179,7 +181,7 @@ export default function AiProvidersAdminPanel() {
                 <DialogHeader>
                   <DialogTitle>Add AI Provider</DialogTitle>
                   <DialogDescription>
-                    Enter the provider details. Any OpenAI-compatible API works (OpenAI, Anthropic via proxy, Together, Fireworks, local vLLM, etc.)
+                    Any OpenAI-compatible API works (OpenAI, Anthropic via proxy, Together, Fireworks, local vLLM, etc.)
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-2">
@@ -310,7 +312,7 @@ export default function AiProvidersAdminPanel() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="inherit">Follow active provider</SelectItem>
-                  {providers.filter((p) => p.has_key || p.id === "lovable").map((p) => (
+                  {routable.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -324,7 +326,7 @@ export default function AiProvidersAdminPanel() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="inherit">Follow active provider</SelectItem>
-                  {providers.filter((p) => p.has_key || p.id === "lovable").map((p) => (
+                  {routable.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -341,131 +343,145 @@ export default function AiProvidersAdminPanel() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {providers.map((p) => {
-          const draft = drafts[p.id] || { key: "", model: "" };
-          const isLovable = p.id === "lovable";
-          return (
-            <Card key={p.id} className={p.active ? "border-primary/50 shadow-surface" : "shadow-surface"}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <CardTitle className="text-base flex items-center gap-2 flex-wrap">
-                      <span className="truncate">{p.name}</span>
-                      {p.active && (
-                        <Badge variant="secondary" className="gap-1 text-[11px] shrink-0">
-                          <CheckCircle2 className="h-3 w-3" /> Active
-                        </Badge>
-                      )}
-                      {p.is_custom && (
-                        <Badge variant="outline" className="text-[10px] shrink-0">Custom</Badge>
-                      )}
-                    </CardTitle>
-                    <CardDescription className="text-xs mt-1 truncate">
-                      {p.base_url && <span className="font-mono text-[11px]">{p.base_url}</span>}
-                      {p.default_model && <span className="ml-2 font-mono">{p.default_model}</span>}
-                    </CardDescription>
-                  </div>
-                  <Badge variant={p.has_key ? "outline" : "destructive"} className="text-[11px] shrink-0">
-                    {p.has_key ? "Key set" : "No key"}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {p.key_preview && (
-                  <p className="text-xs text-muted-foreground font-mono">
-                    {p.key_preview}
-                    {p.key_source === "secret" && " \u00b7 from project secret"}
-                  </p>
-                )}
-
-                {p.models && p.models.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {p.models.slice(0, 5).map((m) => (
-                      <Badge key={m} variant="secondary" className="text-[10px] font-mono px-1.5 py-0">{m}</Badge>
-                    ))}
-                    {p.models.length > 5 && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">+{p.models.length - 5} more</Badge>
-                    )}
-                  </div>
-                )}
-
-                {isLovable ? (
-                  <p className="text-xs text-muted-foreground">
-                    Built-in Lovable AI gateway \u2014 no API key required.
-                  </p>
-                ) : (
-                  <>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <Input
-                        type="password"
-                        autoComplete="off"
-                        placeholder={p.has_key ? "Replace API key\u2026" : "Paste API key\u2026"}
-                        value={draft.key}
-                        onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: { ...draft, key: e.target.value } }))}
-                      />
-                      <Input
-                        placeholder={p.default_model || "Default model"}
-                        value={draft.model}
-                        onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: { ...draft, model: e.target.value } }))}
-                      />
+      <Card className="shadow-surface overflow-hidden">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">All Providers ({providers.length})</CardTitle>
+          <CardDescription>Click a row to edit its key or model. Activate exactly one provider.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="divide-y divide-border">
+            {providers.map((p) => {
+              const draft = drafts[p.id] || { key: "", model: "" };
+              const isLovable = p.id === "lovable";
+              const isOpen = expanded === p.id;
+              return (
+                <div key={p.id}>
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(isOpen ? null : p.id)}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  >
+                    <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="truncate text-sm font-semibold">{p.name}</span>
+                        {p.active && (
+                          <Badge variant="secondary" className="gap-1 text-[11px] shrink-0">
+                            <CheckCircle2 className="h-3 w-3" /> Active
+                          </Badge>
+                        )}
+                        {p.is_custom && (
+                          <Badge variant="outline" className="text-[10px] shrink-0">Custom</Badge>
+                        )}
+                      </div>
+                      <div className="mt-0.5 flex items-center gap-2 truncate text-xs text-muted-foreground">
+                        {p.base_url && <span className="font-mono truncate">{p.base_url}</span>}
+                        {p.default_model && <span className="font-mono truncate shrink-0">· {p.default_model}</span>}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={p.has_key ? "outline" : "destructive"} className="text-[11px] shrink-0">
+                      {p.has_key ? "Key set" : "No key"}
+                    </Badge>
+                  </button>
+
+                  {isOpen && (
+                    <div className="space-y-3 border-t border-border bg-muted/20 px-4 py-4 pl-11">
+                      {p.key_preview && (
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {p.key_preview}
+                          {p.key_source === "secret" && " · from project secret"}
+                        </p>
+                      )}
+
+                      {p.models && p.models.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {p.models.slice(0, 8).map((m) => (
+                            <Badge key={m} variant="secondary" className="text-[10px] font-mono px-1.5 py-0">{m}</Badge>
+                          ))}
+                          {p.models.length > 8 && (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">+{p.models.length - 8} more</Badge>
+                          )}
+                        </div>
+                      )}
+
+                      {isLovable ? (
+                        <p className="text-xs text-muted-foreground">
+                          Built-in Lovable AI gateway — no API key required.
+                        </p>
+                      ) : (
+                        <>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <Input
+                              type="password"
+                              autoComplete="off"
+                              placeholder={p.has_key ? "Replace API key…" : "Paste API key…"}
+                              value={draft.key}
+                              onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: { ...draft, key: e.target.value } }))}
+                            />
+                            <Input
+                              placeholder={p.default_model || "Default model"}
+                              value={draft.model}
+                              onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: { ...draft, model: e.target.value } }))}
+                            />
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                              size="sm"
+                              disabled={mutate.isPending || (!draft.key && !draft.model)}
+                              onClick={() =>
+                                mutate.mutate({
+                                  action: "save-key",
+                                  provider: p.id,
+                                  api_key: draft.key || undefined,
+                                  default_model: draft.model || p.default_model,
+                                })
+                              }
+                            >
+                              <KeyRound className="h-3.5 w-3.5 mr-1.5" /> Save
+                            </Button>
+                            {(p.key_source === "admin" || p.is_custom) && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive"
+                                disabled={mutate.isPending}
+                                onClick={() => mutate.mutate({ action: p.is_custom ? "delete-provider" : "delete-key", provider: p.id })}
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-1.5" /> {p.is_custom ? "Remove" : "Remove key"}
+                              </Button>
+                            )}
+                            {p.docs_url && (
+                              <a
+                                href={p.docs_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                              >
+                                Get API key <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                          </div>
+                        </>
+                      )}
+
+                      <Separator />
+
                       <Button
                         size="sm"
-                        disabled={mutate.isPending || (!draft.key && !draft.model)}
-                        onClick={() =>
-                          mutate.mutate({
-                            action: "save-key",
-                            provider: p.id,
-                            api_key: draft.key || undefined,
-                            default_model: draft.model || p.default_model,
-                          })
-                        }
+                        variant={p.active ? "secondary" : "default"}
+                        disabled={p.active || mutate.isPending || (!isLovable && !p.has_key)}
+                        onClick={() => mutate.mutate({ action: "set-active", provider: p.id })}
                       >
-                        <KeyRound className="h-3.5 w-3.5 mr-1.5" /> Save
+                        {p.active ? "Currently active" : `Use ${p.name}`}
                       </Button>
-                      {(p.key_source === "admin" || p.is_custom) && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive"
-                          disabled={mutate.isPending}
-                          onClick={() => mutate.mutate({ action: p.is_custom ? "delete-provider" : "delete-key", provider: p.id })}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 mr-1.5" /> {p.is_custom ? "Remove" : "Remove key"}
-                        </Button>
-                      )}
-                      {p.docs_url && (
-                        <a
-                          href={p.docs_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-                        >
-                          Get API key <ExternalLink className="h-3 w-3" />
-                        </a>
-                      )}
                     </div>
-                  </>
-                )}
-
-                <Separator />
-
-                <Button
-                  size="sm"
-                  variant={p.active ? "secondary" : "outline"}
-                  className="w-full"
-                  disabled={p.active || mutate.isPending || (!isLovable && !p.has_key)}
-                  onClick={() => mutate.mutate({ action: "set-active", provider: p.id })}
-                >
-                  {p.active ? "Currently active" : `Use ${p.name}`}
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
