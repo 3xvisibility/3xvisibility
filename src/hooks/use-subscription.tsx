@@ -161,11 +161,14 @@ export function useSubscription(): SubscriptionData {
 
       // Fetch subscription, AI credits and connected-site count in parallel so
       // the three independent reads don't run as a serial waterfall.
+      // Workspace filter intentionally NOT applied — the subscription row's
+      // workspace_id may be null (created before workspaces) or belong to a
+      // different workspace than the currently selected one. Filtering by it
+      // causes an Agency user to appear as Free for a new/second workspace.
       const subQuery = supabase
         .from("subscriptions")
         .select("plan, pages_used, pages_limit, ai_generations_used, ai_generations_limit, current_period_end, status, trial_end, cancel_at_period_end")
         .eq("user_id", user.id);
-      if (wsId) subQuery.eq("workspace_id", wsId);
 
       const [subRes, creditsRes, sitesRes] = await Promise.all([
         subQuery.maybeSingle(),

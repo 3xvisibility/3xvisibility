@@ -1967,6 +1967,8 @@
   "sidebar.usage": "Usage",
   "sidebar.websiteContent": "Website Content",
   "sidebar.websites": "Websites",
+  "sidebar.websiteSection": "Websites",
+  "sidebar.seoSection": "SEO & Analytics",
   "sidebar.workspaceSettings": "Workspace Settings",
   "sidebar.wpControl": "WordPress Control",
   "startGeneration.description": "Configure generation options before launching. {count} rows available to process.",
