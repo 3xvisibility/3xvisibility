@@ -159,19 +159,22 @@ export function useSubscription(): SubscriptionData {
       const user = session?.user ?? null;
       if (!user) return null;
 
-      // Fetch subscription, AI credits and connected-site count in parallel so
-      // the three independent reads don't run as a serial waterfall.
-      // Workspace filter intentionally NOT applied — the subscription row's
-      // workspace_id may be null (created before workspaces) or belong to a
-      // different workspace than the currently selected one. Filtering by it
-      // causes an Agency user to appear as Free for a new/second workspace.
-      const subQuery = supabase
-        .from("subscriptions")
-        .select("plan, pages_used, pages_limit, ai_generations_used, ai_generations_limit, current_period_end, status, trial_end, cancel_at_period_end")
-        .eq("user_id", user.id);
+      // A user can have MULTIPLE subscription rows (one per workspace after the
+      // multi-workspace migration, plus legacy workspace_id=NULL rows). Reading a
+      // single arbitrary row made Agency/Pro users show as Free whenever the
+      // stale/legacy row won. Fetch all rows for the user and pick the BEST
+      // active plan deterministically instead.
+      const PLAN_RANK: Record<string, number> = { free: 0, starter: 1, pro: 2, agency: 3 };
+      const isActiveish = (r: { status?: string; cancel_at_period_end?: boolean; current_period_end?: string }) => {
+        const expired = r.current_period_end ? new Date(r.current_period_end).getTime() < Date.now() : false;
+        return !expired && r.cancel_at_period_end !== true && (r.status === "active" || r.status === "trialing" || !r.status);
+      };
 
-      const [subRes, creditsRes, sitesRes] = await Promise.all([
-        subQuery.maybeSingle(),
+      const [subsRes, creditsRes, sitesRes] = await Promise.all([
+        supabase
+          .from("subscriptions")
+          .select("plan, pages_used, pages_limit, ai_generations_used, ai_generations_limit, current_period_end, status, trial_end, cancel_at_period_end, workspace_id")
+          .eq("user_id", user.id),
         supabase
           .from("ai_credits")
           .select("total_credits, used_credits, remaining_credits")
@@ -185,8 +188,21 @@ export function useSubscription(): SubscriptionData {
           : Promise.resolve({ count: 0 } as { count: number }),
       ]);
 
+      const rows = (subsRes.data ?? []) as NonNullable<typeof subsRes.data>;
+      // Prefer the row belonging to the CURRENT workspace; among candidates pick
+      // the highest-ranked ACTIVE plan, falling back to the newest row overall.
+      const scoped = wsId ? rows.filter((r) => r.workspace_id === wsId) : rows;
+      const pool = scoped.length ? scoped : rows;
+      const best = [...pool].sort((a, b) => {
+        const act = Number(isActiveish(b)) - Number(isActiveish(a));
+        if (act !== 0) return act;
+        const rank = (PLAN_RANK[String(b.plan)] ?? 0) - (PLAN_RANK[String(a.plan)] ?? 0);
+        if (rank !== 0) return rank;
+        return 0;
+      })[0];
+
       return {
-        ...subRes.data,
+        ...(best ?? {}),
         sitesConnected: (sitesRes as { count: number | null }).count ?? 0,
         aiCredits: creditsRes.data,
       };
