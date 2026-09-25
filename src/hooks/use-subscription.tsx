@@ -225,9 +225,13 @@ export function useSubscription(): SubscriptionData {
   })();
 
   const resolvedPlan = data?.plan as PlanName | undefined;
-  // Before we know the real plan, ALWAYS prefer the cached plan over "free".
-  // Only fall back to "free" when there is genuinely no cached value.
-  const plan: PlanName = resolvedPlan || cachedPlan || "free";
+  // While loading OR when the query returns no usable plan (empty rows due to an
+  // RLS/filter miss, transient network error, or a still-resolving refetch), keep
+  // showing the last known good plan instead of dropping to "free". This kills the
+  // "correct plan for 2s then flips to Free on auto-refresh" flicker.
+  const hasFreshData = !isLoading && !!data;
+  const plan: PlanName =
+    resolvedPlan ?? (hasFreshData ? "free" : cachedPlan ?? "free");
 
   useEffect(() => {
     if (!resolvedPlan) return;

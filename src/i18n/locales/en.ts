@@ -1953,6 +1953,8 @@ const en: Record<string, string> = {
   "sidebar.marketplace": "Marketplace",
   "sidebar.pagesGenerated": "pages generated this month",
   "sidebar.performance": "Performance",
+  "sidebar.seoSection": "SEO & Analytics",
+  "sidebar.websiteSection": "Websites",
   "sidebar.pgpGenerate": "Generate",
   "sidebar.pgpKeywords": "Keywords",
   "sidebar.pgpSection": "Page Generator Pro",
