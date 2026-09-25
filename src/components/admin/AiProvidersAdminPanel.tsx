@@ -81,8 +81,11 @@ export default function AiProvidersAdminPanel() {
       qc.invalidateQueries({ queryKey: ["active-ai-provider"] });
       const action = String(vars.action);
       if (action === "fetch-models") {
-        setFetchedModels((res as unknown as { models?: string[] }).models || []);
+        const models = (res as unknown as { models?: string[] }).models || [];
+        setFetchedModels(models);
         setFetchingModels(false);
+        if (models.length) toast.success(`${models.length} model${models.length > 1 ? "s" : ""} found`);
+        else toast.error("No models returned — check Base URL and API Key, or enter the model manually below.");
         return;
       }
       toast.success(

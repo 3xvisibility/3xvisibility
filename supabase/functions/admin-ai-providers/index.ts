@@ -28,23 +28,66 @@ function preview(key: string | null | undefined) {
   return `${k.slice(0, 4)}\u2022\u2022\u2022\u2022${k.slice(-4)}`;
 }
 
-async function fetchModels(baseUrl: string, apiKey: string): Promise<string[]> {
-  try {
-    const url = `${baseUrl.replace(/\/+$/, "")}/models`;
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    const list = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-    return list
-      .map((m: any) => m.id || m.name || "")
-      .filter(Boolean)
-      .sort();
-  } catch {
-    return [];
+function extractModelList(payload: unknown): string[] {
+  const root = payload as Record<string, unknown> | unknown[] | null;
+  let list: unknown[] = [];
+  if (Array.isArray(root)) list = root;
+  else if (root && typeof root === "object") {
+    for (const key of ["data", "models", "items", "results"]) {
+      const v = (root as Record<string, unknown>)[key];
+      if (Array.isArray(v)) { list = v; break; }
+    }
   }
+  return list
+    .map((m) => {
+      if (typeof m === "string") return m;
+      if (m && typeof m === "object") {
+        const o = m as Record<string, unknown>;
+        return String(o.id ?? o.name ?? o.slug ?? o.model ?? "");
+      }
+      return "";
+    })
+    .filter(Boolean)
+    .sort();
+}
+
+async function fetchModels(baseUrl: string, apiKey: string): Promise<{ models: string[]; error?: string }> {
+  const trimmed = baseUrl.replace(/\/+$/, "");
+  const candidates = [/\/v\d+$/.test(trimmed) ? [trimmed] : [trimmed, `${trimmed}/v1`]].flat();
+  const seen = new Set<string>();
+  const collected: string[] = [];
+  let lastError = "";
+
+  for (const base of candidates) {
+    if (seen.has(base)) continue;
+    seen.add(base);
+    try {
+      const res = await fetch(`${base}/models`, {
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!res.ok) {
+        const bodyText = await res.text().catch(() => "");
+        lastError = `${res.status} ${res.statusText}${bodyText ? ` — ${bodyText.slice(0, 200)}` : ""}`;
+        continue;
+      }
+      const ct = res.headers.get("content-type") || "";
+      if (!ct.includes("json")) {
+        lastError = `endpoint returned non-JSON (${ct || "unknown"})`;
+        continue;
+      }
+      const data = await res.json();
+      const found = extractModelList(data);
+      if (found.length) collected.push(...found);
+      else lastError = "response contained no model entries";
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+    }
+  }
+
+  const unique = [...new Set(collected)].sort();
+  if (unique.length) return { models: unique };
+  return { models: [], error: lastError || "could not reach /models on this base URL" };
 }
 
 Deno.serve(async (req) => {
@@ -132,7 +175,8 @@ Deno.serve(async (req) => {
         const baseUrl = String(body.base_url || "").trim();
         const apiKey = String(body.api_key || "").trim();
         if (!baseUrl || !apiKey) return json({ error: "base_url and api_key are required" }, 400);
-        const models = await fetchModels(baseUrl, apiKey);
+        const { models, error } = await fetchModels(baseUrl, apiKey);
+        if (!models.length && error) return json({ error, models: [] }, 200);
         return json({ models });
       }
 
