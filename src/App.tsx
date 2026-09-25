@@ -28,6 +28,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import { BrandingProvider } from "./contexts/BrandingContext";
 import { FeatureGate } from "./components/FeatureGate";
 
+const AuthCallbackPage = lazy(() => import("./pages/AuthCallbackPage"));
 const DocumentationPage = lazy(() => import("./pages/DocumentationPage"));
 const WordPressGuidePage = lazy(() => import("./pages/WordPressGuidePage"));
 const ShopifyGuidePage = lazy(() => import("./pages/ShopifyGuidePage"));
@@ -100,6 +101,7 @@ const clearExpiredLocalAuthSession = () => {
 
 import { registerQueryClient } from "@/lib/ai-client";
 import { captureReferralFromUrl, attributeReferralIfPending } from "@/lib/referral-tracking";
+import { processPendingAuthCallback } from "@/lib/auth-callback";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -193,12 +195,15 @@ const App = () => {
   useEffect(() => {
     clearExpiredLocalAuthSession();
     captureReferralFromUrl();
-    if (window.location.pathname === "/auth") {
-      const key = getAuthStorageKey();
-      if (key) localStorage.removeItem(key);
-      setSession(null);
-      setLoading(false);
-    }
+    void processPendingAuthCallback().then((handled) => {
+      if (handled) return;
+      if (window.location.pathname === "/auth") {
+        const key = getAuthStorageKey();
+        if (key) localStorage.removeItem(key);
+        setSession(null);
+        setLoading(false);
+      }
+    });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Supabase re-fires SIGNED_IN / TOKEN_REFRESHED every time the tab regains
       // focus. Updating session state on those redundant events causes the whole
@@ -304,6 +309,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
             <Route path="/auth" element={session ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
+            <Route path="/auth/callback" element={<Suspense fallback={<RouteFallback />}><AuthCallbackPage /></Suspense>} />
             <Route path="/admin-login" element={<AdminLoginPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/docs" element={<DocumentationPage />} />

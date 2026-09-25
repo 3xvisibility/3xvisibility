@@ -12,7 +12,6 @@ import { takePendingCheckoutPlan } from "@/lib/checkout";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe, Check, X, Wand2, Info, LogIn, KeyRound } from "lucide-react";
-import { lovable } from "@/integrations/lovable/index";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { normalizeEmail, isValidEmail as checkEmailFormat } from "@/lib/normalize-email";
@@ -324,23 +323,30 @@ export default function AuthPage() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: { access_type: "offline", prompt: "select_account" },
+      },
     });
-    setLoading(false);
-    if (result?.error) {
-      toast({ title: t("auth.googleFailed"), description: String(result.error), variant: "destructive" });
+    if (error) {
+      setLoading(false);
+      toast({ title: t("auth.googleFailed"), description: error.message, variant: "destructive" });
     }
   };
 
   const handleAppleSignIn = async () => {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("apple", {
-      redirect_uri: window.location.origin,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "apple",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
-    setLoading(false);
-    if (result?.error) {
-      toast({ title: t("auth.appleFailed"), description: String(result.error), variant: "destructive" });
+    if (error) {
+      setLoading(false);
+      toast({ title: t("auth.appleFailed"), description: error.message, variant: "destructive" });
     }
   };
 

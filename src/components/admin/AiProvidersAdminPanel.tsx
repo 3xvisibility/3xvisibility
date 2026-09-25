@@ -175,7 +175,7 @@ export default function AiProvidersAdminPanel() {
     if (!editForm.name.trim()) { toast.error("Display Name is required"); return; }
     if (!editForm.base_url.trim()) { toast.error("Base URL is required"); return; }
     const payload: Record<string, unknown> = {
-      action: "update-provider",
+      action: "add-provider",
       provider: editing.id,
       provider_name: editForm.name.trim(),
       base_url: editForm.base_url.trim(),
@@ -183,6 +183,7 @@ export default function AiProvidersAdminPanel() {
       models: editModels,
     };
     if (editForm.api_key.trim()) payload.api_key = editForm.api_key.trim();
+    payload.is_update = true;
     mutate.mutate(payload);
   };
 
