@@ -286,6 +286,42 @@ Deno.serve(async (req) => {
         return json({ success: true, ...(await loadState()) });
       }
 
+      if (action === "update-provider") {
+        if (provider === "lovable") return json({ error: "Lovable AI cannot be edited." }, 400);
+        const apiKey = typeof body.api_key === "string" ? body.api_key.trim() : "";
+        const baseUrl = typeof body.base_url === "string" ? body.base_url.trim() : "";
+        const providerName = typeof body.provider_name === "string" ? body.provider_name.trim() : "";
+        const defaultModel = typeof body.default_model === "string" ? body.default_model.trim() : "";
+        const models = Array.isArray(body.models) ? body.models : [];
+
+        if (!baseUrl) return json({ error: "Base URL is required." }, 400);
+        if (apiKey && apiKey.length < 8) return json({ error: "API key looks too short." }, 400);
+
+        const { data: existing } = await sb
+          .from("ai_provider_keys")
+          .select("api_key")
+          .eq("provider", provider)
+          .maybeSingle();
+        if (!existing && !apiKey) {
+          return json({ error: "This provider has no stored key yet — provide an API Key to create it." }, 400);
+        }
+
+        const payload: Record<string, unknown> = {
+          provider,
+          base_url: baseUrl,
+          updated_by: user.id,
+          updated_at: new Date().toISOString(),
+        };
+        if (providerName) payload.provider_name = providerName;
+        if (defaultModel) payload.default_model = defaultModel;
+        if (models.length > 0) payload.models = models;
+        if (apiKey) payload.api_key = apiKey;
+
+        const { error } = await sb.from("ai_provider_keys").upsert(payload, { onConflict: "provider" });
+        if (error) return json({ error: error.message }, 500);
+        return json({ success: true, ...(await loadState()) });
+      }
+
       if (action === "delete-provider" || action === "delete-key") {
         if (provider === "lovable") return json({ error: "Cannot delete built-in Lovable provider." }, 400);
         const { error } = await sb.from("ai_provider_keys").delete().eq("provider", provider);

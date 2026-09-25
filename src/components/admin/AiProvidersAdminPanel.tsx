@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronDown, ExternalLink, FileText, Globe, KeyRound, Loader2, Palette, Plus, RefreshCw, Sparkles, Split, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronDown, ExternalLink, FileText, Globe, KeyRound, Loader2, MoreVertical, Palette, Pencil, Plus, RefreshCw, Sparkles, Split, Trash2 } from "lucide-react";
 
 interface ProviderRow {
   id: string;
@@ -68,6 +68,11 @@ export default function AiProvidersAdminPanel() {
   const [newProvider, setNewProvider] = useState({ id: "", name: "", base_url: "", api_key: "", default_model: "" });
   const [fetchedModels, setFetchedModels] = useState<string[]>([]);
   const [fetchingModels, setFetchingModels] = useState(false);
+  const [editing, setEditing] = useState<ProviderRow | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", base_url: "", api_key: "", default_model: "" });
+  const [editModels, setEditModels] = useState<string[]>([]);
+  const [editFetching, setEditFetching] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<ProviderRow | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-ai-providers"],
@@ -82,10 +87,15 @@ export default function AiProvidersAdminPanel() {
       const action = String(vars.action);
       if (action === "fetch-models") {
         const models = (res as unknown as { models?: string[] }).models || [];
-        setFetchedModels(models);
-        setFetchingModels(false);
+        if (vars.for_edit) {
+          setEditModels(models);
+          setEditFetching(false);
+        } else {
+          setFetchedModels(models);
+          setFetchingModels(false);
+        }
         if (models.length) toast.success(`${models.length} model${models.length > 1 ? "s" : ""} found`);
-        else toast.info("This provider has no /models endpoint. Enter the model name manually in the field below.");
+        else toast.info("This provider has no /models endpoint. Enter the model name manually.");
         return;
       }
       toast.success(
@@ -97,19 +107,29 @@ export default function AiProvidersAdminPanel() {
               ? "Provider removed"
               : action === "add-provider"
                 ? "Provider added"
-                : "API key saved",
+                : action === "update-provider"
+                  ? "Provider updated"
+                  : "API key saved",
       );
       setDrafts((d) => ({ ...d, [String(vars.provider)]: { key: "", model: d[String(vars.provider)]?.model || "" } }));
-      if (action === "add-provider" || action === "delete-provider") {
+      if (action === "add-provider" || action === "delete-provider" || action === "update-provider") {
         setAddDialogOpen(false);
         setNewProvider({ id: "", name: "", base_url: "", api_key: "", default_model: "" });
         setFetchedModels([]);
-        if (action === "delete-provider") setExpanded(null);
+        if (action === "delete-provider") {
+          setExpanded(null);
+          setConfirmDelete(null);
+        }
+        if (action === "update-provider") {
+          setEditing(null);
+          setEditModels([]);
+        }
       }
     },
     onError: (e: Error) => {
       toast.error(e.message);
       setFetchingModels(false);
+      setEditFetching(false);
     },
   });
 
@@ -135,6 +155,35 @@ export default function AiProvidersAdminPanel() {
       default_model: newProvider.default_model.trim(),
       models: fetchedModels,
     });
+  };
+
+  const openEdit = (p: ProviderRow) => {
+    setEditing(p);
+    setEditForm({ name: p.name, base_url: p.base_url, api_key: "", default_model: p.default_model });
+    setEditModels(Array.isArray(p.models) ? [...p.models] : []);
+  };
+
+  const handleEditFetchModels = () => {
+    const key = editForm.api_key || "__existing__";
+    if (!editForm.base_url) { toast.error("Enter Base URL first"); return; }
+    setEditFetching(true);
+    mutate.mutate({ action: "fetch-models", base_url: editForm.base_url, api_key: key, for_edit: true });
+  };
+
+  const handleUpdateProvider = () => {
+    if (!editing) return;
+    if (!editForm.name.trim()) { toast.error("Display Name is required"); return; }
+    if (!editForm.base_url.trim()) { toast.error("Base URL is required"); return; }
+    const payload: Record<string, unknown> = {
+      action: "update-provider",
+      provider: editing.id,
+      provider_name: editForm.name.trim(),
+      base_url: editForm.base_url.trim(),
+      default_model: editForm.default_model.trim(),
+      models: editModels,
+    };
+    if (editForm.api_key.trim()) payload.api_key = editForm.api_key.trim();
+    mutate.mutate(payload);
   };
 
   if (isLoading) {
@@ -349,7 +398,7 @@ export default function AiProvidersAdminPanel() {
       <Card className="shadow-surface overflow-hidden">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">All Providers ({providers.length})</CardTitle>
-          <CardDescription>Click a row to edit its key or model. Activate exactly one provider.</CardDescription>
+          <CardDescription>Click a row to expand. Use the menu to edit or remove a provider.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border">
@@ -357,35 +406,45 @@ export default function AiProvidersAdminPanel() {
               const draft = drafts[p.id] || { key: "", model: "" };
               const isLovable = p.id === "lovable";
               const isOpen = expanded === p.id;
+              const canRemove = p.is_custom || p.key_source === "admin";
               return (
-                <div key={p.id}>
-                  <button
-                    type="button"
-                    onClick={() => setExpanded(isOpen ? null : p.id)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                  >
-                    <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="truncate text-sm font-semibold">{p.name}</span>
-                        {p.active && (
-                          <Badge variant="secondary" className="gap-1 text-[11px] shrink-0">
-                            <CheckCircle2 className="h-3 w-3" /> Active
-                          </Badge>
-                        )}
-                        {p.is_custom && (
-                          <Badge variant="outline" className="text-[10px] shrink-0">Custom</Badge>
-                        )}
+                <div key={p.id} className={isOpen ? "bg-muted/10" : ""}>
+                  <div className="flex w-full items-center gap-2 px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => setExpanded(isOpen ? null : p.id)}
+                      aria-expanded={isOpen}
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring rounded-md"
+                    >
+                      <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="truncate text-sm font-semibold">{p.name}</span>
+                          {p.active && (
+                            <Badge variant="secondary" className="gap-1 text-[11px] shrink-0">
+                              <CheckCircle2 className="h-3 w-3" /> Active
+                            </Badge>
+                          )}
+                          {p.is_custom && (
+                            <Badge variant="outline" className="text-[10px] shrink-0">Custom</Badge>
+                          )}
+                        </div>
+                        <div className="mt-0.5 flex items-center gap-2 truncate text-xs text-muted-foreground">
+                          {p.base_url && <span className="font-mono truncate">{p.base_url}</span>}
+                          {p.default_model && <span className="font-mono truncate shrink-0">· {p.default_model}</span>}
+                        </div>
                       </div>
-                      <div className="mt-0.5 flex items-center gap-2 truncate text-xs text-muted-foreground">
-                        {p.base_url && <span className="font-mono truncate">{p.base_url}</span>}
-                        {p.default_model && <span className="font-mono truncate shrink-0">· {p.default_model}</span>}
-                      </div>
-                    </div>
-                    <Badge variant={p.has_key ? "outline" : "destructive"} className="text-[11px] shrink-0">
+                    </button>
+                    <Badge variant={p.has_key ? "outline" : "destructive"} className="text-[11px] shrink-0 hidden sm:inline-flex">
                       {p.has_key ? "Key set" : "No key"}
                     </Badge>
-                  </button>
+                    <DropdownMenu
+                      onEdit={isLovable ? undefined : () => openEdit(p)}
+                      onDelete={!isLovable && canRemove ? () => setConfirmDelete(p) : undefined}
+                      onActivate={p.active || (!isLovable && !p.has_key) ? undefined : () => mutate.mutate({ action: "set-active", provider: p.id })}
+                      isActive={p.active}
+                    />
+                  </div>
 
                   {isOpen && (
                     <div className="space-y-3 border-t border-border bg-muted/20 px-4 py-4 pl-11">
@@ -440,17 +499,20 @@ export default function AiProvidersAdminPanel() {
                                 })
                               }
                             >
-                              <KeyRound className="h-3.5 w-3.5 mr-1.5" /> Save
+                              <KeyRound className="h-3.5 w-3.5 mr-1.5" /> Quick save
                             </Button>
-                            {(p.key_source === "admin" || p.is_custom) && (
+                            <Button size="sm" variant="outline" onClick={() => openEdit(p)}>
+                              <Pencil className="h-3.5 w-3.5 mr-1.5" /> Edit details
+                            </Button>
+                            {canRemove && (
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="text-destructive"
+                                className="text-destructive hover:text-destructive"
                                 disabled={mutate.isPending}
-                                onClick={() => mutate.mutate({ action: p.is_custom ? "delete-provider" : "delete-key", provider: p.id })}
+                                onClick={() => setConfirmDelete(p)}
                               >
-                                <Trash2 className="h-3.5 w-3.5 mr-1.5" /> {p.is_custom ? "Remove" : "Remove key"}
+                                <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Remove
                               </Button>
                             )}
                             {p.docs_url && (
@@ -485,6 +547,201 @@ export default function AiProvidersAdminPanel() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit {editing?.name}</DialogTitle>
+            <DialogDescription>
+              Update this provider's display name, base URL, default model and (optionally) its API key. Leave the key blank to keep the current one.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-name">Display Name</Label>
+              <Input
+                id="edit-name"
+                value={editForm.name}
+                onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-url">Base URL</Label>
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="edit-url"
+                  className="pl-9"
+                  value={editForm.base_url}
+                  onChange={(e) => setEditForm((f) => ({ ...f, base_url: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-key">API Key (optional)</Label>
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="edit-key"
+                  type="password"
+                  autoComplete="off"
+                  className="pl-9"
+                  placeholder={editing?.has_key ? "Leave blank to keep current key" : "Paste API key…"}
+                  value={editForm.api_key}
+                  onChange={(e) => setEditForm((f) => ({ ...f, api_key: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={editFetching || !editForm.base_url}
+                onClick={handleEditFetchModels}
+              >
+                {editFetching ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
+                Fetch Models
+              </Button>
+              {editModels.length > 0 && (
+                <span className="text-xs text-muted-foreground">{editModels.length} models</span>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-model">Default Model</Label>
+              {editModels.length > 0 ? (
+                <Select value={editForm.default_model} onValueChange={(v) => setEditForm((f) => ({ ...f, default_model: v }))}>
+                  <SelectTrigger id="edit-model">
+                    <SelectValue placeholder="Select a model..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {editModels.map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id="edit-model"
+                  placeholder="e.g. claude-opus-4.8"
+                  value={editForm.default_model}
+                  onChange={(e) => setEditForm((f) => ({ ...f, default_model: e.target.value }))}
+                />
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={handleUpdateProvider} disabled={mutate.isPending}>
+              {mutate.isPending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Pencil className="h-4 w-4 mr-1.5" />}
+              Save changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Remove {confirmDelete?.name}?</DialogTitle>
+            <DialogDescription>
+              This deletes the stored configuration and API key for this provider. Pages routed to it will fall back to the active provider. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDelete(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              disabled={mutate.isPending}
+              onClick={() => confirmDelete && mutate.mutate({ action: "delete-provider", provider: confirmDelete.id })}
+            >
+              {mutate.isPending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1.5" />}
+              Remove provider
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function DropdownMenu({
+  onEdit,
+  onDelete,
+  onActivate,
+  isActive,
+}: {
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onActivate?: () => void;
+  isActive: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const run = (fn?: () => void) => { setOpen(false); fn?.(); };
+  return (
+    <div className="relative shrink-0">
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        aria-label="Provider actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false); }}
+      >
+        <MoreVertical className="h-4 w-4" />
+      </Button>
+      {open && (
+        <div role="menu" className="absolute right-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-lg border border-border bg-popover shadow-lg">
+          {onActivate && (
+            <MenuItem icon={<CheckCircle2 className="h-3.5 w-3.5" />} onSelect={() => run(onActivate)}>
+              Set active
+            </MenuItem>
+          )}
+          {isActive && !onActivate && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">Currently active</div>
+          )}
+          {onEdit && (
+            <MenuItem icon={<Pencil className="h-3.5 w-3.5" />} onSelect={() => run(onEdit)}>
+              Edit
+            </MenuItem>
+          )}
+          {onDelete && (
+            <MenuItem danger icon={<Trash2 className="h-3.5 w-3.5" />} onSelect={() => run(onDelete)}>
+              Delete
+            </MenuItem>
+          )}
+          {!onEdit && !onDelete && !onActivate && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">Built-in — read only</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MenuItem({
+  children,
+  icon,
+  onSelect,
+  danger,
+}: {
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  onSelect: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onSelect}
+      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:bg-accent ${danger ? "text-destructive" : "text-foreground"}`}
+    >
+      {icon}
+      {children}
+    </button>
   );
 }
