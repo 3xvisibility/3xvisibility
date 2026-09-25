@@ -136,7 +136,7 @@ export default function TemplatesPage() {
       ]),
     [queryClient],
   );
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, basePath } = useWorkspace();
   const { t } = useLanguage();
   const { features, plan } = useSubscription();
   const wsId = currentWorkspace?.id;
@@ -1154,7 +1154,7 @@ slug: ${fields.slug}`,
               template or upgrade your plan to create more.
             </span>
             <Button asChild size="sm" variant="outline" className="shrink-0">
-              <Link to="/billing"><Crown className="mr-1.5 h-3.5 w-3.5" /> Upgrade plan</Link>
+              <Link to={`${basePath}/billing`}><Crown className="mr-1.5 h-3.5 w-3.5" /> Upgrade plan</Link>
             </Button>
           </AlertDescription>
         </Alert>

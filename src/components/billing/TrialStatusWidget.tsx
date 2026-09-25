@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Gift, CalendarClock, AlertTriangle, Sparkles, CreditCard, Loader2, ExternalLink } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLAN_FEATURES } from "@/lib/plan-features";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,7 +38,7 @@ interface TrialStatusWidgetProps {
  * key plan limits (pages, AI credits, connected sites).
  */
 export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusWidgetProps) {
-  const navigate = useNavigate();
+  const { basePath } = useWorkspace();
   const { toast } = useToast();
   const { t } = useLanguage();
   const [portalLoading, setPortalLoading] = useState(false);
@@ -129,7 +129,7 @@ export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusW
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
             {!hideUpgradeAction && (
-              <Button size="sm" variant="outline" onClick={() => navigate("/billing")}>
+              <Button size="sm" variant="outline" onClick={() => { window.location.href = `${basePath}/billing`; }}>
                 <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                 {t("trial.viewPlans")}
               </Button>
@@ -205,7 +205,7 @@ export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusW
             <p className="text-xs text-muted-foreground">
               {t("trial.capNote", { date: fmtDate(resetDate) })}
             </p>
-            <Button size="sm" onClick={() => navigate("/billing")}>
+            <Button size="sm" onClick={() => { window.location.href = `${basePath}/billing`; }}>
               <Sparkles className="h-3.5 w-3.5 mr-1.5" />
               {t("trial.upgradePlan")}
             </Button>
