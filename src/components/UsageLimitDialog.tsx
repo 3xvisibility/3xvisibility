@@ -73,7 +73,7 @@ export function UsageLimitDialog({ open, onOpenChange, type, used, limit }: Usag
             className="w-full gap-2"
             onClick={() => {
               onOpenChange(false);
-              navigate(`${basePath}/billing`);
+              window.location.href = `${basePath}/billing`;
             }}
           >
             Upgrade Plan <ArrowRight className="h-4 w-4" />
