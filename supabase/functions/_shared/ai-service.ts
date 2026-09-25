@@ -15,7 +15,9 @@ import { edgeConfig } from "./config.ts";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type AiProvider = "lovable" | "openai" | "gemini" | "groq" | "deepseek" | "openrouter";
+export type AiProvider = string;
+
+const BUILTIN_PROVIDERS = ["lovable", "openai", "gemini", "groq", "deepseek", "openrouter"];
 
 export interface AiMessage {
   role: "system" | "user" | "assistant";
@@ -253,27 +255,42 @@ const PROVIDERS: Record<Exclude<AiProvider, "lovable">, ProviderConfig> = {
   },
 };
 
+const _cfgCache = new Map<string, { cfg: ProviderConfig | null; at: number }>();
+
+function normalizeChatUrl(baseUrl: string): string {
+  const trimmed = baseUrl.replace(/\/+$/, "");
+  if (/\/chat\/completions$/.test(trimmed)) return trimmed;
+  return `${trimmed}/chat/completions`;
+}
+
 async function getDynamicProviderConfig(provider: string): Promise<ProviderConfig | null> {
-  if (PROVIDERS[provider as Exclude<AiProvider, "lovable">]) {
-    return PROVIDERS[provider as Exclude<AiProvider, "lovable">];
+  if (BUILTIN_PROVIDERS.includes(provider) && provider !== "lovable") {
+    return PROVIDERS[provider as keyof typeof PROVIDERS] ?? null;
   }
+  const cached = _cfgCache.get(provider);
+  if (cached && Date.now() - cached.at < 30_000) return cached.cfg;
+
+  let cfg: ProviderConfig | null = null;
   try {
     const sb = getServiceClient();
-    if (!sb) return null;
-    const { data } = await sb
-      .from("ai_provider_keys")
-      .select("base_url, default_model")
-      .eq("provider", provider)
-      .maybeSingle();
-    if (data?.base_url) {
-      return {
-        url: `${(data.base_url as string).replace(/\/+$/, "")}/chat/completions`,
-        keyEnv: "",
-        defaultModel: (data.default_model as string) || "gpt-4o-mini",
-      };
+    if (sb) {
+      const { data } = await sb
+        .from("ai_provider_keys")
+        .select("base_url, default_model, enabled")
+        .eq("provider", provider)
+        .maybeSingle();
+      if (data && data.enabled !== false && data.base_url) {
+        cfg = {
+          url: normalizeChatUrl(data.base_url as string),
+          keyEnv: "",
+          defaultModel: (data.default_model as string) || "gpt-4o-mini",
+        };
+      }
     }
   } catch (_) {}
-  return null;
+
+  _cfgCache.set(provider, { cfg, at: Date.now() });
+  return cfg;
 }
 
 // ── Timed fetch ──────────────────────────────────────────────────────────────
@@ -360,11 +377,11 @@ async function callExternal(
   provider: AiProvider,
   opts: AiGenerateOptions,
 ): Promise<Response> {
-  let cfg: ProviderConfig | null = PROVIDERS[provider as Exclude<AiProvider, "lovable">] ?? null;
+  let cfg: ProviderConfig | null = PROVIDERS[provider as keyof typeof PROVIDERS] ?? null;
   if (!cfg) cfg = await getDynamicProviderConfig(provider);
-  if (!cfg) throw new Error(`Unknown provider "${provider}"`);
+  if (!cfg) throw new Error(`Unknown provider "${provider}". Add its Base URL + API Key in Admin → AI Providers.`);
   const key = await resolveProviderKey(provider, cfg.keyEnv);
-  if (!key) throw new Error(`No API key configured for provider "${provider}" (set it in Admin → AI Providers, or as ${cfg.keyEnv}).`);
+  if (!key) throw new Error(`No API key configured for provider "${provider}" (set it in Admin → AI Providers${cfg.keyEnv ? `, or as ${cfg.keyEnv}` : ""}).`);
 
 
   const body: any = {
@@ -392,12 +409,27 @@ async function callExternal(
 
 // ── Resolve active provider ──────────────────────────────────────────────────
 
-const VALID_PROVIDERS: AiProvider[] = ["lovable", "openai", "gemini", "groq", "deepseek", "openrouter"];
-
 /** Env-based provider (last-resort fallback when the DB is unreachable). */
 export function getActiveProvider(): AiProvider {
-  const raw = edgeConfig.ai.provider;
-  return VALID_PROVIDERS.includes(raw as AiProvider) ? (raw as AiProvider) : "lovable";
+  const raw = String(edgeConfig.ai.provider || "").toLowerCase().trim();
+  return raw || "lovable";
+}
+
+/** True if a provider id is usable: built-in OR present in ai_provider_keys. */
+async function isValidProvider(provider: string): Promise<boolean> {
+  if (BUILTIN_PROVIDERS.includes(provider)) return true;
+  try {
+    const sb = getServiceClient();
+    if (!sb) return false;
+    const { data } = await sb
+      .from("ai_provider_keys")
+      .select("provider")
+      .eq("provider", provider)
+      .maybeSingle();
+    return !!data;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -447,20 +479,19 @@ export async function getGlobalProvider(category?: AiTaskCategory): Promise<AiPr
       .eq("id", "global")
       .maybeSingle();
 
-    const pick = (v: unknown) => {
-      const raw = String(v || "").toLowerCase().trim();
-      return VALID_PROVIDERS.includes(raw as AiProvider) ? (raw as AiProvider) : null;
-    };
+    const pick = (v: unknown) => String(v || "").toLowerCase().trim() || null;
 
     if (category === "design") {
-      const p = pick((data as any)?.ai_provider_design);
-      if (p) return p;
+      const p = pick((data as Record<string, unknown>)?.ai_provider_design);
+      if (p && (await isValidProvider(p))) return p;
     } else if (category === "content") {
-      const p = pick((data as any)?.ai_provider_content);
-      if (p) return p;
+      const p = pick((data as Record<string, unknown>)?.ai_provider_content);
+      if (p && (await isValidProvider(p))) return p;
     }
 
-    return pick(data?.ai_provider) ?? getActiveProvider();
+    const globalPick = pick(data?.ai_provider);
+    if (globalPick && (await isValidProvider(globalPick))) return globalPick;
+    return getActiveProvider();
   } catch {
     return getActiveProvider();
   }

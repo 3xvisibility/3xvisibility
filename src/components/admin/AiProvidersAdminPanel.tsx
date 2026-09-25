@@ -85,7 +85,7 @@ export default function AiProvidersAdminPanel() {
         setFetchedModels(models);
         setFetchingModels(false);
         if (models.length) toast.success(`${models.length} model${models.length > 1 ? "s" : ""} found`);
-        else toast.error("No models returned — check Base URL and API Key, or enter the model manually below.");
+        else toast.info("This provider has no /models endpoint. Enter the model name manually in the field below.");
         return;
       }
       toast.success(

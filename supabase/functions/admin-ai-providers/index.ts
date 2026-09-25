@@ -51,43 +51,71 @@ function extractModelList(payload: unknown): string[] {
     .sort();
 }
 
-async function fetchModels(baseUrl: string, apiKey: string): Promise<{ models: string[]; error?: string }> {
+function buildCandidateUrls(baseUrl: string): string[] {
   const trimmed = baseUrl.replace(/\/+$/, "");
-  const candidates = [/\/v\d+$/.test(trimmed) ? [trimmed] : [trimmed, `${trimmed}/v1`]].flat();
-  const seen = new Set<string>();
-  const collected: string[] = [];
-  let lastError = "";
+  const urls = new Set<string>();
+  const add = (u: string) => { if (u) urls.add(u); };
 
-  for (const base of candidates) {
-    if (seen.has(base)) continue;
-    seen.add(base);
+  add(`${trimmed}/models`);
+  if (/\/v\d+$/.test(trimmed)) {
+    // .../api/v1 -> also try .../api and the bare origin
+    add(`${trimmed.replace(/\/v\d+$/, "")}/models`);
     try {
-      const res = await fetch(`${base}/models`, {
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!res.ok) {
-        const bodyText = await res.text().catch(() => "");
-        lastError = `${res.status} ${res.statusText}${bodyText ? ` — ${bodyText.slice(0, 200)}` : ""}`;
-        continue;
+      const u = new URL(trimmed);
+      add(`${u.origin}/models`);
+      add(`${u.origin}/api/models`);
+      add(`${u.origin}/v1/models`);
+    } catch { /* not a valid absolute URL */ }
+  } else {
+    add(`${trimmed}/v1/models`);
+    try {
+      const u = new URL(trimmed);
+      add(`${u.origin}/v1/models`);
+      add(`${u.origin}/api/v1/models`);
+      add(`${u.origin}/api/models`);
+    } catch { /* not a valid absolute URL */ }
+  }
+  return [...urls];
+}
+
+async function fetchModels(baseUrl: string, apiKey: string): Promise<{ models: string[]; error?: string }> {
+  const collected: string[] = [];
+  const errors: string[] = [];
+
+  for (const url of buildCandidateUrls(baseUrl)) {
+    for (const headers of [
+      { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      { "x-api-key": apiKey, "Content-Type": "application/json" },
+      { "api-key": apiKey, "Content-Type": "application/json" },
+    ]) {
+      try {
+        const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
+        if (!res.ok) {
+          const bodyText = await res.text().catch(() => "");
+          errors.push(`${url} -> ${res.status}${bodyText ? ` — ${bodyText.slice(0, 120)}` : ""}`);
+          continue;
+        }
+        const ct = res.headers.get("content-type") || "";
+        if (!ct.includes("json")) {
+          errors.push(`${url} returned non-JSON (${ct || "unknown"})`);
+          continue;
+        }
+        const data = await res.json();
+        const found = extractModelList(data);
+        if (found.length) {
+          collected.push(...found);
+          break;
+        }
+        errors.push(`${url} had no model entries`);
+      } catch (e) {
+        errors.push(`${url} -> ${e instanceof Error ? e.message : String(e)}`);
       }
-      const ct = res.headers.get("content-type") || "";
-      if (!ct.includes("json")) {
-        lastError = `endpoint returned non-JSON (${ct || "unknown"})`;
-        continue;
-      }
-      const data = await res.json();
-      const found = extractModelList(data);
-      if (found.length) collected.push(...found);
-      else lastError = "response contained no model entries";
-    } catch (e) {
-      lastError = e instanceof Error ? e.message : String(e);
     }
   }
 
   const unique = [...new Set(collected)].sort();
   if (unique.length) return { models: unique };
-  return { models: [], error: lastError || "could not reach /models on this base URL" };
+  return { models: [], error: errors[errors.length - 1] || "could not reach /models on this base URL" };
 }
 
 Deno.serve(async (req) => {
@@ -182,7 +210,10 @@ Deno.serve(async (req) => {
 
       if (action === "set-routing") {
         const state = await loadState();
-        const validIds = new Set(state.providers.map((p) => p.id));
+        const validIds = new Set<string>([
+          ...Object.keys(BUILTIN_PROVIDERS),
+          ...(state.providers.map((p) => p.id)),
+        ]);
         const norm = (v: unknown) => {
           const s = String(v ?? "").toLowerCase().trim();
           if (!s || s === "inherit") return null;
