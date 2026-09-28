@@ -74,10 +74,18 @@ export function VideoSection() {
               {playing ? (
                 <video key={`play-${videoSrc}`} className="absolute inset-0 w-full h-full object-cover" src={videoSrc} autoPlay controls playsInline />
               ) : (
-                <>
-                  {inView && (
-                    <video key={`preview-${videoSrc}`} className="absolute inset-0 w-full h-full object-cover" src={videoSrc} muted loop autoPlay playsInline preload="metadata" />
-                  )}
+<>
+                  <video
+                    key={`preview-${videoSrc}`}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    src={videoSrc}
+                    muted
+                    loop
+                    autoPlay={inView}
+                    playsInline
+                    preload="metadata"
+                    poster="/og-image.png"
+                  />
                   <div className="absolute inset-0 cursor-pointer group bg-gradient-to-br from-[hsl(250,30%,99%,0.55)] to-[hsl(250,30%,99%,0.25)] flex flex-col items-center justify-center gap-4" onClick={() => setPlaying(true)}>
                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl shadow-primary/30 group-hover:shadow-primary/40">
                       <Play className="h-6 w-6 ml-1 fill-current" />

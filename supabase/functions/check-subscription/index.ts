@@ -111,6 +111,31 @@ serve(async (req) => {
     if (!userEmail) throw new Error("No email in token");
     logStep("User authenticated", { email: userEmail });
 
+    // Respect admin-manually-granted plans: if the subscription row is flagged
+    // as an admin override, leave it untouched and report its stored plan so a
+    // manual grant/provision never gets clobbered back to free by this Stripe sync.
+    const { data: existingSub } = await supabaseClient
+      .from("subscriptions")
+      .select("plan, status, pages_limit, ai_generations_limit, billing_cycle, trial_end, cancel_at_period_end, current_period_end, admin_override")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (existingSub && (existingSub as any).admin_override === true) {
+      logStep("Admin override active — skipping Stripe sync", { plan: existingSub.plan });
+      return new Response(JSON.stringify({
+        subscribed: existingSub.plan !== "free",
+        plan: existingSub.plan,
+        status: existingSub.status,
+        admin_override: true,
+        billing_cycle: existingSub.billing_cycle,
+        trial_end: existingSub.trial_end,
+        cancel_at_period_end: existingSub.cancel_at_period_end,
+        subscription_end: existingSub.current_period_end,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // Get user's workspace
     const { data: memberData } = await supabaseClient
       .from("workspace_members")

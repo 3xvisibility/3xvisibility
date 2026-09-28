@@ -616,6 +616,7 @@ Deno.serve(async (req) => {
           updates.ai_generations_limit = Math.max(0, Math.floor(Number(ai_generations_limit)));
         }
         updates.updated_at = new Date().toISOString();
+        if (plan !== undefined) updates.admin_override = true;
 
         const { error } = await serviceClient
           .from("subscriptions")
@@ -630,6 +631,7 @@ Deno.serve(async (req) => {
           plan: plan || "starter",
           pages_limit: pages_limit ?? 100,
           pages_used: pages_used ?? 0,
+          admin_override: true,
         };
         if (ai_generations_limit !== undefined && ai_generations_limit !== null) {
           insertRow.ai_generations_limit = Math.max(0, Math.floor(Number(ai_generations_limit)));
@@ -693,6 +695,7 @@ Deno.serve(async (req) => {
         cancel_at_period_end: false,
         pages_limit: limits.pages,
         ai_generations_limit: limits.ai,
+        admin_override: true,
         updated_at: start.toISOString(),
       };
 
