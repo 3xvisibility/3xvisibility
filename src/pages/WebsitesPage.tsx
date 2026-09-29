@@ -216,6 +216,7 @@ export default function WebsitesPage() {
 
     if (siteType === "shopify") return { shop_domain: shopDomain };
     if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
+    if (siteType === "elementor_mcp") return { mcp_api_key: connectorKey.trim(), auth_method: "mcp" };
     return { api_key: prestashopApiKey };
   };
 
@@ -234,6 +235,9 @@ export default function WebsitesPage() {
     }
     if (siteType === "prestashop" && !prestashopApiKey.trim()) {
       return "Enter the PrestaShop API key.";
+    }
+    if (siteType === "elementor_mcp" && !connectorKey.trim()) {
+      return "Enter your Elementor MCP API key from WordPress → Elementor → Settings → MCP.";
     }
     return null;
   };
@@ -270,10 +274,11 @@ export default function WebsitesPage() {
       });
       return;
     }
-    if (!siteUrl && !(siteType === "shopify" && shopDomain)) {
+    if (!siteUrl && !(siteType === "shopify" && shopDomain) && !isElementorMcp) {
       toast({ title: "Error", description: "Missing website info", variant: "destructive" });
       return;
     }
+    const finalUrl = isElementorMcp ? siteUrl.replace(/\/+$/, "") + "/wp-json/elementor/v1" : siteUrl;
     const credentialValidationError = getCredentialValidationError();
     if (credentialValidationError) {
       setWpTestError(credentialValidationError);
@@ -286,7 +291,7 @@ export default function WebsitesPage() {
       await startShopifyOAuth();
       return;
     }
-    const finalUrl = siteUrl;
+    const resolvedUrl = isElementorMcp ? finalUrl : siteUrl;
 
     // Initialize step list — three explicit phases the user asked to see.
     const steps: ProgressStep[] = [
@@ -301,9 +306,11 @@ export default function WebsitesPage() {
       // ---- Step 1: Verify connection ----
       updateStep("verify", "running");
       try {
-        const { data: verifyData, error: verifyError } = await supabase.functions.invoke("test-connection", {
-          body: { url: finalUrl, type: siteType, credentials: buildCredentials() },
-        });
+        const fnName = isElementorMcp ? "elementor-mcp" : "test-connection";
+        const body = isElementorMcp
+          ? { action: "ping", site_url: resolvedUrl, api_key: connectorKey.trim() }
+          : { url: resolvedUrl, type: siteType, credentials: buildCredentials() };
+        const { data: verifyData, error: verifyError } = await supabase.functions.invoke(fnName, { body });
         if (verifyError) throw new Error(await extractEdgeError(verifyError, "Could not reach the site"));
         if (verifyData?.error) throw new Error(verifyData.error);
         updateStep("verify", "success", verifyData?.message || "Credentials accepted");
@@ -316,16 +323,16 @@ export default function WebsitesPage() {
       updateStep("save", "running");
       let savedWebsiteId: string | null = null;
       try {
+        const saveType = isElementorMcp ? "wordpress" : siteType;
         const { data, error } = await supabase.functions.invoke("save-website", {
           body: {
-            name: siteName || new URL(finalUrl).hostname,
-            url: finalUrl,
-            type: siteType,
+            name: siteName || new URL(resolvedUrl).hostname,
+            url: resolvedUrl,
+            type: saveType,
             credentials: buildCredentials(),
             workspace_id: wsId,
             language: siteLanguage,
             language_locked: languageLocked,
-            
           },
         });
         if (error) throw new Error(await extractEdgeError(error, "Failed to save credentials"));
@@ -340,26 +347,35 @@ export default function WebsitesPage() {
       // ---- Step 3: Publish test page (best-effort, non-fatal) ----
       updateStep("test", "running");
       try {
-        const { data: testData, error: testError } = await supabase.functions.invoke("test-connection", {
-          body: {
-            url: finalUrl,
-            type: siteType,
-            credentials: buildCredentials(),
-            publish_test_page: true,
-          },
-        });
-        if (testError) throw new Error(await extractEdgeError(testError, "Test publish failed"));
-        if (testData?.error) throw new Error(testData.error);
-        if (testData?.test_page_published || testData?.test_page_url) {
-          updateStep(
-            "test",
-            "success",
-            testData.test_page_url
-              ? `Draft created: ${testData.test_page_url}`
-              : "Test draft created successfully"
-          );
+        if (isElementorMcp) {
+          const { data: tData, error: tErr } = await supabase.functions.invoke("elementor-mcp", {
+            body: { action: "list_pages", site_url: resolvedUrl, api_key: connectorKey.trim(), per_page: 1 },
+          });
+          if (tErr) throw new Error(await extractEdgeError(tErr, "MCP test failed"));
+          if (tData?.error) throw new Error(tData.error);
+          updateStep("test", "success", `Connected — ${tData?.total ?? 0} pages found on site`);
         } else {
-          updateStep("test", "skipped", "Skipped — connector reachable but no test draft created");
+          const { data: testData, error: testError } = await supabase.functions.invoke("test-connection", {
+            body: {
+              url: resolvedUrl,
+              type: siteType,
+              credentials: buildCredentials(),
+              publish_test_page: true,
+            },
+          });
+          if (testError) throw new Error(await extractEdgeError(testError, "Test publish failed"));
+          if (testData?.error) throw new Error(testData.error);
+          if (testData?.test_page_published || testData?.test_page_url) {
+            updateStep(
+              "test",
+              "success",
+              testData.test_page_url
+                ? `Draft created: ${testData.test_page_url}`
+                : "Test draft created successfully"
+            );
+          } else {
+            updateStep("test", "skipped", "Skipped — connector reachable but no test draft created");
+          }
         }
       } catch (err: any) {
         // Non-fatal: site is connected even if test publish fails
@@ -386,6 +402,8 @@ export default function WebsitesPage() {
     siteType === "shopify" && shopDomain
       ? `https://${normalizedShopDomain}`
       : siteUrl;
+
+  const isElementorMcp = siteType === "elementor_mcp";
 
   const detectLanguageMutation = useMutation({
     mutationFn: async () => {
@@ -570,6 +588,7 @@ export default function WebsitesPage() {
                       <SelectItem value="woocommerce" disabled={!canUseFeature("woocommerce")}>
                         WooCommerce {!canUseFeature("woocommerce") && "🔒 Pro"}
                       </SelectItem>
+                      <SelectItem value="elementor_mcp">Elementor MCP</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -631,6 +650,20 @@ export default function WebsitesPage() {
                       <p className="text-[11px] text-muted-foreground mt-1">Found in WooCommerce → Settings → Advanced → REST API</p>
                     </div>
                   </>
+                )}
+                {siteType === "elementor_mcp" && (
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="mcp-key">Elementor MCP API Key</Label>
+                      <Input id="mcp-key" type="password" placeholder="emcp_xxxxx" value={connectorKey} onChange={(e) => setConnectorKey(e.target.value)} />
+                      <p className="text-[11px] text-muted-foreground mt-1">Generate from WordPress → Elementor → MCP Settings</p>
+                    </div>
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                      <p className="text-xs text-foreground leading-relaxed">
+                        Connect your Elementor site directly via MCP. AI agents can create, edit, and publish pages with 100% design fidelity using native Elementor widgets.
+                      </p>
+                    </div>
+                  </div>
                 )}
 
                 {siteType && (
