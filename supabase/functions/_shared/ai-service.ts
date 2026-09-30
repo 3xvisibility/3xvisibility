@@ -570,43 +570,108 @@ export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
     provider = access.provider;
     const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
     if (!credit.allowed) {
+      console.warn(`[ai-service] credits exhausted for user ${uid}, attempting provider failover chain`);
+    }
+  }
+
+  // ── Provider routing with automatic failover chain ────────────────────────
+  let fallbackUsed = false;
+  let response: Response | null = null;
+  let lastProvider = provider;
+
+  const isQuotaOrRateLimitError = (status: number, body: string): boolean => {
+    const lower = body.toLowerCase();
+    return (
+      status === 429 ||
+      status === 402 ||
+      status === 503 ||
+      lower.includes("rate limit") ||
+      lower.includes("quota") ||
+      lower.includes("insufficient") ||
+      lower.includes("credits") ||
+      lower.includes("token limit") ||
+      lower.includes("billing") ||
+      lower.includes("payment required") ||
+      lower.includes("too many requests") ||
+      lower.includes("resource_exhausted")
+    );
+  };
+
+  async function getAllAvailableProviders(primaryProvider: string): Promise<string[]> {
+    const chain: string[] = [primaryProvider];
+    try {
+      const sb = getServiceClient();
+      if (sb) {
+        const { data } = await sb
+          .from("ai_provider_keys")
+          .select("provider, enabled")
+          .eq("enabled", true)
+          .neq("provider", primaryProvider);
+        if (data) {
+          for (const row of data) {
+            if (row.provider && !chain.includes(row.provider)) {
+              chain.push(row.provider);
+            }
+          }
+        }
+      }
+    } catch (_) {}
+    if (!chain.includes("lovable")) chain.push("lovable");
+    return chain;
+  }
+
+  const providerChain = await getAllAvailableProviders(provider);
+
+  for (let i = 0; i < providerChain.length; i++) {
+    const currentProvider = providerChain[i];
+    lastProvider = currentProvider;
+    if (i > 0) fallbackUsed = true;
+
+    try {
+      if (currentProvider === "lovable") {
+        response = await callLovable(opts);
+      } else {
+        response = await callExternal(currentProvider, opts);
+      }
+
+      if (response.ok) {
+        provider = currentProvider;
+        break;
+      }
+
+      const errorBody = await response.clone().text().catch(() => "");
+      if (isQuotaOrRateLimitError(response.status, errorBody) && i < providerChain.length - 1) {
+        console.warn(`[ai-service] ${currentProvider} quota/rate-limited (${response.status}), trying next provider in chain`);
+        response = null;
+        continue;
+      }
+
+      if (i < providerChain.length - 1) {
+        console.warn(`[ai-service] ${currentProvider} returned ${response.status}, trying next provider`);
+        response = null;
+        continue;
+      }
+    } catch (err) {
+      if (i < providerChain.length - 1) {
+        console.warn(`[ai-service] ${currentProvider} failed:`, err, "— trying next provider in chain");
+        response = null;
+        continue;
+      }
+      console.error("[ai-service] all providers exhausted, last error:", err);
       return {
         success: false,
-        content: `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`,
-        provider: "lovable",
-        fallback_used: false,
+        content: err instanceof Error ? err.message : "All AI providers failed. Please try again later.",
+        provider: currentProvider,
+        fallback_used: fallbackUsed,
       };
     }
   }
 
-  // ── Provider routing ─────────────────────────────────────────────────────
-  let fallbackUsed = false;
-  let response: Response;
-
-  try {
-    if (provider === "lovable") {
-      response = await callLovable(opts);
-    } else {
-      try {
-        response = await callExternal(provider, opts);
-        if (!response.ok) {
-          console.warn(`[ai-service] ${provider} returned ${response.status}, falling back to lovable`);
-          response = await callLovable(opts);
-          fallbackUsed = true;
-        }
-      } catch (err) {
-        console.warn(`[ai-service] ${provider} failed:`, err, "— falling back to lovable");
-        response = await callLovable(opts);
-        fallbackUsed = true;
-      }
-    }
-  } catch (err) {
-    // Includes the AbortError → timeout case from fetchWithTimeout.
-    console.error("[ai-service] request failed:", err);
+  if (!response) {
     return {
       success: false,
-      content: err instanceof Error ? err.message : "AI request failed. Please try again.",
-      provider: fallbackUsed ? "lovable" : provider,
+      content: "All configured AI providers are unavailable. Please check your provider settings or contact support.",
+      provider: lastProvider,
       fallback_used: fallbackUsed,
     };
   }
@@ -701,32 +766,49 @@ export async function aiGenerateStream(opts: AiGenerateOptions): Promise<{
     provider = access.provider;
     const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
     if (!credit.allowed) {
-      return {
-        response: new Response(
-          JSON.stringify({ error: "insufficient_credits", remaining: credit.remaining ?? 0 }),
-          { status: 402, headers: { "Content-Type": "application/json" } },
-        ),
-        provider: "lovable",
-        fallback_used: false,
-      };
+      console.warn(`[ai-service] stream: credits exhausted for user ${uid}, attempting provider failover chain`);
     }
   }
 
   const streamOpts = { ...opts, stream: true };
+  let streamFallbackUsed = false;
 
-  if (provider === "lovable") {
-    return { response: await callLovable(streamOpts), provider, fallback_used: false };
-  }
+  const isStreamQuotaError = (status: number, body: string): boolean => {
+    const lower = body.toLowerCase();
+    return status === 429 || status === 402 || status === 503 ||
+      lower.includes("rate limit") || lower.includes("quota") ||
+      lower.includes("insufficient") || lower.includes("credits") ||
+      lower.includes("billing") || lower.includes("too many requests");
+  };
 
-  try {
-    const resp = await callExternal(provider, streamOpts);
-    if (!resp.ok) {
-      console.warn(`[ai-service] ${provider} stream returned ${resp.status}, falling back`);
-      return { response: await callLovable(streamOpts), provider: "lovable", fallback_used: true };
+  const streamChain = await getAllAvailableProviders(provider);
+
+  for (let i = 0; i < streamChain.length; i++) {
+    const cp = streamChain[i];
+    if (i > 0) streamFallbackUsed = true;
+    try {
+      const resp = cp === "lovable" ? await callLovable(streamOpts) : await callExternal(cp, streamOpts);
+      if (resp.ok) return { response: resp, provider: cp, fallback_used: streamFallbackUsed };
+      const errBody = await resp.clone().text().catch(() => "");
+      if (isStreamQuotaError(resp.status, errBody) && i < streamChain.length - 1) {
+        console.warn(`[ai-service] stream ${cp} quota/rate-limited (${resp.status}), trying next`);
+        continue;
+      }
+      if (i < streamChain.length - 1) {
+        console.warn(`[ai-service] stream ${cp} returned ${resp.status}, trying next`);
+        continue;
+      }
+      return { response: resp, provider: cp, fallback_used: streamFallbackUsed };
+    } catch (err) {
+      if (i < streamChain.length - 1) {
+        console.warn(`[ai-service] stream ${cp} failed:`, err, "— trying next");
+        continue;
+      }
+      const fallbackResp = await callLovable(streamOpts).catch(() => null);
+      if (fallbackResp) return { response: fallbackResp, provider: "lovable", fallback_used: true };
+      throw err;
     }
-    return { response: resp, provider, fallback_used: false };
-  } catch (err) {
-    console.warn(`[ai-service] ${provider} stream failed:`, err);
-    return { response: await callLovable(streamOpts), provider: "lovable", fallback_used: true };
   }
+
+  return { response: await callLovable(streamOpts), provider: "lovable", fallback_used: true };
 }
