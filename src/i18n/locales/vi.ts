@@ -2370,6 +2370,8 @@ const vi: Record<string, string> = {
   "trial.unlimited": "Unlimited",
   "trial.upgradePlan": "Upgrade plan",
   "trial.viewPlans": "View plans",
+  "sidebar.seoSection": "SEO & Analytics",
+  "sidebar.websiteSection": "Websites",
 };
 
 export default vi;

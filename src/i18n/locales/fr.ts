@@ -2370,6 +2370,8 @@ const fr: Record<string, string> = {
   "workspaceSettings.workspaceName": "Nom de l'espace de travail",
   "workspaceSettings.workspaceRenamed": "Espace de travail renommé",
   "workspaceSettings.workspaceRenamedDesc": "Le nom de l’espace de travail a été mis à jour.",
+  "sidebar.seoSection": "SEO & Analytics",
+  "sidebar.websiteSection": "Websites",
 };
 
 export default fr;
