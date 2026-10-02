@@ -3,6 +3,7 @@ import { Play } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import heroDashboard from "@/assets/hero-dashboard.png";
 
 // Bump this when the rendered video changes to bust browser/CDN caches.
 const VIDEO_VERSION = "3xvisibility-2";
@@ -84,7 +85,7 @@ export function VideoSection() {
                     autoPlay={inView}
                     playsInline
                     preload="metadata"
-                    poster="/og-image.png"
+                    poster={heroDashboard}
                   />
                   <div className="absolute inset-0 cursor-pointer group bg-gradient-to-br from-[hsl(250,30%,99%,0.55)] to-[hsl(250,30%,99%,0.25)] flex flex-col items-center justify-center gap-4" onClick={() => setPlaying(true)}>
                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl shadow-primary/30 group-hover:shadow-primary/40">
