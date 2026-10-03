@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 const TRIAL_LENGTH_DAYS = 30;
 
 function fmtDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "â€”";
   try {
     return new Date(iso).toLocaleDateString(undefined, {
       year: "numeric",
@@ -23,7 +23,7 @@ function fmtDate(iso: string | null) {
       day: "numeric",
     });
   } catch {
-    return "—";
+    return "â€”";
   }
 }
 
@@ -71,7 +71,7 @@ export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusW
     { key: "sites", label: t("trial.sites"), used: sitesConnected, limit: sitesLimit },
   ].map((m) => ({
     ...m,
-    // -1 means unlimited → never show a filled bar or a near-cap warning.
+    // -1 means unlimited â†’ never show a filled bar or a near-cap warning.
     percent: m.limit > 0 ? Math.min(100, Math.round((m.used / m.limit) * 100)) : 0,
   }));
   const nearCap = isLoading ? [] : meters.filter((m) => m.limit > 0 && m.percent >= 80);
@@ -183,7 +183,7 @@ export function TrialStatusWidget({ hideUpgradeAction, className }: TrialStatusW
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{m.label}</span>
                 <span className="font-semibold tabular-nums">
-                  {isLoading ? "—" : `${m.used.toLocaleString()} / ${m.limit === -1 ? t("trial.unlimited") : m.limit.toLocaleString()}`}
+                  {isLoading ? "â€”" : `${m.used.toLocaleString()} / ${m.limit === -1 ? t("trial.unlimited") : m.limit.toLocaleString()}`}
                 </span>
               </div>
               <Progress

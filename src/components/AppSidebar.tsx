@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logo3x from "@/assets/logo-3x.png";
 import {
@@ -142,7 +142,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
       if (isLocked) {
         const content = (
           <button
-            onClick={() => navigate(`${basePath}/billing`)}
+            onClick={() => navigate(`${basePath}/billing?upgrade=1`)}
             aria-label={t("common.upgradeToUnlock", { plan: minPlanLabel })}
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted/50 transition-all duration-150 w-full cursor-pointer opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
           >

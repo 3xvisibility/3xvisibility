@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, lazy, Suspense } from "react";
+﻿import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { logAudit } from "@/lib/audit";
 import { assertSameWorkspace, logIfAuthorizationFailure } from "@/lib/security-audit";
@@ -64,7 +64,7 @@ export default function CampaignsPage() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Auto-open the wizard when arriving with ?new=1 (e.g. from Generate → Continue in Campaign)
+  // Auto-open the wizard when arriving with ?new=1 (e.g. from Generate â†’ Continue in Campaign)
   useEffect(() => {
     if (searchParams.get("new") === "1") {
       setWizardOpen(true);
@@ -80,7 +80,7 @@ export default function CampaignsPage() {
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // Realtime — scoped to the current workspace topic + workspace_id filters
+  // Realtime â€” scoped to the current workspace topic + workspace_id filters
   useEffect(() => {
     if (!wsId) return;
     const wsScopeFilter = wsFilter(wsId);
@@ -379,7 +379,7 @@ export default function CampaignsPage() {
         </div>
       </div>
 
-      {/* Plan campaign limit reached — inline upgrade banner */}
+      {/* Plan campaign limit reached â€” inline upgrade banner */}
       {campaignLimitReached && (
         <Alert variant="destructive" className="rounded-xl">
           <AlertTriangle className="h-4 w-4" />
@@ -388,14 +388,14 @@ export default function CampaignsPage() {
             <span>
               {t("campaigns.limitDescription", { plan: planLabel, limit: campaignLimit, used: userCampaignCount })}
             </span>
-            <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => navigate(`${basePath}/billing`)}>
+            <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => navigate(`${basePath}/billing?upgrade=1`)}>
               <Crown className="h-3.5 w-3.5" /> {t("campaigns.upgradePlan")}
             </Button>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Friendly "How a campaign works" guide — only show once user has at least 1 campaign */}
+      {/* Friendly "How a campaign works" guide â€” only show once user has at least 1 campaign */}
       {campaigns.length > 0 && (
         <CampaignHowItWorks onCreateClick={() => setWizardOpen(true)} compact={true} />
       )}

@@ -1,4 +1,4 @@
-import { Lock, Sparkles, ArrowRight } from "lucide-react";
+﻿import { Lock, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -28,7 +28,7 @@ export function UpgradePrompt({ feature, variant = "inline", className = "" }: U
           <span className="font-medium">{featureLabel}</span> is available on the{" "}
           <span className="font-semibold text-primary">{planLabel}</span> {t("common.plan")}.
         </p>
-        <Button size="sm" onClick={() => navigate(`${basePath}/billing`)} className="shrink-0 gap-1.5">
+        <Button size="sm" onClick={() => navigate(`${basePath}/billing?upgrade=1`)} className="shrink-0 gap-1.5">
           {t("common.upgrade")} <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -46,7 +46,7 @@ export function UpgradePrompt({ feature, variant = "inline", className = "" }: U
           <p className="text-sm text-muted-foreground">
             {t("common.upgradeToUnlock", { plan: planLabel })}.
           </p>
-          <Button onClick={() => navigate(`${basePath}/billing`)} className="gap-1.5">
+          <Button onClick={() => navigate(`${basePath}/billing?upgrade=1`)} className="gap-1.5">
             <Sparkles className="h-4 w-4" /> {t("common.upgrade")} {planLabel}
           </Button>
         </div>
@@ -67,7 +67,7 @@ export function UpgradePrompt({ feature, variant = "inline", className = "" }: U
             {t("common.requiresPlan", { plan: planLabel })}.
           </p>
         </div>
-        <Button size="sm" onClick={() => navigate(`${basePath}/billing`)} className="shrink-0 gap-1.5 mt-1">
+        <Button size="sm" onClick={() => navigate(`${basePath}/billing?upgrade=1`)} className="shrink-0 gap-1.5 mt-1">
           {t("common.upgrade")} <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       </CardContent>
@@ -124,7 +124,7 @@ export function UsageLimitBanner({ type, used, limit, className = "" }: UsageLim
           <>You've used <span className="font-semibold">{used}</span> of <span className="font-semibold">{limit}</span> {label} ({percent}%).</>
         )}
       </p>
-      <Button size="sm" variant={isExhausted ? "default" : "outline"} onClick={() => navigate(`${basePath}/billing`)} className="shrink-0 gap-1.5">
+      <Button size="sm" variant={isExhausted ? "default" : "outline"} onClick={() => navigate(`${basePath}/billing?upgrade=1`)} className="shrink-0 gap-1.5">
         {t("common.upgrade")} <ArrowRight className="h-3.5 w-3.5" />
       </Button>
     </div>

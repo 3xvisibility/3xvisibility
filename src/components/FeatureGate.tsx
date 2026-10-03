@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { getMinimumPlanFor, PLAN_FEATURES, type FeatureKey, type PlanName } from "@/lib/plan-features";
 import { Lock, ArrowRight, Check, X, Sparkles, Mail, GitCompare } from "lucide-react";
@@ -55,12 +55,12 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
 
   const getPrice = (plan: PlanName) => {
     const monthly = PLAN_PRICES_MONTHLY[plan];
-    if (monthly === 0) return "€0";
-    if (isYearly) return `€${Math.round(monthly * (1 - YEARLY_DISCOUNT))}`;
-    return `€${monthly}`;
+    if (monthly === 0) return "â‚¬0";
+    if (isYearly) return `â‚¬${Math.round(monthly * (1 - YEARLY_DISCOUNT))}`;
+    return `â‚¬${monthly}`;
   };
 
-  const fmt = (v: number) => (v === -1 ? "∞" : v.toLocaleString());
+  const fmt = (v: number) => (v === -1 ? "âˆž" : v.toLocaleString());
   const sitesRem = sitesRemaining === Infinity ? -1 : sitesRemaining;
   const usageStats = [
     { label: t("featureGate.pagesPerMonth"), used: pagesUsed, limit: pagesLimit, remaining: pagesRemaining },
@@ -93,7 +93,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto">
-            <Button onClick={() => navigate(`${basePath}/billing?highlight=${minPlan}`)} className="gap-2 w-full sm:w-auto">
+            <Button onClick={() => navigate(`${basePath}/billing?upgrade=1&highlight=${minPlan}`)} className="gap-2 w-full sm:w-auto">
               {t("featureGate.upgradeCta", { plan: planLabel })}
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -112,7 +112,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
         <div className="mt-2 flex flex-col sm:flex-row items-center sm:justify-between gap-1 text-[11px] text-muted-foreground">
           <button
             type="button"
-            onClick={() => navigate(`${basePath}/billing?highlight=${minPlan}`)}
+            onClick={() => navigate(`${basePath}/billing?upgrade=1&highlight=${minPlan}`)}
             className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
           >
             <GitCompare className="h-3 w-3" />
@@ -164,7 +164,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
             <span className="font-bold text-primary">{aiRemaining.toLocaleString()}</span> {t("featureGate.aiLeft")}
           </span>
           <span className="text-foreground">
-            <span className="font-bold text-primary">{sitesRem === -1 ? "∞" : sitesRem.toLocaleString()}</span> {t("featureGate.sitesLeft")}
+            <span className="font-bold text-primary">{sitesRem === -1 ? "âˆž" : sitesRem.toLocaleString()}</span> {t("featureGate.sitesLeft")}
           </span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -317,7 +317,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
         </table>
       </div>
 
-      <Button onClick={() => navigate(`${basePath}/billing?highlight=${minPlan}`)} size="lg" className="gap-2">
+      <Button onClick={() => navigate(`${basePath}/billing?upgrade=1&highlight=${minPlan}`)} size="lg" className="gap-2">
         {t("featureGate.upgradeCta", { plan: planLabel })}
         <ArrowRight className="h-4 w-4" />
       </Button>

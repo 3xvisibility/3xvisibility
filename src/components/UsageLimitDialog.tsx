@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
+﻿import { AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -73,7 +73,7 @@ export function UsageLimitDialog({ open, onOpenChange, type, used, limit }: Usag
             className="w-full gap-2"
             onClick={() => {
               onOpenChange(false);
-              window.location.href = `${basePath}/billing`;
+              window.location.href = `${basePath}/billing?upgrade=1`;
             }}
           >
             Upgrade Plan <ArrowRight className="h-4 w-4" />

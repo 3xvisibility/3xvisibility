@@ -1,4 +1,4 @@
-import { useLanguage } from "@/i18n/LanguageContext";
+﻿import { useLanguage } from "@/i18n/LanguageContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +31,7 @@ interface UsageEntry {
 }
 
 interface AiCreditsWidgetProps {
-  /** Percentage threshold (0–100) below which the upgrade prompt appears. Default: 10 */
+  /** Percentage threshold (0â€“100) below which the upgrade prompt appears. Default: 10 */
   lowThreshold?: number;
 }
 
@@ -109,7 +109,7 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
             {hasError && (
               <div className="flex items-center gap-2 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-xs text-warning">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                <span>Couldn't refresh credits — showing last known balance.</span>
+                <span>Couldn't refresh credits â€” showing last known balance.</span>
               </div>
             )}
             <Progress value={usedPct} className="h-2" />
@@ -126,7 +126,7 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
                   size="sm"
                   variant="default"
                   className="shrink-0 gap-1 h-7 text-xs"
-                  onClick={() => navigate(`${basePath}/billing`)}
+                  onClick={() => navigate(`${basePath}/billing?upgrade=1`)}
                 >
                   Upgrade <ArrowRight className="h-3 w-3" />
                 </Button>

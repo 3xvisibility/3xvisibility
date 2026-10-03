@@ -198,10 +198,17 @@ const App = () => {
     void processPendingAuthCallback().then((handled) => {
       if (handled) return;
       if (window.location.pathname === "/auth") {
-        const key = getAuthStorageKey();
-        if (key) localStorage.removeItem(key);
-        setSession(null);
-        setLoading(false);
+        // Only treat /auth as a signed-out surface when there is genuinely no
+        // persisted session. A hard reload of a deep link (e.g. /w/<slug>/billing)
+        // briefly lands here while supabase.auth is still restoring its storage —
+        // wiping the storage key at that moment logged the user out permanently.
+        void supabase.auth.getSession().then(({ data: { session: existing } }) => {
+          if (existing) return;
+          const key = getAuthStorageKey();
+          if (key) localStorage.removeItem(key);
+          setSession(null);
+          setLoading(false);
+        });
       }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {

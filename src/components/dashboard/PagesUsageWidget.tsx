@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+﻿import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -58,7 +58,7 @@ export function PagesUsageWidget() {
           </div>
         ) : unlimited ? (
           <div className="flex flex-col gap-1">
-            <span className="text-2xl font-bold tabular-nums">∞</span>
+            <span className="text-2xl font-bold tabular-nums">âˆž</span>
             <p className="text-xs text-muted-foreground">
               {t("pagesUsage.unlimited")}
             </p>
@@ -106,7 +106,7 @@ export function PagesUsageWidget() {
                   size="sm"
                   variant="default"
                   className="shrink-0 gap-1 h-7 text-xs"
-                  onClick={() => navigate(`${basePath}/billing`)}
+                  onClick={() => navigate(`${basePath}/billing?upgrade=1`)}
                 >
                   {t("pagesUsage.upgrade")} <ArrowRight className="h-3 w-3" />
                 </Button>

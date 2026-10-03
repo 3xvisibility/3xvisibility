@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+﻿import { toast } from "sonner";
 import { friendlyError, isCreditError, isUnauthorizedError, isForbiddenError, isSubscriptionLimitError } from "@/lib/friendly-errors";
 import { getUsageSnapshot } from "@/lib/usage-snapshot";
 
@@ -28,7 +28,7 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
           // Workspace-aware billing route
           const match = window.location.pathname.match(/^\/w\/([^/]+)/);
           const base = match ? `/w/${match[1]}` : "";
-          window.location.href = `${base}/billing`;
+          window.location.href = `${base}/billing?upgrade=1`;
         },
       },
       duration: 8000,
@@ -36,7 +36,7 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
     return;
   }
 
-  // Unauthorized — not signed in / token missing or expired. Guide the user to sign in.
+  // Unauthorized â€” not signed in / token missing or expired. Guide the user to sign in.
   if (isUnauthorizedError(raw)) {
     toast.error("Sign-in required", {
       description: friendlyError(raw),
@@ -52,7 +52,7 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
     return;
   }
 
-  // Subscription / plan limit — show upgrade prompt
+  // Subscription / plan limit â€” show upgrade prompt
   if (isSubscriptionLimitError(raw)) {
     const usage = getUsageSnapshot();
     let description = friendlyError(raw);
@@ -75,7 +75,7 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
         onClick: () => {
           const match = window.location.pathname.match(/^\/w\/([^/]+)/);
           const base = match ? `/w/${match[1]}` : "";
-          window.location.href = `${base}/billing`;
+          window.location.href = `${base}/billing?upgrade=1`;
         },
       },
       cancel: {
@@ -83,7 +83,7 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
         onClick: () => {
           const match = window.location.pathname.match(/^\/w\/([^/]+)/);
           const base = match ? `/w/${match[1]}` : "";
-          window.location.href = `${base}/billing`;
+          window.location.href = `${base}/billing?upgrade=1`;
         },
       },
       duration: 10000,
@@ -92,7 +92,7 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
   }
 
 
-  // Forbidden — signed in but lacking permission. Explain clearly with admin-only guidance.
+  // Forbidden â€” signed in but lacking permission. Explain clearly with admin-only guidance.
   if (isForbiddenError(raw)) {
     const msg = friendlyError(raw);
     const isAdminOnly = msg.toLowerCase().includes("admin-only");

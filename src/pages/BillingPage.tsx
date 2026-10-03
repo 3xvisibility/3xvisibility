@@ -19,6 +19,8 @@ import { BillingDetailsCard } from "@/components/billing/BillingDetailsCard";
 import { TrialStatusWidget } from "@/components/billing/TrialStatusWidget";
 import { DowngradePlanDialog } from "@/components/billing/DowngradePlanDialog";
 import { CheckoutConfirmDialog } from "@/components/billing/CheckoutConfirmDialog";
+import { PricingSection } from "@/components/landing/PricingSection";
+import { ChevronDown } from "lucide-react";
 
 
 import { logAudit } from "@/lib/audit";
@@ -54,6 +56,12 @@ export default function BillingPage() {
   const [showCanceled, setShowCanceled] = useState(false);
   const [hasSynced, setHasSynced] = useState(false);
   const highlightPlan = searchParams.get("highlight") as PlanName | null;
+  // Arriving via an Upgrade button (?upgrade=1 or ?plan=/highlight=) auto-opens
+  // the embedded pricing cards; otherwise they stay collapsed.
+  const [showPlans, setShowPlans] = useState<boolean>(() => {
+    const sp = new URLSearchParams(window.location.search);
+    return sp.has("upgrade") || sp.has("plan") || sp.has("highlight");
+  });
 
   // Auto-scroll to highlighted plan
   useEffect(() => {
@@ -229,6 +237,28 @@ export default function BillingPage() {
       </div>
 
       <TrialStatusWidget hideUpgradeAction />
+
+      {/* Upgrade plans — embedded pricing cards. Auto-opened when arriving via
+          an Upgrade button (?upgrade=1), collapsed otherwise. Checkout is handled
+          inside PricingSection (startPlanCheckout -> Stripe). */}
+      <div id="upgrade-plans" className="scroll-mt-24">
+        <button
+          type="button"
+          onClick={() => setShowPlans((s) => !s)}
+          className="w-full flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-5 py-4 text-left transition-colors hover:bg-primary/10"
+        >
+          <span className="flex items-center gap-2 font-semibold text-sm">
+            <Sparkles className="h-4 w-4 text-primary" />
+            {t("billing.upgrade")}
+          </span>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${showPlans ? "rotate-180" : ""}`} />
+        </button>
+        {showPlans && (
+          <div className="mt-4">
+            <PricingSection />
+          </div>
+        )}
+      </div>
 
 
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -212,8 +212,8 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* AI Provider configuration is managed by administrators (see Admin → AI Access). */}
-      {/* Read-only summary of the active global provider — visible to admins only. */}
+      {/* AI Provider configuration is managed by administrators (see Admin â†’ AI Access). */}
+      {/* Read-only summary of the active global provider â€” visible to admins only. */}
       <ActiveAiProviderCard />
 
 
@@ -295,7 +295,7 @@ export default function SettingsPage() {
 
       <Separator />
 
-      {/* Webhooks & API — plan gated */}
+      {/* Webhooks & API â€” plan gated */}
       {hasApiAccess ? (
         <>
           <WebhookSettings wsId={wsId} />
@@ -330,7 +330,7 @@ export default function SettingsPage() {
             <p className="text-sm text-muted-foreground">
               {t("settings.apiWebhookLocked", { plan: apiMinPlanLabel })}
             </p>
-            <Button onClick={() => navigate(`${basePath}/billing?highlight=${apiMinPlan}`)} size="sm">
+            <Button onClick={() => navigate(`${basePath}/billing?upgrade=1&highlight=${apiMinPlan}`)} size="sm">
               {t("featureGate.upgradeCta", { plan: apiMinPlanLabel })}
             </Button>
           </CardContent>
@@ -356,7 +356,7 @@ export default function SettingsPage() {
   );
 }
 
-// ── Password Change Form ─────────────────────────────
+// â”€â”€ Password Change Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function PasswordChangeForm() {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -393,11 +393,11 @@ function PasswordChangeForm() {
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="new-pw">{t("settings.newPassword")}</Label>
-        <Input id="new-pw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="••••••••" />
+        <Input id="new-pw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
       </div>
       <div className="space-y-2">
         <Label htmlFor="confirm-pw">{t("settings.confirmPassword")}</Label>
-        <Input id="confirm-pw" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder="••••••••" />
+        <Input id="confirm-pw" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
       </div>
       <Button onClick={handleChange} disabled={saving || !newPw} variant="outline">
         {saving ? t("settings.updating") : t("settings.updatePassword")}
@@ -406,7 +406,7 @@ function PasswordChangeForm() {
   );
 }
 
-// ── Notification Preferences ─────────────────────────
+// â”€â”€ Notification Preferences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function NotificationPrefsEditor() {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -597,7 +597,7 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
                     <span>{wh.events.join(", ")}</span>
                     {wh.last_triggered_at && (
                       <>
-                        <span>·</span>
+                        <span>Â·</span>
                         {wh.last_status_code && wh.last_status_code >= 200 && wh.last_status_code < 300 ? (
                           <span className="flex items-center gap-0.5 text-emerald-600">
                             <CheckCircle2 className="h-3 w-3" /> {wh.last_status_code}
