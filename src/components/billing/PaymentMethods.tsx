@@ -12,7 +12,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { CreditCard, Plus, Loader2, Trash2, Star, Wallet } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CreditCard, Plus, Loader2, Trash2, Star, Wallet, Landmark, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -50,6 +51,13 @@ export function PaymentMethods() {
   const [adding, setAdding] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<PaymentMethod | null>(null);
+  const [methodDialog, setMethodDialog] = useState(false);
+
+  const METHOD_OPTIONS = [
+    { id: "card", label: "Credit / Debit Card", desc: "Visa, Mastercard, Amex, etc.", icon: CreditCard },
+    { id: "paypal", label: "PayPal", desc: "Link your PayPal account", icon: Wallet },
+    { id: "stripe", label: "Stripe Secure Checkout", desc: "Saved securely by Stripe", icon: Landmark },
+  ];
 
   const load = async () => {
     setLoading(true);
@@ -81,16 +89,17 @@ export function PaymentMethods() {
   }, []);
 
 
-  const handleAdd = async () => {
+  const handleAdd = async (method?: string) => {
     setAdding(true);
     try {
       const { data, error } = await supabase.functions.invoke("payment-methods", {
-        body: { action: "add" },
+        body: { action: "add", method },
       });
       if (error) throw error;
       if (data?.url) window.location.href = data.url;
-    } catch (err: any) {
-      toast({ title: t("billing.cardFormOpenFailed"), description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast({ title: t("billing.cardFormOpenFailed"), description: message, variant: "destructive" });
       setAdding(false);
     }
   };
@@ -142,11 +151,45 @@ export function PaymentMethods() {
             </p>
           </div>
         </div>
-        <Button size="sm" onClick={handleAdd} disabled={adding}>
+        <Button size="sm" onClick={() => setMethodDialog(true)} disabled={adding}>
           {adding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
           {t("common.add")}
         </Button>
       </CardHeader>
+
+      {/* Method chooser dialog — user picks one, stays on billing (no signout) */}
+      <Dialog open={methodDialog} onOpenChange={(open) => !adding && setMethodDialog(open)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-primary" /> {t("billing.addCardPaypal")}
+            </DialogTitle>
+            <DialogDescription>
+              Choose a payment method to add. You will complete the details on a secure Stripe page and return here automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            {METHOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                disabled={adding}
+                onClick={() => handleAdd(opt.id === "stripe" ? "card" : opt.id)}
+                className="w-full flex items-center gap-3 rounded-xl border border-border/60 p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5 disabled:opacity-60"
+              >
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <opt.icon className="h-4.5 w-4.5 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">{opt.label}</p>
+                  <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                </div>
+                {adding ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <Plus className="h-4 w-4 text-muted-foreground" />}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
       <CardContent className="space-y-3">
         {loading ? (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
@@ -156,7 +199,7 @@ export function PaymentMethods() {
           <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
             <Wallet className="h-8 w-8 text-muted-foreground/40" />
             <p className="text-sm text-muted-foreground">{t("billing.noPaymentMethods")}</p>
-            <Button variant="outline" size="sm" onClick={handleAdd} disabled={adding}>
+            <Button variant="outline" size="sm" onClick={() => setMethodDialog(true)} disabled={adding}>
               {adding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
               {t("billing.addCardPaypal")}
             </Button>

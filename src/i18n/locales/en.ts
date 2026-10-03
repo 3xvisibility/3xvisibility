@@ -1136,6 +1136,8 @@ const en: Record<string, string> = {
   "nav.getStarted": "Get Started",
   "nav.howItWorks": "How It Works",
   "nav.lightMode": "Light mode",
+  "nav.dashboard": "Dashboard",
+  "nav.logout": "Sign out",
   "nav.login": "Log in",
   "nav.pricing": "Pricing",
   "nav.useCases": "Use Cases",

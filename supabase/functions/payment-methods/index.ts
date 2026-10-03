@@ -84,19 +84,24 @@ serve(async (req) => {
         .eq("id", "global")
         .maybeSingle();
       const flags = (settings?.feature_flags || {}) as Record<string, boolean>;
-      const methods: string[] = [];
-      if (flags.pay_method_card !== false) methods.push("card");
-      if (flags.pay_method_paypal !== false) methods.push("paypal");
-      if (methods.length === 0) methods.push("card");
+      const enabled: string[] = [];
+      if (flags.pay_method_card !== false) enabled.push("card");
+      if (flags.pay_method_paypal !== false) enabled.push("paypal");
+      if (enabled.length === 0) enabled.push("card");
+
+      // The user picks ONE method in the frontend dialog; only that method is
+      // offered in the setup session so the flow matches their choice exactly.
+      const requested = String(body.method ?? "").toLowerCase();
+      const allowed = requested && enabled.includes(requested) ? [requested] : enabled;
 
       let session;
       try {
         session = await stripe.checkout.sessions.create({
           mode: "setup",
           customer: customerId,
-          payment_method_types: methods as any,
-          ...(methods.includes("paypal") ? { currency: "eur" } : {}),
-          success_url: `${origin}/billing?card_added=true`,
+          payment_method_types: allowed as any,
+          ...(allowed.includes("paypal") ? { currency: "eur" } : {}),
+          success_url: `${origin}/billing?card_added=true&method=${allowed[0]}`,
           cancel_url: `${origin}/billing`,
         });
       } catch (_e) {
@@ -105,7 +110,7 @@ serve(async (req) => {
           mode: "setup",
           customer: customerId,
           payment_method_types: ["card"],
-          success_url: `${origin}/billing?card_added=true`,
+          success_url: `${origin}/billing?card_added=true&method=card`,
           cancel_url: `${origin}/billing`,
         });
       }

@@ -1136,6 +1136,8 @@ const es: Record<string, string> = {
   "nav.getStarted": "Empezar",
   "nav.howItWorks": "Cómo funciona",
   "nav.lightMode": "Modo de luz",
+  "nav.dashboard": "Panel de control",
+  "nav.logout": "Cerrar sesión",
   "nav.login": "Iniciar sesión",
   "nav.pricing": "Precios",
   "nav.useCases": "Casos de uso",

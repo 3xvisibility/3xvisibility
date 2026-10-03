@@ -1136,6 +1136,8 @@ const fr: Record<string, string> = {
   "nav.getStarted": "Commencer",
   "nav.howItWorks": "Comment ça marche",
   "nav.lightMode": "Mode clair",
+  "nav.dashboard": "Tableau de bord",
+  "nav.logout": "Se déconnecter",
   "nav.login": "Connexion",
   "nav.pricing": "Tarifs",
   "nav.useCases": "Cas d'usage",

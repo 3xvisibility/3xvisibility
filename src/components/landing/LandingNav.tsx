@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutDashboard, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 import logo3x from "@/assets/logo-3x.png";
 
 // Height of the fixed navbar (h-16 = 64px) plus a little breathing room,
@@ -22,6 +24,8 @@ function scrollToElement(el: HTMLElement | null) {
 
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   // Default active section when there's no URL hash on the home page.
   const DEFAULT_ACTIVE_ID = "features";
@@ -97,6 +101,19 @@ export function LandingNav() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Track auth state so returning users see their profile instead of Sign In.
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    navigate("/");
+  };
 
   // On load: if the URL has a hash, smooth-scroll to that section once it mounts.
   useEffect(() => {
@@ -222,12 +239,25 @@ export function LandingNav() {
 
           <div className="hidden lg:flex items-center gap-2">
             <LanguageSwitcher variant="ghost" size="icon" className="h-9 w-auto px-2 text-[hsl(220,12%,45%)] hover:text-foreground rounded-lg" />
-            <Button variant="ghost" size="sm" className="text-sm h-9 px-4 rounded-lg font-medium text-[hsl(220,12%,48%)] hover:text-foreground hover:bg-[hsl(96,67%,48%,0.08)]" asChild>
-              <Link to="/auth">{t("nav.login")}</Link>
-            </Button>
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm h-9 px-5 rounded-lg font-semibold shadow-lg shadow-primary/20" asChild>
-              <Link to="/auth">{t("nav.getStarted")}</Link>
-            </Button>
+            {session ? (
+              <>
+                <Button variant="ghost" size="sm" className="text-sm h-9 px-4 rounded-lg font-medium text-[hsl(220,12%,48%)] hover:text-foreground hover:bg-[hsl(96,67%,48%,0.08)]" asChild>
+                  <Link to="/dashboard"><LayoutDashboard className="mr-1.5 h-4 w-4" />{t("nav.dashboard") || "Dashboard"}</Link>
+                </Button>
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-[hsl(220,12%,48%)] hover:text-destructive hover:bg-destructive/5" title="Sign out" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" className="text-sm h-9 px-4 rounded-lg font-medium text-[hsl(220,12%,48%)] hover:text-foreground hover:bg-[hsl(96,67%,48%,0.08)]" asChild>
+                  <Link to="/auth">{t("nav.login")}</Link>
+                </Button>
+                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm h-9 px-5 rounded-lg font-semibold shadow-lg shadow-primary/20" asChild>
+                  <Link to="/auth">{t("nav.getStarted")}</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           <Button variant="ghost" size="icon" className="lg:hidden h-9 w-9 text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
@@ -259,12 +289,25 @@ export function LandingNav() {
                 })}
                 <div className="pt-3 flex flex-col gap-2 border-t border-[hsl(96,67%,48%,0.1)] mt-3">
                   <LanguageSwitcher variant="outline" size="sm" className="justify-start gap-2 rounded-lg h-10 border-[hsl(96,67%,48%,0.15)]" />
-                  <Button variant="outline" size="sm" className="rounded-lg h-10 border-[hsl(96,67%,48%,0.15)] text-foreground" asChild>
-                    <Link to="/auth">{t("nav.login")}</Link>
-                  </Button>
-                  <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-10 font-semibold" asChild>
-                    <Link to="/auth">{t("nav.getStarted")}</Link>
-                  </Button>
+                  {session ? (
+                    <>
+                      <Button variant="outline" size="sm" className="rounded-lg h-10 border-[hsl(96,67%,48%,0.15)] text-foreground justify-start" asChild>
+                        <Link to="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" />{t("nav.dashboard") || "Dashboard"}</Link>
+                      </Button>
+                      <Button variant="outline" size="sm" className="rounded-lg h-10 border-destructive/30 text-destructive justify-start" onClick={handleSignOut}>
+                        <LogOut className="mr-2 h-4 w-4" />{t("nav.logout") || "Sign out"}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outline" size="sm" className="rounded-lg h-10 border-[hsl(96,67%,48%,0.15)] text-foreground" asChild>
+                        <Link to="/auth">{t("nav.login")}</Link>
+                      </Button>
+                      <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-10 font-semibold" asChild>
+                        <Link to="/auth">{t("nav.getStarted")}</Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>
