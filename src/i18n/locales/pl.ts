@@ -3003,6 +3003,8 @@ const pl: Record<string, string> = {
   "trial.viewPlans": "View plans",
   "sidebar.seoSection": "SEO & Analytics",
   "sidebar.websiteSection": "Websites",
+  "nav.dashboard": "Dashboard",
+  "nav.logout": "Sign out",
 };
 
 export default pl;
