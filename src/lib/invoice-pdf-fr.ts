@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import QRCode from "qrcode";
 import type { InvoiceRecord } from "./invoice-pdf";
+import { INVOICE_LOGO_PNG_BASE64 } from "./invoice-logo";
 
 /**
  * Legally compliant invoice generator for a French SAS, localised into the
@@ -274,6 +275,16 @@ export async function generateFrenchInvoicePdf(
   const margin = 48;
   const right = pageWidth - margin;
   let y = margin;
+
+  // ---- Company logo ----
+  try {
+    const logoWidth = 150;
+    const logoHeight = Math.round(logoWidth * (378 / 1189));
+    doc.addImage(INVOICE_LOGO_PNG_BASE64, "PNG", margin, y - 4, logoWidth, logoHeight);
+    y += logoHeight + 16;
+  } catch {
+    // Logo is decorative — never fail the invoice over it.
+  }
 
   // ---- Issuer block ----
   doc.setFont("helvetica", "bold");

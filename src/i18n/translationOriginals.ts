@@ -1,6 +1,6 @@
 import { languages, translations, type Language } from "./translations";
 
-const REVERSE_CACHE_PREFIX = "autotr:rev:v1:";
+const REVERSE_CACHE_PREFIX = "autotr:rev:v2:";
 const KEY_SEPARATOR = "\u0000";
 
 const runtimeReverse = new Map<string, string>();

@@ -117,6 +117,16 @@ serve(async (req) => {
       line_items: [{ price: priceId, quantity: qty }],
       mode: isRecurring ? "subscription" : "payment",
       metadata,
+      // Collect the buyer's country so 20% VAT is added automatically at
+      // checkout and appears as a TAX line on the Stripe-generated invoice.
+      automatic_tax: { enabled: true },
+      tax_id_collection: { enabled: true },
+      invoice_creation: isRecurring ? undefined : {
+        invoice_data: {
+          issuer: { type: "self" as const },
+          rendering_options: { language_locale: "en" },
+        },
+      },
       ...(isRecurring
         ? {
             subscription_data: {

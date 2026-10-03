@@ -758,7 +758,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { value: "seo", label: "SEO Landing Page", icon: "🔍", desc: "Organic search optimized" },
-                  { value: "sea", label: "SEA Landing Page", icon: "📢", desc: "Paid ads conversion focused" },
+                  { value: "sea", label: "AEO Landing Page", icon: "📢", desc: "Answer-engine optimized conversion page" },
                   { value: "geo", label: "GEO Local Page", icon: "📍", desc: "Location-based targeting" },
                 ].map(ct => (
                   <button

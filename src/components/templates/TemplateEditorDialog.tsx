@@ -510,7 +510,7 @@ ${contentText}`
               return (
                 <div className="hidden lg:flex items-center gap-1.5 mr-2">
                   <SeoScoreBadge score={seo.score} label={seo.label} color={seo.color} checks={seo.checks} size="sm" scoreType="SEO" />
-                  <SeoScoreBadge score={sea.score} label={sea.label} color={sea.color} checks={sea.checks} size="sm" scoreType="SEA" />
+                  <SeoScoreBadge score={sea.score} label={sea.label} color={sea.color} checks={sea.checks} size="sm" scoreType="AEO" />
                   <SeoScoreBadge score={geo.score} label={geo.label} color={geo.color} checks={geo.checks} size="sm" scoreType="GEO" />
                 </div>
               );

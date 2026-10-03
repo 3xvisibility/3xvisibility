@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+import { INVOICE_LOGO_PNG_BASE64 } from "./invoice-logo";
 
 export interface InvoiceLineItem {
   description: string;
@@ -70,6 +71,16 @@ function renderInvoice(doc: jsPDF, invoice: InvoiceRecord, issuer: IssuerDetails
   const company = issuer.name || "3x Visibility";
   const companyEmail = issuer.email || "3xvisibility@gmail.com";
   const companySite = issuer.website || "https://www.3xvisibility.com";
+
+  // Company logo above the issuer block
+  try {
+    const logoWidth = 150;
+    const logoHeight = Math.round(logoWidth * (378 / 1189));
+    doc.addImage(INVOICE_LOGO_PNG_BASE64, "PNG", margin, y - 4, logoWidth, logoHeight);
+    y += logoHeight + 14;
+  } catch {
+    // Logo is decorative — never fail the invoice over it.
+  }
 
   // Header
   doc.setFont("helvetica", "bold");
@@ -168,8 +179,18 @@ function renderInvoice(doc: jsPDF, invoice: InvoiceRecord, issuer: IssuerDetails
   doc.setFontSize(10);
   doc.setTextColor(110);
   doc.text("Subtotal", right - 150, y, { align: "right" });
+  const subtotalCents = Math.round(invoice.amount_total / 1.2);
   doc.setTextColor(25);
-  doc.text(formatInvoiceMoney(invoice.amount_total, invoice.currency), right - 10, y, {
+  doc.text(formatInvoiceMoney(subtotalCents, invoice.currency), right - 10, y, {
+    align: "right",
+  });
+
+  // VAT 20% — included in the amount paid
+  y += 18;
+  doc.setTextColor(110);
+  doc.text("TAX (VAT 20%)", right - 150, y, { align: "right" });
+  doc.setTextColor(25);
+  doc.text(formatInvoiceMoney(invoice.amount_total - subtotalCents, invoice.currency), right - 10, y, {
     align: "right",
   });
 
@@ -187,7 +208,7 @@ function renderInvoice(doc: jsPDF, invoice: InvoiceRecord, issuer: IssuerDetails
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.setTextColor(20);
-  doc.text("Total paid", right - 150, y, { align: "right" });
+  doc.text("Total paid (incl. VAT)", right - 150, y, { align: "right" });
   doc.text(
     formatInvoiceMoney(invoice.amount_total - (invoice.amount_refunded || 0), invoice.currency),
     right - 10,

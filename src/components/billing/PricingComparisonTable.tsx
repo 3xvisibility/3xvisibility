@@ -310,7 +310,7 @@ const featureGroups: FeatureGroup[] = [
   },
   {
     id: "scores",
-    label: "SEO, SEA & GEO optimization",
+    label: "SEO, AEO & GEO optimization",
     icon: <Search className="h-3.5 w-3.5" />,
     rows: [
       {
@@ -322,7 +322,7 @@ const featureGroups: FeatureGroup[] = [
       },
       {
         id: "sea-score",
-        label: "SEA scoring — ad / landing page readiness",
+        label: "AEO scoring — answer / landing page readiness",
         hint: "Message match, CTA strength, conversion elements",
         values: tier(false, true, true, true),
         notes: { starter: "Score only", pro: "Score + auto-fix", agency: "Auto-fix + bulk" },
@@ -334,11 +334,11 @@ const featureGroups: FeatureGroup[] = [
         values: tier(false, false, true, true),
         notes: { pro: "Score + auto-fix", agency: "Auto-fix + bulk" },
       },
-      { id: "credit-cost", label: "Optimization credit cost", hint: "Credits deducted per optimization run", values: tier("—", "SEO 2", "SEO 2 / SEA 3", "SEO 2 / SEA 3 / GEO 4") },
-      { id: "score-badges", label: "Live SEO / SEA / GEO badges on every page", values: tier(true, true, true, true) },
+      { id: "credit-cost", label: "Optimization credit cost", hint: "Credits deducted per optimization run", values: tier("—", "SEO 2", "SEO 2 / AEO 3", "SEO 2 / AEO 3 / GEO 4") },
+      { id: "score-badges", label: "Live SEO / AEO / GEO badges on every page", values: tier(true, true, true, true) },
       { id: "score-target", label: "Guaranteed 80+ multi-pass optimization", values: tier(false, false, true, true) },
       { id: "score-diff", label: "Before / after diff preview", values: tier(false, true, true, true) },
-      { id: "score-bulk", label: "Bulk SEO / SEA / GEO optimization across campaigns", values: tier(false, false, false, true) },
+      { id: "score-bulk", label: "Bulk SEO / AEO / GEO optimization across campaigns", values: tier(false, false, false, true) },
     ],
   },
   {

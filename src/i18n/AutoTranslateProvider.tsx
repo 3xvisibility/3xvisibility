@@ -43,9 +43,13 @@ function hash(str: string): string {
   return (h >>> 0).toString(36);
 }
 
+// Bumped when stale caches must be invalidated (e.g. after locale file fixes)
+// so previously-mistranslated pairs are re-fetched instead of served.
+const CACHE_SCHEMA = "v2";
+
 function cacheGet(lang: string, text: string): string | null {
   try {
-    const cached = localStorage.getItem(`${CACHE_PREFIX}${lang}:${hash(text)}`);
+    const cached = localStorage.getItem(`${CACHE_PREFIX}${CACHE_SCHEMA}:${lang}:${hash(text)}`);
     if (isBadTranslation(cached) || !cached) return null;
     return restoreBrandName(cached);
   } catch {
@@ -61,7 +65,7 @@ function cacheSet(lang: string, text: string, translation: string) {
   if (isBadTranslation(safe)) return;
   if (isUntranslated(text, safe)) return;
   try {
-    localStorage.setItem(`${CACHE_PREFIX}${lang}:${hash(text)}`, safe);
+    localStorage.setItem(`${CACHE_PREFIX}${CACHE_SCHEMA}:${lang}:${hash(text)}`, safe);
   } catch {
     /* quota — ignore */
   }

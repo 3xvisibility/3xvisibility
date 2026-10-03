@@ -16,7 +16,7 @@ interface ScoresBadgeGroupProps {
   seoKeywords?: string[] | null;
   focusKeyword?: string | null;
   size?: "sm" | "md";
-  /** Show labels like "SEO", "SEA", "GEO" next to badges */
+  /** Show labels like "SEO", "AEO", "GEO" next to badges */
   showLabels?: boolean;
 }
 
@@ -45,7 +45,7 @@ export function ScoresBadgeGroup({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <ScoreItem label="SEO" result={seo} size={size} showLabel={showLabels} />
-      <ScoreItem label="SEA" result={sea} size={size} showLabel={showLabels} />
+      <ScoreItem label="AEO" result={sea} size={size} showLabel={showLabels} />
       <ScoreItem label="GEO" result={geo} size={size} showLabel={showLabels} />
     </div>
   );

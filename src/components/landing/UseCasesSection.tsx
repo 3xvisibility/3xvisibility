@@ -38,7 +38,7 @@ export function UseCasesSection() {
     },
     {
       icon: Target,
-      tag: "SEA",
+      tag: "AEO",
       title: t("useCases.seaTitle"),
       description: t("useCases.seaDescription"),
       highlights: [

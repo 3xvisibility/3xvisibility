@@ -154,7 +154,7 @@ const TARGET_FIELDS: TargetField[] = [
 const CATEGORY_META: Record<string, { icon: any; label: string; color: string }> = {
   content: { icon: Type, label: "Content", color: "text-primary" },
   seo: { icon: SearchIcon, label: "SEO", color: "text-success" },
-  sea: { icon: Target, label: "SEA", color: "text-warning" },
+  sea: { icon: Target, label: "AEO", color: "text-warning" },
   geo: { icon: MapPin, label: "GEO", color: "text-secondary" },
   custom: { icon: Hash, label: "Platform", color: "text-muted-foreground" },
 };
