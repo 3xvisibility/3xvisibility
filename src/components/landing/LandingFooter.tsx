@@ -130,8 +130,8 @@ export function LandingFooter() {
 
         <div className="mt-12 pt-6 border-t border-[hsl(96,67%,48%,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-[hsl(250,10%,25%)]">
-            &copy; {new Date().getFullYear()}{" "}
-            <span data-no-translate translate="no">{BRAND_NAME}</span>. {t("footer.rights")}
+            &copy; {new Date().getFullYear()}{"    "}
+            <span data-no-translate translate="no"> {BRAND_NAME} </span>. {t("footer.rights")}
           </p>
           <div className="flex items-center gap-4">
             {socials.map((s) => (
